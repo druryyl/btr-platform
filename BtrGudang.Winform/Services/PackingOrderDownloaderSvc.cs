@@ -104,6 +104,7 @@ namespace BtrGudang.Winform.Services
         public string DriverName { get; set; }
         public string WarehouseDesc {get;set;}
         public string OfficeCode {get;set;}
+        public string Note { get; set; }
         public IEnumerable<PackingOrderDownloadItemResponse> ListItem { get; set;  }
 
         public PackingOrderModel ToModel()
@@ -124,7 +125,8 @@ namespace BtrGudang.Winform.Services
 
             var result = new PackingOrderModel(
                 PackingOrderId, packingOrderDate, customer, location, faktur, driver,
-                DateTime.Now, OfficeCode, string.Empty, listItem);
+                DateTime.Now, OfficeCode, string.Empty, DateTime.Now, string.Empty, Note,
+                listItem);
             return result;
         }
     }

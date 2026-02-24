@@ -4,6 +4,7 @@ using BtrGudang.Helper.Common;
 using BtrGudang.Winform.Infrastructure;
 using Dapper;
 using Microsoft.Extensions.Options;
+using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlClient;
@@ -11,11 +12,11 @@ using System.Data.SqlClient;
 namespace BtrGudang.Infrastructure.PackingOrderFeature
 {
     public interface IPrintLogDal :
-        IInsert<PrintLogType>,
-        IUpdate<PrintLogType>,
+        IInsert<PrintLogDto>,
+        IUpdate<PrintLogDto>,
         IDelete<IPrintLogKey>,
-        IGetData<PrintLogType, IPrintLogKey>,
-        IListData<PrintLogType>
+        IGetData<PrintLogDto, IPrintLogKey>,
+        IListData<PrintLogDto>
     {
     }
 
@@ -28,7 +29,7 @@ namespace BtrGudang.Infrastructure.PackingOrderFeature
             _opt = opt.Value;
         }
 
-        public void Insert(PrintLogType dto)
+        public void Insert(PrintLogDto dto)
         {
             const string sql = @"
                INSERT INTO BTRG_PrintLog(
@@ -48,7 +49,7 @@ namespace BtrGudang.Infrastructure.PackingOrderFeature
             }
         }
 
-        public void Update(PrintLogType dto)
+        public void Update(PrintLogDto dto)
         {
             const string sql = @"
                    UPDATE 
@@ -89,7 +90,7 @@ namespace BtrGudang.Infrastructure.PackingOrderFeature
             }
         }
 
-        public PrintLogType GetData(IPrintLogKey key)
+        public PrintLogDto GetData(IPrintLogKey key)
         {
            const string sql = @"
                SELECT
@@ -107,12 +108,12 @@ namespace BtrGudang.Infrastructure.PackingOrderFeature
 
             using (var conn = new SqlConnection(ConnStringHelper.Get(_opt)))
             {
-                var result = conn.ReadSingle<PrintLogType>(sql, dp);
+                var result = conn.ReadSingle<PrintLogDto>(sql, dp);
                 return result;
             }
         }
 
-        public IEnumerable<PrintLogType> ListData()
+        public IEnumerable<PrintLogDto> ListData()
         {
             const string sql = @"
                 SELECT
@@ -125,8 +126,35 @@ namespace BtrGudang.Infrastructure.PackingOrderFeature
 
             using (var conn = new SqlConnection(ConnStringHelper.Get(_opt)))
             {
-                return conn.Read<PrintLogType>(sql);
+                return conn.Read<PrintLogDto>(sql);
             }
         }
+    }
+
+    public class PrintLogDto
+    {
+        public PrintLogDto(string printLogId, 
+            DateTime printLogTimestamp, string docType)
+        {
+            PrintLogId = printLogId;
+            PrintLogTimestamp = printLogTimestamp;
+            DocType = docType;
+        }
+
+        public PrintLogType ToModel(IEnumerable<PrintLogPackingOrderType> listItem)
+        {
+            var result = new PrintLogType(PrintLogId, PrintLogTimestamp, DocType, listItem);
+            return result;
+        }
+
+        public static PrintLogDto FromModel(PrintLogType model)
+        {
+            var result = new PrintLogDto(model.PrintLogId, model.PrintLogTimestamp, model.DocType);
+            return result;
+        }
+
+        public string PrintLogId { get; private set; }
+        public DateTime PrintLogTimestamp { get; private set; }
+        public string DocType { get; private set; }
     }
 }

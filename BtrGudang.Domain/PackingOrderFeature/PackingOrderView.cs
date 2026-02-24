@@ -19,5 +19,8 @@ namespace BtrGudang.Domain.PackingOrderFeature
         public string Alamat { get; set; }
         public DateTime DownloadTimestamp { get; set; }
         public string PrintLogId { get; set; }
+        public DateTime JamCetak { get; set;  }
+        public string JenisCetak { get; set; }
+        public string Note { get; set;  }
     }
 }

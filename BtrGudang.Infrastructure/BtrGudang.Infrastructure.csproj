@@ -84,6 +84,8 @@
     <Compile Include="PackingOrderFeature\PackingOrderRepo.cs" />
     <Compile Include="PackingOrderFeature\PackingOrderDal.cs" />
     <Compile Include="PackingOrderFeature\PrintLogDal.cs" />
+    <Compile Include="PackingOrderFeature\PrintLogPackingOrderDal.cs" />
+    <Compile Include="PackingOrderFeature\PrintLogRepo.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

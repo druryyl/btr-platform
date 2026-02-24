@@ -31,6 +31,9 @@ namespace BtrGudang.Infrastructure.PackingOrderFeature
         public DateTime DownloadTimestamp { get; set; }
         public string OfficeCode { get; set; }
         public string PrintLogId { get; set; }
+        public DateTime PrintTimestamp { get; set; }
+        public string DocType { get; set; }
+        public string Note { get; set; }
 
         public static PackingOrderDto FromModel(PackingOrderModel model)
         {
@@ -59,6 +62,9 @@ namespace BtrGudang.Infrastructure.PackingOrderFeature
                 DownloadTimestamp = model.DownloadTimestamp,
                 OfficeCode = model.OfficeCode,
                 PrintLogId = model.PrintLogId,
+                PrintTimestamp = model.PrintTimestamp,
+                DocType = model.DocType,
+                Note = model.Note,
             };
         }
 
@@ -81,6 +87,9 @@ namespace BtrGudang.Infrastructure.PackingOrderFeature
                 DownloadTimestamp,
                 OfficeCode,
                 PrintLogId,
+                PrintTimestamp,
+                DocType,
+                Note,
                 listItem);
         }
     }

@@ -16,11 +16,11 @@ namespace BtrGudang.Test.PackingOrderFeature
     {
         private readonly PrintLogDal _sut = new PrintLogDal(ConnStringHelper.GetTestEnv());
 
-        private static PrintLogType Faker()
-            => new PrintLogType("A", new DateTime(2023, 1, 1), "B");
+        private static PrintLogDto Faker()
+            => new PrintLogDto("A", new DateTime(2023, 1, 1), "B");
 
         private static IPrintLogKey FakerKey()
-            => new PrintLogType("A", new DateTime(2023, 1, 1), "B");
+            => PrintLogType.Key("A");
 
         [Fact]
         public void InsertTest()

@@ -77,7 +77,7 @@ namespace BtrGudang.Winform.Forms
             
             col["FakturDate"].Width = 100;
             col["FakturDate"].DefaultCellStyle.Format = "dd-MM-yyyy";
-            col["Driver"].Width = 100;
+            //col["Driver"].Width = 100;
             col["CustomerCode"].Width = 80;
             col["CustomerName"].Width = 225;
             col["Alamat"].Width = 180;

@@ -64,5 +64,6 @@
     <Build Include="Tables\BTRG_PackingOrderItem.sql" />
     <None Include="Scripts\btrgd_database.sql" />
     <Build Include="Tables\BTRG_PrintLog.sql" />
+    <Build Include="Tables\BTRG_PrintLogPackingOrder.sql" />
   </ItemGroup>
 </Project>

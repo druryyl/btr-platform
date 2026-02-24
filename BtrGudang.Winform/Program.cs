@@ -52,6 +52,11 @@ namespace BtrGudang.Winform
             services.AddScoped<IPackingOrderRepo, PackingOrderRepo>();
             services.AddScoped<IPackingOrderDal, PackingOrderDal>();
             services.AddScoped<IPackingOrderItemDal, PackingOrderItemDal>();
+            services.AddScoped<IPrintLogRepo, PrintLogRepo>();
+            services.AddScoped<IPrintLogDal, PrintLogDal>();
+            services.AddScoped<IPrintLogPackingOrderDal, PrintLogPackingOrderDal>();
+
+
 
 
             // Register forms

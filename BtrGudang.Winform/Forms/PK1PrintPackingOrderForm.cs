@@ -1,11 +1,14 @@
 ﻿using BtrGudang.AppTier.PackingOrderFeature;
 using BtrGudang.Domain.PackingOrderFeature;
 using BtrGudang.Helper.Common;
+using BtrGudang.Infrastructure.PackingOrderFeature;
+using BtrGudang.Winform.Helpers;
 using ClosedXML.Excel;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
+using System.Drawing;
 using System.Globalization;
 using System.Linq;
 using System.Runtime.CompilerServices;
@@ -19,15 +22,21 @@ namespace BtrGudang.Winform.Forms
         private readonly BindingList<PK1AllFakturView> _allFakturList;
         private readonly BindingSource _allFakturBindingSource;
 
-        public PK1PrintPackingOrderForm(IPackingOrderRepo packingOrderRepo)
+        private readonly IPrintLogRepo _printLogRepo;
+        private readonly IPrintLogDal _printLogDal;
+
+        public PK1PrintPackingOrderForm(IPackingOrderRepo packingOrderRepo, IPrintLogRepo printLogRepo, IPrintLogDal printLogDal)
         {
             InitializeComponent();
             _packingOrderRepo = packingOrderRepo;
+            _printLogRepo = printLogRepo;
+
             _allFakturList = new BindingList<PK1AllFakturView>();
             _allFakturBindingSource = new BindingSource(_allFakturList, null);
 
             RegisterControlEventHandler();
             InitGrid();
+            _printLogDal = printLogDal;
         }
 
 
@@ -39,6 +48,7 @@ namespace BtrGudang.Winform.Forms
             FilterTextBox.TextChanged += FilterText_TextChanged;
         }
 
+        
         #region Proses Per-Supplier
         private void PrintPerSupplierButton_Click(object sender, EventArgs e)
         {
@@ -48,11 +58,27 @@ namespace BtrGudang.Winform.Forms
         {
             var listModel = _allFakturList
                 .Where(x => x.PerSupplier)
-                .Select(x => _packingOrderRepo.LoadEntity(x).Value);
+                .Select(x => _packingOrderRepo.LoadEntity(x).Value)
+                .ToList();
             var listPerSupplier = PrintPackingOrderPerSupplierView
                 .CreateFrom(listModel)?.ToList() 
                 ?? new List<PrintPackingOrderPerSupplierView>();
             ExportPerSupplierToExcel(listPerSupplier);
+
+            var printLog = PrintLogType.Create("PER-SUPPLIER", listModel);
+            foreach (var item in listModel)
+                item.PrintLogBrg(printLog);
+
+            using (var trans = TransHelper.NewScope())
+            {
+                _printLogRepo.SaveChanges(printLog);
+                foreach (var item in listModel)
+                    _packingOrderRepo.SaveChanges(item);
+                trans.Complete();
+            }
+            ListFakturButton_Click(null, null);
+
+
         }
         private void ExportPerSupplierToExcel(IEnumerable<PrintPackingOrderPerSupplierView> data)
         {
@@ -198,16 +224,31 @@ namespace BtrGudang.Winform.Forms
         #endregion
 
         #region Proses Per-Faktur
-        private void PrintPerFakturButton_Click(object sender, EventArgs e)
+        private void PrintPerFakturButton_Click(object sender, EventArgs e)         
         {
             var listModel = _allFakturList
                 .Where(x => x.PerFaktur)
-                .Select(x => _packingOrderRepo.LoadEntity(x).Value);
+                .Select(x => _packingOrderRepo.LoadEntity(x).Value)
+                .ToList();
             var listPerFaktur = PrintPackingOrderPerFakturView
                 .CreateFrom(listModel)?.ToList()
                 ?? new List<PrintPackingOrderPerFakturView>();
             ExportPerFakturToExcel(listPerFaktur, PisahHalamanCheckBox.Checked);
+
+            var printLog = PrintLogType.Create("PER-FAKTUR", listModel);
+            foreach (var item in listModel)
+                item.PrintLogFaktur(printLog);
+
+            using (var trans = TransHelper.NewScope())
+            {
+                _printLogRepo.SaveChanges(printLog);
+                foreach (var item in listModel)
+                    _packingOrderRepo.SaveChanges(item);
+                trans.Complete();
+            }
+            ListFakturButton_Click(null, null);
         }
+
         private void ExportPerFakturToExcel(IEnumerable<PrintPackingOrderPerFakturView> data, bool pisahHalaman)
         {
             if (data == null || !data.Any())
@@ -362,6 +403,12 @@ namespace BtrGudang.Winform.Forms
                         ws.Row(row).AdjustToContents(); // Adjust height to content
                     }
 
+                    if (faktur.Note.Trim() != "")
+                    {
+                        ws.Cell(itemRow, 1).Value = $"Note: {faktur.Note}";
+                        itemRow++;
+                    }
+
                     if (pisahHalaman)
                     {
                         // Set print area for this faktur
@@ -435,6 +482,39 @@ namespace BtrGudang.Winform.Forms
             AllFakturGrid.DataSource = _allFakturBindingSource;
             AllFakturGrid.AutoGenerateColumns = true;
             AllFakturGrid.DataSource = _allFakturBindingSource;
+            AllFakturGrid.RowPostPaint += DataGridViewExtension.DataGridView_RowPostPaint;
+            //  TODO: Bikin View
+            var cols = AllFakturGrid.Columns;
+            cols["PackingOrderId"].Width = 80;
+            cols["PackingOrderId"].Visible = false;
+            cols["FakturCode"].Width = 70;
+            cols["FakturDate"].DefaultCellStyle.Format = "dd-MM-yyyy";
+            cols["FakturDate"].Width = 70;
+
+            cols["GrandTotal"].DefaultCellStyle.Font = new Font("Lucida Console", 8);
+            cols["GrandTotal"].DefaultCellStyle.Format = "N0";
+            cols["GrandTotal"].DefaultCellStyle.Alignment = DataGridViewContentAlignment.TopRight;
+            cols["GrandTotal"].Width = 100;
+
+            cols["Driver"].Width = 70;
+            cols["AdminName"].Width = 70;
+            cols["CustomerCode"].Width = 80;
+            cols["CustomerName"].Width = 150;
+            cols["Alamat"].Width = 200;
+            cols["Alamat"].DefaultCellStyle.Font = new Font("Arial", 8);
+            
+            cols["Note"].Width = 70;
+            cols["Note"].DefaultCellStyle.Font = new Font("Arial", 8);
+
+            cols["MapLocation"].Width = 50;
+            cols["PerSupplier"].Width = 70;
+            cols["PerFaktur"].Width = 70;
+            
+            cols["JamCetak"].Width = 70;
+            cols["JamCetak"].DefaultCellStyle.Format = "ddd, HH:mm";
+            cols["JenisCetak"].Width = 80;
+
+
 
             foreach (DataGridViewColumn col in AllFakturGrid.Columns)
             {
@@ -464,7 +544,7 @@ namespace BtrGudang.Winform.Forms
                     }
                 }
             };
-            AllFakturGrid.CellContentClick += (s,e) =>
+            AllFakturGrid.CellContentClick += (s, e) =>
             {
                 var grid = (DataGridView)s;
                 if (!(grid.CurrentCell is DataGridViewCheckBoxCell))
@@ -472,9 +552,36 @@ namespace BtrGudang.Winform.Forms
 
                 grid.EndEdit();
             };
+            AllFakturGrid.CellFormatting += AllFakturGrid_CellFormatting1;
             _allFakturBindingSource.ListChanged += AllFakturBindingSource_ListChanged;
         }
 
+        private void AllFakturGrid_CellFormatting1(object sender, DataGridViewCellFormattingEventArgs e)
+        {
+            if (e.RowIndex >= 0 && e.RowIndex < AllFakturGrid.Rows.Count)
+            {
+                DataGridViewRow row = AllFakturGrid.Rows[e.RowIndex];
+                if (!row.IsNewRow)
+                {
+                    object statusValue = row.Cells["JenisCetak"].Value;
+                    if (statusValue != null)
+                    {
+                        switch (statusValue.ToString())
+                        {
+                            case "PER-SUPPLIER":
+                                row.DefaultCellStyle.BackColor = Color.LightGreen;
+                                break;
+                            case "PER-FAKTUR":
+                                row.DefaultCellStyle.BackColor = Color.LightPink;
+                                break;
+                            default:
+                                row.DefaultCellStyle.BackColor = Color.White;
+                                break;
+                        }
+                    }
+                }
+            }
+        }
         private void AllFakturBindingSource_ListChanged(object sender, ListChangedEventArgs e)
         {
             if (e.ListChangedType == ListChangedType.ItemChanged)
@@ -541,7 +648,7 @@ namespace BtrGudang.Winform.Forms
 
         public PK1AllFakturView(string packingOrderId,
             string fakturCode, DateTime fakturDate, string adminName, decimal grandTotal, string driver,
-            string customerCode, string customerName, string alamat, Uri mapLocation)
+            string customerCode, string customerName, string alamat, string note, Uri mapLocation, DateTime jamCetak, string jenisCetak)
         {
             PackingOrderId = packingOrderId;
             FakturCode = fakturCode;
@@ -552,8 +659,11 @@ namespace BtrGudang.Winform.Forms
             CustomerCode = customerCode;
             CustomerName = customerName;
             Alamat = alamat;
+            Note = note;
             MapLocation = mapLocation;
-            _isPersupplier = null; // Initially both false
+            JamCetak = jamCetak;
+            JenisCetak = jenisCetak;
+            _isPersupplier = null; 
         }
 
         public string PackingOrderId { get; private set; }
@@ -565,6 +675,7 @@ namespace BtrGudang.Winform.Forms
         public string CustomerCode { get; private set; }
         public string CustomerName { get; private set; }
         public string Alamat { get; private set; }
+        public string Note { get; private set; }
         public Uri MapLocation { get; private set; }
 
         public bool PerSupplier
@@ -611,6 +722,9 @@ namespace BtrGudang.Winform.Forms
             }
         }
 
+        public DateTime JamCetak { get; private set; }
+        public string JenisCetak    { get; private set; }
+
         public static PK1AllFakturView CreateFrom(PackingOrderModel view)
         {
             Uri mapLocation = null;
@@ -624,7 +738,8 @@ namespace BtrGudang.Winform.Forms
 
             var result = new PK1AllFakturView(view.PackingOrderId, view.Faktur.FakturCode,
                     view.Faktur.FakturDate, view.Faktur.AdminName, view.Faktur.GrandTotal, 
-                    view.Driver.DriverName, view.Customer.CustomerCode, view.Customer.CustomerName, view.Customer.Alamat, mapLocation);
+                    view.Driver.DriverName, view.Customer.CustomerCode, view.Customer.CustomerName, 
+                    view.Customer.Alamat, view.Note, mapLocation, view.PrintTimestamp, view.DocType);
             return result;
         }
     }
@@ -719,6 +834,7 @@ namespace BtrGudang.Winform.Forms
         public string CustomerCode { get; set; }
         public string CustomerName { get; set; }
         public string Alamat { get; set; }
+        public string Note { get; set;  }
         public string Location { get; set; }
         public string Driver { get; set; }
         public decimal GrandTotal { get; set; }
@@ -743,6 +859,7 @@ namespace BtrGudang.Winform.Forms
                     Location = GenerateMapLocation(po.Location, culture),
                     Driver = po.Driver.DriverName,
                     GrandTotal = po.Faktur.GrandTotal,
+                    Note = po.Note,
                     ListBrg = po.ListItem?
                         .Where(item => item?.Brg != null)
                         .Select(item => new PrintPackingOrderPerFakturBrgView

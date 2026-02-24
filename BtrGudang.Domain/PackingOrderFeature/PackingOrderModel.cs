@@ -20,6 +20,9 @@ namespace BtrGudang.Domain.PackingOrderFeature
             DateTime downloadTimestamp,
             string offoiceCode,
             string printLogId,
+            DateTime printTimestamp,
+            string docType,
+            string note,
             IEnumerable<PackingOrderItemModel> listItem)
         {
             PackingOrderId = packingOrderId;
@@ -31,6 +34,9 @@ namespace BtrGudang.Domain.PackingOrderFeature
             DownloadTimestamp = downloadTimestamp;
             OfficeCode = offoiceCode;
             PrintLogId = printLogId;
+            PrintTimestamp = printTimestamp;
+            DocType = docType;
+            Note = note;
             _listItem = listItem.ToList();
         }
 
@@ -43,6 +49,9 @@ namespace BtrGudang.Domain.PackingOrderFeature
             DriverReff.Default,
             new DateTime(3000,1,1),
             "-",
+            string.Empty,
+            new DateTime(3000,1,1),
+            string.Empty,
             string.Empty,
             Enumerable.Empty<PackingOrderItemModel>());
 
@@ -62,6 +71,9 @@ namespace BtrGudang.Domain.PackingOrderFeature
         public DateTime DownloadTimestamp { get; private set; }
         public string OfficeCode { get; private set;  }
         public string PrintLogId { get; private set;  }
+        public DateTime PrintTimestamp { get; private set; }
+        public string DocType { get; private set; }
+        public string Note { get; private set; }
         
         public void PrintLogFaktur(PrintLogType printLog)
         {
@@ -69,14 +81,16 @@ namespace BtrGudang.Domain.PackingOrderFeature
                 return;
             PrintLogId = printLog.PrintLogId;
         }
-        public void PrintLogBrg(PrintLogType printLog, string brgId)
+        public void PrintLogBrg(PrintLogType printLog) //, string brgId)
         {
             if (printLog.DocType != "PER-SUPPLIER")
                 return;
 
-            foreach (var item in _listItem)
-                if (item.Brg.BrgId == brgId)
-                    item.PrintLogBrg(printLog);
+            PrintLogId = printLog.PrintLogId;
+
+            //foreach (var item in _listItem)
+            //  if (item.Brg.BrgId == brgId)
+            //    item.PrintLogBrg(printLog);
 
         }
 
