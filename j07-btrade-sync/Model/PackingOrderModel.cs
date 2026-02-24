@@ -16,7 +16,7 @@ namespace j07_btrade_sync.Model
             string customerId, string customerCode, string customerName, string alamat, string noTelp,
             double latitude, double longitude, double accuracy,
             string fakturId, string fakturCode, DateTime fakturDate, string adminName, decimal grandTotal,
-            string driverId, string driverName, DateTime uploadTimestamp, 
+            string driverId, string driverName, DateTime uploadTimestamp, string note,
             List<PackingOrderItemModel> listItem)
         {
             PackingOrderId = packingOrderId;
@@ -37,13 +37,14 @@ namespace j07_btrade_sync.Model
             DriverId = driverId;
             DriverName = driverName;
             UploadTimestamp = uploadTimestamp;
+            Note = note;
             _listItem = listItem;
         }
         public PackingOrderModel(string packingOrderId, DateTime packingOrderDate,
             string customerId, string customerCode, string customerName, string alamat, string noTelp,
             double latitude, double longitude, double accuracy,
             string fakturId, string fakturCode, DateTime fakturDate, string adminName, decimal grandTotal,
-            string driverId, string driverName, DateTime uploadTimestamp)
+            string driverId, string driverName, DateTime uploadTimestamp, string note)
         {
             PackingOrderId = packingOrderId;
             PackingOrderDate = packingOrderDate;
@@ -63,6 +64,7 @@ namespace j07_btrade_sync.Model
             DriverId = driverId;
             DriverName = driverName;
             UploadTimestamp = uploadTimestamp;
+            Note = note;
             _listItem = new List<PackingOrderItemModel>();
         }
         public static PackingOrderModel Default => new PackingOrderModel(
@@ -84,6 +86,7 @@ namespace j07_btrade_sync.Model
             driverId : string.Empty,
             driverName: string.Empty,
             uploadTimestamp: new DateTime(3000,1,1),
+            note: string.Empty,
             listItem: new List<PackingOrderItemModel>());
 
         public static IPackingOrderKey Key(string id)
@@ -117,6 +120,8 @@ namespace j07_btrade_sync.Model
         public string DriverName { get; private set; }
 
         public DateTime UploadTimestamp { get; private set; }
+        public string Note { get; private set; }
+
         public void Upload(DateTime uploadTimestamp)
         {
             UploadTimestamp = uploadTimestamp;

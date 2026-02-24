@@ -18,13 +18,13 @@ namespace j07_btrade_sync.Repository
                     CustomerId, CustomerCode, CustomerName, Alamat, NoTelp,
                     Latitude, Longitude, Accuracy,
                     FakturId, FakturCode, FakturDate, AdminName, GrandTotal,
-                    DriverId, DriverName, UploadTimestamp)
+                    DriverId, DriverName, UploadTimestamp, Note)
                 VALUES(
                     @PackingOrderId, @PackingOrderDate,
                     @CustomerId, @CustomerCode, @CustomerName, @Alamat, @NoTelp,
                     @Latitude, @Longitude, @Accuracy,
                     @FakturId, @FakturCode, @FakturDate, @AdminName, @GrandTotal,
-                    @DriverId, @DriverName, @UploadTimestamp)
+                    @DriverId, @DriverName, @UploadTimestamp, @Note)
                 ";
 
             var dp = new DynamicParameters();
@@ -50,6 +50,7 @@ namespace j07_btrade_sync.Repository
             dp.AddParam("@DriverId", dto.DriverId, SqlDbType.VarChar);
             dp.AddParam("@DriverName", dto.DriverName, SqlDbType.VarChar);
             dp.AddParam("@UploadTimestamp", dto.UploadTimestamp, SqlDbType.DateTime);
+            dp.AddParam("@Note", dto.Note, SqlDbType.VarChar);
 
             using (var conn = new SqlConnection(ConnStringHelper.Get()))
             {
@@ -81,7 +82,8 @@ namespace j07_btrade_sync.Repository
 
                     DriverId = @DriverId,
                     DriverName = @DriverName,
-                    UploadTimestamp = @UploadTimestamp
+                    UploadTimestamp = @UploadTimestamp,
+                    Note = @note
                 WHERE
                     PackingOrderId = @PackingOrderId
                 ";
@@ -109,6 +111,7 @@ namespace j07_btrade_sync.Repository
             dp.AddParam("@DriverId", dto.DriverId, SqlDbType.VarChar);
             dp.AddParam("@DriverName", dto.DriverName, SqlDbType.VarChar);
             dp.AddParam("@UploadTimestamp", dto.UploadTimestamp, SqlDbType.DateTime);
+            dp.AddParam("@Note", dto.Note, SqlDbType.VarChar);
 
 
             using (var conn = new SqlConnection(ConnStringHelper.Get()))
@@ -141,7 +144,7 @@ namespace j07_btrade_sync.Repository
                     CustomerId, CustomerCode, CustomerName, Alamat, NoTelp,
                     Latitude, Longitude, Accuracy,
                     FakturId, FakturCode, FakturDate, AdminName, GrandTotal,
-                    DriverId, DriverName, UploadTimestamp
+                    DriverId, DriverName, UploadTimestamp, Note
                 FROM BTR_PackingOrder
                 WHERE PackingOrderId = @PackingOrderId
                 ";
@@ -164,7 +167,7 @@ namespace j07_btrade_sync.Repository
                     CustomerId, CustomerCode, CustomerName, Alamat, NoTelp,
                     Latitude, Longitude, Accuracy,
                     FakturId, FakturCode, FakturDate, AdminName, GrandTotal,
-                    DriverId, DriverName, UploadTimestamp
+                    DriverId, DriverName, UploadTimestamp, Note
                 FROM BTR_PackingOrder
                 WHERE PackingOrderDate BETWEEN @Tgl1 AND @Tgl2
                 ";
@@ -187,7 +190,7 @@ namespace j07_btrade_sync.Repository
                     CustomerId, CustomerCode, CustomerName, Alamat, NoTelp,
                     Latitude, Longitude, Accuracy,
                     FakturId, FakturCode, FakturDate, AdminName, GrandTotal,
-                    DriverId, DriverName, UploadTimestamp
+                    DriverId, DriverName, UploadTimestamp, Note
                 FROM BTR_PackingOrder
                 WHERE FakturId = @FakturId
                 ";

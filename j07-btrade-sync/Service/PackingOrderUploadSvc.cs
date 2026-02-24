@@ -74,7 +74,7 @@ namespace j07_btrade_sync.Service
             string customerId, string customerCode, string customerName, string alamat, string noTelp, 
             double latitude, double longitude, double accuracy,
             string fakturId, string fakturCode, string fakturDate, string adminName, decimal grandTotal,
-            string driverId, string driverName, string officeCode,
+            string driverId, string driverName, string officeCode, string note,
             IEnumerable<PackingOrderUploadItemDto> listItem)
         {
             PackingOrderId = packingOrderId;
@@ -95,6 +95,7 @@ namespace j07_btrade_sync.Service
             DriverId = driverId;
             DriverName = driverName;
             OfficeCode = officeCode;
+            Note = note;
             ListItem = listItem;
         }
 
@@ -108,7 +109,7 @@ namespace j07_btrade_sync.Service
                 model.CustomerId, model.CustomerCode, model.CustomerName, model.Alamat, model.NoTelp,
                 model.Latitude, model.Longitude, model.Accuracy,
                 model.FakturId, model.FakturCode, fakturDate, model.AdminName, model.GrandTotal, 
-                model.DriverId, model.DriverName, officeCode, listItem);
+                model.DriverId, model.DriverName, officeCode, model.Note, listItem);
         }
 
         public string PackingOrderId { get; }
@@ -129,6 +130,7 @@ namespace j07_btrade_sync.Service
         public string DriverId { get; }
         public string DriverName { get; }
         public string OfficeCode { get; }
+        public string Note { get; }
         public IEnumerable<PackingOrderUploadItemDto> ListItem { get; }
     }
 
