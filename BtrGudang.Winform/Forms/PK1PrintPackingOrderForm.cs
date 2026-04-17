@@ -10,8 +10,10 @@ using System.ComponentModel;
 using System.Data;
 using System.Drawing;
 using System.Globalization;
+using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using System.Windows.Forms;
 
 namespace BtrGudang.Winform.Forms
@@ -25,6 +27,12 @@ namespace BtrGudang.Winform.Forms
         private readonly IPrintLogRepo _printLogRepo;
         private readonly IPrintLogDal _printLogDal;
 
+        [DllImport("user32.dll", CharSet = CharSet.Auto)]
+        private static extern IntPtr SendMessage(IntPtr hWnd, int msg, int wParam, string lParam);
+
+        private const int EM_SETCUEBANNER = 0x1501;
+
+
         public PK1PrintPackingOrderForm(IPackingOrderRepo packingOrderRepo, IPrintLogRepo printLogRepo, IPrintLogDal printLogDal)
         {
             InitializeComponent();
@@ -37,6 +45,9 @@ namespace BtrGudang.Winform.Forms
             RegisterControlEventHandler();
             InitGrid();
             _printLogDal = printLogDal;
+
+            SendMessage(FilterTextBox.Handle, EM_SETCUEBANNER, 0, "Search...");
+
         }
 
 
@@ -45,10 +56,124 @@ namespace BtrGudang.Winform.Forms
             ListFakturButton.Click += ListFakturButton_Click;
             PrintPerFakturButton.Click += PrintPerFakturButton_Click;
             PrintPerSupplierButton.Click += PrintPerSupplierButton_Click;
+            PrintFakturListButton.Click += PrintFakturListButton_Click; 
             FilterTextBox.TextChanged += FilterText_TextChanged;
         }
 
-        
+        private void PrintFakturListButton_Click(object sender, EventArgs e)
+        {
+            var listModel = _allFakturList
+                .Where(x => x.PerFaktur || x.PerSupplier)
+                .Select(x => _packingOrderRepo.LoadEntity(x).Value)
+                .ToList();
+            var listFaktur = listModel
+                .Select((x, idx) => new PrintPackingOrderFakturListView(
+                    idx + 1,
+                    x.Faktur.FakturCode,
+                    x.Faktur.FakturDate.ToString("dd-MM-yyyy", CultureInfo.InvariantCulture),
+                    x.Customer.CustomerName,
+                    x.Customer.Alamat,
+                    x.Faktur.GrandTotal))
+                .ToList();
+
+            ExportFakturListToExcel(listFaktur);
+        }
+
+        private void ExportFakturListToExcel(IEnumerable<PrintPackingOrderFakturListView> data)
+        {
+            if (data == null || !data.Any())
+            {
+                MessageBox.Show(@"No data to export", @"Information",
+                    MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+            // Determine file path automatically (My Documents folder) and overwrite if exists
+            var fileName = $"packing-order-faktur-list-{DateTime.Now:yyyy-MM-dd-HHmm}.xlsx";
+            var folder = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
+            var filePath = Path.Combine(folder, fileName);
+            if (File.Exists(filePath))
+            {
+                File.Delete(filePath);
+            }
+            using (IXLWorkbook wb = new XLWorkbook())
+            {
+                var ws = wb.AddWorksheet("Packing Order Faktur List");
+                var baris = 1;
+                ws.Cell($"A{baris}").Value = "CV BINTANG TIMUR RAHAYU";
+                ws.Cell($"A{baris}").Style
+                    .Font.SetFontSize(12)
+                    .Font.SetBold(false)
+                    .Alignment.SetHorizontal(XLAlignmentHorizontalValues.Center);
+                ws.Range(ws.Cell($"A{baris}"), ws.Cell($"F{baris}")).Merge();
+                baris++;
+
+                ws.Cell($"A{baris}").Value = "Jl.Kaliurang Km 5.5 Gg. Durmo No.18";
+                ws.Cell($"A{baris}").Style
+                    .Font.SetFontSize(10)
+                    .Font.SetBold(false)
+                    .Alignment.SetHorizontal(XLAlignmentHorizontalValues.Center);
+                ws.Range(ws.Cell($"A{baris}"), ws.Cell($"F{baris}")).Merge();
+                baris++;
+
+                ws.Cell($"A{baris}").Value = "LAPORAN PACKING LIST";
+                ws.Cell($"A{baris}").Style
+                    .Font.SetFontSize(16)
+                    .Font.SetBold(true)
+                    .Alignment.SetHorizontal(XLAlignmentHorizontalValues.Center);
+                ws.Range(ws.Cell($"A{baris}"), ws.Cell($"F{baris}")).Merge();
+                baris++;
+
+                //  Add headers
+                ws.Cell(baris, 1).Value = "No";
+                ws.Cell(baris, 2).Value = "Faktur Code";
+                ws.Cell(baris, 3).Value = "Faktur Date";
+                ws.Cell(baris, 4).Value = "Customer Name";
+                ws.Cell(baris, 5).Value = "Alamat";
+                ws.Cell(baris, 6).Value = "Grand Total";
+                //  Style header row
+                ws.Range(baris, 1, baris, 6).Style
+                    .Font.SetBold(true)
+                    .Fill.SetBackgroundColor(XLColor.LightGray)
+                    .Border.SetOutsideBorder(XLBorderStyleValues.Thin)
+                    .Border.SetInsideBorder(XLBorderStyleValues.Hair)
+                    .Alignment.SetHorizontal(XLAlignmentHorizontalValues.Center);
+                baris++;
+                int startTableRow = baris;
+                int currentRow = baris;
+                foreach (var item in data)
+                {
+                    ws.Cell(currentRow, 1).Value = item.No;
+                    ws.Cell(currentRow, 2).Value = item.FakturCode;
+                    ws.Cell(currentRow, 3).Value = item.FakturDate;
+                    ws.Cell(currentRow, 4).Value = item.CustomerName;
+                    ws.Cell(currentRow, 5).Value = item.Address;
+                    ws.Cell(currentRow, 6).Value = item.GrandTotal;
+                    //  Apply borders to item row
+                    ws.Range(currentRow, 1, currentRow, 6).Style
+                        .Border.SetOutsideBorder(XLBorderStyleValues.Thin)
+                        .Border.SetInsideBorder(XLBorderStyleValues.Hair);
+                    currentRow++;
+                }
+                ws.Range(ws.Cell($"F{startTableRow}"), ws.Cell($"F{currentRow}"))
+                    .Style.NumberFormat.Format = "#,##";
+
+                ws.Range($"E{startTableRow}:E{currentRow}").Style.Font.SetFontName("Arial Narrow");
+                ws.Range($"E{startTableRow}:E{currentRow}").Style.Font.SetFontSize(9);
+
+                ws.Range($"F{startTableRow}:F{currentRow}").Style.Font.SetFontName("Courier New");
+                ws.Range($"F{startTableRow}:F{currentRow}").Style.Font.SetFontSize(9);
+
+                ws.Column("A").Width = 3;
+                ws.Column("B").Width = 9;
+                ws.Column("C").Width = 10;
+                ws.Column("D").Width = 25;
+                ws.Column("E").Width = 37;
+                ws.Column("F").Width = 12;
+                wb.SaveAs(filePath);
+            }
+            System.Diagnostics.Process.Start(filePath);
+        }
+
         #region Proses Per-Supplier
         private void PrintPerSupplierButton_Click(object sender, EventArgs e)
         {
@@ -89,18 +214,13 @@ namespace BtrGudang.Winform.Forms
                 return;
             }
 
-            //  Get file path from save dialog
-            string filePath;
-            using (var saveFileDialog = new SaveFileDialog())
+            // Determine file path automatically (My Documents folder) and overwrite if exists
+            var fileName = $"packing-order-per-supplier-{DateTime.Now:yyyy-MM-dd-HHmm}.xlsx";
+            var folder = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
+            var filePath = Path.Combine(folder, fileName);
+            if (File.Exists(filePath))
             {
-                saveFileDialog.Filter = @"Excel Files|*.xlsx";
-                saveFileDialog.Title = @"Save Excel File";
-                saveFileDialog.DefaultExt = "xlsx";
-                saveFileDialog.AddExtension = true;
-                saveFileDialog.FileName = $"packing-order-per-supplier-{DateTime.Now:yyyy-MM-dd-HHmm}";
-                if (saveFileDialog.ShowDialog() != DialogResult.OK)
-                    return;
-                filePath = saveFileDialog.FileName;
+                File.Delete(filePath);
             }
 
             using (IXLWorkbook wb = new XLWorkbook())
@@ -233,6 +353,7 @@ namespace BtrGudang.Winform.Forms
             var listPerFaktur = PrintPackingOrderPerFakturView
                 .CreateFrom(listModel)?.ToList()
                 ?? new List<PrintPackingOrderPerFakturView>();
+
             ExportPerFakturToExcel(listPerFaktur, PisahHalamanCheckBox.Checked);
 
             var printLog = PrintLogType.Create("PER-FAKTUR", listModel);
@@ -258,18 +379,13 @@ namespace BtrGudang.Winform.Forms
                 return;
             }
 
-            //  Get file path from save dialog
-            string filePath;
-            using (var saveFileDialog = new SaveFileDialog())
+            // Determine file path automatically (My Documents folder) and overwrite if exists
+            var fileName = $"packing-order-per-faktur-{DateTime.Now:yyyy-MM-dd-HHmm}.xlsx";
+            var folder = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
+            var filePath = Path.Combine(folder, fileName);
+            if (File.Exists(filePath))
             {
-                saveFileDialog.Filter = @"Excel Files|*.xlsx";
-                saveFileDialog.Title = @"Save Excel File";
-                saveFileDialog.DefaultExt = "xlsx";
-                saveFileDialog.AddExtension = true;
-                saveFileDialog.FileName = $"packing-order-per-faktur-{DateTime.Now:yyyy-MM-dd-HHmm}";
-                if (saveFileDialog.ShowDialog() != DialogResult.OK)
-                    return;
-                filePath = saveFileDialog.FileName;
+                File.Delete(filePath);
             }
 
             using (IXLWorkbook wb = new XLWorkbook())
@@ -535,6 +651,8 @@ namespace BtrGudang.Winform.Forms
             }
             AllFakturGrid.CellClick += (s, e) =>
             {
+                if (e.ColumnIndex < 0 || e.RowIndex < 0)
+                    return;
                 if (e.RowIndex >= 0 && AllFakturGrid.Columns[e.ColumnIndex].Name == "MapLocation")
                 {
                     var location = AllFakturGrid.Rows[e.RowIndex].DataBoundItem as PK1AllFakturView;
@@ -871,7 +989,6 @@ namespace BtrGudang.Winform.Forms
                             QtyBesar = $"{item.QtyBesar?.Qty ?? 0} {item.QtyBesar?.Satuan ?? "-"}",
                             QtyKecil = $"{item.QtyKecil?.Qty ?? 0} {item.QtyKecil?.Satuan ?? "-"}"
                         })
-                        .OrderBy(brg => brg.BrgCode)
                         .ToList() ?? Enumerable.Empty<PrintPackingOrderPerFakturBrgView>()
                 })
                 .OrderBy(faktur => faktur.FakturCode)
@@ -916,4 +1033,26 @@ namespace BtrGudang.Winform.Forms
         public string QtyKecil { get; set; }
     }
     #endregion
+
+    public class PrintPackingOrderFakturListView
+    {
+        public PrintPackingOrderFakturListView(int no, string fakturCode, 
+            string fakturDate, string customerName, string address, 
+            decimal grandTotal)
+        {
+            No = no;
+            FakturCode = fakturCode;
+            FakturDate = fakturDate;
+            CustomerName = customerName;
+            Address = address;
+            GrandTotal = grandTotal;
+        }
+
+        public int No { get; set; }
+        public string FakturCode { get; set; }
+        public string FakturDate { get; set; }
+        public string CustomerName { get; set; }
+        public string Address { get; set; }
+        public decimal GrandTotal { get; set; }
+    }
 }

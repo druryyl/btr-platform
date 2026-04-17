@@ -45,6 +45,7 @@ namespace BtrGudang.Infrastructure.PackingOrderFeature
             var hdr = _packingOrderDal.GetData(key);
             var listDtl = _packingOrderItemDal.ListData(key).SafeToList();
             var listDtlModel = listDtl
+                .OrderBy(x => x.NoUrut)
                 .Select(x => x.ToModel())
                 .ToList();
             var model = hdr?.ToModel(listDtlModel);
