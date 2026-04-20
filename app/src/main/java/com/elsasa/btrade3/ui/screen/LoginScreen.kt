@@ -1,20 +1,55 @@
 package com.elsasa.btrade3.ui.screen
 
+import android.app.Activity
+import android.content.Context
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.ExposedDropdownMenuDefaults
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.MenuAnchorType
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
@@ -26,11 +61,9 @@ import androidx.navigation.NavController
 import com.elsasa.btrade3.R
 import com.elsasa.btrade3.util.GoogleSignInHelper
 import com.elsasa.btrade3.util.ServerHelper
+import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount
 import com.google.android.gms.common.api.ApiException
-import androidx.lifecycle.compose.LocalLifecycleOwner
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -38,164 +71,164 @@ import kotlinx.coroutines.launch
 fun LoginScreen(
     navController: NavController,
     onUserSignedIn: (String) -> Unit,
-    context: android.content.Context = LocalContext.current
+    context: Context = LocalContext.current
 ) {
     val googleSignInHelper = remember { GoogleSignInHelper(context) }
     var isLoading by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
 
-    // Server selection state - initialize with default value first
-    var selectedServer by remember { mutableStateOf("JOG") } // Default value
+    // Server selection
+    var selectedServer by remember { mutableStateOf("JOG") }
     var serverOptions by remember { mutableStateOf(listOf<String>()) }
-    var isServerDataLoaded by remember { mutableStateOf(false) }
+    var isServerLoaded by remember { mutableStateOf(false) }
+    var expanded by remember { mutableStateOf(false) }
 
-    // Create a coroutine scope
-    val coroutineScope = rememberCoroutineScope()
+    val scope = rememberCoroutineScope()
 
-    // Load server data when composable is launched
-    LaunchedEffect(context) {
-        // Get the selected server from preferences
-        val savedServer = ServerHelper.getSelectedServer(context)
-        selectedServer = savedServer
+    // Load server data
+    LaunchedEffect(Unit) {
+        selectedServer = ServerHelper.getSelectedServer(context)
 
-        // Initialize server options
         serverOptions = listOf(
             "JOG - Server Jogja",
             "MGL - Server Magelang"
         )
 
-        isServerDataLoaded = true
+        isServerLoaded = true
     }
 
-    var expanded by remember { mutableStateOf(false) }
-
-    // Get the display text for the selected server
-    val selectedServerDisplay = serverOptions.find {
-        it.startsWith("${selectedServer} -")
-    } ?: "JOG - Server Jogja"
-
+    // Google sign-in launcher
     val launcher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.StartActivityForResult()
+        ActivityResultContracts.StartActivityForResult()
     ) { result ->
         isLoading = false
-        when (result.resultCode) {
-            android.app.Activity.RESULT_OK -> {
-                try {
-                    val task = com.google.android.gms.auth.api.signin.GoogleSignIn.getSignedInAccountFromIntent(result.data)
-                    val account: GoogleSignInAccount = task.getResult(ApiException::class.java)
-                    account.email?.let { email ->
-                        onUserSignedIn(email)
-                        navController.navigate("faktur_list") {
-                            popUpTo("login") { inclusive = true }
-                        }
-                    } ?: run {
-                        errorMessage = "Failed to get email from Google account"
+        if (result.resultCode == Activity.RESULT_OK) {
+            try {
+                val task = GoogleSignIn.getSignedInAccountFromIntent(result.data)
+                val account = task.getResult(ApiException::class.java)
+                val email = account.email
+
+                if (email != null) {
+                    onUserSignedIn(email)
+                    navController.navigate("faktur_list") {
+                        popUpTo("login") { inclusive = true }
                     }
-                } catch (e: ApiException) {
-                    errorMessage = "Google Sign-In failed: ${e.statusCode}"
+                } else {
+                    errorMessage = "Failed to retrieve email"
                 }
+            } catch (e: ApiException) {
+                errorMessage = "Google Sign-In failed (${e.statusCode})"
             }
         }
     }
 
     Scaffold(
-        containerColor = MaterialTheme.colorScheme.background
+        containerColor = MaterialTheme.colorScheme.surface
     ) { paddingValues ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
-                .verticalScroll(rememberScrollState()),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+                .verticalScroll(rememberScrollState())
+                .background(
+                    brush = Brush.verticalGradient(
+                        colors = listOf(
+                            MaterialTheme.colorScheme.surfaceContainer,
+                            MaterialTheme.colorScheme.surfaceContainer,
+                            MaterialTheme.colorScheme.primaryContainer
+                            //MaterialTheme.colorScheme.secondaryContainer,
+                        ),
+                        startY = 0f,
+                        endY = Float.POSITIVE_INFINITY
+                    )
+                ),
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Spacer(modifier = Modifier.height(40.dp))
 
-            // App Logo Section
-            Box(
-                modifier = Modifier
-                    .size(120.dp)
-                    .clip(CircleShape)
-                    .background(MaterialTheme.colorScheme.primaryContainer)
-                    .border(
-                        width = 2.dp,
-                        color = MaterialTheme.colorScheme.primary,
-                        shape = CircleShape
-                    ),
-                contentAlignment = Alignment.Center
+            // ───────────────────────────────────────────────────────────
+            //  LOGO + TITLE SECTION
+            // ───────────────────────────────────────────────────────────
+            Spacer(modifier = Modifier.height(60.dp))
+
+            Surface(
+                shape = CircleShape,
+                color = MaterialTheme.colorScheme.primaryContainer,
+                tonalElevation = 4.dp,
+                modifier = Modifier.size(120.dp),
+                border = BorderStroke(2.dp, MaterialTheme.colorScheme.outline)
             ) {
-                Image(
-                    painter = painterResource(R.drawable.sharp_connect_without_contact_24),
-                    colorFilter = ColorFilter.tint(MaterialTheme.colorScheme.primary),
-                    contentDescription = "App Logo",
-                    contentScale = ContentScale.Fit,
-                    modifier = Modifier
-                        .size(100.dp)
-                        .clip(CircleShape)
-                )
+                Box(contentAlignment = Alignment.Center) {
+                    Image(
+                        painter = painterResource(R.drawable.sharp_connect_without_contact_24),
+                        contentDescription = "Logo",
+                        contentScale = ContentScale.Fit,
+                        colorFilter = ColorFilter.tint(MaterialTheme.colorScheme.primary),
+                        modifier = Modifier.size(80.dp)
+                    )
+                }
             }
 
-            // Title Section
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                modifier = Modifier.padding(horizontal = 32.dp)
-            ) {
-                Text(
-                    text = "Sales Order App",
-                    style = MaterialTheme.typography.headlineMedium.copy(
-                        fontWeight = FontWeight.Bold
-                    ),
-                    color = MaterialTheme.colorScheme.onBackground
-                )
+            Spacer(modifier = Modifier.height(20.dp))
 
-                Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = "Sales Order App",
+                style = MaterialTheme.typography.headlineMedium.copy(
+                    fontWeight = FontWeight.Bold
+                ),
+                color = MaterialTheme.colorScheme.onSurface
+            )
 
-                Text(
-                    text = "Sign in to manage your sales orders",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f),
-                    textAlign = TextAlign.Center
-                )
-            }
+            Text(
+                text = "Sign in to manage your sales orders",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.padding(top = 4.dp, bottom = 24.dp)
+            )
 
-            Spacer(modifier = Modifier.height(24.dp))
-
-            // Server Selection Dropdown
-            if (isServerDataLoaded) { // Only show when server data is loaded
+            // ───────────────────────────────────────────────────────────
+            //  SERVER SELECTION CARD
+            // ───────────────────────────────────────────────────────────
+            if (isServerLoaded) {
                 Card(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 48.dp),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+                        .padding(horizontal = 32.dp),
+                    shape = RoundedCornerShape(20.dp),
+                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.surface
+                    ),
+                    elevation = CardDefaults.cardElevation(3.dp)
                 ) {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(16.dp)
-                    ) {
+                    Column(Modifier.padding(20.dp)) {
+
                         Text(
-                            text = "Select Server Target",
-                            style = MaterialTheme.typography.bodyMedium,
-                            fontWeight = FontWeight.Medium,
+                            text = "Server Target",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.SemiBold,
                             color = MaterialTheme.colorScheme.onSurface
                         )
 
-                        Spacer(modifier = Modifier.height(8.dp))
+                        Spacer(modifier = Modifier.height(12.dp))
 
                         ExposedDropdownMenuBox(
                             expanded = expanded,
                             onExpandedChange = { expanded = !expanded }
                         ) {
+
                             OutlinedTextField(
-                                value = selectedServerDisplay,
+                                value = serverOptions.firstOrNull {
+                                    it.startsWith("$selectedServer -")
+                                } ?: "",
                                 onValueChange = {},
                                 readOnly = true,
                                 modifier = Modifier
-                                    .fillMaxWidth()
-                                    .menuAnchor(MenuAnchorType.PrimaryNotEditable, enabled = true),
-                                label = { Text("Server") },
+                                    .menuAnchor()
+                                    .fillMaxWidth(),
+                                label = { Text("Select Server") },
                                 trailingIcon = {
-                                    ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded)
+                                    ExposedDropdownMenuDefaults.TrailingIcon(expanded)
                                 },
                                 colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors()
                             )
@@ -208,16 +241,14 @@ fun LoginScreen(
                                     DropdownMenuItem(
                                         text = { Text(option) },
                                         onClick = {
-                                            val newServer = option.substring(0, 3) // Extract "JOG" or "MGL"
+                                            val newServer = option.substring(0, 3)
                                             selectedServer = newServer
                                             expanded = false
 
-                                            // Save the new server selection using the coroutine scope
-                                            coroutineScope.launch {
+                                            scope.launch {
                                                 ServerHelper.setSelectedServer(context, newServer)
                                             }
-                                        },
-                                        contentPadding = ExposedDropdownMenuDefaults.ItemContentPadding
+                                        }
                                     )
                                 }
                             }
@@ -225,95 +256,85 @@ fun LoginScreen(
                     }
                 }
             } else {
-                // Show loading indicator while server data is loading
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 48.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    CircularProgressIndicator()
-                }
+                CircularProgressIndicator()
             }
 
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(30.dp))
 
-            // Google Sign-In Button
+            // ───────────────────────────────────────────────────────────
+            //  GOOGLE SIGN-IN BUTTON
+            // ───────────────────────────────────────────────────────────
             GoogleSignInButton(
-                onClick = {
-                    isLoading = true
-                    errorMessage = null
-                    val signInIntent = googleSignInHelper.getSignInIntent()
-                    launcher.launch(signInIntent)
-                },
-                isLoading = isLoading,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 48.dp)
-                    .height(50.dp)
-            )
+                    .padding(horizontal = 32.dp)
+                    .height(52.dp),
+                isLoading = isLoading
+            ) {
+                isLoading = true
+                errorMessage = null
+                launcher.launch(googleSignInHelper.getSignInIntent())
+            }
 
             // Error Message
-            errorMessage?.let { message ->
+            if (errorMessage != null) {
                 Text(
-                    text = message,
+                    text = errorMessage!!,
                     color = MaterialTheme.colorScheme.error,
                     style = MaterialTheme.typography.bodySmall,
                     textAlign = TextAlign.Center,
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 48.dp)
+                        .padding(top = 12.dp)
+                        .padding(horizontal = 32.dp)
                 )
             }
 
-            Spacer(modifier = Modifier.weight(1f))
+            Spacer(modifier = Modifier.height(60.dp))
 
-            // Footer
+            // FOOTER
             Text(
                 text = "Your login session will be remembered",
                 style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(bottom = 24.dp)
             )
         }
     }
 }
 
+
 // Custom Google Sign-In Button
 @Composable
-private fun GoogleSignInButton(
-    onClick: () -> Unit,
+fun GoogleSignInButton(
+    modifier: Modifier = Modifier,
     isLoading: Boolean,
-    modifier: Modifier = Modifier
+    onClick: () -> Unit
 ) {
-    Button(
-        onClick = onClick,
-        modifier = modifier,
-        shape = RoundedCornerShape(8.dp),
-        colors = ButtonDefaults.buttonColors(
-            containerColor = MaterialTheme.colorScheme.surface,
-            contentColor = MaterialTheme.colorScheme.onSurface
-        ),
-        elevation = ButtonDefaults.buttonElevation(
-            defaultElevation = 2.dp,
-            pressedElevation = 4.dp
-        )
+    Surface(
+        shape = RoundedCornerShape(12.dp),
+        shadowElevation = 3.dp,
+        color = MaterialTheme.colorScheme.surface,
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
+        modifier = modifier
+            .clickable(enabled = !isLoading) { onClick() }
     ) {
-        if (isLoading) {
-            CircularProgressIndicator(
-                modifier = Modifier.size(24.dp),
-                strokeWidth = 2.dp,
-                color = MaterialTheme.colorScheme.primary
-            )
-        } else {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.Center
-            ) {
+        Row(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(horizontal = 20.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Center
+        ) {
+            if (isLoading) {
+                CircularProgressIndicator(
+                    modifier = Modifier.size(22.dp),
+                    strokeWidth = 2.dp
+                )
+            } else {
                 Image(
-                    painter = painterResource(R.drawable.ic_google_logo), // Add your Google logo asset
+                    painter = painterResource(R.drawable.ic_google_logo),
                     contentDescription = "Google Logo",
-                    modifier = Modifier.size(24.dp)
+                    modifier = Modifier.size(22.dp)
                 )
                 Spacer(modifier = Modifier.width(12.dp))
                 Text(
@@ -324,6 +345,7 @@ private fun GoogleSignInButton(
         }
     }
 }
+
 //
 ///**
 // * Custom Composable for a Google-branded Sign-In Button.
