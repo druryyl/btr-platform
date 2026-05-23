@@ -2,7 +2,7 @@
 
 Reference for developers and AI agents working on **Sales Omzet** (`BTR_SalesOmzet`): what it is, how it relates to Order and Faktur, and where business rules live in code.
 
-**Related:** operational deploy/backfill → [`docs/ops/sales-omzet-deploy.md`](../ops/sales-omzet-deploy.md)
+**Related:** operational deploy/backfill → [`docs/ops/sales-omzet-deploy.md`](../ops/sales-omzet-deploy.md); chart/KPI UI → [`sales-omzet-chart-visualization.md`](sales-omzet-chart-visualization.md)
 
 ---
 
@@ -186,8 +186,8 @@ btr.domain/SalesContext/SalesOmzetAgg/
   SalesOmzetPeriodFilterMode.cs, ReconcileSalesOmzetScope.cs
 
 btr.application/SalesContext/SalesOmzetAgg/
-  Contracts/     ISalesOmzetEntityDal, ISalesOmzetSourceDal
-  Policies/      Eligibility, Period, Status, SaleKind, SnapshotBuilder
+  Contracts/     ISalesOmzetEntityDal, ISalesOmzetSourceDal, ISalesOmzetMaterializeHealthDal
+  Policies/      Eligibility, Period, Status, SaleKind, SnapshotBuilder, MaterializeHealth
   Services/      ISalesOmzetLinker
   UseCases/      ReconcileSalesOmzetWorker, Request, Result
   Workers/       SalesOmzetWriter
@@ -195,7 +195,7 @@ btr.application/SalesContext/SalesOmzetAgg/
   SalesOmzetDates.cs
 
 btr.infrastructure/SalesContext/SalesOmzetAgg/
-  SalesOmzetEntityDal.cs, SalesOmzetSourceDal.cs
+  SalesOmzetEntityDal.cs, SalesOmzetSourceDal.cs, SalesOmzetMaterializeHealthDal.cs
 
 btr.infrastructure/SalesContext/SalesPersonAgg/
   SalesOmzetDal.cs              ← RO2 read (BTR_SalesOmzet + period policy)
@@ -284,6 +284,19 @@ Default `ListData(Periode)` → `OmzetPeriod` (strict omzet).
 - **Proses** — list only.
 - **Materialisasi** — opens materialize form with dates pre-filled.
 - Search filter, grid, Excel export (status from `OmzetStatus`).
+
+#### Materialize health indicator (60-day bucket)
+
+Fast **approximate** signal for whether to run Materialisasi before Proses (monthly incentive use). Independent of report `Tgl1`–`Tgl2` and *Periode Omzet/Jual*.
+
+| Item | Detail |
+|------|--------|
+| **Window** | Fixed **60 days** ending on **Indikator sampai** (`HealthWindowEndDate`). Default end = today; optional `appsettings.json` → `SalesOmzetHealth.WindowEndDate` for dev DB snapshots. |
+| **Metrics** | Missing orders/fakturs in window, unlinked ordered fakturs, `MAX(LastReconciledAt)` in reconcile scope, stale faktur estimate (`LastUpdate > LastReconciledAt`). |
+| **Levels** | Good / Warning / Poor — freshness vs **window end**, not wall-clock today. |
+| **Materialisasi** | If not Good, dialog opens with health window dates; else report dates. |
+
+Code: `ISalesOmzetMaterializeHealthDal`, `SalesOmzetMaterializeHealthDal`, `SalesOmzetMaterializeHealthPolicy`.
 
 ### `SalesOmzetMaterializeForm`
 

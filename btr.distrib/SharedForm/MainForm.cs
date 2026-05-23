@@ -298,12 +298,35 @@ namespace btr.distrib.SharedForm
         }
         private void RO2SalesOmzetMenu_Click(object sender, EventArgs e)
         {
-            if (BringMdiChildToFrontIfLoaded<SalesOmzetInfoForm>())
+            if (BringSalesOmzetToFront(managerView: false))
                 return;
             var form = ThisServicesProvider.GetRequiredService<SalesOmzetInfoForm>();
             form.StartPosition = FormStartPosition.CenterScreen;
             form.MdiParent = this;
             form.Show();
+        }
+
+        private void RO2SalesOmzetPusatMenu_Click(object sender, EventArgs e)
+        {
+            if (BringSalesOmzetToFront(managerView: true))
+                return;
+            var form = ThisServicesProvider.GetRequiredService<SalesOmzetInfoForm>();
+            form.ConfigureAsManagerView();
+            form.StartPosition = FormStartPosition.CenterScreen;
+            form.MdiParent = this;
+            form.Show();
+        }
+
+        private bool BringSalesOmzetToFront(bool managerView)
+        {
+            var loadedForm = MdiChildren
+                .OfType<SalesOmzetInfoForm>()
+                .FirstOrDefault(f => f.IsManagerView == managerView);
+            if (loadedForm is null)
+                return false;
+
+            loadedForm.BringToFront();
+            return true;
         }
         private void RO3EffectiveCallMenu_Click(object sender, EventArgs e)
         {

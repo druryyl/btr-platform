@@ -12,6 +12,7 @@ This runbook covers first-time deployment of `BTR_SalesOmzet` and the production
 
 1. Publish or run scripts from `btr.sql`:
    - `Tables/SalesContext/BTR_SalesOmzet.sql` (table + indexes)
+   - `Tables/SalesContext/BTR_SalesOmzetTarget.sql` (monthly omzet targets per sales person; RO2 KPI/chart)
    - `DataSeeds/BTR_ParamNo_SalesOmzet.sql` (prefix `SO` for `SalesOmzetWriter`)
 2. Verify:
 

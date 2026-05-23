@@ -45,6 +45,7 @@ namespace btr.infrastructure.SalesContext.SalesPersonAgg
                     CustomerName,
                     Code,
                     Alamat,
+                    SalesDate,
                     OmzetDate,
                     OmzetStatus,
                     SaleKind
@@ -82,6 +83,7 @@ namespace btr.infrastructure.SalesContext.SalesPersonAgg
                     CustomerName = row.CustomerName,
                     Code = row.Code,
                     Alamat = row.Alamat,
+                    SalesDate = FormatDisplayDate(row.SalesDate),
                     OmzetDate = FormatDisplayDate(row.OmzetDate),
                     OmzetStatus = ParseEnum(row.OmzetStatus, SalesOmzetStatusEnum.Outstanding),
                     SaleKind = ParseEnum(row.SaleKind, SaleKindEnum.OrderedSale)
@@ -113,6 +115,7 @@ namespace btr.infrastructure.SalesContext.SalesPersonAgg
             public string CustomerName { get; set; }
             public string Code { get; set; }
             public string Alamat { get; set; }
+            public DateTime SalesDate { get; set; }
             public DateTime OmzetDate { get; set; }
             public string OmzetStatus { get; set; }
             public string SaleKind { get; set; }

@@ -24,6 +24,7 @@ namespace btr.application.SalesContext.OrderFeature
         public string CustomerName { get; set; }
         public string Code { get; set; }
         public string Alamat { get; set; }
+        public DateTime SalesDate { get; set; }
         public DateTime OmzetDate { get; set; }
         public SalesOmzetStatusEnum OmzetStatus { get; set; }
         public SaleKindEnum SaleKind { get; set; }

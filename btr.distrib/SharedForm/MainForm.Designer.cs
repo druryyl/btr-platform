@@ -56,6 +56,7 @@
             this.ReportingOrderListMenu = new System.Windows.Forms.RibbonButton();
             this.RO1CheckInListMenu = new System.Windows.Forms.RibbonButton();
             this.RO2SalesOmzetMenu = new System.Windows.Forms.RibbonButton();
+            this.RO2SalesOmzetPusatMenu = new System.Windows.Forms.RibbonButton();
             this.RO3EffectiveCallMenu = new System.Windows.Forms.RibbonButton();
             this.RO4CoordinateCoverageMenu = new System.Windows.Forms.RibbonButton();
             this.PurchaseTab = new System.Windows.Forms.RibbonTab();
@@ -371,6 +372,7 @@
             // 
             this.ReportingOrderListMenu.DropDownItems.Add(this.RO1CheckInListMenu);
             this.ReportingOrderListMenu.DropDownItems.Add(this.RO2SalesOmzetMenu);
+            this.ReportingOrderListMenu.DropDownItems.Add(this.RO2SalesOmzetPusatMenu);
             this.ReportingOrderListMenu.DropDownItems.Add(this.RO3EffectiveCallMenu);
             this.ReportingOrderListMenu.DropDownItems.Add(this.RO4CoordinateCoverageMenu);
             this.ReportingOrderListMenu.Image = global::btr.distrib.Properties.Resources.icons8_day_view;
@@ -399,6 +401,16 @@
             this.RO2SalesOmzetMenu.SmallImage = ((System.Drawing.Image)(resources.GetObject("RO2SalesOmzetMenu.SmallImage")));
             this.RO2SalesOmzetMenu.Text = "RO2-Sales Omzet";
             this.RO2SalesOmzetMenu.Click += new System.EventHandler(this.RO2SalesOmzetMenu_Click);
+            // 
+            // RO2SalesOmzetPusatMenu
+            // 
+            this.RO2SalesOmzetPusatMenu.DropDownArrowDirection = System.Windows.Forms.RibbonArrowDirection.Left;
+            this.RO2SalesOmzetPusatMenu.Image = ((System.Drawing.Image)(resources.GetObject("RO2SalesOmzetMenu.Image")));
+            this.RO2SalesOmzetPusatMenu.LargeImage = ((System.Drawing.Image)(resources.GetObject("RO2SalesOmzetMenu.LargeImage")));
+            this.RO2SalesOmzetPusatMenu.Name = "RO2SalesOmzetPusatMenu";
+            this.RO2SalesOmzetPusatMenu.SmallImage = ((System.Drawing.Image)(resources.GetObject("RO2SalesOmzetMenu.SmallImage")));
+            this.RO2SalesOmzetPusatMenu.Text = "RO2-Sales Omzet (Pusat)";
+            this.RO2SalesOmzetPusatMenu.Click += new System.EventHandler(this.RO2SalesOmzetPusatMenu_Click);
             // 
             // RO3EffectiveCallMenu
             // 
@@ -1081,6 +1093,7 @@
         private System.Windows.Forms.RibbonButton ReportingOrderListMenu;
         private System.Windows.Forms.RibbonButton RO1CheckInListMenu;
         private System.Windows.Forms.RibbonButton RO2SalesOmzetMenu;
+        private System.Windows.Forms.RibbonButton RO2SalesOmzetPusatMenu;
         private System.Windows.Forms.RibbonButton RO3EffectiveCallMenu;
         private System.Windows.Forms.RibbonButton RO4CoordinateCoverageMenu;
         private System.Windows.Forms.RibbonButton XX4RoleMenu;

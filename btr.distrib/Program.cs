@@ -17,6 +17,7 @@ using btr.distrib.Helpers;
 using btr.application.SupportContext.TglJamAgg;
 using btr.distrib.Browsers;
 using btr.infrastructure.SupportContext.TglJamAgg;
+using btr.application.SalesContext.SalesOmzetAgg;
 using btr.application.SalesContext.SalesOmzetAgg.Contracts;
 using btr.application.SalesContext.SalesOmzetAgg.Policies;
 using btr.application.SalesContext.SalesOmzetAgg.Services;
@@ -176,8 +177,14 @@ namespace btr.distrib
             services.AddScoped<ISalesOmzetSaleKindPolicy, SalesOmzetSaleKindPolicy>();
             services.AddScoped<ISalesOmzetStatusPolicy, SalesOmzetStatusPolicy>();
             services.AddScoped<ISalesOmzetPeriodPolicy, SalesOmzetPeriodPolicy>();
+            services.AddScoped<ISalesOmzetChartAmountPolicy, SalesOmzetChartAmountPolicy>();
+            services.AddScoped<ISalesOmzetChartSummaryBuilder, SalesOmzetChartSummaryBuilder>();
+            services.AddScoped<ISalesOmzetTargetDal, SalesOmzetTargetDal>();
+            services.AddScoped<ISalesOmzetTargetResolver, SalesOmzetTargetResolver>();
             services.AddScoped<ISalesOmzetSnapshotBuilder, SalesOmzetSnapshotBuilder>();
             services.AddScoped<ISalesOmzetLinker, SalesOmzetLinker>();
+            services.Configure<SalesOmzetHealthOptions>(configuration.GetSection(SalesOmzetHealthOptions.SectionName));
+            services.AddScoped<ISalesOmzetMaterializeHealthDal, SalesOmzetMaterializeHealthDal>();
 
             services
                 .Scan(selector => selector

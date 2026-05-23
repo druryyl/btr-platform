@@ -186,6 +186,8 @@
     <Compile Include="SalesContext\OrderFeature\OrderItemDal.cs" />
     <Compile Include="SalesContext\OrderMapFeature\OrderMapDal.cs" />
     <Compile Include="SalesContext\SalesOmzetAgg\SalesOmzetEntityDal.cs" />
+    <Compile Include="SalesContext\SalesOmzetAgg\SalesOmzetMaterializeHealthDal.cs" />
+    <Compile Include="SalesContext\SalesOmzetAgg\SalesOmzetTargetDal.cs" />
     <Compile Include="SalesContext\SalesOmzetAgg\SalesOmzetSourceDal.cs" />
     <Compile Include="SalesContext\SalesPersonAgg\SalesOmzetDal.cs" />
     <Compile Include="SalesContext\SalesPersonAgg\SalesPersonDal.cs" />

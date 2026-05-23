@@ -90,6 +90,7 @@
     <Build Include="Tables\SalesContext\BTR_FakturItem.sql" />
     <Build Include="Tables\SalesContext\BTR_SalesPerson.sql" />
     <Build Include="Tables\SalesContext\BTR_SalesOmzet.sql" />
+    <Build Include="Tables\SalesContext\BTR_SalesOmzetTarget.sql" />
     <Build Include="Tables\BrgContext\BTR_BrgHarga.sql" />
     <Build Include="Tables\BrgContext\BTR_Kategori.sql" />
     <Build Include="Tables\BrgContext\BTR_HargaType.sql" />
