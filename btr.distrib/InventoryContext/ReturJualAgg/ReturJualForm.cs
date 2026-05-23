@@ -114,6 +114,7 @@ namespace btr.distrib.InventoryContext.ReturJualAgg
             var paramKey = new ParamSistemModel("SISTEM_PPN_PROSEN");
             var paramPpn = _paramSistemDal.GetData(paramKey).ParamValue ?? "0";
             _ppnProsen = Convert.ToDecimal(paramPpn, CultureInfo.InvariantCulture);
+            JenisReturCombo.SelectedIndex = 0;
         }
 
         private void RegisterEventHandler()
@@ -679,7 +680,7 @@ namespace btr.distrib.InventoryContext.ReturJualAgg
         {
 
             var item = _listItem[rowIndex];
-            var jenisRetur = JenisReturCombo.SelectedItem.ToString();
+            var jenisRetur = JenisReturCombo.SelectedItem?.ToString();
             var req = new CreateReturJualItemRequest(
                 item.BrgId ?? string.Empty, CustomerIdText.Text, 
                 item.HrgInputStr, item.QtyInputStr, item.SubQty, item.SubSatuan,

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace btr.nuna.Domain
 {
@@ -110,6 +111,53 @@ namespace btr.nuna.Domain
                     return " trilyun";
             };
             return string.Empty;
+        }
+        public static string SanitizeDecimalDigitGroupingString(string input)
+        {
+            if (string.IsNullOrWhiteSpace(input))
+                return input;
+
+            bool hasDot = input.Contains('.');
+            bool hasComma = input.Contains(',');
+
+            if (hasDot && hasComma)
+            {
+                // Both exist: whichever comes LAST is the decimal separator
+                int lastDot = input.LastIndexOf('.');
+                int lastComma = input.LastIndexOf(',');
+
+                char decimalSep = lastDot > lastComma ? '.' : ',';
+                char groupingSep = decimalSep == '.' ? ',' : '.';
+
+                string result = input.Replace(groupingSep.ToString(), "");
+                if (decimalSep != '.')
+                    result = result.Replace(decimalSep, '.');
+
+                return result;
+            }
+            else if (hasDot || hasComma)
+            {
+                // Only one separator exists
+                char sep = hasDot ? '.' : ',';
+                int index = input.IndexOf(sep);
+                bool appearsOnce = input.IndexOf(sep) == input.LastIndexOf(sep);
+                bool exactlyThreeAfter = (input.Length - index - 1) == 3;
+
+                // Treat as GROUPING separator if it appears once and has exactly 3 digits after
+                if (appearsOnce && exactlyThreeAfter)
+                {
+                    // e.g. "89.000" or "89,000" -> "89000"
+                    return input.Replace(sep.ToString(), "");
+                }
+                else
+                {
+                    // Treat as DECIMAL separator
+                    // e.g. "3,14" or "3.14" -> "3.14"
+                    return input.Replace(sep, '.');
+                }
+            }
+
+            return input; // no separators, return as-is
         }
     }
 }

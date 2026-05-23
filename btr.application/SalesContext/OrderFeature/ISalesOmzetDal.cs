@@ -11,6 +11,7 @@ namespace btr.application.SalesContext.OrderFeature
     public interface ISalesOmzetDal :
         IListData<SalesOmzetView, Periode>
     {
+
     }
 
     public class SalesOmzetView
@@ -21,10 +22,10 @@ namespace btr.application.SalesContext.OrderFeature
         public decimal OrderTotal { get; set; }
         public string FakturCode { get; set; }
         public DateTime FakturDate { get; set; }
+        public decimal FakturTotal { get; set; }
         public string CustomerName { get; set; }
         public string Code { get; set; }
         public string Alamat { get; set; }
-        public decimal FakturTotal { get; set; }
         public DateTime OmzetDate { get; set; }
     }
 }

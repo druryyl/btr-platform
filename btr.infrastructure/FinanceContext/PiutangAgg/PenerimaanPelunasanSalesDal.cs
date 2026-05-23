@@ -44,12 +44,14 @@ namespace btr.infrastructure.FinanceContext.PiutangAgg
                     SELECT  PiutangId, SUM(aa1.Nilai) BayarTunai
                     FROM BTR_PiutangLunas aa1
                     WHERE aa1.JenisLunas = 0 
+                        AND aa1.LunasDate BETWEEN @Tgl1 AND @Tgl2
                     GROUP BY PiutangId) ff ON aa.PiutangId = ff.PiutangId
                 LEFT JOIN (
                     SELECT  PiutangId, SUM(aa1.Nilai) BayarGiro
                     FROM BTR_PiutangLunas aa1
                     WHERE aa1.JenisLunas = 1 
-                    GROUP BY PiutangId) gg ON aa.PiutangId = gg.PiutangId
+                        AND aa1.LunasDate BETWEEN @Tgl1 AND @Tgl2
+                     GROUP BY PiutangId) gg ON aa.PiutangId = gg.PiutangId
                 LEFT JOIN (
                     SELECT  PiutangId, SUM(aa1.NilaiPlus - aa1.NilaiMinus) Retur
                     FROM BTR_PiutangElement aa1

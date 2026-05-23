@@ -355,7 +355,8 @@ namespace btr.application.InventoryContext.ReturJualAgg.Workers
             var x = 0;
             foreach (var item in resultStr.TakeWhile(item => x < result.Count))
             {
-                if (decimal.TryParse(item, NumberStyles.Any, CultureInfo.InvariantCulture, out var temp))
+                var sanitizedItem = NumericHelper.SanitizeDecimalDigitGroupingString(item.Trim());
+                if (decimal.TryParse(sanitizedItem, NumberStyles.Any, CultureInfo.InvariantCulture, out var temp))
                     result[x] = temp;
                 x++;
             }

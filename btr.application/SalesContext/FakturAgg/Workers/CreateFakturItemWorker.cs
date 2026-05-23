@@ -256,6 +256,5 @@ namespace btr.application.SalesContext.FakturAgg.Workers
 
             return result;
         }
-
     }
 }
