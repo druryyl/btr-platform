@@ -2,9 +2,7 @@ using System;
 using System.Data;
 using System.Data.SqlClient;
 using System.Globalization;
-using btr.application.SalesContext.SalesOmzetAgg;
-using btr.application.SalesContext.SalesOmzetAgg.Contracts;
-using btr.application.SalesContext.SalesOmzetAgg.Policies;
+using btr.application.SalesContext.SalesOmzetHealthWeeklyAgg.Contracts;
 using btr.infrastructure.Helpers;
 using btr.nuna.Domain;
 using btr.nuna.Infrastructure;
@@ -13,19 +11,19 @@ using Microsoft.Extensions.Options;
 
 namespace btr.infrastructure.SalesContext.SalesOmzetAgg
 {
-    public class SalesOmzetMaterializeHealthDal : ISalesOmzetMaterializeHealthDal
+    public class SalesOmzetHealthMetricsDal : ISalesOmzetHealthMetricsDal
     {
         private readonly DatabaseOptions _opt;
 
-        public SalesOmzetMaterializeHealthDal(IOptions<DatabaseOptions> opt)
+        public SalesOmzetHealthMetricsDal(IOptions<DatabaseOptions> opt)
         {
             _opt = opt.Value;
         }
 
-        public SalesOmzetMaterializeHealth GetHealth(Periode window)
+        public SalesOmzetHealthMetrics GetMetrics(Periode week)
         {
-            if (window is null)
-                throw new ArgumentNullException(nameof(window));
+            if (week is null)
+                throw new ArgumentNullException(nameof(week));
 
             const string sql = @"
             SELECT
@@ -78,12 +76,12 @@ namespace btr.infrastructure.SalesContext.SalesOmzetAgg
                    AND f.VoidDate = '3000-01-01'
                    AND f.LastUpdate > s.LastReconciledAt) AS StaleFakturEstimate";
 
-            var orderTgl1 = window.Tgl1.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
-            var orderTgl2 = window.Tgl2.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
+            var orderTgl1 = week.Tgl1.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
+            var orderTgl2 = week.Tgl2.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
 
             var dp = new DynamicParameters();
-            dp.AddParam("@Tgl1", window.Tgl1, SqlDbType.DateTime);
-            dp.AddParam("@Tgl2", window.Tgl2, SqlDbType.DateTime);
+            dp.AddParam("@Tgl1", week.Tgl1, SqlDbType.DateTime);
+            dp.AddParam("@Tgl2", week.Tgl2, SqlDbType.DateTime);
             dp.AddParam("@OrderTgl1", orderTgl1, SqlDbType.VarChar);
             dp.AddParam("@OrderTgl2", orderTgl2, SqlDbType.VarChar);
 
@@ -93,7 +91,7 @@ namespace btr.infrastructure.SalesContext.SalesOmzetAgg
                 row = conn.ReadSingle<HealthRow>(sql, dp);
             }
 
-            var metrics = new SalesOmzetMaterializeHealthMetrics
+            return new SalesOmzetHealthMetrics
             {
                 MissingOrders = row?.MissingOrders ?? 0,
                 MissingDirectFakturs = row?.MissingDirectFakturs ?? 0,
@@ -101,20 +99,6 @@ namespace btr.infrastructure.SalesContext.SalesOmzetAgg
                 AggregateRowsInScope = row?.AggregateRowsInScope ?? 0,
                 LastReconciledMax = row?.LastReconciledMax,
                 StaleFakturEstimate = row?.StaleFakturEstimate ?? 0
-            };
-
-            var level = SalesOmzetMaterializeHealthPolicy.Evaluate(metrics, window);
-
-            return new SalesOmzetMaterializeHealth
-            {
-                Window = window,
-                MissingOrders = metrics.MissingOrders,
-                MissingDirectFakturs = metrics.MissingDirectFakturs,
-                UnlinkedFakturs = metrics.UnlinkedFakturs,
-                AggregateRowsInScope = metrics.AggregateRowsInScope,
-                LastReconciledMax = metrics.LastReconciledMax,
-                StaleFakturEstimate = metrics.StaleFakturEstimate,
-                Level = level
             };
         }
 

@@ -179,6 +179,10 @@
     <Compile Include="SalesContext\SalesOmzetAgg\SalesOmzetModel.cs" />
     <Compile Include="SalesContext\SalesOmzetAgg\SalesOmzetPeriodFilterMode.cs" />
     <Compile Include="SalesContext\SalesOmzetAgg\SalesOmzetStatusEnum.cs" />
+    <Compile Include="SalesContext\SalesOmzetHealthWeeklyAgg\IsoWeekIdentifier.cs" />
+    <Compile Include="SalesContext\SalesOmzetHealthWeeklyAgg\ISalesOmzetHealthWeeklyKey.cs" />
+    <Compile Include="SalesContext\SalesOmzetHealthWeeklyAgg\SalesOmzetHealthLevelEnum.cs" />
+    <Compile Include="SalesContext\SalesOmzetHealthWeeklyAgg\SalesOmzetHealthWeeklyModel.cs" />
     <Compile Include="SalesContext\SalesPersonAgg\ISalesPersonKey.cs" />
     <Compile Include="SalesContext\SalesPersonAgg\ISalesRuteKey.cs" />
     <Compile Include="SalesContext\SalesPersonAgg\SalesPersonModel.cs" />

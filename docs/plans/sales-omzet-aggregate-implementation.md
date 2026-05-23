@@ -178,24 +178,39 @@ Sentinel convention: `SalesOmzetDates.Sentinel` = `3000-01-01` (also void faktur
 
 ```
 btr.sql/Tables/SalesContext/BTR_SalesOmzet.sql
+btr.sql/Tables/SalesContext/BTR_SalesOmzetHealthWeekly.sql
 btr.sql/DataSeeds/BTR_ParamNo_SalesOmzet.sql
+btr.sql/DataSeeds/BTR_ParamNo_SalesOmzetHealthWeekly.sql
 
 btr.domain/SalesContext/SalesOmzetAgg/
   SalesOmzetModel.cs, ISalesOmzetKey.cs
   SaleKindEnum.cs, SalesOmzetStatusEnum.cs
   SalesOmzetPeriodFilterMode.cs, ReconcileSalesOmzetScope.cs
 
+btr.domain/SalesContext/SalesOmzetHealthWeeklyAgg/
+  SalesOmzetHealthWeeklyModel.cs, SalesOmzetHealthLevelEnum.cs, IsoWeekIdentifier.cs
+
 btr.application/SalesContext/SalesOmzetAgg/
-  Contracts/     ISalesOmzetEntityDal, ISalesOmzetSourceDal, ISalesOmzetMaterializeHealthDal
-  Policies/      Eligibility, Period, Status, SaleKind, SnapshotBuilder, MaterializeHealth
+  Contracts/     ISalesOmzetEntityDal, ISalesOmzetSourceDal
+  Policies/      Eligibility, Period, Status, SaleKind, SnapshotBuilder
   Services/      ISalesOmzetLinker
   UseCases/      ReconcileSalesOmzetWorker, Request, Result
   Workers/       SalesOmzetWriter
   Snapshots/     OrderSnapshot, FakturSnapshot, ...
   SalesOmzetDates.cs
 
+btr.application/SalesContext/SalesOmzetHealthWeeklyAgg/
+  Contracts/     ISalesOmzetHealthMetricsDal, ISalesOmzetHealthWeeklyDal
+  Policies/      ISalesOmzetHealthPolicy, ISalesOmzetReportHealthResolver
+  Services/      IIsoWeekCalendar (IsoWeekCalendar)
+  UseCases/      GenerateSalesOmzetHealthWeeklyWorker
+  Workers/       SalesOmzetHealthWeeklyWriter
+
 btr.infrastructure/SalesContext/SalesOmzetAgg/
-  SalesOmzetEntityDal.cs, SalesOmzetSourceDal.cs, SalesOmzetMaterializeHealthDal.cs
+  SalesOmzetEntityDal.cs, SalesOmzetSourceDal.cs, SalesOmzetHealthMetricsDal.cs
+
+btr.infrastructure/SalesContext/SalesOmzetHealthWeeklyAgg/
+  SalesOmzetHealthWeeklyDal.cs
 
 btr.infrastructure/SalesContext/SalesPersonAgg/
   SalesOmzetDal.cs              ← RO2 read (BTR_SalesOmzet + period policy)
@@ -204,11 +219,13 @@ btr.application/SalesContext/OrderFeature/
   ISalesOmzetDal.cs, SalesOmzetView.cs   ← report contract
 
 btr.distrib/SalesContext/SalesPersonAgg/
-  SalesOmzetInfoForm.cs         ← report UI
+  SalesOmzetInfoForm.cs         ← report UI + weekly health resolution
   SalesOmzetMaterializeForm.cs  ← materialize UI
+  SalesOmzetHealthWeeklyForm.cs ← calculate one ISO week snapshot
 
 btr.test/SalesContext/
   SalesOmzetPoliciesTest.cs, SalesOmzetEntityDalTest.cs, SalesOmzetReconcileTest.cs
+  IsoWeekCalendarTest.cs, SalesOmzetHealthPolicyTest.cs, SalesOmzetReportHealthResolverTest.cs
 ```
 
 ### Important naming split
@@ -285,18 +302,20 @@ Default `ListData(Periode)` → `OmzetPeriod` (strict omzet).
 - **Materialisasi** — opens materialize form with dates pre-filled.
 - Search filter, grid, Excel export (status from `OmzetStatus`).
 
-#### Materialize health indicator (60-day bucket)
+#### Weekly materialize health indicator (persisted ISO weeks)
 
-Fast **approximate** signal for whether to run Materialisasi before Proses (monthly incentive use). Independent of report `Tgl1`–`Tgl2` and *Periode Omzet/Jual*.
+Operational signal for whether aggregate data in a calendar week is trustworthy. **Not** a rolling window; **not** event history — one **current-state row** per `(YearNumber, WeekNumber)` in `BTR_SalesOmzetHealthWeekly`.
 
 | Item | Detail |
 |------|--------|
-| **Window** | Fixed **60 days** ending on **Indikator sampai** (`HealthWindowEndDate`). Default end = today; optional `appsettings.json` → `SalesOmzetHealth.WindowEndDate` for dev DB snapshots. |
-| **Metrics** | Missing orders/fakturs in window, unlinked ordered fakturs, `MAX(LastReconciledAt)` in reconcile scope, stale faktur estimate (`LastUpdate > LastReconciledAt`). |
-| **Levels** | Good / Warning / Poor — freshness vs **window end**, not wall-clock today. |
-| **Materialisasi** | If not Good, dialog opens with health window dates; else report dates. |
+| **Week definition** | ISO-8601 (Monday first day). `IIsoWeekCalendar` resolves week ↔ date range. |
+| **Calculation** | `SalesOmzetHealthWeeklyForm` — operator picks **Year** + **ISO week** (no start/end dates). `GenerateSalesOmzetHealthWeeklyWorker` loads metrics for that week, scores via `ISalesOmzetHealthPolicy`, upserts row (idempotent). |
+| **Metrics** | Same gap/freshness SQL as before, scoped to `PeriodStartDate`–`PeriodEndDate` (`ISalesOmzetHealthMetricsDal`). |
+| **Score / level** | Score 0–100 in policy; level: ≥90 Baik, ≥70 Peringatan, else Buruk. |
+| **Report display** | On RO2, intersecting ISO weeks for `Tgl1`–`Tgl2` are loaded; **worst-bucket-wins** (any Buruk → Buruk). Missing week row → Buruk. Average score shown for info only. |
+| **Materialisasi** | Always pre-fills report `Tgl1`–`Tgl2`. |
 
-Code: `ISalesOmzetMaterializeHealthDal`, `SalesOmzetMaterializeHealthDal`, `SalesOmzetMaterializeHealthPolicy`.
+Code: `GenerateSalesOmzetHealthWeeklyWorker`, `SalesOmzetHealthWeeklyDal`, `SalesOmzetHealthPolicy`, `SalesOmzetReportHealthResolver`, `IsoWeekCalendar`.
 
 ### `SalesOmzetMaterializeForm`
 
@@ -380,7 +399,9 @@ Registered in `btr.distrib/Program.cs`:
 | Wrong pattern (old report) | git history of `SalesOmzetDal` UNION — do not reintroduce period-scoped faktur join on read |
 | Report UI | `SalesOmzetInfoForm.cs` |
 | Materialize UI | `SalesOmzetMaterializeForm.cs` |
-| Tests | `SalesOmzetPoliciesTest.cs`, `SalesOmzetReconcileTest.cs` |
+| Weekly health UI / worker | `SalesOmzetHealthWeeklyForm.cs`, `GenerateSalesOmzetHealthWeeklyWorker.cs` |
+| ISO week / report health | `IsoWeekCalendar.cs`, `SalesOmzetReportHealthResolver.cs` |
+| Tests | `SalesOmzetPoliciesTest.cs`, `SalesOmzetReconcileTest.cs`, `IsoWeekCalendarTest.cs`, `SalesOmzetHealthPolicyTest.cs` |
 | Deploy / backfill | `docs/ops/sales-omzet-deploy.md` |
 
 ---

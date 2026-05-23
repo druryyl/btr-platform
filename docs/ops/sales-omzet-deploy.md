@@ -13,12 +13,15 @@ This runbook covers first-time deployment of `BTR_SalesOmzet` and the production
 1. Publish or run scripts from `btr.sql`:
    - `Tables/SalesContext/BTR_SalesOmzet.sql` (table + indexes)
    - `Tables/SalesContext/BTR_SalesOmzetTarget.sql` (monthly omzet targets per sales person; RO2 KPI/chart)
+   - `Tables/SalesContext/BTR_SalesOmzetHealthWeekly.sql` (weekly materialize health snapshots; RO2 indicator)
    - `DataSeeds/BTR_ParamNo_SalesOmzet.sql` (prefix `SO` for `SalesOmzetWriter`)
+   - `DataSeeds/BTR_ParamNo_SalesOmzetHealthWeekly.sql` (prefix `OHW` for `SalesOmzetHealthWeeklyWriter`)
 2. Verify:
 
    ```sql
-   SELECT * FROM BTR_ParamNo WHERE Prefix = 'SO';
+   SELECT * FROM BTR_ParamNo WHERE Prefix IN ('SO', 'OHW');
    SELECT COUNT(*) FROM BTR_SalesOmzet;
+   SELECT COUNT(*) FROM BTR_SalesOmzetHealthWeekly;
    ```
 
 ## 2. Application deploy
@@ -82,6 +85,11 @@ Document any batching approach used in your environment.
 - **Proses** on RO2 loads the report for the selected window (max 122 days) from `BTR_SalesOmzet` — no reconcile on that click.
 - When source data changed (new orders/faktur, Kembali Faktur): open **Materialisasi**, confirm dates, click **Materialisasi** for scoped reconcile, then **Proses** on the info form.
 - Reconcile metrics appear in the materialize dialog status label (orders/fakturs processed, rows refreshed, duration).
+- **Weekly health:** use **Hitung indikator mingguan** on RO2 for each ISO week that intersects report periods you care about. Report health uses worst-bucket across those weeks; weeks never calculated count as Buruk.
+
+## 5b. Weekly health backfill (optional)
+
+After first deploy of `BTR_SalesOmzetHealthWeekly`, run **Hitung indikator mingguan** for each ISO week you need on historical reports (year + week number). Recalculation updates the same row (idempotent).
 
 ## 6. Future work (out of scope)
 

@@ -17,11 +17,13 @@ using btr.distrib.Helpers;
 using btr.application.SupportContext.TglJamAgg;
 using btr.distrib.Browsers;
 using btr.infrastructure.SupportContext.TglJamAgg;
-using btr.application.SalesContext.SalesOmzetAgg;
 using btr.application.SalesContext.SalesOmzetAgg.Contracts;
 using btr.application.SalesContext.SalesOmzetAgg.Policies;
 using btr.application.SalesContext.SalesOmzetAgg.Services;
+using btr.application.SalesContext.SalesOmzetHealthWeeklyAgg.Policies;
+using btr.application.SalesContext.SalesOmzetHealthWeeklyAgg.Services;
 using btr.infrastructure.SalesContext.SalesOmzetAgg;
+using btr.infrastructure.SalesContext.SalesOmzetHealthWeeklyAgg;
 using Microsoft.Win32;
 using System.Threading;
 using System.Collections.Generic;
@@ -183,8 +185,10 @@ namespace btr.distrib
             services.AddScoped<ISalesOmzetTargetResolver, SalesOmzetTargetResolver>();
             services.AddScoped<ISalesOmzetSnapshotBuilder, SalesOmzetSnapshotBuilder>();
             services.AddScoped<ISalesOmzetLinker, SalesOmzetLinker>();
-            services.Configure<SalesOmzetHealthOptions>(configuration.GetSection(SalesOmzetHealthOptions.SectionName));
-            services.AddScoped<ISalesOmzetMaterializeHealthDal, SalesOmzetMaterializeHealthDal>();
+            services.AddScoped<IIsoWeekCalendar, IsoWeekCalendar>();
+            services.AddScoped<ISalesOmzetHealthMetricsDal, SalesOmzetHealthMetricsDal>();
+            services.AddScoped<ISalesOmzetHealthPolicy, SalesOmzetHealthPolicy>();
+            services.AddScoped<ISalesOmzetReportHealthResolver, SalesOmzetReportHealthResolver>();
 
             services
                 .Scan(selector => selector

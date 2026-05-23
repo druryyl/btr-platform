@@ -126,7 +126,9 @@
     <Compile Include="SalesContext\NumericHelperTest.cs" />
     <Compile Include="SalesContext\SalesOmzetEntityDalTest.cs" />
     <Compile Include="SalesContext\SalesOmzetPoliciesTest.cs" />
-    <Compile Include="SalesContext\SalesOmzetMaterializeHealthPolicyTest.cs" />
+    <Compile Include="SalesContext\IsoWeekCalendarTest.cs" />
+    <Compile Include="SalesContext\SalesOmzetHealthPolicyTest.cs" />
+    <Compile Include="SalesContext\SalesOmzetReportHealthResolverTest.cs" />
     <Compile Include="SalesContext\SalesOmzetChartSummaryTest.cs" />
     <Compile Include="SalesContext\SalesOmzetTargetTest.cs" />
     <Compile Include="SalesContext\SalesOmzetReconcileTest.cs" />

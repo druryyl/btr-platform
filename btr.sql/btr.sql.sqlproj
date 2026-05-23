@@ -91,6 +91,7 @@
     <Build Include="Tables\SalesContext\BTR_SalesPerson.sql" />
     <Build Include="Tables\SalesContext\BTR_SalesOmzet.sql" />
     <Build Include="Tables\SalesContext\BTR_SalesOmzetTarget.sql" />
+    <Build Include="Tables\SalesContext\BTR_SalesOmzetHealthWeekly.sql" />
     <Build Include="Tables\BrgContext\BTR_BrgHarga.sql" />
     <Build Include="Tables\BrgContext\BTR_Kategori.sql" />
     <Build Include="Tables\BrgContext\BTR_HargaType.sql" />
@@ -154,5 +155,6 @@
     <None Include="DataSeeds\BTR_Menu.dataseed.sql" />
     <None Include="DataSeeds\BTR_Role.dataseed.sql" />
     <None Include="DataSeeds\BTR_ParamNo_SalesOmzet.sql" />
+    <None Include="DataSeeds\BTR_ParamNo_SalesOmzetHealthWeekly.sql" />
   </ItemGroup>
 </Project>
