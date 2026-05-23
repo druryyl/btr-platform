@@ -52,6 +52,9 @@ namespace btr.application.SalesContext.SalesOmzetAgg.Services
                 SaleKind = SaleKindEnum.OrderedSale,
                 OmzetDate = SalesOmzetDates.Sentinel,
                 FakturDate = SalesOmzetDates.Sentinel,
+                CustomerName = order.CustomerName,
+                Code = string.Empty,
+                Alamat = string.Empty,
                 CreatedAt = now,
                 LastReconciledAt = now
             };
@@ -103,6 +106,9 @@ namespace btr.application.SalesContext.SalesOmzetAgg.Services
                 SaleKind = SaleKindEnum.DirectSale,
                 OmzetDate = SalesOmzetDates.Sentinel,
                 OrderDate = SalesOmzetDates.Sentinel,
+                CustomerName = string.Empty,
+                Code = string.Empty,
+                Alamat = string.Empty,
                 CreatedAt = now,
                 LastReconciledAt = now
             };

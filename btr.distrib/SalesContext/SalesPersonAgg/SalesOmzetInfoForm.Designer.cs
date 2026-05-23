@@ -61,34 +61,34 @@
             // 
             // ExcelButton
             // 
-            this.ExcelButton.Location = new System.Drawing.Point(673, 6);
+            this.ExcelButton.Location = new System.Drawing.Point(703, 6);
             this.ExcelButton.Name = "ExcelButton";
-            this.ExcelButton.Size = new System.Drawing.Size(110, 23);
+            this.ExcelButton.Size = new System.Drawing.Size(80, 23);
             this.ExcelButton.TabIndex = 5;
             this.ExcelButton.Text = "Excel";
             this.ExcelButton.UseVisualStyleBackColor = true;
             // 
             // ProsesButton
             // 
-            this.ProsesButton.Location = new System.Drawing.Point(567, 6);
+            this.ProsesButton.Location = new System.Drawing.Point(627, 6);
             this.ProsesButton.Name = "ProsesButton";
-            this.ProsesButton.Size = new System.Drawing.Size(100, 23);
+            this.ProsesButton.Size = new System.Drawing.Size(70, 23);
             this.ProsesButton.TabIndex = 4;
             this.ProsesButton.Text = "Proses";
             this.ProsesButton.UseVisualStyleBackColor = true;
             // 
             // FullRebuildButton
             // 
-            this.FullRebuildButton.Location = new System.Drawing.Point(457, 6);
+            this.FullRebuildButton.Location = new System.Drawing.Point(546, 6);
             this.FullRebuildButton.Name = "FullRebuildButton";
-            this.FullRebuildButton.Size = new System.Drawing.Size(104, 23);
+            this.FullRebuildButton.Size = new System.Drawing.Size(75, 23);
             this.FullRebuildButton.TabIndex = 6;
-            this.FullRebuildButton.Text = "Rebuild Semua";
+            this.FullRebuildButton.Text = "Rebuild";
             this.FullRebuildButton.UseVisualStyleBackColor = true;
             // 
             // SearchText
             // 
-            this.SearchText.Location = new System.Drawing.Point(337, 6);
+            this.SearchText.Location = new System.Drawing.Point(424, 6);
             this.SearchText.Name = "SearchText";
             this.SearchText.Size = new System.Drawing.Size(114, 22);
             this.SearchText.TabIndex = 3;
@@ -96,13 +96,12 @@
             // SalesPeriodCheckBox
             // 
             this.SalesPeriodCheckBox.AutoSize = true;
-            this.SalesPeriodCheckBox.Location = new System.Drawing.Point(280, 8);
+            this.SalesPeriodCheckBox.Location = new System.Drawing.Point(330, 10);
             this.SalesPeriodCheckBox.Name = "SalesPeriodCheckBox";
             this.SalesPeriodCheckBox.Size = new System.Drawing.Size(88, 17);
             this.SalesPeriodCheckBox.TabIndex = 2;
             this.SalesPeriodCheckBox.Text = "Periode Jual";
             this.SalesPeriodCheckBox.UseVisualStyleBackColor = true;
-            this.SalesPeriodCheckBox.Checked = false;
             // 
             // Tgl2Date
             // 
