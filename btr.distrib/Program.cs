@@ -27,6 +27,7 @@ using btr.infrastructure.SalesContext.SalesOmzetHealthWeeklyAgg;
 using Microsoft.Win32;
 using System.Threading;
 using System.Collections.Generic;
+using btr.application.SalesContext.SalesOmzetHealthWeeklyAgg.Contracts;
 
 namespace btr.distrib
 {

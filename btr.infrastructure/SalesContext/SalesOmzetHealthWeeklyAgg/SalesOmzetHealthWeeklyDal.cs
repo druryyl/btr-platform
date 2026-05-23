@@ -129,7 +129,7 @@ namespace btr.infrastructure.SalesContext.SalesOmzetHealthWeeklyAgg
 
             using (var conn = new SqlConnection(ConnStringHelper.Get(_opt)))
             {
-                return conn.Read<SalesOmzetHealthWeeklyModel>(sql, dp).ToList();
+                return conn.Read<SalesOmzetHealthWeeklyModel>(sql, dp)?.ToList();
             }
         }
 
