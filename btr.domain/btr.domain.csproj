@@ -173,6 +173,11 @@
     <Compile Include="SalesContext\RuteAgg\IRuteKey.cs" />
     <Compile Include="SalesContext\RuteAgg\RuteItemModel.cs" />
     <Compile Include="SalesContext\RuteAgg\RuteModel.cs" />
+    <Compile Include="SalesContext\SalesOmzetAgg\ISalesOmzetKey.cs" />
+    <Compile Include="SalesContext\SalesOmzetAgg\SaleKindEnum.cs" />
+    <Compile Include="SalesContext\SalesOmzetAgg\SalesOmzetModel.cs" />
+    <Compile Include="SalesContext\SalesOmzetAgg\SalesOmzetPeriodFilterMode.cs" />
+    <Compile Include="SalesContext\SalesOmzetAgg\SalesOmzetStatusEnum.cs" />
     <Compile Include="SalesContext\SalesPersonAgg\ISalesPersonKey.cs" />
     <Compile Include="SalesContext\SalesPersonAgg\ISalesRuteKey.cs" />
     <Compile Include="SalesContext\SalesPersonAgg\SalesPersonModel.cs" />

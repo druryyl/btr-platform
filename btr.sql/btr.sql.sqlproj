@@ -89,6 +89,7 @@
     <Build Include="Tables\SalesContext\BTR_FakturDiscount.sql" />
     <Build Include="Tables\SalesContext\BTR_FakturItem.sql" />
     <Build Include="Tables\SalesContext\BTR_SalesPerson.sql" />
+    <Build Include="Tables\SalesContext\BTR_SalesOmzet.sql" />
     <Build Include="Tables\BrgContext\BTR_BrgHarga.sql" />
     <Build Include="Tables\BrgContext\BTR_Kategori.sql" />
     <Build Include="Tables\BrgContext\BTR_HargaType.sql" />
@@ -151,5 +152,6 @@
     <None Include="Tables\SalesContext\BTR_HariRuteDataSeed.sql" />
     <None Include="DataSeeds\BTR_Menu.dataseed.sql" />
     <None Include="DataSeeds\BTR_Role.dataseed.sql" />
+    <None Include="DataSeeds\BTR_ParamNo_SalesOmzet.sql" />
   </ItemGroup>
 </Project>

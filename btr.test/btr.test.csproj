@@ -124,12 +124,17 @@
     <Compile Include="Helpers\AppSettingsHelper.cs" />
     <Compile Include="Helpers\CodingPlayground.cs" />
     <Compile Include="SalesContext\NumericHelperTest.cs" />
+    <Compile Include="SalesContext\SalesOmzetEntityDalTest.cs" />
     <Compile Include="SalesContext\SalesPersonDalTest.cs" />
     <Compile Include="SalesContext\SegmentDalTest.cs" />
     <Compile Include="Tests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\btr.application\btr.application.csproj">
+      <Project>{BA660E24-397D-4D9B-9E71-729736588205}</Project>
+      <Name>btr.application</Name>
+    </ProjectReference>
     <ProjectReference Include="..\btr.domain\btr.domain.csproj">
       <Project>{1f2c4331-cc07-49c6-860e-e6ba55a66b12}</Project>
       <Name>btr.domain</Name>
