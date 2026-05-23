@@ -5,7 +5,7 @@
 1. Replace on-the-fly `SalesOmzetDal` UNION query with a first-class **`SalesOmzet`** entity (`SalesOmzetId` ≠ `OrderId` / `FakturId`).
 2. Model sales as **Ordered Sale** (Order >> Faktur) or **Direct Sale** (faktur without order), as **current state** updated by reconcile only.
 3. **Do not change** Create Order or Save Faktur use cases — create/link/refresh happens only in **`ReconcileSalesOmzetWorker`**.
-4. RO2 (`SalesOmzetInfoForm`): wire Proses → reconcile → list; add **period mode** control (see UX below).
+4. RO2 (`SalesOmzetInfoForm`): **Proses** → list only; materialize via `SalesOmzetMaterializeForm`; add **period mode** control (see UX below).
 5. Make **business rules easy to change** via small policy classes, not SQL unions.
 
 ---
@@ -96,21 +96,23 @@ When **Sales Period** is selected:
 ## Architecture
 
 ```
-SalesOmzetInfoForm
+SalesOmzetInfoForm (report / info only)
     │  Proses(periode, periodFilterMode)
+    ▼
+ISalesOmzetDal.ListData(periode, periodFilterMode)
+    └── ISalesOmzetPeriodPolicy → SQL WHERE on BTR_SalesOmzet
+
+SalesOmzetMaterializeForm (opened from info form — Materialisasi button)
+    │  Materialisasi / Rebuild Semua
     ▼
 IReconcileSalesOmzetWorker
     ├── ISalesOmzetSourceDal
-    ├── ISalesOmzetDal
     ├── ISalesOmzetLinker
     ├── ISalesOmzetSnapshotBuilder     ← SalesDate (once), OmzetDate (KembaliFaktur), totals
     ├── ISalesOmzetSaleKindPolicy      ← OrderedSale vs DirectSale
     ├── ISalesOmzetStatusPolicy        ← Outstanding / Completed / PendingOmzet / ...
     ├── ISalesOmzetEligibilityPolicy
     └── ISalesOmzetWriter
-
-ISalesOmzetDal.ListData(periode, periodFilterMode)
-    └── ISalesOmzetPeriodPolicy → SQL WHERE
 ```
 
 ---
@@ -297,19 +299,27 @@ string ToSqlWhere(SalesOmzetPeriodFilterMode mode); // for ListData
 ## Read path & form
 
 ```csharp
-// Reconcile (always refreshes aggregate; period mode does not affect reconcile scope logic)
-_reconcileWorker.Execute(new ReconcileSalesOmzetRequest { Periode = periode, UserId = ... });
-
-// List with user-selected period mode
+// Info form — list only (fast; reads materialized aggregate)
 var list = _salesOmzetDal.ListData(periode, periodFilterMode);
+
+// Materialize form — reconcile when user explicitly refreshes aggregate data
+_reconcileWorker.Execute(new ReconcileSalesOmzetRequest { Periode = periode, UserId = ... });
 ```
 
-**Form changes:**
+**Form layout (RO2):**
 
-1. Inject `IReconcileSalesOmzetWorker`.
+| Form | Role |
+|------|------|
+| `SalesOmzetInfoForm` | Report: period filter, **Proses** → `ListData`, grid, Excel |
+| `SalesOmzetMaterializeForm` | Materialize: **Materialisasi** (scoped reconcile), **Rebuild Semua** (full); opened from info form |
+
+**Info form:**
+
+1. Inject `ISalesOmzetDal` only (no reconcile worker).
 2. Add control: **Omzet Period** (default) vs **Sales Period** (*Periode Omzet* / *Periode Jual*).
-3. `Proses()` passes selected mode to `ListData`.
-4. Optional: show `SaleKind` / `OmzetStatus` on grid; Excel uses DB status when available.
+3. `Proses()` passes selected mode to `ListData` — does **not** run reconcile.
+4. **Materialisasi** button opens `SalesOmzetMaterializeForm` with current date range pre-filled.
+5. Optional: show `SaleKind` / `OmzetStatus` on grid; Excel uses DB status when available.
 
 ---
 
@@ -345,7 +355,7 @@ Worker + request; idempotent create/link; compose Phase 2 linker end-to-end.
 
 ### Phase 4 — RO2 integration (1 day)
 
-`ListData(periode, mode)`, form period control, reconcile on Proses, remove old UNION.
+`ListData(periode, mode)`, form period control, materialize form (reconcile separate from Proses), remove old UNION.
 
 **→ Follow [Phase 4 — Agent kickoff](#phase-4--agent-kickoff) below before coding.**
 
@@ -365,7 +375,7 @@ Full reconcile scope, deploy/backfill runbook, reconcile metrics/logging, tests 
 | Order Jan, KembaliFaktur Feb | OrderedSale | Visible in Feb omzet | Visible in Jan sales |
 | Direct faktur, KembaliFaktur in Mar | DirectSale | Visible in Mar | Visible per SalesDate |
 | Void faktur | — | Removed | Removed |
-| Second Proses same period | — | No duplicate IDs | — |
+| Second materialize same period | — | No duplicate IDs | — |
 
 ---
 
@@ -717,7 +727,7 @@ Implement **Phase 3 — Reconcile worker** for the Sales Omzet aggregate.
 
 ### Context
 
-`ReconcileSalesOmzetWorker` is the **only** process that should create/link/refresh `BTR_SalesOmzet` rows in bulk (until optional scheduler in Phase 5). It orchestrates Phase 2 components inside a transaction. Phase 4 will call this worker from `SalesOmzetInfoForm.Proses()` before `ListData`.
+`ReconcileSalesOmzetWorker` is the **only** process that should create/link/refresh `BTR_SalesOmzet` rows in bulk (until optional scheduler in Phase 5). It orchestrates Phase 2 components inside a transaction. Phase 4 wires this worker from `SalesOmzetMaterializeForm` (not on info `Proses`).
 
 **Do not change:** Create Order, Save Faktur, `ISalesOmzetDal` / `SalesOmzetView`, legacy UNION `SalesOmzetDal`, or `SalesOmzetInfoForm` (Phase 4).
 
@@ -900,7 +910,7 @@ Implement **Phase 4 — RO2 integration** for the Sales Omzet aggregate.
 
 ### Context
 
-RO2 (`SalesOmzetInfoForm`) currently calls legacy `ISalesOmzetDal.ListData(periode)` which runs the **UNION query** in `btr.infrastructure/SalesContext/SalesPersonAgg/SalesOmzetDal.cs`. Phase 4 switches the read path to **`BTR_SalesOmzet`**, runs **reconcile on Proses**, and adds the **Omzet Period / Sales Period** user choice.
+RO2 (`SalesOmzetInfoForm`) currently calls legacy `ISalesOmzetDal.ListData(periode)` which runs the **UNION query** in `btr.infrastructure/SalesContext/SalesPersonAgg/SalesOmzetDal.cs`. Phase 4 switches the read path to **`BTR_SalesOmzet`** and adds the **Omzet Period / Sales Period** user choice. Reconcile runs from **`SalesOmzetMaterializeForm`**, not on info **Proses** (faster reporting).
 
 ### Phase 3 artifacts (already exist)
 
@@ -949,22 +959,21 @@ ORDER BY SalesPersonName, OrderDate, FakturDate
 
 **Optional on `SalesOmzetView`:** add `SalesOmzetStatusEnum OmzetStatus` and/or `SaleKindEnum SaleKind` for grid/Excel — only if needed; do not break existing grid column bindings (`SalesPersonName`, `OrderId`, …).
 
-#### 3. `SalesOmzetInfoForm` — Proses flow
+#### 3. `SalesOmzetInfoForm` — Proses flow (read only)
 
 Update constructor DI:
 
 - `ISalesOmzetDal` (read)
-- `IReconcileSalesOmzetWorker` (reconcile)
 
 **`Proses()` sequence:**
 
 1. Validate period ≤ 122 days (keep existing).
 2. Build `Periode` from `Tgl1Date` / `Tgl2Date`.
 3. Read period mode from new UI control (see below).
-4. **`_reconcileWorker.Execute(new ReconcileSalesOmzetRequest { Periode = periode, Scope = ReconcileSalesOmzetScope.PeriodeScoped, UserId = ... })`**
-   - `UserId`: optional — from `(Parent.Parent as MainForm)?.UserId?.UserId` if available (see `FakturForm`), else `string.Empty`.
-5. **`var listOmzet = _salesOmzetDal.ListData(periode, mode)?.ToList()`**
-6. Apply existing in-memory `Filter(listOmzet, SearchText.Text)` and bind grid.
+4. **`var listOmzet = _salesOmzetDal.ListData(periode, mode)?.ToList()`**
+5. Apply existing in-memory `Filter(listOmzet, SearchText.Text)` and bind grid.
+
+**Materialize:** **Materialisasi** opens `SalesOmzetMaterializeForm` (DI) with dates pre-filled; that form calls `IReconcileSalesOmzetWorker` (scoped or full rebuild).
 
 #### 4. UI — period mode control (minimal layout change)
 
@@ -1031,12 +1040,12 @@ Reconcile **always** runs before list; list mode only affects **which rows appea
 ### Definition of done (Phase 4)
 
 - [ ] Solution builds; RO2 opens from menu (`MainForm.RO2SalesOmzetMenu_Click`)
-- [ ] Proses runs reconcile then lists from `BTR_SalesOmzet` (no UNION SQL left in read DAL)
+- [ ] Proses lists from `BTR_SalesOmzet` only; materialize form runs reconcile (no UNION SQL left in read DAL)
 - [ ] Default (unchecked): **Periode Omzet** — outstanding rows **not** shown
 - [ ] Checked **Periode Jual**: outstanding ordered sales in range **shown**
 - [ ] Order Jan + KembaliFaktur Feb: visible in Feb omzet mode; Jan sales mode shows row with Jan `SalesDate`
 - [ ] Excel export works; status column reflects `OmzetStatus`
-- [ ] Second Proses is idempotent (no duplicate aggregate rows)
+- [ ] Second materialize for same period is idempotent (no duplicate aggregate rows)
 - [ ] Legacy UNION file deleted or reduced to aggregate SELECT only
 
 ### Reference files
@@ -1066,7 +1075,7 @@ Reconcile **always** runs before list; list mode only affects **which rows appea
 
 ## Phase 5 — Agent kickoff
 
-Use this section when starting a **new agent session** for Phase 5 only. Phases 1–4 should be **complete** (aggregate, policies, reconcile on RO2 Proses, read from `BTR_SalesOmzet`).
+Use this section when starting a **new agent session** for Phase 5 only. Phases 1–4 should be **complete** (aggregate, policies, materialize form + list-only RO2 Proses, read from `BTR_SalesOmzet`).
 
 See also: [Testing checklist](#testing-checklist), [Out of scope](#out-of-scope), [Phase 3 — Agent kickoff](#phase-3--agent-kickoff).
 
@@ -1082,7 +1091,7 @@ Implement **Phase 5 — Hardening** for the Sales Omzet aggregate.
 
 **Primary reference:** `docs/plans/sales-omzet-aggregate-implementation.md` (Testing checklist, Phase 5 — Agent kickoff, entire plan for business rules).
 
-**Prerequisites:** Phases 1–4 are done. RO2 (`SalesOmzetInfoForm`) already calls `IReconcileSalesOmzetWorker` then `ISalesOmzetDal.ListData(periode, mode)`. Legacy UNION SQL is **removed** from read DAL.
+**Prerequisites:** Phases 1–4 are done. RO2 info form calls `ISalesOmzetDal.ListData(periode, mode)`; reconcile is on `SalesOmzetMaterializeForm`. Legacy UNION SQL is **removed** from read DAL.
 
 ### Current state (do not redo Phases 1–4)
 
@@ -1090,7 +1099,7 @@ Implement **Phase 5 — Hardening** for the Sales Omzet aggregate.
 |------|----------|
 | Table + seed | `btr.sql/Tables/SalesContext/BTR_SalesOmzet.sql`, `DataSeeds/BTR_ParamNo_SalesOmzet.sql` |
 | Reconcile (scoped) | `ReconcileSalesOmzetWorker` — `PeriodeScoped` only; **`Full` throws `NotSupportedException`** |
-| RO2 | `SalesOmzetInfoForm` — `SalesPeriodCheckBox`, reconcile on Proses |
+| RO2 | `SalesOmzetInfoForm` — `SalesPeriodCheckBox`, list-only Proses; `SalesOmzetMaterializeForm` for reconcile |
 | Read | `SalesPersonAgg/SalesOmzetDal.cs` → `BTR_SalesOmzet` + `ISalesOmzetPeriodPolicy` |
 | Tests | `SalesOmzetPoliciesTest`, `SalesOmzetEntityDalTest`, `SalesOmzetReconcileTest` |
 
@@ -1184,7 +1193,7 @@ Do **not** require production DB credentials in committed code — follow existi
 #### 7. `.csproj` / DI
 
 - Register any new types; if worker signature changes to `INunaService<ReconcileSalesOmzetResult, ...>`, Scrutor still auto-registers.
-- Update `SalesOmzetInfoForm` only if showing reconcile metrics or Full-rebuild button.
+- Update `SalesOmzetMaterializeForm` if extending reconcile metrics UI.
 
 ### Phase 5 — Out of scope
 

@@ -66,6 +66,8 @@ namespace btr.infrastructure.SalesContext.SalesPersonAgg
 
         private static IEnumerable<SalesOmzetView> MapToView(IEnumerable<SalesOmzetListRow> rows)
         {
+            if (rows is null)
+                yield break;
             foreach (var row in rows)
             {
                 yield return new SalesOmzetView

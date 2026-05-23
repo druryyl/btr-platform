@@ -1,6 +1,6 @@
 # Sales Omzet Aggregate — Deploy & Backfill Runbook
 
-This runbook covers first-time deployment of `BTR_SalesOmzet` and the production backfill reconcile. Normal day-to-day use remains **RO2 → Proses** (scoped reconcile for the selected period).
+This runbook covers first-time deployment of `BTR_SalesOmzet` and the production backfill reconcile. Normal day-to-day use: **RO2 → Materialisasi** when aggregate data must be refreshed; **Proses** loads the report from `BTR_SalesOmzet` only.
 
 ## Prerequisites
 
@@ -51,11 +51,12 @@ _worker.Execute(new ReconcileSalesOmzetRequest
 
 Inspect `request.Result` for counts and duration.
 
-### Option B — RO2 admin button
+### Option B — RO2 materialize dialog
 
-1. Open **Sales Omzet Info** (RO2).
-2. Click **Rebuild Semua** (confirm warning).
-3. Full reconcile runs (`Scope = Full`); status label shows row counts and duration.
+1. Open **RO2 - Sales Omzet** (info form).
+2. Click **Materialisasi**.
+3. In the dialog, click **Rebuild Semua** (confirm warning).
+4. Full reconcile runs (`Scope = Full`); status label shows row counts and duration.
 
 ### Transaction / timeout note
 
@@ -73,13 +74,13 @@ Document any batching approach used in your environment.
 2. Compare sample rows to [Testing checklist](../plans/sales-omzet-aggregate-implementation.md#testing-checklist):
    - Order in Jan without KembaliFaktur: hidden in Omzet Period, visible in Sales Period
    - Order Jan + KembaliFaktur Feb: Feb omzet period, Jan sales period
-3. Run **Proses** twice on the same period — no duplicate `OrderId` / `FakturId` in `BTR_SalesOmzet`.
+3. Run **Materialisasi** twice for the same period — no duplicate `OrderId` / `FakturId` in `BTR_SalesOmzet`.
 
 ## 5. Normal operations
 
-- Users run **Proses** on RO2 for their report window (max 122 days).
-- Each Proses: **scoped** reconcile (`PeriodeScoped`) for selected dates, then list with Omzet Period or Sales Period mode.
-- Reconcile metrics appear in the form status label (orders/fakturs processed, rows refreshed, duration).
+- **Proses** on RO2 loads the report for the selected window (max 122 days) from `BTR_SalesOmzet` — no reconcile on that click.
+- When source data changed (new orders/faktur, Kembali Faktur): open **Materialisasi**, confirm dates, click **Materialisasi** for scoped reconcile, then **Proses** on the info form.
+- Reconcile metrics appear in the materialize dialog status label (orders/fakturs processed, rows refreshed, duration).
 
 ## 6. Future work (out of scope)
 

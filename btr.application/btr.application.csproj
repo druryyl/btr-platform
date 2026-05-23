@@ -329,6 +329,7 @@
     <Compile Include="SalesContext\SalesOmzetAgg\Policies\SalesOmzetStatusPolicy.cs" />
     <Compile Include="SalesContext\SalesOmzetAgg\Services\ISalesOmzetLinker.cs" />
     <Compile Include="SalesContext\SalesOmzetAgg\Services\SalesOmzetLinker.cs" />
+    <Compile Include="SalesContext\SalesOmzetAgg\UseCases\ReconcileSalesOmzetProgress.cs" />
     <Compile Include="SalesContext\SalesOmzetAgg\UseCases\ReconcileSalesOmzetRequest.cs" />
     <Compile Include="SalesContext\SalesOmzetAgg\UseCases\ReconcileSalesOmzetResult.cs" />
     <Compile Include="SalesContext\SalesOmzetAgg\UseCases\ReconcileSalesOmzetWorker.cs" />

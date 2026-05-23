@@ -46,10 +46,10 @@ namespace btr.infrastructure.SalesContext.SalesOmzetAgg
         }
 
         public IEnumerable<OrderSnapshot> ListOrders(Periode periode) =>
-            _orderDal.ListData(periode).Select(MapOrder).Where(o => o != null);
+            _orderDal.ListData(periode)?.Select(MapOrder).Where(o => o != null) ?? new List<OrderSnapshot>();
 
         public IEnumerable<FakturSnapshot> ListFakturs(Periode periode) =>
-            _fakturDal.ListData(periode).Select(MapFaktur);
+            _fakturDal.ListData(periode)?.Select(MapFaktur) ?? new List<FakturSnapshot>();
 
         public IEnumerable<OrderSnapshot> ListAllOrders()
         {

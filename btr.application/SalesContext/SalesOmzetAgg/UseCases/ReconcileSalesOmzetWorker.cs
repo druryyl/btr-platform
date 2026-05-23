@@ -46,50 +46,65 @@ namespace btr.application.SalesContext.SalesOmzetAgg.UseCases
             var ordersProcessed = 0;
             var faktursProcessed = 0;
 
-            IEnumerable<OrderSnapshot> orders = isFull
+            var orderList = (isFull
                 ? _source.ListAllOrders()
-                : _source.ListOrders(request.Periode);
-            IEnumerable<FakturSnapshot> fakturs = isFull
+                : _source.ListOrders(request.Periode)).ToList();
+            var fakturList = (isFull
                 ? _source.ListAllFakturs()
-                : _source.ListFakturs(request.Periode);
+                : _source.ListFakturs(request.Periode)).ToList();
 
             var touched = new Dictionary<string, SalesOmzetModel>(StringComparer.Ordinal);
 
             using (var trans = TransHelper.NewScope())
             {
-                foreach (var order in orders)
+                Report(request, 0, orderList.Count, "Memproses order...");
+
+                foreach (var order in orderList)
                 {
                     ordersProcessed++;
                     var row = _linker.FindOrCreateForOrder(order);
-                    if (row == null)
-                        continue;
+                    if (row != null)
+                        Touch(touched, row);
 
-                    Touch(touched, row);
+                    Report(request, ordersProcessed, orderList.Count, "Memproses order...");
                 }
 
-                foreach (var faktur in fakturs)
+                Report(request, 0, fakturList.Count, "Memproses faktur...");
+
+                foreach (var faktur in fakturList)
                 {
                     faktursProcessed++;
                     var row = _linker.FindOrCreateForFaktur(faktur);
-                    if (row == null)
-                        continue;
+                    if (row != null)
+                        Touch(touched, row);
 
-                    Touch(touched, row);
+                    Report(request, faktursProcessed, fakturList.Count, "Memproses faktur...");
                 }
+
+                Report(request, 0, 1, "Menggabungkan data agregat...");
 
                 if (isFull)
                 {
-                    foreach (var existing in _entityDal.ListAll())
+                    foreach (var existing in _entityDal.ListAll() ?? Enumerable.Empty<SalesOmzetModel>())
                         MergeExisting(touched, existing);
                 }
                 else
                 {
-                    foreach (var existing in _entityDal.ListForReconcileScope(request.Periode))
+                    foreach (var existing in _entityDal.ListForReconcileScope(request.Periode) ?? Enumerable.Empty<SalesOmzetModel>())
                         MergeExisting(touched, existing);
                 }
 
-                foreach (var row in touched.Values.ToList())
+                var refreshList = touched.Values.ToList();
+                var refreshIndex = 0;
+
+                Report(request, 0, refreshList.Count, "Refresh baris omzet...");
+
+                foreach (var row in refreshList)
+                {
                     _linker.Refresh(row);
+                    refreshIndex++;
+                    Report(request, refreshIndex, refreshList.Count, "Refresh baris omzet...");
+                }
 
                 trans.Complete();
             }
@@ -109,6 +124,20 @@ namespace btr.application.SalesContext.SalesOmzetAgg.UseCases
             Trace.WriteLine(
                 $"SalesOmzet reconcile ({request.Scope}): orders={ordersProcessed}, fakturs={faktursProcessed}, " +
                 $"refreshed={touched.Count}, duration={sw.Elapsed}");
+        }
+
+        private static void Report(
+            ReconcileSalesOmzetRequest request,
+            int current,
+            int total,
+            string phase)
+        {
+            request.Progress?.Report(new ReconcileSalesOmzetProgress
+            {
+                Current = current,
+                Total = total,
+                Phase = phase
+            });
         }
 
         private static void Touch(Dictionary<string, SalesOmzetModel> touched, SalesOmzetModel row)

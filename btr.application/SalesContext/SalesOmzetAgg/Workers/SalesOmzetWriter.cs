@@ -25,7 +25,7 @@ namespace btr.application.SalesContext.SalesOmzetAgg.Workers
         public void Save(ref SalesOmzetModel model)
         {
             if (model.SalesOmzetId.IsNullOrEmpty())
-                model.SalesOmzetId = _counter.Generate("SO", IDFormatEnum.PFnnn);
+                model.SalesOmzetId = _counter.Generate("OMZT", IDFormatEnum.PREFYYMnnnnnC);
 
             var persisted = _salesOmzetEntityDal.GetData(model);
             if (persisted is null)
