@@ -51,6 +51,39 @@ namespace btr.infrastructure.SalesContext.SalesOmzetAgg
         public IEnumerable<FakturSnapshot> ListFakturs(Periode periode) =>
             _fakturDal.ListData(periode).Select(MapFaktur);
 
+        public IEnumerable<OrderSnapshot> ListAllOrders()
+        {
+            const string sql = @"
+            SELECT
+                aa.OrderId, aa.OrderDate, aa.TotalAmount,
+                aa.SalesName, aa.UserEmail, aa.CustomerId, aa.CustomerName, aa.StatusSync
+            FROM BTR_Order aa";
+
+            using (var conn = new SqlConnection(ConnStringHelper.Get(_opt)))
+            {
+                var rows = conn.Read<OrderRow>(sql);
+                return rows.Select(MapOrder).Where(o => o != null);
+            }
+        }
+
+        public IEnumerable<FakturSnapshot> ListAllFakturs()
+        {
+            const string sql = @"
+            SELECT
+                aa.FakturId, aa.FakturDate, aa.FakturCode,
+                aa.OrderId, aa.GrandTotal, aa.CustomerId, aa.VoidDate,
+                ISNULL(bb.SalesPersonName, '') AS SalesPersonName
+            FROM BTR_Faktur aa
+                LEFT JOIN BTR_SalesPerson bb ON aa.SalesPersonId = bb.SalesPersonId
+            WHERE aa.VoidDate = '3000-01-01'";
+
+            using (var conn = new SqlConnection(ConnStringHelper.Get(_opt)))
+            {
+                var rows = conn.Read<FakturRow>(sql);
+                return rows.Select(MapFaktur);
+            }
+        }
+
         public OrderSnapshot GetOrderByOrderId(string orderId)
         {
             if (string.IsNullOrEmpty(orderId)) return null;
@@ -174,6 +207,36 @@ namespace btr.infrastructure.SalesContext.SalesOmzetAgg
                 return parsed;
 
             return SalesOmzetDates.Sentinel;
+        }
+
+        private static OrderSnapshot MapOrder(OrderRow row)
+        {
+            if (row is null || string.IsNullOrEmpty(row.OrderId))
+                return null;
+
+            return new OrderSnapshot
+            {
+                OrderId = row.OrderId,
+                OrderDate = ParseOrderDate(row.OrderDate),
+                OrderTotal = row.TotalAmount,
+                SalesName = row.SalesName,
+                UserEmail = row.UserEmail,
+                CustomerId = row.CustomerId,
+                CustomerName = row.CustomerName,
+                StatusSync = row.StatusSync
+            };
+        }
+
+        private class OrderRow
+        {
+            public string OrderId { get; set; }
+            public string OrderDate { get; set; }
+            public decimal TotalAmount { get; set; }
+            public string SalesName { get; set; }
+            public string UserEmail { get; set; }
+            public string CustomerId { get; set; }
+            public string CustomerName { get; set; }
+            public string StatusSync { get; set; }
         }
 
         private class FakturRow

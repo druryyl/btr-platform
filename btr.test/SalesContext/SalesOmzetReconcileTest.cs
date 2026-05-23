@@ -76,9 +76,49 @@ namespace btr.test.SalesContext
         {
             using (var trans = TransHelper.NewScope())
             {
-                Action act = () => _worker.Execute(new ReconcileSalesOmzetRequest { Periode = LastSevenDays() });
+                var request = new ReconcileSalesOmzetRequest { Periode = LastSevenDays() };
+                Action act = () => _worker.Execute(request);
+                act.Should().NotThrow();
+                request.Result.Should().NotBeNull();
+            }
+        }
+
+        [Fact]
+        [Trait("Category", "Integration")]
+        public void UT3_FullReconcile_CompletesWithoutError()
+        {
+            var end = DateTime.Today;
+            var request = new ReconcileSalesOmzetRequest
+            {
+                Periode = new Periode(end.AddYears(-10), end),
+                Scope = ReconcileSalesOmzetScope.Full
+            };
+
+            using (var trans = TransHelper.NewScope())
+            {
+                Action act = () => _worker.Execute(request);
                 act.Should().NotThrow();
             }
+
+            request.Result.Should().NotBeNull();
+            request.Result.Scope.Should().Be(ReconcileSalesOmzetScope.Full);
+        }
+
+        [Fact]
+        public void UT4_ReconcileResult_HasNonNegativeCounts()
+        {
+            var request = new ReconcileSalesOmzetRequest { Periode = LastSevenDays() };
+
+            using (var trans = TransHelper.NewScope())
+            {
+                _worker.Execute(request);
+            }
+
+            request.Result.Should().NotBeNull();
+            request.Result.OrdersProcessed.Should().BeGreaterOrEqualTo(0);
+            request.Result.FaktursProcessed.Should().BeGreaterOrEqualTo(0);
+            request.Result.RowsRefreshed.Should().BeGreaterOrEqualTo(0);
+            request.Result.Duration.Should().BeGreaterOrEqualTo(TimeSpan.Zero);
         }
 
         [Fact]

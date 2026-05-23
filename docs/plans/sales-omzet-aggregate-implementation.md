@@ -347,9 +347,13 @@ Worker + request; idempotent create/link; compose Phase 2 linker end-to-end.
 
 `ListData(periode, mode)`, form period control, reconcile on Proses, remove old UNION.
 
+**→ Follow [Phase 4 — Agent kickoff](#phase-4--agent-kickoff) below before coding.**
+
 ### Phase 5 — Hardening
 
-Full reconcile on deploy; logging; optional scheduler.
+Full reconcile scope, deploy/backfill runbook, reconcile metrics/logging, tests & ops polish.
+
+**→ Follow [Phase 5 — Agent kickoff](#phase-5--agent-kickoff) below before coding.**
 
 ---
 
@@ -874,15 +878,371 @@ Avoid double-`Refresh` if you already refresh inside the loop — pick **one** p
 
 ---
 
-## Phase 4 — Agent kickoff (brief)
+## Phase 4 — Agent kickoff
 
-### Phase 4 prompt
+Use this section when starting a **new agent session** for Phase 4 only. Read the full artifact for business context; this section is the **execution contract**.
+
+See also: [Read path & form](#read-path--form), [RO2 UX — period filter](#ro2-ux--period-filter), [Testing checklist](#testing-checklist), [Phase 3 — Agent kickoff](#phase-3--agent-kickoff).
+
+### Copy-paste prompt (new session)
+
+Copy from **BEGIN PHASE 4 PROMPT** through **END PHASE 4 PROMPT**.
+
+---
+
+**BEGIN PHASE 4 PROMPT**
+
+Implement **Phase 4 — RO2 integration** for the Sales Omzet aggregate.
+
+**Primary reference:** `docs/plans/sales-omzet-aggregate-implementation.md` (Read path & form, RO2 UX, Testing checklist, Phase 4 — Agent kickoff).
+
+**Prerequisites:** Phase 1–3 are **complete** (`BTR_SalesOmzet`, policies, linker, `ReconcileSalesOmzetWorker`).
+
+### Context
+
+RO2 (`SalesOmzetInfoForm`) currently calls legacy `ISalesOmzetDal.ListData(periode)` which runs the **UNION query** in `btr.infrastructure/SalesContext/SalesPersonAgg/SalesOmzetDal.cs`. Phase 4 switches the read path to **`BTR_SalesOmzet`**, runs **reconcile on Proses**, and adds the **Omzet Period / Sales Period** user choice.
+
+### Phase 3 artifacts (already exist)
+
+| Component | Path |
+|-----------|------|
+| Reconcile | `IReconcileSalesOmzetWorker` / `ReconcileSalesOmzetWorker` |
+| Request | `ReconcileSalesOmzetRequest` (`Periode`, `UserId`, `Scope`) |
+| Period policy | `ISalesOmzetPeriodPolicy.ToSqlWhere(mode)` — strict omzet + sales period |
+| Entity table | `BTR_SalesOmzet` via `SalesOmzetEntityDal` |
+| Filter enum | `SalesOmzetPeriodFilterMode` (`OmzetPeriod`, `SalesPeriod`) |
+| RO2 form | `btr.distrib/.../SalesOmzetInfoForm.cs` + `.Designer.cs` |
+| Read contract | `btr.application/.../OrderFeature/ISalesOmzetDal.cs` + `SalesOmzetView` |
+| Legacy read (replace) | `btr.infrastructure/.../SalesPersonAgg/SalesOmzetDal.cs` |
+
+### Phase 4 — In scope
+
+#### 1. Extend `ISalesOmzetDal` (keep in `OrderFeature` for form compatibility)
+
+```csharp
+public interface ISalesOmzetDal : IListData<SalesOmzetView, Periode>
+{
+    IEnumerable<SalesOmzetView> ListData(Periode periode, SalesOmzetPeriodFilterMode mode);
+}
+```
+
+- Implement **`ListData(Periode)`** as **`ListData(periode, SalesOmzetPeriodFilterMode.OmzetPeriod)`** (default = strict omzet / Periode Omzet).
+- Scrutor must still resolve `ISalesOmzetDal` — one implementation class.
+
+#### 2. Replace legacy read implementation
+
+**Remove the entire UNION CTE SQL** from `SalesOmzetDal` (or move implementation to `SalesOmzetAgg/SalesOmzetListDal.cs` and update `.csproj` — same interface).
+
+New `ListData(periode, mode)`:
+
+```sql
+SELECT <columns mapped to SalesOmzetView>
+FROM BTR_SalesOmzet
+WHERE <ISalesOmzetPeriodPolicy.ToSqlWhere(mode)>
+  AND OmzetStatus <> 'Void'   -- exclude void rows from RO2 (adjust if policy changes)
+ORDER BY SalesPersonName, OrderDate, FakturDate
+```
+
+- Inject `ISalesOmzetPeriodPolicy` into the read DAL.
+- Use `DynamicParameters` with `@Tgl1`, `@Tgl2` from `Periode` (match `OrderDal` date param style).
+- Map DB row → `SalesOmzetView` (manual or Mapster). Columns already on `SalesOmzetModel` / table match view fields.
+
+**Optional on `SalesOmzetView`:** add `SalesOmzetStatusEnum OmzetStatus` and/or `SaleKindEnum SaleKind` for grid/Excel — only if needed; do not break existing grid column bindings (`SalesPersonName`, `OrderId`, …).
+
+#### 3. `SalesOmzetInfoForm` — Proses flow
+
+Update constructor DI:
+
+- `ISalesOmzetDal` (read)
+- `IReconcileSalesOmzetWorker` (reconcile)
+
+**`Proses()` sequence:**
+
+1. Validate period ≤ 122 days (keep existing).
+2. Build `Periode` from `Tgl1Date` / `Tgl2Date`.
+3. Read period mode from new UI control (see below).
+4. **`_reconcileWorker.Execute(new ReconcileSalesOmzetRequest { Periode = periode, Scope = ReconcileSalesOmzetScope.PeriodeScoped, UserId = ... })`**
+   - `UserId`: optional — from `(Parent.Parent as MainForm)?.UserId?.UserId` if available (see `FakturForm`), else `string.Empty`.
+5. **`var listOmzet = _salesOmzetDal.ListData(periode, mode)?.ToList()`**
+6. Apply existing in-memory `Filter(listOmzet, SearchText.Text)` and bind grid.
+
+#### 4. UI — period mode control (minimal layout change)
+
+Add to `panel1` in **Designer** (e.g. left of Search or before Proses):
+
+| Control | Type | Default | Label (suggested) |
+|---------|------|---------|-------------------|
+| `SalesPeriodCheckBox` | `CheckBox` | **unchecked** | **Periode Jual** |
+
+Behavior:
+
+| Checked? | Mode | UX meaning |
+|----------|------|------------|
+| No | `SalesOmzetPeriodFilterMode.OmzetPeriod` | **Periode Omzet** (default) — strict omzet |
+| Yes | `SalesOmzetPeriodFilterMode.SalesPeriod` | **Periode Jual** — filter by `SalesDate` |
+
+Optional: tooltip on checkbox explaining both modes (Indonesian OK).
+
+**Do not** redesign the grid layout; keep existing columns and summary rows.
+
+#### 5. Excel export — use aggregate status
+
+Replace `GetOrderStatus(orderId, fakturCode)` with display text from **`OmzetStatus`** when available:
+
+| `SalesOmzetStatusEnum` | Excel / display text (suggested) |
+|------------------------|----------------------------------|
+| `Outstanding` | Outstanding Order |
+| `PendingOmzet` | Pending Omzet (or similar) |
+| `Completed` + `DirectSale` | Direct Sales (if `OrderId` empty) else Completed Order |
+| `Completed` + `OrderedSale` | Completed Order |
+| `Void` | (should not appear in list) |
+
+Reuse existing `GetStatusColor` with updated strings or map enum → color in one helper.
+
+#### 6. `.csproj` updates
+
+- If new files (e.g. `SalesOmzetListDal`), update `btr.infrastructure.csproj`.
+- If `SalesOmzetView` extended, `btr.application.csproj` only.
+
+#### 7. Verification
+
+- Run / extend tests: `SalesOmzetPoliciesTest` already covers period policy; add optional integration test `ListData` against dev DB.
+- Manually verify [Testing checklist](#testing-checklist) scenarios on RO2 after Proses.
+
+### Phase 4 — Out of scope
+
+- `ReconcileSalesOmzetScope.Full` implementation
+- Scheduled reconcile (`btr.sync`)
+- Removing `BTR_OrderMap`
+- Changing Create Order / Save Faktur
+- New report menus or grid columns beyond optional status/sale kind
+
+### Period policy (must match Phase 2 — do not reimplement in SQL)
+
+Use **`ISalesOmzetPeriodPolicy.ToSqlWhere`** already implemented:
+
+| Mode | WHERE |
+|------|--------|
+| `OmzetPeriod` | `OmzetDate BETWEEN @Tgl1 AND @Tgl2 AND OmzetDate <> '3000-01-01'` |
+| `SalesPeriod` | `SalesDate BETWEEN @Tgl1 AND @Tgl2` |
+
+Reconcile **always** runs before list; list mode only affects **which rows appear**, not how reconcile links faktur.
+
+### Definition of done (Phase 4)
+
+- [ ] Solution builds; RO2 opens from menu (`MainForm.RO2SalesOmzetMenu_Click`)
+- [ ] Proses runs reconcile then lists from `BTR_SalesOmzet` (no UNION SQL left in read DAL)
+- [ ] Default (unchecked): **Periode Omzet** — outstanding rows **not** shown
+- [ ] Checked **Periode Jual**: outstanding ordered sales in range **shown**
+- [ ] Order Jan + KembaliFaktur Feb: visible in Feb omzet mode; Jan sales mode shows row with Jan `SalesDate`
+- [ ] Excel export works; status column reflects `OmzetStatus`
+- [ ] Second Proses is idempotent (no duplicate aggregate rows)
+- [ ] Legacy UNION file deleted or reduced to aggregate SELECT only
+
+### Reference files
+
+| File | Why |
+|------|-----|
+| `docs/plans/sales-omzet-aggregate-implementation.md` | Master plan + checklist |
+| `SalesOmzetPeriodPolicy.cs` | `ToSqlWhere` / `IsInPeriod` |
+| `ReconcileSalesOmzetWorker.cs` | How to call reconcile |
+| `SalesOmzetEntityDal.cs` | Column names for SELECT |
+| `SalesOmzetInfoForm.cs` | Proses, Excel, Filter, grid init |
+| `SalesOmzetInfoForm.Designer.cs` | Add checkbox |
+| `SalesPersonAgg/SalesOmzetDal.cs` | **Remove UNION** |
+| `ISalesOmzetDal.cs` | Extend interface |
+| `MainForm.cs` | `UserId` for reconcile request |
+| `FakturForm.cs` | Pattern for `MainForm` user |
+
+### Coding conventions
+
+- WinForms designer: keep `partial` class split; wire checkbox in `.Designer.cs`
+- Do not register read DAL manually if Scrutor already picks up `IListData<SalesOmzetView, Periode>` — ensure single `ISalesOmzetDal` implementation
+- Sentinel dates in grid: may display `3000-01-01` for empty faktur/order dates — consider formatting empty as blank in mapper (optional polish)
+
+**END PHASE 4 PROMPT**
+
+---
+
+## Phase 5 — Agent kickoff
+
+Use this section when starting a **new agent session** for Phase 5 only. Phases 1–4 should be **complete** (aggregate, policies, reconcile on RO2 Proses, read from `BTR_SalesOmzet`).
+
+See also: [Testing checklist](#testing-checklist), [Out of scope](#out-of-scope), [Phase 3 — Agent kickoff](#phase-3--agent-kickoff).
+
+### Copy-paste prompt (new session)
+
+Copy from **BEGIN PHASE 5 PROMPT** through **END PHASE 5 PROMPT**.
+
+---
+
+**BEGIN PHASE 5 PROMPT**
+
+Implement **Phase 5 — Hardening** for the Sales Omzet aggregate.
+
+**Primary reference:** `docs/plans/sales-omzet-aggregate-implementation.md` (Testing checklist, Phase 5 — Agent kickoff, entire plan for business rules).
+
+**Prerequisites:** Phases 1–4 are done. RO2 (`SalesOmzetInfoForm`) already calls `IReconcileSalesOmzetWorker` then `ISalesOmzetDal.ListData(periode, mode)`. Legacy UNION SQL is **removed** from read DAL.
+
+### Current state (do not redo Phases 1–4)
+
+| Area | Location |
+|------|----------|
+| Table + seed | `btr.sql/Tables/SalesContext/BTR_SalesOmzet.sql`, `DataSeeds/BTR_ParamNo_SalesOmzet.sql` |
+| Reconcile (scoped) | `ReconcileSalesOmzetWorker` — `PeriodeScoped` only; **`Full` throws `NotSupportedException`** |
+| RO2 | `SalesOmzetInfoForm` — `SalesPeriodCheckBox`, reconcile on Proses |
+| Read | `SalesPersonAgg/SalesOmzetDal.cs` → `BTR_SalesOmzet` + `ISalesOmzetPeriodPolicy` |
+| Tests | `SalesOmzetPoliciesTest`, `SalesOmzetEntityDalTest`, `SalesOmzetReconcileTest` |
+
+### Phase 5 goals
+
+1. **Production backfill** — ability to populate/refresh **all** `BTR_SalesOmzet` rows after deploy (not only a 3-month UI window).
+2. **Operational visibility** — reconcile returns or logs counts (orders processed, fakturs processed, rows refreshed, duration).
+3. **Deploy runbook** — documented steps for DB publish + first full reconcile.
+4. **Quality** — extend automated tests for full scope and checklist scenarios where feasible.
+5. **Optional ops UX** — safe admin path to run full reconcile without hacking code.
+
+**Not required in Phase 5:** wiring `btr.sync` (separate .NET 4.8 app, no reference to `btr.application`) unless you add a clearly isolated follow-up doc only.
+
+### Phase 5 — In scope
+
+#### 1. Implement `ReconcileSalesOmzetScope.Full`
+
+Today (`ReconcileSalesOmzetWorker`):
+
+```csharp
+if (request.Scope == ReconcileSalesOmzetScope.Full)
+    throw new NotSupportedException("Full reconcile scope is not implemented yet.");
+```
+
+**Implement Full** by processing **all** eligible orders and fakturs (or a configurable wide range), not only `ListOrders(periode)` / `ListFakturs(periode)`.
+
+Suggested approach (pick one, document in code):
+
+| Approach | Description |
+|----------|-------------|
+| **A — Source DAL expansion** | Add `ISalesOmzetSourceDal.ListAllOrders()` / `ListAllFakturs()` (SQL without date filter; still exclude void faktur). Use in worker when `Scope == Full`. |
+| **B — Wide periode** | `Periode` from min order/faktur date to today — only if A is too heavy; document risk. |
+
+Full reconcile loop: same as scoped (find/create → `ListForReconcileScope` optional → `Refresh` all touched). For Full, **omit** `ListForReconcileScope(periode)` or replace with “all rows in `BTR_SalesOmzet`” refresh pass.
+
+**Transaction:** keep single `TransHelper.NewScope()` for Full only if batch size is acceptable; if timeout risk, document batching strategy (e.g. reconcile by calendar year) in runbook.
+
+#### 2. `ReconcileSalesOmzetResult` (metrics)
+
+Add result DTO returned from worker (change to `INunaService<ReconcileSalesOmzetResult, ReconcileSalesOmzetRequest>` **or** add optional out-parameter / mutable result on request — prefer `INunaService<,>` if other workers use it; else keep `INunaServiceVoid` and attach `ReconcileSalesOmzetResult Result { get; set; }` on request after execute).
+
+Suggested metrics:
+
+- `int OrdersProcessed`
+- `int FaktursProcessed`
+- `int RowsRefreshed` (touched count)
+- `int RowsCreated` (optional — if tracked in linker)
+- `TimeSpan Duration`
+- `ReconcileSalesOmzetScope Scope`
+
+Populate counts in `ReconcileSalesOmzetWorker` during loops.
+
+#### 3. Logging / diagnostics
+
+This solution has **no** widespread `ILogger` in `btr.application`. Use a **lightweight** approach:
+
+- `System.Diagnostics.Trace` or `Debug.WriteLine` with one line summary after reconcile, **and/or**
+- Store last result on request for UI, **and/or**
+- Optional: write to a simple ops log table — **only if** a pattern already exists (avoid new infra unless needed).
+
+**RO2 (optional polish):** after Proses reconcile, show non-blocking feedback e.g. `ToolTip` or status label: *"Reconcile: N rows refreshed (Xs)"* — only if minimal UI change is acceptable in Phase 5.
+
+#### 4. Deploy & backfill runbook
+
+Add **`docs/plans/sales-omzet-deploy.md`** (or `docs/ops/sales-omzet-deploy.md`) containing:
+
+1. Publish `btr.sql` objects: `BTR_SalesOmzet`, indexes, `BTR_ParamNo` seed (`SO`).
+2. Deploy application binaries (`btr.distrib`, `btr.infrastructure`, `btr.application`, `btr.domain`).
+3. **First-time backfill** — run **Full** reconcile once:
+   - Option A: xUnit test / console harness documented as manual step (`SalesOmzetReconcileTest` with `[Fact]` + `Scope = Full`, or new `SalesOmzetFullReconcileTest`).
+   - Option B: temporary admin button on RO2 *"Rebuild omzet (semua data)"* with `MessageBox` confirm + `Scope = Full` (guard with warning).
+4. Normal ops: users continue **Proses** on RO2 (scoped reconcile for selected period).
+5. Rollback note: legacy UNION removed — restore from git if emergency; table can remain.
+
+#### 5. Extend tests (`btr.test`)
+
+| Test | Purpose |
+|------|---------|
+| `UT3_FullReconcile_CompletesWithoutError` | Smoke Full scope (mark `[Trait("Integration")]` if slow; skip on CI without DB) |
+| `UT4_ReconcileResult_HasNonNegativeCounts` | Metrics populated |
+| Policy tests for checklist rows | Jan order / Feb KembaliFaktur — unit-level on `ISalesOmzetPeriodPolicy` if not already covered |
+
+Do **not** require production DB credentials in committed code — follow existing `SalesOmzetEntityDalTest` pattern or use config.
+
+#### 6. Code hygiene (small, targeted)
+
+- Confirm **no** remaining UNION read SQL in `SalesOmzetDal`.
+- Optional: format sentinel dates as blank in grid/Excel (`3000-01-01` → empty display) in `SalesOmzetDal.MapToView` or form.
+- Optional: document `BTR_OrderMap` vs `SalesOmzet` — **do not remove** `OrderMap` unless product owner confirms (plan: separate task).
+
+#### 7. `.csproj` / DI
+
+- Register any new types; if worker signature changes to `INunaService<ReconcileSalesOmzetResult, ...>`, Scrutor still auto-registers.
+- Update `SalesOmzetInfoForm` only if showing reconcile metrics or Full-rebuild button.
+
+### Phase 5 — Out of scope
+
+- Event-driven reconcile on Save Faktur / Create Order
+- Replacing `BTR_OrderMap` in production flows
+- Integrating reconcile into **`btr.sync`** timer (different project stack) — mention in runbook as future work
+- Changing business rules in policies (unless fixing a production bug found during backfill)
+- New report menus
+
+### Definition of done (Phase 5)
+
+- [ ] `ReconcileSalesOmzetScope.Full` runs without `NotSupportedException` on dev DB
+- [ ] Reconcile exposes metrics (`ReconcileSalesOmzetResult` or equivalent)
+- [ ] Deploy/backfill runbook exists and describes first Full reconcile
+- [ ] At least one test or documented manual step for Full reconcile
+- [ ] RO2 scoped Proses still works (regression)
+- [ ] Solution builds; no duplicate `OrderId`/`FakturId` after Full + scoped runs
+
+### Reference files
+
+| File | Why |
+|------|-----|
+| `ReconcileSalesOmzetWorker.cs` | Implement Full + metrics |
+| `ISalesOmzetSourceDal.cs` / `SalesOmzetSourceDal.cs` | Add list-all or wide queries |
+| `ReconcileSalesOmzetScope.cs` | Enum |
+| `SalesOmzetInfoForm.cs` | Optional metrics / full rebuild UI |
+| `SalesOmzetReconcileTest.cs` | Extend integration tests |
+| `btr.sync/SyncForm.cs` | Reference only — different architecture |
+| `docs/plans/sales-omzet-aggregate-implementation.md` | Testing checklist |
+
+### Suggested Full reconcile pseudocode
+
+```csharp
+if (request.Scope == ReconcileSalesOmzetScope.Full)
+{
+    orders = _source.ListAllOrders();
+    fakturs = _source.ListAllFakturs();
+}
+else
+{
+    orders = _source.ListOrders(request.Periode);
+    fakturs = _source.ListFakturs(request.Periode);
+}
+// same touched + Refresh loop; for Full, refresh all BTR_SalesOmzet rows after (optional second pass)
+```
+
+### Production backfill command (document in runbook)
+
+Example for operators (adjust dates/method):
 
 ```text
-Implement Phase 4: extend ISalesOmzetDal.ListData(periode, SalesOmzetPeriodFilterMode);
-SalesOmzetInfoForm — reconcile on Proses, Omzet Period / Sales Period control;
-remove legacy UNION in SalesPersonAgg/SalesOmzetDal.cs after parity with testing checklist.
+1. Deploy database + app.
+2. Run Full reconcile once (test harness or admin button).
+3. Open RO2, select Periode Omzet, run Proses for current quarter to verify row counts.
+4. Compare sample rows against legacy expectations (Testing checklist).
 ```
+
+**END PHASE 5 PROMPT**
 
 ---
 

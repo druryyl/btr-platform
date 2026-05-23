@@ -18,5 +18,8 @@ namespace btr.application.SalesContext.SalesOmzetAgg.Contracts
         /// Wide net: SalesDate, OmzetDate, OrderDate, or FakturDate in periode (reconcile scope only).
         /// </summary>
         IEnumerable<SalesOmzetModel> ListForReconcileScope(Periode periode);
+
+        /// <summary>All aggregate rows — refresh pass for full reconcile.</summary>
+        IEnumerable<SalesOmzetModel> ListAll();
     }
 }

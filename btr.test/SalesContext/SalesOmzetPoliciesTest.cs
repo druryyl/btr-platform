@@ -48,6 +48,27 @@ namespace btr.test.SalesContext
         }
 
         [Fact]
+        public void Period_JanOrder_FebOmzet_VisibleInFebOmzet_NotInJanOmzet()
+        {
+            var row = new SalesOmzetModel
+            {
+                SalesDate = new DateTime(2025, 1, 15),
+                OmzetDate = new DateTime(2025, 2, 10),
+                OrderId = "ORD-1"
+            };
+
+            var jan = Jan2025();
+            var feb = new Periode(new DateTime(2025, 2, 1), new DateTime(2025, 2, 28));
+
+            _periodPolicy.IsInPeriod(row, jan, SalesOmzetPeriodFilterMode.OmzetPeriod)
+                .Should().BeFalse();
+            _periodPolicy.IsInPeriod(row, feb, SalesOmzetPeriodFilterMode.OmzetPeriod)
+                .Should().BeTrue();
+            _periodPolicy.IsInPeriod(row, jan, SalesOmzetPeriodFilterMode.SalesPeriod)
+                .Should().BeTrue();
+        }
+
+        [Fact]
         public void Period_SalesPeriod_ShowsOutstandingInSalesMonth()
         {
             var row = new SalesOmzetModel

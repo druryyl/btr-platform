@@ -14,6 +14,12 @@ namespace btr.application.SalesContext.SalesOmzetAgg.Contracts
         IEnumerable<OrderSnapshot> ListOrders(Periode periode);
         IEnumerable<FakturSnapshot> ListFakturs(Periode periode);
 
+        /// <summary>All orders — no date filter (full reconcile / backfill).</summary>
+        IEnumerable<OrderSnapshot> ListAllOrders();
+
+        /// <summary>All non-void fakturs — no faktur-date filter (full reconcile / backfill).</summary>
+        IEnumerable<FakturSnapshot> ListAllFakturs();
+
         OrderSnapshot GetOrderByOrderId(string orderId);
         FakturSnapshot GetFakturByFakturId(string fakturId);
 

@@ -31,9 +31,12 @@
             this.panel1 = new System.Windows.Forms.Panel();
             this.ExcelButton = new System.Windows.Forms.Button();
             this.ProsesButton = new System.Windows.Forms.Button();
+            this.FullRebuildButton = new System.Windows.Forms.Button();
             this.SearchText = new System.Windows.Forms.TextBox();
+            this.SalesPeriodCheckBox = new System.Windows.Forms.CheckBox();
             this.Tgl2Date = new System.Windows.Forms.DateTimePicker();
             this.Tgl1Date = new System.Windows.Forms.DateTimePicker();
+            this.ReconcileStatusLabel = new System.Windows.Forms.Label();
             this.InfoGrid = new Syncfusion.Windows.Forms.Grid.Grouping.GridGroupingControl();
             this.panel1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.InfoGrid)).BeginInit();
@@ -46,7 +49,9 @@
             this.panel1.BackColor = System.Drawing.Color.PowderBlue;
             this.panel1.Controls.Add(this.ExcelButton);
             this.panel1.Controls.Add(this.ProsesButton);
+            this.panel1.Controls.Add(this.FullRebuildButton);
             this.panel1.Controls.Add(this.SearchText);
+            this.panel1.Controls.Add(this.SalesPeriodCheckBox);
             this.panel1.Controls.Add(this.Tgl2Date);
             this.panel1.Controls.Add(this.Tgl1Date);
             this.panel1.Location = new System.Drawing.Point(7, 7);
@@ -56,28 +61,48 @@
             // 
             // ExcelButton
             // 
-            this.ExcelButton.Location = new System.Drawing.Point(617, 6);
+            this.ExcelButton.Location = new System.Drawing.Point(673, 6);
             this.ExcelButton.Name = "ExcelButton";
-            this.ExcelButton.Size = new System.Drawing.Size(119, 23);
-            this.ExcelButton.TabIndex = 4;
+            this.ExcelButton.Size = new System.Drawing.Size(110, 23);
+            this.ExcelButton.TabIndex = 5;
             this.ExcelButton.Text = "Excel";
             this.ExcelButton.UseVisualStyleBackColor = true;
             // 
             // ProsesButton
             // 
-            this.ProsesButton.Location = new System.Drawing.Point(492, 6);
+            this.ProsesButton.Location = new System.Drawing.Point(567, 6);
             this.ProsesButton.Name = "ProsesButton";
-            this.ProsesButton.Size = new System.Drawing.Size(119, 23);
-            this.ProsesButton.TabIndex = 2;
+            this.ProsesButton.Size = new System.Drawing.Size(100, 23);
+            this.ProsesButton.TabIndex = 4;
             this.ProsesButton.Text = "Proses";
             this.ProsesButton.UseVisualStyleBackColor = true;
             // 
+            // FullRebuildButton
+            // 
+            this.FullRebuildButton.Location = new System.Drawing.Point(457, 6);
+            this.FullRebuildButton.Name = "FullRebuildButton";
+            this.FullRebuildButton.Size = new System.Drawing.Size(104, 23);
+            this.FullRebuildButton.TabIndex = 6;
+            this.FullRebuildButton.Text = "Rebuild Semua";
+            this.FullRebuildButton.UseVisualStyleBackColor = true;
+            // 
             // SearchText
             // 
-            this.SearchText.Location = new System.Drawing.Point(330, 6);
+            this.SearchText.Location = new System.Drawing.Point(337, 6);
             this.SearchText.Name = "SearchText";
-            this.SearchText.Size = new System.Drawing.Size(156, 22);
+            this.SearchText.Size = new System.Drawing.Size(114, 22);
             this.SearchText.TabIndex = 3;
+            // 
+            // SalesPeriodCheckBox
+            // 
+            this.SalesPeriodCheckBox.AutoSize = true;
+            this.SalesPeriodCheckBox.Location = new System.Drawing.Point(280, 8);
+            this.SalesPeriodCheckBox.Name = "SalesPeriodCheckBox";
+            this.SalesPeriodCheckBox.Size = new System.Drawing.Size(88, 17);
+            this.SalesPeriodCheckBox.TabIndex = 2;
+            this.SalesPeriodCheckBox.Text = "Periode Jual";
+            this.SalesPeriodCheckBox.UseVisualStyleBackColor = true;
+            this.SalesPeriodCheckBox.Checked = false;
             // 
             // Tgl2Date
             // 
@@ -97,6 +122,16 @@
             this.Tgl1Date.Size = new System.Drawing.Size(156, 22);
             this.Tgl1Date.TabIndex = 0;
             // 
+            // ReconcileStatusLabel
+            // 
+            this.ReconcileStatusLabel.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.ReconcileStatusLabel.AutoEllipsis = true;
+            this.ReconcileStatusLabel.Location = new System.Drawing.Point(7, 44);
+            this.ReconcileStatusLabel.Name = "ReconcileStatusLabel";
+            this.ReconcileStatusLabel.Size = new System.Drawing.Size(787, 16);
+            this.ReconcileStatusLabel.TabIndex = 8;
+            // 
             // InfoGrid
             // 
             this.InfoGrid.AlphaBlendSelectionColor = System.Drawing.Color.FromArgb(((int)(((byte)(64)))), ((int)(((byte)(0)))), ((int)(((byte)(120)))), ((int)(((byte)(215)))));
@@ -105,10 +140,10 @@
             | System.Windows.Forms.AnchorStyles.Right)));
             this.InfoGrid.BackColor = System.Drawing.SystemColors.Window;
             this.InfoGrid.Font = new System.Drawing.Font("Lucida Console", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.InfoGrid.Location = new System.Drawing.Point(7, 47);
+            this.InfoGrid.Location = new System.Drawing.Point(7, 63);
             this.InfoGrid.Name = "InfoGrid";
             this.InfoGrid.ShowCurrentCellBorderBehavior = Syncfusion.Windows.Forms.Grid.GridShowCurrentCellBorder.GrayWhenLostFocus;
-            this.InfoGrid.Size = new System.Drawing.Size(787, 397);
+            this.InfoGrid.Size = new System.Drawing.Size(787, 381);
             this.InfoGrid.TabIndex = 7;
             this.InfoGrid.Text = "gridGroupingControl1";
             this.InfoGrid.UseRightToLeftCompatibleTextBox = true;
@@ -120,6 +155,7 @@
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.Color.CadetBlue;
             this.ClientSize = new System.Drawing.Size(800, 450);
+            this.Controls.Add(this.ReconcileStatusLabel);
             this.Controls.Add(this.panel1);
             this.Controls.Add(this.InfoGrid);
             this.Font = new System.Drawing.Font("Segoe UI", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
@@ -137,7 +173,10 @@
         private System.Windows.Forms.Panel panel1;
         private System.Windows.Forms.Button ExcelButton;
         private System.Windows.Forms.Button ProsesButton;
+        private System.Windows.Forms.Button FullRebuildButton;
+        private System.Windows.Forms.Label ReconcileStatusLabel;
         private System.Windows.Forms.TextBox SearchText;
+        private System.Windows.Forms.CheckBox SalesPeriodCheckBox;
         private System.Windows.Forms.DateTimePicker Tgl2Date;
         private System.Windows.Forms.DateTimePicker Tgl1Date;
         private Syncfusion.Windows.Forms.Grid.Grouping.GridGroupingControl InfoGrid;

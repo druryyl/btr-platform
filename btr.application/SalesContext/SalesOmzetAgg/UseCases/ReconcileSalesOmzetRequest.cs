@@ -11,5 +11,8 @@ namespace btr.application.SalesContext.SalesOmzetAgg.UseCases
         public string UserId { get; set; }
 
         public ReconcileSalesOmzetScope Scope { get; set; } = ReconcileSalesOmzetScope.PeriodeScoped;
+
+        /// <summary>Populated by <see cref="IReconcileSalesOmzetWorker.Execute"/> after a successful run.</summary>
+        public ReconcileSalesOmzetResult Result { get; set; }
     }
 }

@@ -1,4 +1,8 @@
 ﻿using btr.application.SalesContext.OrderFeature;
+using btr.application.SalesContext.SalesOmzetAgg;
+using btr.application.SalesContext.SalesOmzetAgg.UseCases;
+using btr.distrib.SharedForm;
+using btr.domain.SalesContext.SalesOmzetAgg;
 using btr.nuna.Domain;
 using ClosedXML.Excel;
 using Syncfusion.Windows.Forms.Grid;
@@ -17,14 +21,26 @@ namespace btr.distrib.SalesContext.SalesPersonAgg
     public partial class SalesOmzetInfoForm : Form
     {
         private readonly ISalesOmzetDal _salesOmzetDal;
+        private readonly IReconcileSalesOmzetWorker _reconcileWorker;
         private List<SalesOmzetView> _dataSource;
 
-        public SalesOmzetInfoForm(ISalesOmzetDal salesOmzetDal)
+        public SalesOmzetInfoForm(
+            ISalesOmzetDal salesOmzetDal,
+            IReconcileSalesOmzetWorker reconcileWorker)
         {
             InitializeComponent();
             _salesOmzetDal = salesOmzetDal;
+            _reconcileWorker = reconcileWorker;
+
+            var periodToolTip = new ToolTip();
+            periodToolTip.SetToolTip(
+                SalesPeriodCheckBox,
+                "Tidak dicentang: Periode Omzet (hanya omzet yang sudah Kembali Faktur). " +
+                "Dicentang: Periode Jual (filter Tanggal Jual, termasuk outstanding).");
+
             ProsesButton.Click += ProsesButton_Click;
             ExcelButton.Click += ExcelButton_Click;
+            FullRebuildButton.Click += FullRebuildButton_Click;
 
             // Register the QueryCellStyleInfo event for conditional formatting
             InfoGrid.QueryCellStyleInfo += InfoGrid_QueryCellStyleInfo;
@@ -81,21 +97,20 @@ namespace btr.distrib.SalesContext.SalesPersonAgg
                     var omzet = listToExcel[i];
                     var row = i + 2;
 
-                    // Determine status based on business logic
-                    string status = GetOrderStatus(omzet.OrderId, omzet.FakturCode);
+                    string status = GetStatusDisplayText(omzet);
 
                     ws.Cell($"A{row}").Value = i + 1;
                     ws.Cell($"B{row}").Value = omzet.SalesPersonName;
                     ws.Cell($"C{row}").Value = omzet.OrderId;
-                    ws.Cell($"D{row}").Value = omzet.OrderDate;
+                    ws.Cell($"D{row}").Value = FormatExportDate(omzet.OrderDate);
                     ws.Cell($"E{row}").Value = omzet.OrderTotal;
                     ws.Cell($"F{row}").Value = omzet.FakturCode;
-                    ws.Cell($"G{row}").Value = omzet.FakturDate;
+                    ws.Cell($"G{row}").Value = FormatExportDate(omzet.FakturDate);
                     ws.Cell($"H{row}").Value = omzet.CustomerName;
                     ws.Cell($"I{row}").Value = omzet.Code;
                     ws.Cell($"J{row}").Value = omzet.Alamat;
                     ws.Cell($"K{row}").Value = omzet.FakturTotal;
-                    ws.Cell($"L{row}").Value = omzet.OmzetDate;
+                    ws.Cell($"L{row}").Value = FormatExportDate(omzet.OmzetDate);
                     ws.Cell($"M{row}").Value = status;
 
                     // Apply conditional formatting only to Status column (M)
@@ -183,6 +198,9 @@ namespace btr.distrib.SalesContext.SalesPersonAgg
             InfoGrid.TableDescriptor.Columns["FakturTotal"].Width = 100;
             InfoGrid.TableDescriptor.Columns["OrderId"].Width = 120;
 
+            HideGridColumn("OmzetStatus");
+            HideGridColumn("SaleKind");
+
             // Summary rows for totals
             var sumColOrderTotal = new GridSummaryColumnDescriptor("OrderTotal", SummaryType.DoubleAggregate, "OrderTotal", "{Sum}");
             sumColOrderTotal.Appearance.AnySummaryCell.Interior = new BrushInfo(Color.LightYellow);
@@ -214,6 +232,26 @@ namespace btr.distrib.SalesContext.SalesPersonAgg
             Proses();
         }
 
+        private void FullRebuildButton_Click(object sender, EventArgs e)
+        {
+            var confirm = MessageBox.Show(
+                "Rebuild semua data omzet dari seluruh order dan faktur? " +
+                "Proses ini dapat memakan waktu lama. Lanjutkan?",
+                "Rebuild Omzet",
+                MessageBoxButtons.YesNo,
+                MessageBoxIcon.Warning,
+                MessageBoxDefaultButton.Button2);
+            if (confirm != DialogResult.Yes)
+                return;
+
+            RunReconcile(ReconcileSalesOmzetScope.Full);
+            MessageBox.Show(
+                "Rebuild selesai. Jalankan Proses untuk periode laporan yang diinginkan.",
+                "Rebuild Omzet",
+                MessageBoxButtons.OK,
+                MessageBoxIcon.Information);
+        }
+
         private void Proses()
         {
             var tgl1 = Tgl1Date.Value;
@@ -228,11 +266,64 @@ namespace btr.distrib.SalesContext.SalesPersonAgg
                 return;
             }
 
-            var listOmzet = _salesOmzetDal.ListData(periode)?.ToList() ?? new List<SalesOmzetView>();
-            //listOmzet.RemoveAll(x => !string.IsNullOrEmpty(x.OrderId) && string.IsNullOrEmpty(x.FakturCode));
+            var mode = SalesPeriodCheckBox.Checked
+                ? SalesOmzetPeriodFilterMode.SalesPeriod
+                : SalesOmzetPeriodFilterMode.OmzetPeriod;
+
+            RunReconcile(ReconcileSalesOmzetScope.PeriodeScoped, periode);
+
+            var listOmzet = _salesOmzetDal.ListData(periode, mode)?.ToList() ?? new List<SalesOmzetView>();
             _dataSource = Filter(listOmzet, SearchText.Text);
             InfoGrid.DataSource = _dataSource;
         }
+
+        private void RunReconcile(
+            ReconcileSalesOmzetScope scope,
+            Periode periode = null,
+            string userId = null)
+        {
+            if (periode is null)
+            {
+                var end = DateTime.Today;
+                periode = new Periode(end.AddYears(-20), end);
+            }
+
+            if (userId is null)
+            {
+                userId = string.Empty;
+                if (Parent?.Parent is MainForm mainForm && mainForm.UserId != null)
+                    userId = mainForm.UserId.UserId;
+            }
+
+            var request = new ReconcileSalesOmzetRequest
+            {
+                Periode = periode,
+                Scope = scope,
+                UserId = userId
+            };
+
+            _reconcileWorker.Execute(request);
+            ShowReconcileStatus(request.Result);
+        }
+
+        private void ShowReconcileStatus(ReconcileSalesOmzetResult result)
+        {
+            if (result is null)
+            {
+                ReconcileStatusLabel.Text = string.Empty;
+                return;
+            }
+
+            var seconds = result.Duration.TotalSeconds;
+            ReconcileStatusLabel.Text =
+                $"Reconcile ({result.Scope}): {result.OrdersProcessed} order, {result.FaktursProcessed} faktur, " +
+                $"{result.RowsRefreshed} baris ({seconds:0.#} d)";
+        }
+
+        private static DateTime FormatExportDate(DateTime value) =>
+            SalesOmzetDates.IsSentinel(value) || value == DateTime.MinValue
+                ? default
+                : value;
 
         private List<SalesOmzetView> Filter(List<SalesOmzetView> source, string keyword)
         {
@@ -256,20 +347,27 @@ namespace btr.distrib.SalesContext.SalesPersonAgg
             return result.ToList();
         }
 
-        // Helper method to determine order status
-        private string GetOrderStatus(string orderId, string fakturCode)
+        private void HideGridColumn(string columnName)
         {
-            bool hasOrderId = !string.IsNullOrEmpty(orderId);
-            bool hasFakturCode = !string.IsNullOrEmpty(fakturCode);
+            if (InfoGrid.TableDescriptor.Columns.Contains(columnName))
+                InfoGrid.TableDescriptor.VisibleColumns.Remove(columnName);
+        }
 
-            if (hasOrderId && !hasFakturCode)
-                return "Outstanding Order";
-            else if (hasOrderId && hasFakturCode)
-                return "Completed Order";
-            else if (!hasOrderId && hasFakturCode)
-                return "Direct Sales";
-            else
-                return "Unknown";
+        private static string GetStatusDisplayText(SalesOmzetView omzet)
+        {
+            switch (omzet.OmzetStatus)
+            {
+                case SalesOmzetStatusEnum.Outstanding:
+                    return "Outstanding Order";
+                case SalesOmzetStatusEnum.PendingOmzet:
+                    return "Pending Omzet";
+                case SalesOmzetStatusEnum.Completed:
+                    return omzet.SaleKind == SaleKindEnum.DirectSale || string.IsNullOrEmpty(omzet.OrderId)
+                        ? "Direct Sales"
+                        : "Completed Order";
+                default:
+                    return "Unknown";
+            }
         }
 
         // Helper method to get color based on status
@@ -283,6 +381,8 @@ namespace btr.distrib.SalesContext.SalesPersonAgg
                     return Color.PaleGreen;  // Green for completed
                 case "Direct Sales":
                     return Color.PowderBlue;  // Blue for direct sales
+                case "Pending Omzet":
+                    return Color.LightGoldenrodYellow;
                 default:
                     return Color.White;
             }

@@ -151,6 +151,18 @@ namespace btr.infrastructure.SalesContext.SalesOmzetAgg
             }
         }
 
+        public IEnumerable<SalesOmzetModel> ListAll()
+        {
+            var sql = $@"
+            SELECT {SelectColumns}
+            FROM BTR_SalesOmzet";
+
+            using (var conn = new SqlConnection(ConnStringHelper.Get(_opt)))
+            {
+                return conn.Read<SalesOmzetModel>(sql);
+            }
+        }
+
         private static DynamicParameters CreateParameters(SalesOmzetModel model)
         {
             var dp = new DynamicParameters();
