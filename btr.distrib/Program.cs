@@ -17,6 +17,10 @@ using btr.distrib.Helpers;
 using btr.application.SupportContext.TglJamAgg;
 using btr.distrib.Browsers;
 using btr.infrastructure.SupportContext.TglJamAgg;
+using btr.application.SalesContext.SalesOmzetAgg.Contracts;
+using btr.application.SalesContext.SalesOmzetAgg.Policies;
+using btr.application.SalesContext.SalesOmzetAgg.Services;
+using btr.infrastructure.SalesContext.SalesOmzetAgg;
 using Microsoft.Win32;
 using System.Threading;
 using System.Collections.Generic;
@@ -166,6 +170,14 @@ namespace btr.distrib
             services.Configure<DatabaseOptions>(configuration.GetSection(DatabaseOptions.SECTION_NAME));
             services.Configure<PrinterOptions>(configuration.GetSection(PrinterOptions.SECTION_NAME));
             services.AddScoped<INunaCounterDal, ParamNoDal>();
+
+            services.AddScoped<ISalesOmzetSourceDal, SalesOmzetSourceDal>();
+            services.AddScoped<ISalesOmzetEligibilityPolicy, SalesOmzetEligibilityPolicy>();
+            services.AddScoped<ISalesOmzetSaleKindPolicy, SalesOmzetSaleKindPolicy>();
+            services.AddScoped<ISalesOmzetStatusPolicy, SalesOmzetStatusPolicy>();
+            services.AddScoped<ISalesOmzetPeriodPolicy, SalesOmzetPeriodPolicy>();
+            services.AddScoped<ISalesOmzetSnapshotBuilder, SalesOmzetSnapshotBuilder>();
+            services.AddScoped<ISalesOmzetLinker, SalesOmzetLinker>();
 
             services
                 .Scan(selector => selector

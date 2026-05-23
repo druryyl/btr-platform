@@ -339,7 +339,9 @@ Source DAL, all policies, linker, snapshot builder (KembaliFaktur omzet date, fr
 
 ### Phase 3 — Reconcile worker (1–2 days)
 
-Worker + request; idempotent create/link; OrderedSale → DirectSale link scenario.
+Worker + request; idempotent create/link; compose Phase 2 linker end-to-end.
+
+**→ Follow [Phase 3 — Agent kickoff](#phase-3--agent-kickoff) below before coding.**
 
 ### Phase 4 — RO2 integration (1 day)
 
