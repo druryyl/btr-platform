@@ -173,6 +173,7 @@
     <Compile Include="SalesContext\RuteAgg\IRuteKey.cs" />
     <Compile Include="SalesContext\RuteAgg\RuteItemModel.cs" />
     <Compile Include="SalesContext\RuteAgg\RuteModel.cs" />
+    <Compile Include="SalesContext\SalesOmzetAgg\ReconcileSalesOmzetScope.cs" />
     <Compile Include="SalesContext\SalesOmzetAgg\ISalesOmzetKey.cs" />
     <Compile Include="SalesContext\SalesOmzetAgg\SaleKindEnum.cs" />
     <Compile Include="SalesContext\SalesOmzetAgg\SalesOmzetModel.cs" />

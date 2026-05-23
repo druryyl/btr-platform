@@ -691,15 +691,190 @@ When linking faktur to order, load faktur by `OrderId` regardless of whether `Fa
 
 ---
 
-## Phase 3–4 — Agent kickoff (brief)
+## Phase 3 — Agent kickoff
 
-### Phase 3 prompt
+Use this section when starting a **new agent session** for Phase 3 only. Read the full artifact for business context; this section is the **execution contract**.
 
-```text
-Implement Phase 3: ReconcileSalesOmzetWorker + ReconcileSalesOmzetRequest.
-Compose Phase 2 policies/linker/snapshot; TransHelper.NewScope; idempotent create/link.
-Out of scope: form, ListData period mode.
+See also: [Reconcile worker](#reconcile-worker), [Testing checklist](#testing-checklist), [Phase 2 — Agent kickoff](#phase-2--agent-kickoff).
+
+### Copy-paste prompt (new session)
+
+Copy from **BEGIN PHASE 3 PROMPT** through **END PHASE 3 PROMPT**.
+
+---
+
+**BEGIN PHASE 3 PROMPT**
+
+Implement **Phase 3 — Reconcile worker** for the Sales Omzet aggregate.
+
+**Primary reference:** `docs/plans/sales-omzet-aggregate-implementation.md` (Reconcile worker, Business vocabulary, Testing checklist, Phase 3 — Agent kickoff).
+
+**Prerequisites:** Phase 1 (entity persistence) and Phase 2 (policies, source DAL, linker) are **complete**. Compose existing services — do not reimplement business rules in the worker.
+
+### Context
+
+`ReconcileSalesOmzetWorker` is the **only** process that should create/link/refresh `BTR_SalesOmzet` rows in bulk (until optional scheduler in Phase 5). It orchestrates Phase 2 components inside a transaction. Phase 4 will call this worker from `SalesOmzetInfoForm.Proses()` before `ListData`.
+
+**Do not change:** Create Order, Save Faktur, `ISalesOmzetDal` / `SalesOmzetView`, legacy UNION `SalesOmzetDal`, or `SalesOmzetInfoForm` (Phase 4).
+
+### Phase 2 artifacts (already exist — use as-is)
+
+| Component | Path |
+|-----------|------|
+| Linker | `ISalesOmzetLinker` / `SalesOmzetLinker` — `FindOrCreateForOrder`, `FindOrCreateForFaktur`, `Refresh` |
+| Source | `ISalesOmzetSourceDal` / `SalesOmzetSourceDal` — `ListOrders(Periode)`, `ListFakturs(Periode)`, get-by-id |
+| Policies | `Policies/SalesOmzet*.cs` (eligibility, status, sale kind, period, snapshot) |
+| Entity DAL | `ISalesOmzetEntityDal` / `SalesOmzetEntityDal` |
+| Writer | `ISalesOmzetWriter` / `SalesOmzetWriter` |
+| Dates helper | `SalesOmzetDates.Sentinel` |
+| DI (policies + linker + source) | `btr.distrib/Program.cs` (lines ~174–180) |
+| Policy unit tests | `btr.test/SalesContext/SalesOmzetPoliciesTest.cs` |
+
+**Important linker behavior (Phase 3 must call `Refresh` after link):**
+
+- `FindOrCreateForFaktur` when attaching to an ordered row currently sets `FakturId` and `Save` but does **not** fully hydrate faktur/omzet fields — **`Refresh(row)`** must run after create/link.
+- `Refresh` preserves `SalesDate` (frozen); loads faktur via `GetFakturByOrderId` without report-period filter.
+
+### Phase 3 — In scope
+
+1. **`ReconcileSalesOmzetRequest.cs`** (in `UseCases/`)
+   - `Periode Periode` (required — same window as RO2, max 122 days validated in form later; optional validation in worker)
+   - `string UserId` (optional — for future audit; set `LastReconciledAt` regardless)
+   - `ReconcileSalesOmzetScope Scope` enum (see below)
+
+2. **`ReconcileSalesOmzetScope` enum** (domain or application)
+   - `PeriodeScoped` (default) — process `ListOrders(periode)` + `ListFakturs(periode)`; refresh all touched rows
+   - `Full` (optional) — process all orders/fakturs or all `BTR_SalesOmzet` rows; document if deferred
+
+3. **`IReconcileSalesOmzetWorker`** : `INunaServiceVoid<ReconcileSalesOmzetRequest>`
+   **`ReconcileSalesOmzetWorker`** — orchestration only:
+
+   | Step | Action |
+   |------|--------|
+   | 1 | `using (var trans = TransHelper.NewScope())` |
+   | 2 | Load `orders = _source.ListOrders(request.Periode)` |
+   | 3 | `HashSet<string>` or list of `SalesOmzetId` **touched** |
+   | 4 | For each eligible order: `row = _linker.FindOrCreateForOrder(order)`; if row != null → add id → `_linker.Refresh(row)` |
+   | 5 | Load `fakturs = _source.ListFakturs(request.Periode)` |
+   | 6 | For each eligible faktur: `row = _linker.FindOrCreateForFaktur(faktur)`; if row != null → add id → `_linker.Refresh(row)` |
+   | 7 | **Refresh pass (if not refreshed inline):** for each touched id, `GetData` → `_linker.Refresh(row)` — use single refresh after create/link to avoid duplicate saves |
+   | 8 | **Optional scope refresh:** load existing `BTR_SalesOmzet` rows overlapping periode (add `ISalesOmzetEntityDal.ListForReconcileScope(Periode)` if needed) and `Refresh` any not yet touched — ensures stale rows update when only source lists changed |
+   | 9 | **Cleanup:** rows marked `Void` by eligibility during refresh stay in DB (linker sets `OmzetStatus = Void`); physical `DELETE` only if you add explicit policy — default: leave Void rows, Phase 4 list filters them out |
+   | 10 | `trans.Complete()` |
+
+   **Idempotency:** second run with same data must not create duplicate `SalesOmzetId` (unique `OrderId` / `FakturId`).
+
+   **Transaction pattern:** match `ChangeToCashFakturWorker` / `SaveFakturWorker` — `TransHelper.NewScope()` + `Complete()`.
+
+4. **Optional DAL extension** (if needed for step 8):
+
+   ```csharp
+   // ISalesOmzetEntityDal
+   IEnumerable<SalesOmzetModel> ListForReconcileScope(Periode periode);
+   ```
+
+   SQL: rows where `SalesDate`, `OmzetDate`, `OrderDate`, or `FakturDate` between `@Tgl1` and `@Tgl2` (wide net for scoped reconcile). Document in XML comment.
+
+5. **`.csproj`** entries for new files in `btr.application` (and test project if added).
+
+6. **DI:** `IReconcileSalesOmzetWorker` auto-registers via Scrutor `INunaServiceVoid<>` scan in `Program.cs` — verify no manual registration required.
+
+7. **Tests** (recommended):
+   - `btr.test/SalesContext/SalesOmzetReconcileTest.cs` — integration test against dev DB (mirror `SalesOmzetEntityDalTest` setup), OR
+   - Manual test script documented in PR description.
+
+   **Acceptance scenarios** (from plan testing checklist):
+
+   | Action | Expected |
+   |--------|----------|
+   | Reconcile order Jan, no faktur | One `OrderedSale`, `Outstanding`, `SalesDate` = Jan |
+   | Reconcile again after KembaliFaktur Feb | Same `SalesOmzetId`, `OmzetDate` Feb, `SalesDate` still Jan, status `Completed` |
+   | Direct faktur reconcile | `DirectSale`, `SalesDate` = faktur date |
+   | Second reconcile same period | No duplicate rows |
+
+### Phase 3 — Out of scope
+
+- `SalesOmzetInfoForm` changes / injecting worker into form (Phase 4)
+- `ISalesOmzetDal.ListData(periode, SalesOmzetPeriodFilterMode)` (Phase 4)
+- Removing legacy `SalesPersonAgg/SalesOmzetDal.cs` UNION
+- Scheduled job / `btr.sync` (Phase 5)
+- Changing Phase 2 policy rules (only fix bugs if reconcile exposes them)
+
+### Reconcile scope vs period filter (do not confuse)
+
+| Concept | Purpose |
+|---------|---------|
+| **Reconcile `Periode`** | Limits which **source** orders/fakturs are **processed** in this run (`ListOrders` / `ListFakturs`). |
+| **Linker `GetFakturByOrderId`** | No faktur-date filter — faktur outside periode still links on refresh. |
+| **Omzet Period / Sales Period** | **Read** filter for RO2 grid (Phase 4) — **not** used inside reconcile worker. |
+
+### Suggested worker structure (pseudocode)
+
+```csharp
+public void Execute(ReconcileSalesOmzetRequest request)
+{
+    var touched = new Dictionary<string, SalesOmzetModel>(StringComparer.Ordinal);
+
+    using (var trans = TransHelper.NewScope())
+    {
+        foreach (var order in _source.ListOrders(request.Periode))
+        {
+            var row = _linker.FindOrCreateForOrder(order);
+            if (row != null) touched[row.SalesOmzetId] = row;
+        }
+
+        foreach (var faktur in _source.ListFakturs(request.Periode))
+        {
+            var row = _linker.FindOrCreateForFaktur(faktur);
+            if (row != null) touched[row.SalesOmzetId] = row;
+        }
+
+        // Optional: merge ListForReconcileScope into touched
+
+        foreach (var row in touched.Values)
+            _linker.Refresh(row);
+
+        trans.Complete();
+    }
+}
 ```
+
+Avoid double-`Refresh` if you already refresh inside the loop — pick **one** pattern (refresh once after all creates is clearer).
+
+### Definition of done (Phase 3)
+
+- [ ] Solution builds
+- [ ] `IReconcileSalesOmzetWorker.Execute` runs without error for a 1–3 month `Periode` on dev DB
+- [ ] Creates ordered row without faktur; second run after faktur+KembaliFaktur updates same `SalesOmzetId`
+- [ ] Direct faktur creates `DirectSale` row
+- [ ] No duplicate `SalesOmzetId` for same `OrderId` / `FakturId`
+- [ ] `SalesDate` unchanged after faktur link + refresh (Jan order / Feb omzet case)
+- [ ] Legacy RO2 form still uses old `ISalesOmzetDal` and works unchanged
+- [ ] (Recommended) At least one automated or documented manual test for idempotency
+
+### Reference files
+
+| File | Why |
+|------|-----|
+| `docs/plans/sales-omzet-aggregate-implementation.md` | Master plan |
+| `SalesOmzetLinker.cs` | Create/link/refresh behavior |
+| `ISalesOmzetSourceDal.cs` | Scoped source lists |
+| `ChangeToCashFakturWorker.cs` | `TransHelper.NewScope` pattern |
+| `SalesOmzetEntityDalTest.cs` | DB connection pattern for tests |
+| `SalesOmzetPoliciesTest.cs` | Policy expectations |
+
+### Coding conventions
+
+- Namespace: `btr.application.SalesContext.SalesOmzetAgg.UseCases`
+- Worker implements `INunaServiceVoid<ReconcileSalesOmzetRequest>` — no return value
+- Log counts optional: orders processed, fakturs processed, rows refreshed (simple `Debug` or leave for Phase 5)
+- Do not embed SQL in the worker — use source DAL + linker only
+
+**END PHASE 3 PROMPT**
+
+---
+
+## Phase 4 — Agent kickoff (brief)
 
 ### Phase 4 prompt
 

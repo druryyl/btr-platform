@@ -1,8 +1,10 @@
+using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlClient;
 using btr.application.SalesContext.SalesOmzetAgg.Contracts;
 using btr.domain.SalesContext.SalesOmzetAgg;
 using btr.infrastructure.Helpers;
+using btr.nuna.Domain;
 using btr.nuna.Infrastructure;
 using Dapper;
 using Microsoft.Extensions.Options;
@@ -126,6 +128,26 @@ namespace btr.infrastructure.SalesContext.SalesOmzetAgg
             using (var conn = new SqlConnection(ConnStringHelper.Get(_opt)))
             {
                 return conn.ReadSingle<SalesOmzetModel>(sql, dp);
+            }
+        }
+
+        public IEnumerable<SalesOmzetModel> ListForReconcileScope(Periode periode)
+        {
+            var sql = $@"
+            SELECT {SelectColumns}
+            FROM BTR_SalesOmzet
+            WHERE SalesDate BETWEEN @Tgl1 AND @Tgl2
+               OR OmzetDate BETWEEN @Tgl1 AND @Tgl2
+               OR OrderDate BETWEEN @Tgl1 AND @Tgl2
+               OR FakturDate BETWEEN @Tgl1 AND @Tgl2";
+
+            var dp = new DynamicParameters();
+            dp.AddParam("@Tgl1", periode.Tgl1, SqlDbType.DateTime);
+            dp.AddParam("@Tgl2", periode.Tgl2, SqlDbType.DateTime);
+
+            using (var conn = new SqlConnection(ConnStringHelper.Get(_opt)))
+            {
+                return conn.Read<SalesOmzetModel>(sql, dp);
             }
         }
 

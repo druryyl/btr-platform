@@ -126,6 +126,7 @@
     <Compile Include="SalesContext\NumericHelperTest.cs" />
     <Compile Include="SalesContext\SalesOmzetEntityDalTest.cs" />
     <Compile Include="SalesContext\SalesOmzetPoliciesTest.cs" />
+    <Compile Include="SalesContext\SalesOmzetReconcileTest.cs" />
     <Compile Include="SalesContext\SalesPersonDalTest.cs" />
     <Compile Include="SalesContext\SegmentDalTest.cs" />
     <Compile Include="Tests.cs" />
