@@ -1,0 +1,1310 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{6884F4FD-C792-4FD2-A3FA-8EC2E3B49E06}</ProjectGuid>
+    <OutputType>WinExe</OutputType>
+    <RootNamespace>btr.distrib</RootNamespace>
+    <AssemblyName>btr.distrib</AssemblyName>
+    <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+    <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
+    <Deterministic>true</Deterministic>
+    <IsWebBootstrapper>false</IsWebBootstrapper>
+    <PublishUrl>publish\</PublishUrl>
+    <Install>true</Install>
+    <InstallFrom>Disk</InstallFrom>
+    <UpdateEnabled>false</UpdateEnabled>
+    <UpdateMode>Foreground</UpdateMode>
+    <UpdateInterval>7</UpdateInterval>
+    <UpdateIntervalUnits>Days</UpdateIntervalUnits>
+    <UpdatePeriodically>false</UpdatePeriodically>
+    <UpdateRequired>false</UpdateRequired>
+    <MapFileExtensions>true</MapFileExtensions>
+    <ApplicationRevision>354</ApplicationRevision>
+    <ApplicationVersion>1.0.0.%2a</ApplicationVersion>
+    <UseApplicationTrust>false</UseApplicationTrust>
+    <PublishWizardCompleted>true</PublishWizardCompleted>
+    <BootstrapperEnabled>true</BootstrapperEnabled>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup>
+    <ManifestCertificateThumbprint>E54F7901DDEBFA3636AC9B92AE69D0ED80818FCC</ManifestCertificateThumbprint>
+  </PropertyGroup>
+  <PropertyGroup>
+    <ManifestKeyFile>btr.distrib_TemporaryKey.pfx</ManifestKeyFile>
+  </PropertyGroup>
+  <PropertyGroup>
+    <GenerateManifests>true</GenerateManifests>
+  </PropertyGroup>
+  <PropertyGroup>
+    <SignManifests>false</SignManifests>
+  </PropertyGroup>
+  <PropertyGroup>
+    <ApplicationIcon>icons8_truck.ico</ApplicationIcon>
+  </PropertyGroup>
+  <PropertyGroup>
+    <SignAssembly>false</SignAssembly>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="ClosedXML, Version=0.102.1.0, Culture=neutral, PublicKeyToken=fd1eb21b62ae805b, processorArchitecture=MSIL">
+      <HintPath>..\packages\ClosedXML.0.102.1\lib\netstandard2.0\ClosedXML.dll</HintPath>
+    </Reference>
+    <Reference Include="DocumentFormat.OpenXml, Version=2.16.0.0, Culture=neutral, PublicKeyToken=8fb06cb64d019a17, processorArchitecture=MSIL">
+      <HintPath>..\packages\DocumentFormat.OpenXml.2.16.0\lib\net46\DocumentFormat.OpenXml.dll</HintPath>
+    </Reference>
+    <Reference Include="ExcelNumberFormat, Version=1.1.0.0, Culture=neutral, PublicKeyToken=23c6f5d73be07eca, processorArchitecture=MSIL">
+      <HintPath>..\packages\ExcelNumberFormat.1.1.0\lib\net20\ExcelNumberFormat.dll</HintPath>
+    </Reference>
+    <Reference Include="FluentValidation, Version=11.0.0.0, Culture=neutral, PublicKeyToken=7de548da2fbae0f0, processorArchitecture=MSIL">
+      <HintPath>..\packages\FluentValidation.11.6.0\lib\netstandard2.0\FluentValidation.dll</HintPath>
+    </Reference>
+    <Reference Include="FluentValidation.DependencyInjectionExtensions, Version=11.0.0.0, Culture=neutral, PublicKeyToken=7de548da2fbae0f0, processorArchitecture=MSIL">
+      <HintPath>..\packages\FluentValidation.DependencyInjectionExtensions.11.6.0\lib\netstandard2.0\FluentValidation.DependencyInjectionExtensions.dll</HintPath>
+    </Reference>
+    <Reference Include="Irony, Version=1.0.11.0, Culture=neutral, PublicKeyToken=ca48ace7223ead47, processorArchitecture=MSIL">
+      <HintPath>..\packages\Irony.NetCore.1.0.11\lib\net461\Irony.dll</HintPath>
+    </Reference>
+    <Reference Include="JetBrains.Annotations, Version=4242.42.42.42, Culture=neutral, PublicKeyToken=1010a0d8d6380325, processorArchitecture=MSIL">
+      <HintPath>..\packages\JetBrains.Annotations.2023.2.0\lib\net20\JetBrains.Annotations.dll</HintPath>
+    </Reference>
+    <Reference Include="Mapster, Version=7.3.0.0, Culture=neutral, PublicKeyToken=2f39883af23c29a8, processorArchitecture=MSIL">
+      <HintPath>..\packages\Mapster.7.3.0\lib\netstandard2.0\Mapster.dll</HintPath>
+    </Reference>
+    <Reference Include="Mapster.Core, Version=1.2.0.0, Culture=neutral, PublicKeyToken=e64997d676a9c1d3, processorArchitecture=MSIL">
+      <HintPath>..\packages\Mapster.Core.1.2.0\lib\net45\Mapster.Core.dll</HintPath>
+    </Reference>
+    <Reference Include="MediatR, Version=12.0.0.0, Culture=neutral, PublicKeyToken=bb9a41a5e8aaa7e2, processorArchitecture=MSIL">
+      <HintPath>..\packages\MediatR.12.1.1\lib\netstandard2.0\MediatR.dll</HintPath>
+    </Reference>
+    <Reference Include="MediatR.Contracts, Version=2.0.1.0, Culture=neutral, PublicKeyToken=bb9a41a5e8aaa7e2, processorArchitecture=MSIL">
+      <HintPath>..\packages\MediatR.Contracts.2.0.1\lib\netstandard2.0\MediatR.Contracts.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.Bcl.AsyncInterfaces, Version=8.0.0.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.Bcl.AsyncInterfaces.8.0.0\lib\net462\Microsoft.Bcl.AsyncInterfaces.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.Extensions.Configuration, Version=7.0.0.0, Culture=neutral, PublicKeyToken=adb9793829ddae60, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.Extensions.Configuration.7.0.0\lib\net462\Microsoft.Extensions.Configuration.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.Extensions.Configuration.Abstractions, Version=7.0.0.0, Culture=neutral, PublicKeyToken=adb9793829ddae60, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.Extensions.Configuration.Abstractions.7.0.0\lib\net462\Microsoft.Extensions.Configuration.Abstractions.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.Extensions.Configuration.Binder, Version=7.0.0.0, Culture=neutral, PublicKeyToken=adb9793829ddae60, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.Extensions.Configuration.Binder.7.0.0\lib\net462\Microsoft.Extensions.Configuration.Binder.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.Extensions.Configuration.FileExtensions, Version=7.0.0.0, Culture=neutral, PublicKeyToken=adb9793829ddae60, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.Extensions.Configuration.FileExtensions.7.0.0\lib\net462\Microsoft.Extensions.Configuration.FileExtensions.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.Extensions.Configuration.Json, Version=7.0.0.0, Culture=neutral, PublicKeyToken=adb9793829ddae60, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.Extensions.Configuration.Json.7.0.0\lib\net462\Microsoft.Extensions.Configuration.Json.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.Extensions.DependencyInjection, Version=7.0.0.0, Culture=neutral, PublicKeyToken=adb9793829ddae60, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.Extensions.DependencyInjection.7.0.0\lib\net462\Microsoft.Extensions.DependencyInjection.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.Extensions.DependencyInjection.Abstractions, Version=7.0.0.0, Culture=neutral, PublicKeyToken=adb9793829ddae60, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.Extensions.DependencyInjection.Abstractions.7.0.0\lib\net462\Microsoft.Extensions.DependencyInjection.Abstractions.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.Extensions.DependencyModel, Version=3.1.25.0, Culture=neutral, PublicKeyToken=adb9793829ddae60, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.Extensions.DependencyModel.3.1.25\lib\net451\Microsoft.Extensions.DependencyModel.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.Extensions.FileProviders.Abstractions, Version=7.0.0.0, Culture=neutral, PublicKeyToken=adb9793829ddae60, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.Extensions.FileProviders.Abstractions.7.0.0\lib\net462\Microsoft.Extensions.FileProviders.Abstractions.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.Extensions.FileProviders.Physical, Version=7.0.0.0, Culture=neutral, PublicKeyToken=adb9793829ddae60, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.Extensions.FileProviders.Physical.7.0.0\lib\net462\Microsoft.Extensions.FileProviders.Physical.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.Extensions.FileSystemGlobbing, Version=7.0.0.0, Culture=neutral, PublicKeyToken=adb9793829ddae60, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.Extensions.FileSystemGlobbing.7.0.0\lib\net462\Microsoft.Extensions.FileSystemGlobbing.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.Extensions.Options, Version=7.0.0.1, Culture=neutral, PublicKeyToken=adb9793829ddae60, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.Extensions.Options.7.0.1\lib\net462\Microsoft.Extensions.Options.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.Extensions.Options.ConfigurationExtensions, Version=7.0.0.0, Culture=neutral, PublicKeyToken=adb9793829ddae60, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.Extensions.Options.ConfigurationExtensions.7.0.0\lib\net462\Microsoft.Extensions.Options.ConfigurationExtensions.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.Extensions.Primitives, Version=7.0.0.0, Culture=neutral, PublicKeyToken=adb9793829ddae60, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.Extensions.Primitives.7.0.0\lib\net462\Microsoft.Extensions.Primitives.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.Office.Interop.Excel, Version=15.0.0.0, Culture=neutral, PublicKeyToken=71e9bce111e9429c, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.Office.Interop.Excel.15.0.4795.1001\lib\net20\Microsoft.Office.Interop.Excel.dll</HintPath>
+      <EmbedInteropTypes>True</EmbedInteropTypes>
+    </Reference>
+    <Reference Include="Microsoft.ReportViewer.Common, Version=15.0.0.0, Culture=neutral, PublicKeyToken=89845dcd8080cc91, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.ReportingServices.ReportViewerControl.Winforms.150.1652.0\lib\net40\Microsoft.ReportViewer.Common.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.ReportViewer.DataVisualization, Version=15.0.0.0, Culture=neutral, PublicKeyToken=89845dcd8080cc91, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.ReportingServices.ReportViewerControl.Winforms.150.1652.0\lib\net40\Microsoft.ReportViewer.DataVisualization.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.ReportViewer.Design, Version=15.0.0.0, Culture=neutral, PublicKeyToken=89845dcd8080cc91, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.ReportingServices.ReportViewerControl.Winforms.150.1652.0\lib\net40\Microsoft.ReportViewer.Design.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.ReportViewer.ProcessingObjectModel, Version=15.0.0.0, Culture=neutral, PublicKeyToken=89845dcd8080cc91, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.ReportingServices.ReportViewerControl.Winforms.150.1652.0\lib\net40\Microsoft.ReportViewer.ProcessingObjectModel.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.ReportViewer.WinForms, Version=15.0.0.0, Culture=neutral, PublicKeyToken=89845dcd8080cc91, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.ReportingServices.ReportViewerControl.Winforms.150.1652.0\lib\net40\Microsoft.ReportViewer.WinForms.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.SqlServer.Types, Version=14.0.0.0, Culture=neutral, PublicKeyToken=89845dcd8080cc91, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.SqlServer.Types.14.0.314.76\lib\net40\Microsoft.SqlServer.Types.dll</HintPath>
+    </Reference>
+    <Reference Include="Newtonsoft.Json, Version=13.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
+      <HintPath>..\packages\Newtonsoft.Json.13.0.1\lib\net45\Newtonsoft.Json.dll</HintPath>
+    </Reference>
+    <Reference Include="Polly, Version=7.0.0.0, Culture=neutral, PublicKeyToken=c8a3ffc3f8f825cc, processorArchitecture=MSIL">
+      <HintPath>..\packages\Polly.7.2.4\lib\net472\Polly.dll</HintPath>
+    </Reference>
+    <Reference Include="Polly.Core, Version=8.0.0.0, Culture=neutral, PublicKeyToken=c8a3ffc3f8f825cc, processorArchitecture=MSIL">
+      <HintPath>..\packages\Polly.Core.8.0.0\lib\net472\Polly.Core.dll</HintPath>
+    </Reference>
+    <Reference Include="Scrutor, Version=4.0.0.0, Culture=neutral, PublicKeyToken=167d3117ac9a6821, processorArchitecture=MSIL">
+      <HintPath>..\packages\Scrutor.4.2.2\lib\net461\Scrutor.dll</HintPath>
+    </Reference>
+    <Reference Include="SixLabors.Fonts, Version=1.0.0.0, Culture=neutral, PublicKeyToken=d998eea7b14cab13, processorArchitecture=MSIL">
+      <HintPath>..\packages\SixLabors.Fonts.1.0.0\lib\netstandard2.0\SixLabors.Fonts.dll</HintPath>
+    </Reference>
+    <Reference Include="Syncfusion.Core.WinForms, Version=22.1460.34.0, Culture=neutral, PublicKeyToken=3d67ed1f87d44c89" />
+    <Reference Include="Syncfusion.Data.WinForms, Version=22.1460.34.0, Culture=neutral, PublicKeyToken=3d67ed1f87d44c89" />
+    <Reference Include="Syncfusion.DataSource.WinForms, Version=22.1460.34.0, Culture=neutral, PublicKeyToken=3d67ed1f87d44c89" />
+    <Reference Include="Syncfusion.Diagram.Base, Version=22.1460.34.0, Culture=neutral, PublicKeyToken=3d67ed1f87d44c89" />
+    <Reference Include="Syncfusion.Diagram.Windows, Version=22.1460.34.0, Culture=neutral, PublicKeyToken=3d67ed1f87d44c89, processorArchitecture=MSIL" />
+    <Reference Include="Syncfusion.Grid.Base, Version=22.1460.34.0, Culture=neutral, PublicKeyToken=3d67ed1f87d44c89" />
+    <Reference Include="Syncfusion.Grid.Grouping.Windows, Version=22.1460.34.0, Culture=neutral, PublicKeyToken=3d67ed1f87d44c89, processorArchitecture=MSIL" />
+    <Reference Include="Syncfusion.Grid.Windows, Version=22.1460.34.0, Culture=neutral, PublicKeyToken=3d67ed1f87d44c89" />
+    <Reference Include="Syncfusion.GridCommon.WinForms, Version=22.1460.34.0, Culture=neutral, PublicKeyToken=3d67ed1f87d44c89" />
+    <Reference Include="Syncfusion.Grouping.Base, Version=22.1460.34.0, Culture=neutral, PublicKeyToken=3d67ed1f87d44c89" />
+    <Reference Include="Syncfusion.Licensing, Version=26.1462.35.0, Culture=neutral, PublicKeyToken=632609b4d040f6b4, processorArchitecture=MSIL">
+      <HintPath>..\packages\Syncfusion.Licensing.26.1.35\lib\net462\Syncfusion.Licensing.dll</HintPath>
+    </Reference>
+    <Reference Include="Syncfusion.SfDataGrid.WinForms, Version=22.1460.34.0, Culture=neutral, PublicKeyToken=3d67ed1f87d44c89, processorArchitecture=MSIL" />
+    <Reference Include="Syncfusion.SfInput.WinForms, Version=22.1460.34.0, Culture=neutral, PublicKeyToken=3d67ed1f87d44c89" />
+    <Reference Include="Syncfusion.SfListView.WinForms, Version=22.1460.34.0, Culture=neutral, PublicKeyToken=3d67ed1f87d44c89, processorArchitecture=MSIL" />
+    <Reference Include="Syncfusion.Shared.Base, Version=22.1460.34.0, Culture=neutral, PublicKeyToken=3d67ed1f87d44c89" />
+    <Reference Include="Syncfusion.Shared.Windows, Version=22.1460.34.0, Culture=neutral, PublicKeyToken=3d67ed1f87d44c89" />
+    <Reference Include="Syncfusion.SpellChecker.Base, Version=22.1460.34.0, Culture=neutral, PublicKeyToken=3d67ed1f87d44c89" />
+    <Reference Include="Syncfusion.Tools.Base, Version=22.1460.34.0, Culture=neutral, PublicKeyToken=3d67ed1f87d44c89" />
+    <Reference Include="Syncfusion.Tools.Windows, Version=22.1460.34.0, Culture=neutral, PublicKeyToken=3d67ed1f87d44c89, processorArchitecture=MSIL" />
+    <Reference Include="System" />
+    <Reference Include="System.Buffers, Version=4.0.3.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
+      <HintPath>..\packages\System.Buffers.4.5.1\lib\net461\System.Buffers.dll</HintPath>
+    </Reference>
+    <Reference Include="System.ComponentModel.Annotations, Version=4.2.1.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <HintPath>..\packages\System.ComponentModel.Annotations.4.5.0\lib\net461\System.ComponentModel.Annotations.dll</HintPath>
+    </Reference>
+    <Reference Include="System.ComponentModel.Composition" />
+    <Reference Include="System.ComponentModel.DataAnnotations" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Design" />
+    <Reference Include="System.IO, Version=4.1.1.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <HintPath>..\packages\System.IO.4.3.0\lib\net462\System.IO.dll</HintPath>
+      <Private>True</Private>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="System.IO.Packaging, Version=6.0.0.1, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <HintPath>..\packages\System.IO.Packaging.6.0.1\lib\net461\System.IO.Packaging.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Memory, Version=4.0.1.2, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
+      <HintPath>..\packages\System.Memory.4.5.5\lib\net461\System.Memory.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Net.Http, Version=4.1.1.3, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <HintPath>..\packages\System.Net.Http.4.3.4\lib\net46\System.Net.Http.dll</HintPath>
+      <Private>True</Private>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="System.Numerics" />
+    <Reference Include="System.Numerics.Vectors, Version=4.1.4.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <HintPath>..\packages\System.Numerics.Vectors.4.5.0\lib\net46\System.Numerics.Vectors.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Runtime, Version=4.1.1.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <HintPath>..\packages\System.Runtime.4.3.0\lib\net462\System.Runtime.dll</HintPath>
+      <Private>True</Private>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="System.Runtime.CompilerServices.Unsafe, Version=6.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <HintPath>..\packages\System.Runtime.CompilerServices.Unsafe.6.0.0\lib\net461\System.Runtime.CompilerServices.Unsafe.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Runtime.InteropServices.RuntimeInformation, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <HintPath>..\packages\System.Runtime.InteropServices.RuntimeInformation.4.0.0\lib\net45\System.Runtime.InteropServices.RuntimeInformation.dll</HintPath>
+      <Private>True</Private>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="System.Runtime.Serialization" />
+    <Reference Include="System.Runtime.Serialization.Formatters.Soap" />
+    <Reference Include="System.Security.Cryptography.Algorithms, Version=4.2.1.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <HintPath>..\packages\System.Security.Cryptography.Algorithms.4.3.1\lib\net463\System.Security.Cryptography.Algorithms.dll</HintPath>
+      <Private>True</Private>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="System.Security.Cryptography.Encoding, Version=4.0.1.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <HintPath>..\packages\System.Security.Cryptography.Encoding.4.3.0\lib\net46\System.Security.Cryptography.Encoding.dll</HintPath>
+      <Private>True</Private>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="System.Security.Cryptography.Primitives, Version=4.0.1.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <HintPath>..\packages\System.Security.Cryptography.Primitives.4.3.0\lib\net46\System.Security.Cryptography.Primitives.dll</HintPath>
+      <Private>True</Private>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="System.Security.Cryptography.X509Certificates, Version=4.1.1.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <HintPath>..\packages\System.Security.Cryptography.X509Certificates.4.3.0\lib\net461\System.Security.Cryptography.X509Certificates.dll</HintPath>
+      <Private>True</Private>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="System.Text.Encodings.Web, Version=8.0.0.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
+      <HintPath>..\packages\System.Text.Encodings.Web.8.0.0\lib\net462\System.Text.Encodings.Web.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Text.Json, Version=8.0.0.5, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
+      <HintPath>..\packages\System.Text.Json.8.0.5\lib\net462\System.Text.Json.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Text.RegularExpressions, Version=4.1.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <HintPath>..\packages\System.Text.RegularExpressions.4.3.1\lib\net463\System.Text.RegularExpressions.dll</HintPath>
+      <Private>True</Private>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="System.Threading.Tasks.Extensions, Version=4.2.0.1, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
+      <HintPath>..\packages\System.Threading.Tasks.Extensions.4.5.4\lib\net461\System.Threading.Tasks.Extensions.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Transactions" />
+    <Reference Include="System.ValueTuple, Version=4.0.3.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
+      <HintPath>..\packages\System.ValueTuple.4.5.0\lib\net47\System.ValueTuple.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Windows.Forms.DataVisualization" />
+    <Reference Include="System.Windows.Forms.Ribbon, Version=2.0.0.0, Culture=neutral, PublicKeyToken=928736e248aa81f9, processorArchitecture=MSIL">
+      <HintPath>..\packages\RibbonWinForms.5.0.1.1\lib\net48\System.Windows.Forms.Ribbon.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="System.Data.DataSetExtensions" />
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Deployment" />
+    <Reference Include="System.Drawing" />
+    <Reference Include="System.Windows.Forms" />
+    <Reference Include="System.Xml" />
+    <Reference Include="UIAutomationProvider" />
+    <Reference Include="UIAutomationTypes" />
+    <Reference Include="WindowsBase" />
+    <Reference Include="XLParser, Version=1.5.2.0, Culture=neutral, PublicKeyToken=63397e1e46bb91b4, processorArchitecture=MSIL">
+      <HintPath>..\packages\XLParser.1.5.2\lib\net461\XLParser.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="Browsers\BrgBrowser.cs" />
+    <Compile Include="Browsers\BrgStokBrowser.cs" />
+    <Compile Include="Browsers\CustomerBrowser.cs" />
+    <Compile Include="Browsers\DriverBrowser.cs" />
+    <Compile Include="Browsers\FakturBrowser.cs" />
+    <Compile Include="Browsers\FakturCodeOpenBrowser.cs" />
+    <Compile Include="Browsers\FpKeluaranBrowser.cs" />
+    <Compile Include="Browsers\RepoBrowser.cs" />
+    <Compile Include="Browsers\ReturBeliBrowser.cs" />
+    <Compile Include="Browsers\InvoiceBrowser.cs" />
+    <Compile Include="Browsers\KategoriBrowser.cs" />
+    <Compile Include="Browsers\MutasiBrowser.cs" />
+    <Compile Include="Browsers\PackingBrowser.cs" />
+    <Compile Include="Browsers\ReturJualBrowser.cs" />
+    <Compile Include="Browsers\HariRuteBrowser.cs" />
+    <Compile Include="Browsers\SalesPersonBrowser.cs" />
+    <Compile Include="Browsers\TagihanBrowser.cs" />
+    <Compile Include="Browsers\WilayahBrowser.cs" />
+    <Compile Include="FinanceContext\FpKeluaranAgg\FpKeluaranForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="FinanceContext\FpKeluaranAgg\FpKeluaranForm.Designer.cs">
+      <DependentUpon>FpKeluaranForm.cs</DependentUpon>
+    </Compile>
+    <Compile Include="FinanceContext\FpKeluaranAgg\FpKeluaranInfoForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="FinanceContext\FpKeluaranAgg\FpKeluaranInfoForm.Designer.cs">
+      <DependentUpon>FpKeluaranInfoForm.cs</DependentUpon>
+    </Compile>
+    <Compile Include="FinanceContext\FpKeluaranAgg\FpKeluaranItemDto.cs" />
+    <Compile Include="FinanceContext\LunasPiutangAgg\LunasPiutang2Form.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="FinanceContext\LunasPiutangAgg\LunasPiutang2Form.Designer.cs">
+      <DependentUpon>LunasPiutang2Form.cs</DependentUpon>
+    </Compile>
+    <Compile Include="FinanceContext\LunasPiutangAgg\PelunasanInfoForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="FinanceContext\LunasPiutangAgg\PelunasanInfoForm.Designer.cs">
+      <DependentUpon>PelunasanInfoForm.cs</DependentUpon>
+    </Compile>
+    <Compile Include="FinanceContext\PenerimaanPelunasanSalesRpt\PenerimaanPelunasanSalesForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="FinanceContext\PenerimaanPelunasanSalesRpt\PenerimaanPelunasanSalesForm.Designer.cs">
+      <DependentUpon>PenerimaanPelunasanSalesForm.cs</DependentUpon>
+    </Compile>
+    <Compile Include="FinanceContext\PiutangSalesWilayahRpt\PiutangSalesWilayahForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="FinanceContext\PiutangSalesWilayahRpt\PiutangSalesWilayahForm.Designer.cs">
+      <DependentUpon>PiutangSalesWilayahForm.cs</DependentUpon>
+    </Compile>
+    <Compile Include="FinanceContext\PiutangSalesWilayahRpt\PiutangSalesWilayahView.cs" />
+    <Compile Include="FinanceContext\ReturBalanceAgg\FakturPotViewDto.cs" />
+    <Compile Include="FinanceContext\ReturBalanceAgg\ReturBalanceForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="FinanceContext\ReturBalanceAgg\ReturBalanceForm.Designer.cs">
+      <DependentUpon>ReturBalanceForm.cs</DependentUpon>
+    </Compile>
+    <Compile Include="FinanceContext\ReturBalanceAgg\ReturBalanceViewDto.cs" />
+    <Compile Include="FinanceContext\ReturBalanceAgg\ReturItemViewDto.cs" />
+    <Compile Include="FinanceContext\TagihanAgg\FakturTagihanCard.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="FinanceContext\TagihanAgg\FakturTagihanCard.Designer.cs">
+      <DependentUpon>FakturTagihanCard.cs</DependentUpon>
+    </Compile>
+    <Compile Include="FinanceContext\TagihanAgg\PiutangTrackerForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="FinanceContext\TagihanAgg\PiutangTrackerForm.Designer.cs">
+      <DependentUpon>PiutangTrackerForm.cs</DependentUpon>
+    </Compile>
+    <Compile Include="FinanceContext\TagihanAgg\TagihanFakturDto.cs" />
+    <Compile Include="FinanceContext\TagihanAgg\TagihanForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="FinanceContext\TagihanAgg\TagihanForm.Designer.cs">
+      <DependentUpon>TagihanForm.cs</DependentUpon>
+    </Compile>
+    <Compile Include="FinanceContext\TagihanAgg\TagihanPrintOutDto.cs" />
+    <Compile Include="FinanceContext\TagihanAgg\TagihanPrintOutForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="FinanceContext\TagihanAgg\TagihanPrintOutForm.Designer.cs">
+      <DependentUpon>TagihanPrintOutForm.cs</DependentUpon>
+    </Compile>
+    <Compile Include="FinanceContext\TagihanAgg\TagihanPrintOutItemDto.cs" />
+    <Compile Include="FinanceContext\TagihanAgg\TandaTerimaTagihanForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="FinanceContext\TagihanAgg\TandaTerimaTagihanForm.Designer.cs">
+      <DependentUpon>TandaTerimaTagihanForm.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Helpers\BrowseFilter.cs" />
+    <Compile Include="Helpers\CodeRedReporting.cs" />
+    <Compile Include="Helpers\DecimalStringFormatter.cs" />
+    <Compile Include="Helpers\IBrowseEngine.cs" />
+    <Compile Include="Browsers\SupplierBrowser.cs" />
+    <Compile Include="Browsers\WarehouseBrowser.cs" />
+    <Compile Include="Form1.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Form1.Designer.cs">
+      <DependentUpon>Form1.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Helpers\ControlStyle.cs" />
+    <Compile Include="Helpers\DataGridViewExtensions.cs" />
+    <Compile Include="Helpers\SortableBindingListHelper.cs" />
+    <Compile Include="Helpers\TextBoxExtensions.cs" />
+    <Compile Include="InventoryContext\AdjustmentAgg\AdjustmentForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="InventoryContext\AdjustmentAgg\AdjustmentForm.Designer.cs">
+      <DependentUpon>AdjustmentForm.cs</DependentUpon>
+    </Compile>
+    <Compile Include="InventoryContext\BrgAgg\BrgForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="InventoryContext\BrgAgg\BrgForm.Designer.cs">
+      <DependentUpon>BrgForm.cs</DependentUpon>
+    </Compile>
+    <Compile Include="InventoryContext\BrgAgg\BrgFormBrgDto.cs" />
+    <Compile Include="InventoryContext\BrgAgg\BrgFormExcelDto.cs" />
+    <Compile Include="InventoryContext\BrgAgg\BrgFormHargaDto.cs" />
+    <Compile Include="InventoryContext\BrgAgg\BrgFormSatuanDto.cs" />
+    <Compile Include="InventoryContext\BrgAgg\BrgFormStokDto.cs" />
+    <Compile Include="InventoryContext\DriverAgg\DriverForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="InventoryContext\DriverAgg\DriverForm.Designer.cs">
+      <DependentUpon>DriverForm.cs</DependentUpon>
+    </Compile>
+    <Compile Include="InventoryContext\ImportOpnameAgg\ImportOpnameForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="InventoryContext\ImportOpnameAgg\ImportOpnameForm.Designer.cs">
+      <DependentUpon>ImportOpnameForm.cs</DependentUpon>
+    </Compile>
+    <Compile Include="InventoryContext\KartuStokRpt\KartuStokInfoForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="InventoryContext\KartuStokRpt\KartuStokInfoForm.Designer.cs">
+      <DependentUpon>KartuStokInfoForm.cs</DependentUpon>
+    </Compile>
+    <Compile Include="InventoryContext\KartuStokRpt\KartuStokSummaryForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="InventoryContext\KartuStokRpt\KartuStokSummaryForm.Designer.cs">
+      <DependentUpon>KartuStokSummaryForm.cs</DependentUpon>
+    </Compile>
+    <Compile Include="InventoryContext\MutasiAgg\MutasiItemPrintOutDto.cs" />
+    <Compile Include="InventoryContext\MutasiAgg\MutasiForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="InventoryContext\MutasiAgg\MutasiForm.Designer.cs">
+      <DependentUpon>MutasiForm.cs</DependentUpon>
+    </Compile>
+    <Compile Include="InventoryContext\MutasiAgg\MutasiItemDto.cs" />
+    <Compile Include="InventoryContext\MutasiAgg\MutasiPrintOutDto.cs" />
+    <Compile Include="InventoryContext\MutasiRpt\MutasiInfoForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="InventoryContext\MutasiRpt\MutasiInfoForm.Designer.cs">
+      <DependentUpon>MutasiInfoForm.cs</DependentUpon>
+    </Compile>
+    <Compile Include="InventoryContext\OmzetSupplierRpt\OmzetSupplierBulananDto.cs" />
+    <Compile Include="InventoryContext\OmzetSupplierRpt\OmzetSupplierHarianDto.cs" />
+    <Compile Include="InventoryContext\OmzetSupplierRpt\OmzetSupplierInfoForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="InventoryContext\OmzetSupplierRpt\OmzetSupplierInfoForm.Designer.cs">
+      <DependentUpon>OmzetSupplierInfoForm.cs</DependentUpon>
+    </Compile>
+    <Compile Include="InventoryContext\OpnameAgg\StokOpForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="InventoryContext\OpnameAgg\StokOpForm.Designer.cs">
+      <DependentUpon>StokOpForm.cs</DependentUpon>
+    </Compile>
+    <Compile Include="InventoryContext\OpnameAgg\StokOpInfoForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="InventoryContext\OpnameAgg\StokOpInfoForm.Designer.cs">
+      <DependentUpon>StokOpInfoForm.cs</DependentUpon>
+    </Compile>
+    <Compile Include="InventoryContext\PackingAgg\Packing2BrgDto.cs" />
+    <Compile Include="InventoryContext\PackingAgg\Packing2FakturBrgDto.cs" />
+    <Compile Include="InventoryContext\PackingAgg\Packing2FakturDto.cs" />
+    <Compile Include="InventoryContext\PackingAgg\Packing2Form.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="InventoryContext\PackingAgg\Packing2Form.Designer.cs">
+      <DependentUpon>Packing2Form.cs</DependentUpon>
+    </Compile>
+    <Compile Include="InventoryContext\PackingAgg\Packing2SupplierBrgDto.cs" />
+    <Compile Include="InventoryContext\PackingAgg\Packing2SupplierDto.cs" />
+    <Compile Include="InventoryContext\ReturJualAgg\ReturJualForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="InventoryContext\ReturJualAgg\ReturJualForm.Designer.cs">
+      <DependentUpon>ReturJualForm.cs</DependentUpon>
+    </Compile>
+    <Compile Include="InventoryContext\ReturJualAgg\ReturJualItemDto.cs" />
+    <Compile Include="InventoryContext\ReturJualAgg\ReturJualPrintOutDto.cs" />
+    <Compile Include="InventoryContext\ReturJualAgg\ReturJualPrintOutForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="InventoryContext\ReturJualAgg\ReturJualPrintOutForm.Designer.cs">
+      <DependentUpon>ReturJualPrintOutForm.cs</DependentUpon>
+    </Compile>
+    <Compile Include="InventoryContext\ReturJualRpt\ReturJualBrgReportForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="InventoryContext\ReturJualRpt\ReturJualBrgReportForm.Designer.cs">
+      <DependentUpon>ReturJualBrgReportForm.cs</DependentUpon>
+    </Compile>
+    <Compile Include="InventoryContext\ReturJualRpt\ReturJualPerSupplierReportForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="InventoryContext\ReturJualRpt\ReturJualPerSupplierReportForm.Designer.cs">
+      <DependentUpon>ReturJualPerSupplierReportForm.cs</DependentUpon>
+    </Compile>
+    <Compile Include="InventoryContext\ReturJualRpt\ReturJualReportForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="InventoryContext\ReturJualRpt\ReturJualReportForm.Designer.cs">
+      <DependentUpon>ReturJualReportForm.cs</DependentUpon>
+    </Compile>
+    <Compile Include="InventoryContext\StokBalanceRpt\StokBalanceInfo2Form.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="InventoryContext\StokBalanceRpt\StokBalanceInfo2Form.Designer.cs">
+      <DependentUpon>StokBalanceInfo2Form.cs</DependentUpon>
+    </Compile>
+    <Compile Include="InventoryContext\KategoriAgg\KategoriForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="InventoryContext\KategoriAgg\KategoriForm.Designer.cs">
+      <DependentUpon>KategoriForm.cs</DependentUpon>
+    </Compile>
+    <Compile Include="InventoryContext\OpnameAgg\BrgOpnameFormDto.cs" />
+    <Compile Include="InventoryContext\OpnameAgg\ReportOpnameFormDto.cs" />
+    <Compile Include="InventoryContext\StokBalanceRpt\StokBalanceInfoDto.cs" />
+    <Compile Include="InventoryContext\StokBrgSupplierRpt\StokBrgSupplierForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="InventoryContext\StokBrgSupplierRpt\StokBrgSupplierForm.Designer.cs">
+      <DependentUpon>StokBrgSupplierForm.cs</DependentUpon>
+    </Compile>
+    <Compile Include="InventoryContext\StokHarianAgg\StokHarianForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="InventoryContext\StokHarianAgg\StokHarianForm.Designer.cs">
+      <DependentUpon>StokHarianForm.cs</DependentUpon>
+    </Compile>
+    <Compile Include="InventoryContext\StokPeriodikRpt\StokPeriodikViewDto.cs" />
+    <Compile Include="InventoryContext\StokPeriodikRpt\StokPeriodikForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="InventoryContext\StokPeriodikRpt\StokPeriodikForm.Designer.cs">
+      <DependentUpon>StokPeriodikForm.cs</DependentUpon>
+    </Compile>
+    <Compile Include="InventoryContext\WarehouseAgg\WarehouseForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="InventoryContext\WarehouseAgg\WarehouseForm.Designer.cs">
+      <DependentUpon>WarehouseForm.cs</DependentUpon>
+    </Compile>
+    <Compile Include="InventoryContext\WarehouseAgg\WarehouseFormGridDto.cs" />
+    <Compile Include="PrintDocs\FakturPrintDoc.cs" />
+    <Compile Include="PrintDocs\InvoicePrintDoc.cs" />
+    <Compile Include="PrintDocs\PrintManagerForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="PrintDocs\PrintManagerForm.Designer.cs">
+      <DependentUpon>PrintManagerForm.cs</DependentUpon>
+    </Compile>
+    <Compile Include="PrintDocs\TagihanPrintDoc.cs" />
+    <Compile Include="Program.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Properties\Resources.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>Resources.resx</DependentUpon>
+    </Compile>
+    <Compile Include="PurchaseContext\InvoiceAgg\InvoiceForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="PurchaseContext\InvoiceAgg\InvoiceForm.Designer.cs">
+      <DependentUpon>InvoiceForm.cs</DependentUpon>
+    </Compile>
+    <Compile Include="PurchaseContext\InvoiceAgg\InvoiceItemDto.cs" />
+    <Compile Include="PurchaseContext\InvoiceAgg\InvoicePrintOutDto.cs" />
+    <Compile Include="PurchaseContext\InvoiceAgg\InvoicePrintOutForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="PurchaseContext\InvoiceAgg\InvoicePrintOutForm.Designer.cs">
+      <DependentUpon>InvoicePrintOutForm.cs</DependentUpon>
+    </Compile>
+    <Compile Include="PurchaseContext\InvoiceHarianDetilRpt\InvoiceHarianDetilForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="PurchaseContext\InvoiceHarianDetilRpt\InvoiceHarianDetilForm.Designer.cs">
+      <DependentUpon>InvoiceHarianDetilForm.cs</DependentUpon>
+    </Compile>
+    <Compile Include="PurchaseContext\InvoiceInfo\InvoiceBrgInfoForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="PurchaseContext\InvoiceInfo\InvoiceBrgInfoForm.Designer.cs">
+      <DependentUpon>InvoiceBrgInfoForm.cs</DependentUpon>
+    </Compile>
+    <Compile Include="PurchaseContext\InvoiceInfo\InvoiceInfoForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="PurchaseContext\InvoiceInfo\InvoiceInfoForm.Designer.cs">
+      <DependentUpon>InvoiceInfoForm.cs</DependentUpon>
+    </Compile>
+    <Compile Include="PurchaseContext\PostingStokAgg\PostingStokForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="PurchaseContext\PostingStokAgg\PostingStokForm.Designer.cs">
+      <DependentUpon>PostingStokForm.cs</DependentUpon>
+    </Compile>
+    <Compile Include="PurchaseContext\ReturBeliFeature\ReturBeliBrgInfoForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="PurchaseContext\ReturBeliFeature\ReturBeliBrgInfoForm.Designer.cs">
+      <DependentUpon>ReturBeliBrgInfoForm.cs</DependentUpon>
+    </Compile>
+    <Compile Include="PurchaseContext\ReturBeliFeature\ReturBeliForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="PurchaseContext\ReturBeliFeature\ReturBeliForm.Designer.cs">
+      <DependentUpon>ReturBeliForm.cs</DependentUpon>
+    </Compile>
+    <Compile Include="PurchaseContext\ReturBeliFeature\ReturBeliItemDto.cs" />
+    <Compile Include="PurchaseContext\ReturBeliFeature\ReturBeliPrintOutDto.cs" />
+    <Compile Include="PurchaseContext\SupplierAgg\SupplierForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="PurchaseContext\SupplierAgg\SupplierForm.Designer.cs">
+      <DependentUpon>SupplierForm.cs</DependentUpon>
+    </Compile>
+    <Compile Include="InventoryContext\StokBalanceRpt\WarehouseRptDto.cs" />
+    <Compile Include="ReportingContext\CustomerChartRpt.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="ReportingContext\CustomerChartRpt.Designer.cs">
+      <DependentUpon>CustomerChartRpt.cs</DependentUpon>
+    </Compile>
+    <Compile Include="SalesContext\AlokasiFpAgg\AlokasiFpAlokasiDto.cs" />
+    <Compile Include="SalesContext\CustomerAgg\CustomerForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="SalesContext\CustomerAgg\CustomerForm.Designer.cs">
+      <DependentUpon>CustomerForm.cs</DependentUpon>
+    </Compile>
+    <Compile Include="SalesContext\DriverFakturRpt\DriverFakturInfoForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="SalesContext\DriverFakturRpt\DriverFakturInfoForm.Designer.cs">
+      <DependentUpon>DriverFakturInfoForm.cs</DependentUpon>
+    </Compile>
+    <Compile Include="SalesContext\FakturAgg\FakturForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="SalesContext\FakturAgg\FakturForm.Designer.cs">
+      <DependentUpon>FakturForm.cs</DependentUpon>
+    </Compile>
+    <Compile Include="SalesContext\FakturAgg\FakturItemDto.cs" />
+    <Compile Include="SalesContext\FakturAgg\FakturPrintOutDto.cs" />
+    <Compile Include="SalesContext\FakturAgg\FakturPrintOutForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="SalesContext\FakturAgg\FakturPrintOutForm.Designer.cs">
+      <DependentUpon>FakturPrintOutForm.cs</DependentUpon>
+    </Compile>
+    <Compile Include="SalesContext\FakturAgg\FakturPrintOutItemDto.cs" />
+    <Compile Include="SalesContext\FakturAgg\RdlcViewerForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="SalesContext\FakturAgg\RdlcViewerForm.Designer.cs">
+      <DependentUpon>RdlcViewerForm.cs</DependentUpon>
+    </Compile>
+    <Compile Include="SalesContext\FakturCashRpt\FakturCashInfoForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="SalesContext\FakturCashRpt\FakturCashInfoForm.Designer.cs">
+      <DependentUpon>FakturCashInfoForm.cs</DependentUpon>
+    </Compile>
+    <Compile Include="SalesContext\FakturControlAgg\FakturControlForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="SalesContext\FakturControlAgg\FakturControlForm.Designer.cs">
+      <DependentUpon>FakturControlForm.cs</DependentUpon>
+    </Compile>
+    <Compile Include="SalesContext\AlokasiFpAgg\AlokasiFpForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="SalesContext\AlokasiFpAgg\AlokasiFpForm.Designer.cs">
+      <DependentUpon>AlokasiFpForm.cs</DependentUpon>
+    </Compile>
+    <Compile Include="SalesContext\FakturControlAgg\FakturControlView.cs" />
+    <Compile Include="SalesContext\FakturInfoRpt\FakturBrgInfoForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="SalesContext\FakturInfoRpt\FakturBrgInfoForm.Designer.cs">
+      <DependentUpon>FakturBrgInfoForm.cs</DependentUpon>
+    </Compile>
+    <Compile Include="SalesContext\FakturInfoRpt\FakturInfoForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="SalesContext\FakturInfoRpt\FakturInfoForm.Designer.cs">
+      <DependentUpon>FakturInfoForm.cs</DependentUpon>
+    </Compile>
+    <Compile Include="SalesContext\FakturPajakRpt\FakturPajakInfoForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="SalesContext\FakturPajakRpt\FakturPajakInfoForm.Designer.cs">
+      <DependentUpon>FakturPajakInfoForm.cs</DependentUpon>
+    </Compile>
+    <Compile Include="SalesContext\FakturPerCustomerRpt\FakturPerCustomerForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="SalesContext\FakturPerCustomerRpt\FakturPerCustomerForm.Designer.cs">
+      <DependentUpon>FakturPerCustomerForm.cs</DependentUpon>
+    </Compile>
+    <Compile Include="SalesContext\FakturPerSupplierRpt\FakturPerSupplierForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="SalesContext\FakturPerSupplierRpt\FakturPerSupplierForm.Designer.cs">
+      <DependentUpon>FakturPerSupplierForm.cs</DependentUpon>
+    </Compile>
+    <Compile Include="SalesContext\LocationFeature\CHeckInInfoForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="SalesContext\LocationFeature\CHeckInInfoForm.Designer.cs">
+      <DependentUpon>CHeckInInfoForm.cs</DependentUpon>
+    </Compile>
+    <Compile Include="SalesContext\LocationFeature\EffectiveCallInfoForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="SalesContext\LocationFeature\EffectiveCallInfoForm.Designer.cs">
+      <DependentUpon>EffectiveCallInfoForm.cs</DependentUpon>
+    </Compile>
+    <Compile Include="SalesContext\LocationFeature\LocationCoverageInfoForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="SalesContext\LocationFeature\LocationCoverageInfoForm.Designer.cs">
+      <DependentUpon>LocationCoverageInfoForm.cs</DependentUpon>
+    </Compile>
+    <Compile Include="SalesContext\OrderFeature\ListOrderDto.cs" />
+    <Compile Include="SalesContext\OrderFeature\ListOrderForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="SalesContext\OrderFeature\ListOrderForm.Designer.cs">
+      <DependentUpon>ListOrderForm.cs</DependentUpon>
+    </Compile>
+    <Compile Include="SalesContext\SalesPersonAgg\CustomerViewDto.cs" />
+    <Compile Include="SalesContext\SalesPersonAgg\ISalesOmzetChartHost.cs" />
+    <Compile Include="SalesContext\SalesPersonAgg\SalesOmzetChartForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="SalesContext\SalesPersonAgg\SalesOmzetChartForm.Designer.cs">
+      <DependentUpon>SalesOmzetChartForm.cs</DependentUpon>
+    </Compile>
+    <Compile Include="SalesContext\SalesPersonAgg\SalesOmzetInfoForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="SalesContext\SalesPersonAgg\SalesOmzetInfoForm.Designer.cs">
+      <DependentUpon>SalesOmzetInfoForm.cs</DependentUpon>
+    </Compile>
+    <Compile Include="SalesContext\SalesPersonAgg\SalesOmzetMaterializeForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="SalesContext\SalesPersonAgg\SalesOmzetMaterializeForm.Designer.cs">
+      <DependentUpon>SalesOmzetMaterializeForm.cs</DependentUpon>
+    </Compile>
+    <Compile Include="SalesContext\SalesPersonAgg\SalesPersonForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="SalesContext\SalesPersonAgg\SalesPersonForm.Designer.cs">
+      <DependentUpon>SalesPersonForm.cs</DependentUpon>
+    </Compile>
+    <Compile Include="SalesContext\SalesReplacementFeat\SalesReplacementForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="SalesContext\SalesReplacementFeat\SalesReplacementForm.Designer.cs">
+      <DependentUpon>SalesReplacementForm.cs</DependentUpon>
+    </Compile>
+    <Compile Include="SalesContext\SalesRuteAgg\SalesRuteForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="SalesContext\SalesRuteAgg\SalesRuteForm.Designer.cs">
+      <DependentUpon>SalesRuteForm.cs</DependentUpon>
+    </Compile>
+    <Compile Include="SalesContext\WilayahAgg\WilayahForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="SalesContext\WilayahAgg\WilayahForm.Designer.cs">
+      <DependentUpon>WilayahForm.cs</DependentUpon>
+    </Compile>
+    <Compile Include="SharedForm\AboutForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="SharedForm\AboutForm.Designer.cs">
+      <DependentUpon>AboutForm.cs</DependentUpon>
+    </Compile>
+    <Compile Include="SharedForm\BrowserForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="SharedForm\BrowserForm.Designer.cs">
+      <DependentUpon>BrowserForm.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Browsers\IBrowser.cs" />
+    <Compile Include="SharedForm\ChartHelper.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="SharedForm\LoginForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="SharedForm\LoginForm.Designer.cs">
+      <DependentUpon>LoginForm.cs</DependentUpon>
+    </Compile>
+    <Compile Include="SharedForm\MainForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="SharedForm\MainForm.Designer.cs">
+      <DependentUpon>MainForm.cs</DependentUpon>
+    </Compile>
+    <Compile Include="SharedForm\ParamSistemForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="SharedForm\ParamSistemForm.Designer.cs">
+      <DependentUpon>ParamSistemForm.cs</DependentUpon>
+    </Compile>
+    <Compile Include="SharedForm\RoleForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="SharedForm\RoleForm.Designer.cs">
+      <DependentUpon>RoleForm.cs</DependentUpon>
+    </Compile>
+    <Compile Include="SharedForm\StokBalancerForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="SharedForm\StokBalancerForm.Designer.cs">
+      <DependentUpon>StokBalancerForm.cs</DependentUpon>
+    </Compile>
+    <Compile Include="SharedForm\UserForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="SharedForm\UserForm.Designer.cs">
+      <DependentUpon>UserForm.cs</DependentUpon>
+    </Compile>
+    <Compile Include="SharedForm\VoidReasonForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="SharedForm\VoidReasonForm.Designer.cs">
+      <DependentUpon>VoidReasonForm.cs</DependentUpon>
+    </Compile>
+    <Compile Include="SqlServerTypes\Loader.cs" />
+    <Compile Include="WinformAssemblyAnchor.cs" />
+    <Content Include="icons8_truck.ico" />
+    <None Include="Properties\DataSources\btr.distrib.InventoryContext.MutasiAgg.MutasiPrintOutDto.datasource" />
+    <None Include="Properties\DataSources\btr.distrib.PurchaseContext.ReturBeliFeature.ReturBeliForm.datasource" />
+    <None Include="Properties\DataSources\btr.distrib.PurchaseContext.ReturBeliFeature.ReturBeliPrintOutDto.datasource" />
+    <None Include="Resources\icons8_sherlock_holmes_64.png" />
+    <None Include="Resources\icons8_route_16.png" />
+    <None Include="Resources\icons8_route_32.png" />
+    <None Include="Resources\red-icon.png" />
+    <None Include="Resources\tosca-icon.png" />
+    <None Include="Resources\purrple-icon.png" />
+    <None Include="Resources\animasi-login3.gif" />
+    <None Include="Resources\icons8_smartphone_tablet_32.png" />
+    <None Include="Resources\icons8_in_progress_16.png" />
+    <None Include="Resources\icons8_in_progress_32.png" />
+    <None Include="Resources\icons8_refund_32.png" />
+    <None Include="Resources\icons8_cash_32.png" />
+    <None Include="Resources\icons8_password_32.png" />
+    <Content Include="SqlServerTypes\readme.htm" />
+    <Content Include="SqlServerTypes\x64\msvcr120.dll">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="SqlServerTypes\x64\SqlServerSpatial140.dll">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="SqlServerTypes\x86\msvcr120.dll">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="SqlServerTypes\x86\SqlServerSpatial140.dll">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <None Include="Properties\DataSources\btr.distrib.FinanceContext.TagihanAgg.TagihanPrintOutDto.datasource" />
+    <None Include="Properties\DataSources\btr.distrib.FinanceContext.TagihanAgg.TagihanPrintOutItemDto.datasource" />
+    <None Include="Properties\DataSources\btr.distrib.InventoryContext.ReturJualAgg.ReturJualPrintOutDto.datasource" />
+    <None Include="Properties\DataSources\btr.distrib.PurchaseContext.InvoiceAgg.InvoicePrintOutDto.datasource" />
+    <None Include="Properties\DataSources\btr.distrib.SalesContext.FakturAgg.FakturItemDto.datasource" />
+    <None Include="Properties\DataSources\btr.distrib.SalesContext.FakturAgg.FakturPrintOutDto.datasource" />
+    <None Include="Properties\DataSources\btr.distrib.SalesContext.FakturAgg.FakturPrintOutForm.datasource" />
+    <None Include="Properties\DataSources\btr.distrib.SalesContext.FakturAgg.FakturPrintOutItemDto.datasource" />
+    <None Include="Properties\DataSources\btr.domain.SalesContext.FakturAgg.FakturModel.datasource" />
+    <None Include="Resources\icons8_report_card_32.png" />
+    <None Include="Resources\icons8_pipe_organ_32.png" />
+    <None Include="Resources\icons8_test_passed_32.png" />
+    <None Include="Resources\icons8_uninstalling_updates_321.png" />
+    <None Include="Resources\icons8_pokeball_32.png" />
+    <None Include="Resources\icons8_return_purchase_32.png" />
+    <None Include="Resources\icons8_page_16.png" />
+    <None Include="Resources\icons8_microsoft_excel_32.png" />
+    <None Include="Resources\icons8_python_32.png" />
+    <None Include="Resources\icons8_vue_js_32.png" />
+    <None Include="Resources\icons8_uninstalling_updates_32.png" />
+    <None Include="Resources\icons8_stack_overflow_32.png" />
+    <None Include="Resources\icons8_stack_overflow_16.png" />
+    <EmbeddedResource Include="FinanceContext\FpKeluaranAgg\FpKeluaranForm.resx">
+      <DependentUpon>FpKeluaranForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="FinanceContext\FpKeluaranAgg\FpKeluaranInfoForm.resx">
+      <DependentUpon>FpKeluaranInfoForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="FinanceContext\LunasPiutangAgg\LunasPiutang2Form.resx">
+      <DependentUpon>LunasPiutang2Form.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="FinanceContext\LunasPiutangAgg\PelunasanInfoForm.resx">
+      <DependentUpon>PelunasanInfoForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="FinanceContext\PenerimaanPelunasanSalesRpt\PenerimaanPelunasanSalesForm.resx">
+      <DependentUpon>PenerimaanPelunasanSalesForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="FinanceContext\PiutangSalesWilayahRpt\PiutangSalesWilayahForm.resx">
+      <DependentUpon>PiutangSalesWilayahForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="FinanceContext\ReturBalanceAgg\ReturBalanceForm.resx">
+      <DependentUpon>ReturBalanceForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="FinanceContext\TagihanAgg\FakturTagihanCard.resx">
+      <DependentUpon>FakturTagihanCard.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="FinanceContext\TagihanAgg\PiutangTrackerForm.resx">
+      <DependentUpon>PiutangTrackerForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="FinanceContext\TagihanAgg\TagihanForm.resx">
+      <DependentUpon>TagihanForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="FinanceContext\TagihanAgg\TagihanPrintOut.rdlc" />
+    <EmbeddedResource Include="FinanceContext\TagihanAgg\TagihanPrintOutForm.resx">
+      <DependentUpon>TagihanPrintOutForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="FinanceContext\TagihanAgg\TandaTerimaTagihanForm.resx">
+      <DependentUpon>TandaTerimaTagihanForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="InventoryContext\AdjustmentAgg\AdjustmentForm.resx">
+      <DependentUpon>AdjustmentForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="InventoryContext\DriverAgg\DriverForm.resx">
+      <DependentUpon>DriverForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="InventoryContext\ImportOpnameAgg\ImportOpnameForm.resx">
+      <DependentUpon>ImportOpnameForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="InventoryContext\KartuStokRpt\KartuStokInfoForm.resx">
+      <DependentUpon>KartuStokInfoForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="InventoryContext\KartuStokRpt\KartuStokSummaryForm.resx">
+      <DependentUpon>KartuStokSummaryForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="InventoryContext\MutasiAgg\MutasiForm.resx">
+      <DependentUpon>MutasiForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="InventoryContext\MutasiRpt\MutasiInfoForm.resx">
+      <DependentUpon>MutasiInfoForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="InventoryContext\OmzetSupplierRpt\OmzetSupplierInfoForm.resx">
+      <DependentUpon>OmzetSupplierInfoForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="InventoryContext\OpnameAgg\StokOpForm.resx">
+      <DependentUpon>StokOpForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="InventoryContext\OpnameAgg\StokOpInfoForm.resx">
+      <DependentUpon>StokOpInfoForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="InventoryContext\PackingAgg\Packing2Form.resx">
+      <DependentUpon>Packing2Form.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="InventoryContext\ReturJualAgg\ReturJualForm.resx">
+      <DependentUpon>ReturJualForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <Content Include="Reports\ReturJualPrintOut-Yk.rdlc">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <EmbeddedResource Include="InventoryContext\ReturJualAgg\ReturJualPrintOutForm.resx">
+      <DependentUpon>ReturJualPrintOutForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="InventoryContext\ReturJualRpt\ReturJualBrgReportForm.resx">
+      <DependentUpon>ReturJualBrgReportForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="InventoryContext\ReturJualRpt\ReturJualPerSupplierReportForm.resx">
+      <DependentUpon>ReturJualPerSupplierReportForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="InventoryContext\ReturJualRpt\ReturJualReportForm.resx">
+      <DependentUpon>ReturJualReportForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="InventoryContext\StokBalanceRpt\StokBalanceInfo2Form.resx">
+      <DependentUpon>StokBalanceInfo2Form.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="InventoryContext\StokBrgSupplierRpt\StokBrgSupplierForm.resx">
+      <DependentUpon>StokBrgSupplierForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="InventoryContext\StokHarianAgg\StokHarianForm.resx">
+      <DependentUpon>StokHarianForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="InventoryContext\StokPeriodikRpt\StokPeriodikForm.resx">
+      <DependentUpon>StokPeriodikForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="PurchaseContext\InvoiceAgg\InvoiceForm.resx">
+      <DependentUpon>InvoiceForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <Content Include="Reports\InvoicePrintOut-Yk.rdlc">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <EmbeddedResource Include="PurchaseContext\InvoiceAgg\InvoicePrintOutForm.resx">
+      <DependentUpon>InvoicePrintOutForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="PurchaseContext\InvoiceHarianDetilRpt\InvoiceHarianDetilForm.resx">
+      <DependentUpon>InvoiceHarianDetilForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="PurchaseContext\InvoiceInfo\InvoiceBrgInfoForm.resx">
+      <DependentUpon>InvoiceBrgInfoForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="PurchaseContext\InvoiceInfo\InvoiceInfoForm.resx">
+      <DependentUpon>InvoiceInfoForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="PurchaseContext\PostingStokAgg\PostingStokForm.resx">
+      <DependentUpon>PostingStokForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="PurchaseContext\ReturBeliFeature\ReturBeliBrgInfoForm.resx">
+      <DependentUpon>ReturBeliBrgInfoForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="PurchaseContext\ReturBeliFeature\ReturBeliForm.resx">
+      <DependentUpon>ReturBeliForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="ReportingContext\CustomerChartRpt.resx">
+      <DependentUpon>CustomerChartRpt.cs</DependentUpon>
+    </EmbeddedResource>
+    <Content Include="Reports\ReturJualPrintOut-Mgl.rdlc">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Reports\MutasiKlaim-Yk.rdlc">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Reports\TagihanPrintOut-Mgl.rdlc">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Reports\TagihanPrintOut-Yk.rdlc">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Reports\FakturPrintOut-Mgl.rdlc">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Reports\InvoicePrintOut-Mgl.rdlc">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Reports\ReturBeliPrintOut-Yk.rdlc">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Reports\MutasiKlaim-Mgl.rdlc">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Reports\ReturBeliPrintOut-Mgl.rdlc">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <EmbeddedResource Include="SalesContext\DriverFakturRpt\DriverFakturInfoForm.resx">
+      <DependentUpon>DriverFakturInfoForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <Content Include="Reports\FakturPrintOut-Yk.rdlc">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <EmbeddedResource Include="SalesContext\FakturAgg\FakturPrintOutForm.resx">
+      <DependentUpon>FakturPrintOutForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="SalesContext\FakturAgg\RdlcViewerForm.resx">
+      <DependentUpon>RdlcViewerForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="SalesContext\FakturCashRpt\FakturCashInfoForm.resx">
+      <DependentUpon>FakturCashInfoForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="SalesContext\FakturInfoRpt\FakturBrgInfoForm.resx">
+      <DependentUpon>FakturBrgInfoForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="SalesContext\FakturInfoRpt\FakturInfoForm.resx">
+      <DependentUpon>FakturInfoForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="SalesContext\FakturPajakRpt\FakturPajakInfoForm.resx">
+      <DependentUpon>FakturPajakInfoForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="SalesContext\FakturPerCustomerRpt\FakturPerCustomerForm.resx">
+      <DependentUpon>FakturPerCustomerForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="SalesContext\FakturPerSupplierRpt\FakturPerSupplierForm.resx">
+      <DependentUpon>FakturPerSupplierForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="SalesContext\LocationFeature\CHeckInInfoForm.resx">
+      <DependentUpon>CHeckInInfoForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="SalesContext\LocationFeature\EffectiveCallInfoForm.resx">
+      <DependentUpon>EffectiveCallInfoForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="SalesContext\LocationFeature\LocationCoverageInfoForm.resx">
+      <DependentUpon>LocationCoverageInfoForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="SalesContext\OrderFeature\ListOrderForm.resx">
+      <DependentUpon>ListOrderForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="SalesContext\SalesPersonAgg\SalesOmzetChartForm.resx">
+      <DependentUpon>SalesOmzetChartForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="SalesContext\SalesPersonAgg\SalesOmzetInfoForm.resx">
+      <DependentUpon>SalesOmzetInfoForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="SalesContext\SalesPersonAgg\SalesOmzetMaterializeForm.resx">
+      <DependentUpon>SalesOmzetMaterializeForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="SalesContext\SalesReplacementFeat\SalesReplacementForm.resx">
+      <DependentUpon>SalesReplacementForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="SalesContext\SalesRuteAgg\SalesRuteForm.resx">
+      <DependentUpon>SalesRuteForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="SharedForm\ParamSistemForm.resx">
+      <DependentUpon>ParamSistemForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="SharedForm\RoleForm.resx">
+      <DependentUpon>RoleForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="SharedForm\StokBalancerForm.resx">
+      <DependentUpon>StokBalancerForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="SharedForm\VoidReasonForm.resx">
+      <DependentUpon>VoidReasonForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <None Include="Resources\icons8_numbers_48.png" />
+    <None Include="Resources\icons8_numeric_32.png" />
+    <None Include="Resources\icons8_numeric_16.png" />
+    <None Include="Resources\tax2.ico" />
+    <None Include="Resources\icons8_winrar_32.png" />
+    <None Include="Resources\icons8_to_do_32.png" />
+    <None Include="Resources\key_48px.png" />
+    <None Include="Resources\icons8_user_account_32.png" />
+    <EmbeddedResource Include="SalesContext\FakturControlAgg\FakturControlForm.resx">
+      <DependentUpon>FakturControlForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="SalesContext\AlokasiFpAgg\AlokasiFpForm.resx">
+      <DependentUpon>AlokasiFpForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="SharedForm\LoginForm.resx">
+      <DependentUpon>LoginForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="SharedForm\UserForm.resx">
+      <DependentUpon>UserForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <None Include="Resources\icons8_documents_16.png" />
+    <None Include="Resources\icons8_about_32.png" />
+    <None Include="Resources\app-wallpaper-5.jpg" />
+    <None Include="Resources\icons8_hashtag_activity_feed_32.png" />
+    <None Include="Resources\cancelled-stamp.png" />
+    <None Include="Resources\icons8_broadcasting_48.png" />
+    <None Include="Resources\icons8_documents_32.png" />
+    <None Include="Resources\icons8_general_ledger_32.png" />
+    <None Include="Resources\icons8_harvester_32.png" />
+    <None Include="Resources\icons8_kaspersky_32.png" />
+    <None Include="Resources\icons8_align_text_right_32.png" />
+    <None Include="Resources\icons8_budget_32.png" />
+    <None Include="Resources\icons8_event_accepted_32.png" />
+    <None Include="Resources\icons8_adjust_32.png" />
+    <Content Include="Resources\icons8_microscope.ico" />
+    <Content Include="Resources\icons8_microscope_32.png" />
+    <EmbeddedResource Include="SharedForm\AboutForm.resx">
+      <DependentUpon>AboutForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <None Include="Resources\icons8_print.ico" />
+    <None Include="Resources\icons8_warehouse.ico" />
+    <None Include="Resources\icons8_ingredients.ico" />
+    <None Include="Resources\icons8_factory.ico" />
+    <None Include="Resources\icons8_bill.ico" />
+    <None Include="Resources\icons8_purchase_order.ico" />
+    <None Include="Resources\icons8_map_marker.ico" />
+    <None Include="Resources\icons8_caretaker.ico" />
+    <None Include="Resources\icons8_real_estate.ico" />
+    <None Include="Resources\icons8_3d_farm_32.png" />
+    <None Include="Resources\icons8_documents.ico" />
+    <None Include="Resources\icons8_import.ico" />
+    <None Include="Resources\icons8_day_view.ico" />
+    <None Include="Readme.md" />
+    <None Include="Resources\icons8_graph_32.png" />
+    <None Include="Resources\ingredients_48px.png" />
+    <None Include="Resources\factory_48px.png" />
+    <None Include="Resources\flag_of_bremen_with_lesser_arms_48px.png" />
+    <None Include="Resources\documents_48px1.png" />
+    <None Include="Resources\purchase_order_48px.png" />
+    <None Include="Resources\map_marker_48px.png" />
+    <None Include="Resources\caretaker_48px.png" />
+    <None Include="Resources\real_estate_48px.png" />
+    <None Include="Resources\3d_farm_48px.png" />
+    <None Include="Resources\documents_48px.png" />
+    <None Include="Resources\import_48px.png" />
+    <None Include="Resources\day_view_48px.png" />
+    <EmbeddedResource Include="InventoryContext\BrgAgg\BrgForm.resx">
+      <DependentUpon>BrgForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="InventoryContext\KategoriAgg\KategoriForm.resx">
+      <DependentUpon>KategoriForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="InventoryContext\WarehouseAgg\WarehouseForm.resx">
+      <DependentUpon>WarehouseForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="PrintDocs\PrintManagerForm.resx">
+      <DependentUpon>PrintManagerForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Properties\Resources.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
+      <SubType>Designer</SubType>
+      <LastGenOutput>Resources.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
+    <Content Include="appsettings.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <EmbeddedResource Include="PurchaseContext\SupplierAgg\SupplierForm.resx">
+      <DependentUpon>SupplierForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="SalesContext\CustomerAgg\CustomerForm.resx">
+      <DependentUpon>CustomerForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="SalesContext\FakturAgg\FakturForm.resx">
+      <DependentUpon>FakturForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="SalesContext\SalesPersonAgg\SalesPersonForm.resx">
+      <DependentUpon>SalesPersonForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="SalesContext\WilayahAgg\WilayahForm.resx">
+      <DependentUpon>WilayahForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="SharedForm\BrowserForm.resx">
+      <DependentUpon>BrowserForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="SharedForm\MainForm.resx">
+      <DependentUpon>MainForm.cs</DependentUpon>
+      <SubType>Designer</SubType>
+    </EmbeddedResource>
+    <None Include="btr.distrib_TemporaryKey.pfx" />
+    <None Include="packages.config" />
+    <None Include="Properties\Settings.settings">
+      <Generator>SettingsSingleFileGenerator</Generator>
+      <LastGenOutput>Settings.Designer.cs</LastGenOutput>
+    </None>
+    <Compile Include="Properties\Settings.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DependentUpon>Settings.settings</DependentUpon>
+      <DesignTimeSharedInput>True</DesignTimeSharedInput>
+    </Compile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="App.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <BootstrapperPackage Include=".NETFramework,Version=v4.8">
+      <Visible>False</Visible>
+      <ProductName>Microsoft .NET Framework 4.8 %28x86 and x64%29</ProductName>
+      <Install>true</Install>
+    </BootstrapperPackage>
+    <BootstrapperPackage Include="Microsoft.Net.Framework.3.5.SP1">
+      <Visible>False</Visible>
+      <ProductName>.NET Framework 3.5 SP1</ProductName>
+      <Install>false</Install>
+    </BootstrapperPackage>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\btr.application\btr.application.csproj">
+      <Project>{BA660E24-397D-4D9B-9E71-729736588205}</Project>
+      <Name>btr.application</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\btr.domain\btr.domain.csproj">
+      <Project>{1f2c4331-cc07-49c6-860e-e6ba55a66b12}</Project>
+      <Name>btr.domain</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\btr.infrastructure\btr.infrastructure.csproj">
+      <Project>{bd420c25-6a06-47cb-b011-2e302f902335}</Project>
+      <Name>btr.infrastructure</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\btr.nuna\btr.nuna.csproj">
+      <Project>{EF0BE179-091D-4477-A5E5-7E39910057C3}</Project>
+      <Name>btr.nuna</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <ItemGroup />
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+</Project>

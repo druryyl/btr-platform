@@ -1,0 +1,213 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{1F2C4331-CC07-49C6-860E-E6BA55A66B12}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>btr.domain</RootNamespace>
+    <AssemblyName>btr.domain</AssemblyName>
+    <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+    <Deterministic>true</Deterministic>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="System" />
+    <Reference Include="System.Buffers, Version=4.0.2.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
+      <HintPath>..\packages\System.Buffers.4.4.0\lib\netstandard2.0\System.Buffers.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Core" />
+    <Reference Include="System.Memory, Version=4.0.1.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
+      <HintPath>..\packages\System.Memory.4.5.2\lib\netstandard2.0\System.Memory.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Numerics" />
+    <Reference Include="System.Numerics.Vectors, Version=4.1.3.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <HintPath>..\packages\System.Numerics.Vectors.4.4.0\lib\net46\System.Numerics.Vectors.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Runtime.CompilerServices.Unsafe, Version=4.0.4.1, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <HintPath>..\packages\System.Runtime.CompilerServices.Unsafe.4.5.2\lib\netstandard2.0\System.Runtime.CompilerServices.Unsafe.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="System.Data.DataSetExtensions" />
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Net.Http" />
+    <Reference Include="System.Xml" />
+    <Reference Include="Ulid, Version=1.2.6.0, Culture=neutral, PublicKeyToken=5635ede1d450abf5, processorArchitecture=MSIL">
+      <HintPath>..\packages\Ulid.1.2.6\lib\netstandard2.0\Ulid.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="BrgContext\BrgAgg\BrgHargaModel.cs" />
+    <Compile Include="BrgContext\BrgAgg\BrgModel.cs" />
+    <Compile Include="BrgContext\BrgAgg\BrgSatuanModel.cs" />
+    <Compile Include="BrgContext\BrgAgg\BrgQtyModel.cs" />
+    <Compile Include="BrgContext\BrgAgg\IBrgKey.cs" />
+    <Compile Include="BrgContext\BrgStokViewAgg\BrgStokViewModel.cs" />
+    <Compile Include="BrgContext\HargaTypeAgg\HargaTypeModel.cs" />
+    <Compile Include="BrgContext\HargaTypeAgg\IHargaTypeKey.cs" />
+    <Compile Include="BrgContext\JenisBrgAgg\IJenisBrgKey.cs" />
+    <Compile Include="BrgContext\JenisBrgAgg\JenisBrgModel.cs" />
+    <Compile Include="BrgContext\KategoriAgg\IKategoryKey.cs" />
+    <Compile Include="BrgContext\KategoriAgg\KategoriModel.cs" />
+    <Compile Include="FinanceContext\FakturPotBalanceAgg\FakturPotBalancePostModel.cs" />
+    <Compile Include="FinanceContext\FpKeluaranAgg\FpKeluaranBrgModel.cs" />
+    <Compile Include="FinanceContext\FpKeluaranAgg\FpKeluaranFakturModel.cs" />
+    <Compile Include="FinanceContext\FpKeluaranAgg\IFpKeluaranKey.cs" />
+    <Compile Include="FinanceContext\HutangAgg\HutangModel.cs" />
+    <Compile Include="FinanceContext\HutangAgg\IHutangKey.cs" />
+    <Compile Include="FinanceContext\PiutangAgg\IPiutangKey.cs" />
+    <Compile Include="FinanceContext\PiutangAgg\JenisLunasEnum.cs" />
+    <Compile Include="FinanceContext\PiutangAgg\PiutangElementModel.cs" />
+    <Compile Include="FinanceContext\PiutangAgg\PiutangLunasModel.cs" />
+    <Compile Include="FinanceContext\PiutangAgg\PiutangLunasView.cs" />
+    <Compile Include="FinanceContext\PiutangAgg\PiutangModel.cs" />
+    <Compile Include="FinanceContext\FakturPotBalanceAgg\FakturPotBalanceModel.cs" />
+    <Compile Include="FinanceContext\ReturBalanceAgg\ReturBalanceModel.cs" />
+    <Compile Include="FinanceContext\ReturBalanceAgg\ReturBalancePostModel.cs" />
+    <Compile Include="FinanceContext\TagihanAgg\TagihanModel.cs" />
+    <Compile Include="InventoryContext\AdjustmentAgg\AdjustmentModel.cs" />
+    <Compile Include="InventoryContext\AdjustmentAgg\IAdjustmentKey.cs" />
+    <Compile Include="InventoryContext\DeliveryAgg\DeliveryModel.cs" />
+    <Compile Include="InventoryContext\DeliveryAgg\IDeliveryKey.cs" />
+    <Compile Include="InventoryContext\PackingOrderFeature\DriverReff.cs" />
+    <Compile Include="InventoryContext\PackingOrderFeature\FakturItemCatSupDepoView.cs" />
+    <Compile Include="InventoryContext\WarehouseAgg\DepoType.cs" />
+    <Compile Include="InventoryContext\WarehouseAgg\IDepoKey.cs" />
+    <Compile Include="InventoryContext\DriverAgg\DriverModel.cs" />
+    <Compile Include="InventoryContext\DriverAgg\IDriverKey.cs" />
+    <Compile Include="InventoryContext\ImportOpnameAgg\ImportOpnameModel.cs" />
+    <Compile Include="InventoryContext\KartuStokRpt\KartuStokSaldoView.cs" />
+    <Compile Include="InventoryContext\KartuStokRpt\KartuStokView.cs" />
+    <Compile Include="InventoryContext\MutasiAgg\IMutasiKey.cs" />
+    <Compile Include="InventoryContext\MutasiAgg\MutasiDiscModel.cs" />
+    <Compile Include="InventoryContext\MutasiAgg\MutasiItemModel.cs" />
+    <Compile Include="InventoryContext\MutasiAgg\MutasiModel.cs" />
+    <Compile Include="InventoryContext\OpnameAgg\IOpnameKey.cs" />
+    <Compile Include="InventoryContext\OpnameAgg\IStokOpKey.cs" />
+    <Compile Include="InventoryContext\OpnameAgg\OpnameModel.cs" />
+    <Compile Include="InventoryContext\OpnameAgg\StokOpModel.cs" />
+    <Compile Include="InventoryContext\PackingOrderFeature\BrgReff.cs" />
+    <Compile Include="InventoryContext\PackingOrderFeature\CustomerReff.cs" />
+    <Compile Include="InventoryContext\PackingOrderFeature\FakturReff.cs" />
+    <Compile Include="InventoryContext\PackingOrderFeature\LocationReff.cs" />
+    <Compile Include="InventoryContext\PackingOrderFeature\PackingOrderItemModel.cs" />
+    <Compile Include="InventoryContext\PackingOrderFeature\PackingOrderModel.cs" />
+    <Compile Include="InventoryContext\PackingOrderFeature\QtyType.cs" />
+    <Compile Include="InventoryContext\ReturJualAgg\ReturJualItemDiscModel.cs" />
+    <Compile Include="InventoryContext\ReturJualAgg\ReturJualItemModel.cs" />
+    <Compile Include="InventoryContext\ReturJualAgg\ReturJualItemQtyHrgModel.cs" />
+    <Compile Include="InventoryContext\ReturJualAgg\ReturJualModel.cs" />
+    <Compile Include="InventoryContext\StokBalanceAgg\StokBalanceWarehouseModel.cs" />
+    <Compile Include="PurchaseContext\InvoiceAgg\IInvoiceKey.cs" />
+    <Compile Include="PurchaseContext\InvoiceAgg\InvoiceDiscModel.cs" />
+    <Compile Include="PurchaseContext\InvoiceAgg\InvoiceItemModel.cs" />
+    <Compile Include="PurchaseContext\InvoiceAgg\InvoiceModel.cs" />
+    <Compile Include="PurchaseContext\ReturBeliFeature\ReturBeliModel.cs" />
+    <Compile Include="PurchaseContext\ReturBeliFeature\IReturBeliKey.cs" />
+    <Compile Include="PurchaseContext\ReturBeliFeature\ReturBeliDiscModel.cs" />
+    <Compile Include="PurchaseContext\ReturBeliFeature\ReturBeliItemModel.cs" />
+    <Compile Include="SalesContext\AlokasiFpAgg\AlokasiFpItemModel.cs" />
+    <Compile Include="SalesContext\AlokasiFpAgg\IAlokasiFpKey.cs" />
+    <Compile Include="SalesContext\CheckInFeature\CheckInModel.cs" />
+    <Compile Include="SalesContext\CustomerAgg\CustomerLocHistModel.cs" />
+    <Compile Include="SalesContext\EFakturAgg\EFakturModel.cs" />
+    <Compile Include="SalesContext\FakturAgg\FakturAlokasiFpItemView.cs" />
+    <Compile Include="SalesContext\FakturAgg\FakturPackingView.cs" />
+    <Compile Include="InventoryContext\PackingAgg\PackingModel.cs" />
+    <Compile Include="InventoryContext\StokAgg\IReffKey.cs" />
+    <Compile Include="InventoryContext\StokAgg\StokModel.cs" />
+    <Compile Include="InventoryContext\StokBalanceAgg\StokBalanceModel.cs" />
+    <Compile Include="InventoryContext\TerimaBrgAgg\TerimaBrgModel.cs" />
+    <Compile Include="InventoryContext\TerimaBrgAgg\ITerimaBrgKey.cs" />
+    <Compile Include="InventoryContext\StokAgg\IStokKey.cs" />
+    <Compile Include="InventoryContext\StokAgg\IStokMutasiKey.cs" />
+    <Compile Include="InventoryContext\StokAgg\StokMutasiModel.cs" />
+    <Compile Include="InventoryContext\WarehouseAgg\IWarehouseKey.cs" />
+    <Compile Include="InventoryContext\WarehouseAgg\WarehouseModel.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="PurchaseContext\SupplierAgg\ISupplierKey.cs" />
+    <Compile Include="PurchaseContext\SupplierAgg\SupplierModel.cs" />
+    <Compile Include="SalesContext\CustomerAgg\CustomerModel.cs" />
+    <Compile Include="SalesContext\CustomerAgg\ICustomerKey.cs" />
+    <Compile Include="SalesContext\FakturAgg\FakturDiscountModel.cs" />
+    <Compile Include="SalesContext\FakturAgg\FakturItemModel.cs" />
+    <Compile Include="SalesContext\FakturAgg\FakturModel.cs" />
+    <Compile Include="SalesContext\FakturAgg\IFakturDiscountKey.cs" />
+    <Compile Include="SalesContext\FakturAgg\IFakturItemKey.cs" />
+    <Compile Include="SalesContext\FakturAgg\IFakturKey.cs" />
+    <Compile Include="SalesContext\FakturAgg\IFakturStokHargaKey.cs" />
+    <Compile Include="SalesContext\FakturAgg\INoFakturPajak.cs" />
+    <Compile Include="SalesContext\FakturControlAgg\FakturControlModel.cs" />
+    <Compile Include="SalesContext\FakturControlAgg\FakturControlStatusModel.cs" />
+    <Compile Include="SalesContext\FakturControlAgg\StatusFakturEnum.cs" />
+    <Compile Include="SalesContext\AlokasiFpAgg\AlokasiFpModel.cs" />
+    <Compile Include="FinanceContext\FpKeluaranAgg\FpKeluaranModel.cs" />
+    <Compile Include="SalesContext\FakturPajakVoidAgg\FakturPajakVoidModel.cs" />
+    <Compile Include="SalesContext\HariRuteAgg\HariRuteModel.cs" />
+    <Compile Include="SalesContext\KlasifikasiAgg\IKlasifikasiKey.cs" />
+    <Compile Include="SalesContext\KlasifikasiAgg\KlasifikasiModel.cs" />
+    <Compile Include="SalesContext\KlasifikasiAgg\SegmentType.cs" />
+    <Compile Include="SalesContext\OrderFeature\OrderItemType.cs" />
+    <Compile Include="SalesContext\OrderFeature\OrderModel.cs" />
+    <Compile Include="SalesContext\OrderMapFeature\OrderMapModel.cs" />
+    <Compile Include="SalesContext\RuteAgg\IRuteKey.cs" />
+    <Compile Include="SalesContext\RuteAgg\RuteItemModel.cs" />
+    <Compile Include="SalesContext\RuteAgg\RuteModel.cs" />
+    <Compile Include="SalesContext\SalesOmzetAgg\ReconcileSalesOmzetScope.cs" />
+    <Compile Include="SalesContext\SalesOmzetAgg\ISalesOmzetKey.cs" />
+    <Compile Include="SalesContext\SalesOmzetAgg\SaleKindEnum.cs" />
+    <Compile Include="SalesContext\SalesOmzetAgg\SalesOmzetModel.cs" />
+    <Compile Include="SalesContext\SalesOmzetAgg\SalesOmzetPeriodFilterMode.cs" />
+    <Compile Include="SalesContext\SalesOmzetAgg\SalesOmzetStatusEnum.cs" />
+    <Compile Include="SalesContext\SalesOmzetHealthWeeklyAgg\IsoWeekIdentifier.cs" />
+    <Compile Include="SalesContext\SalesOmzetHealthWeeklyAgg\ISalesOmzetHealthWeeklyKey.cs" />
+    <Compile Include="SalesContext\SalesOmzetHealthWeeklyAgg\SalesOmzetHealthLevelEnum.cs" />
+    <Compile Include="SalesContext\SalesOmzetHealthWeeklyAgg\SalesOmzetHealthWeeklyModel.cs" />
+    <Compile Include="SalesContext\SalesPersonAgg\ISalesPersonKey.cs" />
+    <Compile Include="SalesContext\SalesPersonAgg\ISalesRuteKey.cs" />
+    <Compile Include="SalesContext\SalesPersonAgg\SalesPersonModel.cs" />
+    <Compile Include="SalesContext\SalesPersonAgg\SalesRuteModel.cs" />
+    <Compile Include="SalesContext\WilayahAgg\IWilayahKey.cs" />
+    <Compile Include="SalesContext\WilayahAgg\WilayahModel.cs" />
+    <Compile Include="SupportContext\DocAgg\DocActionModel.cs" />
+    <Compile Include="SupportContext\DocAgg\DocModel.cs" />
+    <Compile Include="SupportContext\DocAgg\DocPrintStatusEnum.cs" />
+    <Compile Include="SupportContext\DocAgg\IDocKey.cs" />
+    <Compile Include="SupportContext\ParamSistemAgg\ParamSistemModel.cs" />
+    <Compile Include="SupportContext\ParamUser\ParamUserModel.cs" />
+    <Compile Include="SupportContext\PlaygroundAgg\ImportOpnameModel.cs" />
+    <Compile Include="SupportContext\RoleFeature\MenuType.cs" />
+    <Compile Include="SupportContext\RoleFeature\RoleType.cs" />
+    <Compile Include="SupportContext\UserAgg\IUserKey.cs" />
+    <Compile Include="SupportContext\UserAgg\UserModel.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="FinanceContext\CreditNoteAgg\" />
+    <Folder Include="InventoryContext\StokBalanceRpt\" />
+    <Folder Include="SalesContext\FakturInfoAgg\" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="packages.config" />
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+</Project>

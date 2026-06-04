@@ -1,0 +1,416 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{BA660E24-397D-4D9B-9E71-729736588205}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>btr.application</RootNamespace>
+    <AssemblyName>btr.application</AssemblyName>
+    <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+    <Deterministic>true</Deterministic>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="Dawn.Guard, Version=1.12.0.0, Culture=neutral, PublicKeyToken=234740ae15f786ce, processorArchitecture=MSIL">
+      <HintPath>..\packages\Dawn.Guard.1.12.0\lib\netstandard2.0\Dawn.Guard.dll</HintPath>
+    </Reference>
+    <Reference Include="FluentValidation, Version=11.0.0.0, Culture=neutral, PublicKeyToken=7de548da2fbae0f0, processorArchitecture=MSIL">
+      <HintPath>..\packages\FluentValidation.11.6.0\lib\netstandard2.0\FluentValidation.dll</HintPath>
+    </Reference>
+    <Reference Include="JetBrains.Annotations, Version=4242.42.42.42, Culture=neutral, PublicKeyToken=1010a0d8d6380325, processorArchitecture=MSIL">
+      <HintPath>..\packages\JetBrains.Annotations.2023.2.0\lib\net20\JetBrains.Annotations.dll</HintPath>
+    </Reference>
+    <Reference Include="Mapster, Version=7.3.0.0, Culture=neutral, PublicKeyToken=2f39883af23c29a8, processorArchitecture=MSIL">
+      <HintPath>..\packages\Mapster.7.3.0\lib\netstandard2.0\Mapster.dll</HintPath>
+    </Reference>
+    <Reference Include="Mapster.Core, Version=1.2.0.0, Culture=neutral, PublicKeyToken=e64997d676a9c1d3, processorArchitecture=MSIL">
+      <HintPath>..\packages\Mapster.Core.1.2.0\lib\net45\Mapster.Core.dll</HintPath>
+    </Reference>
+    <Reference Include="MediatR, Version=12.0.0.0, Culture=neutral, PublicKeyToken=bb9a41a5e8aaa7e2, processorArchitecture=MSIL">
+      <HintPath>..\packages\MediatR.12.1.1\lib\netstandard2.0\MediatR.dll</HintPath>
+    </Reference>
+    <Reference Include="MediatR.Contracts, Version=2.0.1.0, Culture=neutral, PublicKeyToken=bb9a41a5e8aaa7e2, processorArchitecture=MSIL">
+      <HintPath>..\packages\MediatR.Contracts.2.0.1\lib\netstandard2.0\MediatR.Contracts.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.Bcl.AsyncInterfaces, Version=7.0.0.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.Bcl.AsyncInterfaces.7.0.0\lib\net462\Microsoft.Bcl.AsyncInterfaces.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.Extensions.DependencyInjection.Abstractions, Version=7.0.0.0, Culture=neutral, PublicKeyToken=adb9793829ddae60, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.Extensions.DependencyInjection.Abstractions.7.0.0\lib\net462\Microsoft.Extensions.DependencyInjection.Abstractions.dll</HintPath>
+    </Reference>
+    <Reference Include="mscorlib" />
+    <Reference Include="Newtonsoft.Json, Version=13.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
+      <HintPath>..\packages\Newtonsoft.Json.13.0.1\lib\net45\Newtonsoft.Json.dll</HintPath>
+    </Reference>
+    <Reference Include="Polly, Version=7.0.0.0, Culture=neutral, PublicKeyToken=c8a3ffc3f8f825cc, processorArchitecture=MSIL">
+      <HintPath>..\packages\Polly.7.2.4\lib\net472\Polly.dll</HintPath>
+    </Reference>
+    <Reference Include="Polly.Core, Version=8.0.0.0, Culture=neutral, PublicKeyToken=c8a3ffc3f8f825cc, processorArchitecture=MSIL">
+      <HintPath>..\packages\Polly.Core.8.0.0\lib\net472\Polly.Core.dll</HintPath>
+    </Reference>
+    <Reference Include="System" />
+    <Reference Include="System.ComponentModel.Annotations, Version=4.2.1.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <HintPath>..\packages\System.ComponentModel.Annotations.4.5.0\lib\net461\System.ComponentModel.Annotations.dll</HintPath>
+    </Reference>
+    <Reference Include="System.ComponentModel.DataAnnotations" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Runtime.CompilerServices.Unsafe, Version=6.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <HintPath>..\packages\System.Runtime.CompilerServices.Unsafe.6.0.0\lib\net461\System.Runtime.CompilerServices.Unsafe.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Threading.Tasks.Extensions, Version=4.2.0.1, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
+      <HintPath>..\packages\System.Threading.Tasks.Extensions.4.5.4\lib\net461\System.Threading.Tasks.Extensions.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Transactions" />
+    <Reference Include="System.ValueTuple, Version=4.0.3.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
+      <HintPath>..\packages\System.ValueTuple.4.5.0\lib\net47\System.ValueTuple.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="System.Data.DataSetExtensions" />
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Net.Http" />
+    <Reference Include="System.Xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="ApplicationAssemblyAnchor.cs" />
+    <Compile Include="BrgContext\BrgAgg\BrgValidator.cs" />
+    <Compile Include="BrgContext\BrgAgg\BrgWriter.cs" />
+    <Compile Include="BrgContext\BrgAgg\IBrgDal.cs" />
+    <Compile Include="BrgContext\BrgAgg\IBrgHargaDal.cs" />
+    <Compile Include="BrgContext\BrgAgg\IBrgSatuanDal.cs" />
+    <Compile Include="BrgContext\BrgAgg\GetBrgQuery.cs" />
+    <Compile Include="BrgContext\BrgAgg\BrgBuilder.cs" />
+    <Compile Include="BrgContext\BrgStokViewAgg\Contracts\IBrgStokViewDal.cs" />
+    <Compile Include="BrgContext\HargaTypeAgg\IHargaTypeDal.cs" />
+    <Compile Include="BrgContext\JenisBrgAgg\IJenisBrgDal.cs" />
+    <Compile Include="BrgContext\KategoriAgg\IKategoriDal.cs" />
+    <Compile Include="BrgContext\KategoriAgg\KategoriBuilder.cs" />
+    <Compile Include="BrgContext\KategoriAgg\KategoriWriter.cs" />
+    <Compile Include="FinanceContext\FakturPotBalanceAgg\FakturPotBalanceBuilder.cs" />
+    <Compile Include="FinanceContext\FakturPotBalanceAgg\FakturPotBalanceWriter.cs" />
+    <Compile Include="FinanceContext\FakturPotBalanceAgg\IFakturPotBalanceDal.cs" />
+    <Compile Include="FinanceContext\FakturPotBalanceAgg\IFakturPotBalancePostDal.cs" />
+    <Compile Include="FinanceContext\FpKeluaragAgg\FpKeluaranBuilder.cs" />
+    <Compile Include="FinanceContext\FpKeluaragAgg\FpKeluaranWriter.cs" />
+    <Compile Include="FinanceContext\FpKeluaragAgg\IFpKeluaranBrgDal.cs" />
+    <Compile Include="FinanceContext\FpKeluaragAgg\IFpKeluaranDal.cs" />
+    <Compile Include="FinanceContext\FpKeluaragAgg\IFpKeluaranFakturDal.cs" />
+    <Compile Include="FinanceContext\FpKeluaragAgg\IFpKeluaranViewDal.cs" />
+    <Compile Include="FinanceContext\PiutangAgg\Contracts\IPelunasanInfoDal.cs" />
+    <Compile Include="FinanceContext\PiutangAgg\Contracts\IPenerimaanPelunasanSalesDal.cs" />
+    <Compile Include="FinanceContext\PiutangAgg\Contracts\IPiutangDal.cs" />
+    <Compile Include="FinanceContext\PiutangAgg\Contracts\IPIutangElementDal.cs" />
+    <Compile Include="FinanceContext\PiutangAgg\Contracts\IPiutangLunasDal.cs" />
+    <Compile Include="FinanceContext\PiutangAgg\Contracts\IPIutangLunasViewDal.cs" />
+    <Compile Include="FinanceContext\PiutangAgg\Contracts\IPiutangSalesWilayahDal.cs" />
+    <Compile Include="FinanceContext\PiutangAgg\Contracts\IPiutangTrackerDal.cs" />
+    <Compile Include="FinanceContext\PiutangAgg\UseCases\CancelPiutangWorker.cs" />
+    <Compile Include="FinanceContext\PiutangAgg\UseCases\CreatePiutangWorker.cs" />
+    <Compile Include="FinanceContext\PiutangAgg\UseCases\AddLunasPiutangWorker.cs" />
+    <Compile Include="FinanceContext\PiutangAgg\UseCases\RemoveLunasPiutangWorker.cs" />
+    <Compile Include="FinanceContext\PiutangAgg\Workers\PiutangBuilder.cs" />
+    <Compile Include="FinanceContext\PiutangAgg\Workers\PiutangWriter.cs" />
+    <Compile Include="FinanceContext\ReturBalanceAgg\IReturBalanceDal.cs" />
+    <Compile Include="FinanceContext\ReturBalanceAgg\IReturBalancePostDal.cs" />
+    <Compile Include="FinanceContext\ReturBalanceAgg\ReturBalanceBuilder.cs" />
+    <Compile Include="FinanceContext\ReturBalanceAgg\ReturBalanceWriter.cs" />
+    <Compile Include="FinanceContext\TagihanAgg\ITagihanDal.cs" />
+    <Compile Include="FinanceContext\TagihanAgg\TagihanBuilder.cs" />
+    <Compile Include="FinanceContext\TagihanAgg\TagihanWriter.cs" />
+    <Compile Include="Helpers\DecFormatterHelper.cs" />
+    <Compile Include="Helpers\NumericHelper.cs" />
+    <Compile Include="InventoryContext\AdjustmentAgg\AdjustmentWriter.cs" />
+    <Compile Include="InventoryContext\AdjustmentAgg\AdjustmnetBuilder.cs" />
+    <Compile Include="InventoryContext\AdjustmentAgg\IAdjustmentDal.cs" />
+    <Compile Include="InventoryContext\DriverAgg\DriverWriter.cs" />
+    <Compile Include="InventoryContext\DriverAgg\IDriverDal.cs" />
+    <Compile Include="InventoryContext\ImportOpnameAgg\Contracts\IImportOpnameDal.cs" />
+    <Compile Include="InventoryContext\KartuStokRpt\IKartuStokDal.cs" />
+    <Compile Include="InventoryContext\KartuStokRpt\IKartuStokSummaryDal.cs" />
+    <Compile Include="InventoryContext\MutasiAgg\CreateMutasiItemWorker.cs" />
+    <Compile Include="InventoryContext\MutasiAgg\IMutasiBrgViewDal.cs" />
+    <Compile Include="InventoryContext\MutasiAgg\IMutasiDal.cs" />
+    <Compile Include="InventoryContext\MutasiAgg\IMutasiDiscDal.cs" />
+    <Compile Include="InventoryContext\MutasiAgg\MutasiBuilder.cs" />
+    <Compile Include="InventoryContext\MutasiAgg\MutasiValidator.cs" />
+    <Compile Include="InventoryContext\MutasiAgg\MutasiWriter.cs" />
+    <Compile Include="InventoryContext\MutasiAgg\SaveMutasiWorker.cs" />
+    <Compile Include="InventoryContext\OpnameAgg\IOpnameDal.cs" />
+    <Compile Include="InventoryContext\OpnameAgg\IStokOpDal.cs" />
+    <Compile Include="InventoryContext\OpnameAgg\IStokOpInfoDal.cs" />
+    <Compile Include="InventoryContext\OpnameAgg\OpnameBuilder.cs" />
+    <Compile Include="InventoryContext\OpnameAgg\OpnameValidator.cs" />
+    <Compile Include="InventoryContext\OpnameAgg\OpnameWriter.cs" />
+    <Compile Include="InventoryContext\OpnameAgg\RollbackStokOpWorker.cs" />
+    <Compile Include="InventoryContext\OpnameAgg\SaveStokOpWorker.cs" />
+    <Compile Include="InventoryContext\OpnameAgg\StokOpBuilder.cs" />
+    <Compile Include="InventoryContext\OpnameAgg\StokOpWriter.cs" />
+    <Compile Include="InventoryContext\PackingAgg\IPackingDal.cs" />
+    <Compile Include="InventoryContext\PackingAgg\IPackingFakturDal.cs" />
+    <Compile Include="InventoryContext\PackingAgg\IPackingFakturBrgDal.cs" />
+    <Compile Include="InventoryContext\PackingAgg\PackingBuilder.cs" />
+    <Compile Include="InventoryContext\PackingAgg\PackingWriter.cs" />
+    <Compile Include="InventoryContext\PackingOrderFeature\IPackingOrderRepo.cs" />
+    <Compile Include="InventoryContext\ReturJualAgg\Contracts\IReturJualBrgViewDal.cs" />
+    <Compile Include="InventoryContext\ReturJualAgg\Contracts\IReturJualDal.cs" />
+    <Compile Include="InventoryContext\ReturJualAgg\Contracts\IReturJualItemDal.cs" />
+    <Compile Include="InventoryContext\ReturJualAgg\Contracts\IReturJualItemDiscDal.cs" />
+    <Compile Include="InventoryContext\ReturJualAgg\Contracts\IReturJualItemQtyHrgDal.cs" />
+    <Compile Include="InventoryContext\ReturJualAgg\Contracts\IReturJualViewDal.cs" />
+    <Compile Include="InventoryContext\ReturJualAgg\Workers\CreateReturJualItemWorker.cs" />
+    <Compile Include="InventoryContext\ReturJualAgg\Workers\FindHrgReturJualWorker.cs" />
+    <Compile Include="InventoryContext\ReturJualAgg\Workers\ReturJualBuilder.cs" />
+    <Compile Include="InventoryContext\ReturJualAgg\Workers\ReturJualWriter.cs" />
+    <Compile Include="InventoryContext\StokAgg\GenStokUseCase\AddStokWorker.cs" />
+    <Compile Include="InventoryContext\StokAgg\GenStokUseCase\GenStokAdjustmentWorker.cs" />
+    <Compile Include="InventoryContext\StokAgg\GenStokUseCase\GenStokBalanceWorker.cs" />
+    <Compile Include="InventoryContext\StokAgg\GenStokUseCase\GenStokFakturRegenWorker.cs" />
+    <Compile Include="InventoryContext\StokAgg\GenStokUseCase\GenStokFakturWorker.cs" />
+    <Compile Include="InventoryContext\StokAgg\GenStokUseCase\GenStokInvoiceWorker.cs" />
+    <Compile Include="InventoryContext\StokAgg\GenStokUseCase\GenStokMutasiWorker.cs" />
+    <Compile Include="InventoryContext\StokAgg\GenStokUseCase\GenStokReturBeliWorker.cs" />
+    <Compile Include="InventoryContext\StokAgg\GenStokUseCase\GenStokStokOpWorker.cs" />
+    <Compile Include="InventoryContext\StokAgg\GenStokUseCase\GenStokReturJualWorker.cs" />
+    <Compile Include="InventoryContext\StokAgg\GenStokUseCase\RemoveEditInvoiceWorker.cs" />
+    <Compile Include="InventoryContext\StokAgg\GenStokUseCase\RemovePriorityStokWorker.cs" />
+    <Compile Include="InventoryContext\StokAgg\GenStokUseCase\RemoveRollbackStokWorker.cs" />
+    <Compile Include="InventoryContext\StokAgg\GenStokUseCase\RollBackInOutStokWorker.cs" />
+    <Compile Include="InventoryContext\StokAgg\IGetStokBalanceHealthWorker.cs" />
+    <Compile Include="InventoryContext\StokAgg\IStokDal.cs" />
+    <Compile Include="InventoryContext\StokAgg\IStokMutasiDal.cs" />
+    <Compile Include="InventoryContext\StokAgg\GenStokUseCase\RemoveFifoStokWorker.cs" />
+    <Compile Include="InventoryContext\StokAgg\GenStokUseCase\RemoveEditReturBeliWorker.cs" />
+    <Compile Include="InventoryContext\StokAgg\StokBuilder.cs" />
+    <Compile Include="InventoryContext\StokAgg\StokValidator.cs" />
+    <Compile Include="InventoryContext\StokAgg\StokWriter.cs" />
+    <Compile Include="InventoryContext\StokAgg\UseCases\ListBrgStokQuery.cs" />
+    <Compile Include="InventoryContext\StokAgg\GenStokUseCase\RollBackStokWorker.cs" />
+    <Compile Include="InventoryContext\StokBalanceAgg\IStokBalanceDal.cs" />
+    <Compile Include="InventoryContext\StokBalanceAgg\StokBalanceBuilder.cs" />
+    <Compile Include="InventoryContext\StokBalanceAgg\StokBalanceWriter.cs" />
+    <Compile Include="InventoryContext\StokBalanceInfo\IStokBalanceViewDal.cs" />
+    <Compile Include="InventoryContext\StokBalanceInfo\StokBalanceView.cs" />
+    <Compile Include="InventoryContext\StokBrgSupplierRpt\IStokBrgSupplierDal.cs" />
+    <Compile Include="InventoryContext\StokPeriodikInfo\IStokPeriodikDal.cs" />
+    <Compile Include="InventoryContext\StokPeriodikInfo\StokPeriodikDto.cs" />
+    <Compile Include="InventoryContext\WarehouseAgg\IDepoDal.cs" />
+    <Compile Include="InventoryContext\WarehouseAgg\IWarehouseDal.cs" />
+    <Compile Include="InventoryContext\WarehouseAgg\GetWarehouseQuery.cs" />
+    <Compile Include="InventoryContext\WarehouseAgg\ListWarehouseQuery.cs" />
+    <Compile Include="InventoryContext\WarehouseAgg\WarehouseBuilder.cs" />
+    <Compile Include="InventoryContext\WarehouseAgg\WarehouseWriter.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="PurchaseContext\InvoiceAgg\CreateInvoiceItemWorker.cs" />
+    <Compile Include="PurchaseContext\InvoiceAgg\InvoiceBuilder.cs" />
+    <Compile Include="PurchaseContext\InvoiceAgg\IInvoiceDal.cs" />
+    <Compile Include="PurchaseContext\InvoiceAgg\IInvoiceDiscDal.cs" />
+    <Compile Include="PurchaseContext\InvoiceAgg\IInvoiceItemDal.cs" />
+    <Compile Include="PurchaseContext\InvoiceAgg\InvoiceValidator.cs" />
+    <Compile Include="PurchaseContext\InvoiceAgg\InvoiceWriter.cs" />
+    <Compile Include="PurchaseContext\InvoiceAgg\SaveInvoiceWorker.cs" />
+    <Compile Include="PurchaseContext\InvoiceAgg\VoidInvoiceWorker.cs" />
+    <Compile Include="PurchaseContext\InvoiceBrgInfo\IInvoiceBrgViewDal.cs" />
+    <Compile Include="PurchaseContext\InvoiceBrgInfo\InvoiceBrgViewDto.cs" />
+    <Compile Include="PurchaseContext\InvoiceHarianDetilRpt\IInvoiceHarianDetilDal.cs" />
+    <Compile Include="PurchaseContext\InvoiceInfo\IInvoiceViewDal.cs" />
+    <Compile Include="PurchaseContext\InvoiceInfo\InvoiceView.cs" />
+    <Compile Include="PurchaseContext\ReturBeliBrgInfo\IReturBeliBrgViewDal.cs" />
+    <Compile Include="PurchaseContext\ReturBeliBrgInfo\ReturBeliBrgViewDto.cs" />
+    <Compile Include="PurchaseContext\ReturBeliFeature\CreateReturBeliItemWorker.cs" />
+    <Compile Include="PurchaseContext\ReturBeliFeature\IReturBeliDal.cs" />
+    <Compile Include="PurchaseContext\ReturBeliFeature\IReturBeliDiscDal.cs" />
+    <Compile Include="PurchaseContext\ReturBeliFeature\IReturBeliItemDal.cs" />
+    <Compile Include="PurchaseContext\ReturBeliFeature\ReturBeliBuilder.cs" />
+    <Compile Include="PurchaseContext\ReturBeliFeature\ReturBeliValidator.cs" />
+    <Compile Include="PurchaseContext\ReturBeliFeature\ReturBeliWriter.cs" />
+    <Compile Include="PurchaseContext\ReturBeliFeature\SaveReturBeliWorker.cs" />
+    <Compile Include="PurchaseContext\ReturBeliFeature\VoidReturBeliWorker.cs" />
+    <Compile Include="PurchaseContext\SupplierAgg\Contracts\ISupplierDal.cs" />
+    <Compile Include="PurchaseContext\SupplierAgg\UseCases\GetSupplierQuery.cs" />
+    <Compile Include="PurchaseContext\SupplierAgg\UseCases\ListSupplierQuery.cs" />
+    <Compile Include="PurchaseContext\SupplierAgg\Workers\SupplierBuilder.cs" />
+    <Compile Include="PurchaseContext\SupplierAgg\Workers\SupplierValidator.cs" />
+    <Compile Include="PurchaseContext\SupplierAgg\Workers\SupplierWriter.cs" />
+    <Compile Include="SalesContext\AlokasiFpAgg\IAlokasiFpItemDal.cs" />
+    <Compile Include="SalesContext\CheckInFeature\ICheckInDal.cs" />
+    <Compile Include="SalesContext\CheckInFeature\IEffectiveCallDal.cs" />
+    <Compile Include="SalesContext\CustomerAgg\Contracts\ICustomerDal.cs" />
+    <Compile Include="SalesContext\CustomerAgg\Contracts\ICustomerLocHistDal.cs" />
+    <Compile Include="SalesContext\CustomerAgg\UseCases\GetCustomerQuery.cs" />
+    <Compile Include="SalesContext\CustomerAgg\UseCases\ListCustomerQuery.cs" />
+    <Compile Include="SalesContext\CustomerAgg\Workers\CustomerBuilder.cs" />
+    <Compile Include="SalesContext\CustomerAgg\Workers\CustomerWriter.cs" />
+    <Compile Include="SalesContext\DriverFakturRpt\IDriverFakturInfoDal.cs" />
+    <Compile Include="SalesContext\EFakturAgg\EfakturBuilder.cs" />
+    <Compile Include="SalesContext\FakturAgg\Contracts\IFakturAlokasiFpItemDal.cs" />
+    <Compile Include="SalesContext\FakturAgg\Contracts\IFakturCodeOpenDal.cs" />
+    <Compile Include="SalesContext\FakturAgg\Contracts\IFakturDal.cs" />
+    <Compile Include="SalesContext\FakturAgg\Contracts\IFakturDiscountDal.cs" />
+    <Compile Include="SalesContext\FakturAgg\Contracts\IFakturItemDal.cs" />
+    <Compile Include="SalesContext\FakturAgg\Contracts\IFakturItemKlaimDal.cs" />
+    <Compile Include="SalesContext\FakturAgg\Contracts\IFakturDiscountKlaimDal.cs" />
+    <Compile Include="SalesContext\FakturAgg\Contracts\IFakturStatusDal.cs" />
+    <Compile Include="SalesContext\FakturAgg\UseCases\ChangeToCashFakturWorker.cs" />
+    <Compile Include="SalesContext\FakturAgg\UseCases\ChangeToCreditFakturWorker.cs" />
+    <Compile Include="SalesContext\FakturAgg\UseCases\GetFakturQuery.cs" />
+    <Compile Include="SalesContext\FakturAgg\UseCases\ListFakturQuery.cs" />
+    <Compile Include="SalesContext\FakturAgg\UseCases\ReActivateFakturWorker.cs" />
+    <Compile Include="SalesContext\FakturAgg\UseCases\VoidFakturWorker.cs" />
+    <Compile Include="SalesContext\FakturAgg\Workers\CreateFakturItemWorker.cs" />
+    <Compile Include="SalesContext\FakturAgg\Workers\FakturBuilder.cs" />
+    <Compile Include="SalesContext\FakturAgg\Workers\FakturValidator.cs" />
+    <Compile Include="SalesContext\FakturAgg\Workers\FakturWriter.cs" />
+    <Compile Include="SalesContext\FakturAgg\UseCases\SaveFakturWorker.cs" />
+    <Compile Include="SalesContext\FakturBrgInfo\FakturBrgView.cs" />
+    <Compile Include="SalesContext\FakturBrgInfo\IFakturBrgViewDal.cs" />
+    <Compile Include="SalesContext\FakturCashRpt\IFakturCashViewDal.cs" />
+    <Compile Include="SalesContext\FakturControlAgg\CreatePostOnSavedFakturEventHandler.cs" />
+    <Compile Include="SalesContext\FakturControlAgg\FakturControlBuilder.cs" />
+    <Compile Include="SalesContext\FakturControlAgg\FakturControlWriter.cs" />
+    <Compile Include="SalesContext\FakturControlAgg\IFakturControlStatusDal.cs" />
+    <Compile Include="SalesContext\FakturControlAgg\ListFakturControlWorker.cs" />
+    <Compile Include="SalesContext\FakturInfo\FakturView.cs" />
+    <Compile Include="SalesContext\FakturInfo\IFakturViewDal.cs" />
+    <Compile Include="SalesContext\FakturPajakInfo\IFakturPajakDal.cs" />
+    <Compile Include="SalesContext\FakturPajakVoidAgg\FaktuPajakVoidWriter.cs" />
+    <Compile Include="SalesContext\FakturPajakVoidAgg\FakturPajakVoidBuilder.cs" />
+    <Compile Include="SalesContext\FakturPajakVoidAgg\IFakturPajakVoidDal.cs" />
+    <Compile Include="SalesContext\FakturPerCustomerRpt\IFakturPerCustomerDal.cs" />
+    <Compile Include="SalesContext\FakturPerSupplierRpt\IFakturPerSupplierDal.cs" />
+    <Compile Include="SalesContext\KlasifikasiAgg\IKlasifikasiDal.cs" />
+    <Compile Include="SalesContext\AlokasiFpAgg\IAlokasiFpDal.cs" />
+    <Compile Include="SalesContext\AlokasiFpAgg\AlokasiFpBuilder.cs" />
+    <Compile Include="SalesContext\AlokasiFpAgg\AlokasiFpWriter.cs" />
+    <Compile Include="SalesContext\KlasifikasiAgg\ISegmentRepo.cs" />
+    <Compile Include="SalesContext\OmzetSupplierInfo\IOmzetSupplierViewDal.cs" />
+    <Compile Include="SalesContext\OmzetSupplierInfo\OmzetSupplierView.cs" />
+    <Compile Include="SalesContext\HariRuteAgg\IHariRuteDal.cs" />
+    <Compile Include="SalesContext\OrderFeature\ISalesOmzetDal.cs" />
+    <Compile Include="SalesContext\OrderFeature\IOrderDal.cs" />
+    <Compile Include="SalesContext\OrderFeature\IOrderItemDal.cs" />
+    <Compile Include="SalesContext\OrderFeature\OrderBuilder.cs" />
+    <Compile Include="SalesContext\OrderMapFeature\IOrderMapDal.cs" />
+    <Compile Include="SalesContext\SalesOmzetAgg\Contracts\ISalesOmzetEntityDal.cs" />
+    <Compile Include="SalesContext\SalesOmzetHealthWeeklyAgg\Contracts\ISalesOmzetHealthMetricsDal.cs" />
+    <Compile Include="SalesContext\SalesOmzetHealthWeeklyAgg\Contracts\ISalesOmzetHealthWeeklyDal.cs" />
+    <Compile Include="SalesContext\SalesOmzetHealthWeeklyAgg\Contracts\SalesOmzetHealthMetrics.cs" />
+    <Compile Include="SalesContext\SalesOmzetHealthWeeklyAgg\Policies\ISalesOmzetHealthPolicy.cs" />
+    <Compile Include="SalesContext\SalesOmzetHealthWeeklyAgg\Policies\ISalesOmzetReportHealthResolver.cs" />
+    <Compile Include="SalesContext\SalesOmzetHealthWeeklyAgg\Policies\SalesOmzetHealthPolicy.cs" />
+    <Compile Include="SalesContext\SalesOmzetHealthWeeklyAgg\Policies\SalesOmzetReportHealthResolver.cs" />
+    <Compile Include="SalesContext\SalesOmzetHealthWeeklyAgg\Policies\SalesOmzetReportHealthResult.cs" />
+    <Compile Include="SalesContext\SalesOmzetHealthWeeklyAgg\SalesOmzetHealthLevelDisplay.cs" />
+    <Compile Include="SalesContext\SalesOmzetHealthWeeklyAgg\Services\IIsoWeekCalendar.cs" />
+    <Compile Include="SalesContext\SalesOmzetHealthWeeklyAgg\Services\IsoWeekCalendar.cs" />
+    <Compile Include="SalesContext\SalesOmzetHealthWeeklyAgg\UseCases\GenerateSalesOmzetHealthWeeklyRequest.cs" />
+    <Compile Include="SalesContext\SalesOmzetHealthWeeklyAgg\UseCases\GenerateSalesOmzetHealthWeeklyWorker.cs" />
+    <Compile Include="SalesContext\SalesOmzetHealthWeeklyAgg\Workers\SalesOmzetHealthWeeklyWriter.cs" />
+    <Compile Include="SalesContext\SalesOmzetAgg\Contracts\ISalesOmzetTargetDal.cs" />
+    <Compile Include="SalesContext\SalesOmzetAgg\Contracts\ISalesOmzetSourceDal.cs" />
+    <Compile Include="SalesContext\SalesOmzetAgg\SalesOmzetDates.cs" />
+    <Compile Include="SalesContext\SalesOmzetAgg\Snapshots\CustomerSnapshot.cs" />
+    <Compile Include="SalesContext\SalesOmzetAgg\Snapshots\FakturControlStatusSnapshot.cs" />
+    <Compile Include="SalesContext\SalesOmzetAgg\Snapshots\FakturSnapshot.cs" />
+    <Compile Include="SalesContext\SalesOmzetAgg\Snapshots\OrderSnapshot.cs" />
+    <Compile Include="SalesContext\SalesOmzetAgg\Policies\ISalesOmzetEligibilityPolicy.cs" />
+    <Compile Include="SalesContext\SalesOmzetAgg\Policies\SalesOmzetEligibilityPolicy.cs" />
+    <Compile Include="SalesContext\SalesOmzetAgg\Policies\ISalesOmzetPeriodPolicy.cs" />
+    <Compile Include="SalesContext\SalesOmzetAgg\Policies\SalesOmzetPeriodPolicy.cs" />
+    <Compile Include="SalesContext\SalesOmzetAgg\Policies\ISalesOmzetSaleKindPolicy.cs" />
+    <Compile Include="SalesContext\SalesOmzetAgg\Policies\SalesOmzetSaleKindPolicy.cs" />
+    <Compile Include="SalesContext\SalesOmzetAgg\Policies\ISalesOmzetSnapshotBuilder.cs" />
+    <Compile Include="SalesContext\SalesOmzetAgg\Policies\SalesOmzetSnapshotBuilder.cs" />
+    <Compile Include="SalesContext\SalesOmzetAgg\Policies\ISalesOmzetStatusPolicy.cs" />
+    <Compile Include="SalesContext\SalesOmzetAgg\Policies\SalesOmzetStatusPolicy.cs" />
+    <Compile Include="SalesContext\SalesOmzetAgg\Policies\ISalesOmzetChartAmountPolicy.cs" />
+    <Compile Include="SalesContext\SalesOmzetAgg\Policies\SalesOmzetChartAmountPolicy.cs" />
+    <Compile Include="SalesContext\SalesOmzetAgg\Policies\SalesOmzetChartAchievementPolicy.cs" />
+    <Compile Include="SalesContext\SalesOmzetAgg\SalesOmzetChartSummary.cs" />
+    <Compile Include="SalesContext\SalesOmzetAgg\Services\ISalesOmzetChartSummaryBuilder.cs" />
+    <Compile Include="SalesContext\SalesOmzetAgg\Services\SalesOmzetChartSummaryBuilder.cs" />
+    <Compile Include="SalesContext\SalesOmzetAgg\Services\SalesOmzetChartWeekGrouper.cs" />
+    <Compile Include="SalesContext\SalesOmzetAgg\Services\ISalesOmzetTargetResolver.cs" />
+    <Compile Include="SalesContext\SalesOmzetAgg\Services\SalesOmzetTargetResolver.cs" />
+    <Compile Include="SalesContext\SalesOmzetAgg\Services\ISalesOmzetLinker.cs" />
+    <Compile Include="SalesContext\SalesOmzetAgg\Services\SalesOmzetLinker.cs" />
+    <Compile Include="SalesContext\SalesOmzetAgg\UseCases\ReconcileSalesOmzetProgress.cs" />
+    <Compile Include="SalesContext\SalesOmzetAgg\UseCases\ReconcileSalesOmzetRequest.cs" />
+    <Compile Include="SalesContext\SalesOmzetAgg\UseCases\ReconcileSalesOmzetResult.cs" />
+    <Compile Include="SalesContext\SalesOmzetAgg\UseCases\ReconcileSalesOmzetWorker.cs" />
+    <Compile Include="SalesContext\SalesOmzetAgg\Workers\SalesOmzetWriter.cs" />
+    <Compile Include="SalesContext\SalesPersonAgg\Contracts\ISalesPersonDal.cs" />
+    <Compile Include="SalesContext\SalesRuteAgg\ISalesRuteDal.cs" />
+    <Compile Include="SalesContext\SalesRuteAgg\ISalesRuteItemDal.cs" />
+    <Compile Include="SalesContext\SalesPersonAgg\UseCases\CreateSalesPersonCommand.cs" />
+    <Compile Include="SalesContext\SalesPersonAgg\UseCases\GetDataSalesPersonQuery.cs" />
+    <Compile Include="SalesContext\SalesPersonAgg\UseCases\ListSalesPersonQuery.cs" />
+    <Compile Include="SalesContext\SalesPersonAgg\UseCases\UpdateSalesPersonCommand.cs" />
+    <Compile Include="SalesContext\SalesPersonAgg\Workers\SalesPersonBuilder.cs" />
+    <Compile Include="SalesContext\SalesPersonAgg\Workers\SalesPersonValidator.cs" />
+    <Compile Include="SalesContext\SalesPersonAgg\Workers\SalesPersonWriter.cs" />
+    <Compile Include="SalesContext\SalesRuteAgg\SalesRuteBuilder.cs" />
+    <Compile Include="SalesContext\SalesRuteAgg\SalesRuteWriter.cs" />
+    <Compile Include="SalesContext\WilayahAgg\IWilayahDal.cs" />
+    <Compile Include="SalesContext\WilayahAgg\WilayahBuilder.cs" />
+    <Compile Include="SalesContext\WilayahAgg\WilayahWriter.cs" />
+    <Compile Include="SupportContext\DocAgg\CreateDocOnSavedFakturEventHandler.cs" />
+    <Compile Include="SupportContext\DocAgg\DocBuilder.cs" />
+    <Compile Include="SupportContext\DocAgg\DocValidator.cs" />
+    <Compile Include="SupportContext\DocAgg\DocWriter.cs" />
+    <Compile Include="SupportContext\DocAgg\IDocActionDal.cs" />
+    <Compile Include="SupportContext\DocAgg\IDocDal.cs" />
+    <Compile Include="SupportContext\ParamSistemAgg\IParamSistemDal.cs" />
+    <Compile Include="SupportContext\ParamUserAgg\IParamUserDal.cs" />
+    <Compile Include="SupportContext\PlaygroundAgg\IImportOpnameDal.cs" />
+    <Compile Include="SupportContext\RoleFeature\IMenuRepo.cs" />
+    <Compile Include="SupportContext\RoleFeature\IRoleDal.cs" />
+    <Compile Include="SupportContext\TglJamAgg\ITglJamDal.cs" />
+    <Compile Include="SupportContext\UserAgg\IUserDal.cs" />
+    <Compile Include="SupportContext\UserAgg\UserBuilder.cs" />
+    <Compile Include="SupportContext\UserAgg\UserValidator.cs" />
+    <Compile Include="SupportContext\UserAgg\UserWriter.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="FinanceContext\CreditNoteAgg\" />
+    <Folder Include="FinanceContext\HutangAgg\" />
+    <Folder Include="InventoryContext\DeliveryAgg\Contracts\" />
+    <Folder Include="InventoryContext\DeliveryAgg\UseCases\" />
+    <Folder Include="InventoryContext\DeliveryAgg\Workers\" />
+    <Folder Include="PurchaseContext\KlaimAgg\" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\btr.domain\btr.domain.csproj">
+      <Project>{1f2c4331-cc07-49c6-860e-e6ba55a66b12}</Project>
+      <Name>btr.domain</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\btr.nuna\btr.nuna.csproj">
+      <Project>{EF0BE179-091D-4477-A5E5-7E39910057C3}</Project>
+      <Name>btr.nuna</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="app.config" />
+    <None Include="packages.config" />
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+</Project>

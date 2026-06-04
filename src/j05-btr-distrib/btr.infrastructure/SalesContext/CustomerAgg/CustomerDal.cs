@@ -1,0 +1,265 @@
+﻿using System.Collections.Generic;
+using System.Data;
+using System.Data.SqlClient;
+using btr.application.SalesContext.CustomerAgg.Contracts;
+using btr.domain.SalesContext.CustomerAgg;
+using btr.infrastructure.Helpers;
+using btr.nuna.Infrastructure;
+using Dapper;
+using Microsoft.Extensions.Options;
+
+namespace btr.infrastructure.SalesContext.CustomerAgg
+{
+    public class CustomerDal : ICustomerDal
+    {
+        private readonly DatabaseOptions _opt;
+
+        public CustomerDal(IOptions<DatabaseOptions> opt)
+        {
+            _opt = opt.Value;
+        }
+
+        public void Insert(CustomerModel model)
+        {
+            const string sql = @"
+            INSERT INTO BTR_Customer(
+                CustomerId, CustomerName, CustomerCode, WilayahId, KlasifikasiId, HargaTypeId, 
+                Address1, Address2, Kota, KodePos, NoTelp, NoFax, Email, Nitku,
+                Npwp, Nik, Nppkp, NamaWp, AddressWp, AddressWp2, IsKenaPajak, JenisIdentitasPajak,
+                IsSuspend, Plafond, CreditBalance, 
+                Latitude, Longitude, Accuracy, CoordinateTimestamp, CoordinateUser)
+            VALUES (
+                @CustomerId, @CustomerName, @CustomerCode, @WilayahId, @KlasifikasiId, @HargaTypeId, 
+                @Address1, @Address2, @Kota, @KodePos, @NoTelp, @NoFax, @Email, @Nitku,
+                @Npwp, @Nik, @Nppkp, @NamaWp, @AddressWp, @AddressWp2, @IsKenaPajak, @JenisIdentitasPajak, 
+                @IsSuspend, @Plafond, @CreditBalance, 
+                @Latitude, @Longitude, @Accuracy, @CoordinateTimestamp, @CoordinateUser)";
+
+            var dp = new DynamicParameters();
+            dp.AddParam("@CustomerId", model.CustomerId, SqlDbType.VarChar);
+            dp.AddParam("@CustomerName", model.CustomerName, SqlDbType.VarChar);
+            dp.AddParam("@CustomerCode", model.CustomerCode, SqlDbType.VarChar);
+            
+            dp.AddParam("@WilayahId", model.WilayahId, SqlDbType.VarChar);
+            dp.AddParam("@KlasifikasiId", model.KlasifikasiId, SqlDbType.VarChar);
+            dp.AddParam("@HargaTypeId", model.HargaTypeId, SqlDbType.VarChar);
+         
+            dp.AddParam("@Address1", model.Address1, SqlDbType.VarChar);
+            dp.AddParam("@Address2", model.Address2, SqlDbType.VarChar);
+            dp.AddParam("@Kota", model.Kota, SqlDbType.VarChar);
+            dp.AddParam("@KodePos", model.KodePos, SqlDbType.VarChar);
+            dp.AddParam("@NoTelp", model.NoTelp, SqlDbType.VarChar);
+            dp.AddParam("@NoFax", model.NoFax, SqlDbType.VarChar);
+
+            dp.AddParam("@Email", model.Email, SqlDbType.VarChar);
+            dp.AddParam("@Nitku", model.Nitku, SqlDbType.VarChar);
+
+            dp.AddParam("@Npwp", model.Npwp, SqlDbType.VarChar);
+            dp.AddParam("@Nik", model.Nik, SqlDbType.VarChar);
+            dp.AddParam("@Nppkp", model.Nppkp, SqlDbType.VarChar);
+            dp.AddParam("@NamaWp", model.NamaWp, SqlDbType.VarChar);
+            dp.AddParam("@AddressWp", model.AddressWp, SqlDbType.VarChar);
+            dp.AddParam("@AddressWp2", model.AddressWp2, SqlDbType.VarChar);
+            dp.AddParam("@IsKenaPajak", model.IsKenaPajak, SqlDbType.Bit);
+            dp.AddParam("@JenisIdentitasPajak", model.JenisIdentitasPajak, SqlDbType.VarChar);
+
+            dp.AddParam("@IsSuspend", model.IsSuspend, SqlDbType.Bit);
+            dp.AddParam("@Plafond", model.Plafond, SqlDbType.Decimal);
+            dp.AddParam("@CreditBalance", model.CreditBalance, SqlDbType.Decimal);
+
+            dp.AddParam("@Latitude", model.Latitude, SqlDbType.Float);
+            dp.AddParam("@Longitude", model.Longitude, SqlDbType.Float);
+            dp.AddParam("@Accuracy", model.Longitude, SqlDbType.Float);
+            dp.AddParam("@CoordinateTimestamp", model.CoordinateTimestamp, SqlDbType.DateTime);
+            dp.AddParam("@CoordinateUser", model.CoordinateUser, SqlDbType.VarChar);
+
+            using (var conn = new SqlConnection(ConnStringHelper.Get(_opt)))
+            {
+                conn.Execute(sql, dp);
+            }
+        
+        }
+
+    
+        public void Update( CustomerModel model)
+        {
+            const  string sql  = @"
+            UPDATE 
+                BTR_Customer
+            SET
+                CustomerId = @CustomerId,
+                CustomerName = @CustomerName,
+                CustomerCode = @CustomerCode,
+                WilayahId = @WilayahId,
+                KlasifikasiId = @KlasifikasiId,
+                HargaTypeId = @HargaTypeId,
+                Address1 = @Address1,
+                Address2 = @Address2,
+                Kota = @Kota,
+                KodePos = @KodePos,
+                NoTelp = @NoTelp,
+                NoFax = @NoFax,
+                Email = @Email,
+                Nitku = @Nitku,
+                Npwp = @Npwp,
+                Nik = @Nik,
+                Nppkp = @Nppkp,
+                NamaWp = @NamaWp,
+                AddressWp = @AddressWp,
+                AddressWp2 = @AddressWp2,
+                IsKenaPajak = @IsKenaPajak,
+                JenisIdentitasPajak = @JenisIdentitasPajak,
+                IsSuspend = @IsSuspend,
+                Plafond = @Plafond,
+                CreditBalance = @CreditBalance,
+                Latitude = @Latitude,
+                Longitude = @Longitude,
+                Accuracy = @Accuracy,
+                CoordinateTimestamp = @CoordinateTimestamp,
+                CoordinateUser = @CoordinateUser
+            WHERE
+                CustomerId = @CustomerId ";
+
+            var dp = new DynamicParameters();
+            dp.AddParam("@CustomerId", model.CustomerId, SqlDbType.VarChar);
+            dp.AddParam("@CustomerName", model.CustomerName, SqlDbType.VarChar);
+            dp.AddParam("@CustomerCode", model.CustomerCode, SqlDbType.VarChar);
+
+            dp.AddParam("@WilayahId", model.WilayahId, SqlDbType.VarChar);
+            dp.AddParam("@KlasifikasiId", model.KlasifikasiId, SqlDbType.VarChar);
+            dp.AddParam("@HargaTypeId", model.HargaTypeId, SqlDbType.VarChar);
+
+            dp.AddParam("@Address1", model.Address1, SqlDbType.VarChar);
+            dp.AddParam("@Address2", model.Address2, SqlDbType.VarChar);
+            dp.AddParam("@Kota", model.Kota, SqlDbType.VarChar);
+            dp.AddParam("@KodePos", model.KodePos, SqlDbType.VarChar);
+            dp.AddParam("@NoTelp", model.NoTelp, SqlDbType.VarChar);
+            dp.AddParam("@NoFax", model.NoFax, SqlDbType.VarChar);
+            dp.AddParam("@Email", model.Email, SqlDbType.VarChar);
+            dp.AddParam("@Nitku", model.Nitku, SqlDbType.VarChar);
+
+            dp.AddParam("@Npwp", model.Npwp, SqlDbType.VarChar);
+            dp.AddParam("@Nik", model.Nik, SqlDbType.VarChar);
+            dp.AddParam("@Nppkp", model.Nppkp, SqlDbType.VarChar);
+            dp.AddParam("@NamaWp", model.NamaWp, SqlDbType.VarChar);
+            dp.AddParam("@AddressWp", model.AddressWp, SqlDbType.VarChar);
+            dp.AddParam("@AddressWp2", model.AddressWp2, SqlDbType.VarChar);
+            dp.AddParam("@IsKenaPajak", model.IsKenaPajak, SqlDbType.Bit);
+            dp.AddParam("@JenisIdentitasPajak", model.JenisIdentitasPajak, SqlDbType.VarChar);
+
+            dp.AddParam("@IsSuspend", model.IsSuspend, SqlDbType.Bit);
+            dp.AddParam("@Plafond", model.Plafond, SqlDbType.Decimal);
+            dp.AddParam("@CreditBalance", model.CreditBalance, SqlDbType.Decimal);
+
+            dp.AddParam("@Latitude", model.Latitude, SqlDbType.Float);
+            dp.AddParam("@Longitude", model.Longitude, SqlDbType.Float);
+            dp.AddParam("@Accuracy", model.Longitude, SqlDbType.Float);
+            dp.AddParam("@CoordinateTimestamp", model.CoordinateTimestamp, SqlDbType.DateTime);
+            dp.AddParam("@CoordinateUser", model.CoordinateUser, SqlDbType.VarChar);
+
+            using (var conn = new SqlConnection(ConnStringHelper.Get(_opt)))
+            {
+                conn.Execute(sql, dp);
+            }
+        }
+
+        public void Delete(ICustomerKey key)
+        {
+            const string sql = @"
+                DELETE FROM 
+                    BTR_Customer
+                WHERE
+                    CustomerId = @CustomerId ";
+
+            var dp = new DynamicParameters();
+            dp.AddParam("@CustomerId", key.CustomerId, SqlDbType.VarChar);
+
+            using (var conn = new SqlConnection(ConnStringHelper.Get(_opt)))
+            {
+                conn.Execute(sql, dp);
+            }
+        }
+
+        public CustomerModel GetData(ICustomerKey key)
+        {
+            const string sql = @"
+            SELECT
+                aa.CustomerId, aa.CustomerName, aa.CustomerCode, 
+                aa.WilayahId, aa.KlasifikasiId, aa.HargaTypeId, 
+                aa.Address1, aa.Address2, aa.Kota, aa.KodePos, aa.NoTelp, aa.NoFax, aa.Email, aa.Nitku,
+                aa.Npwp, aa.Nik, aa.Nppkp, aa.NamaWp, aa.AddressWp, 
+                aa.AddressWp2, aa.IsKenaPajak, aa.JenisIdentitasPajak,
+                aa.IsSuspend,  aa.Plafond, aa.CreditBalance,
+                aa.Latitude, aa.Longitude, aa.Accuracy, aa.CoordinateTimestamp, aa.CoordinateUser,
+                ISNULL(bb.WilayahName, '') AS WilayahName,
+                ISNULL(cc.KlasifikasiName, '') AS KlasifikasiName,
+                ISNULL(dd.HargaTypeName, '') AS HargaTypeName
+            FROM
+                BTR_Customer aa
+                LEFT JOIN BTR_Wilayah bb ON aa.WilayahId = bb.WilayahId
+                LEFT JOIN BTR_Klasifikasi cc ON aa.KlasifikasiId = cc.KlasifikasiId
+                LEFT JOIN BTR_HargaType dd ON aa.HargaTypeId = dd.HargaTypeId
+            WHERE
+                aa.CustomerId = @CustomerId ";
+
+            var dp = new DynamicParameters();
+            dp.AddParam("@CustomerId", key.CustomerId, SqlDbType.VarChar);
+
+            using (var conn = new SqlConnection(ConnStringHelper.Get(_opt)))
+            {
+                return conn.ReadSingle<CustomerModel>(sql, dp);
+            }
+        }
+
+        public IEnumerable<CustomerModel> ListData()
+        {
+            const string sql = @"
+                SELECT
+                    aa.CustomerId, aa.CustomerName, aa.CustomerCode, 
+                    aa.WilayahId, aa.KlasifikasiId, aa.HargaTypeId, 
+                    aa.Address1, aa.Address2, aa.Kota, aa.KodePos, aa.NoTelp, aa.NoFax, aa.Email, aa.Nitku,
+                    aa.Npwp, aa.Nik, aa.Nppkp, aa.NamaWp, aa.AddressWp, 
+                    aa.AddressWp2, aa.IsKenaPajak, aa.JenisIdentitasPajak,
+                    aa.IsSuspend,  aa.Plafond, aa.CreditBalance, 
+                    aa.Latitude, aa.Longitude, aa.Accuracy, aa.CoordinateTimestamp, aa.CoordinateUser,
+                    ISNULL(bb.WilayahName, '') AS WilayahName,
+                    ISNULL(cc.KlasifikasiName, '') AS KlasifikasiName,
+                    ISNULL(dd.HargaTypeName, '') AS HargaTypeName
+                FROM
+                    BTR_Customer aa
+                    LEFT JOIN BTR_Wilayah bb ON aa.WilayahId = bb.WilayahId
+                    LEFT JOIN BTR_Klasifikasi cc ON aa.KlasifikasiId = cc.KlasifikasiId
+                    LEFT JOIN BTR_HargaType dd ON aa.HargaTypeId = dd.HargaTypeId";
+
+            using (var conn = new SqlConnection(ConnStringHelper.Get(_opt)))
+            {
+                return conn.Read<CustomerModel>(sql);
+            }
+        }
+
+        public IEnumerable<CustomerLocationView> ListLocation()
+        {
+            const string sql = @"
+                SELECT
+                    aa.CustomerId, aa.CustomerName, aa.CustomerCode, 
+                    aa.WilayahId, aa.KlasifikasiId, 
+                    aa.Latitude, aa.Longitude, aa.Accuracy, aa.CoordinateTimestamp, aa.CoordinateUser,
+                    aa.Address1 AS CustomerAddress,
+                    CASE 
+                        WHEN aa.Latitude <> 0 AND aa.Longitude <> 0 THEN 1 
+                        ELSE 0 
+                    END AS HasCoordinate,
+                    ISNULL(bb.WilayahName, '') AS WilayahName,
+                    ISNULL(cc.KlasifikasiName, '') AS KlasifikasiName
+                FROM
+                    BTR_Customer aa
+                    LEFT JOIN BTR_Wilayah bb ON aa.WilayahId = bb.WilayahId
+                    LEFT JOIN BTR_Klasifikasi cc ON aa.KlasifikasiId = cc.KlasifikasiId ";
+
+            using (var conn = new SqlConnection(ConnStringHelper.Get(_opt)))
+            {
+                return conn.Read<CustomerLocationView>(sql);
+            }
+         }
+    }
+}

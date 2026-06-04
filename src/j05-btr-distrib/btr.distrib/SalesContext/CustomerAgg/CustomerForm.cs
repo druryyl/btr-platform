@@ -1,0 +1,663 @@
+﻿using btr.application.BrgContext.HargaTypeAgg;
+using btr.application.SalesContext.CustomerAgg.Contracts;
+using btr.application.SalesContext.CustomerAgg.Workers;
+using btr.application.SalesContext.KlasifikasiAgg;
+using btr.application.SalesContext.WilayahAgg;
+using btr.distrib.Browsers;
+using btr.distrib.Helpers;
+using btr.distrib.SharedForm;
+using btr.domain.BrgContext.HargaTypeAgg;
+using btr.domain.SalesContext.CustomerAgg;
+using btr.domain.SalesContext.KlasifikasiAgg;
+using btr.domain.SalesContext.WilayahAgg;
+using btr.nuna.Domain;
+using ClosedXML.Excel;
+using Syncfusion.DataSource.Extensions;
+using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Drawing;
+using System.Globalization;
+using System.Linq;
+using System.Text.RegularExpressions;
+using System.Windows.Forms;
+
+namespace btr.distrib.SalesContext.CustomerAgg
+{
+    public partial class CustomerForm : Form
+    {
+        private readonly ICustomerDal _customerDal;
+        private readonly ICustomerBuilder _customerBuilder;
+        private IEnumerable<CustomerFormGridDto> _listCust;
+        private readonly IBrowser<CustomerBrowserView> _customerBrowser;
+        private readonly IBrowser<WilayahBrowserView> _wilayahBrowser;
+
+        private readonly IKlasifikasiDal _klasifikasiDal;
+        private readonly IHargaTypeDal _hargaTypeDal;
+        private readonly ICustomerWriter _customerWriter;
+        private readonly ICustomerLocHistDal _customerLocHistDal;
+        private readonly IWilayahDal _wilayahDal;
+
+        private LocationType _location;
+        private LocationType _locationOriginal;
+
+        public CustomerForm(ICustomerDal customerDal,
+            ICustomerBuilder customerBuilder,
+            IBrowser<CustomerBrowserView> customerBrowser,
+            IKlasifikasiDal klasifikasiDal,
+            IHargaTypeDal hargaTypeDal,
+            ICustomerWriter customerWriter,
+            IWilayahDal wilayahDal,
+            IBrowser<WilayahBrowserView> wilayahBrowser,
+            ICustomerLocHistDal customerLocHistDal)
+        {
+            InitializeComponent();
+
+            _customerDal = customerDal;
+            _klasifikasiDal = klasifikasiDal;
+            _hargaTypeDal = hargaTypeDal;
+            _wilayahDal = wilayahDal;
+
+            _customerBrowser = customerBrowser;
+            _wilayahBrowser = wilayahBrowser;
+
+            _customerBuilder = customerBuilder;
+            _customerWriter = customerWriter;
+            _location = new LocationType(0, 0, 0, new DateTime(3000, 1, 1), "");
+            _locationOriginal = new LocationType(0, 0, 0, new DateTime(3000, 1, 1), "");
+
+            PlafondText.Maximum = 9999999999;
+            CreditBalanceText.Maximum = 9999999999;
+            CreditBalanceText.Minimum = -9999999999;
+
+            RegisterEventHandler();
+            InitGrid();
+            InitKlasifikasi();
+            InitTipeHarga();
+            _customerLocHistDal = customerLocHistDal;
+        }
+
+        private void RegisterEventHandler()
+        {
+            SearchButton.Click += SearchButton_Click;
+            SearchText.KeyDown += SearchText_KeyDown;
+
+            CustIdText.Validated += CustIdText_Validated;
+            CustButton.Click += CustButton_Click;
+
+            SaveButton.Click += SaveButton_Click;
+            CustGrid.CellDoubleClick += CustGrid_CellDoubleClick;
+            CustGrid.RowPostPaint += DataGridViewExtensions.DataGridView_RowPostPaint;
+
+            WilayahIdText.Validated += WilayahIdText_Validated;
+            WilayahButton.Click += WilayahButton_Click;
+
+            NewButton.Click += NewButton_Click;
+            ExcelButton.Click += ExcelButton_Click;
+            CoordinateText.Validating += CoordinateText_Validating;
+            OpenInMapButton.Click += OpenInMapButton_Click;
+        }
+
+        private void OpenInMapButton_Click(object sender, EventArgs e)
+        {
+            var lat = _location.Latitude;
+            var lng = _location.Longitude;
+            var url = $"https://www.google.com/maps?q={lat},{lng}";
+            Process.Start(new ProcessStartInfo
+            {
+                FileName = url,
+                UseShellExecute = true
+            });
+        }
+        private void ExcelButton_Click(object sender, EventArgs e)
+        {
+            var listCust = _customerDal.ListData()?.ToList()
+                ?? new List<CustomerModel>();
+
+            var listCustomer = _customerDal.ListData()?.ToList() ?? new List<CustomerModel>();
+            var listWilayah = _wilayahDal.ListData()?.ToList() ?? new List<WilayahModel>();
+            var listKlasifikasi = _klasifikasiDal.ListData()?.ToList() ?? new List<KlasifikasiModel>();
+            var listHargaType = _hargaTypeDal.ListData()?.ToList() ?? new List<HargaTypeModel>();
+            
+            //  projection listCutomer to CustomerFormExcelDto
+            var listCustomerExcel = listCustomer
+                .Where(x => x.CustomerName.Length > 0)
+                .OrderBy(x => x.CustomerName)
+                .Select(x => new CustomerFormExcelDto
+                {
+                    CustomerId = x.CustomerId,
+                    CustomerCode = x.CustomerCode,
+                    CustomerName = x.CustomerName,
+                    Address1 = x.Address1,
+                    Address2 = x.Address2,
+                    Kota = x.Kota,
+                    NoTelp = x.NoTelp,
+                    NoFax = x.NoFax,
+                    WilayahName = listWilayah.FirstOrDefault(y => y.WilayahId == x.WilayahId)?.WilayahName,
+                    KlasifikasiName = listKlasifikasi.FirstOrDefault(y => y.KlasifikasiId == x.KlasifikasiId)?.KlasifikasiName,
+                    Plafond = x.Plafond,
+                    Npwp = x.Npwp,
+                    NamaWp = x.NamaWp,
+                    AddressWp = x.AddressWp,
+                    IsKenaPajak = x.IsKenaPajak,
+                    HargaTypeName = listHargaType.FirstOrDefault(y => y.HargaTypeId == x.HargaTypeId)?.HargaTypeName,
+                    IsSuspend = x.IsSuspend,
+                }).ToList();
+            
+            string filePath;
+            using (var saveFileDialog = new SaveFileDialog())
+            {
+                saveFileDialog.Filter = @"Excel Files|*.xlsx";
+                saveFileDialog.Title = @"Save Excel File";
+                saveFileDialog.DefaultExt = "xlsx";
+                saveFileDialog.AddExtension = true;
+                saveFileDialog.FileName = $"customer-info-{DateTime.Now:yyyy-MM-dd-HHmm}";
+                if (saveFileDialog.ShowDialog() != DialogResult.OK)
+                    return;
+                filePath = saveFileDialog.FileName;
+            }
+
+            using (IXLWorkbook wb = new XLWorkbook())
+            {
+                wb.AddWorksheet("customer-info")
+                    .Cell($"B1")
+                    .InsertTable(listCustomerExcel, false);
+                var ws = wb.Worksheets.First();
+                //  add row number at column A
+                ws.Cell("A1").Value = "No";
+                for (var i = 0; i < listCustomerExcel.Count; i++)
+                    ws.Cell($"A{i + 2}").Value = i + 1;
+
+                //  border header
+                ws.Range("A1:R1").Style.Border.BottomBorder = XLBorderStyleValues.Thin;
+                //  font bold header and background color light blue
+                ws.Range("A1:R1").Style.Font.SetBold();
+                ws.Range("A1:R1").Style.Fill.BackgroundColor = XLColor.LightBlue;
+                //  freeze header
+                ws.SheetView.FreezeRows(1);
+                //  border table
+                ws.Range($"A2:R{listCustomerExcel.Count + 1}").Style.Border.OutsideBorder = XLBorderStyleValues.Thin;
+                ws.Range($"A2:R{listCustomerExcel.Count + 1}").Style.Border.InsideBorder = XLBorderStyleValues.Hair;
+                
+                //  format number thousand separator and zero decimal place
+                ws.Range($"L2:L{listCustomerExcel.Count + 1}").Style.NumberFormat.Format = "#,##";
+                
+                ws.Range($"A1:R{listCustomerExcel.Count + 1}").Style.Font.SetFontName("Lucida Console");
+                ws.Range($"A1:R{listCustomerExcel.Count + 1}").Style.Font.SetFontSize(9f);
+                
+                //  set backcolor column E to H as light yellow
+                ws.Range($"M2:P{listCustomerExcel.Count + 1}").Style.Fill.BackgroundColor = XLColor.LightYellow;
+                ws.Range($"L2:L{listCustomerExcel.Count + 1}").Style.Fill.BackgroundColor = XLColor.LightGreen;
+
+                //  auto fit column
+                ws.Columns().AdjustToContents();
+                //  set column D width to 20 character
+                ws.Column(4).Width = 35;
+                ws.Column(5).Width = 35;
+                ws.Column(6).Width = 15;
+                ws.Column(7).Width = 15;
+                ws.Column(15).Width = 35;
+                wb.SaveAs(filePath);
+            }
+            System.Diagnostics.Process.Start(filePath);
+        }
+
+        #region GRID-CUSTOMER
+        private void SearchText_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.KeyCode == Keys.Enter)
+                FilterCustGrid(SearchText.Text);
+        }
+
+        private void SearchButton_Click(object sender, EventArgs e)
+        {
+            FilterCustGrid(SearchText.Text);
+        }
+
+        private void CustGrid_CellDoubleClick(object sender, DataGridViewCellEventArgs e)
+        {
+            if (e.RowIndex < 0)
+                return;
+            var grid = (DataGridView)sender;
+            var custId = grid.Rows[e.RowIndex].Cells[0].Value.ToString();
+            var cust = _customerBuilder.Load(new CustomerModel(custId)).Build();
+            ShowData(cust);
+            CustomerTab.SelectedTab = DetilPage;
+        }
+
+        private void InitGrid()
+        {
+            var listCust = _customerDal.ListData()?.ToList()
+                ?? new List<domain.SalesContext.CustomerAgg.CustomerModel>();
+
+            _listCust = listCust
+                .Select(x => new CustomerFormGridDto(x.CustomerId,
+                    x.CustomerCode,
+                    x.CustomerName,
+                    x.Address1,
+                    x.WilayahName,
+                    x.Plafond,
+                    x.CreditBalance,
+                    x.Npwp,
+                    x.NamaWp,
+                    x.KlasifikasiName, x.HargaTypeName)).ToList();
+            CustGrid.DataSource = _listCust;
+
+            CustGrid.Columns.SetDefaultCellStyle(Color.Beige);
+            CustGrid.Columns.GetCol("Id").Width = 50;
+            CustGrid.Columns.GetCol("Name").Width = 150;
+            CustGrid.Columns.GetCol("Alamat").Width = 220;
+            CustGrid.Columns.GetCol("Plafond").Width = 100;
+            CustGrid.Columns.GetCol("CreditBalance").Width = 100;
+            CustGrid.Columns.GetCol("Npwp").Width = 100;
+            CustGrid.Columns.GetCol("NamaWp").Width = 150;
+            CustGrid.SetAlternatingRowColors();
+        }
+
+        private void FilterCustGrid(string keyword)
+        {
+            if (keyword.Length == 0)
+            {
+                CustGrid.DataSource = _listCust;
+                return;
+            }
+            var listFilter = _listCust.Where(x => x.Name.ContainMultiWord(keyword)).ToList();
+            var listByAlamat = _listCust.Where(x => x.Alamat.ContainMultiWord(keyword)).ToList();
+            var listCustomerCode = _listCust.Where(x => x.Code ==  keyword).ToList();
+            var listByNamaWp = _listCust.Where(x => x.NamaWp.ContainMultiWord(keyword)).ToList();
+            var result = listFilter
+                .Union(listByAlamat)
+                .Union(listCustomerCode)
+                .Union(listByNamaWp)
+                .ToList();
+            CustGrid.DataSource = result;
+        }
+        #endregion
+
+        #region CUSTOMER-ID
+        private void CustButton_Click(object sender, EventArgs e)
+        {
+            CustIdText.Text = _customerBrowser.Browse(CustIdText.Text);
+            CustIdText_Validated(CustIdText, null);
+        }
+
+        private void CustIdText_Validated(object sender, EventArgs e)
+        {
+            var textbox = (TextBox)sender;
+            if (textbox.Text.Length == 0)
+                return;
+
+            var customer = _customerBuilder
+                .Load(new CustomerModel(textbox.Text))
+                .Build();
+
+            ShowData(customer);
+        }
+
+        private void ShowData(CustomerModel customer)
+        {
+            CustIdText.Text = customer.CustomerId;
+            CustNameText.Text = customer.CustomerName;
+            CustCodeText.Text = customer.CustomerCode;
+            KlasifikasiCombo.SelectedValue = customer.KlasifikasiId;
+
+            TipeHargaCombo.SelectedValue = customer.HargaTypeId;
+            PlafondText.Value = customer.Plafond;
+            CreditBalanceText.Value = customer.CreditBalance;
+
+            WilayahIdText.Text = customer.WilayahId;
+            WilayahNameText.Text = customer.WilayahName;
+            Alamat1Text.Text = customer.Address1;
+            Alamat2Text.Text = customer.Address2;
+            KotaText.Text = customer.Kota;
+            KodePosText.Text = customer.KodePos;
+            NoTelponText.Text = customer.NoTelp;
+            NoFaxText.Text = customer.NoFax;
+
+            IsKenaPajakCheck.Checked = customer.IsKenaPajak;
+            NpwpText.Text = customer.Npwp;
+            NikText.Text = customer.Nik;
+            NamaWpText.Text = customer.NamaWp;
+            Alamat1WpText.Text = customer.AddressWp;
+
+            EmailText.Text = customer.Email;
+            NitkuText.Text = customer.Nitku;
+            JenisIdentitasCombo.Text = customer.JenisIdentitasPajak;
+
+            _location = new LocationType(customer.Latitude, customer.Longitude, 
+                customer.Accuracy, customer.CoordinateTimestamp, customer.CoordinateUser);
+            _locationOriginal = new LocationType(customer.Latitude, customer.Longitude,
+                customer.Accuracy, customer.CoordinateTimestamp, customer.CoordinateUser);
+            CoordinateText.Text = _location.GetCoordinate();
+        }
+
+        private void ClearForm()
+        {
+            CustIdText.Clear(); ;
+            CustNameText.Clear(); ;
+            CustCodeText.Clear(); ;
+            PlafondText.Value = 0;
+            CreditBalanceText.Value = 0;
+            WilayahIdText.Clear();
+            WilayahNameText.Clear();
+            Alamat1Text.Clear();
+            Alamat2Text.Clear();
+            KotaText.Clear();
+            KodePosText.Clear();
+            NoTelponText.Clear();
+            NoFaxText.Clear();
+            IsKenaPajakCheck.Checked = true;
+            NpwpText.Clear();
+            NikText.Clear();
+            NamaWpText.Clear();
+            Alamat1WpText.Clear();
+            EmailText.Clear();
+            NitkuText.Clear();
+            _location = new LocationType(0, 0, 0, new DateTime(3000, 1, 1), "");
+            CoordinateText.Text = _location.GetCoordinate();
+        }
+        #endregion
+
+        #region KLASIFIKASI
+        private void InitKlasifikasi()
+        {
+            var listAll = _klasifikasiDal.ListData()?.ToList() ?? new List<KlasifikasiModel>();
+            KlasifikasiCombo.DataSource = listAll;
+            KlasifikasiCombo.DisplayMember = "KlasifikasiName";
+            KlasifikasiCombo.ValueMember = "KlasifikasiId";
+        }
+        #endregion
+
+        #region HARGA-TYPE
+        private void InitTipeHarga()
+        {
+            var listAll = _hargaTypeDal.ListData()?.ToList() ?? new List<HargaTypeModel>();
+            TipeHargaCombo.DataSource = listAll;
+            TipeHargaCombo.DisplayMember = "HargaTypeName";
+            TipeHargaCombo.ValueMember = "HargaTypeId";
+        }
+        #endregion
+
+        #region WILAYAH
+        private void WilayahButton_Click(object sender, EventArgs e)
+        {
+            WilayahIdText.Text = _wilayahBrowser.Browse(WilayahIdText.Text);
+            WilayahIdText_Validated(WilayahIdText, null);
+        }
+
+        private void WilayahIdText_Validated(object sender, EventArgs e)
+        {
+            var textbox = (TextBox)sender;
+            if (textbox.Text.Length == 0)
+                return;
+
+            var wilayah = _wilayahDal.GetData(new WilayahModel(textbox.Text))
+                ?? new WilayahModel { WilayahName = string.Empty };
+            WilayahNameText.Text = wilayah.WilayahName;
+        }
+        #endregion
+
+        #region NEW
+        private void NewButton_Click(object sender, EventArgs e)
+        {
+            ClearForm();
+        }
+        #endregion
+
+        #region SAVE
+        private void SaveButton_Click(object sender, EventArgs e)
+        {
+            var customer = new CustomerModel(CustIdText.Text);
+            if (CustIdText.Text.Length == 0)
+                customer = _customerBuilder.CreateNew().Build();
+            else
+                customer = _customerBuilder.Load(customer).Build();
+
+            customer = _customerBuilder
+                .Attach(customer)
+                .Name(CustNameText.Text)
+                .Code(CustCodeText.Text)
+                .Klasifikasi(new KlasifikasiModel(KlasifikasiCombo.SelectedValue.ToString()))
+                .HargaType(new HargaTypeModel(TipeHargaCombo.SelectedValue.ToString()))
+                .Plafond(PlafondText.Value)
+                .CreditBalance(CreditBalanceText.Value)
+                .Wilayah(new WilayahModel(WilayahIdText.Text))
+                .Address(Alamat1Text.Text, Alamat2Text.Text, KotaText.Text)
+                .KodePos(KodePosText.Text)
+                .NoTelp(NoTelponText.Text)
+                .NoFax(NoFaxText.Text)
+                .IsKenaPajak(IsKenaPajakCheck.Checked)
+                .Npwp(NpwpText.Text)
+                .Nik(NikText.Text)
+                .NamaWp(NamaWpText.Text)
+                .AddressWp(Alamat1WpText.Text)
+                .Email(EmailText.Text)
+                .Nitku(NitkuText.Text)
+                .JenisIdentitasPajak(JenisIdentitasCombo.Text)
+                .Build();
+
+            var isCoordinateChange = false;
+            if (_location.Latitude != _locationOriginal.Latitude)
+                isCoordinateChange = true;
+
+            if (_location.Longitude != _locationOriginal.Longitude)
+                isCoordinateChange = true;
+
+            customer.CoordinateTimestamp = new DateTime(3000,1,1);
+            if (isCoordinateChange)
+            {
+                customer.Latitude = _location.Latitude;
+                customer.Longitude = _location.Longitude;
+                customer.Accuracy = 12;
+                customer.CoordinateTimestamp = DateTime.Now;
+                customer.CoordinateUser = ((MainForm)this.Parent.Parent).UserId.UserId;
+
+                var locHist = CustomerLocHistModel.Create(customer.CustomerId, _location.Latitude, _location.Longitude, _location.Accuracy, customer.CoordinateUser);
+                _customerLocHistDal.Insert(locHist);
+            }
+
+
+            _customerWriter.Save(ref customer);
+            ClearForm();
+        }
+        #endregion
+
+        #region TEXT-COORDINATE
+        private void CoordinateText_Validating(object sender, System.ComponentModel.CancelEventArgs e)
+        {
+            var content = ((TextBox)sender).Text.Trim();
+            if (content == string.Empty)
+                content = "0,0";
+
+            try
+            {
+                _location.SetCoordinate(content);
+                CoordinateText.Text = _location.GetCoordinate();
+            }
+            catch (ArgumentException ex)
+            {
+                MessageBox.Show(ex.Message);
+                e.Cancel = true;
+            }
+        }
+        #endregion
+    }
+
+    public class CustomerFormGridDto
+    {
+        public CustomerFormGridDto(string id, string code, string name, string alamat, 
+            string kota, decimal plafond, decimal creditBalance,
+            string npwp, string namaWp, string klasifikasiName, string hargaTypeName)
+        {
+            Id = id;
+            Code = code;
+            Name = name;
+            Alamat = alamat;
+            Kota = kota;
+            Plafond = plafond;
+            CreditBalance = creditBalance;
+            Npwp = npwp;
+            NamaWp = namaWp;
+            KlasifikasiName = klasifikasiName;
+            HargaTypeName = hargaTypeName;
+        }
+        public string Id { get; }
+        public string Code{ get; }
+
+        public string Name { get; }
+        public string Alamat { get; }
+        public string Kota { get; }
+        public string KlasifikasiName { get; set; }
+        public decimal Plafond { get; }
+        public decimal CreditBalance { get; }
+        public string Npwp { get; set; }
+        public string NamaWp { get; set; }
+        public string HargaTypeName { get; set; }
+    }
+
+    public class CustomerFormExcelDto
+    {
+        public string CustomerId { get; set; }
+        public string CustomerCode { get; set; }
+        public string CustomerName { get; set; }
+        public string Address1 { get; set; }
+        public string Address2 { get; set; }
+        public string Kota { get; set; }
+        public string NoTelp {get;set;  }
+        public string NoFax {get;set;   }
+        public string WilayahName {get;set; }
+        public string KlasifikasiName {get;set; }
+        public decimal Plafond {get;set; }
+        public string Npwp {get;set;    }
+        public string NamaWp {get;set;  }
+        public string AddressWp {get;set;   }
+        public bool IsKenaPajak {get;set; }
+        public string HargaTypeName {get;set;   }
+        public bool IsSuspend {get;set;   }
+    }
+
+    public class LocationType
+    {
+        public LocationType(double lat, double ltd, double accuracy, DateTime coordTimestampe, string coordUser)
+        {
+            Latitude = lat;
+            Longitude = ltd;
+            Accuracy = accuracy;
+            CoordinateTimestamp = coordTimestampe;
+            CoordinateUser = coordUser;
+        }
+        public double Latitude { get; private set; }
+        public double Longitude { get; private set; }
+        public double Accuracy { get; private set; }
+        public DateTime CoordinateTimestamp { get; private set; }
+        public string CoordinateUser { get; private set; }
+
+        public void SetCoordinate(string coordinate)
+        {
+            if (string.IsNullOrWhiteSpace(coordinate))
+                throw new ArgumentException("Coordinate cannot be null or empty", nameof(coordinate));
+
+            if (!IsDecimalLatLon(coordinate))
+            { 
+                var fromDms = TryConvertDmsToDecimal(coordinate);
+                if (fromDms == null)
+                    throw new ArgumentException("Invalid Coordinate", nameof(coordinate));
+                else
+                    coordinate = fromDms;
+            }
+
+            var parts = coordinate.Split(',');
+
+            if (parts.Length != 2)
+                throw new ArgumentException("Coordinate must contain exactly one comma separating latitude and longitude", nameof(coordinate));
+
+            var latString = parts[0].Trim();
+            var lngString = parts[1].Trim();
+
+            if (string.IsNullOrWhiteSpace(latString) || string.IsNullOrWhiteSpace(lngString))
+                throw new ArgumentException("Both latitude and longitude must be provided", nameof(coordinate));
+
+            if (!double.TryParse(latString, out double latitude) || !double.TryParse(lngString, out double longitude))
+                throw new ArgumentException("Invalid latitude or longitude format", nameof(coordinate));
+
+            if (latitude < -90 || latitude > 90)
+                throw new ArgumentException($"Latitude must be between -90 and 90 degrees. Value: {latitude}", nameof(coordinate));
+
+            if (longitude < -180 || longitude > 180)
+                throw new ArgumentException($"Longitude must be between -180 and 180 degrees. Value: {longitude}", nameof(coordinate));
+
+            // Only update latitude and longitude, keep other properties unchanged
+            Latitude = latitude;
+            Longitude = longitude;
+        }
+
+
+        // Regex pattern for DMS format, e.g. 7°48'02.3"S 110°20'30.1"E
+        private static readonly Regex DmsPattern = new Regex(
+            @"(?<latDeg>\d{1,2})°(?<latMin>\d{1,2})'(?<latSec>[\d.]+)""?(?<latDir>[NS])\s*" +
+            @"(?<lonDeg>\d{1,3})°(?<lonMin>\d{1,2})'(?<lonSec>[\d.]+)""?(?<lonDir>[EW])",
+            RegexOptions.Compiled | RegexOptions.IgnoreCase
+        );
+
+        public static string TryConvertDmsToDecimal(string input)
+        {
+            if (string.IsNullOrWhiteSpace(input))
+                return null;
+
+            var match = DmsPattern.Match(input.Trim());
+            if (!match.Success)
+                return null;
+
+            // Parse latitude
+            double latDeg = double.Parse(match.Groups["latDeg"].Value, CultureInfo.InvariantCulture);
+            double latMin = double.Parse(match.Groups["latMin"].Value, CultureInfo.InvariantCulture);
+            double latSec = double.Parse(match.Groups["latSec"].Value, CultureInfo.InvariantCulture);
+            char latDir = char.ToUpperInvariant(match.Groups["latDir"].Value[0]);
+
+            // Parse longitude
+            double lonDeg = double.Parse(match.Groups["lonDeg"].Value, CultureInfo.InvariantCulture);
+            double lonMin = double.Parse(match.Groups["lonMin"].Value, CultureInfo.InvariantCulture);
+            double lonSec = double.Parse(match.Groups["lonSec"].Value, CultureInfo.InvariantCulture);
+            char lonDir = char.ToUpperInvariant(match.Groups["lonDir"].Value[0]);
+
+            // Convert DMS to decimal degrees
+            double latitude = latDeg + (latMin / 60.0) + (latSec / 3600.0);
+            double longitude = lonDeg + (lonMin / 60.0) + (lonSec / 3600.0);
+
+            if (latDir == 'S') latitude *= -1;
+            if (lonDir == 'W') longitude *= -1;
+
+            return string.Format(
+                CultureInfo.InvariantCulture,
+                "{0},{1}",
+                latitude,
+                longitude
+            );
+        }
+        private static readonly Regex LatLonPattern = new Regex(
+            @"^\s*([+-]?\d{1,2}(?:\.\d+)?),\s*([+-]?\d{1,3}(?:\.\d+)?)\s*$",
+            RegexOptions.Compiled
+        );
+
+        public static bool IsDecimalLatLon(string input)
+        {
+            if (string.IsNullOrWhiteSpace(input))
+                return false;
+
+            var match = LatLonPattern.Match(input);
+            if (!match.Success)
+                return false;
+
+            double lat = double.Parse(match.Groups[1].Value);
+            double lon = double.Parse(match.Groups[2].Value);
+
+            // Ensure within valid coordinate ranges
+            return lat >= -90 && lat <= 90 && lon >= -180 && lon <= 180;
+        }
+        public string GetCoordinate()
+        {
+            var result = $"{Latitude:N5}, {Longitude:N5}";
+            return result;
+        }
+    }
+}

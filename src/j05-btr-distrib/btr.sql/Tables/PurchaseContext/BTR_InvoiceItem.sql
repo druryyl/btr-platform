@@ -1,0 +1,40 @@
+﻿CREATE TABLE BTR_InvoiceItem(
+    InvoiceId VARCHAR(13) NOT NULL CONSTRAINT DF_BTR_InvoiceItem_InvoiceId DEFAULT(''),
+    InvoiceItemId VARCHAR(17) NOT NULL CONSTRAINT DF_BTR_InvoiceItem_InvoiceItemId DEFAULT(''),
+    NoUrut INT NOT NULL CONSTRAINT DF_BTR_InvoiceItem_NoUrut DEFAULT(0),
+    BrgId VARCHAR(6) NOT NULL CONSTRAINT DF_BTR_InvoiceItem_BrgId DEFAULT(''),
+
+    HrgInputStr VARCHAR(30) NOT NULL CONSTRAINT DF_BTR_InvoiceItem_HrgInputStr DEFAULT(''),
+    HrgDetilStr VARCHAR(50) NOT NULL CONSTRAINT DF_BTR_InvoiceItem_HrgDetilStr DEFAULT(''),
+
+    QtyInputStr VARCHAR(13) NOT NULL CONSTRAINT DF_BTR_InvoiceItem_QtyInputStr DEFAULT(''),
+    QtyDetilStr VARCHAR(50) NOT NULL CONSTRAINT DF_BTR_InvoiceItem_QtyDetilStr DEFAULT(''),
+    
+    QtyBesar INT NOT NULL CONSTRAINT DF_BTR_InvoiceItem_QtyBesar DEFAULT(0),
+    SatBesar VARCHAR(10) NOT NULL CONSTRAINT DF_BTR_InvoiceItem_SatBesar DEFAULT(''),
+    Conversion INT NOT NULL CONSTRAINT DF_BTR_InvoiceItem_Conversion DEFAULT(0),
+    HppSatBesar DECIMAL(18,2) NOT NULL CONSTRAINT DF_BTR_InvoiceItem_HppSatBesar DEFAULT(0),
+    
+    QtyKecil INT NOT NULL CONSTRAINT DF_BTR_InvoiceItem_QtyKecil DEFAULT(0),
+    SatKecil VARCHAR(10) NOT NULL CONSTRAINT DF_BTR_InvoiceItem_SatKecil DEFAULT(''),
+    HppSatKecil DECIMAL(18,2) NOT NULL CONSTRAINT DF_BTR_InvoiceItem_HppSatKecil DEFAULT(0),
+    
+    QtyBeli INT NOT NULL CONSTRAINT DF_BTR_InvoiceItem_QtyJual DEFAULT(0),
+    HppSat DECIMAL(18,2) NOT NULL CONSTRAINT DF_BTR_InvoiceItem_HppSat DEFAULT(0),
+    SubTotal DECIMAL(18,2) NOT NULL CONSTRAINT DF_BTR_InvoiceItem_SubTotal DEFAULT(0),
+    
+    QtyBonus INT NOT NULL CONSTRAINT DF_BTR_InvoiceItem_QtyBonus DEFAULT(0),
+    QtyPotStok INT NOT NULL CONSTRAINT DF_BTR_InvoiceItem_QtyPotStok DEFAULT(0),
+    
+    DiscInputStr VARCHAR(13) NOT NULL CONSTRAINT DF_BTR_InvoiceItem_DiscInputStr DEFAULT(''),
+    DiscDetilStr VARCHAR(13) NOT NULL CONSTRAINT DF_BTR_InvoiceItem_DiscDetilStr DEFAULT(''),
+    DiscRp DECIMAL(18,2) NOT NULL CONSTRAINT DF_BTR_InvoiceItem_DiscRp DEFAULT(0),
+
+    DppProsen DECIMAL(18,2) NOT NULL CONSTRAINT DF_BTR_InvoiceItem_DppProsen DEFAULT(0),
+    DppRp DECIMAL(18,2) NOT NULL CONSTRAINT DF_BTR_InvoiceItem_DppRp DEFAULT(0),
+    PpnProsen DECIMAL(18,2) NOT NULL CONSTRAINT DF_BTR_InvoiceItem_PpnProsen DEFAULT(0),
+    PpnRp DECIMAL(18,2) NOT NULL CONSTRAINT DF_BTR_InvoiceItem_PpnRp DEFAULT(0),
+    Total DECIMAL(18,2) NOT NULL CONSTRAINT DF_BTR_InvoiceItem_Total DEFAULT(0),
+    
+    CONSTRAINT PK_BTR_InvoiceItem PRIMARY KEY CLUSTERED (InvoiceItemId)
+)

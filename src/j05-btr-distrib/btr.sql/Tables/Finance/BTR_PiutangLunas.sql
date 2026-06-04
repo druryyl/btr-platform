@@ -1,0 +1,22 @@
+﻿CREATE TABLE [dbo].[BTR_PiutangLunas]
+(
+	PiutangId VARCHAR(13) NOT NULL CONSTRAINT DF_BTR_PiutangLunas_PiutangId DEFAULT(''),
+	NoUrut INT NOT NULL CONSTRAINT DF_BTR_PiutangLunas_NoUrut DEFAULT(0),
+	PelunasanId VARCHAR(17) NOT NULL CONSTRAINT DF_BTR_PiutangLunas_PelunasanId DEFAULT(''),
+	LunasDate DATETIME NOT NULL CONSTRAINT DF_BTR_PiutangLunas_LunasDate DEFAULT('3000-01-01'),
+	TagihanId VARCHAR(13) NOT NULL CONSTRAINT DF_BTR_PiutangLunas_TagihanId DEFAULT(''),
+	Nilai DECIMAL(18,2) NOT NULL CONSTRAINT DF_BTR_PiutangLunas_Nilai DEFAULT(0),
+	JenisLunas INT NOT NULL CONSTRAINT DF_BTR_PiutangLunas_JenisLunas DEFAULT(0),
+	JatuhTempoBg DATETIME NOT NULL CONSTRAINT DF_BTR_PiutangLunas_JatuhTempoBg DEFAULT('3000-01-01'),
+	NoRekBg VARCHAR(20) NOT NULL CONSTRAINT DF_BTR_PiutangLunas_NoRekBg DEFAULT(''),
+	NamaBank VARCHAR(50) NOT NULL CONSTRAINT DF_BTR_PiutangLunas_NamaBank DEFAULT(''),
+	AtasNamaBank VARCHAR(50) NOT NULL CONSTRAINT DF_BTR_PiutangLunas_AtasNamaBank DEFAULT(''),
+
+	CONSTRAINT PK_BTR_PiutangLunas PRIMARY KEY CLUSTERED(PiutangId, NoUrut)
+)
+GO
+
+CREATE INDEX IX_BTR_PiutangLunas_LunasDate 
+	ON [dbo].[BTR_PiutangLunas](LunasDate, PiutangId, NoUrut)
+	WITH(FILLFACTOR=95)
+GO

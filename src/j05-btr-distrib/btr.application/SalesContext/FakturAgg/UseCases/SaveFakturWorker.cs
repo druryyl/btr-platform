@@ -1,0 +1,235 @@
+﻿using System;
+using System.Collections.Generic;
+using btr.application.InventoryContext.StokAgg.GenStokUseCase;
+using btr.application.SalesContext.FakturAgg.Workers;
+using btr.application.SalesContext.OrderFeature;
+using btr.application.SalesContext.OrderMapFeature;
+using btr.domain.BrgContext.BrgAgg;
+using btr.domain.InventoryContext.DriverAgg;
+using btr.domain.InventoryContext.WarehouseAgg;
+using btr.domain.SalesContext.CustomerAgg;
+using btr.domain.SalesContext.FakturAgg;
+using btr.domain.SalesContext.OrderAgg;
+using btr.domain.SalesContext.OrderStatusFeature;
+using btr.domain.SalesContext.SalesPersonAgg;
+using btr.domain.SupportContext.UserAgg;
+using btr.nuna.Application;
+using btr.nuna.Domain;
+using Dawn;
+using MediatR;
+using Newtonsoft.Json;
+using Polly;
+
+namespace btr.application.SalesContext.FakturAgg.UseCases
+{
+    public class SaveFakturRequest : IFakturKey, ICustomerKey, ISalesPersonKey, IWarehouseKey, IUserKey, IDriverKey
+    {
+        public string FakturId { get; set; }
+        public string FakturCode { get; set; }
+        public string FakturDate { get; set; }
+        public string CustomerId { get; set; }
+        public string OrderId { get; set; }
+        public string SalesPersonId { get; set; }
+        public string WarehouseId { get; set; }
+        public string RencanaKirimDate { get; set; }
+        public string DriverId { get; set; }
+        public int TermOfPayment { get; set; }
+        public string DueDate { get; set; }
+        public string UserId { get; set; }
+        public decimal Cash { get; set; }
+        public string Note { get; set; }
+        public IEnumerable<SaveFakturRequestItem> ListBrg { get; set; }
+        public IEnumerable<SaveFakturRequestItem> ListBrgKlaim { get; set; }
+
+    }
+
+    public class SaveFakturRequestItem : IBrgKey
+    {
+        public string BrgId { get; set; }
+        public string StokHarga { get; set; }
+        public string QtyString { get; set; }
+        public string HrgString { get; set; }
+        public string DiscountString { get; set; }
+        public decimal DppProsen { get; set; }
+        public decimal PpnProsen { get; set; }
+    }
+
+    public interface ISaveFakturWorker : INunaService<FakturModel, SaveFakturRequest> { }
+
+    public class SaveFakturWorker : ISaveFakturWorker
+    {
+        private readonly IFakturBuilder _fakturBuilder;
+        private readonly IFakturWriter _fakturWriter;
+        private readonly IMediator _mediator;
+        private readonly IGenStokFakturWorker _genStokWorker;
+        private readonly IOrderMapDal _orderMapDal;
+        private readonly IOrderDal _orderDal;
+
+        public SaveFakturWorker(IFakturBuilder fakturBuilder,
+            IFakturWriter fakturWriter,
+            IMediator mediator, IGenStokFakturWorker genStokWorker, IOrderMapDal orderMapDal, IOrderDal orderDal)
+        {
+            _fakturBuilder = fakturBuilder;
+            _fakturWriter = fakturWriter;
+            _mediator = mediator;
+            _genStokWorker = genStokWorker;
+            _orderMapDal = orderMapDal;
+            _orderDal = orderDal;
+        }
+
+        public FakturModel Execute(SaveFakturRequest req)
+        {
+            //  GUARD
+            Guard.Argument(() => req).NotNull()
+                .Member(x => x.FakturDate, y => y.ValidDate("yyyy-MM-dd"))
+                .Member(x => x.CustomerId, y => y.NotEmpty())
+                .Member(x => x.SalesPersonId, y => y.NotEmpty())
+                .Member(x => x.WarehouseId, y => y.NotEmpty())
+                .Member(x => x.DueDate, y => y.ValidDate("yyyy-MM-dd"));
+
+            //  PROSES FAKTUR
+            FakturModel result;
+            var fallback = Policy<FakturModel>
+                .Handle<KeyNotFoundException>()
+                .Fallback(() => null);
+            var existingFaktur = fallback.Execute(() => _fakturBuilder.Load(req).Build());
+            var order = _orderDal.GetData(OrderModel.Key(req.OrderId));
+            if (order != null)
+                order.StatusSync = "TERBIT FAKTUR";
+            using (var trans = TransHelper.NewScope())
+            {
+                result = SaveFaktur(req);
+
+                _orderMapDal.Delete(OrderModel.Key(req.OrderId));
+                _orderMapDal.Insert(new OrderMapModel
+                {
+                    OrderId = req.OrderId,
+                    FakturId = result.FakturId,
+                    FakturCode = result.FakturCode,
+                    Timestamp = DateTime.Now,
+                    UserName = req.UserId
+                });
+
+                if (order != null)
+                {
+                    _orderDal.Update(order);
+                }
+                
+                //      generate stok dilakukan jika data baru atau...
+                //      edit faktur dan item berubah (jika hanya edit header,
+                //      maka tidak usah gen stok
+                var genStokReq = new GenStokFakturRequest(result.FakturId);
+                if (existingFaktur is null)
+                { 
+                    _genStokWorker.Execute(genStokReq);
+                    trans.Complete();
+                    return result;
+                }
+
+                //  
+
+                if (IsItemBerubah(existingFaktur, result))
+                    _genStokWorker.Execute(genStokReq);
+
+
+
+                trans.Complete();
+            }
+
+            //  RESULT
+            return result;
+        }
+
+        private static bool IsItemBerubah(FakturModel before, FakturModel after)
+        {
+            foreach (var item in before.ListItem)
+            {
+                item.DiscRp = Math.Round(item.DiscRp, 0);
+                item.PpnRp = Math.Round(item.PpnRp, 0);
+                item.Total = Math.Round(item.Total, 0);
+            }
+            var x = JsonConvert.SerializeObject(before.ListItem);
+
+            foreach (var item in after.ListItem)
+            {
+                item.DiscRp = Math.Round(item.DiscRp, 0);
+                item.PpnRp = Math.Round(item.PpnRp, 0);
+                item.Total =  Math.Round(item.Total, 0);
+            }
+            var y = JsonConvert.SerializeObject(after.ListItem);
+            var result = x != y;
+            return result;
+        }
+
+        private FakturModel SaveFaktur(SaveFakturRequest req)
+        {
+            //  BUILD
+            FakturModel result;
+            if (req.FakturId.Length == 0)
+            {
+                result = _fakturBuilder.CreateNew(req).Build();
+            }
+            else
+            {
+                result = _fakturBuilder.Load(req).Build();
+                result.ListItem.Clear();
+                result.ListItemKlaim.Clear();
+            }
+
+            result = _fakturBuilder
+                .Attach(result)
+                .FakturCode(req.FakturCode)
+                .FakturDate(req.FakturDate.ToDate(DateFormatEnum.YMD))
+                .Customer(req)
+                .Order(OrderModel.Key(req.OrderId))
+                .SalesPerson(req)
+                .Warehouse(req)
+                .TglRencanaKirim(req.RencanaKirimDate.ToDate(DateFormatEnum.YMD))
+                .Driver(req)
+                .User(req)
+                .TermOfPayment((TermOfPaymentEnum)req.TermOfPayment)
+                .DueDate(req.DueDate.ToDate(DateFormatEnum.YMD))
+                .Cash(req.Cash)
+                .Note(req.Note)
+                .Build();
+
+            foreach (var item in req.ListBrg)
+            {
+                result = _fakturBuilder
+                    .Attach(result)
+                    .AddItem(item, item.StokHarga, item.QtyString, item.HrgString, item.DiscountString, item.DppProsen, item.PpnProsen, false)
+                    .Build();
+            }
+
+            foreach (var item in req.ListBrgKlaim)
+            {
+                result = _fakturBuilder
+                    .Attach(result)
+                    .AddItemKlaim(item, item.StokHarga, item.QtyString, item.HrgString, item.DiscountString, item.DppProsen, item.PpnProsen, false)
+                    .Build();
+            }
+
+
+            result = _fakturBuilder
+                .Attach(result)
+                .CalcTotal()
+                .Build();
+
+            //  APPLY
+            _ = _fakturWriter.Save(result);
+            _mediator.Publish(new SavedFakturEvent(req, result));
+            return result;
+        }
+    }
+
+    public class SavedFakturEvent : INotification
+    {
+        public SavedFakturEvent(SaveFakturRequest request, FakturModel aggregate)
+        {
+            Request = request;
+            Aggregate = aggregate;
+        }
+        public SaveFakturRequest Request { get; }
+        public FakturModel Aggregate { get; }
+    }
+}

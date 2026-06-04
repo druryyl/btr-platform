@@ -1,0 +1,237 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{BD420C25-6A06-47CB-B011-2E302F902335}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>btr.infrastructure</RootNamespace>
+    <AssemblyName>btr.infrastructure</AssemblyName>
+    <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+    <Deterministic>true</Deterministic>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="Dapper, Version=2.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\Dapper.2.0.143\lib\net461\Dapper.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.Bcl.AsyncInterfaces, Version=7.0.0.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.Bcl.AsyncInterfaces.7.0.0\lib\net462\Microsoft.Bcl.AsyncInterfaces.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.Extensions.DependencyInjection.Abstractions, Version=7.0.0.0, Culture=neutral, PublicKeyToken=adb9793829ddae60, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.Extensions.DependencyInjection.Abstractions.7.0.0\lib\net462\Microsoft.Extensions.DependencyInjection.Abstractions.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.Extensions.Options, Version=7.0.0.1, Culture=neutral, PublicKeyToken=adb9793829ddae60, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.Extensions.Options.7.0.1\lib\net462\Microsoft.Extensions.Options.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.Extensions.Primitives, Version=7.0.0.0, Culture=neutral, PublicKeyToken=adb9793829ddae60, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.Extensions.Primitives.7.0.0\lib\net462\Microsoft.Extensions.Primitives.dll</HintPath>
+    </Reference>
+    <Reference Include="System" />
+    <Reference Include="System.Buffers, Version=4.0.3.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
+      <HintPath>..\packages\System.Buffers.4.5.1\lib\net461\System.Buffers.dll</HintPath>
+    </Reference>
+    <Reference Include="System.ComponentModel.DataAnnotations" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Drawing" />
+    <Reference Include="System.Memory, Version=4.0.1.2, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
+      <HintPath>..\packages\System.Memory.4.5.5\lib\net461\System.Memory.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Numerics" />
+    <Reference Include="System.Numerics.Vectors, Version=4.1.4.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <HintPath>..\packages\System.Numerics.Vectors.4.5.0\lib\net46\System.Numerics.Vectors.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Runtime.CompilerServices.Unsafe, Version=6.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <HintPath>..\packages\System.Runtime.CompilerServices.Unsafe.6.0.0\lib\net461\System.Runtime.CompilerServices.Unsafe.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Threading.Tasks.Extensions, Version=4.2.0.1, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
+      <HintPath>..\packages\System.Threading.Tasks.Extensions.4.5.4\lib\net461\System.Threading.Tasks.Extensions.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Windows.Forms" />
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="System.Data.DataSetExtensions" />
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Net.Http" />
+    <Reference Include="System.Xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="BrgContext\HargaTypeAgg\HargaTypeDal.cs" />
+    <Compile Include="BrgContext\JenisBrgAgg\JenisBrgDal.cs" />
+    <Compile Include="FinanceContext\FakturPotBalanceAgg\FakturPotBalanceDal.cs" />
+    <Compile Include="FinanceContext\FakturPotBalanceAgg\FakturPotBalancePostDal.cs" />
+    <Compile Include="FinanceContext\FpKeluaranAgg\FpKeluaranBrgDal.cs" />
+    <Compile Include="FinanceContext\FpKeluaranAgg\FpKeluaranDal.cs" />
+    <Compile Include="FinanceContext\FpKeluaranAgg\FpKeluaranFakturDal.cs" />
+    <Compile Include="FinanceContext\FpKeluaranAgg\FpKeluaranViewDal.cs" />
+    <Compile Include="FinanceContext\PiutangAgg\PelunasanInfoDal.cs" />
+    <Compile Include="FinanceContext\PiutangAgg\PenerimaanPelunasanSalesDal.cs" />
+    <Compile Include="FinanceContext\PiutangAgg\PiutangDal.cs" />
+    <Compile Include="FinanceContext\PiutangAgg\PiutangElementDal.cs" />
+    <Compile Include="FinanceContext\PiutangAgg\PiutangLunasDal.cs" />
+    <Compile Include="FinanceContext\PiutangAgg\PIutangLunasViewDal.cs" />
+    <Compile Include="FinanceContext\PiutangAgg\PiutangTrackerDal.cs" />
+    <Compile Include="FinanceContext\PiutangSalesWilayahRpt\PiutangSalesWilayahDal.cs" />
+    <Compile Include="FinanceContext\ReturBalanceAgg\ReturBalanceDal.cs" />
+    <Compile Include="FinanceContext\ReturBalanceAgg\ReturBalancePostDal.cs" />
+    <Compile Include="FinanceContext\TagihanAgg\TagihanDal.cs" />
+    <Compile Include="FinanceContext\TagihanAgg\TagihanFakturDal.cs" />
+    <Compile Include="Helpers\ConnStringHelper.cs" />
+    <Compile Include="Helpers\DatabaseOptions.cs" />
+    <Compile Include="Helpers\ParamNoDal.cs" />
+    <Compile Include="Helpers\PrinterOptions.cs" />
+    <Compile Include="InfrastructureAssemblyAnchor.cs" />
+    <Compile Include="BrgContext\BrgAgg\BrgDal.cs" />
+    <Compile Include="BrgContext\BrgAgg\BrgSatuanDal.cs" />
+    <Compile Include="BrgContext\BrgAgg\BrgHargaDal.cs" />
+    <Compile Include="BrgContext\BrgAgg\BrgStokViewDal.cs" />
+    <Compile Include="BrgContext\KategoriAgg\KategoriDal.cs" />
+    <Compile Include="InventoryContext\AdjustmentAgg\AdjustmentDal.cs" />
+    <Compile Include="InventoryContext\DriverAgg\DriverDal.cs" />
+    <Compile Include="InventoryContext\ImportOpnameAgg\ImportOpnameDal.cs" />
+    <Compile Include="InventoryContext\KartuStokRpt\KartuStokDal.cs" />
+    <Compile Include="InventoryContext\KartuStokRpt\KartuStokSummaryDal.cs" />
+    <Compile Include="InventoryContext\MutasiAgg\MutasiBrgViewDal.cs" />
+    <Compile Include="InventoryContext\MutasiAgg\MutasiDal.cs" />
+    <Compile Include="InventoryContext\MutasiAgg\MutasiDiscDal.cs" />
+    <Compile Include="InventoryContext\MutasiAgg\MutasiItemDal.cs" />
+    <Compile Include="InventoryContext\OmzetSupplierAgg\OmzetSupplierViewDal.cs" />
+    <Compile Include="InventoryContext\OpnameAgg\OpnameDal.cs" />
+    <Compile Include="InventoryContext\OpnameAgg\StokOpDal.cs" />
+    <Compile Include="InventoryContext\OpnameAgg\StokOpInfoDal.cs" />
+    <Compile Include="InventoryContext\PackingAgg\PackingDal.cs" />
+    <Compile Include="InventoryContext\PackingAgg\PackingFakturDal.cs" />
+    <Compile Include="InventoryContext\PackingAgg\PackingBrgDal.cs" />
+    <Compile Include="InventoryContext\PackingOrderFeature\PackingOrderDal.cs" />
+    <Compile Include="InventoryContext\PackingOrderFeature\PackingOrderDepoDal.cs" />
+    <Compile Include="InventoryContext\PackingOrderFeature\PackingOrderDto.cs" />
+    <Compile Include="InventoryContext\PackingOrderFeature\PackingOrderItemDal.cs" />
+    <Compile Include="InventoryContext\PackingOrderFeature\PackingOrderItemDto.cs" />
+    <Compile Include="InventoryContext\PackingOrderFeature\PackingOrderRepo.cs" />
+    <Compile Include="InventoryContext\ReturJualAgg\ReturJualDal.cs" />
+    <Compile Include="InventoryContext\ReturJualAgg\ReturJualItemDal.cs" />
+    <Compile Include="InventoryContext\ReturJualAgg\ReturJualItemDiscDal.cs" />
+    <Compile Include="InventoryContext\ReturJualAgg\ReturJualItemQtyHrgDal.cs" />
+    <Compile Include="InventoryContext\ReturJualRpt\ReturJualBrgViewDal.cs" />
+    <Compile Include="InventoryContext\ReturJualRpt\ReturJualViewDal.cs" />
+    <Compile Include="InventoryContext\StokAgg\StokDal.cs" />
+    <Compile Include="InventoryContext\StokAgg\StokMutasiDal.cs" />
+    <Compile Include="InventoryContext\StokBalanceAgg\StokBalanceHealthDal.cs" />
+    <Compile Include="InventoryContext\StokBalanceAgg\StokBalanceWarehouseDal.cs" />
+    <Compile Include="InventoryContext\StokBalanceRpt\StokBalanceViewDal.cs" />
+    <Compile Include="InventoryContext\StokBrgSupplierRpt\StokBrgSupplierDal.cs" />
+    <Compile Include="InventoryContext\StokPeriodikRpt\StokPeriodikDal.cs" />
+    <Compile Include="InventoryContext\WarehouseAgg\DepoDal.cs" />
+    <Compile Include="InventoryContext\WarehouseAgg\WarehouseDal.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="PurchaseContext\InvoiceAgg\InvoiceDal.cs" />
+    <Compile Include="PurchaseContext\InvoiceAgg\InvoiceDiscDal.cs" />
+    <Compile Include="PurchaseContext\InvoiceAgg\InvoiceItemDal.cs" />
+    <Compile Include="PurchaseContext\InvoiceHarianDetilRpt\InvoiceHarianDetilDal.cs" />
+    <Compile Include="PurchaseContext\InvoiceInfoRpt\InvoiceBrgViewDal.cs" />
+    <Compile Include="PurchaseContext\InvoiceInfoRpt\InvoiceViewDal.cs" />
+    <Compile Include="PurchaseContext\ReturBeliFeature\ReturBeliBrgViewDal.cs" />
+    <Compile Include="PurchaseContext\ReturBeliFeature\ReturBeliDal.cs" />
+    <Compile Include="PurchaseContext\ReturBeliFeature\ReturBeliDiscDal.cs" />
+    <Compile Include="PurchaseContext\ReturBeliFeature\ReturBeliItemDal.cs" />
+    <Compile Include="PurchaseContext\SupplierAgg\SupplierDal.cs" />
+    <Compile Include="SalesContext\AlokasiFpAgg\AlokasiFpDal.cs" />
+    <Compile Include="SalesContext\AlokasiFpAgg\AlokasiFpItemDal.cs" />
+    <Compile Include="SalesContext\CheckInFeature\CheckInDal.cs" />
+    <Compile Include="SalesContext\CheckInFeature\EffectiveCallDal.cs" />
+    <Compile Include="SalesContext\CustomerAgg\CustomerDal.cs" />
+    <Compile Include="SalesContext\CustomerAgg\CustomerLocHistDal.cs" />
+    <Compile Include="SalesContext\DriverFakturRpt\DriverFakturInfoDal.cs" />
+    <Compile Include="SalesContext\FakturAgg\FakturAlokasiFpItemDal.cs" />
+    <Compile Include="SalesContext\FakturAgg\FakturCodeOpenDal.cs" />
+    <Compile Include="SalesContext\FakturAgg\FakturDal.cs" />
+    <Compile Include="SalesContext\FakturAgg\FakturDiscountDal.cs" />
+    <Compile Include="SalesContext\FakturAgg\FakturDiscountKlaimDal.cs" />
+    <Compile Include="SalesContext\FakturAgg\FakturItemDal.cs" />
+    <Compile Include="SalesContext\FakturAgg\FakturItemKlaimDal.cs" />
+    <Compile Include="SalesContext\FakturAgg\FakturItemViewDal.cs" />
+    <Compile Include="SalesContext\FakturAgg\FakturStatusDal.cs" />
+    <Compile Include="SalesContext\FakturCashRpt\FakturCashViewDal.cs" />
+    <Compile Include="SalesContext\FakturControlAgg\FakturControlStatusDal.cs" />
+    <Compile Include="SalesContext\FakturInfoAgg\FakturBrgViewDal.cs" />
+    <Compile Include="SalesContext\FakturInfoAgg\FakturViewDal.cs" />
+    <Compile Include="SalesContext\FakturPajakInfo\FakturPajakInfoDal.cs" />
+    <Compile Include="SalesContext\FakturPajakVoidAgg\FakturPajakVoidDal.cs" />
+    <Compile Include="SalesContext\FakturPerCustomerRpt\FakturPerCustomerDal.cs" />
+    <Compile Include="SalesContext\FakturPerSupplierRpt\FakturPerSupplierDal.cs" />
+    <Compile Include="SalesContext\HariRuteAgg\HariRuteDal.cs" />
+    <Compile Include="SalesContext\KlasifikasiAgg\KlasifikasiDal.cs" />
+    <Compile Include="SalesContext\KlasifikasiAgg\SegmentDal.cs" />
+    <Compile Include="SalesContext\KlasifikasiAgg\SegmentRepo.cs" />
+    <Compile Include="SalesContext\OrderFeature\OrderDal.cs" />
+    <Compile Include="SalesContext\OrderFeature\OrderItemDal.cs" />
+    <Compile Include="SalesContext\OrderMapFeature\OrderMapDal.cs" />
+    <Compile Include="SalesContext\SalesOmzetAgg\SalesOmzetEntityDal.cs" />
+    <Compile Include="SalesContext\SalesOmzetAgg\SalesOmzetHealthMetricsDal.cs" />
+    <Compile Include="SalesContext\SalesOmzetHealthWeeklyAgg\SalesOmzetHealthWeeklyDal.cs" />
+    <Compile Include="SalesContext\SalesOmzetAgg\SalesOmzetTargetDal.cs" />
+    <Compile Include="SalesContext\SalesOmzetAgg\SalesOmzetSourceDal.cs" />
+    <Compile Include="SalesContext\SalesPersonAgg\SalesOmzetDal.cs" />
+    <Compile Include="SalesContext\SalesPersonAgg\SalesPersonDal.cs" />
+    <Compile Include="SalesContext\SalesRuteAgg\SalesRuteDal.cs" />
+    <Compile Include="SalesContext\SalesRuteAgg\SalesRuteItemViewDal.cs" />
+    <Compile Include="SalesContext\SalesRuteAgg\SalesRuteItemDal.cs" />
+    <Compile Include="SalesContext\WilayahAgg\WilayahDal.cs" />
+    <Compile Include="SupportContext\DocAgg\DocActionDal.cs" />
+    <Compile Include="SupportContext\DocAgg\DocDal.cs" />
+    <Compile Include="SupportContext\ParamSistemAgg\ParamSistemDal.cs" />
+    <Compile Include="SupportContext\ParamUserAgg\ParamUserDal.cs" />
+    <Compile Include="SupportContext\PlaygroundAgg\ImportOpnameDal.cs" />
+    <Compile Include="SupportContext\RoleFeature\MenuDal.cs" />
+    <Compile Include="SupportContext\RoleFeature\MenuDto.cs" />
+    <Compile Include="SupportContext\RoleFeature\MenuRepo.cs" />
+    <Compile Include="SupportContext\RoleFeature\RoleDal.cs" />
+    <Compile Include="SupportContext\RoleFeature\RoleMenuDal.cs" />
+    <Compile Include="SupportContext\RoleFeature\RoleRepo.cs" />
+    <Compile Include="SupportContext\TglJamAgg\TglJamDal.cs" />
+    <Compile Include="SupportContext\UserAgg\UserDal.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\btr.application\btr.application.csproj">
+      <Project>{ba660e24-397d-4d9b-9e71-729736588205}</Project>
+      <Name>btr.application</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\btr.domain\btr.domain.csproj">
+      <Project>{1f2c4331-cc07-49c6-860e-e6ba55a66b12}</Project>
+      <Name>btr.domain</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\btr.nuna\btr.nuna.csproj">
+      <Project>{EF0BE179-091D-4477-A5E5-7E39910057C3}</Project>
+      <Name>btr.nuna</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="app.config" />
+    <None Include="packages.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="FinanceContext\CreditNoteAgg\" />
+    <Folder Include="FinanceContext\HutangAgg\" />
+    <Folder Include="PurchaseContext\KlaimAgg\" />
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+</Project>

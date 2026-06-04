@@ -1,0 +1,40 @@
+﻿CREATE TABLE BTR_Customer(
+    CustomerId VARCHAR(6) NOT NULL CONSTRAINT DF_BTR_Customer_CustomerId DEFAULT(''),
+    CustomerName VARCHAR(50) NOT NULL CONSTRAINT DF_BTR_Customer_CustomerName DEFAULT(''),
+    CustomerCode VARCHAR(10) NOT NULL CONSTRAINT DF_BTR_Customer_CustomerCode DEFAULT(''),
+
+    WilayahId VARCHAR(3) NOT NULL CONSTRAINT DF_BTR_Customer_WilayahId DEFAULT(''),
+    KlasifikasiId VARCHAR(5) NOT NULL CONSTRAINT DF_BTR_Customer_KlasifikasiId DEFAULT(''),
+    HargaTypeId VARCHAR(2) NOT NULL CONSTRAINT DF_BTR_Customer_HargaTypeId DEFAULT(''),
+
+    Address1 VARCHAR(60) NOT NULL CONSTRAINT DF_BTR_Customer_Address1 DEFAULT(''),
+    Address2 VARCHAR(60) NOT NULL CONSTRAINT DF_BTR_Customer_Address2 DEFAULT(''),
+    Kota VARCHAR(30) NOT NULL CONSTRAINT DF_BTR_Customer_Kota DEFAULT(''),
+    KodePos VARCHAR(6) NOT NULL CONSTRAINT DF_BTR_Customer_KodePos DEFAULT(''),
+    NoTelp VARCHAR(20) NOT NULL CONSTRAINT DF_BTR_Customer_NoTelp DEFAULT(''),
+    NoFax VARCHAR(20) NOT NULL CONSTRAINT DF_BTR_Customer_NoFax DEFAULT(''),
+    
+    Email VARCHAR(100) NOT NULL CONSTRAINT DF_BTR_Customer_Email DEFAULT(''),
+    Nitku VARCHAR(30) NOT NULL CONSTRAINT DF_BTR_Customer_Nitku DEFAULT(''),
+
+    Npwp VARCHAR(20) NOT NULL CONSTRAINT DF_BTR_Customer_Npwp DEFAULT(''),
+    Nppkp VARCHAR(20) NOT NULL CONSTRAINT DF_BTR_Customer_Nppkp DEFAULT(''),
+    Nik VARCHAR(20) NOT NULL CONSTRAINT DF_BTR_Customer_Nik DEFAULT(''),
+    NamaWp VARCHAR(60) NOT NULL CONSTRAINT DF_BTR_Customer_NamaWp DEFAULT(''),
+    AddressWp VARCHAR(128) NOT NULL CONSTRAINT DF_BTR_Customer_AlamatWp DEFAULT(''),
+    AddressWp2 VARCHAR(60) NOT NULL CONSTRAINT DF_BTR_Customer_AlamatWp2 DEFAULT(''),
+    IsKenaPajak BIT NOT NULL CONSTRAINT DF_BTR_Customer_IsKenaPajak DEFAULT(0),
+    JenisIdentitasPajak VARCHAR(20) NOT NULL CONSTRAINT DF_BTR_Customer_JenisIdentitasPajak DEFAULT(''),
+    
+    IsSuspend BIT NOT NULL CONSTRAINT DF_BTR_Customer_IsSuspend DEFAULT(0),
+    Plafond DECIMAL(18,2) NOT NULL CONSTRAINT DF_BTR_Customer_Plafond DEFAULT(0),
+    CreditBalance DECIMAL(18,2) NOT NULL CONSTRAINT DF_BTR_Customer_CreditBalance DEFAULT(0),
+
+    Latitude FLOAT NOT NULL CONSTRAINT DF_BTR_Customer_Latitude DEFAULT(0),
+    Longitude FLOAT NOT NULL CONSTRAINT DF_BTR_Customer_Longitude DEFAULT(0),
+    Accuracy FLOAT NOT NULL CONSTRAINT DF_BTR_Customer_Accuracy DEFAULT(0),
+    CoordinateTimestamp FLOAT NOT NULL CONSTRAINT DF_BTR_Customer_CoordinateTimestamp DEFAULT(0),
+    CoordinateUser FLOAT NOT NULL CONSTRAINT DF_BTR_Customer_CoordinateUser DEFAULT(0)
+
+    CONSTRAINT  PK_BTR_Customer PRIMARY KEY CLUSTERED(CustomerId)
+)
