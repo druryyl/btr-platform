@@ -790,12 +790,6 @@
     <Compile Include="SalesContext\SalesPersonAgg\SalesOmzetMaterializeForm.Designer.cs">
       <DependentUpon>SalesOmzetMaterializeForm.cs</DependentUpon>
     </Compile>
-    <Compile Include="SalesContext\SalesPersonAgg\SalesOmzetHealthWeeklyForm.cs">
-      <SubType>Form</SubType>
-    </Compile>
-    <Compile Include="SalesContext\SalesPersonAgg\SalesOmzetHealthWeeklyForm.Designer.cs">
-      <DependentUpon>SalesOmzetHealthWeeklyForm.cs</DependentUpon>
-    </Compile>
     <Compile Include="SalesContext\SalesPersonAgg\SalesPersonForm.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -1139,9 +1133,6 @@
     </EmbeddedResource>
     <EmbeddedResource Include="SalesContext\SalesPersonAgg\SalesOmzetMaterializeForm.resx">
       <DependentUpon>SalesOmzetMaterializeForm.cs</DependentUpon>
-    </EmbeddedResource>
-    <EmbeddedResource Include="SalesContext\SalesPersonAgg\SalesOmzetHealthWeeklyForm.resx">
-      <DependentUpon>SalesOmzetHealthWeeklyForm.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="SalesContext\SalesReplacementFeat\SalesReplacementForm.resx">
       <DependentUpon>SalesReplacementForm.cs</DependentUpon>

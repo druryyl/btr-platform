@@ -17,30 +17,7 @@ namespace btr.distrib.SalesContext.SalesPersonAgg
             InitializeComponent();
             _reconcileWorker = reconcileWorker;
 
-            ProsesButton.Click += ProsesButton_Click;
             FullRebuildButton.Click += FullRebuildButton_Click;
-        }
-
-        public void SetInitialPeriode(DateTime tgl1, DateTime tgl2)
-        {
-            Tgl1Date.Value = tgl1;
-            Tgl2Date.Value = tgl2;
-        }
-
-        private async void ProsesButton_Click(object sender, EventArgs e)
-        {
-            var tgl1 = Tgl1Date.Value;
-            var tgl2 = Tgl2Date.Value;
-            var periode = new Periode(tgl1, tgl2);
-            var dayCount = (tgl2 - tgl1).Days;
-
-            if (dayCount > 122)
-            {
-                MessageBox.Show("Periode materialisasi maximal 3 bulan");
-                return;
-            }
-
-            await RunReconcileAsync(ReconcileSalesOmzetScope.PeriodeScoped, periode);
         }
 
         private async void FullRebuildButton_Click(object sender, EventArgs e)
@@ -99,7 +76,7 @@ namespace btr.distrib.SalesContext.SalesPersonAgg
             {
                 MessageBox.Show(
                     ex.Message,
-                    "Materialisasi Omzet",
+                    "Rebuild Omzet",
                     MessageBoxButtons.OK,
                     MessageBoxIcon.Error);
             }
@@ -113,10 +90,7 @@ namespace btr.distrib.SalesContext.SalesPersonAgg
 
         private void SetReconcileUiBusy(bool busy)
         {
-            ProsesButton.Enabled = !busy;
             FullRebuildButton.Enabled = !busy;
-            Tgl1Date.Enabled = !busy;
-            Tgl2Date.Enabled = !busy;
         }
 
         private void BeginProgress()
@@ -126,7 +100,7 @@ namespace btr.distrib.SalesContext.SalesPersonAgg
             ProgressBar.Minimum = 0;
             ProgressBar.Maximum = 100;
             ProgressBar.Value = 0;
-            StatusLabel.Text = "Memulai materialisasi...";
+            StatusLabel.Text = "Memulai rebuild...";
             ProgressBar.Refresh();
         }
 
@@ -178,7 +152,7 @@ namespace btr.distrib.SalesContext.SalesPersonAgg
 
             var seconds = result.Duration.TotalSeconds;
             StatusLabel.Text =
-                $"Reconcile ({result.Scope}): {result.OrdersProcessed} order, {result.FaktursProcessed} faktur, " +
+                $"Rebuild ({result.Scope}): {result.OrdersProcessed} order, {result.FaktursProcessed} faktur, " +
                 $"{result.RowsRefreshed} baris ({seconds:0.#} d)";
         }
     }

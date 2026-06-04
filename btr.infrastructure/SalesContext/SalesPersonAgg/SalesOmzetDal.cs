@@ -92,7 +92,7 @@ namespace btr.infrastructure.SalesContext.SalesPersonAgg
         }
 
         private static DateTime FormatDisplayDate(DateTime value) =>
-            SalesOmzetDates.IsSentinel(value) ? DateTime.MinValue : value;
+            SalesOmzetDates.IsSentinel(value) ? DateTime.MinValue.Date : value.Date;
 
         private static TEnum ParseEnum<TEnum>(string value, TEnum fallback)
             where TEnum : struct

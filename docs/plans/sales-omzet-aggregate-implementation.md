@@ -115,7 +115,8 @@ Excel/grid labels map from `OmzetStatus` + `SaleKind` (e.g. Completed + DirectSa
 ┌─────────────────────────────────────────────────────────────────┐
 │  SalesOmzetInfoForm (RO2 report)                                 │
 │  Proses → ISalesOmzetDal.ListData(periode, periodMode)           │
-│  Materialisasi button → opens SalesOmzetMaterializeForm          │
+│  Materialisasi → reconcile each ISO week in report period + health │
+│  panel1 BackColor = worst-bucket health (no text labels)           │
 └────────────────────────────┬────────────────────────────────────┘
                              │ read
                              ▼
@@ -131,8 +132,7 @@ Excel/grid labels map from `OmzetStatus` + `SaleKind` (e.g. Completed + DirectSa
 └─────────────────────────────────────────────────────────────────┘
                              ▲
 ┌────────────────────────────┴────────────────────────────────────┐
-│  SalesOmzetMaterializeForm                                       │
-│  Materialisasi → PeriodeScoped reconcile                         │
+│  SalesOmzetMaterializeForm (admin)                               │
 │  Rebuild Semua → Full reconcile (all orders/fakturs)             │
 └─────────────────────────────────────────────────────────────────┘
 ```
@@ -221,7 +221,7 @@ btr.application/SalesContext/OrderFeature/
 btr.distrib/SalesContext/SalesPersonAgg/
   SalesOmzetInfoForm.cs         ← report UI + weekly health resolution
   SalesOmzetMaterializeForm.cs  ← materialize UI
-  SalesOmzetHealthWeeklyForm.cs ← calculate one ISO week snapshot
+  (health via GenerateSalesOmzetHealthWeeklyWorker after each week materialize)
 
 btr.test/SalesContext/
   SalesOmzetPoliciesTest.cs, SalesOmzetEntityDalTest.cs, SalesOmzetReconcileTest.cs
@@ -245,8 +245,8 @@ Legacy **UNION** logic in `SalesOmzetDal` has been **removed**; read path querie
 
 | Entry | Scope | Typical use |
 |-------|--------|-------------|
-| `SalesOmzetMaterializeForm` — Materialisasi | `ReconcileSalesOmzetScope.PeriodeScoped` | Refresh aggregate for date range (max 3 months on report UI) |
-| `SalesOmzetMaterializeForm` — Rebuild Semua | `ReconcileSalesOmzetScope.Full` | Post-deploy backfill; all eligible orders/fakturs via `ListAllOrders` / `ListAllFakturs` |
+| `SalesOmzetInfoForm` — Materialisasi | `ReconcileSalesOmzetScope.PeriodeScoped` per ISO week | For each week intersecting report `Tgl1`–`Tgl2` (max 3 months), reconcile week bounds then `GenerateSalesOmzetHealthWeeklyWorker` |
+| `SalesOmzetMaterializeForm` — Rebuild Semua (context menu) | `ReconcileSalesOmzetScope.Full` | Post-deploy backfill; all eligible orders/fakturs via `ListAllOrders` / `ListAllFakturs`; does not auto-run weekly health |
 
 ### Worker flow (`ReconcileSalesOmzetWorker`)
 
@@ -299,7 +299,8 @@ Default `ListData(Periode)` → `OmzetPeriod` (strict omzet).
 - Date range `Tgl1`–`Tgl2` (max 122 days).
 - **`SalesPeriodCheckBox`** — *Periode Jual* (unchecked = *Periode Omzet*).
 - **Proses** — list only.
-- **Materialisasi** — opens materialize form with dates pre-filled.
+- **Materialisasi** — materializes all ISO weeks in the report period and recalculates health per week (no dialog). Right-click → *Rebuild semua omzet...* (admin).
+- **Health indicator** — `panel1` background only (green / yellow / red); worst-bucket across intersecting weeks.
 - Search filter, grid, Excel export (status from `OmzetStatus`).
 
 #### Weekly materialize health indicator (persisted ISO weeks)
@@ -309,18 +310,18 @@ Operational signal for whether aggregate data in a calendar week is trustworthy.
 | Item | Detail |
 |------|--------|
 | **Week definition** | ISO-8601 (Monday first day). `IIsoWeekCalendar` resolves week ↔ date range. |
-| **Calculation** | `SalesOmzetHealthWeeklyForm` — operator picks **Year** + **ISO week** (no start/end dates). `GenerateSalesOmzetHealthWeeklyWorker` loads metrics for that week, scores via `ISalesOmzetHealthPolicy`, upserts row (idempotent). |
+| **Calculation** | `GenerateSalesOmzetHealthWeeklyWorker` runs automatically after each week's materialize (and can be invoked from tests/jobs). Loads metrics for that ISO week, scores via `ISalesOmzetHealthPolicy`, upserts row (idempotent). |
 | **Metrics** | Same gap/freshness SQL as before, scoped to `PeriodStartDate`–`PeriodEndDate` (`ISalesOmzetHealthMetricsDal`). |
 | **Score / level** | Score 0–100 in policy; level: ≥90 Baik, ≥70 Peringatan, else Buruk. |
-| **Report display** | On RO2, intersecting ISO weeks for `Tgl1`–`Tgl2` are loaded; **worst-bucket-wins** (any Buruk → Buruk). Missing week row → Buruk. Average score shown for info only. |
-| **Materialisasi** | Always pre-fills report `Tgl1`–`Tgl2`. |
+| **Report display** | On RO2, intersecting ISO weeks for `Tgl1`–`Tgl2` are loaded; **worst-bucket-wins** (any Buruk → Buruk). Missing week row → Buruk. Shown as `panel1` color only (no labels). |
+| **Materialisasi** | One `PeriodeScoped` reconcile per intersecting ISO week (`GetWeekBounds`), then health for that week. |
 
 Code: `GenerateSalesOmzetHealthWeeklyWorker`, `SalesOmzetHealthWeeklyDal`, `SalesOmzetHealthPolicy`, `SalesOmzetReportHealthResolver`, `IsoWeekCalendar`.
 
 ### `SalesOmzetMaterializeForm`
 
-- Runs reconcile async; shows result metrics from `ReconcileSalesOmzetResult`.
-- Scoped materialize uses parent date range; full rebuild ignores period for source load.
+- Admin-only **Rebuild Semua** (opened from RO2 Materialisasi context menu).
+- Runs full reconcile async; shows result metrics from `ReconcileSalesOmzetResult`.
 
 ---
 
@@ -399,7 +400,7 @@ Registered in `btr.distrib/Program.cs`:
 | Wrong pattern (old report) | git history of `SalesOmzetDal` UNION — do not reintroduce period-scoped faktur join on read |
 | Report UI | `SalesOmzetInfoForm.cs` |
 | Materialize UI | `SalesOmzetMaterializeForm.cs` |
-| Weekly health UI / worker | `SalesOmzetHealthWeeklyForm.cs`, `GenerateSalesOmzetHealthWeeklyWorker.cs` |
+| Weekly health worker | `GenerateSalesOmzetHealthWeeklyWorker.cs` (triggered from RO2 materialize) |
 | ISO week / report health | `IsoWeekCalendar.cs`, `SalesOmzetReportHealthResolver.cs` |
 | Tests | `SalesOmzetPoliciesTest.cs`, `SalesOmzetReconcileTest.cs`, `IsoWeekCalendarTest.cs`, `SalesOmzetHealthPolicyTest.cs` |
 | Deploy / backfill | `docs/ops/sales-omzet-deploy.md` |

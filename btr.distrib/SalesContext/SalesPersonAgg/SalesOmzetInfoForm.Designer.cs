@@ -1,21 +1,39 @@
 ﻿namespace btr.distrib.SalesContext.SalesPersonAgg
+
 {
+
     partial class SalesOmzetInfoForm
+
     {
+
         private System.ComponentModel.IContainer components = null;
 
+
+
         protected override void Dispose(bool disposing)
+
         {
+
             if (disposing && (components != null))
+
             {
+
                 components.Dispose();
+
             }
+
             base.Dispose(disposing);
+
         }
+
+
 
         #region Windows Form Designer generated code
 
+
+
         private void InitializeComponent()
+
         {
             this.panel1 = new System.Windows.Forms.Panel();
             this.ExcelButton = new System.Windows.Forms.Button();
@@ -26,14 +44,12 @@
             this.SalesPeriodCheckBox = new System.Windows.Forms.CheckBox();
             this.Tgl2Date = new System.Windows.Forms.DateTimePicker();
             this.Tgl1Date = new System.Windows.Forms.DateTimePicker();
-            this.healthPanel = new System.Windows.Forms.Panel();
-            this.HealthDetailsLabel = new System.Windows.Forms.Label();
-            this.MaterializeHealthLabel = new System.Windows.Forms.Label();
-            this.HealthWeeklyButton = new System.Windows.Forms.Button();
             this.InfoGrid = new Syncfusion.Windows.Forms.Grid.Grouping.GridGroupingControl();
+            this.summaryPanel = new System.Windows.Forms.Panel();
+            this.SummaryLabel = new System.Windows.Forms.Label();
             this.panel1.SuspendLayout();
-            this.healthPanel.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.InfoGrid)).BeginInit();
+            this.summaryPanel.SuspendLayout();
             this.SuspendLayout();
             // 
             // panel1
@@ -56,45 +72,51 @@
             // 
             // ExcelButton
             // 
-            this.ExcelButton.Location = new System.Drawing.Point(737, 5);
+            this.ExcelButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.ExcelButton.Image = global::btr.distrib.Properties.Resources.icons8_microsoft_excel_32;
+            this.ExcelButton.Location = new System.Drawing.Point(790, 3);
             this.ExcelButton.Name = "ExcelButton";
-            this.ExcelButton.Size = new System.Drawing.Size(80, 23);
+            this.ExcelButton.Size = new System.Drawing.Size(28, 28);
             this.ExcelButton.TabIndex = 7;
-            this.ExcelButton.Text = "Excel";
             this.ExcelButton.UseVisualStyleBackColor = true;
             // 
             // ChartButton
             // 
-            this.ChartButton.Location = new System.Drawing.Point(661, 5);
+            this.ChartButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.ChartButton.Image = global::btr.distrib.Properties.Resources.icons8_graph_32;
+            this.ChartButton.Location = new System.Drawing.Point(758, 3);
             this.ChartButton.Name = "ChartButton";
-            this.ChartButton.Size = new System.Drawing.Size(70, 23);
+            this.ChartButton.Size = new System.Drawing.Size(28, 28);
             this.ChartButton.TabIndex = 6;
-            this.ChartButton.Text = "Grafik";
             this.ChartButton.UseVisualStyleBackColor = true;
             // 
             // ProsesButton
             // 
-            this.ProsesButton.Location = new System.Drawing.Point(485, 5);
+            this.ProsesButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.ProsesButton.Location = new System.Drawing.Point(645, 3);
             this.ProsesButton.Name = "ProsesButton";
-            this.ProsesButton.Size = new System.Drawing.Size(70, 23);
+            this.ProsesButton.Size = new System.Drawing.Size(77, 28);
             this.ProsesButton.TabIndex = 4;
             this.ProsesButton.Text = "Proses";
             this.ProsesButton.UseVisualStyleBackColor = true;
             // 
             // MaterializeButton
             // 
-            this.MaterializeButton.Location = new System.Drawing.Point(561, 5);
+            this.MaterializeButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.MaterializeButton.Image = global::btr.distrib.Properties.Resources.icons8_stack_overflow_32;
+            this.MaterializeButton.Location = new System.Drawing.Point(726, 3);
             this.MaterializeButton.Name = "MaterializeButton";
-            this.MaterializeButton.Size = new System.Drawing.Size(94, 23);
+            this.MaterializeButton.Size = new System.Drawing.Size(28, 28);
             this.MaterializeButton.TabIndex = 5;
-            this.MaterializeButton.Text = "Materialisasi";
             this.MaterializeButton.UseVisualStyleBackColor = true;
             // 
             // SearchText
             // 
+            this.SearchText.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
             this.SearchText.Location = new System.Drawing.Point(378, 6);
             this.SearchText.Name = "SearchText";
-            this.SearchText.Size = new System.Drawing.Size(101, 22);
+            this.SearchText.Size = new System.Drawing.Size(261, 22);
             this.SearchText.TabIndex = 3;
             // 
             // SalesPeriodCheckBox
@@ -125,51 +147,6 @@
             this.Tgl1Date.Size = new System.Drawing.Size(133, 22);
             this.Tgl1Date.TabIndex = 0;
             // 
-            // healthPanel
-            // 
-            this.healthPanel.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
-            this.healthPanel.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(224)))), ((int)(((byte)(224)))), ((int)(((byte)(224)))));
-            this.healthPanel.Controls.Add(this.HealthDetailsLabel);
-            this.healthPanel.Controls.Add(this.MaterializeHealthLabel);
-            this.healthPanel.Controls.Add(this.HealthWeeklyButton);
-            this.healthPanel.Location = new System.Drawing.Point(7, 47);
-            this.healthPanel.Name = "healthPanel";
-            this.healthPanel.Size = new System.Drawing.Size(823, 48);
-            this.healthPanel.TabIndex = 1;
-            // 
-            // HealthDetailsLabel
-            // 
-            this.HealthDetailsLabel.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
-            this.HealthDetailsLabel.AutoEllipsis = true;
-            this.HealthDetailsLabel.Location = new System.Drawing.Point(168, 26);
-            this.HealthDetailsLabel.Name = "HealthDetailsLabel";
-            this.HealthDetailsLabel.Size = new System.Drawing.Size(651, 16);
-            this.HealthDetailsLabel.TabIndex = 2;
-            this.HealthDetailsLabel.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
-            // 
-            // MaterializeHealthLabel
-            // 
-            this.MaterializeHealthLabel.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
-            this.MaterializeHealthLabel.AutoEllipsis = true;
-            this.MaterializeHealthLabel.Location = new System.Drawing.Point(168, 6);
-            this.MaterializeHealthLabel.Name = "MaterializeHealthLabel";
-            this.MaterializeHealthLabel.Size = new System.Drawing.Size(651, 16);
-            this.MaterializeHealthLabel.TabIndex = 1;
-            this.MaterializeHealthLabel.Text = "Memuat indikator kesehatan...";
-            this.MaterializeHealthLabel.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
-            // 
-            // HealthWeeklyButton
-            // 
-            this.HealthWeeklyButton.Location = new System.Drawing.Point(6, 6);
-            this.HealthWeeklyButton.Name = "HealthWeeklyButton";
-            this.HealthWeeklyButton.Size = new System.Drawing.Size(156, 23);
-            this.HealthWeeklyButton.TabIndex = 0;
-            this.HealthWeeklyButton.Text = "Hitung indikator mingguan";
-            this.HealthWeeklyButton.UseVisualStyleBackColor = true;
-            // 
             // InfoGrid
             // 
             this.InfoGrid.AlphaBlendSelectionColor = System.Drawing.Color.FromArgb(((int)(((byte)(64)))), ((int)(((byte)(0)))), ((int)(((byte)(120)))), ((int)(((byte)(215)))));
@@ -178,14 +155,38 @@
             | System.Windows.Forms.AnchorStyles.Right)));
             this.InfoGrid.BackColor = System.Drawing.SystemColors.Window;
             this.InfoGrid.Font = new System.Drawing.Font("Lucida Console", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.InfoGrid.Location = new System.Drawing.Point(7, 101);
+            this.InfoGrid.Location = new System.Drawing.Point(7, 47);
             this.InfoGrid.Name = "InfoGrid";
             this.InfoGrid.ShowCurrentCellBorderBehavior = Syncfusion.Windows.Forms.Grid.GridShowCurrentCellBorder.GrayWhenLostFocus;
-            this.InfoGrid.Size = new System.Drawing.Size(823, 343);
-            this.InfoGrid.TabIndex = 2;
+            this.InfoGrid.Size = new System.Drawing.Size(823, 363);
+            this.InfoGrid.TabIndex = 1;
             this.InfoGrid.Text = "gridGroupingControl1";
             this.InfoGrid.UseRightToLeftCompatibleTextBox = true;
             this.InfoGrid.VersionInfo = "22.1460.34";
+            // 
+            // summaryPanel
+            // 
+            this.summaryPanel.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.summaryPanel.BackColor = System.Drawing.Color.LightYellow;
+            this.summaryPanel.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.summaryPanel.Controls.Add(this.SummaryLabel);
+            this.summaryPanel.Location = new System.Drawing.Point(7, 416);
+            this.summaryPanel.Name = "summaryPanel";
+            this.summaryPanel.Size = new System.Drawing.Size(823, 27);
+            this.summaryPanel.TabIndex = 2;
+            // 
+            // SummaryLabel
+            // 
+            this.SummaryLabel.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.SummaryLabel.Font = new System.Drawing.Font("Segoe UI", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.SummaryLabel.Location = new System.Drawing.Point(0, 0);
+            this.SummaryLabel.Name = "SummaryLabel";
+            this.SummaryLabel.Padding = new System.Windows.Forms.Padding(6, 0, 0, 0);
+            this.SummaryLabel.Size = new System.Drawing.Size(821, 25);
+            this.SummaryLabel.TabIndex = 0;
+            this.SummaryLabel.Text = "Order Count: 0   Faktur Count: 0   Total Order: 0   Total Faktur: 0";
+            this.SummaryLabel.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
             // 
             // SalesOmzetInfoForm
             // 
@@ -193,36 +194,51 @@
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.Color.CadetBlue;
             this.ClientSize = new System.Drawing.Size(836, 450);
+            this.Controls.Add(this.summaryPanel);
             this.Controls.Add(this.InfoGrid);
-            this.Controls.Add(this.healthPanel);
             this.Controls.Add(this.panel1);
             this.Font = new System.Drawing.Font("Segoe UI", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.Name = "SalesOmzetInfoForm";
             this.Text = "RO2 - Sales Omzet";
             this.panel1.ResumeLayout(false);
             this.panel1.PerformLayout();
-            this.healthPanel.ResumeLayout(false);
-            this.healthPanel.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)(this.InfoGrid)).EndInit();
+            this.summaryPanel.ResumeLayout(false);
             this.ResumeLayout(false);
 
         }
 
+
+
         #endregion
 
+
+
         private System.Windows.Forms.Panel panel1;
+
         private System.Windows.Forms.Button ExcelButton;
+
         private System.Windows.Forms.Button ChartButton;
+
         private System.Windows.Forms.Button ProsesButton;
+
         private System.Windows.Forms.Button MaterializeButton;
+
         private System.Windows.Forms.TextBox SearchText;
+
         private System.Windows.Forms.CheckBox SalesPeriodCheckBox;
+
         private System.Windows.Forms.DateTimePicker Tgl2Date;
+
         private System.Windows.Forms.DateTimePicker Tgl1Date;
-        private System.Windows.Forms.Panel healthPanel;
-        private System.Windows.Forms.Button HealthWeeklyButton;
-        private System.Windows.Forms.Label MaterializeHealthLabel;
-        private System.Windows.Forms.Label HealthDetailsLabel;
+
         private Syncfusion.Windows.Forms.Grid.Grouping.GridGroupingControl InfoGrid;
+
+        private System.Windows.Forms.Panel summaryPanel;
+
+        private System.Windows.Forms.Label SummaryLabel;
+
     }
+
 }
+

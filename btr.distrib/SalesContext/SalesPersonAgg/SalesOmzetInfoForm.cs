@@ -1,10 +1,11 @@
 ﻿using btr.application.SalesContext.OrderFeature;
 using btr.application.SalesContext.SalesOmzetAgg;
 using btr.application.SalesContext.SalesOmzetAgg.Policies;
-using btr.application.SalesContext.SalesOmzetHealthWeeklyAgg;
+using btr.application.SalesContext.SalesOmzetAgg.UseCases;
 using btr.application.SalesContext.SalesOmzetHealthWeeklyAgg.Contracts;
 using btr.application.SalesContext.SalesOmzetHealthWeeklyAgg.Policies;
 using btr.application.SalesContext.SalesOmzetHealthWeeklyAgg.Services;
+using btr.application.SalesContext.SalesOmzetHealthWeeklyAgg.UseCases;
 using btr.application.SupportContext.UserAgg;
 using btr.distrib.SharedForm;
 using btr.domain.SalesContext.SalesOmzetAgg;
@@ -32,10 +33,11 @@ namespace btr.distrib.SalesContext.SalesPersonAgg
         private readonly IIsoWeekCalendar _isoWeekCalendar;
         private readonly ISalesOmzetReportHealthResolver _reportHealthResolver;
         private readonly IUserDal _userDal;
+        private readonly IReconcileSalesOmzetWorker _reconcileWorker;
+        private readonly IGenerateSalesOmzetHealthWeeklyWorker _healthWeeklyWorker;
         private List<SalesOmzetView> _dataSource;
         private List<SalesOmzetView> _fullDataSource;
         private Periode _reportPeriode;
-        private SalesOmzetReportHealthResult _lastReportHealth;
         private int _healthLoadGeneration;
         private bool _suppressSearchFilterRefresh;
 
@@ -52,7 +54,9 @@ namespace btr.distrib.SalesContext.SalesPersonAgg
             ISalesOmzetHealthWeeklyDal healthWeeklyDal,
             IIsoWeekCalendar isoWeekCalendar,
             ISalesOmzetReportHealthResolver reportHealthResolver,
-            IUserDal userDal)
+            IUserDal userDal,
+            IReconcileSalesOmzetWorker reconcileWorker,
+            IGenerateSalesOmzetHealthWeeklyWorker healthWeeklyWorker)
         {
             InitializeComponent();
 
@@ -61,6 +65,8 @@ namespace btr.distrib.SalesContext.SalesPersonAgg
             _isoWeekCalendar = isoWeekCalendar;
             _reportHealthResolver = reportHealthResolver;
             _userDal = userDal;
+            _reconcileWorker = reconcileWorker;
+            _healthWeeklyWorker = healthWeeklyWorker;
 
             var periodToolTip = new ToolTip();
             periodToolTip.SetToolTip(
@@ -68,27 +74,25 @@ namespace btr.distrib.SalesContext.SalesPersonAgg
                 "Tidak dicentang: Periode Omzet (hanya omzet yang sudah Kembali Faktur). " +
                 "Dicentang: Periode Jual (filter Tanggal Jual, termasuk outstanding).");
 
-            var materializeToolTip = new ToolTip();
-            materializeToolTip.SetToolTip(
-                MaterializeButton,
-                "Perbarui data agregat BTR_SalesOmzet untuk periode ini");
+            ConfigureToolbarButtons();
 
-            var healthToolTip = new ToolTip();
-            healthToolTip.SetToolTip(
-                HealthWeeklyButton,
-                "Hitung dan simpan indikator kesehatan materialisasi untuk satu minggu ISO.");
-            healthToolTip.SetToolTip(
-                MaterializeHealthLabel,
-                "Indikator gabungan periode laporan (worst-bucket dari minggu ISO yang bersinggungan).");
-            healthToolTip.SetToolTip(
-                HealthDetailsLabel,
-                "Rincian per minggu ISO; minggu belum dihitung dianggap Buruk.");
+            var actionToolTip = new ToolTip();
+            actionToolTip.SetToolTip(ProsesButton, "Proses");
+            actionToolTip.SetToolTip(
+                MaterializeButton,
+                "Materialisasi semua minggu ISO dalam periode laporan dan hitung indikator kesehatan. " +
+                "Klik kanan untuk rebuild semua omzet (admin).");
+            actionToolTip.SetToolTip(ChartButton, "Grafik");
+            actionToolTip.SetToolTip(ExcelButton, "Excel");
+
+            var rebuildMenu = new ContextMenuStrip();
+            rebuildMenu.Items.Add("Rebuild semua omzet...", null, RebuildSemuaMenuItem_Click);
+            MaterializeButton.ContextMenuStrip = rebuildMenu;
 
             ProsesButton.Click += ProsesButton_Click;
             ExcelButton.Click += ExcelButton_Click;
             ChartButton.Click += ChartButton_Click;
             MaterializeButton.Click += MaterializeButton_Click;
-            HealthWeeklyButton.Click += HealthWeeklyButton_Click;
             Tgl1Date.ValueChanged += ReportPeriodDates_ValueChanged;
             Tgl2Date.ValueChanged += ReportPeriodDates_ValueChanged;
             Shown += SalesOmzetInfoForm_Shown;
@@ -97,9 +101,25 @@ namespace btr.distrib.SalesContext.SalesPersonAgg
             SearchText.TextChanged += SearchText_TextChanged;
 
             InitGrid();
+            InfoGrid.TableControl.ModelChanged += (_, __) => UpdateSummaryPanel();
             _dataSource = new List<SalesOmzetView>();
             _fullDataSource = new List<SalesOmzetView>();
             _reportPeriode = new Periode(Tgl1Date.Value, Tgl2Date.Value);
+            UpdateSummaryPanel();
+        }
+
+        private void ConfigureToolbarButtons()
+        {
+            ConfigureIconButton(ProsesButton);
+            ConfigureIconButton(MaterializeButton);
+            ConfigureIconButton(ChartButton);
+            ConfigureIconButton(ExcelButton);
+        }
+
+        private static void ConfigureIconButton(Button button)
+        {
+            button.Text = string.Empty;
+            button.ImageAlign = ContentAlignment.MiddleCenter;
         }
 
         /// <summary>Manager / pusat view: no default rep search.</summary>
@@ -181,15 +201,19 @@ namespace btr.distrib.SalesContext.SalesPersonAgg
 
         private void ReportPeriodDates_ValueChanged(object sender, EventArgs e)
         {
+            if (Tgl1Date.Value > Tgl2Date.Value)
+            {
+                Tgl2Date.Value = Tgl1Date.Value;
+            }
             _ = RefreshHealthAsync();
         }
 
-        private void HealthWeeklyButton_Click(object sender, EventArgs e)
+        private void RebuildSemuaMenuItem_Click(object sender, EventArgs e)
         {
             if (MdiParent is MainForm mainForm)
             {
-                var form = mainForm.ThisServicesProvider.GetRequiredService<SalesOmzetHealthWeeklyForm>();
-                form.ShowDialog(this);
+                var matForm = mainForm.ThisServicesProvider.GetRequiredService<SalesOmzetMaterializeForm>();
+                matForm.ShowDialog(this);
                 _ = RefreshHealthAsync();
             }
         }
@@ -197,9 +221,7 @@ namespace btr.distrib.SalesContext.SalesPersonAgg
         private async Task RefreshHealthAsync()
         {
             var generation = ++_healthLoadGeneration;
-            MaterializeHealthLabel.Text = "Memuat indikator kesehatan...";
-            MaterializeHealthLabel.BackColor = SystemColors.Control;
-            HealthDetailsLabel.Text = string.Empty;
+            panel1.BackColor = SystemColors.Control;
 
             var reportPeriode = new Periode(Tgl1Date.Value, Tgl2Date.Value);
 
@@ -213,54 +235,150 @@ namespace btr.distrib.SalesContext.SalesPersonAgg
                     return _reportHealthResolver.Resolve(reportPeriode, weeks, rows);
                 });
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 if (generation != _healthLoadGeneration)
                     return;
-                MaterializeHealthLabel.Text = "Indikator gagal dimuat: " + ex.Message;
-                MaterializeHealthLabel.BackColor = Color.MistyRose;
+                panel1.BackColor = Color.MistyRose;
                 return;
             }
 
             if (generation != _healthLoadGeneration)
                 return;
 
-            _lastReportHealth = resolved;
-            ApplyHealthLabel(resolved);
+            ApplyHealthIndicatorColor(resolved);
         }
 
-        private void ApplyHealthLabel(SalesOmzetReportHealthResult health)
+        private void ApplyHealthIndicatorColor(SalesOmzetReportHealthResult health)
         {
-            MaterializeHealthLabel.Text = SalesOmzetHealthLevelDisplay.FormatReportSummary(health);
-            HealthDetailsLabel.Text = SalesOmzetHealthLevelDisplay.FormatWeekDetails(health.WeekDetails);
-
             Color backColor;
-            switch (health.FinalLevel)
+            if (health is null)
             {
-                case SalesOmzetHealthLevelEnum.Good:
-                    backColor = Color.PaleGreen;
-                    break;
-                case SalesOmzetHealthLevelEnum.Warning:
-                    backColor = Color.LightGoldenrodYellow;
-                    break;
-                default:
-                    backColor = Color.MistyRose;
-                    break;
+                backColor = Color.PowderBlue;
+            }
+            else
+            {
+                switch (health.FinalLevel)
+                {
+                    case SalesOmzetHealthLevelEnum.Good:
+                        backColor = Color.PaleGreen;
+                        break;
+                    case SalesOmzetHealthLevelEnum.Warning:
+                        backColor = Color.LightGoldenrodYellow;
+                        break;
+                    default:
+                        backColor = Color.MistyRose;
+                        break;
+                }
             }
 
-            MaterializeHealthLabel.BackColor = backColor;
-            healthPanel.BackColor = backColor;
+            panel1.BackColor = backColor;
         }
 
         private async void MaterializeButton_Click(object sender, EventArgs e)
         {
-            if (MdiParent is MainForm mainForm)
+            await MaterializeReportWeeksAsync();
+        }
+
+        private async Task MaterializeReportWeeksAsync()
+        {
+            var tgl1 = Tgl1Date.Value;
+            var tgl2 = Tgl2Date.Value;
+            var periode = new Periode(tgl1, tgl2);
+            var dayCount = (tgl2 - tgl1).Days;
+
+            if (dayCount > 122)
             {
-                var matForm = mainForm.ThisServicesProvider.GetRequiredService<SalesOmzetMaterializeForm>();
-                matForm.SetInitialPeriode(Tgl1Date.Value, Tgl2Date.Value);
-                matForm.ShowDialog(this);
+                MessageBox.Show("Periode informasi maximal 3 bulan");
+                return;
+            }
+
+            var weeks = _isoWeekCalendar.ListWeeksIntersecting(periode)?.ToList() ?? new List<IsoWeekIdentifier>();
+            if (weeks.Count == 0)
+            {
+                MessageBox.Show("Tidak ada minggu ISO dalam periode laporan.");
+                return;
+            }
+
+            var userId = GetReconcileUserId();
+            var previousCursor = Cursor;
+            ReconcileSalesOmzetResult lastReconcileResult = null;
+
+            try
+            {
+                Cursor = Cursors.WaitCursor;
+                SetMaterializeUiBusy(true);
+
+                await Task.Run(() =>
+                {
+                    foreach (var week in weeks)
+                    {
+                        var (start, end) = _isoWeekCalendar.GetWeekBounds(week.YearNumber, week.WeekNumber);
+                        var weekPeriode = new Periode(start, end);
+
+                        var reconcileRequest = new ReconcileSalesOmzetRequest
+                        {
+                            Periode = weekPeriode,
+                            Scope = ReconcileSalesOmzetScope.PeriodeScoped,
+                            UserId = userId
+                        };
+                        _reconcileWorker.Execute(reconcileRequest);
+                        lastReconcileResult = reconcileRequest.Result;
+
+                        var healthRequest = new GenerateSalesOmzetHealthWeeklyRequest
+                        {
+                            YearNumber = week.YearNumber,
+                            WeekNumber = week.WeekNumber
+                        };
+                        _healthWeeklyWorker.Execute(healthRequest);
+                    }
+                });
+
+                await RefreshHealthAsync();
+
+                var summary = lastReconcileResult != null
+                    ? $"{lastReconcileResult.OrdersProcessed} order, {lastReconcileResult.FaktursProcessed} faktur, " +
+                      $"{lastReconcileResult.RowsRefreshed} baris (minggu terakhir)."
+                    : string.Empty;
+
+                MessageBox.Show(
+                    $"Materialisasi selesai untuk {weeks.Count} minggu ISO.\n{summary}",
+                    "Materialisasi Omzet",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Information);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(
+                    ex.Message,
+                    "Materialisasi Omzet",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Error);
                 await RefreshHealthAsync();
             }
+            finally
+            {
+                SetMaterializeUiBusy(false);
+                Cursor = previousCursor;
+            }
+        }
+
+        private string GetReconcileUserId()
+        {
+            if (MdiParent is MainForm mainForm && mainForm.UserId != null)
+                return mainForm.UserId.UserId;
+            return string.Empty;
+        }
+
+        private void SetMaterializeUiBusy(bool busy)
+        {
+            MaterializeButton.Enabled = !busy;
+            ProsesButton.Enabled = !busy;
+            ExcelButton.Enabled = !busy;
+            ChartButton.Enabled = !busy;
+            Tgl1Date.Enabled = !busy;
+            Tgl2Date.Enabled = !busy;
+            SalesPeriodCheckBox.Enabled = !busy;
         }
 
         private void ExcelButton_Click(object sender, EventArgs e)
@@ -388,6 +506,7 @@ namespace btr.distrib.SalesContext.SalesPersonAgg
 
             InfoGrid.TableDescriptor.Columns["OrderDate"].Appearance.AnyRecordFieldCell.Format = "dd-MMM-yyyy";
             InfoGrid.TableDescriptor.Columns["FakturDate"].Appearance.AnyRecordFieldCell.Format = "dd-MMM-yyyy";
+            InfoGrid.TableDescriptor.Columns["SalesDate"].Appearance.AnyRecordFieldCell.Format = "dd-MMM-yyyy";
             InfoGrid.TableDescriptor.Columns["OmzetDate"].Appearance.AnyRecordFieldCell.Format = "dd-MMM-yyyy";
 
             InfoGrid.TableDescriptor.Columns["SalesPersonName"].Width = 150;
@@ -442,6 +561,7 @@ namespace btr.distrib.SalesContext.SalesPersonAgg
             _dataSource = Filter(_fullDataSource, SearchText.Text);
             _reportPeriode = periode;
             InfoGrid.DataSource = _dataSource;
+            ScheduleSummaryPanelUpdate();
             _ = RefreshHealthAsync();
         }
 
@@ -451,6 +571,48 @@ namespace btr.distrib.SalesContext.SalesPersonAgg
                 return;
             _dataSource = Filter(_fullDataSource, SearchText.Text);
             InfoGrid.DataSource = _dataSource;
+            ScheduleSummaryPanelUpdate();
+        }
+
+        private void ScheduleSummaryPanelUpdate()
+        {
+            if (IsHandleCreated)
+                BeginInvoke(new Action(UpdateSummaryPanel));
+            else
+                UpdateSummaryPanel();
+        }
+
+        private void UpdateSummaryPanel()
+        {
+            if (SummaryLabel is null || InfoGrid?.Table is null)
+                return;
+
+            var rows = GetDisplayedRows();
+            var orderCount = rows.Count(r => !string.IsNullOrWhiteSpace(r.OrderId));
+            var fakturCount = rows.Count(r => !string.IsNullOrWhiteSpace(r.FakturCode));
+            var totalOrder = rows.Sum(r => r.OrderTotal);
+            var totalFaktur = rows.Sum(r => r.FakturTotal);
+
+            SummaryLabel.Text =
+                $"Order Count: {orderCount:N0}   " +
+                $"Faktur Count: {fakturCount:N0}   " +
+                $"Total Order: {totalOrder:N0}   " +
+                $"Total Faktur: {totalFaktur:N0}";
+        }
+
+        private List<SalesOmzetView> GetDisplayedRows()
+        {
+            var list = new List<SalesOmzetView>();
+            if (InfoGrid?.Table?.FilteredRecords is null)
+                return list;
+
+            foreach (var item in InfoGrid.Table.FilteredRecords)
+            {
+                if (item.GetData() is SalesOmzetView row)
+                    list.Add(row);
+            }
+
+            return list;
         }
 
         private SalesOmzetPeriodFilterMode CurrentPeriodMode() =>
@@ -471,9 +633,10 @@ namespace btr.distrib.SalesContext.SalesPersonAgg
             var keywordLower = keyword.ToLower();
             var listFilteredSales = source.Where(x => x.SalesPersonName.ToLower().ContainMultiWord(keywordLower)).ToList();
             var listFilteredFaktur = source.Where(x => x.FakturCode.ToLower().Contains(keywordLower)).ToList();
-            var listFilteredOrder = source.Where(x => x.OrderId.ToLower().Contains(keywordLower)).ToList();
+            var listFilteredCustomer = source.Where(x => x.CustomerName.ToLower().Contains(keywordLower)).ToList();
+            var listFilteredAddress = source.Where(x => x.Alamat.ToLower().Contains(keywordLower)).ToList();
 
-            var result = listFilteredSales.Union(listFilteredFaktur).Union(listFilteredOrder);
+            var result = listFilteredSales.Union(listFilteredFaktur).Union(listFilteredCustomer).Union(listFilteredAddress);
             return result.ToList();
         }
 
@@ -527,4 +690,3 @@ namespace btr.distrib.SalesContext.SalesPersonAgg
         }
     }
 }
-
