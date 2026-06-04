@@ -1,79 +1,79 @@
 # Repository consolidation — btr-platform monorepo
 
-**Status:** Planning complete — **awaiting approval before execution**
+**Status:** **Completed** (2026-06-05)
 
-This folder documents consolidating five independent Git repositories under `src/` into a single root repository at `btr-platform`, preserving full commit history for each project.
+Five standalone repositories were merged into this monorepo using **`git subtree add`** on each project’s **`master`** branch only. Full `master` history is preserved in the Git graph; original tip SHAs remain reachable as ancestors.
 
-## Current state (inspected 2026-06-05)
+## Approval (recorded)
 
-| Item | Finding |
-|------|---------|
-| Root `.git` | **Not present** — monorepo not initialized yet |
-| `src/` projects | Five folders, each with its own nested `.git` |
-| `docs/` | Exists (this documentation) |
-| `architecture/` | **Not present** — create at root during migration (empty or placeholder only) |
-| `git-filter-repo` | **Not installed** on this machine (`git subtree` is available) |
-| Git version | 2.45.1.windows.1 |
+| Decision | Value |
+|----------|--------|
+| Strategy | git subtree |
+| Branches | `master` only |
+| Tags / feature branches | Not imported |
+| Refactoring | None |
 
-## Repository inventory (summary)
+## Final layout
 
-| Folder | Remote | Default branch | Commits (master) | Working tree |
-|--------|--------|----------------|------------------|--------------|
-| `src/BTrade3` | `https://github.com/druryyl/BTrade3.git` | `master` | 55 | Clean |
-| `src/j05-btr-distrib` | `https://github.com/druryyl/j05-btr-distrib.git` | `master` | 582 | Clean; tag `setup-rute` |
-| `src/j06-pkl-btrade-api` | `https://github.com/druryyl/j06-pkl-btrade-api.git` | `master` | 34 | Clean |
-| `src/j07-btr-gudang` | `https://github.com/druryyl/j07-btr-gudang.git` | `master` | 17 | Untracked `BtrGudang.Winform/publish-107.zip` |
-| `src/j07-btrade-sync` | `https://github.com/druryyl/j07-btrade-sync.git` | `master` | 21 | Untracked `j07-btrade-sync/publish-v21.7z` |
+```text
+btr-platform/
+├── .git
+├── .gitignore          # consolidated monorepo ignores
+├── architecture/
+├── docs/
+│   ├── agent-handbook.md
+│   ├── system-map.md
+│   └── repository-consolidation/
+└── src/
+    ├── BTrade3
+    ├── j05-btr-distrib
+    ├── j06-pkl-btrade-api
+    ├── j07-btr-gudang
+    └── j07-btrade-sync
+```
 
-See [INVENTORY.md](./INVENTORY.md) for branches, sizes, and first-commit dates.
+## Quick verification
 
-## Recommended strategy
+```powershell
+# Single root repo
+Test-Path .git                                    # True
+(Get-ChildItem src -Recurse -Directory -Filter .git -Force).Count  # 0
 
-**Primary:** `git subtree add` (merge each repository’s `master` under `src/<name>/` with full history).
+# History preserved (example j05)
+git merge-base --is-ancestor 232fc14 HEAD         # exit 0
+git rev-list --count 232fc14                      # 582
+```
 
-**Alternative:** `git filter-repo --to-subdirectory-filter` on bare clones, then `git merge --allow-unrelated-histories` (better if you need all remote branches/tags rewritten into the monorepo in one pass).
+## Build sign-off summary
 
-**Not recommended here:** `git subtree split` / squash imports — they drop or flatten history. Plain copy without Git merge — no history.
+See [MIGRATION-RESULTS.md](./MIGRATION-RESULTS.md).
 
-Rationale: working trees already match the desired layout (repo root = `src/<folder>/` content). Subtree add imports history under the correct prefix without rewriting every commit by hand. `filter-repo` is the fallback if subtree merges conflict or you require importing **all** branches and tags systematically.
-
-## Execution plan (high level)
-
-Detailed steps: [EXECUTION-PLAN.md](./EXECUTION-PLAN.md).
-
-1. **Backup** — full copy of `D:\Project.Private\btr-platform` and confirm GitHub remotes are up to date.
-2. **Initialize** root `git init` at `btr-platform` (no source commit yet, or docs-only seed commit).
-3. **Import** each repo in a fixed order via `git subtree add --prefix=src/<name> <path-to-repo> master` (or `filter-repo` + merge).
-4. **Import optional refs** — fetch/merge additional branches and tag `setup-rute` if required (see inventory).
-5. **Verify** history per path (`git log -- src/<name>/`) and file tree vs pre-migration snapshot.
-6. **Remove** nested `src/*/.git` directories only after verification passes.
-7. **Build verify** — solutions/projects listed in [VERIFICATION-CHECKLIST.md](./VERIFICATION-CHECKLIST.md).
-8. **Document** final state and remote setup for new monorepo.
-
-## Risks and rollback
-
-See [RISKS-AND-ROLLBACK.md](./RISKS-AND-ROLLBACK.md).
-
-## Verification
-
-See [VERIFICATION-CHECKLIST.md](./VERIFICATION-CHECKLIST.md).
-
-## Approval gate
-
-Do **not** proceed with steps that delete nested `.git` directories or rewrite history until you confirm:
-
-- [ ] Approved migration strategy (subtree vs filter-repo)
-- [ ] Import order (proposed: j05 → j06 → j07-gudang → j07-sync → BTrade3 — oldest/largest first; adjustable)
-- [ ] Whether to import **only `master`** or **all local/remote branches and tags**
-- [ ] Whether untracked publish archives in j07 repos should stay untracked (recommended: yes, add root `.gitignore` patterns later if needed — out of scope for code changes unless requested)
-
-Reply with approval (and any choices above) to begin execution.
+| Project | Build status (2026-06-05) |
+|---------|----------------------------|
+| j06 `btrade.webapi` | Pass (`dotnet build`) |
+| j07-btr-gudang | Pass (MSBuild + `packages/`) |
+| j07-btrade-sync | Pass (MSBuild + `packages/`) |
+| j05 full solution | Blocked on Syncfusion + SSDT (environment) |
+| BTrade3 | Blocked on Android SDK config (environment) |
 
 ## Document index
 
 | Document | Purpose |
 |----------|---------|
-| [INVENTORY.md](./INVENTORY.md) | Remotes, branches, tags, sizes |
-| [EXECUTION-PLAN.md](./EXECUTION-PLAN.md) | Step-by-step commands |
+| [INVENTORY.md](./INVENTORY.md) | Pre-migration remotes, branches, sizes |
+| [EXECUTION-PLAN.md](./EXECUTION-PLAN.md) | Planned steps (executed via subtree) |
+| [PROPOSED-ROOT-GITIGNORE.md](./PROPOSED-ROOT-GITIGNORE.md) | Ignore consolidation analysis |
+| [MIGRATION-RESULTS.md](./MIGRATION-RESULTS.md) | **Execution record and verification** |
 | [RISKS-AND-ROLLBACK.md](./RISKS-AND-ROLLBACK.md) | Failure modes and recovery |
-| [VERIFICATION-CHECKLIST.md](./VERIFICATION-CHECKLIST.md) | Post-migration checks |
+| [VERIFICATION-CHECKLIST.md](./VERIFICATION-CHECKLIST.md) | Checklist with sign-off |
+
+## Next steps (optional)
+
+- [ ] Add monorepo `git remote` and push to GitHub
+- [ ] Archive legacy per-repo remotes with pointer README
+- [ ] Import tags/feature branches later if needed
+
+## Related
+
+- [System map](../system-map.md)
+- [Agent handbook](../agent-handbook.md)

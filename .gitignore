@@ -13,6 +13,7 @@ Desktop.ini
 
 # Migration / backup folders (local)
 _src_migration_staging/
+migration-bare/
 btr-platform-backup-*/
 
 # Publish archives (local deployment bundles; not source)
