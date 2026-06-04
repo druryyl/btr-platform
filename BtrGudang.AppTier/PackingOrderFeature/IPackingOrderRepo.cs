@@ -15,5 +15,6 @@ namespace BtrGudang.AppTier.PackingOrderFeature
     {
         IEnumerable<PackingOrderView> ListData(Periode periode);
         IEnumerable<PackingOrderView> ListByDownloadTimestamp(DateTime downloadTimestamp);
+        PackingOrderView GetLastDownloadByTimestamp();
     }
 }

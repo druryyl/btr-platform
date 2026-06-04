@@ -121,6 +121,18 @@ namespace PackingOrderDownloader
 
                 // Execute the service call
                 var (success, message, lastTimestamp, orders) = await _packingOrderDownloaderSvc.Execute(_lastTimestamp, _depoId, 100);
+                if (lastTimestamp.Date.ToString("yyyy-MM-dd") == "3000-01-01")
+                {
+                    var packingOrd = _packingOrderRepo.GetLastDownloadByTimestamp();
+                    if (packingOrd != null)
+                    {
+                        lastTimestamp = packingOrd.DownloadTimestamp;
+                    }
+                    else
+                    {
+                        lastTimestamp = DateTime.Now.Date.AddDays(-3);
+                    }
+                }
                 _lastTimestamp = GetNextSecond(lastTimestamp);
 
                 // Log results

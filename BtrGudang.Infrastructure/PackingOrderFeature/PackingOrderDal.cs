@@ -8,6 +8,7 @@ using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlClient;
+using System.Linq;
 
 namespace BtrGudang.Infrastructure.PackingOrderFeature
 {
@@ -20,6 +21,7 @@ namespace BtrGudang.Infrastructure.PackingOrderFeature
     {
         IEnumerable<PackingOrderView> ListDataView(Periode periode);
         IEnumerable<PackingOrderView> ListByDownloadTimestamp(DateTime downloadTimestamp);
+        PackingOrderView GetLastDownloadByTimestamp();
     }
 
     public class PackingOrderDal : IPackingOrderDal
@@ -263,6 +265,23 @@ S                WHERE PackingOrderDate BETWEEN @Tgl1 AND @Tgl2
             using (var conn = new SqlConnection(ConnStringHelper.Get(_opt)))
             {
                 return conn.Read<PackingOrderView>(sql, dp);
+            }
+        }
+        public PackingOrderView GetLastDownloadByTimestamp()
+        {
+            const string sql = @"
+                SELECT TOP 1
+                    PackingOrderId, FakturCode, FakturDate, GrandTotal,
+                    CustomerCode, CustomerName, DriverId, DriverName,
+                    Alamat, DownloadTimestamp, PrintLogId, Note
+                FROM BTRG_PackingOrder
+                ORDER BY DownloadTimestamp DESC
+                ";
+
+            using (var conn = new SqlConnection(ConnStringHelper.Get(_opt)))
+            {
+                var result = conn.Read<PackingOrderView>(sql);
+                return result.FirstOrDefault();
             }
         }
     }

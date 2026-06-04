@@ -61,5 +61,10 @@ namespace BtrGudang.Infrastructure.PackingOrderFeature
         {
             return _packingOrderDal.ListByDownloadTimestamp(downloadTimestamp);
         }
+
+        public PackingOrderView GetLastDownloadByTimestamp()
+        {
+            return _packingOrderDal.GetLastDownloadByTimestamp();
+        }
     }
 }

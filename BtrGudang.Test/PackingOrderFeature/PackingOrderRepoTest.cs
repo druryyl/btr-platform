@@ -55,6 +55,8 @@ namespace BtrGudang.Test.PackingOrderFeature
                 "01AN4Z07BY79KA1307SR9X4MV5",
                 new DateTime(3000,1,1),
                 string.Empty,
+                string.Empty,
+
                 items);
         }
 
