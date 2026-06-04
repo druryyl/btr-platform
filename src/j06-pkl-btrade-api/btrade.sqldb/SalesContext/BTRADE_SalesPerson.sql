@@ -1,0 +1,10 @@
+﻿CREATE TABLE [dbo].[BTRADE_SalesPerson]
+(
+	SalesPersonId VARCHAR(5) NOT NULL CONSTRAINT DF_BTRADE_SalesPerson_SalesPersonId DEFAULT(''),
+	SalesPersonCode VARCHAR(10) NOT NULL CONSTRAINT DF_BTRADE_SalesPerson_SalesPersonCode DEFAULT(''),
+	SalesPersonName VARCHAR(50) NOT NULL CONSTRAINT DF_BTRADE_SalesPerson_SalesPersonName DEFAULT(''),
+    Email VARCHAR(100) NOT NULL CONSTRAINT DF_BTRADE_SalesPerson_Email DEFAULT(''),
+	ServerId VARCHAR(5) NOT NULL CONSTRAINT DF_BTRADE_SalesPerson_ServerId DEFAULT(''),
+
+	CONSTRAINT PK_BTRADE_SalesPerson PRIMARY KEY CLUSTERED (SalesPersonId, ServerId)
+)

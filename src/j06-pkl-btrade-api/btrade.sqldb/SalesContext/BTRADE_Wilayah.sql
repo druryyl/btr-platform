@@ -1,0 +1,8 @@
+﻿CREATE TABLE [dbo].[BTRADE_Wilayah]
+(
+	WilayahId VARCHAR(3) NOT NULL CONSTRAINT DF_BTRADE_Wilayah_WilayahId DEFAULT(''),
+	WilayahName VARCHAR(30) NOT NULL CONSTRAINT DF_BTRADE_Wilayah_WilayahName DEFAULT(''),
+	ServerId VARCHAR(5) NOT NULL CONSTRAINT DF_BTRADE_Wilayah_ServerId DEFAULT(''),
+
+	Constraint PK_BTRADE_Wilayah PRIMARY KEY CLUSTERED (WilayahId, ServerId)
+)

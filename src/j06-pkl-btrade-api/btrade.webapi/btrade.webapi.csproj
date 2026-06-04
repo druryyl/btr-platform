@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net6.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <AssemblyVersion>1.1.0.26</AssemblyVersion>
+    <FileVersion>1.1.0.26</FileVersion>
+    <Version>1.1.0.26</Version>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="MediatR" Version="13.0.0" />
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="6.0.36" />
+    <PackageReference Include="Nuna.Lib.NetStandard" Version="3.3.155" />
+    <PackageReference Include="Scrutor" Version="6.1.0" />
+    <PackageReference Include="Swashbuckle.AspNetCore" Version="6.5.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\btrade.application\btrade.application.csproj" />
+    <ProjectReference Include="..\btrade.infrastructure\btrade.infrastructure.csproj" />
+  </ItemGroup>
+
+</Project>
