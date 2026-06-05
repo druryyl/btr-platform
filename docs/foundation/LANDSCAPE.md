@@ -223,8 +223,8 @@ When working on a feature, identify:
 
 This document is the primary navigation map for understanding responsibility and system involvement within BTR.
 
-For business terminology, refer to DOMAIN.md.
+For business terminology, refer to `docs/foundation/DOMAIN.md`.
 
-For business processes, refer to WORKFLOW.md.
+For business processes, refer to `docs/foundation/WORKFLOW.md`.
 
-For product goals and scope, refer to PRODUCT.md.
+For product goals and scope, refer to `docs/foundation/PRODUCT.md`.

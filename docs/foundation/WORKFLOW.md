@@ -229,10 +229,8 @@ Warehouse fulfillment activities receive and exchange data through synchronizati
 
 This document intentionally focuses on high-level business processes.
 
-Detailed business rules, validations, exceptions, and feature behavior should be documented within their respective feature artifacts.
+Detailed business rules, validations, exceptions, and feature behavior should be documented within their respective feature artifacts under `docs/features/`.
 
-For business terminology, refer to DOMAIN.md.
+For business terminology, refer to `docs/foundation/DOMAIN.md`.
 
-For business responsibility boundaries, refer to CONTEXTS.md.
-
-For system structure, refer to SYSTEM-LANDSCAPE.md.
+For business responsibility boundaries and system structure, refer to `docs/foundation/LANDSCAPE.md`.
