@@ -6,6 +6,9 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -20,10 +23,13 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.DividerDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -41,6 +47,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
@@ -50,12 +57,14 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.elsasa.btrade3.model.Barang
 import com.elsasa.btrade3.ui.component.SearchBar
+import com.elsasa.btrade3.util.BulkInputProfile
 import com.elsasa.btrade3.util.RecentSearchManager
+import com.elsasa.btrade3.util.groupByBulkProfile
 import com.elsasa.btrade3.viewmodel.BarangSelectionViewModel
 import java.text.NumberFormat
 import java.util.Locale
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun BarangSelectionScreen(
     navController: NavController,
@@ -64,6 +73,8 @@ fun BarangSelectionScreen(
 ) {
     val searchQuery by viewModel.searchQuery.collectAsState()
     val barangs by viewModel.barangs.collectAsState()
+    val bulkModeEnabled by viewModel.bulkModeEnabled.collectAsState()
+    val selectedBrgIds by viewModel.selectedBrgIds.collectAsState()
     val isSearchFocused = remember { mutableStateOf(false) }
 
     var searchText by rememberSaveable { mutableStateOf(searchQuery) }
@@ -91,16 +102,104 @@ fun BarangSelectionScreen(
         }
     }
 
+    val bulkGroups = remember(filteredBarangs) {
+        filteredBarangs
+            .groupByBulkProfile()
+            .filter { it.value.size >= 2 }
+    }
+
+    val selectedCount = selectedBrgIds.size
+    val selectedBarangs = remember(barangs, selectedBrgIds) {
+        barangs.filter { it.brgId in selectedBrgIds }
+    }
+    val activeProfile = selectedBarangs.firstOrNull()?.let {
+        BulkInputProfile(it.hrgSat, it.konversi, it.satBesar, it.satKecil)
+    }
+
+    fun returnSelection(barang: Barang) {
+        navController.previousBackStackEntry?.savedStateHandle?.set("selected_barang", barang)
+        navController.popBackStack()
+    }
+
+    fun returnBulkSelection(barangsToReturn: List<Barang>) {
+        when (barangsToReturn.size) {
+            0 -> return
+            1 -> returnSelection(barangsToReturn.first())
+            else -> {
+                navController.previousBackStackEntry?.savedStateHandle?.set(
+                    "selected_barangs",
+                    ArrayList(barangsToReturn)
+                )
+                navController.popBackStack()
+            }
+        }
+    }
+
+    fun onItemClick(barang: Barang) {
+        if (bulkModeEnabled) {
+            viewModel.toggleSelection(barang)
+        } else {
+            if (searchText.isNotBlank()) {
+                recentSearchManager.addRecentSearch(searchText)
+                recentSearches = recentSearchManager.getRecentSearches()
+            }
+            returnSelection(barang)
+        }
+    }
+
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Select Item") },
+                title = { Text(if (bulkModeEnabled) "Select Items" else "Select Item") },
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                     }
+                },
+                actions = {
+                    if (bulkModeEnabled && selectedCount > 0) {
+                        TextButton(onClick = { viewModel.clearSelection() }) {
+                            Text("Clear")
+                        }
+                    }
+                    TextButton(onClick = { viewModel.toggleBulkMode() }) {
+                        Text(if (bulkModeEnabled) "Single" else "Bulk")
+                    }
                 }
             )
+        },
+        bottomBar = {
+            if (bulkModeEnabled && selectedCount > 0) {
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
+                    shape = MaterialTheme.shapes.extraSmall
+                ) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        activeProfile?.let { profile ->
+                            Text(
+                                text = "$selectedCount items · ${formatCurrency(profile.hrgSat)}/${profile.satKecil}",
+                                style = MaterialTheme.typography.bodyMedium,
+                                fontWeight = FontWeight.Medium
+                            )
+                        }
+                        Button(
+                            onClick = { returnBulkSelection(selectedBarangs) },
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text(
+                                if (selectedCount == 1) "Continue with 1 item"
+                                else "Continue with $selectedCount items"
+                            )
+                        }
+                    }
+                }
+            }
         }
     ) { padding ->
         Column(
@@ -125,7 +224,27 @@ fun BarangSelectionScreen(
                     isSearchFocused.value = focused
                 }
             )
-            // Recent Searches Dropdown
+
+            if (bulkModeEnabled) {
+                Text(
+                    text = "Select items with the same price and unit. Only matching items can be added together.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)
+                )
+            }
+
+            if (searchText.isNotEmpty() && bulkGroups.isNotEmpty()) {
+                BulkGroupChips(
+                    groups = bulkGroups,
+                    selectedBrgIds = selectedBrgIds,
+                    onSelectGroup = { group ->
+                        viewModel.selectGroup(group)
+                    },
+                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp)
+                )
+            }
+
             if (isSearchFocused.value && recentSearches.isNotEmpty() && searchText.isEmpty()) {
                 Card(
                     elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
@@ -196,43 +315,60 @@ fun BarangSelectionScreen(
                     Text("No items found")
                 }
             } else if (searchText.isEmpty() && !isSearchFocused.value) {
-                LazyColumn {
-                    items(filteredBarangs) { barang ->
+                LazyColumn(contentPadding = PaddingValues(bottom = if (bulkModeEnabled && selectedCount > 0) 16.dp else 0.dp)) {
+                    items(filteredBarangs, key = { it.brgId }) { barang ->
                         BarangItem(
                             barang = barang,
-                            onClick = {
-                                // Navigate back with selected barang
-                                navController.previousBackStackEntry?.savedStateHandle?.set(
-                                    "selected_barang", barang
-                                )
-                                navController.popBackStack()
-                            }
+                            bulkModeEnabled = bulkModeEnabled,
+                            isSelected = barang.brgId in selectedBrgIds,
+                            isSelectable = viewModel.canSelect(barang),
+                            onClick = { onItemClick(barang) }
                         )
                     }
                 }
-            } else {
-                // Show filtered items
-                LazyColumn {
-                    items(filteredBarangs) { barang ->
+            } else if (!isSearchFocused.value || searchText.isNotEmpty()) {
+                LazyColumn(contentPadding = PaddingValues(bottom = if (bulkModeEnabled && selectedCount > 0) 16.dp else 0.dp)) {
+                    items(filteredBarangs, key = { it.brgId }) { barang ->
                         BarangItem(
                             barang = barang,
-                            onClick = {
-                                // Save the search query when an item is selected
-                                if (searchText.isNotBlank()) {
-                                    recentSearchManager.addRecentSearch(searchText)
-                                    recentSearches = recentSearchManager.getRecentSearches()
-                                }
+                            bulkModeEnabled = bulkModeEnabled,
+                            isSelected = barang.brgId in selectedBrgIds,
+                            isSelectable = viewModel.canSelect(barang),
+                            onClick = { onItemClick(barang) }
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
 
-                                // Navigate back with selected barang
-                                navController.previousBackStackEntry?.savedStateHandle?.set(
-                                    "selected_barang", barang
-                                )
-                                navController.popBackStack()
-                            }
-                        )
-                    }
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun BulkGroupChips(
+    groups: Map<BulkInputProfile, List<Barang>>,
+    selectedBrgIds: Set<String>,
+    onSelectGroup: (List<Barang>) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    FlowRow(
+        modifier = modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        verticalArrangement = Arrangement.spacedBy(4.dp)
+    ) {
+        groups.forEach { (profile, items) ->
+            val allSelected = items.all { it.brgId in selectedBrgIds }
+            FilterChip(
+                selected = allSelected,
+                onClick = { onSelectGroup(items) },
+                label = {
+                    Text(
+                        text = "${items.size} items @ ${formatCurrency(profile.hrgSat)}",
+                        style = MaterialTheme.typography.labelMedium
+                    )
                 }
-            }        }
+            )
+        }
     }
 }
 
@@ -263,132 +399,108 @@ fun RecentSearchItem(
 }
 
 @Composable
-fun BarangItemOriginal(
-    barang: Barang,
-    onClick: () -> Unit
-) {
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(8.dp)
-            .clickable { onClick() },
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp)
-        ) {
-            Text(
-                text = "${barang.brgName} (${barang.brgCode})",
-                style = MaterialTheme.typography.titleMedium
-            )
-            Spacer(modifier = Modifier.height(4.dp))
-            Text(
-                text = "Category: ${barang.kategoriName}",
-                style = MaterialTheme.typography.bodySmall
-            )
-            Spacer(modifier = Modifier.height(4.dp))
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Text(
-                    text = "Stock: ${barang.stok}",
-                    style = MaterialTheme.typography.bodySmall
-                )
-                Text(
-                    text = "${barang.satKecil}: ${formatCurrency(barang.hrgSat)}",
-                    style = MaterialTheme.typography.bodySmall,
-                    fontWeight = FontWeight.Bold
-                )
-            }
-        }
-    }
-}
-
-@Composable
 fun BarangItem(
     barang: Barang,
     onClick: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    bulkModeEnabled: Boolean = false,
+    isSelected: Boolean = false,
+    isSelectable: Boolean = true
 ) {
+    val alpha = if (bulkModeEnabled && !isSelectable && !isSelected) 0.45f else 1f
+
     Card(
         modifier = modifier
             .fillMaxWidth()
             .padding(horizontal = 12.dp, vertical = 4.dp)
-            .clickable { onClick() },
+            .alpha(alpha)
+            .clickable(enabled = !bulkModeEnabled || isSelectable || isSelected) { onClick() },
         shape = MaterialTheme.shapes.small,
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.5.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = if (isSelected) 2.dp else 0.5.dp),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface,
+            containerColor = if (isSelected) {
+                MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.35f)
+            } else {
+                MaterialTheme.colorScheme.surface
+            }
         )
     ) {
-        Column(
+        Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(12.dp),
-            verticalArrangement = Arrangement.spacedBy(4.dp)
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            // Line 1: Product Name
-            Text(
-                text = barang.brgName,
-                style = MaterialTheme.typography.titleSmall.copy(fontSize = 14.sp),
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-                modifier = Modifier.fillMaxWidth()
-            )
-
-            // Line 2: Code • Category • Unit
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.Start,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = barang.brgCode,
-                    style = MaterialTheme.typography.labelSmall.copy(fontSize = 12.sp),
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-
-                Text(
-                    text = " • ",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.outline
-                )
-
-                Text(
-                    text = barang.kategoriName,
-                    style = MaterialTheme.typography.labelSmall.copy(fontSize = 12.sp),
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-
-                Text(
-                    text = " • ",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.outline
-                )
-
-                Text(
-                    text = barang.satKecil,
-                    style = MaterialTheme.typography.labelSmall.copy(fontSize = 12.sp),
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+            if (bulkModeEnabled) {
+                Checkbox(
+                    checked = isSelected,
+                    onCheckedChange = null,
+                    enabled = isSelectable || isSelected,
+                    modifier = Modifier.padding(end = 4.dp)
                 )
             }
 
-            // Line 3: Price and Stock
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(4.dp)
             ) {
-                StockBadge(stock = barang.stok)
                 Text(
-                    text = formatCurrency(barang.hrgSat),
-                    style = MaterialTheme.typography.labelLarge.copy(fontSize = 14.sp),
-                    color = MaterialTheme.colorScheme.primary,
-                    fontWeight = FontWeight.SemiBold
+                    text = barang.brgName,
+                    style = MaterialTheme.typography.titleSmall.copy(fontSize = 14.sp),
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.fillMaxWidth()
                 )
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.Start,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = barang.brgCode,
+                        style = MaterialTheme.typography.labelSmall.copy(fontSize = 12.sp),
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+
+                    Text(
+                        text = " • ",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.outline
+                    )
+
+                    Text(
+                        text = barang.kategoriName,
+                        style = MaterialTheme.typography.labelSmall.copy(fontSize = 12.sp),
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+
+                    Text(
+                        text = " • ",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.outline
+                    )
+
+                    Text(
+                        text = barang.satKecil,
+                        style = MaterialTheme.typography.labelSmall.copy(fontSize = 12.sp),
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    StockBadge(stock = barang.stok)
+                    Text(
+                        text = formatCurrency(barang.hrgSat),
+                        style = MaterialTheme.typography.labelLarge.copy(fontSize = 14.sp),
+                        color = MaterialTheme.colorScheme.primary,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                }
             }
         }
     }
@@ -425,7 +537,7 @@ private fun StockBadge(stock: Int) {
 private fun formatCurrency(amount: Double): String {
     val locale = Locale.Builder().setLanguage("id").setRegion("ID").build()
     val format = NumberFormat.getCurrencyInstance(locale)
-    format.maximumFractionDigits = 0  // This sets the maximum decimal places to 0
+    format.maximumFractionDigits = 0
     format.minimumFractionDigits = 0
     return format.format(amount)
 }

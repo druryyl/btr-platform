@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
@@ -58,6 +59,8 @@ fun AddBarangScreen(
     itemId: String? = null
 ) {
     val selectedBarang by viewModel.selectedBarang.collectAsState()
+    val selectedBarangs by viewModel.selectedBarangs.collectAsState()
+    val isBulkMode = selectedBarangs.size >= 2
     val qtyKecil by viewModel.qtyKecil.collectAsState()
     val qtyBesar by viewModel.qtyBesar.collectAsState()
     val qtyBonus by viewModel.qtyBonus.collectAsState()
@@ -84,10 +87,33 @@ fun AddBarangScreen(
         }
     }
 
+    val selectedBarangsResult = navController.currentBackStackEntry
+        ?.savedStateHandle
+        ?.get<ArrayList<Barang>>("selected_barangs")
+
+    LaunchedEffect(selectedBarangsResult) {
+        selectedBarangsResult?.let { barangs ->
+            when (barangs.size) {
+                0 -> Unit
+                1 -> viewModel.selectBarang(barangs.first())
+                else -> viewModel.selectBarangs(barangs)
+            }
+            navController.currentBackStackEntry?.savedStateHandle?.remove<ArrayList<Barang>>("selected_barangs")
+        }
+    }
+
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(if(itemId == null) "Add Item" else "Edit Item")},
+                title = {
+                    Text(
+                        when {
+                            itemId != null -> "Edit Item"
+                            isBulkMode -> "Add ${selectedBarangs.size} Items"
+                            else -> "Add Item"
+                        }
+                    )
+                },
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
@@ -98,6 +124,7 @@ fun AddBarangScreen(
     ) { padding ->
         AddBarangContent(
             selectedBarang = selectedBarang,
+            selectedBarangs = if (isBulkMode) selectedBarangs else emptyList(),
             qtyBesar = qtyBesar,
             qtyKecil = qtyKecil,
             qtyBonus = qtyBonus,
@@ -121,7 +148,11 @@ fun AddBarangScreen(
             onDisc4Change = { viewModel.setDisc4(it) },
             onSave = {
                 if (itemId == null) {
-                    viewModel.saveItem()
+                    if (isBulkMode) {
+                        viewModel.saveItems()
+                    } else {
+                        viewModel.saveItem()
+                    }
                 } else {
                     viewModel.updateItem()
                 }
@@ -137,6 +168,7 @@ fun AddBarangScreen(
 @Composable
 fun AddBarangContent(
     selectedBarang: Barang?,
+    selectedBarangs: List<Barang> = emptyList(),
     qtyBesar: Int,
     qtyKecil: Int,
     qtyBonus: Int,
@@ -155,13 +187,15 @@ fun AddBarangContent(
     onSave: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val isBulkMode = selectedBarangs.size >= 2
+    val profileBarang = selectedBarang
+
     Column(
         modifier = modifier
             .padding(16.dp)
             .verticalScroll(rememberScrollState()),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        // Select Item Card
         Card(
             elevation = CardDefaults.cardElevation(2.dp),
             colors = CardDefaults.cardColors(
@@ -174,46 +208,76 @@ fun AddBarangContent(
                     .padding(16.dp)
             ) {
                 Text(
-                    text = "Select Item",
+                    text = if (isBulkMode) "Selected Items" else "Select Item",
                     style = MaterialTheme.typography.titleMedium
                 )
                 Spacer(modifier = Modifier.height(8.dp))
-                OutlinedButton(
-                    onClick = onBarangSelect,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
+                if (isBulkMode) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .heightIn(max = 160.dp),
+                        verticalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        selectedBarangs.forEach { barang ->
+                            Text(
+                                text = "• ${barang.brgName} (${barang.brgCode})",
+                                style = MaterialTheme.typography.bodySmall
+                            )
+                        }
+                    }
+                    Spacer(modifier = Modifier.height(8.dp))
                     Text(
-                        text = selectedBarang?.brgName ?: "Search for an item..."
+                        text = "Shared price: ${formatCurrency(profileBarang?.hrgSat ?: 0.0)}/${profileBarang?.satKecil ?: ""}",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    OutlinedButton(
+                        onClick = onBarangSelect,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text("Change selection")
+                    }
+                } else {
+                    OutlinedButton(
+                        onClick = onBarangSelect,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text(
+                            text = selectedBarang?.brgName ?: "Search for an item..."
+                        )
+                    }
                 }
             }
         }
 
-        if (selectedBarang != null) {
-            // Item Info
-            Card(
-                elevation = CardDefaults.cardElevation(2.dp),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
-            ) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp)
+        if (profileBarang != null) {
+            if (!isBulkMode) {
+                Card(
+                    elevation = CardDefaults.cardElevation(2.dp),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
                 ) {
-                    Text(
-                        text = selectedBarang.brgName,
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Bold
-                    )
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Text(
-                        text = "Code: ${selectedBarang.brgCode} (${selectedBarang.brgId})",
-                        style = MaterialTheme.typography.bodySmall
-                    )
-                    Text(
-                        text = "Category: ${selectedBarang.kategoriName}",
-                        style = MaterialTheme.typography.bodySmall
-                    )
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp)
+                    ) {
+                        Text(
+                            text = profileBarang.brgName,
+                            style = MaterialTheme.typography.titleLarge,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = "Code: ${profileBarang.brgCode} (${profileBarang.brgId})",
+                            style = MaterialTheme.typography.bodySmall
+                        )
+                        Text(
+                            text = "Category: ${profileBarang.kategoriName}",
+                            style = MaterialTheme.typography.bodySmall
+                        )
+                    }
                 }
             }
 
@@ -228,22 +292,22 @@ fun AddBarangContent(
                         .padding(16.dp),
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    if (selectedBarang.konversi > 1) {
+                    if (profileBarang.konversi > 1) {
                         QtyInputField(
-                            label = "Qty Besar (${selectedBarang.satBesar})",
+                            label = "Qty Besar (${profileBarang.satBesar})",
                             value = qtyBesar,
                             onValueChange = onQtyBesarChange
                         )
                     }
 
                     QtyInputField(
-                        label = "Qty Kecil (${selectedBarang.satKecil})",
+                        label = "Qty Kecil (${profileBarang.satKecil})",
                         value = qtyKecil,
                         onValueChange = onQtyKecilChange
                     )
 
                     QtyInputField(
-                        label = "Qty Bonus (${selectedBarang.satKecil})",
+                        label = "Qty Bonus (${profileBarang.satKecil})",
                         value = qtyBonus,
                         onValueChange = onQtyBonusChange
                     )
@@ -319,9 +383,11 @@ fun AddBarangContent(
                         fontWeight = FontWeight.Bold
                     )
 
-                    val totalBesar = selectedBarang.hrgSat * selectedBarang.konversi * qtyBesar
-                    val totalKecil = selectedBarang.hrgSat * qtyKecil
-                    val subTotal = totalBesar + totalKecil
+                    val totalBesar = profileBarang.hrgSat * profileBarang.konversi * qtyBesar
+                    val totalKecil = profileBarang.hrgSat * qtyKecil
+                    val subTotalPerItem = totalBesar + totalKecil
+                    val itemMultiplier = if (isBulkMode) selectedBarangs.size else 1
+                    val subTotal = subTotalPerItem * itemMultiplier
 
                     // Discount calculations
                     val disc1Amount = subTotal * disc1 / 100
@@ -336,29 +402,35 @@ fun AddBarangContent(
                     Spacer(Modifier.height(8.dp))
 
                     // --- Qty Besar row ---
+                    if (isBulkMode) {
+                        Text(
+                            text = "Per item (${selectedBarangs.size} items)",
+                            style = MaterialTheme.typography.labelMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+
                     if (qtyBesar > 0) {
                         SummaryRow(
-                            label = selectedBarang.satBesar,
+                            label = profileBarang.satBesar,
                             qty = qtyBesar,
-                            unitPrice = selectedBarang.hrgSat * selectedBarang.konversi,
-                            total = totalBesar
+                            unitPrice = profileBarang.hrgSat * profileBarang.konversi,
+                            total = totalBesar * itemMultiplier
                         )
                     }
 
-                    // --- Qty Kecil row ---
                     if (qtyKecil > 0) {
                         SummaryRow(
-                            label = selectedBarang.satKecil,
+                            label = profileBarang.satKecil,
                             qty = qtyKecil,
-                            unitPrice = selectedBarang.hrgSat,
-                            total = totalKecil
+                            unitPrice = profileBarang.hrgSat,
+                            total = totalKecil * itemMultiplier
                         )
                     }
 
-                    // --- Qty Bonus ---
                     if (qtyBonus > 0) {
                         SummaryRow(
-                            label = "${selectedBarang.satKecil} (Bonus)",
+                            label = "${profileBarang.satKecil} (Bonus)",
                             qty = qtyBonus,
                             unitPrice = 0.0,
                             total = 0.0
@@ -380,7 +452,7 @@ fun AddBarangContent(
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
                         Text(
-                            text = "Line Total:",
+                            text = if (isBulkMode) "Grand Total:" else "Line Total:",
                             style = MaterialTheme.typography.titleMedium.copy(
                                 fontWeight = FontWeight.Bold,
                                 fontFamily = FontFamily.Monospace
@@ -399,9 +471,13 @@ fun AddBarangContent(
 
             Button(
                 onClick = onSave,
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
+                enabled = qtyBesar > 0 || qtyKecil > 0 || qtyBonus > 0
             ) {
-                Text("Add to Order")
+                Text(
+                    if (isBulkMode) "Add ${selectedBarangs.size} items to order"
+                    else "Add to Order"
+                )
             }
         }
     }

@@ -20,6 +20,9 @@ class AddBarangViewModel(
     private val _selectedBarang = MutableStateFlow<Barang?>(null)
     val selectedBarang: StateFlow<Barang?> = _selectedBarang.asStateFlow()
 
+    private val _selectedBarangs = MutableStateFlow<List<Barang>>(emptyList())
+    val selectedBarangs: StateFlow<List<Barang>> = _selectedBarangs.asStateFlow()
+
     private val _qtyBesar = MutableStateFlow(0)
     val qtyBesar: StateFlow<Int> = _qtyBesar.asStateFlow()
 
@@ -47,6 +50,8 @@ class AddBarangViewModel(
     private val _searchQuery = MutableStateFlow("")
     val searchQuery: StateFlow<String> = _searchQuery.asStateFlow()
 
+    val isBulkMode: Boolean
+        get() = _selectedBarangs.value.size >= 2
 
     fun setFakturId(fakturId: String) {
         _fakturId.value = fakturId
@@ -54,6 +59,12 @@ class AddBarangViewModel(
 
     fun selectBarang(barang: Barang) {
         _selectedBarang.value = barang
+        _selectedBarangs.value = emptyList()
+    }
+
+    fun selectBarangs(barangs: List<Barang>) {
+        _selectedBarangs.value = barangs
+        _selectedBarang.value = barangs.firstOrNull()
     }
 
     fun setQtyBesar(newQty: Int) {
@@ -90,14 +101,13 @@ class AddBarangViewModel(
         _disc4.value = newDisc
     }
 
-
-    fun loadItemForEditing(itemId: String){
+    fun loadItemForEditing(itemId: String) {
         viewModelScope.launch {
             _fakturId.value?.let { fakturId ->
                 val item = orderRepository.getOrderItemsByOrderId(fakturId).first()
-                val itemToEdit = item.find{
+                val itemToEdit = item.find {
                     "${it.orderId}-${it.noUrut}" == itemId ||
-                    it.noUrut.toString() == itemId
+                        it.noUrut.toString() == itemId
                 }
 
                 itemToEdit?.let { item ->
@@ -105,18 +115,18 @@ class AddBarangViewModel(
                     _originalOrderItem.value = item
 
                     val barang = Barang(
-                            brgId = item.brgId,
-                            brgCode = item.brgCode,
-                            brgName = item.brgName,
-                            kategoriName = item.kategoriName,
-                            satBesar = item.satBesar,
-                            satKecil = item.satKecil,
-                            konversi = item.konversi,
-                            hrgSat = item.unitPrice,
-                            stok = 0
-                        )
+                        brgId = item.brgId,
+                        brgCode = item.brgCode,
+                        brgName = item.brgName,
+                        kategoriName = item.kategoriName,
+                        satBesar = item.satBesar,
+                        satKecil = item.satKecil,
+                        konversi = item.konversi,
+                        hrgSat = item.unitPrice,
+                        stok = 0
+                    )
 
-                    _selectedBarang.value = barang
+                    selectBarang(barang)
                     _qtyBesar.value = item.qtyBesar
                     _qtyKecil.value = item.qtyKecil
                     _qtyBonus.value = item.qtyBonus
@@ -132,120 +142,132 @@ class AddBarangViewModel(
     fun saveItem() {
         val fakturId = _fakturId.value ?: return
         val barang = _selectedBarang.value ?: return
-        val qtyBesar = _qtyBesar.value
-        val qtyKecil = _qtyKecil.value
-        val qtyBonus = _qtyBonus.value
-        val disc1 = _disc1.value
-        val disc2 = _disc2.value
-        val disc3 = _disc3.value
-        val disc4 = _disc4.value
-
 
         viewModelScope.launch {
-            // Get the current items to determine the next sequence number
             val currentItems = orderRepository.getOrderItemsByOrderId(fakturId).first()
-            val faktur = orderRepository.getOrderById(fakturId)
             val nextNoUrut = currentItems.size + 1
-
-            val lineTotal1 = (qtyBesar * barang.konversi * barang.hrgSat)
-            val lineTotal2 = (qtyKecil * barang.hrgSat)
-            var lineTotal = lineTotal1 + lineTotal2
-            val disc1Rp = disc1 * lineTotal / 100
-            lineTotal = lineTotal - disc1Rp
-            val disc2Rp = disc2 * lineTotal / 100
-            lineTotal = lineTotal - disc2Rp
-            val disc3Rp = disc3 * lineTotal / 100
-            lineTotal = lineTotal - disc3Rp
-            val disc4Rp = disc4 * lineTotal / 100
-            lineTotal = lineTotal - disc4Rp
-
-            val orderItem = OrderItem(
+            val orderItem = buildOrderItem(
                 orderId = fakturId,
                 noUrut = nextNoUrut,
-                brgId = barang.brgId,
-                brgCode = barang.brgCode,
-                brgName = barang.brgName,
-                kategoriName = barang.kategoriName,
-                qtyBesar = qtyBesar,
-                satBesar = barang.satBesar,
-                qtyKecil = qtyKecil,
-                satKecil = barang.satKecil,
-                qtyBonus = qtyBonus,
-                konversi = barang.konversi,
-                unitPrice = barang.hrgSat,
-                disc1 = disc1,
-                disc2 = disc2,
-                disc3 = disc3,
-                disc4 = disc4,
-                lineTotal = lineTotal
+                barang = barang,
+                qtyBesar = _qtyBesar.value,
+                qtyKecil = _qtyKecil.value,
+                qtyBonus = _qtyBonus.value,
+                disc1 = _disc1.value,
+                disc2 = _disc2.value,
+                disc3 = _disc3.value,
+                disc4 = _disc4.value
             )
-
             orderRepository.insertOrderItem(orderItem)
             updateTotalAmount()
         }
     }
 
-    fun updateItem(){
+    fun saveItems() {
         val fakturId = _fakturId.value ?: return
-        val barang = _selectedBarang.value ?: return
-        val qtyBesar = _qtyBesar.value
-        val qtyKecil = _qtyKecil.value
-        val qtyBonus = _qtyBonus.value
-        val disc1 = _disc1.value
-        val disc2 = _disc2.value
-        val disc3 = _disc3.value
-        val disc4 = _disc4.value
-        val originalItem = _originalOrderItem.value ?: return
+        val barangs = _selectedBarangs.value
+        if (barangs.size < 2) return
 
         viewModelScope.launch {
-            val lineTotal1 = (qtyBesar * barang.konversi * barang.hrgSat)
-            val lineTotal2 = (qtyKecil * barang.hrgSat)
-            var lineTotal = lineTotal1 + lineTotal2
-            val disc1Rp = disc1 * lineTotal / 100
-            lineTotal = lineTotal - disc1Rp
-            val disc2Rp = disc2 * lineTotal / 100
-            lineTotal = lineTotal - disc2Rp
-            val disc3Rp = disc3 * lineTotal / 100
-            lineTotal = lineTotal - disc3Rp
-            val disc4Rp = disc4 * lineTotal / 100
-            lineTotal = lineTotal - disc4Rp
+            val currentItems = orderRepository.getOrderItemsByOrderId(fakturId).first()
+            var nextNoUrut = currentItems.size + 1
 
-            val orderItem = OrderItem(
-                orderId = fakturId,
-                noUrut = originalItem.noUrut,
-                brgId = barang.brgId,
-                brgCode = barang.brgCode,
-                brgName = barang.brgName,
-                kategoriName = barang.kategoriName,
-                qtyBesar = qtyBesar,
-                satBesar = barang.satBesar,
-                qtyKecil = qtyKecil,
-                satKecil = barang.satKecil,
-                qtyBonus = qtyBonus,
-                konversi = barang.konversi,
-                unitPrice = barang.hrgSat,
-                disc1 = disc1,
-                disc2 = disc2,
-                disc3 = disc3,
-                disc4 = disc4,
-                lineTotal = lineTotal
-            )
-
-            orderRepository.updateOrderItem(orderItem)
-
-            // Update total amount in faktur
+            for (barang in barangs) {
+                val orderItem = buildOrderItem(
+                    orderId = fakturId,
+                    noUrut = nextNoUrut++,
+                    barang = barang,
+                    qtyBesar = _qtyBesar.value,
+                    qtyKecil = _qtyKecil.value,
+                    qtyBonus = _qtyBonus.value,
+                    disc1 = _disc1.value,
+                    disc2 = _disc2.value,
+                    disc3 = _disc3.value,
+                    disc4 = _disc4.value
+                )
+                orderRepository.insertOrderItem(orderItem)
+            }
             updateTotalAmount()
         }
     }
 
-    private fun updateTotalAmount(){
+    fun updateItem() {
+        val fakturId = _fakturId.value ?: return
+        val barang = _selectedBarang.value ?: return
+        val originalItem = _originalOrderItem.value ?: return
+
+        viewModelScope.launch {
+            val orderItem = buildOrderItem(
+                orderId = fakturId,
+                noUrut = originalItem.noUrut,
+                barang = barang,
+                qtyBesar = _qtyBesar.value,
+                qtyKecil = _qtyKecil.value,
+                qtyBonus = _qtyBonus.value,
+                disc1 = _disc1.value,
+                disc2 = _disc2.value,
+                disc3 = _disc3.value,
+                disc4 = _disc4.value
+            )
+            orderRepository.updateOrderItem(orderItem)
+            updateTotalAmount()
+        }
+    }
+
+    private fun buildOrderItem(
+        orderId: String,
+        noUrut: Int,
+        barang: Barang,
+        qtyBesar: Int,
+        qtyKecil: Int,
+        qtyBonus: Int,
+        disc1: Double,
+        disc2: Double,
+        disc3: Double,
+        disc4: Double
+    ): OrderItem {
+        val lineTotal1 = qtyBesar * barang.konversi * barang.hrgSat
+        val lineTotal2 = qtyKecil * barang.hrgSat
+        var lineTotal = lineTotal1 + lineTotal2
+        val disc1Rp = disc1 * lineTotal / 100
+        lineTotal -= disc1Rp
+        val disc2Rp = disc2 * lineTotal / 100
+        lineTotal -= disc2Rp
+        val disc3Rp = disc3 * lineTotal / 100
+        lineTotal -= disc3Rp
+        val disc4Rp = disc4 * lineTotal / 100
+        lineTotal -= disc4Rp
+
+        return OrderItem(
+            orderId = orderId,
+            noUrut = noUrut,
+            brgId = barang.brgId,
+            brgCode = barang.brgCode,
+            brgName = barang.brgName,
+            kategoriName = barang.kategoriName,
+            qtyBesar = qtyBesar,
+            satBesar = barang.satBesar,
+            qtyKecil = qtyKecil,
+            satKecil = barang.satKecil,
+            qtyBonus = qtyBonus,
+            konversi = barang.konversi,
+            unitPrice = barang.hrgSat,
+            disc1 = disc1,
+            disc2 = disc2,
+            disc3 = disc3,
+            disc4 = disc4,
+            lineTotal = lineTotal
+        )
+    }
+
+    private fun updateTotalAmount() {
         val fakturId = _fakturId.value ?: return
         viewModelScope.launch {
             val total = orderRepository.calculateTotalAmount(fakturId)
             orderRepository.getOrderById(fakturId)?.let { faktur ->
-                orderRepository.updateOrder(faktur.copy(
-                    totalAmount = total
-                ))
+                orderRepository.updateOrder(
+                    faktur.copy(totalAmount = total)
+                )
             }
         }
     }
