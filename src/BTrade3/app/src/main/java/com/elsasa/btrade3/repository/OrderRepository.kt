@@ -12,7 +12,8 @@ class OrderRepository(
     private val orderItemDao: OrderItemDao,
 ) {
     fun getAllOrders(): Flow<List<Order>> = orderDao.getAllOrders()
-    fun getDraftOrders(): Flow<List<Order>> = orderDao.getDraftOrders()
+    fun getReadyToSyncOrders(): Flow<List<Order>> = orderDao.getReadyToSyncOrders()
+    fun getInProgressOrders(): Flow<List<Order>> = orderDao.getInProgressOrders()
     suspend fun getOrderById(fakturId: String): Order? = orderDao.getOrderById(fakturId)
 
 
@@ -37,6 +38,9 @@ class OrderRepository(
     suspend fun calculateTotalAmount(fakturId: String): Double {
         return orderItemDao.getTotalAmountForOrder(fakturId) ?: 0.0
     }
+
+    suspend fun getItemCount(orderId: String): Int =
+        orderItemDao.getItemCountForOrder(orderId)
 
     suspend fun deleteAllItemsForOrder(fakturId: String) =
         orderItemDao.deleteAllItemsForOrder(fakturId)

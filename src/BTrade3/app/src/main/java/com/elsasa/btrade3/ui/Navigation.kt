@@ -108,7 +108,7 @@ fun AppNavigation(
 
         composable("faktur_list") {
             val viewModel: OrderListViewModel = viewModel(
-                factory = OrderListViewModelFactory(orderRepository)
+                factory = OrderListViewModelFactory(orderRepository, orderSyncRepository)
             )
             OrderListScreen(navController, viewModel)
         }
@@ -196,7 +196,7 @@ fun AppNavigation(
             val context = LocalContext.current
             val userEmail = getUserEmail(context) ?: ""
             val viewModel: OrderSyncViewModel = viewModel(
-                factory = OrderSyncViewModelFactory(orderSyncRepository, checkInSyncRepository)
+                factory = OrderSyncViewModelFactory(orderSyncRepository, checkInSyncRepository, orderRepository)
             )
             OrderSyncScreen(navController, userEmail, viewModel)
         }

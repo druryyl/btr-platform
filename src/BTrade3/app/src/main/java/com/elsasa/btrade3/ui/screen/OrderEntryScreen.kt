@@ -2,6 +2,7 @@ package com.elsasa.btrade3.ui.screen
 
 import android.content.Context
 import android.widget.Toast
+import com.elsasa.btrade3.model.OrderSyncStatus
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
@@ -70,6 +71,14 @@ fun OrderEntryScreen(
 ) {
 
     val order by viewModel.order.collectAsStateWithLifecycle()
+    val actionMessage by viewModel.actionMessage.collectAsStateWithLifecycle()
+
+    LaunchedEffect(actionMessage) {
+        actionMessage?.let { message ->
+            Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
+            viewModel.clearActionMessage()
+        }
+    }
 
     val selectedCustomerId = navController.currentBackStackEntry
         ?.savedStateHandle
@@ -183,8 +192,7 @@ fun OrderEntryScreen(
             FakturEntryContent(
                 order = orderData,
                 onCustomerSelect = {
-                    if (statusSync != "DRAFT") {
-                        // Show toast message
+                    if (!OrderSyncStatus.isEditable(orderData.statusSync)) {
                         Toast.makeText(
                             context,
                             "Order cannot be edited",
@@ -200,8 +208,7 @@ fun OrderEntryScreen(
                     }
                 },
                 onSalesSelect = {
-                    if (statusSync != "DRAFT") {
-                        // Show toast message
+                    if (!OrderSyncStatus.isEditable(orderData.statusSync)) {
                         Toast.makeText(
                             context,
                             "Order cannot be edited",
@@ -220,8 +227,12 @@ fun OrderEntryScreen(
                     navController.navigate("item_list/${orderData.orderId}/${orderData.statusSync}")
                 },
                 onOrderNoteChange = { note ->
-                    viewModel.updateOrderNote(note)
+                    if (OrderSyncStatus.isEditable(orderData.statusSync)) {
+                        viewModel.updateOrderNote(note)
+                    }
                 },
+                onFinishOrder = { viewModel.finishOrder() },
+                onReopenForEditing = { viewModel.reopenForEditing() },
                 modifier = Modifier.padding(padding)
             )
         }
@@ -236,6 +247,8 @@ fun FakturEntryContent(
     onSalesSelect: () -> Unit,
     onViewItems: () -> Unit,
     onOrderNoteChange: (String) -> Unit,
+    onFinishOrder: () -> Unit,
+    onReopenForEditing: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val customerCode = order.customerCode
@@ -369,8 +382,40 @@ fun FakturEntryContent(
                 keyboardOptions = KeyboardOptions.Default.copy(
                     imeAction = ImeAction.Default
                 ),
-                maxLines = 4
+                maxLines = 4,
+                readOnly = !OrderSyncStatus.isEditable(order.statusSync)
             )
+        }
+
+        when (order.statusSync) {
+            OrderSyncStatus.IN_PROGRESS -> {
+                Button(
+                    onClick = onFinishOrder,
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(10.dp)
+                ) {
+                    Text("Finish Order")
+                }
+                Text(
+                    text = "Mark this order as finished when you are done adding items. Only finished orders can be synced.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+            OrderSyncStatus.READY_TO_SYNC -> {
+                OutlinedButton(
+                    onClick = onReopenForEditing,
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(10.dp)
+                ) {
+                    Text("Reopen for Editing")
+                }
+                Text(
+                    text = "This order is ready to sync. Go to Sync Transaction to send it to the office.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.primary
+                )
+            }
         }
 
     }

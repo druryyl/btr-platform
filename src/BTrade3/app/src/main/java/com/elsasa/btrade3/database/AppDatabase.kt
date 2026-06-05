@@ -21,7 +21,7 @@ import com.elsasa.btrade3.model.SalesPerson
 
 @Database(
     entities = [Order::class, OrderItem::class, Barang::class, Customer::class, SalesPerson::class, CheckIn::class],
-    version = 23,
+    version = 24,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -46,7 +46,7 @@ abstract class AppDatabase : RoomDatabase() {
                 .fallbackToDestructiveMigration(false) // Add this for development
                 .addMigrations(MIGRATION_15_16, MIGRATION_16_17, MIGRATION_17_18,
                     MIGRATION_18_19, MIGRATION_19_20, MIGRATION_20_21, MIGRATION_21_22,
-                    MIGRATION_22_23)
+                    MIGRATION_22_23, MIGRATION_23_24)
                 .build()
                 INSTANCE = instance
                 instance
@@ -154,6 +154,26 @@ abstract class AppDatabase : RoomDatabase() {
                 PRIMARY KEY(checkInId)
             )
         """.trimIndent())
+            }
+        }
+
+        val MIGRATION_23_24 = object : Migration(23, 24) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("""
+                    UPDATE order_table SET statusSync = 'IN_PROGRESS'
+                    WHERE statusSync = 'DRAFT'
+                    AND (customerId = '' OR customerId IS NULL)
+                """.trimIndent())
+                db.execSQL("""
+                    UPDATE order_table SET statusSync = 'IN_PROGRESS'
+                    WHERE statusSync = 'DRAFT'
+                    AND customerId != '' AND customerId IS NOT NULL
+                    AND orderId NOT IN (SELECT DISTINCT orderId FROM order_item_table)
+                """.trimIndent())
+                db.execSQL("""
+                    UPDATE order_table SET statusSync = 'READY_TO_SYNC'
+                    WHERE statusSync = 'DRAFT'
+                """.trimIndent())
             }
         }
 

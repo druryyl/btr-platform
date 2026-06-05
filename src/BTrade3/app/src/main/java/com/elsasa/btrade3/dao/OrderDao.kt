@@ -13,8 +13,11 @@ interface OrderDao {
     @Query("SELECT * FROM order_table WHERE orderId = :orderId")
     suspend fun getOrderById(orderId: String): Order?
 
-    @Query("SELECT * FROM order_table WHERE statusSync = 'DRAFT'")
-    fun getDraftOrders(): Flow<List<Order>>
+    @Query("SELECT * FROM order_table WHERE statusSync = 'READY_TO_SYNC' ORDER BY orderLocalId DESC")
+    fun getReadyToSyncOrders(): Flow<List<Order>>
+
+    @Query("SELECT * FROM order_table WHERE statusSync = 'IN_PROGRESS' ORDER BY orderLocalId DESC")
+    fun getInProgressOrders(): Flow<List<Order>>
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertOrder(order: Order)
 

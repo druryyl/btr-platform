@@ -51,6 +51,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.elsasa.btrade3.model.OrderItem
+import com.elsasa.btrade3.model.OrderSyncStatus
 import com.elsasa.btrade3.util.MovableFloatingActionButton
 import com.elsasa.btrade3.viewmodel.ItemListViewModel
 import java.text.NumberFormat
@@ -108,7 +109,7 @@ fun ItemListScreen(
         floatingActionButton = {
             MovableFloatingActionButton(
                 onClick = {
-                    if (statusSync != "DRAFT") {
+                    if (!OrderSyncStatus.isEditable(statusSync)) {
                         // Show toast message
                         Toast.makeText(
                             context,
@@ -145,7 +146,7 @@ fun ItemListScreen(
                         ItemCard2(
                             item = item,
                             onEditClick = {
-                                if (statusSync != "DRAFT") {
+                                if (!OrderSyncStatus.isEditable(statusSync)) {
                                     // Show toast message
                                     Toast.makeText(
                                         context,
@@ -158,7 +159,7 @@ fun ItemListScreen(
                                 navController.navigate("add_barang/$fakturId?itemId=$itemId")
                             },
                             onDeleteClick = {
-                                if (statusSync != "DRAFT") {
+                                if (!OrderSyncStatus.isEditable(statusSync)) {
                                     // Show toast message
                                     Toast.makeText(
                                         context,

@@ -13,6 +13,9 @@ interface OrderItemDao {
     @Query("SELECT SUM(lineTotal) FROM order_item_table WHERE orderId = :orderId")
     suspend fun getTotalAmountForOrder(orderId: String): Double?
 
+    @Query("SELECT COUNT(*) FROM order_item_table WHERE orderId = :orderId")
+    suspend fun getItemCountForOrder(orderId: String): Int
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertOrderItem(orderItem: OrderItem)
 

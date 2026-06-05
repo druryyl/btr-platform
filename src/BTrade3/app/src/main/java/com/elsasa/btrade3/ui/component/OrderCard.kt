@@ -58,6 +58,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.elsasa.btrade3.model.Order
 import com.elsasa.btrade3.model.OrderItem
+import com.elsasa.btrade3.model.OrderSyncStatus
 import java.text.NumberFormat
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -311,20 +312,22 @@ fun SelectableModernOrderCard(
                                         )
                                     }
                                 )
-                                DropdownMenuItem(
-                                    text = { Text("Sync", color = MaterialTheme.colorScheme.tertiary) },
-                                    onClick = {
-                                        onSyncClick()
-                                        showMenu = false
-                                    },
-                                    leadingIcon = {
-                                        Icon(
-                                            Icons.Default.Refresh,
-                                            "Sync",
-                                            tint = MaterialTheme.colorScheme.tertiary
-                                        )
-                                    }
-                                )
+                                if (OrderSyncStatus.canSyncFromList(order.statusSync)) {
+                                    DropdownMenuItem(
+                                        text = { Text("Sync", color = MaterialTheme.colorScheme.tertiary) },
+                                        onClick = {
+                                            onSyncClick()
+                                            showMenu = false
+                                        },
+                                        leadingIcon = {
+                                            Icon(
+                                                Icons.Default.Refresh,
+                                                "Sync",
+                                                tint = MaterialTheme.colorScheme.tertiary
+                                            )
+                                        }
+                                    )
+                                }
                             }
                         }
                     }
@@ -338,8 +341,10 @@ fun SelectableModernOrderCard(
 @Composable
 fun StatusChip(status: String) {
     val (backgroundColor, textColor) = when (status) {
-        "SENT" -> MaterialTheme.colorScheme.primaryContainer to MaterialTheme.colorScheme.onPrimaryContainer
-        "DRAFT" -> MaterialTheme.colorScheme.tertiaryContainer to MaterialTheme.colorScheme.onTertiaryContainer
+        OrderSyncStatus.SENT -> MaterialTheme.colorScheme.primaryContainer to MaterialTheme.colorScheme.onPrimaryContainer
+        OrderSyncStatus.READY_TO_SYNC -> MaterialTheme.colorScheme.secondaryContainer to MaterialTheme.colorScheme.onSecondaryContainer
+        OrderSyncStatus.IN_PROGRESS -> MaterialTheme.colorScheme.tertiaryContainer to MaterialTheme.colorScheme.onTertiaryContainer
+        OrderSyncStatus.LEGACY_DRAFT -> MaterialTheme.colorScheme.tertiaryContainer to MaterialTheme.colorScheme.onTertiaryContainer
         else -> MaterialTheme.colorScheme.secondaryContainer to MaterialTheme.colorScheme.onSecondaryContainer
     }
 
@@ -348,7 +353,7 @@ fun StatusChip(status: String) {
         color = backgroundColor,
     ) {
         Text(
-            text = status,
+            text = OrderSyncStatus.displayLabel(status),
             color = textColor,
             style = MaterialTheme.typography.labelSmall,
             fontWeight = FontWeight.Bold,

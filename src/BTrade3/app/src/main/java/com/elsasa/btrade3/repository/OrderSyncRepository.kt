@@ -1,8 +1,8 @@
 package com.elsasa.btrade3.repository
 
 import android.content.Context
-import android.util.Log
 import com.elsasa.btrade3.model.Order
+import com.elsasa.btrade3.model.OrderSyncStatus
 import com.elsasa.btrade3.model.api.OrderItemSyncDto
 import com.elsasa.btrade3.model.api.OrderSyncRequest
 import com.elsasa.btrade3.network.ApiService
@@ -18,10 +18,6 @@ class OrderSyncRepository(
     private val orderRepository: OrderRepository,
     private val serverHelper: ServerHelper
 ) {
-    companion object {
-        private const val TAG = "OrderSyncRepository"
-    }
-
     sealed class SyncResult {
         data class Success(val message: String, val count: Int) : SyncResult()
         data class Error(val message: String) : SyncResult()
@@ -29,129 +25,38 @@ class OrderSyncRepository(
         object Loading : SyncResult()
     }
 
-    suspend fun syncDraftOrders(context: Context): SyncResult = withContext(Dispatchers.IO) {
-        try {
-
-            // Get all draft orders
-            val draftOrders = orderRepository.getDraftOrders().firstOrNull() ?: emptyList()
-
-            if (draftOrders.isEmpty()) {
-                return@withContext SyncResult.Success("No draft orders to sync", 0)
-            }
-
-            val totalOrders = draftOrders.size
-            var syncedCount = 0
-
-            // Sync orders one by one
-            draftOrders.forEachIndexed { index, order ->
-                try {
-                    // Get order items
-                    val serverId = serverHelper.getSelectedServer(context)
-                    val orderItems = orderRepository.getOrderItemsByOrderId(order.orderId).firstOrNull() ?: emptyList()
-
-                    // Convert to sync DTO
-                    val orderItemDtos = orderItems.map { item ->
-                        OrderItemSyncDto(
-                            orderId = item.orderId,
-                            noUrut = item.noUrut,
-                            brgId = item.brgId,
-                            brgCode = item.brgCode,
-                            brgName = item.brgName,
-                            kategoriName = item.kategoriName,
-                            qtyBesar = item.qtyBesar,
-                            satBesar = item.satBesar,
-                            qtyKecil = item.qtyKecil,
-                            satKecil = item.satKecil,
-                            qtyBonus = item.qtyBonus,
-                            konversi = item.konversi,
-                            unitPrice = item.unitPrice,
-                            disc1 = item.disc1,
-                            disc2 = item.disc2,
-                            disc3 = item.disc3,
-                            disc4 = item.disc4,
-                            lineTotal = item.lineTotal
-                        )
-                    }
-
-                    // Create sync request
-                    val syncRequest = OrderSyncRequest(
-                        orderId = order.orderId,
-                        orderLocalId = order.orderId,
-                        customerId = order.customerId,
-                        customerCode = order.customerCode,
-                        customerName = order.customerName,
-                        address = order.customerAddress,
-                        orderDate = order.orderDate,
-                        salesId = order.salesId,
-                        salesName = order.salesName,
-                        totalAmount = order.totalAmount,
-                        userEmail = order.userEmail,
-                        listItem = orderItemDtos,
-                        orderNote = order.orderNote,
-                        serverId = serverId
-                    )
-
-                    // Send to API
-                    val response = apiService.syncOrder(syncRequest)
-
-                    if (response.isSuccessful) {
-                        val apiResponse = response.body()
-                        if (apiResponse?.status == "success") {
-                            // Update order status to SENT
-                            // Since there's no fakturCode in response, we'll use a default or leave it as is
-                            orderRepository.updateOrderSyncStatus(
-                                orderId = order.orderId,
-                                status = "SENT"
-                                // No fakturCode since it's not in the response
-                            )
-                            syncedCount++
-                        } else {
-                            val errorMessage = apiResponse?.message ?: "API returned error status"
-                        }
-                    } else {
-                    }
-                } catch (e: Exception) {
-                }
-            }
-
-            SyncResult.Success(
-                message = "Successfully synced $syncedCount of $totalOrders orders",
-                count = syncedCount
-            )
-        } catch (e: Exception) {
-            SyncResult.Error("Sync failed: ${e.message}")
-        }
-    }
-
-    // Bulk sync with progress tracking
-    suspend fun syncDraftOrdersWithProgress(
+    suspend fun syncSelectedOrdersWithProgress(
+        orderIds: List<String>,
         onProgress: (SyncResult.Progress) -> Unit,
         context: Context
     ): SyncResult = withContext(Dispatchers.IO) {
         try {
-            val draftOrders = orderRepository.getDraftOrders().firstOrNull() ?: emptyList()
-
-            if (draftOrders.isEmpty()) {
-                return@withContext SyncResult.Success("No draft orders to sync", 0)
+            if (orderIds.isEmpty()) {
+                return@withContext SyncResult.Error("No orders selected for sync")
             }
 
-            val totalOrders = draftOrders.size
-            var syncedCount = 0
+            val readyOrders = orderRepository.getReadyToSyncOrders().firstOrNull() ?: emptyList()
+            val ordersToSync = readyOrders.filter { it.orderId in orderIds }
 
-            // Sync orders concurrently
-            val syncResults = draftOrders.mapIndexed { index, order ->
+            if (ordersToSync.isEmpty()) {
+                return@withContext SyncResult.Error("No eligible orders to sync")
+            }
+
+            val totalOrders = ordersToSync.size
+            val syncResults = ordersToSync.mapIndexed { index, order ->
                 async {
-                    onProgress(SyncResult.Progress(
-                        current = index + 1,
-                        total = totalOrders,
-                        orderCode = order.orderLocalId
-                    ))
-
+                    onProgress(
+                        SyncResult.Progress(
+                            current = index + 1,
+                            total = totalOrders,
+                            orderCode = order.orderLocalId
+                        )
+                    )
                     syncSingleOrder(order, context)
                 }
             }.awaitAll()
 
-            syncedCount = syncResults.count { it }
+            val syncedCount = syncResults.count { it }
 
             SyncResult.Success(
                 message = "Successfully synced $syncedCount of $totalOrders orders",
@@ -161,13 +66,17 @@ class OrderSyncRepository(
             SyncResult.Error("Sync failed: ${e.message}")
         }
     }
+
     private suspend fun syncSingleOrder(order: Order, context: Context): Boolean {
         return try {
-
-            val serverId = serverHelper.getSelectedServer(context)
             val orderItems = orderRepository.getOrderItemsByOrderId(order.orderId).firstOrNull() ?: emptyList()
 
-            // Convert to sync DTO
+            if (!OrderSyncStatus.isEligibleForSync(order, orderItems.size)) {
+                return false
+            }
+
+            val serverId = serverHelper.getSelectedServer(context)
+
             val orderItemDtos = orderItems.map { item ->
                 OrderItemSyncDto(
                     orderId = item.orderId,
@@ -191,7 +100,6 @@ class OrderSyncRepository(
                 )
             }
 
-            // Create sync request
             val syncRequest = OrderSyncRequest(
                 orderId = order.orderId,
                 orderLocalId = order.orderLocalId,
@@ -209,20 +117,17 @@ class OrderSyncRepository(
                 listItem = orderItemDtos
             )
 
-            // Send to API
             val response = apiService.syncOrder(syncRequest)
 
             if (response.isSuccessful) {
                 val apiResponse = response.body()
                 if (apiResponse?.status == "success") {
-                    // Update order status to SENT
                     orderRepository.updateOrderSyncStatus(
                         orderId = order.orderId,
-                        status = "SENT"
+                        status = OrderSyncStatus.SENT
                     )
                     true
                 } else {
-                    val errorMessage = apiResponse?.message ?: "API returned error status"
                     false
                 }
             } else {

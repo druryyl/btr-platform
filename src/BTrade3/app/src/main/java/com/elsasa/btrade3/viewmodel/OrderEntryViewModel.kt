@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.elsasa.btrade3.model.Order
+import com.elsasa.btrade3.model.OrderSyncStatus
 import com.elsasa.btrade3.repository.OrderRepository
 import com.elsasa.btrade3.ui.getUserEmail
 import com.elsasa.btrade3.util.FriendlyIdGenerator
@@ -23,6 +24,9 @@ class OrderEntryViewModel(
 ) : ViewModel() {
     private val _order = MutableStateFlow<Order?>(null)
     val order: StateFlow<Order?> = _order.asStateFlow()
+
+    private val _actionMessage = MutableStateFlow<String?>(null)
+    val actionMessage: StateFlow<String?> = _actionMessage.asStateFlow()
 
     private val lastSelectionManager = LastSelectionManager(context)
     private var hasCreatedNewOrder = false
@@ -59,15 +63,47 @@ class OrderEntryViewModel(
             salesName = lastSalesPersonName,
             totalAmount = 0.0,
             userEmail = userEmail,
-            statusSync = "DRAFT",
+            statusSync = OrderSyncStatus.IN_PROGRESS,
             fakturCode = "",
             orderNote = ""
         )
         _order.value = newOrder
         hasCreatedNewOrder = true
 
-        // Save to database immediately
         saveOrder(newOrder)
+    }
+
+    fun finishOrder() {
+        viewModelScope.launch {
+            val current = _order.value ?: return@launch
+            val itemCount = repository.getItemCount(current.orderId)
+            val validationError = OrderSyncStatus.validateForReadyToSync(current, itemCount)
+            if (validationError != null) {
+                _actionMessage.value = validationError
+                return@launch
+            }
+
+            val updatedOrder = current.copy(statusSync = OrderSyncStatus.READY_TO_SYNC)
+            repository.insertOrder(updatedOrder)
+            _order.value = repository.getOrderById(current.orderId)
+            _actionMessage.value = "Order marked as ready to sync"
+        }
+    }
+
+    fun reopenForEditing() {
+        viewModelScope.launch {
+            val current = _order.value ?: return@launch
+            if (current.statusSync != OrderSyncStatus.READY_TO_SYNC) return@launch
+
+            val updatedOrder = current.copy(statusSync = OrderSyncStatus.IN_PROGRESS)
+            repository.insertOrder(updatedOrder)
+            _order.value = repository.getOrderById(current.orderId)
+            _actionMessage.value = "Order reopened for editing"
+        }
+    }
+
+    fun clearActionMessage() {
+        _actionMessage.value = null
     }
 
     fun updateCustomerInfo(customerId: String, customerCode: String, customerName: String, customerAddress: String,
@@ -130,7 +166,6 @@ class OrderEntryViewModel(
     private fun saveOrderAndReload(orderToSave: Order) {
         viewModelScope.launch {
             repository.insertOrder(orderToSave)
-            // Reload from database to ensure consistency
             _order.value = repository.getOrderById(orderToSave.orderId)
         }
     }

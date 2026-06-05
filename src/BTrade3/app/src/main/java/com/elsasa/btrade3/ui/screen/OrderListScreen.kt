@@ -1,7 +1,7 @@
 package com.elsasa.btrade3.ui.screen
 
 import android.content.Context
-import android.util.Log
+import android.widget.Toast
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Arrangement
@@ -41,6 +41,7 @@ import androidx.compose.material.icons.filled.Storage
 import androidx.compose.material.icons.filled.Sync
 import androidx.compose.material.icons.outlined.Face
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -76,6 +77,7 @@ import com.elsasa.btrade3.util.MapUtils
 import com.elsasa.btrade3.util.MovableFloatingActionButton
 import com.elsasa.btrade3.util.ServerHelper
 import com.elsasa.btrade3.viewmodel.OrderListViewModel
+import com.elsasa.btrade3.viewmodel.SingleOrderSyncState
 import java.text.NumberFormat
 import java.util.Locale
 
@@ -87,7 +89,21 @@ fun OrderListScreen(
     context: Context = LocalContext.current
 ) {
     val orders by viewModel.orders.collectAsState()
+    val syncState by viewModel.syncState.collectAsState()
     var orderToDelete by remember { mutableStateOf<Order?>(null) }
+    var orderToSync by remember { mutableStateOf<Order?>(null) }
+
+    val isSyncing = syncState is SingleOrderSyncState.Syncing
+
+    LaunchedEffect(syncState) {
+        when (val state = syncState) {
+            is SingleOrderSyncState.Completed -> {
+                Toast.makeText(context, state.message, Toast.LENGTH_LONG).show()
+                viewModel.clearSyncState()
+            }
+            else -> {}
+        }
+    }
 
     // Selection mode state
     var isSelectionMode by remember { mutableStateOf(false) }
@@ -147,6 +163,56 @@ fun OrderListScreen(
                     Text("Cancel")
                 }
             }
+        )
+    }
+
+    // Single order sync confirmation dialog
+    if (orderToSync != null) {
+        AlertDialog(
+            onDismissRequest = { if (!isSyncing) orderToSync = null },
+            title = { Text("Sync Sales Order") },
+            text = {
+                Text(
+                    "Send this order to the office?\n\n" +
+                            "${orderToSync?.orderLocalId} — ${orderToSync?.customerName ?: ""}"
+                )
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        orderToSync?.let { viewModel.syncOrder(it, context) }
+                        orderToSync = null
+                    },
+                    enabled = !isSyncing
+                ) {
+                    Text("Sync")
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = { orderToSync = null },
+                    enabled = !isSyncing
+                ) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
+
+    // Sync progress dialog
+    if (syncState is SingleOrderSyncState.Syncing) {
+        val syncingState = syncState as SingleOrderSyncState.Syncing
+        AlertDialog(
+            onDismissRequest = {},
+            title = { Text("Syncing Order") },
+            text = {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    CircularProgressIndicator()
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Text("Sending ${syncingState.orderLocalId} to the office...")
+                }
+            },
+            confirmButton = {}
         )
     }
 
@@ -285,8 +351,8 @@ fun OrderListScreen(
             if (!isSelectionMode && !isSearchActive) {
                 MovableFloatingActionButton(
                     isMultiAction = true,
-                    onClick = { navController.navigate("faktur_entry/new/DRAFT") },
-                    onNewOrderClick = { navController.navigate("faktur_entry/new/DRAFT") },
+                    onClick = { navController.navigate("faktur_entry/new/IN_PROGRESS") },
+                    onNewOrderClick = { navController.navigate("faktur_entry/new/IN_PROGRESS") },
                     onCheckInClick = { navController.navigate("check_in") },
                     modifier = Modifier
                         .padding(end = 16.dp, bottom = 16.dp)
@@ -376,7 +442,7 @@ fun OrderListScreen(
                                 orderToDelete = order
                             }
                         },
-                        onSyncClick = {},
+                        onSyncClick = { orderToSync = order },
                         onOpenCustomerInMaps = { order ->
                             // Open customer location in Google Maps
                             if (order.customerLatitude != 0.0 && order.customerLongitude != 0.0) {
