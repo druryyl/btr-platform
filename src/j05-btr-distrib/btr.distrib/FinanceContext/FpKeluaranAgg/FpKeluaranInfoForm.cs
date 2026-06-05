@@ -9,14 +9,14 @@ using System.Data;
 using System.Drawing;
 using System.Linq;
 using System.Windows.Forms;
-using Syncfusion.Drawing;
+using Syncfusion.Drawing;   
 using Syncfusion.Grouping;
 using btr.domain.BrgContext.BrgAgg;
 using btr.application.FinanceContext.FpKeluaragAgg;
 using btr.application.SupportContext.TglJamAgg;
 
 namespace btr.distrib.FinanceContext.FpKeluaranAgg
-{
+{   
     public partial class FpKeluaranInfoForm : Form
     {
         private readonly IFpKeluaranViewDal _fpKeluaranViewDal;
