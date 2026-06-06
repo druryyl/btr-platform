@@ -18,6 +18,24 @@ namespace btr.infrastructure.SalesContext.SalesOmzetAgg
             _opt = opt.Value;
         }
 
+        public decimal SumTargetAmountForMonth(int year, int month)
+        {
+            const string sql = @"
+                SELECT ISNULL(SUM(TargetAmount), 0)
+                FROM BTR_SalesOmzetTarget
+                WHERE TargetYear = @TargetYear
+                  AND TargetMonth = @TargetMonth";
+
+            var dp = new DynamicParameters();
+            dp.AddParam("@TargetYear", year, SqlDbType.Int);
+            dp.AddParam("@TargetMonth", month, SqlDbType.Int);
+
+            using (var conn = new SqlConnection(ConnStringHelper.Get(_opt)))
+            {
+                return conn.ExecuteScalar<decimal>(sql, dp);
+            }
+        }
+
         public decimal? GetTargetAmount(string salesPersonId, int year, int month)
         {
             if (string.IsNullOrWhiteSpace(salesPersonId))

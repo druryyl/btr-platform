@@ -123,6 +123,10 @@
   <ItemGroup>
     <Compile Include="Helpers\AppSettingsHelper.cs" />
     <Compile Include="Helpers\CodingPlayground.cs" />
+    <Compile Include="ReportingContext\InventoryReportDalTest.cs" />
+    <Compile Include="ReportingContext\DashboardInventoryDalTest.cs" />
+    <Compile Include="ReportingContext\PiutangReportDalTest.cs" />
+    <Compile Include="ReportingContext\PurchasingReportDalTest.cs" />
     <Compile Include="SalesContext\NumericHelperTest.cs" />
     <Compile Include="SalesContext\SalesOmzetEntityDalTest.cs" />
     <Compile Include="SalesContext\SalesOmzetPoliciesTest.cs" />

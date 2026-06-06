@@ -417,6 +417,12 @@ docs/features/<feature>/feature.md
 artifact updates
 ```
 
+Every accepted milestone must end with a Knowledge Curator pass.
+
+No temporary artifact should be considered permanent.
+
+Permanent knowledge artifacts are the only authoritative source for future work.
+
 ---
 
 ## Explicit Agent Request

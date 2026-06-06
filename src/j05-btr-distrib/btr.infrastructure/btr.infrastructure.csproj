@@ -154,6 +154,13 @@
     <Compile Include="PurchaseContext\ReturBeliFeature\ReturBeliDiscDal.cs" />
     <Compile Include="PurchaseContext\ReturBeliFeature\ReturBeliItemDal.cs" />
     <Compile Include="PurchaseContext\SupplierAgg\SupplierDal.cs" />
+    <Compile Include="ReportingContext\DashboardInventoryAgg\DashboardInventoryDal.cs" />
+    <Compile Include="ReportingContext\DashboardPiutangAgg\DashboardPiutangDal.cs" />
+    <Compile Include="ReportingContext\DashboardSalesAgg\DashboardSalesDal.cs" />
+    <Compile Include="ReportingContext\InventoryReportAgg\InventoryReportDal.cs" />
+    <Compile Include="ReportingContext\PiutangReportAgg\PiutangReportDal.cs" />
+    <Compile Include="ReportingContext\PurchasingReportAgg\PurchasingReportDal.cs" />
+    <Compile Include="ReportingContext\SalesReportAgg\SalesReportDal.cs" />
     <Compile Include="SalesContext\AlokasiFpAgg\AlokasiFpDal.cs" />
     <Compile Include="SalesContext\AlokasiFpAgg\AlokasiFpItemDal.cs" />
     <Compile Include="SalesContext\CheckInFeature\CheckInDal.cs" />

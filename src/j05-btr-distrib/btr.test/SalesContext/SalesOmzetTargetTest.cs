@@ -104,6 +104,7 @@ namespace btr.test.SalesContext
         private sealed class StubTargetDal : ISalesOmzetTargetDal
         {
             public decimal? Amount { get; set; }
+            public decimal MonthSum { get; set; }
             public string LastSalesPersonId { get; private set; }
             public int LastMonth { get; private set; }
 
@@ -113,6 +114,8 @@ namespace btr.test.SalesContext
                 LastMonth = month;
                 return Amount;
             }
+
+            public decimal SumTargetAmountForMonth(int year, int month) => MonthSum;
         }
 
         private sealed class StubSalesPersonDal : ISalesPersonDal
