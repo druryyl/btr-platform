@@ -1,4 +1,5 @@
 using System.Linq;
+using System.Net.Http.Headers;
 using System.Web.Http;
 using System.Web.Http.Cors;
 using System.Web.Http.Dispatcher;
@@ -16,6 +17,13 @@ namespace btr.portal.api
                 new Infrastructure.ServiceProviderControllerActivator());
 
             config.MapHttpAttributeRoutes();
+
+            // Web API registers XML by default; browser Accept headers prefer XML over JSON.
+            config.Formatters.Remove(config.Formatters.XmlFormatter);
+            var jsonFormatter = config.Formatters.JsonFormatter;
+            jsonFormatter.SupportedMediaTypes.Add(new MediaTypeHeaderValue("text/html"));
+            jsonFormatter.SupportedMediaTypes.Add(new MediaTypeHeaderValue("application/xhtml+xml"));
+
             config.Filters.Add(new GlobalExceptionFilter());
             config.Filters.Add(new JwtAuthenticationFilter());
 
