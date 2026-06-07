@@ -3,6 +3,8 @@
 **Audience:** Product Owner, Business Owner, Developers, Future Agents  
 **Purpose:** Define what BTR Portal is, why it exists, and the business meaning of its dashboards, reports, and KPIs.
 
+**Related permanent docs:** [Architecture (WHAT)](./btr-portal-architecture.md) · [Operational (HOW)](./btr-portal-operational.md) · [Extraction report](./knowledge-extraction-report-btr-portal-api-scaffolding.md)
+
 For how to use the portal, see [btr-portal-operational.md](./btr-portal-operational.md).  
 For how it is built, see [btr-portal-architecture.md](./btr-portal-architecture.md).
 
@@ -302,6 +304,9 @@ Approved rules governing portal calculations and filters:
 | Fixed periods V1 | All reports | No date-range or search parameters; fixed defaults per report |
 | Dashboard traceability | Piutang & Inventory | Report footer totals must match dashboard KPIs |
 | DAL reuse | All | Business rules enforced in existing Desktop DALs; portal does not reimplement SQL |
+| Snapshot materialization | Dashboards | KPIs and charts served from `BTR_PortalDashboard*` tables; refreshed by worker |
+| Live queries | Reports | Report endpoints query Desktop DALs directly — not snapshotted |
+| Sales omzet source | Sales dashboard | Faktur `GrandTotal` for current month — not `BTR_SalesOmzet` pipeline omzet |
 
 ---
 
@@ -319,6 +324,11 @@ Capabilities delivered and accepted across milestones M1–M15:
 | Sales detail dashboard (target, achievement, weekly trend, Top 10 salesman) | Complete |
 | Piutang detail dashboard (aging, overdue customers, Top 10 customers) | Complete |
 | Inventory detail dashboard (category/supplier charts, Top 10 tables) | Complete |
+| Dashboard overview endpoint (`GET /api/dashboard/overview`) | Complete |
+| Snapshot worker (`btr.portal.worker`) + Task Scheduler jobs | Complete |
+| Admin on-demand refresh (`POST /api/admin/dashboard/refresh`) | Complete |
+| Snapshot health endpoint (`GET /api/health/dashboard-snapshots`) | Complete |
+| JSON-only SQL config for portal (decoupled from Desktop registry) | Complete |
 | Sales Report (current month Faktur list) | Complete |
 | Piutang Report (open receivables with footer totals) | Complete |
 | Inventory Report (stock balance with footer totals) | Complete |

@@ -3,6 +3,8 @@
 **Audience:** End Users, Trainers, Support Team  
 **Purpose:** Explain how to use BTR Portal day to day.
 
+**Related permanent docs:** [Domain (WHY)](./btr-portal-domain.md) · [Architecture (WHAT)](./btr-portal-architecture.md) · [Extraction report](./knowledge-extraction-report-btr-portal-api-scaffolding.md)
+
 For business definitions and KPI formulas, see [btr-portal-domain.md](./btr-portal-domain.md).
 
 ---
@@ -30,9 +32,11 @@ The Dashboard has two levels:
 | **Home** | `/dashboard` | Three summary KPI cards: Sales, Piutang, Inventory. Each card links to detailed analytics. |
 | **Detail** | `/dashboard/sales`, `/dashboard/piutang`, `/dashboard/inventory` | Full KPI row, charts, and Top 10 tables for that business area. |
 
-Use **Refresh** on any dashboard page to reload data from the server. Each page shows a **generated-at** timestamp indicating when data was last fetched.
+Use **Refresh** on any dashboard page to reload data from the server. Each page shows a **generated-at** timestamp indicating when the underlying snapshot was last refreshed (not necessarily when you clicked Refresh — Refresh re-reads the stored snapshot).
 
----
+**Data freshness:** Dashboard numbers update on a background schedule (Piutang every 15 minutes, Sales every 30 minutes, Inventory every 60 minutes). Home cards may show different timestamps per domain. If data looks stale, wait for the next scheduled refresh or ask your administrator to trigger a manual refresh.
+
+**Unavailable data:** If the dashboard home shows a warning that data is not yet available, snapshot tables have not been populated. An administrator must run the snapshot worker before dashboards will load.
 
 ## Sales Dashboard
 
@@ -43,16 +47,15 @@ Use **Refresh** on any dashboard page to reload data from the server. Each page 
 ### What You See
 
 1. **KPI row** — Total Target, Total Achievement, Achievement %
-2. **Target vs Achievement chart** — Company-level bar comparing monthly target to achieved omzet
-3. **Weekly Omzet Trend** — Line chart of recognized omzet by week within the current month
-4. **Top 10 Salesman** — Table ranked by Completed Omzet (highest first)
+2. **Target vs Achievement chart** — Company-level bar comparing monthly target to invoiced omzet
+3. **Weekly Invoiced Sales Trend** — Line chart of Faktur totals by week within the current month
+4. **Top 10 Salesman** — Table ranked by invoiced omzet (highest first)
 
 ### How to Read It
 
 - **Total Target** is the sum of all salesperson monthly targets set in BTR.
-- **Total Achievement** is recognized (completed) omzet for the current calendar month.
+- **Total Achievement** is invoiced omzet (`GrandTotal` on Fakturs) for the current calendar month.
 - **Achievement %** shows progress toward target; it is blank when no targets are set.
-- **Pipeline omzet** is not shown on this page (it appears in backend data but the detail view focuses on achievement).
 - Rankings show at most 10 salespeople.
 
 ### Typical Use
@@ -299,9 +302,17 @@ Authenticated users visiting `/login` are redirected to Dashboard home.
 
 ### Why do my dashboard numbers differ from the report?
 
-- **Sales:** The dashboard uses omzet recognition rules (completed/pipeline); the Sales Report lists Faktur totals — different metrics by design.
+- **Sales:** Dashboard Total Omzet / Total Achievement should equal the sum of **Total** column values on the Sales Report for the same month (both use Faktur `GrandTotal`). If they differ after refreshing both pages, escalate to support.
 - **Piutang & Inventory:** Footer totals should match dashboard KPIs. If they differ, refresh both pages. Persistent mismatch indicates a support escalation.
 - **Inventory report footer vs row sum:** Footer groups by item first; row-level Nilai Sediaan sums across warehouses will not necessarily equal the footer.
+
+### Why does the dashboard show an old timestamp?
+
+Dashboard data refreshes on a background schedule, not on every page load. The **generated-at** time shows when snapshots were last rebuilt. Piutang refreshes every 15 minutes, Sales every 30 minutes, Inventory every 60 minutes. Click **Refresh** to re-read the latest stored snapshot; it does not force an immediate recalculation unless an administrator triggers a manual rebuild.
+
+### Why does the dashboard say data is not available?
+
+Snapshot tables may be empty (new deployment or worker not running). Contact your administrator to run the snapshot worker. Detail dashboard pages return an error until snapshots exist.
 
 ### Why can't I change the date range?
 
@@ -334,3 +345,136 @@ Any BTR user with valid credentials. All authenticated users see the same menus.
 ### How do I export to Excel?
 
 Export is not available in the current version. Use BTR Desktop reports for Excel export if needed.
+
+---
+
+## For Administrators and IT
+
+Operational steps for deploying and maintaining BTR Portal on a Windows server. End users can skip this section.
+
+### Prerequisites
+
+1. Deploy `btr.sql` schema (includes `BTR_PortalDashboard*` tables).
+2. Deploy `btr.portal.api`, `btr.portal.web`, and `btr.portal.worker`.
+3. Configure database, JWT, and CORS on each server (see below).
+4. Run an initial snapshot backfill before users access dashboards.
+
+### Database Configuration
+
+Portal does **not** use the BTR Desktop registry. Create `appsettings.{MACHINE_NAME}.json` in **both** the API folder and the worker folder (`{MACHINE_NAME}` must match `Environment.MachineName`):
+
+```json
+{
+  "Database": {
+    "ServerName": "OFFICE-SQL01\\SQLEXPRESS",
+    "DbName": "btr",
+    "IsTest": false
+  },
+  "Jwt": {
+    "Issuer": "btr-portal-api",
+    "Audience": "btr-portal-vue",
+    "Key": "REPLACE-WITH-STRONG-SECRET-256-BITS-MINIMUM",
+    "ExpiryMinutes": 480
+  },
+  "Cors": {
+    "AllowedOrigins": [ "http://your-server/btr-portal" ]
+  }
+}
+```
+
+The IIS app pool identity must reach SQL Server using the embedded `btrLogin` credentials.
+
+### Publishing the API
+
+1. Open `j05-btr-distrib.sln` in Visual Studio 2022 (**ASP.NET and web development** workload required).
+2. Right-click `btr.portal.api` → **Publish** → **FolderProfile**.
+3. Output: `src/j05-btr-distrib/publish/btr-portal-api/`
+4. Copy to IIS physical path (e.g. `/btr-portal-api`).
+5. Add `appsettings.{MACHINE_NAME}.json` and ensure `logs/` is writable.
+
+### Publishing the Frontend
+
+```powershell
+cd src\j05-btr-distrib\btr.portal.web
+npm install
+npm run build
+```
+
+Copy `dist/` contents to the IIS static site (e.g. `/btr-portal`). Set `VITE_API_BASE_URL` at build time to the production API URL.
+
+### Snapshot Worker Setup
+
+**Initial backfill** (required once after deploy):
+
+```powershell
+cd C:\path\to\btr.portal.worker
+.\btr.portal.worker.exe --domain All --triggered-by Manual
+```
+
+Verify `BTR_PortalDashboardRefreshLog` shows `Success` for Piutang, Inventory, and Sales.
+
+**Scheduled tasks** — create three separate Windows Task Scheduler jobs:
+
+| Task name | Interval | Command |
+| --------- | -------- | ------- |
+| `BTR-Portal-Dashboard-Piutang` | Every 15 min | `btr.portal.worker.exe --domain Piutang --triggered-by Scheduler` |
+| `BTR-Portal-Dashboard-Sales` | Every 30 min | `btr.portal.worker.exe --domain Sales --triggered-by Scheduler` |
+| `BTR-Portal-Dashboard-Inventory` | Every 60 min | `btr.portal.worker.exe --domain Inventory --triggered-by Scheduler` |
+
+Task settings: run whether user is logged on or not; service account with SQL access; **Start in** = worker folder; stop if running longer than 30 minutes.
+
+**Worker CLI reference:**
+
+| Argument | Values | Default |
+| -------- | ------ | ------- |
+| `--domain` | `All`, `Piutang`, `Inventory`, `Sales` | `All` |
+| `--triggered-by` | `Scheduler`, `Manual` | `Scheduler` |
+
+Exit code `0` = success. Logs: `{worker-folder}/logs/btr-portal-worker-{date}.log`.
+
+### Manual Dashboard Refresh
+
+**From the portal (authenticated):**
+
+```http
+POST /api/admin/dashboard/refresh
+Authorization: Bearer <token>
+Content-Type: application/json
+
+{ "domain": "All" }
+```
+
+`domain` accepts `All` (default), `Piutang`, `Inventory`, or `Sales` (case-insensitive).
+
+**Prefer worker CLI** for full rebuilds — the API runs refresh synchronously and may hit IIS request timeout (~110 seconds). Use the API for single-domain ad-hoc refresh; use the worker for `--domain All` or initial backfill.
+
+### Monitoring
+
+| Check | How |
+| ----- | --- |
+| API health | `GET /api/health` → 200 |
+| Snapshot health | `GET /api/health/dashboard-snapshots` — status: `unknown`, `ok`, `refreshing`, or `degraded` |
+| Last refresh (SQL) | `SELECT TOP 1 * FROM BTR_PortalDashboardRefreshLog WHERE Domain = 'Piutang' ORDER BY CompletedAt DESC` |
+| Worker log | `{worker-folder}/logs/btr-portal-worker-{date}.log` |
+| Task Scheduler | History tab on each scheduled task |
+
+### Troubleshooting
+
+| Symptom | Likely cause | Action |
+| ------- | ------------ | ------ |
+| Login fails with SQL error | Missing or wrong `appsettings.{MACHINE}.json` | Fix Database section; recycle app pool |
+| Dashboard 503 / unavailable | Empty snapshot tables | Run worker `--domain All --triggered-by Manual` |
+| Stale dashboard data | Scheduler not running | Check Task Scheduler history; re-run worker |
+| API refresh times out | Full rebuild too slow for IIS | Use worker CLI instead |
+| CORS error in browser | Origin not in `Cors:AllowedOrigins` | Add frontend URL to API appsettings |
+
+### Post-Deploy Verification
+
+```text
+GET  /api/health                         → 200
+GET  /api/health/dashboard-snapshots     → 200
+POST /api/auth/login                     → 200 with token
+GET  /api/dashboard/overview             → 200 with KPI data (after worker run)
+GET  /api/dashboard/sales                → 200 with token
+GET  /api/reports/sales                  → 200 with token
+```

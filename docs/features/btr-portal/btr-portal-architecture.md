@@ -3,6 +3,8 @@
 **Audience:** Developers, Architects, Future Agents  
 **Purpose:** Describe how BTR Portal is built and the conventions to follow when extending it.
 
+**Related permanent docs:** [Domain (WHY)](./btr-portal-domain.md) · [Operational (HOW)](./btr-portal-operational.md) · [Extraction report](./knowledge-extraction-report-btr-portal-api-scaffolding.md)
+
 For business definitions, see [btr-portal-domain.md](./btr-portal-domain.md).  
 For user-facing behavior, see [btr-portal-operational.md](./btr-portal-operational.md).
 
@@ -39,7 +41,20 @@ SQL Server (same database as BTR Desktop)
 - **ASP.NET Web API 2** (not ASP.NET Core) — direct references to `net48` class libraries.
 - **No reference to `btr.distrib`** — WinForms host is not pulled into the API.
 - **Same database** — no microservices, no separate reporting database.
-- **Read-only** — no business POST/PUT/DELETE; only `POST /api/auth/login` for authentication.
+- **Read-only** — no business POST/PUT/DELETE for transactional data; auth and admin refresh are the only POST endpoints.
+
+### Solution Projects
+
+| Project | Type | Role |
+| ------- | ---- | ---- |
+| `btr.portal.api` | ASP.NET Web API 2 (.NET 4.8, IIS) | HTTP API — auth, dashboards, reports, health |
+| `btr.portal.web` | Vue 3 SPA (Vite) | Browser UI — static files hosted separately from API |
+| `btr.portal.worker` | Console host (.NET 4.8) | Background dashboard snapshot refresh (Task Scheduler) |
+| `btr.application` | Class library | MediatR handlers, aggregates, snapshot workers |
+| `btr.infrastructure` | Class library | DAL wrappers, snapshot readers/writers |
+| `btr.distrib` | WinForms | BTR Desktop — unchanged; not referenced by portal |
+
+All portal projects live under `src/j05-btr-distrib/` in `j05-btr-distrib.sln` (nested under the `backend` solution folder).
 
 ---
 
@@ -49,6 +64,8 @@ All portal reporting features live under `ReportingContext` in Application and I
 
 ```text
 btr.application/ReportingContext/
+├── DashboardOverviewAgg/
+├── DashboardSnapshotAgg/          ← workers, aggregators, refresh commands
 ├── DashboardSalesAgg/
 ├── DashboardPiutangAgg/
 ├── DashboardInventoryAgg/
@@ -58,6 +75,7 @@ btr.application/ReportingContext/
 └── PurchasingReportAgg/
 
 btr.infrastructure/ReportingContext/
+├── DashboardSnapshotAgg/            ← snapshot readers/writers, overview DAL
 ├── DashboardSalesAgg/DashboardSalesDal.cs
 ├── DashboardPiutangAgg/DashboardPiutangDal.cs
 ├── DashboardInventoryAgg/DashboardInventoryDal.cs
@@ -96,28 +114,72 @@ Portal DALs are **wrappers**, not reimplementations:
 
 ## Dashboard Architecture
 
+### Materialized Snapshot Strategy
+
+Dashboard KPIs and charts are **pre-computed** by `btr.portal.worker` and stored in `BTR_PortalDashboard*` tables. Portal API read endpoints SELECT from snapshot tables — live aggregation on the HTTP request path has been removed.
+
+```text
+Windows Task Scheduler (per-domain jobs)
+        ↓
+btr.portal.worker
+        ↓
+RefreshDashboard{Domain}SnapshotWorker
+        ↓
+Dashboard{Domain}Aggregator  (shared aggregation rules)
+        ↓
+SnapshotWriter → BTR_PortalDashboard* tables
+
+Browser → GET /api/dashboard/overview          (home — Layer A KPI only)
+Browser → GET /api/dashboard/{sales|piutang|inventory}  (detail — Layer A + B)
+        ↓ MediatR → Dashboard*Dal → Dashboard*SnapshotDal → snapshot tables
+```
+
+**Snapshot layers:**
+
+| Layer | Tables | Used by |
+| ----- | ------ | ------- |
+| **A — KPI** | `BTR_PortalDashboard{Sales,Piutang,Inventory}Kpi` | Overview home + detail KPI rows |
+| **B — Dimensional** | Week trend, aging, breakdown, Top-N tables | Detail dashboards only |
+
+All snapshots use `SnapshotKey = 'CURRENT'`. `GeneratedAt` on every dashboard response reflects the last successful background refresh, not request execution time.
+
+**Refresh cadence (Task Scheduler):**
+
+| Domain | Interval |
+| ------ | -------- |
+| Piutang | 15 minutes |
+| Sales | 30 minutes |
+| Inventory | 60 minutes |
+
+**Operational metadata:** `BTR_PortalDashboardRefreshLog` records each refresh attempt (domain, status, duration, error, trigger source).
+
+Reports (`/api/reports/*`) remain **live queries** — unaffected by snapshot materialization.
+
 ### Dashboard API Strategy
 
-Three endpoints — one per business domain. Extended additively across milestones (M8, M13–M15); no new routes added after M4.
+| Endpoint | Controller | Data source | Purpose |
+| -------- | ---------- | ----------- | ------- |
+| `GET /api/dashboard/overview` | `OverviewDashboardController` | Layer A KPI snapshots only | Dashboard home — fast summary cards |
+| `GET /api/dashboard/sales` | `SalesDashboardController` | Layer A + B snapshots | Sales detail analytics |
+| `GET /api/dashboard/piutang` | `PiutangDashboardController` | Layer A + B snapshots | Piutang detail analytics |
+| `GET /api/dashboard/inventory` | `InventoryDashboardController` | Layer A + B snapshots | Inventory detail analytics |
+| `POST /api/admin/dashboard/refresh` | `AdminDashboardRefreshController` | Triggers snapshot rebuild | On-demand refresh (sync; IIS timeout risk) |
+| `GET /api/health/dashboard-snapshots` | `HealthController` | `BTR_PortalDashboardRefreshLog` | Monitoring — no auth |
 
-| Endpoint | Controller | Domain |
-| -------- | ---------- | ------ |
-| `GET /api/dashboard/sales` | `SalesDashboardController` | Sales |
-| `GET /api/dashboard/piutang` | `PiutangDashboardController` | Piutang |
-| `GET /api/dashboard/inventory` | `InventoryDashboardController` | Inventory |
+Domain detail endpoints were extended additively across M8 and M13–M15; response DTOs unchanged in shape. All dashboard data endpoints require JWT except health.
 
-All return `ApiResponse<Dashboard{Domain}Response>`. JWT required.
+**Empty snapshot behavior:** Detail endpoints return HTTP 503 when snapshot tables are empty. Overview sets `HasUnavailableDomain = true` when any Layer A row is missing.
 
 ### Dashboard Routing Strategy (Frontend)
 
 | Route | View | API Call |
 | ----- | ---- | -------- |
-| `/dashboard` | `DashboardHomeView` | All three dashboard endpoints (parallel) |
-| `/dashboard/sales` | `SalesDashboardView` | `GET /api/dashboard/sales` only |
-| `/dashboard/piutang` | `PiutangDashboardView` | `GET /api/dashboard/piutang` only |
-| `/dashboard/inventory` | `InventoryDashboardView` | `GET /api/dashboard/inventory` only |
+| `/dashboard` | `DashboardHomeView` | `GET /api/dashboard/overview` (single call) |
+| `/dashboard/sales` | `SalesDashboardView` | `GET /api/dashboard/sales` |
+| `/dashboard/piutang` | `PiutangDashboardView` | `GET /api/dashboard/piutang` |
+| `/dashboard/inventory` | `InventoryDashboardView` | `GET /api/dashboard/inventory` |
 
-Home shows summary KPI cards with links. Detail pages consume the **full** API response (including sections not shown on home).
+Home shows summary KPI cards with per-domain `GeneratedAt` timestamps and links to detail pages. Detail pages consume the full API response (including chart/ranking sections not shown on home).
 
 ### Dashboard DTO Patterns
 
@@ -158,12 +220,15 @@ Home shows summary KPI cards with links. Detail pages consume the **full** API r
 
 ### KPI Aggregation Patterns
 
+Aggregation runs in `Dashboard{Domain}Aggregator` during snapshot refresh (worker path). Read DALs map snapshot rows to response DTOs.
+
 | Domain | Aggregation Source | Key Logic |
 | ------ | ------------------- | --------- |
-| Sales | `SalesOmzetChartSummaryBuilder.Build()` | Omzet Period mode; `RecognizedOmzet`, `PipelineOmzet`, `ByWeek` |
+| Sales | `IFakturViewDal` (Faktur list) | Current month non-void Fakturs; `SUM(GrandTotal)` for omzet KPIs; `PipelineOmzet` always `0` |
 | Sales target | `ISalesOmzetTargetDal.SumTargetAmountForMonth()` | Sum all target rows for month — not single-rep resolver |
 | Sales achievement % | `SalesOmzetChartAchievementPolicy.ComputePercent()` | Applied to aggregate totals |
-| Sales ranking | `BuildManagerComparison(rows, topCount: 10)` | Completed Omzet descending |
+| Sales weekly trend | Faktur `GrandTotal` grouped by calendar week | 7-day segments from month start |
+| Sales ranking | `SUM(GrandTotal)` per `SalesPersonName`, top 10 descending | Completed Omzet = invoiced omzet |
 | Piutang | `IPiutangSalesWilayahDal` + inline aggregation | Period 2000→today; `KurangBayar > 1`; customer key resolution |
 | Piutang aging | Inline bucket assignment | `DaysOverdue = Today − JatuhTempo`; five inclusive buckets |
 | Inventory | `IStokBalanceViewDal` + BrgId-first pipeline | Exclude In-Transit; group by `BrgId`; sum Qty and Hpp×Qty |
@@ -196,7 +261,7 @@ PrimeVue `Chart` + Chart.js on detail pages.
 | Chart | Type | Data DTO | Config |
 | ----- | ---- | -------- | ------ |
 | Target vs Achievement | `bar` | `DashboardSalesTargetVsAchievement` | Two categories: Target, Achievement |
-| Weekly Trend | `line` | `DashboardSalesWeekTrendItem[]` | X: `WeekLabel`; Y: `RecognizedAmount` |
+| Chart | Weekly Trend | `line` | `DashboardSalesWeekTrendItem[]` | X: `WeekLabel`; Y: Faktur `GrandTotal` per week |
 | Aging Distribution | `pie` | `DashboardPiutangAgingBucket[]` | 5 buckets; `SortOrder` for stable sequence |
 | Category / Supplier | `bar` (`indexAxis: 'y'`) | `DashboardInventoryBreakdownItem[]` | Horizontal bars |
 
@@ -290,8 +355,8 @@ Controller → IMediator.Send(Get{Feature}Query) → Get{Feature}Handler → I{F
 
 | Convention | Detail |
 | ---------- | ------ |
-| Route prefix | `api/dashboard/{domain}`, `api/reports/{domain}`, `api/auth`, `api/health` |
-| HTTP verbs | `GET` for data; `POST` for login only |
+| Route prefix | `api/dashboard/{domain}`, `api/dashboard/overview`, `api/reports/{domain}`, `api/auth`, `api/health`, `api/admin/dashboard` |
+| HTTP verbs | `GET` for data; `POST` for login and admin dashboard refresh |
 | Auth | `[Authorize]` on all data endpoints; `JwtAuthenticationFilter` validates Bearer token |
 | Controller shape | Single action per controller for dashboard/report endpoints |
 | DI registration | Portal DALs in `InfrastructurePortalExtensions`; controllers in `PortalPresentationExtensions` |
@@ -324,7 +389,13 @@ btr.portal.api/
 ├── Controllers/
 │   ├── AuthController.cs
 │   ├── HealthController.cs
+│   ├── Admin/
+│   │   └── AdminDashboardRefreshController.cs
 │   ├── Dashboard/
+│   │   ├── OverviewDashboardController.cs
+│   │   ├── SalesDashboardController.cs
+│   │   ├── PiutangDashboardController.cs
+│   │   └── InventoryDashboardController.cs
 │   └── Reports/
 ├── Filters/
 │   ├── GlobalExceptionFilter.cs
@@ -368,7 +439,7 @@ btr.portal.web/src/
 | Store | Responsibility |
 | ----- | -------------- |
 | `authStore` | Login, logout, JWT hydration from localStorage |
-| `dashboardStore` | `loadDashboard()` (home — parallel fetch); `loadSales()`, `loadPiutang()`, `loadInventory()` (detail pages) |
+| `dashboardStore` | `loadDashboard()` → overview endpoint (home); `loadSales()`, `loadPiutang()`, `loadInventory()` (detail pages) |
 | `{domain}ReportStore` | `report`, `loading`, `error`; `loadReport()`, `reset()` |
 
 One store per report. No premature module stores beyond auth, dashboard, and reports.
@@ -411,7 +482,83 @@ Error Message (on failure)
 | Percent | `formatPercent()` |
 | HTTP | Axios interceptor attaches Bearer token; 401 clears session |
 | Auth persistence | `localStorage` keys: `btr_portal_token`, `btr_portal_expires_at`, `btr_portal_user` |
-| CORS | API allows frontend origin via `appsettings.json` |
+| CORS | API allows frontend origin via `appsettings.json` `Cors:AllowedOrigins` |
+| Dev API URL | Frontend `.env`: `VITE_API_BASE_URL=http://localhost:5050` (IIS Express default) |
+
+---
+
+## Connection Configuration
+
+Portal and Desktop share DAL code but resolve SQL Server settings differently.
+
+```text
+Desktop (btr.distrib)                    Portal (btr.portal.api / worker)
+        ↓                                        ↓
+RegistryConnectionSettingProvider      JsonConnectionSettingProvider
+  (HKCU\DrurySoftware\BTRApp)            (appsettings.json only — no registry)
+        ↓                                        ↓
+        └──────── ConnectionStringFactory ───────┘
+                          ↓
+              ConnStringHelper.Get()  →  all DALs unchanged
+```
+
+| Provider | Host | Source |
+| -------- | ---- | ------ |
+| `RegistryConnectionSettingProvider` | `btr.distrib` | Registry with appsettings fallback |
+| `JsonConnectionSettingProvider` | `btr.portal.api`, `btr.portal.worker` | JSON config only |
+
+**Portal config load order** (`Global.asax.cs` / worker startup):
+
+```text
+appsettings.json  →  appsettings.{Environment.MachineName}.json (optional override)
+```
+
+Per-office IIS deployment requires `appsettings.{MACHINE_NAME}.json` beside the published site with real SQL values:
+
+```json
+{
+  "Database": {
+    "ServerName": "OFFICE-SQL01\\SQLEXPRESS",
+    "DbName": "btr",
+    "IsTest": false
+  }
+}
+```
+
+Property names: `ServerName`, `DbName`, `IsTest` (via `DatabaseOptions`). SQL credentials (`btrLogin`) are embedded in `ConnectionStringFactory` — unchanged from Desktop. App pool identity must have network access to SQL Server.
+
+**Also configure per server:** `Jwt` section (strong secret, issuer, audience, expiry) and `Cors:AllowedOrigins` (Vue app URL).
+
+---
+
+## Deployment Topology
+
+```text
+IIS site: /btr-portal-api     →  btr.portal.api (ASP.NET Web API 2)
+IIS site: /btr-portal         →  btr.portal.web static build (dist/)
+Scheduled tasks               →  btr.portal.worker.exe (separate folder)
+SQL Server                    →  same database as BTR Desktop
+```
+
+| Component | Publish method | Output / path |
+| --------- | -------------- | ------------- |
+| API | Visual Studio Publish → **FolderProfile** | `src/j05-btr-distrib/publish/btr-portal-api/` |
+| Frontend | `npm run build` in `btr.portal.web` | `dist/` → copy to IIS static site |
+| Worker | Build Release, copy bin output | Dedicated folder with `appsettings.json`, `NLog.config`, DLLs |
+
+**IIS app pool (API):** .NET CLR v4.0, Integrated pipeline. Ensure `logs/` folder exists with write permission for the app pool identity.
+
+**Post-deploy smoke tests:**
+
+```text
+GET  /api/health                              → 200
+GET  /api/health/dashboard-snapshots          → 200 (status may be unknown until first refresh)
+POST /api/auth/login                          → 200 with JWT (valid BTR user)
+GET  /api/dashboard/overview                  → 401 without token; 200 with token
+GET  /api/dashboard/sales                     → 503 if snapshots empty; 200 after worker run
+```
+
+Run initial snapshot backfill before go-live: `btr.portal.worker.exe --domain All --triggered-by Manual`
 
 ---
 
@@ -436,6 +583,9 @@ Rules that must be preserved when extending the portal:
 | 13 | Top N rankings = 10 unless product explicitly changes |
 | 14 | BrgId-first grouping for all inventory value calculations |
 | 15 | Piutang open-balance filter `KurangBayar > 1` is fixed — no toggle |
+| 16 | Dashboard read path uses snapshot tables only — no live aggregation fallback |
+| 17 | Snapshot refresh runs in `btr.portal.worker`, not inside IIS app pool |
+| 18 | Portal SQL config via JSON only — never registry under IIS app pool identity |
 
 ### Dashboard–Report Traceability Matrix
 
@@ -445,7 +595,7 @@ Rules that must be preserved when extending the portal:
 | Total Customer (Piutang) | Piutang Report footer | Distinct customer key count |
 | Total Inventory Value | Inventory Report footer | BrgId-grouped `Sum(Hpp × Qty)` excl. In-Transit |
 | Total Item | Inventory Report footer | Count BrgId where aggregated Qty > 0 |
-| Sales KPIs | Sales Report | Different grain — omzet policy vs Faktur list |
+| Sales Total Omzet / Achievement | Sales Report | Sum of `GrandTotal` from report rows (same month, same Faktur source) |
 
 ### Testing Convention
 
