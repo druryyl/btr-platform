@@ -37,7 +37,7 @@ onMounted(() => {
     <div class="dashboard-home__grid">
       <KpiCard title="Sales" icon="pi pi-chart-line" :loading="dashboard.loading">
         <div class="metric">
-          <span class="metric__label">Total Omzet</span>
+          <span class="metric__label">Invoiced Omzet (Faktur)</span>
           <span class="metric__value">
             {{ dashboard.sales ? formatCurrency(dashboard.sales.TotalOmzet) : '-' }}
           </span>

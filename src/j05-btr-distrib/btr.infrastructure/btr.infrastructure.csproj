@@ -162,8 +162,10 @@
     <Compile Include="ReportingContext\DashboardPiutangAgg\DashboardPiutangDal.cs" />
     <Compile Include="ReportingContext\DashboardPiutangAgg\DashboardPiutangLiveDal.cs" />
     <Compile Include="ReportingContext\DashboardInventoryAgg\DashboardInventoryLiveDal.cs" />
+    <Compile Include="ReportingContext\DashboardSalesAgg\DashboardSalesLiveDal.cs" />
     <Compile Include="ReportingContext\DashboardSnapshotAgg\DashboardInventorySnapshotDal.cs" />
     <Compile Include="ReportingContext\DashboardSnapshotAgg\DashboardPiutangSnapshotDal.cs" />
+    <Compile Include="ReportingContext\DashboardSnapshotAgg\DashboardSalesSnapshotDal.cs" />
     <Compile Include="ReportingContext\DashboardSnapshotAgg\DashboardSnapshotRefreshLogDal.cs" />
     <Compile Include="ReportingContext\DashboardSnapshotAgg\PiutangOpenBalanceDal.cs" />
     <Compile Include="ReportingContext\DashboardSalesAgg\DashboardSalesDal.cs" />

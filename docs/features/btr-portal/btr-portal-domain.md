@@ -99,7 +99,7 @@ Summary landing page with three KPI cards (Sales, Piutang, Inventory). Each card
 
 ### Sales Dashboard (`/dashboard/sales`)
 
-**Period:** Current calendar month (Omzet Period mode — pipeline excluded from achievement and ranking).
+**Period:** Current calendar month — non-void Fakturs only (`FakturDate` within month).
 
 **Purpose:** Management-level sales performance — target vs achievement, weekly trend, and salesman ranking.
 
@@ -107,10 +107,12 @@ Summary landing page with three KPI cards (Sales, Piutang, Inventory). Each card
 | ------- | ------- |
 | KPI row | Total Target, Total Achievement, Achievement % |
 | Chart | Company-level Target vs Achievement (two-bar comparison) |
-| Chart | Weekly Omzet Trend (recognized omzet by week) |
-| Table | Top 10 Salesman by Completed Omzet |
+| Chart | Weekly Invoiced Sales Trend (`SUM(GrandTotal)` by calendar week) |
+| Table | Top 10 Salesman by Invoiced Omzet |
 
-**Home card metrics (summary):** Total Omzet, Total Faktur, Total Customer.
+**Home card metrics (summary):** Invoiced Omzet (Faktur), Total Faktur, Total Customer.
+
+**Stakeholder note:** Sales dashboard KPIs use **Faktur `GrandTotal`** for the current month. Pipeline / outstanding-order omzet is no longer included (`PipelineOmzet` is always `0`). This aligns dashboard totals with the Sales Report (per-Faktur list).
 
 ### Piutang Dashboard (`/dashboard/piutang`)
 
@@ -214,19 +216,19 @@ All monetary values are in Indonesian Rupiah (IDR). Dashboard and report totals 
 
 | KPI | Definition | Formula | Business Meaning |
 | --- | ---------- | ------- | ---------------- |
-| **Total Omzet** | Recognized sales revenue for the current month | Sum of Completed omzet rows (`RecognizedOmzet` from omzet chart builder) | How much sales revenue the company has recognized this month |
-| **Completed Omzet** | Same as Total Omzet on detail dashboard | `RecognizedOmzet` — Completed Faktur amounts only | Explicit label for achieved/recognized revenue |
-| **Pipeline Omzet** | Sales not yet recognized | Sum of Pending + Outstanding omzet rows | Potential revenue in the sales pipeline |
-| **Total Faktur** | Invoice count in period | Count of Fakturs in current month | Volume of completed billing activity |
-| **Total Customer** | Customer reach in period | Distinct customers with sales in current month | Breadth of customer activity |
+| **Total Omzet** | Invoiced sales for the current month | `SUM(GrandTotal)` of non-void Fakturs where `FakturDate` is in the current calendar month | How much sales revenue has been invoiced this month |
+| **Completed Omzet** | Same as Total Omzet on detail dashboard | Same as Total Omzet — Faktur `GrandTotal` only | Explicit label for invoiced/achieved revenue |
+| **Pipeline Omzet** | Reserved; not used after Faktur cutover | Always `0` | Pipeline omzet from outstanding orders is excluded |
+| **Total Faktur** | Invoice count in period | Count of non-void Fakturs in current month | Volume of completed billing activity |
+| **Total Customer** | Customer reach in period | Distinct `CustomerCode` (fallback `Customer` name) with Fakturs in current month | Breadth of customer activity |
 | **Total Target** | Monthly sales target (company) | `Sum(TargetAmount)` for all rows in `BTR_SalesOmzetTarget` where year/month = current month | Management target for the month |
-| **Total Achievement** | Achieved recognized omzet | Same as Completed Omzet / Total Omzet for current month | Actual performance against target |
+| **Total Achievement** | Achieved invoiced omzet | Same as Total Omzet / Completed Omzet for current month | Actual performance against target |
 | **Achievement %** | Target attainment rate | `Total Achievement ÷ Total Target × 100%`; null when Total Target ≤ 0 | Percentage of monthly target achieved |
-| **Top Salesman** | Best-performing salespeople | Top 10 by Completed Omzet, descending, current month; Pipeline excluded | Identifies leading sales performers |
+| **Top Salesman** | Best-performing salespeople | Top 10 by `SUM(GrandTotal)` per `SalesPersonName`, descending, current month | Identifies leading sales performers |
 
-**Weekly Trend:** Recognized omzet summed per calendar week within the current month.
+**Weekly Trend:** Faktur `GrandTotal` summed per calendar week within the current month (7-day segments from month start).
 
-**Traceability:** Total Achievement = Sales Report omzet context for same month (Faktur totals represent a different grain but dashboard omzet follows omzet chart policy, not a simple sum of report rows).
+**Traceability:** Total Omzet / Total Achievement = sum of `GrandTotal` from Sales Report rows for the same month (same Faktur source and void exclusion).
 
 ### Piutang KPIs
 
@@ -280,7 +282,7 @@ Approved rules governing portal calculations and filters:
 | Read-only | All | Portal never writes business data |
 | Open balance threshold | Piutang | Only rows with `KurangBayar > 1` count as open receivables |
 | Piutang period | Piutang dashboard & report | `PiutangDate` from `2000-01-01` through today |
-| Sales period | Sales dashboard & report | Current calendar month; Omzet Period mode for achievement/ranking |
+| Sales period | Sales dashboard & report | Current calendar month; Faktur `GrandTotal` for dashboard KPIs |
 | Void exclusion | Sales & Purchasing reports | Voided records excluded (`VoidDate = '3000-01-01'` in DAL) |
 | In-Transit exclusion | Inventory | Warehouse named `"In-Transit"` excluded from all inventory calculations |
 | Zero quantity exclusion | Inventory report & dashboard analytics | Rows/groups with `Qty ≤ 0` excluded after BrgId aggregation |

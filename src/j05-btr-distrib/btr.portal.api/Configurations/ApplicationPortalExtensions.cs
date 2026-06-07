@@ -80,6 +80,7 @@ namespace btr.portal.api.Configurations
             services.AddScoped<ISalesOmzetReportHealthResolver, SalesOmzetReportHealthResolver>();
             services.AddScoped<DashboardPiutangAggregator>();
             services.AddScoped<DashboardInventoryAggregator>();
+            services.AddScoped<DashboardSalesFakturAggregator>();
 
             return services;
         }

@@ -46,8 +46,10 @@ namespace btr.portal.api.Configurations
             services.AddScoped<IDashboardSnapshotRefreshLogDal, DashboardSnapshotRefreshLogDal>();
             services.AddScoped<IDashboardPiutangSnapshotDal, DashboardPiutangSnapshotDal>();
             services.AddScoped<IDashboardInventorySnapshotDal, DashboardInventorySnapshotDal>();
+            services.AddScoped<IDashboardSalesSnapshotDal, DashboardSalesSnapshotDal>();
             services.AddScoped<DashboardPiutangLiveDal>();
             services.AddScoped<DashboardInventoryLiveDal>();
+            services.AddScoped<DashboardSalesLiveDal>();
             services.AddScoped<IDashboardSalesDal, DashboardSalesDal>();
             services.AddScoped<IDashboardPiutangDal, DashboardPiutangDal>();
             services.AddScoped<IDashboardInventoryDal, DashboardInventoryDal>();

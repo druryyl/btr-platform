@@ -12,7 +12,7 @@ const dashboard = useDashboardStore()
 const rankingColumns = [
   { field: 'Rank', header: 'Rank' },
   { field: 'SalesPersonName', header: 'Salesman' },
-  { field: 'CompletedOmzet', header: 'Completed Omzet' },
+  { field: 'CompletedOmzet', header: 'Invoiced Omzet' },
 ]
 
 const rankingRows = computed(
@@ -27,9 +27,10 @@ onMounted(() => {
 <template>
   <DashboardDetailLayout
     title="Sales Dashboard"
-    subtitle="Current month performance — omzet period."
+    subtitle="Current month performance — invoiced sales (Faktur)."
     :loading="dashboard.loading"
     :error="dashboard.error"
+    :generated-at="dashboard.sales?.GeneratedAt ?? null"
     @refresh="dashboard.loadSales()"
   >
     <div class="sales-dashboard__kpi-row">
