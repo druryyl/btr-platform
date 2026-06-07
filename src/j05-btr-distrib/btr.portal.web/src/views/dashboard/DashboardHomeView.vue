@@ -39,26 +39,26 @@ onMounted(() => {
         <div class="metric">
           <span class="metric__label">Invoiced Omzet (Faktur)</span>
           <span class="metric__value">
-            {{ dashboard.sales ? formatCurrency(dashboard.sales.TotalOmzet) : '-' }}
+            {{ dashboard.overview?.Sales ? formatCurrency(dashboard.overview.Sales.TotalOmzet) : '-' }}
           </span>
         </div>
         <div class="metric">
           <span class="metric__label">Total Faktur</span>
           <span class="metric__value">
-            {{ dashboard.sales ? formatNumber(dashboard.sales.TotalFaktur) : '-' }}
+            {{ dashboard.overview?.Sales ? formatNumber(dashboard.overview.Sales.TotalFaktur) : '-' }}
           </span>
         </div>
         <div class="metric">
           <span class="metric__label">Total Customer</span>
           <span class="metric__value">
-            {{ dashboard.sales ? formatNumber(dashboard.sales.TotalCustomer) : '-' }}
+            {{ dashboard.overview?.Sales ? formatNumber(dashboard.overview.Sales.TotalCustomer) : '-' }}
           </span>
         </div>
         <RouterLink to="/dashboard/sales" class="kpi-card__link">
           View sales analytics →
         </RouterLink>
-        <div v-if="dashboard.sales" class="metric__meta">
-          Updated {{ formatDateTime(dashboard.sales.GeneratedAt) }}
+        <div v-if="dashboard.overview?.Sales" class="metric__meta">
+          Updated {{ formatDateTime(dashboard.overview.Sales.GeneratedAt) }}
         </div>
       </KpiCard>
 
@@ -66,20 +66,20 @@ onMounted(() => {
         <div class="metric">
           <span class="metric__label">Total Piutang</span>
           <span class="metric__value">
-            {{ dashboard.piutang ? formatCurrency(dashboard.piutang.TotalPiutang) : '-' }}
+            {{ dashboard.overview?.Piutang ? formatCurrency(dashboard.overview.Piutang.TotalPiutang) : '-' }}
           </span>
         </div>
         <div class="metric">
           <span class="metric__label">Total Customer</span>
           <span class="metric__value">
-            {{ dashboard.piutang ? formatNumber(dashboard.piutang.TotalCustomer) : '-' }}
+            {{ dashboard.overview?.Piutang ? formatNumber(dashboard.overview.Piutang.TotalCustomer) : '-' }}
           </span>
         </div>
         <RouterLink to="/dashboard/piutang" class="kpi-card__link">
           View piutang analytics →
         </RouterLink>
-        <div v-if="dashboard.piutang" class="metric__meta">
-          Updated {{ formatDateTime(dashboard.piutang.GeneratedAt) }}
+        <div v-if="dashboard.overview?.Piutang" class="metric__meta">
+          Updated {{ formatDateTime(dashboard.overview.Piutang.GeneratedAt) }}
         </div>
       </KpiCard>
 
@@ -87,20 +87,24 @@ onMounted(() => {
         <div class="metric">
           <span class="metric__label">Total Inventory Value</span>
           <span class="metric__value">
-            {{ dashboard.inventory ? formatCurrency(dashboard.inventory.TotalInventoryValue) : '-' }}
+            {{
+              dashboard.overview?.Inventory
+                ? formatCurrency(dashboard.overview.Inventory.TotalInventoryValue)
+                : '-'
+            }}
           </span>
         </div>
         <div class="metric">
           <span class="metric__label">Total Item</span>
           <span class="metric__value">
-            {{ dashboard.inventory ? formatNumber(dashboard.inventory.TotalItem) : '-' }}
+            {{ dashboard.overview?.Inventory ? formatNumber(dashboard.overview.Inventory.TotalItem) : '-' }}
           </span>
         </div>
         <RouterLink to="/dashboard/inventory" class="kpi-card__link">
           View inventory analytics →
         </RouterLink>
-        <div v-if="dashboard.inventory" class="metric__meta">
-          Updated {{ formatDateTime(dashboard.inventory.GeneratedAt) }}
+        <div v-if="dashboard.overview?.Inventory" class="metric__meta">
+          Updated {{ formatDateTime(dashboard.overview.Inventory.GeneratedAt) }}
         </div>
       </KpiCard>
     </div>

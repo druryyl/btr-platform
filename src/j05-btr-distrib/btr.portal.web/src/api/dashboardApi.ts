@@ -2,9 +2,20 @@ import { httpClient } from '@/api/httpClient'
 import { isApiSuccess, type ApiResponse } from '@/models/api'
 import type {
   DashboardInventoryResponse,
+  DashboardOverviewResponse,
   DashboardPiutangResponse,
   DashboardSalesResponse,
 } from '@/models/dashboard'
+
+export async function fetchDashboardOverview(): Promise<DashboardOverviewResponse> {
+  const { data } = await httpClient.get<ApiResponse<DashboardOverviewResponse>>('/api/dashboard/overview')
+
+  if (!isApiSuccess(data) || !data.Data) {
+    throw new Error(data.Message ?? 'Failed to load dashboard overview.')
+  }
+
+  return data.Data
+}
 
 export async function fetchDashboardSales(): Promise<DashboardSalesResponse> {
   const { data } = await httpClient.get<ApiResponse<DashboardSalesResponse>>('/api/dashboard/sales')

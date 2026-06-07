@@ -1,3 +1,29 @@
+export interface DashboardOverviewSalesSection {
+  TotalOmzet: number
+  TotalFaktur: number
+  TotalCustomer: number
+  GeneratedAt: string
+}
+
+export interface DashboardOverviewPiutangSection {
+  TotalPiutang: number
+  TotalCustomer: number
+  GeneratedAt: string
+}
+
+export interface DashboardOverviewInventorySection {
+  TotalInventoryValue: number
+  TotalItem: number
+  GeneratedAt: string
+}
+
+export interface DashboardOverviewResponse {
+  Sales: DashboardOverviewSalesSection | null
+  Piutang: DashboardOverviewPiutangSection | null
+  Inventory: DashboardOverviewInventorySection | null
+  HasUnavailableDomain: boolean
+}
+
 export interface DashboardSalesWeekTrendItem {
   WeekStart: string
   WeekEnd: string

@@ -4,24 +4,16 @@ using btr.application.ReportingContext.DashboardPiutangAgg.Queries;
 using btr.application.ReportingContext.DashboardSnapshotAgg;
 using btr.application.ReportingContext.DashboardSnapshotAgg.Contracts;
 using btr.application.ReportingContext.DashboardSnapshotAgg.Models;
-using Microsoft.Extensions.Options;
 
 namespace btr.infrastructure.ReportingContext.DashboardPiutangAgg
 {
     public class DashboardPiutangDal : IDashboardPiutangDal
     {
         private readonly IDashboardPiutangSnapshotDal _snapshotDal;
-        private readonly DashboardPiutangLiveDal _liveDal;
-        private readonly DashboardSnapshotOptions _options;
 
-        public DashboardPiutangDal(
-            IDashboardPiutangSnapshotDal snapshotDal,
-            DashboardPiutangLiveDal liveDal,
-            IOptions<DashboardSnapshotOptions> options)
+        public DashboardPiutangDal(IDashboardPiutangSnapshotDal snapshotDal)
         {
             _snapshotDal = snapshotDal;
-            _liveDal = liveDal;
-            _options = options?.Value ?? new DashboardSnapshotOptions();
         }
 
         public DashboardPiutangResponse GetSummary()
@@ -29,9 +21,6 @@ namespace btr.infrastructure.ReportingContext.DashboardPiutangAgg
             var snapshot = _snapshotDal.GetCurrent();
             if (snapshot != null)
                 return MapToResponse(snapshot);
-
-            if (_options.AllowLiveFallback)
-                return _liveDal.GetSummary();
 
             throw new DashboardSnapshotUnavailableException("Dashboard data not yet available");
         }

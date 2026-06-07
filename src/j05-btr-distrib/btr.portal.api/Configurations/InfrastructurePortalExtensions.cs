@@ -1,4 +1,5 @@
 using btr.application.ReportingContext.DashboardInventoryAgg.Contracts;
+using btr.application.ReportingContext.DashboardOverviewAgg.Contracts;
 using btr.application.ReportingContext.DashboardPiutangAgg.Contracts;
 using btr.application.ReportingContext.DashboardSalesAgg.Contracts;
 using btr.application.ReportingContext.DashboardSnapshotAgg.Contracts;
@@ -47,9 +48,7 @@ namespace btr.portal.api.Configurations
             services.AddScoped<IDashboardPiutangSnapshotDal, DashboardPiutangSnapshotDal>();
             services.AddScoped<IDashboardInventorySnapshotDal, DashboardInventorySnapshotDal>();
             services.AddScoped<IDashboardSalesSnapshotDal, DashboardSalesSnapshotDal>();
-            services.AddScoped<DashboardPiutangLiveDal>();
-            services.AddScoped<DashboardInventoryLiveDal>();
-            services.AddScoped<DashboardSalesLiveDal>();
+            services.AddScoped<IDashboardOverviewDal, DashboardOverviewDal>();
             services.AddScoped<IDashboardSalesDal, DashboardSalesDal>();
             services.AddScoped<IDashboardPiutangDal, DashboardPiutangDal>();
             services.AddScoped<IDashboardInventoryDal, DashboardInventoryDal>();

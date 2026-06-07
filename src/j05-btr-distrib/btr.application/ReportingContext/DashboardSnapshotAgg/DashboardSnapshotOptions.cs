@@ -4,6 +4,10 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg
     {
         public const string SECTION_NAME = "DashboardSnapshot";
 
-        public bool AllowLiveFallback { get; set; } = true;
+        public int PiutangIntervalMinutes { get; set; } = 15;
+
+        public int InventoryIntervalMinutes { get; set; } = 60;
+
+        public int SalesIntervalMinutes { get; set; } = 30;
     }
 }

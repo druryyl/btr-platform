@@ -97,6 +97,8 @@ Management reviews purchase invoice activity for the current month, including wh
 
 Summary landing page with three KPI cards (Sales, Piutang, Inventory). Each card shows compact headline metrics and a link to the corresponding detail dashboard. No charts on the home page.
 
+**Data source:** `GET /api/dashboard/overview` reads Layer A KPI snapshot tables only (`BTR_PortalDashboard*Kpi`). Each card displays its domain's `GeneratedAt` timestamp from the last successful background refresh. Domains may show different refresh times when per-domain scheduler cadences differ (Piutang 15 min, Sales 30 min, Inventory 60 min).
+
 ### Sales Dashboard (`/dashboard/sales`)
 
 **Period:** Current calendar month — non-void Fakturs only (`FakturDate` within month).

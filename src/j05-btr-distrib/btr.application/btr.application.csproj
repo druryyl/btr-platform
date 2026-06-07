@@ -255,6 +255,8 @@
     <Compile Include="ReportingContext\DashboardInventoryAgg\Queries\GetDashboardInventoryQuery.cs" />
     <Compile Include="ReportingContext\DashboardPiutangAgg\Contracts\IDashboardPiutangDal.cs" />
     <Compile Include="ReportingContext\DashboardPiutangAgg\Queries\GetDashboardPiutangQuery.cs" />
+    <Compile Include="ReportingContext\DashboardOverviewAgg\Contracts\IDashboardOverviewDal.cs" />
+    <Compile Include="ReportingContext\DashboardOverviewAgg\Queries\GetDashboardOverviewQuery.cs" />
     <Compile Include="ReportingContext\DashboardSnapshotAgg\Contracts\IDashboardInventorySnapshotDal.cs" />
     <Compile Include="ReportingContext\DashboardSnapshotAgg\Contracts\IDashboardPiutangSnapshotDal.cs" />
     <Compile Include="ReportingContext\DashboardSnapshotAgg\Contracts\IDashboardSalesSnapshotDal.cs" />
@@ -270,6 +272,8 @@
     <Compile Include="ReportingContext\DashboardSnapshotAgg\Services\DashboardInventoryAggregator.cs" />
     <Compile Include="ReportingContext\DashboardSnapshotAgg\Services\DashboardPiutangAggregator.cs" />
     <Compile Include="ReportingContext\DashboardSnapshotAgg\Services\DashboardSalesFakturAggregator.cs" />
+    <Compile Include="ReportingContext\DashboardSnapshotAgg\UseCases\RefreshAllDashboardSnapshotsRequest.cs" />
+    <Compile Include="ReportingContext\DashboardSnapshotAgg\UseCases\RefreshAllDashboardSnapshotsWorker.cs" />
     <Compile Include="ReportingContext\DashboardSnapshotAgg\UseCases\RefreshDashboardInventorySnapshotRequest.cs" />
     <Compile Include="ReportingContext\DashboardSnapshotAgg\UseCases\RefreshDashboardInventorySnapshotWorker.cs" />
     <Compile Include="ReportingContext\DashboardSnapshotAgg\UseCases\RefreshDashboardPiutangSnapshotRequest.cs" />
