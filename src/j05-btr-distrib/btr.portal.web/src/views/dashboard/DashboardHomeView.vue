@@ -83,6 +83,35 @@ onMounted(() => {
         </div>
       </KpiCard>
 
+      <KpiCard title="Purchasing" icon="pi pi-shopping-cart" :loading="dashboard.loading">
+        <div class="metric">
+          <span class="metric__label">Grand Total Purchase</span>
+          <span class="metric__value">
+            {{
+              dashboard.overview?.Purchasing
+                ? formatCurrency(dashboard.overview.Purchasing.GrandTotalPurchase)
+                : '-'
+            }}
+          </span>
+        </div>
+        <div class="metric">
+          <span class="metric__label">Total Invoice</span>
+          <span class="metric__value">
+            {{
+              dashboard.overview?.Purchasing
+                ? formatNumber(dashboard.overview.Purchasing.TotalInvoice)
+                : '-'
+            }}
+          </span>
+        </div>
+        <RouterLink to="/dashboard/purchasing" class="kpi-card__link">
+          View purchasing analytics →
+        </RouterLink>
+        <div v-if="dashboard.overview?.Purchasing" class="metric__meta">
+          Updated {{ formatDateTime(dashboard.overview.Purchasing.GeneratedAt) }}
+        </div>
+      </KpiCard>
+
       <KpiCard title="Inventory" icon="pi pi-box" :loading="dashboard.loading">
         <div class="metric">
           <span class="metric__label">Total Inventory Value</span>
@@ -132,7 +161,7 @@ onMounted(() => {
 
 .dashboard-home__grid {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 1rem;
 }
 
@@ -173,6 +202,12 @@ onMounted(() => {
 }
 
 @media (max-width: 1200px) {
+  .dashboard-home__grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 768px) {
   .dashboard-home__grid {
     grid-template-columns: 1fr;
   }

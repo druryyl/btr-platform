@@ -11,6 +11,7 @@ namespace btr.test.ReportingContext
         private static readonly DateTime SalesGeneratedAt = new DateTime(2026, 6, 6, 8, 0, 0);
         private static readonly DateTime PiutangGeneratedAt = new DateTime(2026, 6, 6, 8, 15, 0);
         private static readonly DateTime InventoryGeneratedAt = new DateTime(2026, 6, 6, 9, 0, 0);
+        private static readonly DateTime PurchasingGeneratedAt = new DateTime(2026, 6, 6, 9, 30, 0);
 
         [Fact]
         public void GetOverview_ReturnsLayerAKpisOnly_WhenAllDomainsPopulated()
@@ -34,6 +35,12 @@ namespace btr.test.ReportingContext
                     TotalInventoryValue = 2_500_000m,
                     TotalItem = 5,
                     GeneratedAt = InventoryGeneratedAt
+                },
+                purchasing: new DashboardOverviewPurchasingSection
+                {
+                    GrandTotalPurchase = 15_000_000m,
+                    TotalInvoice = 42,
+                    GeneratedAt = PurchasingGeneratedAt
                 });
 
             var result = dal.GetOverview();
@@ -45,6 +52,8 @@ namespace btr.test.ReportingContext
             result.Sales.GeneratedAt.Should().Be(SalesGeneratedAt);
             result.Piutang.GeneratedAt.Should().Be(PiutangGeneratedAt);
             result.Inventory.GeneratedAt.Should().Be(InventoryGeneratedAt);
+            result.Purchasing.GrandTotalPurchase.Should().Be(15_000_000m);
+            result.Purchasing.GeneratedAt.Should().Be(PurchasingGeneratedAt);
         }
 
         [Fact]
@@ -64,6 +73,12 @@ namespace btr.test.ReportingContext
                     TotalInventoryValue = 2_500_000m,
                     TotalItem = 5,
                     GeneratedAt = InventoryGeneratedAt
+                },
+                purchasing: new DashboardOverviewPurchasingSection
+                {
+                    GrandTotalPurchase = 15_000_000m,
+                    TotalInvoice = 42,
+                    GeneratedAt = PurchasingGeneratedAt
                 });
 
             var result = dal.GetOverview();
@@ -79,26 +94,30 @@ namespace btr.test.ReportingContext
             private readonly DashboardOverviewSalesSection _sales;
             private readonly DashboardOverviewPiutangSection _piutang;
             private readonly DashboardOverviewInventorySection _inventory;
+            private readonly DashboardOverviewPurchasingSection _purchasing;
 
             public StubOverviewDal(
                 DashboardOverviewSalesSection sales,
                 DashboardOverviewPiutangSection piutang,
-                DashboardOverviewInventorySection inventory)
+                DashboardOverviewInventorySection inventory,
+                DashboardOverviewPurchasingSection purchasing = null)
             {
                 _sales = sales;
                 _piutang = piutang;
                 _inventory = inventory;
+                _purchasing = purchasing;
             }
 
             public DashboardOverviewResponse GetOverview()
             {
-                var hasUnavailable = _sales is null || _piutang is null || _inventory is null;
+                var hasUnavailable = _sales is null || _piutang is null || _inventory is null || _purchasing is null;
 
                 return new DashboardOverviewResponse
                 {
                     Sales = _sales,
                     Piutang = _piutang,
                     Inventory = _inventory,
+                    Purchasing = _purchasing,
                     HasUnavailableDomain = hasUnavailable
                 };
             }

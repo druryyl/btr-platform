@@ -3,7 +3,7 @@
 **Audience:** End Users, Trainers, Support Team  
 **Purpose:** Explain how to use BTR Portal day to day.
 
-**Related permanent docs:** [Domain (WHY)](./btr-portal-domain.md) · [Architecture (WHAT)](./btr-portal-architecture.md) · [Materialized dashboard ops](../materialized-dashboard/materialized-dashboard-operational.md) · [Extraction report M1–M15](./knowledge-extraction-report-m1-m15.md)
+**Related permanent docs:** [Domain (WHY)](./btr-portal-domain.md) · [Architecture (WHAT)](./btr-portal-architecture.md) · [Materialized dashboard ops](../materialized-dashboard/materialized-dashboard-operational.md) · [Extraction report — Purchasing Dashboard](./knowledge-extraction-report-purchasing-dashboard.md)
 
 For business definitions and KPI formulas, see [btr-portal-domain.md](./btr-portal-domain.md).
 
@@ -29,12 +29,12 @@ The Dashboard has two levels:
 
 | Level | Route | What You See |
 | ----- | ----- | ------------ |
-| **Home** | `/dashboard` | Three summary KPI cards: Sales, Piutang, Inventory. Each card links to detailed analytics. |
-| **Detail** | `/dashboard/sales`, `/dashboard/piutang`, `/dashboard/inventory` | Full KPI row, charts, and Top 10 tables for that business area. |
+| **Home** | `/dashboard` | Four summary KPI cards: Sales, Piutang, Inventory, Purchasing. Each card links to detailed analytics. |
+| **Detail** | `/dashboard/sales`, `/dashboard/piutang`, `/dashboard/inventory`, `/dashboard/purchasing` | Full KPI row, charts, and Top 10 tables for that business area. |
 
 Use **Refresh** on any dashboard page to reload data from the server. Each page shows a **generated-at** timestamp indicating when the underlying snapshot was last refreshed (not necessarily when you clicked Refresh — Refresh re-reads the stored snapshot).
 
-**Data freshness:** Dashboard numbers update on a background schedule (Piutang every 15 minutes, Sales every 30 minutes, Inventory every 60 minutes). Home cards may show different timestamps per domain. If data looks stale, wait for the next scheduled refresh or ask your administrator to trigger a manual refresh.
+**Data freshness:** Dashboard numbers update on a background schedule (Piutang every 15 minutes, Sales and Purchasing every 30 minutes, Inventory every 60 minutes). Home cards may show different timestamps per domain. If data looks stale, wait for the next scheduled refresh or ask your administrator to trigger a manual refresh.
 
 **Unavailable data:** If the dashboard home shows a warning that data is not yet available, snapshot tables have not been populated. An administrator must run the snapshot worker before dashboards will load.
 
@@ -121,6 +121,36 @@ Use **Refresh** on any dashboard page to reload data from the server. Each page 
 - Reviewing where inventory capital is concentrated
 - Supporting purchasing decisions by supplier exposure
 - Planning category-level stock reviews
+
+---
+
+## Purchasing Dashboard
+
+**Navigate:** Sidebar → Dashboard → Purchasing, or click the link on the Purchasing card at Dashboard home.
+
+**Route:** `/dashboard/purchasing`
+
+### What You See
+
+1. **KPI row** — Grand Total Purchase, Total Invoice, Pending Posting Invoice Count
+2. **Weekly Purchase Trend** — Line chart of purchase invoice totals by week within the current month
+3. **Posting Status Breakdown** — Pie chart with two buckets: `SUDAH` (posted) and `BELUM` (not yet posted)
+4. **Top 10 Principal** — Table ranked by purchase amount (highest first)
+
+### How to Read It
+
+- **Grand Total Purchase** is the sum of `GrandTotal` on purchase invoices for the current calendar month.
+- **Total Invoice** counts purchase invoice rows in the period.
+- **Pending Posting Invoice Count** counts invoices where Posting Stok is `BELUM`.
+- **Principal** is the supplier name on the purchase invoice; blank names appear as **Unknown**.
+- Void invoices are excluded from all metrics.
+- The sum of posting-status slices equals Grand Total Purchase.
+
+### Typical Use
+
+- Management review of monthly purchasing spend and volume
+- Identifying principals with the largest purchase concentration
+- Spotting backlog of invoices awaiting stock posting (`BELUM`)
 
 ---
 
@@ -212,9 +242,8 @@ Use **Refresh** on any dashboard page to reload data from the server. Each page 
 
 1. Review purchase invoices received this month.
 2. Filter visually for `BELUM` posting status to find invoices awaiting stock receipt.
-3. Use **Refresh** after new purchases are entered in BTR Desktop.
-
-**Note:** There is no Purchasing Dashboard. This report is the sole purchasing visibility in the portal.
+3. Confirm footer **Grand Total Purchase** and **Total Invoice** match the Purchasing Dashboard home card and detail KPI row.
+4. Use **Refresh** after new purchases are entered in BTR Desktop.
 
 ---
 
@@ -228,7 +257,8 @@ BTR Portal
 │   ├── Overview          → /dashboard
 │   ├── Sales             → /dashboard/sales
 │   ├── Piutang           → /dashboard/piutang
-│   └── Inventory         → /dashboard/inventory
+│   ├── Inventory         → /dashboard/inventory
+│   └── Purchasing        → /dashboard/purchasing
 └── Reports
     ├── Sales Report      → /reports/sales
     ├── Piutang Report    → /reports/piutang
@@ -246,6 +276,7 @@ BTR Portal
 | `/dashboard/sales` | Sales analytics | Yes |
 | `/dashboard/piutang` | Piutang analytics | Yes |
 | `/dashboard/inventory` | Inventory analytics | Yes |
+| `/dashboard/purchasing` | Purchasing analytics | Yes |
 | `/reports/sales` | Sales Report | Yes |
 | `/reports/piutang` | Piutang Report | Yes |
 | `/reports/inventory` | Inventory Report | Yes |
@@ -257,7 +288,8 @@ BTR Portal
 Login → Dashboard Home
           ├── "View details" / Sidebar → Sales Dashboard
           ├── "View details" / Sidebar → Piutang Dashboard
-          └── "View details" / Sidebar → Inventory Dashboard
+          ├── "View details" / Sidebar → Inventory Dashboard
+          └── "View details" / Sidebar → Purchasing Dashboard
 
 Sidebar → Reports → [Sales | Piutang | Inventory | Purchasing] Report
 ```
@@ -292,9 +324,11 @@ Authenticated users visiting `/login` are redirected to Dashboard home.
 
 ### Reviewing Monthly Purchasing
 
-1. Sign in → **Reports → Purchasing Report**.
-2. Review Grand Total Purchase and invoice count in the summary bar.
-3. Scan Posting Stok column for `BELUM` invoices needing warehouse action in BTR Desktop.
+1. Sign in → Dashboard home → check Grand Total Purchase and Total Invoice on the Purchasing card.
+2. Open **Dashboard → Purchasing** → review weekly trend, posting-status breakdown, and Top 10 Principal.
+3. Check **Pending Posting Invoice Count** against the posting pie chart (`BELUM` slice).
+4. Open **Reports → Purchasing Report** → scan Posting Stok column for `BELUM` invoices needing warehouse action in BTR Desktop.
+5. Confirm report footer matches dashboard KPIs.
 
 ---
 
@@ -304,11 +338,12 @@ Authenticated users visiting `/login` are redirected to Dashboard home.
 
 - **Sales:** Dashboard Total Omzet / Total Achievement should equal the sum of **Total** column values on the Sales Report for the same month (both use Faktur `GrandTotal`). If they differ after refreshing both pages, escalate to support.
 - **Piutang & Inventory:** Footer totals should match dashboard KPIs. If they differ, refresh both pages. Persistent mismatch indicates a support escalation.
+- **Purchasing:** Grand Total Purchase and Total Invoice on the dashboard must match the Purchasing Report footer for the same month. If they differ after refreshing both pages, escalate to support.
 - **Inventory report footer vs row sum:** Footer groups by item first; row-level Nilai Sediaan sums across warehouses will not necessarily equal the footer.
 
 ### Why does the dashboard show an old timestamp?
 
-Dashboard data refreshes on a background schedule, not on every page load. The **generated-at** time shows when snapshots were last rebuilt. Piutang refreshes every 15 minutes, Sales every 30 minutes, Inventory every 60 minutes. Click **Refresh** to re-read the latest stored snapshot; it does not force an immediate recalculation unless an administrator triggers a manual rebuild.
+Dashboard data refreshes on a background schedule, not on every page load. The **generated-at** time shows when snapshots were last rebuilt. Piutang refreshes every 15 minutes, Sales and Purchasing every 30 minutes, Inventory every 60 minutes. Click **Refresh** to re-read the latest stored snapshot; it does not force an immediate recalculation unless an administrator triggers a manual rebuild.
 
 ### Why does the dashboard say data is not available?
 
@@ -411,14 +446,15 @@ cd C:\path\to\btr.portal.worker
 .\btr.portal.worker.exe --domain All --triggered-by Manual
 ```
 
-Verify `BTR_PortalDashboardRefreshLog` shows `Success` for Piutang, Inventory, and Sales.
+Verify `BTR_PortalDashboardRefreshLog` shows `Success` for Piutang, Inventory, Sales, and Purchasing.
 
-**Scheduled tasks** — create three separate Windows Task Scheduler jobs:
+**Scheduled tasks** — create four separate Windows Task Scheduler jobs:
 
 | Task name | Interval | Command |
 | --------- | -------- | ------- |
 | `BTR-Portal-Dashboard-Piutang` | Every 15 min | `btr.portal.worker.exe --domain Piutang --triggered-by Scheduler` |
 | `BTR-Portal-Dashboard-Sales` | Every 30 min | `btr.portal.worker.exe --domain Sales --triggered-by Scheduler` |
+| `BTR-Portal-Dashboard-Purchasing` | Every 30 min | `btr.portal.worker.exe --domain Purchasing --triggered-by Scheduler` |
 | `BTR-Portal-Dashboard-Inventory` | Every 60 min | `btr.portal.worker.exe --domain Inventory --triggered-by Scheduler` |
 
 Task settings: run whether user is logged on or not; service account with SQL access; **Start in** = worker folder; stop if running longer than 30 minutes.
@@ -427,7 +463,7 @@ Task settings: run whether user is logged on or not; service account with SQL ac
 
 | Argument | Values | Default |
 | -------- | ------ | ------- |
-| `--domain` | `All`, `Piutang`, `Inventory`, `Sales` | `All` |
+| `--domain` | `All`, `Piutang`, `Inventory`, `Sales`, `Purchasing` | `All` |
 | `--triggered-by` | `Scheduler`, `Manual` | `Scheduler` |
 
 Exit code `0` = success. Logs: `{worker-folder}/logs/btr-portal-worker-{date}.log`.
@@ -444,7 +480,7 @@ Content-Type: application/json
 { "domain": "All" }
 ```
 
-`domain` accepts `All` (default), `Piutang`, `Inventory`, or `Sales` (case-insensitive).
+`domain` accepts `All` (default), `Piutang`, `Inventory`, `Sales`, or `Purchasing` (case-insensitive).
 
 **Prefer worker CLI** for full rebuilds — the API runs refresh synchronously and may hit IIS request timeout (~110 seconds). Use the API for single-domain ad-hoc refresh; use the worker for `--domain All` or initial backfill.
 
@@ -453,8 +489,8 @@ Content-Type: application/json
 | Check | How |
 | ----- | --- |
 | API health | `GET /api/health` → 200 |
-| Snapshot health | `GET /api/health/dashboard-snapshots` — status: `unknown`, `ok`, `refreshing`, or `degraded` |
-| Last refresh (SQL) | `SELECT TOP 1 * FROM BTR_PortalDashboardRefreshLog WHERE Domain = 'Piutang' ORDER BY CompletedAt DESC` |
+| Snapshot health | `GET /api/health/dashboard-snapshots` — status: `unknown`, `ok`, `refreshing`, or `degraded`; each domain (Piutang, Sales, Purchasing, Inventory) shows `LastRefresh.Status` |
+| Last refresh (SQL) | `SELECT TOP 1 * FROM BTR_PortalDashboardRefreshLog WHERE Domain = 'Purchasing' ORDER BY CompletedAt DESC` |
 | Worker log | `{worker-folder}/logs/btr-portal-worker-{date}.log` |
 | Task Scheduler | History tab on each scheduled task |
 
@@ -476,5 +512,7 @@ GET  /api/health/dashboard-snapshots     → 200
 POST /api/auth/login                     → 200 with token
 GET  /api/dashboard/overview             → 200 with KPI data (after worker run)
 GET  /api/dashboard/sales                → 200 with token
+GET  /api/dashboard/purchasing           → 200 with token
 GET  /api/reports/sales                  → 200 with token
+GET  /api/reports/purchasing             → 200 with token
 ```

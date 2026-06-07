@@ -38,6 +38,12 @@ const menuItems = computed(() => [
         command: () => router.push('/dashboard/inventory'),
         class: route.path === '/dashboard/inventory' ? 'layout-menu-item--active' : '',
       },
+      {
+        label: 'Purchasing',
+        icon: 'pi pi-shopping-cart',
+        command: () => router.push('/dashboard/purchasing'),
+        class: route.path === '/dashboard/purchasing' ? 'layout-menu-item--active' : '',
+      },
     ],
   },
   {

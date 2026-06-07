@@ -6,10 +6,18 @@ import ProgressSpinner from 'primevue/progressspinner'
 import { formatCurrency } from '@/services/formatters'
 import type { DashboardSalesWeekTrendItem } from '@/models/dashboard'
 
-const props = defineProps<{
-  weeklyTrend: DashboardSalesWeekTrendItem[]
-  loading: boolean
-}>()
+const props = withDefaults(
+  defineProps<{
+    weeklyTrend: DashboardSalesWeekTrendItem[]
+    loading: boolean
+    title?: string
+    emptyMessage?: string
+  }>(),
+  {
+    title: 'Weekly Trend',
+    emptyMessage: 'No weekly omzet data for the current period.',
+  },
+)
 
 const hasWeeklyData = computed(() =>
   props.weeklyTrend?.some((week) => week.RecognizedAmount > 0) ?? false,
@@ -66,7 +74,7 @@ const chartOptions = computed(() => ({
     <template #title>
       <div class="weekly-trend-chart__title">
         <i class="pi pi-chart-line" aria-hidden="true" />
-        <span>Weekly Trend</span>
+        <span>{{ title }}</span>
       </div>
     </template>
 
@@ -79,7 +87,7 @@ const chartOptions = computed(() => ({
         <div v-if="hasWeeklyData" class="weekly-trend-chart__canvas">
           <Chart type="line" :data="chartData" :options="chartOptions" />
         </div>
-        <p v-else class="weekly-trend-chart__empty">No weekly omzet data for the current period.</p>
+        <p v-else class="weekly-trend-chart__empty">{{ emptyMessage }}</p>
       </template>
     </template>
   </Card>

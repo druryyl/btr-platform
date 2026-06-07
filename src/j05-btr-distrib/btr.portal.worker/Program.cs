@@ -16,7 +16,7 @@ namespace btr.portal.worker
         private static readonly HashSet<string> ValidDomains =
             new HashSet<string>(StringComparer.OrdinalIgnoreCase)
             {
-                "All", "Sales", "Piutang", "Inventory"
+                "All", "Sales", "Piutang", "Inventory", "Purchasing"
             };
 
         private static readonly HashSet<string> ValidTriggers =
@@ -36,7 +36,7 @@ namespace btr.portal.worker
 
                 if (!ValidDomains.Contains(domain))
                     throw new ArgumentException(
-                        $"Invalid --domain '{domain}'. Expected All, Sales, Piutang, or Inventory.");
+                        $"Invalid --domain '{domain}'. Expected All, Sales, Piutang, Inventory, or Purchasing.");
 
                 if (!ValidTriggers.Contains(triggeredBy))
                     throw new ArgumentException(
@@ -118,6 +118,15 @@ namespace btr.portal.worker
                     var salesWorker =
                         serviceProvider.GetRequiredService<IRefreshDashboardSalesSnapshotWorker>();
                     salesWorker.Execute(new RefreshDashboardSalesSnapshotRequest
+                    {
+                        TriggeredBy = triggeredBy
+                    });
+                    break;
+
+                case "PURCHASING":
+                    var purchasingWorker =
+                        serviceProvider.GetRequiredService<IRefreshDashboardPurchasingSnapshotWorker>();
+                    purchasingWorker.Execute(new RefreshDashboardPurchasingSnapshotRequest
                     {
                         TriggeredBy = triggeredBy
                     });

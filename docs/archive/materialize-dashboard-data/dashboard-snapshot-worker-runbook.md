@@ -18,7 +18,7 @@ cd C:\path\to\btr.portal.worker\bin\Release
 .\btr.portal.worker.exe --domain All --triggered-by Manual
 ```
 
-5. Verify `BTR_PortalDashboardRefreshLog` shows `Success` for Piutang, Inventory, and Sales.
+5. Verify `BTR_PortalDashboardRefreshLog` shows `Success` for Piutang, Inventory, Sales, and Purchasing.
 
 ---
 
@@ -26,7 +26,7 @@ cd C:\path\to\btr.portal.worker\bin\Release
 
 | Argument | Values | Default |
 | --- | --- | --- |
-| `--domain` | `All`, `Piutang`, `Inventory`, `Sales` | `All` |
+| `--domain` | `All`, `Piutang`, `Inventory`, `Sales`, `Purchasing` | `All` |
 | `--triggered-by` | `Scheduler`, `Manual` | `Scheduler` |
 
 **Exit codes:** `0` = success, non-zero = failure (check `logs/btr-portal-worker-*.log`).
@@ -38,6 +38,7 @@ cd C:\path\to\btr.portal.worker\bin\Release
 .\btr.portal.worker.exe --domain Piutang --triggered-by Scheduler
 .\btr.portal.worker.exe --domain Sales --triggered-by Scheduler
 .\btr.portal.worker.exe --domain Inventory --triggered-by Scheduler
+.\btr.portal.worker.exe --domain Purchasing --triggered-by Scheduler
 
 # Manual ops / initial backfill
 .\btr.portal.worker.exe --domain All --triggered-by Manual
@@ -47,12 +48,13 @@ cd C:\path\to\btr.portal.worker\bin\Release
 
 ## Windows Task Scheduler Jobs
 
-Create **three separate scheduled tasks** so each domain respects its maximum staleness cadence.
+Create **four separate scheduled tasks** so each domain respects its maximum staleness cadence.
 
 | Task name | Schedule | Command |
 | --- | --- | --- |
 | `BTR-Portal-Dashboard-Piutang` | Every **15 minutes** | `btr.portal.worker.exe --domain Piutang --triggered-by Scheduler` |
 | `BTR-Portal-Dashboard-Sales` | Every **30 minutes** | `btr.portal.worker.exe --domain Sales --triggered-by Scheduler` |
+| `BTR-Portal-Dashboard-Purchasing` | Every **30 minutes** | `btr.portal.worker.exe --domain Purchasing --triggered-by Scheduler` |
 | `BTR-Portal-Dashboard-Inventory` | Every **60 minutes** | `btr.portal.worker.exe --domain Inventory --triggered-by Scheduler` |
 
 ### Task configuration checklist
@@ -74,7 +76,7 @@ $trigger = New-ScheduledTaskTrigger -Once -At (Get-Date) -RepetitionInterval (Ne
 Register-ScheduledTask -TaskName "BTR-Portal-Dashboard-Piutang" -Action $action -Trigger $trigger -User "DOMAIN\svc-btr-portal" -RunLevel Highest
 ```
 
-Repeat for Sales (30 min) and Inventory (60 min) with matching `--domain` values.
+Repeat for Sales (30 min), Purchasing (30 min), and Inventory (60 min) with matching `--domain` values.
 
 ---
 
@@ -90,7 +92,7 @@ Content-Type: application/json
 { "domain": "All" }
 ```
 
-`domain` accepts `All` (default), `Piutang`, `Inventory`, or `Sales` (case-insensitive). Refresh attempts are logged with `TriggeredBy = Manual` in `BTR_PortalDashboardRefreshLog`.
+`domain` accepts `All` (default), `Piutang`, `Inventory`, `Sales`, or `Purchasing` (case-insensitive). Refresh attempts are logged with `TriggeredBy = Manual` in `BTR_PortalDashboardRefreshLog`.
 
 The worker CLI remains available for ops and service accounts:
 

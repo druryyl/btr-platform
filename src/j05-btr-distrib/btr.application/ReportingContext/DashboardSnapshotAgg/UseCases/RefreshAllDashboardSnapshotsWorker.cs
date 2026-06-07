@@ -14,15 +14,18 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.UseCases
         private readonly IRefreshDashboardPiutangSnapshotWorker _piutangWorker;
         private readonly IRefreshDashboardInventorySnapshotWorker _inventoryWorker;
         private readonly IRefreshDashboardSalesSnapshotWorker _salesWorker;
+        private readonly IRefreshDashboardPurchasingSnapshotWorker _purchasingWorker;
 
         public RefreshAllDashboardSnapshotsWorker(
             IRefreshDashboardPiutangSnapshotWorker piutangWorker,
             IRefreshDashboardInventorySnapshotWorker inventoryWorker,
-            IRefreshDashboardSalesSnapshotWorker salesWorker)
+            IRefreshDashboardSalesSnapshotWorker salesWorker,
+            IRefreshDashboardPurchasingSnapshotWorker purchasingWorker)
         {
             _piutangWorker = piutangWorker;
             _inventoryWorker = inventoryWorker;
             _salesWorker = salesWorker;
+            _purchasingWorker = purchasingWorker;
         }
 
         public void Execute(RefreshAllDashboardSnapshotsRequest request)
@@ -72,6 +75,20 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.UseCases
                     };
                     _salesWorker.Execute(salesRequest);
                     return salesRequest.Result;
+                },
+                domainResults,
+                failures);
+
+            RunDomain(
+                "Purchasing",
+                () =>
+                {
+                    var purchasingRequest = new RefreshDashboardPurchasingSnapshotRequest
+                    {
+                        TriggeredBy = triggeredBy
+                    };
+                    _purchasingWorker.Execute(purchasingRequest);
+                    return purchasingRequest.Result;
                 },
                 domainResults,
                 failures);
@@ -127,6 +144,13 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.UseCases
                         Domain = domain,
                         RefreshLogId = sales.RefreshLogId,
                         DurationMs = sales.DurationMs
+                    };
+                case RefreshDashboardPurchasingSnapshotResult purchasing:
+                    return new RefreshDashboardDomainResult
+                    {
+                        Domain = domain,
+                        RefreshLogId = purchasing.RefreshLogId,
+                        DurationMs = purchasing.DurationMs
                     };
                 default:
                     return new RefreshDashboardDomainResult { Domain = domain };

@@ -9,7 +9,7 @@
 
 ## Problem Solved
 
-Analytical dashboard routes (`/dashboard/sales`, `/dashboard/piutang`, `/dashboard/inventory`) previously aggregated operational data on every HTTP request. Piutang in particular scanned receivables from 2000-01-01 through today with heavy joins. Materialization moves aggregation to a background worker and serves pre-computed results from SQL snapshot tables.
+Analytical dashboard routes (`/dashboard/sales`, `/dashboard/piutang`, `/dashboard/inventory`, `/dashboard/purchasing`) previously aggregated operational data on every HTTP request. Piutang in particular scanned receivables from 2000-01-01 through today with heavy joins. Materialization moves aggregation to a background worker and serves pre-computed results from SQL snapshot tables.
 
 Reports (`/reports/*`) are **not** materialized — they continue live Desktop DAL queries.
 
@@ -18,9 +18,9 @@ Reports (`/reports/*`) are **not** materialized — they continue live Desktop D
 ## Topology
 
 ```text
-Windows Task Scheduler (per-domain jobs, 15 / 30 / 60 min)
+Windows Task Scheduler (per-domain jobs, 15 / 30 / 30 / 60 min)
         ↓
-btr.portal.worker.exe  (--domain Piutang|Sales|Inventory|All)
+btr.portal.worker.exe  (--domain Piutang|Sales|Purchasing|Inventory|All)
         ↓
 RefreshDashboard{Domain}SnapshotWorker
         ↓
@@ -31,7 +31,7 @@ Dashboard{Domain}SnapshotDal.ReplaceCurrent()
 BTR_PortalDashboard* tables  (SnapshotKey = 'CURRENT')
 
 Browser → GET /api/dashboard/overview              (home — Layer A KPI only)
-Browser → GET /api/dashboard/{sales|piutang|inventory}  (detail — Layer A + B)
+Browser → GET /api/dashboard/{sales|piutang|inventory|purchasing}  (detail — Layer A + B)
         ↓ MediatR → Dashboard*Dal → Dashboard*SnapshotDal → snapshot SELECT
 ```
 
@@ -45,8 +45,8 @@ Browser → GET /api/dashboard/{sales|piutang|inventory}  (detail — Layer A + 
 
 | Layer | Tables | Consumed by |
 | ----- | ------ | ----------- |
-| **A — KPI** | `BTR_PortalDashboard{Sales,Piutang,Inventory}Kpi` | Overview home + detail KPI rows |
-| **B — Dimensional** | Aging, TopCustomer, Breakdown, WeekTrend, TopSalesman | Detail dashboards only |
+| **A — KPI** | `BTR_PortalDashboard{Sales,Piutang,Inventory,Purchasing}Kpi` | Overview home + detail KPI rows |
+| **B — Dimensional** | Aging, TopCustomer, Breakdown, WeekTrend, TopSalesman, PostingStatus, TopPrincipal | Detail dashboards only |
 | **Metadata** | `BTR_PortalDashboardRefreshLog` | Health endpoint, ops monitoring |
 
 **Active snapshot pattern:** One row per domain with `SnapshotKey = 'CURRENT'`. Each refresh deletes child rows and upserts KPI within a transaction. No historical snapshot retention.
@@ -62,23 +62,25 @@ Browser → GET /api/dashboard/{sales|piutang|inventory}  (detail — Layer A + 
 | `RefreshDashboardPiutangSnapshotWorker` | `IPiutangOpenBalanceDal` (`BTR_Piutang.Sisa > 1`) | `DashboardPiutangAggregator` |
 | `RefreshDashboardInventorySnapshotWorker` | `IStokBalanceViewDal.ListData()` | `DashboardInventoryAggregator` |
 | `RefreshDashboardSalesSnapshotWorker` | `IFakturViewDal` (current month) + `ISalesOmzetTargetDal` | `DashboardSalesFakturAggregator` |
-| `RefreshAllDashboardSnapshotsWorker` | Orchestrator | Piutang → Inventory → Sales; per-domain failure isolation |
+| `RefreshDashboardPurchasingSnapshotWorker` | `IInvoiceViewDal` (current month) | `DashboardPurchasingInvoiceAggregator` |
+| `RefreshAllDashboardSnapshotsWorker` | Orchestrator | Piutang → Inventory → Sales → Purchasing; per-domain failure isolation |
 
 **CLI arguments:**
 
 | Argument | Values | Default |
 | -------- | ------ | ------- |
-| `--domain` | `All`, `Piutang`, `Inventory`, `Sales` | `All` |
+| `--domain` | `All`, `Piutang`, `Inventory`, `Sales`, `Purchasing` | `All` |
 | `--triggered-by` | `Scheduler`, `Manual` | `Scheduler` |
 
 Exit code `0` = success. Logs: `{worker-folder}/logs/btr-portal-worker-{date}.log`.
 
-**Scheduled cadence (Task Scheduler — three separate jobs):**
+**Scheduled cadence (Task Scheduler — four separate jobs):**
 
 | Domain | Interval |
 | ------ | -------- |
 | Piutang | 15 minutes |
 | Sales | 30 minutes |
+| Purchasing | 30 minutes |
 | Inventory | 60 minutes |
 
 ---
@@ -89,13 +91,14 @@ Exit code `0` = success. Logs: `{worker-folder}/logs/btr-portal-worker-{date}.lo
 btr.application/ReportingContext/
 ├── DashboardSnapshotAgg/
 │   ├── Contracts/          IDashboard*SnapshotDal, IPiutangOpenBalanceDal, IDashboardSnapshotRefreshLogDal
-│   ├── Services/           DashboardPiutangAggregator, DashboardInventoryAggregator, DashboardSalesFakturAggregator
+│   ├── Services/           DashboardPiutangAggregator, DashboardInventoryAggregator, DashboardSalesFakturAggregator, DashboardPurchasingInvoiceAggregator
 │   ├── Models/             Aggregate result DTOs
 │   └── UseCases/           RefreshDashboard*SnapshotWorker, RefreshAllDashboardSnapshotsWorker
 ├── DashboardOverviewAgg/   GetDashboardOverviewQuery, IDashboardOverviewDal
 ├── DashboardSalesAgg/      DashboardSalesDal (read facade)
 ├── DashboardPiutangAgg/    DashboardPiutangDal (read facade)
-└── DashboardInventoryAgg/  DashboardInventoryDal (read facade)
+├── DashboardInventoryAgg/  DashboardInventoryDal (read facade)
+└── DashboardPurchasingAgg/ DashboardPurchasingDal (read facade)
 
 btr.infrastructure/ReportingContext/
 ├── DashboardSnapshotAgg/   Snapshot readers/writers, PiutangOpenBalanceDal, RefreshLogDal
@@ -128,6 +131,7 @@ btr.portal.worker/          Program.cs, WorkerDependencyConfig, appsettings.json
 | `BTR_PortalDashboardPiutangKpi` | `TotalPiutang`, `TotalCustomer`, `OverdueCustomer`, `GeneratedAt` |
 | `BTR_PortalDashboardInventoryKpi` | `TotalInventoryValue`, `TotalItem`, `GeneratedAt` |
 | `BTR_PortalDashboardSalesKpi` | `PeriodYear`, `PeriodMonth`, omzet/faktur/customer/target/achievement fields, `PipelineOmzet` (= 0) |
+| `BTR_PortalDashboardPurchasingKpi` | `GrandTotalPurchase`, `TotalInvoice`, `PendingPostingInvoiceCount`, `PeriodYear`, `PeriodMonth` |
 
 ### Dimensional tables (Layer B)
 
@@ -138,6 +142,9 @@ btr.portal.worker/          Program.cs, WorkerDependencyConfig, appsettings.json
 | `BTR_PortalDashboardInventoryBreakdown` | Category/supplier rows with `IsTop10` flag |
 | `BTR_PortalDashboardSalesWeekTrend` | Weekly Faktur totals |
 | `BTR_PortalDashboardSalesTopSalesman` | Top 10 salespeople |
+| `BTR_PortalDashboardPurchasingWeekTrend` | Weekly purchase totals |
+| `BTR_PortalDashboardPurchasingPostingStatus` | `SUDAH` / `BELUM` purchase value buckets |
+| `BTR_PortalDashboardPurchasingTopPrincipal` | Top 10 principals by purchase amount |
 
 ### Supporting objects
 
@@ -145,7 +152,7 @@ btr.portal.worker/          Program.cs, WorkerDependencyConfig, appsettings.json
 | ------ | ------- |
 | `BTR_PortalDashboardRefreshLog` | Per-attempt audit (domain, status, duration, error, trigger) |
 | `IX_BTR_Piutang_OpenBalance` | Filtered index `WHERE Sisa > 1` — accelerates Piutang refresh |
-| `BTR_ParamNo_PortalDashboard.sql` | ID prefixes: `PDR`, `PDA`, `PDT`, `PDB`, `PDW`, `PDS` |
+| `BTR_ParamNo_PortalDashboard.sql` | ID prefixes: `PDR`, `PDA`, `PDT`, `PDB`, `PDW`, `PDS`, `PDP`, `PDG` (Purchasing week trend, posting status) |
 
 SQL definitions: `btr.sql/Tables/ReportingContext/BTR_PortalDashboard*.sql`
 
@@ -159,6 +166,7 @@ SQL definitions: `btr.sql/Tables/ReportingContext/BTR_PortalDashboard*.sql`
 | `GET /api/dashboard/sales` | JWT | Layer A + B | Full sales analytics |
 | `GET /api/dashboard/piutang` | JWT | Layer A + B | Full piutang analytics |
 | `GET /api/dashboard/inventory` | JWT | Layer A + B | Full inventory analytics |
+| `GET /api/dashboard/purchasing` | JWT | Layer A + B | Full purchasing analytics |
 | `POST /api/admin/dashboard/refresh` | JWT | Triggers workers synchronously | IIS timeout risk for `--domain All` |
 | `GET /api/health/dashboard-snapshots` | None | `BTR_PortalDashboardRefreshLog` | `unknown` / `ok` / `refreshing` / `degraded` |
 
@@ -208,7 +216,8 @@ Aggregation rules unchanged (`KurangBayar > 1`, aging buckets, customer key, Top
   "DashboardSnapshot": {
     "PiutangIntervalMinutes": 15,
     "InventoryIntervalMinutes": 60,
-    "SalesIntervalMinutes": 30
+    "SalesIntervalMinutes": 30,
+    "PurchasingIntervalMinutes": 30
   }
 }
 ```
@@ -224,6 +233,7 @@ Portal API and worker both require `Database` section (JSON only — no registry
 | Piutang aggregator | `btr.application/ReportingContext/DashboardSnapshotAgg/Services/DashboardPiutangAggregator.cs` |
 | Sales Faktur aggregator | `.../DashboardSalesFakturAggregator.cs` |
 | Inventory aggregator | `.../DashboardInventoryAggregator.cs` |
+| Purchasing aggregator | `.../DashboardPurchasingInvoiceAggregator.cs` |
 | Snapshot workers | `.../DashboardSnapshotAgg/UseCases/RefreshDashboard*SnapshotWorker.cs` |
 | Worker CLI | `btr.portal.worker/Program.cs` |
 | Read DALs | `btr.infrastructure/ReportingContext/Dashboard*Agg/Dashboard*Dal.cs` |

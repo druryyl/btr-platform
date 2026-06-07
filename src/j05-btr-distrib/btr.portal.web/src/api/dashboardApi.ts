@@ -4,6 +4,7 @@ import type {
   DashboardInventoryResponse,
   DashboardOverviewResponse,
   DashboardPiutangResponse,
+  DashboardPurchasingResponse,
   DashboardSalesResponse,
 } from '@/models/dashboard'
 
@@ -42,6 +43,16 @@ export async function fetchDashboardInventory(): Promise<DashboardInventoryRespo
 
   if (!isApiSuccess(data) || !data.Data) {
     throw new Error(data.Message ?? 'Failed to load inventory dashboard.')
+  }
+
+  return data.Data
+}
+
+export async function fetchDashboardPurchasing(): Promise<DashboardPurchasingResponse> {
+  const { data } = await httpClient.get<ApiResponse<DashboardPurchasingResponse>>('/api/dashboard/purchasing')
+
+  if (!isApiSuccess(data) || !data.Data) {
+    throw new Error(data.Message ?? 'Failed to load purchasing dashboard.')
   }
 
   return data.Data

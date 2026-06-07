@@ -66,20 +66,39 @@ namespace btr.test.ReportingContext
                 default).GetAwaiter().GetResult();
 
             act.Should().Throw<ArgumentException>()
-                .WithMessage("*Domain must be All, Piutang, Inventory, or Sales*");
+                .WithMessage("*Domain must be All, Piutang, Inventory, Sales, or Purchasing*");
+        }
+
+        [Fact]
+        public void Handle_PurchasingDomain_UsesPurchasingWorker()
+        {
+            var purchasingWorker = new StubPurchasingWorker();
+            var handler = CreateHandler(purchasingWorker: purchasingWorker);
+
+            var response = handler.Handle(
+                new RefreshDashboardSnapshotsCommand { Domain = "Purchasing" },
+                default).GetAwaiter().GetResult();
+
+            purchasingWorker.WasCalled.Should().BeTrue();
+            purchasingWorker.LastTriggeredBy.Should().Be("Manual");
+            response.Domain.Should().Be("Purchasing");
+            response.Domains.Should().ContainSingle()
+                .Which.RefreshLogId.Should().Be("PDR0001");
         }
 
         private static RefreshDashboardSnapshotsHandler CreateHandler(
             StubAllWorker allWorker = null,
             StubPiutangWorker piutangWorker = null,
             StubInventoryWorker inventoryWorker = null,
-            StubSalesWorker salesWorker = null)
+            StubSalesWorker salesWorker = null,
+            StubPurchasingWorker purchasingWorker = null)
         {
             return new RefreshDashboardSnapshotsHandler(
                 allWorker ?? new StubAllWorker(),
                 piutangWorker ?? new StubPiutangWorker(),
                 inventoryWorker ?? new StubInventoryWorker(),
-                salesWorker ?? new StubSalesWorker());
+                salesWorker ?? new StubSalesWorker(),
+                purchasingWorker ?? new StubPurchasingWorker());
         }
 
         private sealed class StubAllWorker : IRefreshAllDashboardSnapshotsWorker
@@ -132,6 +151,24 @@ namespace btr.test.ReportingContext
         {
             public void Execute(RefreshDashboardSalesSnapshotRequest request)
             {
+            }
+        }
+
+        private sealed class StubPurchasingWorker : IRefreshDashboardPurchasingSnapshotWorker
+        {
+            public bool WasCalled { get; private set; }
+
+            public string LastTriggeredBy { get; private set; }
+
+            public void Execute(RefreshDashboardPurchasingSnapshotRequest request)
+            {
+                WasCalled = true;
+                LastTriggeredBy = request.TriggeredBy;
+                request.Result = new RefreshDashboardPurchasingSnapshotResult
+                {
+                    RefreshLogId = "PDR0001",
+                    DurationMs = 90
+                };
             }
         }
     }

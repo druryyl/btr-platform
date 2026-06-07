@@ -35,13 +35,19 @@ SELECT TotalInventoryValue, TotalItem, GeneratedAt
 FROM BTR_PortalDashboardInventoryKpi
 WHERE SnapshotKey = @SnapshotKey";
 
+            const string purchasingSql = @"
+SELECT GrandTotalPurchase, TotalInvoice, GeneratedAt
+FROM BTR_PortalDashboardPurchasingKpi
+WHERE SnapshotKey = @SnapshotKey";
+
             using (var conn = new SqlConnection(ConnStringHelper.Get(_opt)))
             {
                 var sales = conn.QueryFirstOrDefault<SalesKpiRow>(salesSql, new { SnapshotKey });
                 var piutang = conn.QueryFirstOrDefault<PiutangKpiRow>(piutangSql, new { SnapshotKey });
                 var inventory = conn.QueryFirstOrDefault<InventoryKpiRow>(inventorySql, new { SnapshotKey });
+                var purchasing = conn.QueryFirstOrDefault<PurchasingKpiRow>(purchasingSql, new { SnapshotKey });
 
-                var hasUnavailable = sales is null || piutang is null || inventory is null;
+                var hasUnavailable = sales is null || piutang is null || inventory is null || purchasing is null;
 
                 return new DashboardOverviewResponse
                 {
@@ -69,6 +75,14 @@ WHERE SnapshotKey = @SnapshotKey";
                             TotalInventoryValue = inventory.TotalInventoryValue,
                             TotalItem = inventory.TotalItem,
                             GeneratedAt = inventory.GeneratedAt
+                        },
+                    Purchasing = purchasing is null
+                        ? null
+                        : new DashboardOverviewPurchasingSection
+                        {
+                            GrandTotalPurchase = purchasing.GrandTotalPurchase,
+                            TotalInvoice = purchasing.TotalInvoice,
+                            GeneratedAt = purchasing.GeneratedAt
                         },
                     HasUnavailableDomain = hasUnavailable
                 };
@@ -100,6 +114,15 @@ WHERE SnapshotKey = @SnapshotKey";
             public decimal TotalInventoryValue { get; set; }
 
             public int TotalItem { get; set; }
+
+            public System.DateTime GeneratedAt { get; set; }
+        }
+
+        private sealed class PurchasingKpiRow
+        {
+            public decimal GrandTotalPurchase { get; set; }
+
+            public int TotalInvoice { get; set; }
 
             public System.DateTime GeneratedAt { get; set; }
         }

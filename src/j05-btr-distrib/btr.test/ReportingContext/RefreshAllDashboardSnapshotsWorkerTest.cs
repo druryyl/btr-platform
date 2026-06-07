@@ -15,10 +15,12 @@ namespace btr.test.ReportingContext
             var piutangWorker = new StubPiutangWorker();
             var inventoryWorker = new StubInventoryWorker();
             var salesWorker = new StubSalesWorker();
+            var purchasingWorker = new StubPurchasingWorker();
             var worker = new RefreshAllDashboardSnapshotsWorker(
                 piutangWorker,
                 inventoryWorker,
-                salesWorker);
+                salesWorker,
+                purchasingWorker);
 
             var request = new RefreshAllDashboardSnapshotsRequest
             {
@@ -30,12 +32,15 @@ namespace btr.test.ReportingContext
             piutangWorker.WasCalled.Should().BeTrue();
             inventoryWorker.WasCalled.Should().BeTrue();
             salesWorker.WasCalled.Should().BeTrue();
+            purchasingWorker.WasCalled.Should().BeTrue();
             piutangWorker.CallOrder.Should().BeLessThan(inventoryWorker.CallOrder);
             inventoryWorker.CallOrder.Should().BeLessThan(salesWorker.CallOrder);
-            request.Result.Domains.Should().HaveCount(3);
+            salesWorker.CallOrder.Should().BeLessThan(purchasingWorker.CallOrder);
+            request.Result.Domains.Should().HaveCount(4);
             request.Result.Domains[0].Domain.Should().Be("Piutang");
             request.Result.Domains[1].Domain.Should().Be("Inventory");
             request.Result.Domains[2].Domain.Should().Be("Sales");
+            request.Result.Domains[3].Domain.Should().Be("Purchasing");
         }
 
         [Fact]
@@ -44,7 +49,8 @@ namespace btr.test.ReportingContext
             var worker = new RefreshAllDashboardSnapshotsWorker(
                 new StubPiutangWorker(),
                 new StubInventoryWorker { ShouldFail = true },
-                new StubSalesWorker());
+                new StubSalesWorker(),
+                new StubPurchasingWorker());
 
             Action act = () => worker.Execute(new RefreshAllDashboardSnapshotsRequest());
 
@@ -110,6 +116,24 @@ namespace btr.test.ReportingContext
                 {
                     RefreshLogId = "PDS0001",
                     DurationMs = 300
+                };
+            }
+        }
+
+        private sealed class StubPurchasingWorker : IRefreshDashboardPurchasingSnapshotWorker
+        {
+            public bool WasCalled { get; private set; }
+
+            public int CallOrder { get; private set; }
+
+            public void Execute(RefreshDashboardPurchasingSnapshotRequest request)
+            {
+                WasCalled = true;
+                CallOrder = ++_callSequence;
+                request.Result = new RefreshDashboardPurchasingSnapshotResult
+                {
+                    RefreshLogId = "PDP0001",
+                    DurationMs = 400
                 };
             }
         }

@@ -18,6 +18,8 @@ namespace btr.application.ReportingContext.DashboardOverviewAgg.Queries
 
         public DashboardOverviewInventorySection Inventory { get; set; }
 
+        public DashboardOverviewPurchasingSection Purchasing { get; set; }
+
         public bool HasUnavailableDomain { get; set; }
     }
 
@@ -46,6 +48,15 @@ namespace btr.application.ReportingContext.DashboardOverviewAgg.Queries
         public decimal TotalInventoryValue { get; set; }
 
         public int TotalItem { get; set; }
+
+        public DateTime GeneratedAt { get; set; }
+    }
+
+    public class DashboardOverviewPurchasingSection
+    {
+        public decimal GrandTotalPurchase { get; set; }
+
+        public int TotalInvoice { get; set; }
 
         public DateTime GeneratedAt { get; set; }
     }

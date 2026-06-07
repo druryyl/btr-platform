@@ -4,6 +4,7 @@ import {
   fetchDashboardInventory,
   fetchDashboardOverview,
   fetchDashboardPiutang,
+  fetchDashboardPurchasing,
   fetchDashboardSales,
 } from '@/api/dashboardApi'
 import { getApiErrorMessage } from '@/api/httpClient'
@@ -11,6 +12,7 @@ import type {
   DashboardInventoryResponse,
   DashboardOverviewResponse,
   DashboardPiutangResponse,
+  DashboardPurchasingResponse,
   DashboardSalesResponse,
 } from '@/models/dashboard'
 
@@ -19,6 +21,7 @@ export const useDashboardStore = defineStore('dashboard', () => {
   const sales = ref<DashboardSalesResponse | null>(null)
   const piutang = ref<DashboardPiutangResponse | null>(null)
   const inventory = ref<DashboardInventoryResponse | null>(null)
+  const purchasing = ref<DashboardPurchasingResponse | null>(null)
   const loading = ref(false)
   const error = ref<string | null>(null)
 
@@ -78,11 +81,25 @@ export const useDashboardStore = defineStore('dashboard', () => {
     }
   }
 
+  async function loadPurchasing(): Promise<void> {
+    loading.value = true
+    error.value = null
+
+    try {
+      purchasing.value = await fetchDashboardPurchasing()
+    } catch (err) {
+      error.value = getApiErrorMessage(err, 'Failed to load purchasing dashboard.')
+    } finally {
+      loading.value = false
+    }
+  }
+
   function reset(): void {
     overview.value = null
     sales.value = null
     piutang.value = null
     inventory.value = null
+    purchasing.value = null
     loading.value = false
     error.value = null
   }
@@ -92,12 +109,14 @@ export const useDashboardStore = defineStore('dashboard', () => {
     sales,
     piutang,
     inventory,
+    purchasing,
     loading,
     error,
     loadDashboard,
     loadSales,
     loadPiutang,
     loadInventory,
+    loadPurchasing,
     reset,
   }
 })

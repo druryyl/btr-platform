@@ -3,7 +3,7 @@
 **Audience:** Developers, Architects, Future Agents  
 **Purpose:** Describe how BTR Portal is built and the conventions to follow when extending it.
 
-**Related permanent docs:** [Domain (WHY)](./btr-portal-domain.md) · [Operational (HOW)](./btr-portal-operational.md) · [Materialized dashboards](../materialized-dashboard/materialized-dashboard-architecture.md) · [Extraction report M1–M15](./knowledge-extraction-report-m1-m15.md)
+**Related permanent docs:** [Domain (WHY)](./btr-portal-domain.md) · [Operational (HOW)](./btr-portal-operational.md) · [Materialized dashboards](../materialized-dashboard/materialized-dashboard-architecture.md) · [Extraction report — Purchasing Dashboard](./knowledge-extraction-report-purchasing-dashboard.md)
 
 For business definitions, see [btr-portal-domain.md](./btr-portal-domain.md).  
 For user-facing behavior, see [btr-portal-operational.md](./btr-portal-operational.md).
@@ -69,6 +69,7 @@ btr.application/ReportingContext/
 ├── DashboardSalesAgg/
 ├── DashboardPiutangAgg/
 ├── DashboardInventoryAgg/
+├── DashboardPurchasingAgg/
 ├── SalesReportAgg/
 ├── PiutangReportAgg/
 ├── InventoryReportAgg/
@@ -79,6 +80,7 @@ btr.infrastructure/ReportingContext/
 ├── DashboardSalesAgg/DashboardSalesDal.cs
 ├── DashboardPiutangAgg/DashboardPiutangDal.cs
 ├── DashboardInventoryAgg/DashboardInventoryDal.cs
+├── DashboardPurchasingAgg/DashboardPurchasingDal.cs
 ├── SalesReportAgg/SalesReportDal.cs
 ├── PiutangReportAgg/PiutangReportDal.cs
 ├── InventoryReportAgg/InventoryReportDal.cs
@@ -130,7 +132,7 @@ Dashboard{Domain}Aggregator  (shared aggregation rules)
 SnapshotWriter → BTR_PortalDashboard* tables
 
 Browser → GET /api/dashboard/overview          (home — Layer A KPI only)
-Browser → GET /api/dashboard/{sales|piutang|inventory}  (detail — Layer A + B)
+Browser → GET /api/dashboard/{sales|piutang|inventory|purchasing}  (detail — Layer A + B)
         ↓ MediatR → Dashboard*Dal → Dashboard*SnapshotDal → snapshot tables
 ```
 
@@ -138,7 +140,7 @@ Browser → GET /api/dashboard/{sales|piutang|inventory}  (detail — Layer A + 
 
 | Layer | Tables | Used by |
 | ----- | ------ | ------- |
-| **A — KPI** | `BTR_PortalDashboard{Sales,Piutang,Inventory}Kpi` | Overview home + detail KPI rows |
+| **A — KPI** | `BTR_PortalDashboard{Sales,Piutang,Inventory,Purchasing}Kpi` | Overview home + detail KPI rows |
 | **B — Dimensional** | Week trend, aging, breakdown, Top-N tables | Detail dashboards only |
 
 All snapshots use `SnapshotKey = 'CURRENT'`. `GeneratedAt` on every dashboard response reflects the last successful background refresh, not request execution time.
@@ -149,6 +151,7 @@ All snapshots use `SnapshotKey = 'CURRENT'`. `GeneratedAt` on every dashboard re
 | ------ | -------- |
 | Piutang | 15 minutes |
 | Sales | 30 minutes |
+| Purchasing | 30 minutes |
 | Inventory | 60 minutes |
 
 **Operational metadata:** `BTR_PortalDashboardRefreshLog` records each refresh attempt (domain, status, duration, error, trigger source).
@@ -163,6 +166,7 @@ Reports (`/api/reports/*`) remain **live queries** — unaffected by snapshot ma
 | `GET /api/dashboard/sales` | `SalesDashboardController` | Layer A + B snapshots | Sales detail analytics |
 | `GET /api/dashboard/piutang` | `PiutangDashboardController` | Layer A + B snapshots | Piutang detail analytics |
 | `GET /api/dashboard/inventory` | `InventoryDashboardController` | Layer A + B snapshots | Inventory detail analytics |
+| `GET /api/dashboard/purchasing` | `PurchasingDashboardController` | Layer A + B snapshots | Purchasing detail analytics |
 | `POST /api/admin/dashboard/refresh` | `AdminDashboardRefreshController` | Triggers snapshot rebuild | On-demand refresh (sync; IIS timeout risk) |
 | `GET /api/health/dashboard-snapshots` | `HealthController` | `BTR_PortalDashboardRefreshLog` | Monitoring — no auth |
 
@@ -178,6 +182,7 @@ Domain detail endpoints were extended additively across M8 and M13–M15; respon
 | `/dashboard/sales` | `SalesDashboardView` | `GET /api/dashboard/sales` |
 | `/dashboard/piutang` | `PiutangDashboardView` | `GET /api/dashboard/piutang` |
 | `/dashboard/inventory` | `InventoryDashboardView` | `GET /api/dashboard/inventory` |
+| `/dashboard/purchasing` | `PurchasingDashboardView` | `GET /api/dashboard/purchasing` |
 
 Home shows summary KPI cards with per-domain `GeneratedAt` timestamps and links to detail pages. Detail pages consume the full API response (including chart/ranking sections not shown on home).
 
@@ -218,6 +223,15 @@ Home shows summary KPI cards with per-domain `GeneratedAt` timestamps and links 
 | Breakdown | `CategoryBreakdown[]`, `SupplierBreakdown[]` | M15 |
 | Ranking | `TopCategories[]`, `TopSuppliers[]` | M15 |
 
+**Purchasing response sections:**
+
+| Section | DTO | Introduced |
+| ------- | --- | ---------- |
+| Core KPIs | `GrandTotalPurchase`, `TotalInvoice`, `PendingPostingInvoiceCount` | Purchasing V1 |
+| Trend | `WeeklyTrend[]` | Purchasing V1 |
+| Posting | `PostingStatusBreakdown[]` | Purchasing V1 |
+| Ranking | `TopPrincipalRanking[]` | Purchasing V1 |
+
 ### KPI Aggregation Patterns
 
 Aggregation runs in `Dashboard{Domain}Aggregator` during snapshot refresh (worker path). Read DALs map snapshot rows to response DTOs.
@@ -233,6 +247,9 @@ Aggregation runs in `Dashboard{Domain}Aggregator` during snapshot refresh (worke
 | Piutang aging | Inline bucket assignment | `DaysOverdue = Today − JatuhTempo`; five inclusive buckets |
 | Inventory | `IStokBalanceViewDal` + BrgId-first pipeline | Exclude In-Transit; group by `BrgId`; sum Qty and Hpp×Qty |
 | Inventory rollup | Category/supplier grouping after BrgId step | Blank → `"Unknown"` |
+| Purchasing | `IInvoiceViewDal` (Invoice list) | Current month non-void invoices; `SUM(GrandTotal)`; posting status from `PostingStok` |
+| Purchasing weekly trend | Invoice `GrandTotal` grouped by calendar week | Reuses `SalesOmzetChartWeekGrouper` |
+| Purchasing ranking | `SUM(GrandTotal)` per trimmed `SupplierName`, top 10 descending | Blank → `"Unknown"`; UI label **Principal** |
 
 All chart and ranking values are computed **server-side** in the DAL. Frontend never sums rows to derive KPIs.
 
@@ -253,6 +270,7 @@ Shared across M13–M15:
 | `DashboardSalesRankingItem` | `Rank`, `SalesPersonName`, `CompletedOmzet` |
 | `DashboardPiutangTopCustomer` | `Rank`, `CustomerName`, `OutstandingBalance` |
 | `DashboardInventoryRankingItem` | `Rank`, `Name`, `InventoryValue` |
+| `DashboardPurchasingRankingItem` | `Rank`, `PrincipalName`, `PurchaseAmount` |
 
 ### Chart Patterns
 
@@ -264,6 +282,8 @@ PrimeVue `Chart` + Chart.js on detail pages.
 | Chart | Weekly Trend | `line` | `DashboardSalesWeekTrendItem[]` | X: `WeekLabel`; Y: Faktur `GrandTotal` per week |
 | Aging Distribution | `pie` | `DashboardPiutangAgingBucket[]` | 5 buckets; `SortOrder` for stable sequence |
 | Category / Supplier | `bar` (`indexAxis: 'y'`) | `DashboardInventoryBreakdownItem[]` | Horizontal bars |
+| Posting Status | `pie` | `DashboardPurchasingPostingStatusItem[]` | `SUDAH` / `BELUM`; `SortOrder` for stable sequence |
+| Weekly Purchase Trend | `line` | `DashboardPurchasingWeekTrendItem[]` | Reuses `WeeklyTrendChart` with domain-specific title |
 
 Empty-state handling: frontend shows message when all values are zero.
 
@@ -395,7 +415,8 @@ btr.portal.api/
 │   │   ├── OverviewDashboardController.cs
 │   │   ├── SalesDashboardController.cs
 │   │   ├── PiutangDashboardController.cs
-│   │   └── InventoryDashboardController.cs
+│   │   ├── InventoryDashboardController.cs
+│   │   └── PurchasingDashboardController.cs
 │   └── Reports/
 ├── Filters/
 │   ├── GlobalExceptionFilter.cs
@@ -439,7 +460,7 @@ btr.portal.web/src/
 | Store | Responsibility |
 | ----- | -------------- |
 | `authStore` | Login, logout, JWT hydration from localStorage |
-| `dashboardStore` | `loadDashboard()` → overview endpoint (home); `loadSales()`, `loadPiutang()`, `loadInventory()` (detail pages) |
+| `dashboardStore` | `loadDashboard()` → overview endpoint (home); `loadSales()`, `loadPiutang()`, `loadInventory()`, `loadPurchasing()` (detail pages) |
 | `{domain}ReportStore` | `report`, `loading`, `error`; `loadReport()`, `reset()` |
 
 One store per report. No premature module stores beyond auth, dashboard, and reports.
@@ -454,6 +475,7 @@ One store per report. No premature module stores beyond auth, dashboard, and rep
 | `TargetVsAchievementChart.vue` | M13 company bar chart |
 | `WeeklyTrendChart.vue` | M8/M13 line chart |
 | `AgingPieChart.vue` | M14 pie chart |
+| `PostingStatusPieChart.vue` | Purchasing posting-status pie (`SUDAH` / `BELUM`) |
 | `InventoryHorizontalBarChart.vue` | M15 horizontal bar (category + supplier) |
 
 Detail page section order is fixed per domain (see operational doc).
@@ -556,6 +578,7 @@ GET  /api/health/dashboard-snapshots          → 200 (status may be unknown unt
 POST /api/auth/login                          → 200 with JWT (valid BTR user)
 GET  /api/dashboard/overview                  → 401 without token; 200 with token
 GET  /api/dashboard/sales                     → 503 if snapshots empty; 200 after worker run
+GET  /api/dashboard/purchasing                → 503 if snapshots empty; 200 after worker run
 ```
 
 Run initial snapshot backfill before go-live: `btr.portal.worker.exe --domain All --triggered-by Manual`
@@ -574,7 +597,7 @@ Rules that must be preserved when extending the portal:
 | 4 | Portal remains read-only — no transactional endpoints |
 | 5 | Keep controllers thin — MediatR only |
 | 6 | Avoid new SQL when equivalent reporting logic exists |
-| 7 | Dashboard metrics must be traceable to report data (Piutang, Inventory) |
+| 7 | Dashboard metrics must be traceable to report data (Piutang, Inventory, Purchasing) |
 | 8 | Extend existing dashboard GET endpoints — do not add parallel routes |
 | 9 | Footer/report summaries computed server-side — never client-summed |
 | 10 | Presentation mapping only in portal DALs — business rules stay in Desktop DALs |
@@ -596,6 +619,8 @@ Rules that must be preserved when extending the portal:
 | Total Inventory Value | Inventory Report footer | BrgId-grouped `Sum(Hpp × Qty)` excl. In-Transit |
 | Total Item | Inventory Report footer | Count BrgId where aggregated Qty > 0 |
 | Sales Total Omzet / Achievement | Sales Report | Sum of `GrandTotal` from report rows (same month, same Faktur source) |
+| Grand Total Purchase | Purchasing Report footer | `Sum(GrandTotal)` for current-month invoices |
+| Total Invoice (Purchasing) | Purchasing Report footer | Invoice row count in period |
 
 ### Testing Convention
 

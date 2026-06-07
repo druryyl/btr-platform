@@ -17,3 +17,9 @@ GO
 IF NOT EXISTS (SELECT 1 FROM BTR_ParamNo WHERE Prefix = 'PDS')
     INSERT INTO BTR_ParamNo (Prefix, HexVal) VALUES ('PDS', '0');
 GO
+IF NOT EXISTS (SELECT 1 FROM BTR_ParamNo WHERE Prefix = 'PDP')
+    INSERT INTO BTR_ParamNo (Prefix, HexVal) VALUES ('PDP', '0');
+GO
+IF NOT EXISTS (SELECT 1 FROM BTR_ParamNo WHERE Prefix = 'PDG')
+    INSERT INTO BTR_ParamNo (Prefix, HexVal) VALUES ('PDG', '0');
+GO

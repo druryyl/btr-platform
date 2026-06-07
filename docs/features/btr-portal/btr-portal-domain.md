@@ -3,7 +3,7 @@
 **Audience:** Product Owner, Business Owner, Developers, Future Agents  
 **Purpose:** Define what BTR Portal is, why it exists, and the business meaning of its dashboards, reports, and KPIs.
 
-**Related permanent docs:** [Architecture (WHAT)](./btr-portal-architecture.md) · [Operational (HOW)](./btr-portal-operational.md) · [Materialized dashboards](../materialized-dashboard/materialized-dashboard-domain.md) · [Extraction report M1–M15](./knowledge-extraction-report-m1-m15.md)
+**Related permanent docs:** [Architecture (WHAT)](./btr-portal-architecture.md) · [Operational (HOW)](./btr-portal-operational.md) · [Materialized dashboards](../materialized-dashboard/materialized-dashboard-domain.md) · [Extraction report — Purchasing Dashboard](./knowledge-extraction-report-purchasing-dashboard.md)
 
 For how to use the portal, see [btr-portal-operational.md](./btr-portal-operational.md).  
 For how it is built, see [btr-portal-architecture.md](./btr-portal-architecture.md).
@@ -38,7 +38,7 @@ The portal complements BTR Desktop; it does not replace operational transaction 
 | Area | Capabilities |
 | ---- | ------------ |
 | Authentication | Sign in with existing BTR user credentials |
-| Dashboards | Sales, Piutang (receivables), Inventory — summary home plus detail analytics |
+| Dashboards | Sales, Piutang (receivables), Inventory, Purchasing — summary home plus detail analytics |
 | Reports | Sales, Piutang, Inventory, Purchasing — tabular transaction/detail views |
 | Analytics | KPI cards, charts, Top 10 rankings, footer summary totals |
 
@@ -49,7 +49,7 @@ The portal complements BTR Desktop; it does not replace operational transaction 
 | Sales | Dashboard KPIs, weekly trend, target vs achievement, salesman ranking; Sales Report |
 | Finance (Piutang) | Dashboard KPIs, aging analysis, overdue customers, Top 10 customers; Piutang Report |
 | Inventory | Dashboard KPIs, category/supplier breakdown; Inventory Report |
-| Purchasing | Purchasing Report (invoice summary) |
+| Purchasing | Dashboard KPIs, weekly trend, posting-status breakdown, Top 10 Principal; Purchasing Report |
 
 See `docs/foundation/LANDSCAPE.md` for BTR business area ownership. See `docs/foundation/DOMAIN.md` for business terminology (Faktur, Piutang, Item, etc.).
 
@@ -89,7 +89,7 @@ Management monitors total inventory value, item count, and how value is distribu
 
 ### Purchasing
 
-Management reviews purchase invoice activity for the current month, including whether stock has been posted (`SUDAH` / `BELUM`). No purchasing dashboard exists; the Purchasing Report is standalone visibility.
+Management reviews purchase invoice activity for the current month, including whether stock has been posted (`SUDAH` / `BELUM`). Users validate dashboard KPIs against the Purchasing Report footer totals (Grand Total Purchase, Total Invoice).
 
 ---
 
@@ -97,11 +97,11 @@ Management reviews purchase invoice activity for the current month, including wh
 
 ### Dashboard Home (`/dashboard`)
 
-Summary landing page with three KPI cards (Sales, Piutang, Inventory). Each card shows compact headline metrics and a link to the corresponding detail dashboard. No charts on the home page.
+Summary landing page with four KPI cards (Sales, Piutang, Inventory, Purchasing). Each card shows compact headline metrics and a link to the corresponding detail dashboard. No charts on the home page.
 
-**Data source:** `GET /api/dashboard/overview` reads Layer A KPI snapshot tables only (`BTR_PortalDashboard*Kpi`). Each card displays its domain's `GeneratedAt` timestamp from the last successful background refresh. Domains may show different refresh times when per-domain scheduler cadences differ (Piutang 15 min, Sales 30 min, Inventory 60 min).
+**Data source:** `GET /api/dashboard/overview` reads Layer A KPI snapshot tables only (`BTR_PortalDashboard*Kpi`). Each card displays its domain's `GeneratedAt` timestamp from the last successful background refresh. Domains may show different refresh times when per-domain scheduler cadences differ (Piutang 15 min, Sales 30 min, Purchasing 30 min, Inventory 60 min).
 
-**Background refresh:** Scheduled by `btr.portal.worker` via Windows Task Scheduler (per-domain jobs). Authenticated users may trigger an on-demand rebuild via `POST /api/admin/dashboard/refresh` with optional body `{ "domain": "All|Piutang|Inventory|Sales" }` (default `All`; domain values are case-insensitive). For full rebuilds or long-running refreshes, prefer the worker CLI — the API runs synchronously and is subject to IIS request timeouts (~110 s default). Operations may also use: `btr.portal.worker.exe --domain All --triggered-by Manual`.
+**Background refresh:** Scheduled by `btr.portal.worker` via Windows Task Scheduler (per-domain jobs). Authenticated users may trigger an on-demand rebuild via `POST /api/admin/dashboard/refresh` with optional body `{ "domain": "All|Piutang|Inventory|Sales|Purchasing" }` (default `All`; domain values are case-insensitive). For full rebuilds or long-running refreshes, prefer the worker CLI — the API runs synchronously and is subject to IIS request timeouts (~110 s default). Operations may also use: `btr.portal.worker.exe --domain All --triggered-by Manual`.
 
 **Observability:** `GET /api/health/dashboard-snapshots` (no auth) returns the latest refresh attempt per domain from `BTR_PortalDashboardRefreshLog`, including status, duration, and configured interval minutes. Overall health is `unknown` when no domain has a refresh log yet; otherwise `ok`, `refreshing` (any domain `Running`), or `degraded` (any domain `Failed`).
 
@@ -152,6 +152,23 @@ Summary landing page with three KPI cards (Sales, Piutang, Inventory). Each card
 
 **Home card metrics (summary):** Total Inventory Value, Total Item.
 
+### Purchasing Dashboard (`/dashboard/purchasing`)
+
+**Period:** Current calendar month — non-void purchase Invoices only (`InvoiceDate` within month).
+
+**Purpose:** Management-level purchasing activity — weekly trend, posting-status composition, and principal concentration.
+
+| Section | Content |
+| ------- | ------- |
+| KPI row | Grand Total Purchase, Total Invoice, Pending Posting Invoice Count |
+| Chart | Weekly Purchase Trend (`SUM(GrandTotal)` by calendar week) |
+| Chart | Posting Status Breakdown (`SUDAH` / `BELUM` by purchase value) |
+| Table | Top 10 Principal by Purchase Amount |
+
+**Home card metrics (summary):** Grand Total Purchase, Total Invoice.
+
+**Stakeholder note:** Grand Total Purchase and Total Invoice must match the Purchasing Report footer totals for the same month and invoice source (`IInvoiceViewDal`).
+
 ---
 
 ## Report Definitions
@@ -201,14 +218,14 @@ Reports allow users to **validate dashboard KPIs** against underlying records. F
 
 ### Purchasing Report (`/reports/purchasing`)
 
-**Purpose:** Visibility into purchasing invoice activity. No linked dashboard.
+**Purpose:** Inspect purchase Invoice detail behind Purchasing dashboard KPIs.
 
 | Aspect | Definition |
 | ------ | ---------- |
 | Period | Current calendar month |
 | Row grain | One row per purchase Invoice (PF1 header) |
 | Data scope | Active (non-void) invoices |
-| Footer totals | Grand Total Purchase, Total Invoice |
+| Footer totals | Grand Total Purchase, Total Invoice — must reconcile with dashboard |
 
 **Columns:** Invoice, Date, Supplier, Warehouse, Total, Disc, Tax, Grand Total, Posting Stok (`SUDAH` / `BELUM`).
 
@@ -272,12 +289,20 @@ All monetary values are in Indonesian Rupiah (IDR). Dashboard and report totals 
 
 **Traceability:** Total Inventory Value and Total Item = Inventory Report footer totals.
 
-### Purchasing KPIs (Report Footer Only)
+### Purchasing KPIs
 
 | KPI | Definition | Formula | Business Meaning |
 | --- | ---------- | ------- | ---------------- |
 | **Grand Total Purchase** | Total purchase value | `Sum(GrandTotal)` for current-month invoices | Monthly purchasing spend |
 | **Total Invoice** | Purchase invoice count | Count of invoice rows in period | Volume of purchasing activity |
+| **Pending Posting Invoice Count** | Unposted purchase invoices | Count where `PostingStok = BELUM` | Backlog of invoices awaiting stock posting |
+| **Top Principal** | Largest suppliers by purchase value | Top 10 by `SUM(GrandTotal)` per trimmed `SupplierName`; blank → "Unknown" | Principal concentration in monthly purchasing |
+
+**Weekly Trend:** Invoice `GrandTotal` summed per calendar week within the current month.
+
+**Posting Status Breakdown:** `GrandTotal` grouped by `PostingStok` (`SUDAH` / `BELUM`).
+
+**Traceability:** Grand Total Purchase and Total Invoice = Purchasing Report footer totals (same `IInvoiceViewDal` source and period).
 
 ---
 
@@ -302,7 +327,7 @@ Approved rules governing portal calculations and filters:
 | Faktur Kembali | Sales report | `StatusFaktur == 2` displays as `"Kembali"` |
 | No paid toggle | Piutang report | Paid invoices always hidden; no user toggle |
 | Fixed periods V1 | All reports | No date-range or search parameters; fixed defaults per report |
-| Dashboard traceability | Piutang & Inventory | Report footer totals must match dashboard KPIs |
+| Dashboard traceability | Piutang, Inventory & Purchasing | Report footer totals must match dashboard KPIs |
 | DAL reuse | All | Business rules enforced in existing Desktop DALs; portal does not reimplement SQL |
 | Snapshot materialization | Dashboards | KPIs and charts served from `BTR_PortalDashboard*` tables; refreshed by worker |
 | Live queries | Reports | Report endpoints query Desktop DALs directly — not snapshotted |
@@ -320,7 +345,7 @@ Capabilities delivered and accepted across milestones M1–M15:
 | Materialized dashboard snapshots (background worker + admin refresh) | Complete |
 | JWT authentication with BTR users | Complete |
 | ReportingContext architecture | Complete |
-| Dashboard home with Sales, Piutang, Inventory summary KPIs | Complete |
+| Dashboard home with Sales, Piutang, Inventory, Purchasing summary KPIs | Complete |
 | Sales detail dashboard (target, achievement, weekly trend, Top 10 salesman) | Complete |
 | Piutang detail dashboard (aging, overdue customers, Top 10 customers) | Complete |
 | Inventory detail dashboard (category/supplier charts, Top 10 tables) | Complete |
@@ -333,6 +358,7 @@ Capabilities delivered and accepted across milestones M1–M15:
 | Piutang Report (open receivables with footer totals) | Complete |
 | Inventory Report (stock balance with footer totals) | Complete |
 | Purchasing Report (current month invoices with footer totals) | Complete |
+| Purchasing detail dashboard (weekly trend, posting breakdown, Top 10 Principal) | Complete |
 | Vue 3 frontend with login, layout, sidebar navigation | Complete |
 
 ---
@@ -347,7 +373,7 @@ Known roadmap items explicitly **deferred** beyond M15 (not committed scope):
 | Sales analytics | Margin analysis, status breakdown chart, sales period mode toggle |
 | Piutang analytics | Collection effectiveness KPIs |
 | Inventory analytics | ABC analysis, warehouse breakdown, pie/donut composition views, Kartu Stok drilldown |
-| Purchasing | PF2 line detail, PF3 daily detail, PF4 retur beli |
+| Purchasing | Warehouse breakdown, pending posting value KPI, PF2 line detail, PF3 daily detail, PF4 retur beli |
 | Platform | Export (Excel/PDF), drilldown from charts to transactions, role-based menu visibility, server-side pagination |
 | Reports | Sales Report footer totals (retrofit) |
 

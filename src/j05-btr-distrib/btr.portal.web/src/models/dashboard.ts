@@ -17,10 +17,17 @@ export interface DashboardOverviewInventorySection {
   GeneratedAt: string
 }
 
+export interface DashboardOverviewPurchasingSection {
+  GrandTotalPurchase: number
+  TotalInvoice: number
+  GeneratedAt: string
+}
+
 export interface DashboardOverviewResponse {
   Sales: DashboardOverviewSalesSection | null
   Piutang: DashboardOverviewPiutangSection | null
   Inventory: DashboardOverviewInventorySection | null
+  Purchasing: DashboardOverviewPurchasingSection | null
   HasUnavailableDomain: boolean
 }
 
@@ -98,4 +105,34 @@ export interface DashboardInventoryResponse {
   SupplierBreakdown: DashboardInventoryBreakdownItem[]
   TopCategories: DashboardInventoryRankingItem[]
   TopSuppliers: DashboardInventoryRankingItem[]
+}
+
+export interface DashboardPurchasingWeekTrendItem {
+  WeekStart: string
+  WeekEnd: string
+  WeekLabel: string
+  PurchaseAmount: number
+}
+
+export interface DashboardPurchasingPostingStatusItem {
+  StatusKey: string
+  StatusLabel: string
+  SortOrder: number
+  PurchaseAmount: number
+}
+
+export interface DashboardPurchasingRankingItem {
+  Rank: number
+  PrincipalName: string
+  PurchaseAmount: number
+}
+
+export interface DashboardPurchasingResponse {
+  GrandTotalPurchase: number
+  TotalInvoice: number
+  PendingPostingInvoiceCount: number
+  GeneratedAt: string
+  WeeklyTrend: DashboardPurchasingWeekTrendItem[]
+  PostingStatusBreakdown: DashboardPurchasingPostingStatusItem[]
+  TopPrincipalRanking: DashboardPurchasingRankingItem[]
 }
