@@ -64,6 +64,7 @@
     <Folder Include="Tables\PurchaseContext\" />
     <Folder Include="Tables\Finance" />
     <Folder Include="Tables\InventoryContext\" />
+    <Folder Include="Tables\ReportingContext" />
     <Folder Include="PackingOrderModel" />
     <Folder Include="Snapshots" />
   </ItemGroup>
@@ -149,6 +150,13 @@
     <Build Include="Tables\Helper\BTR_Role.sql" />
     <Build Include="Tables\Helper\BTR_RoleMenu.sql" />
     <Build Include="Tables\SalesContext\BTR_Segment.sql" />
+    <Build Include="Tables\ReportingContext\BTR_PortalDashboardRefreshLog.sql" />
+    <Build Include="Tables\ReportingContext\BTR_PortalDashboardPiutangKpi.sql" />
+    <Build Include="Tables\ReportingContext\BTR_PortalDashboardPiutangAging.sql" />
+    <Build Include="Tables\ReportingContext\BTR_PortalDashboardPiutangTopCustomer.sql" />
+    <Build Include="Tables\ReportingContext\BTR_PortalDashboardInventoryKpi.sql" />
+    <Build Include="Tables\ReportingContext\BTR_PortalDashboardInventoryBreakdown.sql" />
+    <Build Include="Tables\ReportingContext\IX_BTR_Piutang_OpenBalance.sql" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Tables\SalesContext\BTR_HariRuteDataSeed.sql" />
@@ -156,5 +164,6 @@
     <None Include="DataSeeds\BTR_Role.dataseed.sql" />
     <None Include="DataSeeds\BTR_ParamNo_SalesOmzet.sql" />
     <None Include="DataSeeds\BTR_ParamNo_SalesOmzetHealthWeekly.sql" />
+    <None Include="DataSeeds\BTR_ParamNo_PortalDashboard.sql" />
   </ItemGroup>
 </Project>

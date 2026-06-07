@@ -1,5 +1,7 @@
 using System.Reflection;
 using btr.application;
+using btr.application.ReportingContext.DashboardSnapshotAgg;
+using btr.application.ReportingContext.DashboardSnapshotAgg.Services;
 using btr.application.SalesContext.SalesOmzetAgg.Contracts;
 using btr.application.SalesContext.SalesOmzetAgg.Policies;
 using btr.application.SalesContext.SalesOmzetAgg.Services;
@@ -28,6 +30,8 @@ namespace btr.portal.api.Configurations
             services.AddScoped<INunaCounterBL, NunaCounterBL>();
             services.AddScoped<DateTimeProvider, DateTimeProvider>();
             services.AddScoped<ITglJamDal, TglJamDal>();
+            services.Configure<DashboardSnapshotOptions>(
+                configuration.GetSection(DashboardSnapshotOptions.SECTION_NAME));
 
             services
                 .Scan(selector => selector
@@ -74,6 +78,8 @@ namespace btr.portal.api.Configurations
             services.AddScoped<IIsoWeekCalendar, IsoWeekCalendar>();
             services.AddScoped<ISalesOmzetHealthPolicy, SalesOmzetHealthPolicy>();
             services.AddScoped<ISalesOmzetReportHealthResolver, SalesOmzetReportHealthResolver>();
+            services.AddScoped<DashboardPiutangAggregator>();
+            services.AddScoped<DashboardInventoryAggregator>();
 
             return services;
         }

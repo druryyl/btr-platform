@@ -99,6 +99,7 @@ namespace btr.distrib
         {
             user = string.Empty;
             var servicesProvider = services.BuildServiceProvider();
+            ConnStringHelper.Initialize(servicesProvider.GetRequiredService<ConnectionStringFactory>());
             var login = servicesProvider.GetRequiredService<LoginForm>();
             var server = GetServerDb();
             Version version = Assembly.GetExecutingAssembly().GetName().Version;
@@ -172,6 +173,8 @@ namespace btr.distrib
                         .WithScopedLifetime());
 
             services.Configure<DatabaseOptions>(configuration.GetSection(DatabaseOptions.SECTION_NAME));
+            services.AddSingleton<IConnectionSettingProvider, RegistryConnectionSettingProvider>();
+            services.AddSingleton<ConnectionStringFactory>();
             services.Configure<PrinterOptions>(configuration.GetSection(PrinterOptions.SECTION_NAME));
             services.AddScoped<INunaCounterDal, ParamNoDal>();
 

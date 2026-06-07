@@ -4,6 +4,7 @@ using System.ComponentModel.DataAnnotations;
 using System.Net;
 using System.Net.Http;
 using System.Web.Http.Filters;
+using btr.application.ReportingContext.DashboardSnapshotAgg;
 using btr.portal.api.Models;
 using NLog;
 
@@ -39,6 +40,9 @@ namespace btr.portal.api.Filters
 
             if (exception is UnauthorizedAccessException)
                 return (HttpStatusCode.Unauthorized, exception.Message);
+
+            if (exception is DashboardSnapshotUnavailableException)
+                return (HttpStatusCode.ServiceUnavailable, exception.Message);
 
             return (HttpStatusCode.InternalServerError, "An unexpected error occurred.");
         }

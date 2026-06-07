@@ -1,6 +1,7 @@
 using btr.application.ReportingContext.DashboardInventoryAgg.Contracts;
 using btr.application.ReportingContext.DashboardPiutangAgg.Contracts;
 using btr.application.ReportingContext.DashboardSalesAgg.Contracts;
+using btr.application.ReportingContext.DashboardSnapshotAgg.Contracts;
 using btr.application.ReportingContext.InventoryReportAgg.Contracts;
 using btr.application.ReportingContext.PiutangReportAgg.Contracts;
 using btr.application.ReportingContext.PurchasingReportAgg.Contracts;
@@ -12,6 +13,7 @@ using btr.infrastructure.Helpers;
 using btr.infrastructure.ReportingContext.DashboardInventoryAgg;
 using btr.infrastructure.ReportingContext.DashboardPiutangAgg;
 using btr.infrastructure.ReportingContext.DashboardSalesAgg;
+using btr.infrastructure.ReportingContext.DashboardSnapshotAgg;
 using btr.infrastructure.ReportingContext.InventoryReportAgg;
 using btr.infrastructure.ReportingContext.PiutangReportAgg;
 using btr.infrastructure.ReportingContext.PurchasingReportAgg;
@@ -33,11 +35,19 @@ namespace btr.portal.api.Configurations
             IConfiguration configuration)
         {
             services.Configure<DatabaseOptions>(configuration.GetSection(DatabaseOptions.SECTION_NAME));
+            services.AddSingleton<IConnectionSettingProvider, JsonConnectionSettingProvider>();
+            services.AddSingleton<ConnectionStringFactory>();
             services.AddScoped<INunaCounterDal, ParamNoDal>();
 
             services.AddScoped<ISalesOmzetSourceDal, SalesOmzetSourceDal>();
             services.AddScoped<ISalesOmzetTargetDal, SalesOmzetTargetDal>();
             services.AddScoped<ISalesOmzetHealthMetricsDal, SalesOmzetHealthMetricsDal>();
+            services.AddScoped<IPiutangOpenBalanceDal, PiutangOpenBalanceDal>();
+            services.AddScoped<IDashboardSnapshotRefreshLogDal, DashboardSnapshotRefreshLogDal>();
+            services.AddScoped<IDashboardPiutangSnapshotDal, DashboardPiutangSnapshotDal>();
+            services.AddScoped<IDashboardInventorySnapshotDal, DashboardInventorySnapshotDal>();
+            services.AddScoped<DashboardPiutangLiveDal>();
+            services.AddScoped<DashboardInventoryLiveDal>();
             services.AddScoped<IDashboardSalesDal, DashboardSalesDal>();
             services.AddScoped<IDashboardPiutangDal, DashboardPiutangDal>();
             services.AddScoped<IDashboardInventoryDal, DashboardInventoryDal>();

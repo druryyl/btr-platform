@@ -95,8 +95,12 @@
     <Compile Include="FinanceContext\ReturBalanceAgg\ReturBalancePostDal.cs" />
     <Compile Include="FinanceContext\TagihanAgg\TagihanDal.cs" />
     <Compile Include="FinanceContext\TagihanAgg\TagihanFakturDal.cs" />
+    <Compile Include="Helpers\ConnectionStringFactory.cs" />
     <Compile Include="Helpers\ConnStringHelper.cs" />
     <Compile Include="Helpers\DatabaseOptions.cs" />
+    <Compile Include="Helpers\IConnectionSettingProvider.cs" />
+    <Compile Include="Helpers\JsonConnectionSettingProvider.cs" />
+    <Compile Include="Helpers\RegistryConnectionSettingProvider.cs" />
     <Compile Include="Helpers\ParamNoDal.cs" />
     <Compile Include="Helpers\PrinterOptions.cs" />
     <Compile Include="InfrastructureAssemblyAnchor.cs" />
@@ -156,6 +160,12 @@
     <Compile Include="PurchaseContext\SupplierAgg\SupplierDal.cs" />
     <Compile Include="ReportingContext\DashboardInventoryAgg\DashboardInventoryDal.cs" />
     <Compile Include="ReportingContext\DashboardPiutangAgg\DashboardPiutangDal.cs" />
+    <Compile Include="ReportingContext\DashboardPiutangAgg\DashboardPiutangLiveDal.cs" />
+    <Compile Include="ReportingContext\DashboardInventoryAgg\DashboardInventoryLiveDal.cs" />
+    <Compile Include="ReportingContext\DashboardSnapshotAgg\DashboardInventorySnapshotDal.cs" />
+    <Compile Include="ReportingContext\DashboardSnapshotAgg\DashboardPiutangSnapshotDal.cs" />
+    <Compile Include="ReportingContext\DashboardSnapshotAgg\DashboardSnapshotRefreshLogDal.cs" />
+    <Compile Include="ReportingContext\DashboardSnapshotAgg\PiutangOpenBalanceDal.cs" />
     <Compile Include="ReportingContext\DashboardSalesAgg\DashboardSalesDal.cs" />
     <Compile Include="ReportingContext\InventoryReportAgg\InventoryReportDal.cs" />
     <Compile Include="ReportingContext\PiutangReportAgg\PiutangReportDal.cs" />

@@ -1,9 +1,11 @@
 using System;
 using System.Web;
 using System.Web.Http;
+using btr.infrastructure.Helpers;
 using btr.portal.api.Configurations;
 using btr.portal.api.Infrastructure;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using NLog;
 
 namespace btr.portal.api
@@ -22,6 +24,8 @@ namespace btr.portal.api
                 .Build();
 
             var serviceProvider = DependencyConfig.Configure(configuration);
+
+            ConnStringHelper.Initialize(serviceProvider.GetRequiredService<ConnectionStringFactory>());
 
             GlobalConfiguration.Configuration.DependencyResolver =
                 new ServiceProviderDependencyResolver(serviceProvider);
