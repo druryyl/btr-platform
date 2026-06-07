@@ -1,5 +1,7 @@
 using System;
+using System.Collections.Generic;
 using System.Data.SqlClient;
+using System.Linq;
 using btr.application.ReportingContext.DashboardSnapshotAgg.Contracts;
 using btr.application.ReportingContext.DashboardSnapshotAgg.Models;
 using btr.infrastructure.Helpers;
@@ -71,6 +73,44 @@ WHERE RefreshLogId = @RefreshLogId";
                     DurationMs = durationMs,
                     ErrorMessage = errorMessage ?? string.Empty
                 });
+            }
+        }
+
+        public IReadOnlyList<DashboardSnapshotRefreshStatusModel> GetLatestPerDomain()
+        {
+            const string sql = @"
+SELECT
+    RefreshLogId,
+    Domain,
+    StartedAt,
+    CompletedAt,
+    Status,
+    DurationMs,
+    ErrorMessage,
+    TriggeredBy
+FROM (
+    SELECT
+        RefreshLogId,
+        Domain,
+        StartedAt,
+        CompletedAt,
+        Status,
+        DurationMs,
+        ErrorMessage,
+        TriggeredBy,
+        ROW_NUMBER() OVER (
+            PARTITION BY Domain
+            ORDER BY COALESCE(CompletedAt, StartedAt) DESC, StartedAt DESC) AS RowNum
+    FROM BTR_PortalDashboardRefreshLog
+    WHERE Domain IN ('Piutang', 'Inventory', 'Sales')
+) ranked
+WHERE RowNum = 1
+ORDER BY Domain";
+
+            using (var conn = new SqlConnection(ConnStringHelper.Get(_opt)))
+            {
+                var rows = conn.Query<DashboardSnapshotRefreshStatusModel>(sql).ToList();
+                return rows;
             }
         }
     }

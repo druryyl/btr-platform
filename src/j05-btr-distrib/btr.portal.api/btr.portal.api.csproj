@@ -186,6 +186,7 @@
     <Compile Include="Configurations\DependencyConfig.cs" />
     <Compile Include="Configurations\InfrastructurePortalExtensions.cs" />
     <Compile Include="Configurations\PortalPresentationExtensions.cs" />
+    <Compile Include="Controllers\Admin\AdminDashboardRefreshController.cs" />
     <Compile Include="Controllers\AuthController.cs" />
     <Compile Include="Controllers\Dashboard\OverviewDashboardController.cs" />
     <Compile Include="Controllers\Dashboard\InventoryDashboardController.cs" />
@@ -206,6 +207,7 @@
     <Compile Include="Infrastructure\ServiceProviderControllerActivator.cs" />
     <Compile Include="Infrastructure\ServiceProviderDependencyResolver.cs" />
     <Compile Include="Models\ApiResponse.cs" />
+    <Compile Include="Models\DashboardRefreshRequest.cs" />
     <Compile Include="Models\LoginRequest.cs" />
     <Compile Include="Models\LoginResponse.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

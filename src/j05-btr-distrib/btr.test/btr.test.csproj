@@ -129,6 +129,8 @@
     <Compile Include="ReportingContext\DashboardInventorySnapshotVerificationTest.cs" />
     <Compile Include="ReportingContext\DashboardSalesFakturAggregatorTest.cs" />
     <Compile Include="ReportingContext\RefreshAllDashboardSnapshotsWorkerTest.cs" />
+    <Compile Include="ReportingContext\DashboardSnapshotHealthStatusResolverTest.cs" />
+    <Compile Include="ReportingContext\RefreshDashboardSnapshotsHandlerTest.cs" />
     <Compile Include="ReportingContext\DashboardSalesDalTest.cs" />
     <Compile Include="ReportingContext\DashboardSalesSnapshotVerificationTest.cs" />
     <Compile Include="ReportingContext\DashboardPiutangAggregatorTest.cs" />

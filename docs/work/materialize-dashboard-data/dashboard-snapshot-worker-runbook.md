@@ -78,11 +78,45 @@ Repeat for Sales (30 min) and Inventory (60 min) with matching `--domain` values
 
 ---
 
+## Manual Refresh (Portal API)
+
+Authenticated portal users can trigger on-demand refresh without shell access:
+
+```http
+POST /api/admin/dashboard/refresh
+Authorization: Bearer <token>
+Content-Type: application/json
+
+{ "domain": "All" }
+```
+
+`domain` accepts `All` (default), `Piutang`, `Inventory`, or `Sales` (case-insensitive). Refresh attempts are logged with `TriggeredBy = Manual` in `BTR_PortalDashboardRefreshLog`.
+
+The worker CLI remains available for ops and service accounts:
+
+```powershell
+.\btr.portal.worker.exe --domain All --triggered-by Manual
+```
+
+### API refresh vs worker CLI (timeouts)
+
+The portal API runs snapshot refresh **synchronously** on the HTTP request thread. IIS applies an execution timeout (default **110 seconds** in `httpRuntime executionTimeout`; site-level limits may differ). A full `--domain All` refresh can exceed that limit on large databases, causing HTTP **502/504** even if the worker logic would eventually succeed.
+
+| Method | Timeout risk | Recommended use |
+| --- | --- | --- |
+| `POST /api/admin/dashboard/refresh` | Bound by IIS / reverse-proxy request timeout (~110 s default) | Single-domain ad-hoc refresh from the portal |
+| `btr.portal.worker.exe` | No HTTP timeout; Task Scheduler allows up to 30 minutes (see task checklist) | Initial backfill, `--domain All`, scheduled production refresh |
+
+If an API-triggered refresh times out, check `BTR_PortalDashboardRefreshLog` — the refresh may still be `Running` or may have failed mid-run. Prefer the worker CLI for full rebuilds and re-run a single domain via API only when duration is known to be short.
+
+---
+
 ## Monitoring
 
 | Check | How |
 | --- | --- |
-| Last refresh per domain | `SELECT TOP 1 * FROM BTR_PortalDashboardRefreshLog WHERE Domain = 'Piutang' ORDER BY CompletedAt DESC` |
+| Last refresh per domain (API) | `GET /api/health/dashboard-snapshots` — overall `status`: `unknown` (no refresh logged), `ok`, `refreshing`, or `degraded` |
+| Last refresh per domain (SQL) | `SELECT TOP 1 * FROM BTR_PortalDashboardRefreshLog WHERE Domain = 'Piutang' ORDER BY CompletedAt DESC` |
 | Worker log | `{worker-folder}/logs/btr-portal-worker-{date}.log` |
 | Task Scheduler history | Task Scheduler → task → History tab |
 | Portal overview staleness | Dashboard home cards show per-domain `GeneratedAt` |

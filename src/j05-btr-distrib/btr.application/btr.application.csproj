@@ -260,6 +260,7 @@
     <Compile Include="ReportingContext\DashboardSnapshotAgg\Contracts\IDashboardInventorySnapshotDal.cs" />
     <Compile Include="ReportingContext\DashboardSnapshotAgg\Contracts\IDashboardPiutangSnapshotDal.cs" />
     <Compile Include="ReportingContext\DashboardSnapshotAgg\Contracts\IDashboardSalesSnapshotDal.cs" />
+    <Compile Include="ReportingContext\DashboardSnapshotAgg\Commands\RefreshDashboardSnapshotsCommand.cs" />
     <Compile Include="ReportingContext\DashboardSnapshotAgg\Contracts\IDashboardSnapshotRefreshLogDal.cs" />
     <Compile Include="ReportingContext\DashboardSnapshotAgg\Contracts\IPiutangOpenBalanceDal.cs" />
     <Compile Include="ReportingContext\DashboardSnapshotAgg\DashboardSnapshotOptions.cs" />
@@ -268,6 +269,8 @@
     <Compile Include="ReportingContext\DashboardSnapshotAgg\Models\DashboardPiutangAggregateResult.cs" />
     <Compile Include="ReportingContext\DashboardSnapshotAgg\Models\DashboardSalesAggregateResult.cs" />
     <Compile Include="ReportingContext\DashboardSnapshotAgg\Models\DashboardSnapshotRefreshLogModel.cs" />
+    <Compile Include="ReportingContext\DashboardSnapshotAgg\DashboardSnapshotHealthStatusResolver.cs" />
+    <Compile Include="ReportingContext\DashboardSnapshotAgg\Models\DashboardSnapshotRefreshStatusModel.cs" />
     <Compile Include="ReportingContext\DashboardSnapshotAgg\Models\PiutangOpenBalanceDto.cs" />
     <Compile Include="ReportingContext\DashboardSnapshotAgg\Services\DashboardInventoryAggregator.cs" />
     <Compile Include="ReportingContext\DashboardSnapshotAgg\Services\DashboardPiutangAggregator.cs" />

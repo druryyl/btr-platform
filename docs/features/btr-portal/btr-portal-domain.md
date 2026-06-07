@@ -99,6 +99,10 @@ Summary landing page with three KPI cards (Sales, Piutang, Inventory). Each card
 
 **Data source:** `GET /api/dashboard/overview` reads Layer A KPI snapshot tables only (`BTR_PortalDashboard*Kpi`). Each card displays its domain's `GeneratedAt` timestamp from the last successful background refresh. Domains may show different refresh times when per-domain scheduler cadences differ (Piutang 15 min, Sales 30 min, Inventory 60 min).
 
+**Background refresh:** Scheduled by `btr.portal.worker` via Windows Task Scheduler (per-domain jobs). Authenticated users may trigger an on-demand rebuild via `POST /api/admin/dashboard/refresh` with optional body `{ "domain": "All|Piutang|Inventory|Sales" }` (default `All`; domain values are case-insensitive). For full rebuilds or long-running refreshes, prefer the worker CLI — the API runs synchronously and is subject to IIS request timeouts (~110 s default). Operations may also use: `btr.portal.worker.exe --domain All --triggered-by Manual`.
+
+**Observability:** `GET /api/health/dashboard-snapshots` (no auth) returns the latest refresh attempt per domain from `BTR_PortalDashboardRefreshLog`, including status, duration, and configured interval minutes. Overall health is `unknown` when no domain has a refresh log yet; otherwise `ok`, `refreshing` (any domain `Running`), or `degraded` (any domain `Failed`).
+
 ### Sales Dashboard (`/dashboard/sales`)
 
 **Period:** Current calendar month — non-void Fakturs only (`FakturDate` within month).
@@ -308,6 +312,7 @@ Capabilities delivered and accepted across milestones M1–M15:
 | Capability | Status |
 | ---------- | ------ |
 | Portal API foundation (DI, MediatR, health, CORS, logging) | Complete |
+| Materialized dashboard snapshots (background worker + admin refresh) | Complete |
 | JWT authentication with BTR users | Complete |
 | ReportingContext architecture | Complete |
 | Dashboard home with Sales, Piutang, Inventory summary KPIs | Complete |

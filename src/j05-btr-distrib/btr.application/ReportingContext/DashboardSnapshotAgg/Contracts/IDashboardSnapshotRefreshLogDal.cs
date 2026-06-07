@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using btr.application.ReportingContext.DashboardSnapshotAgg.Models;
 
 namespace btr.application.ReportingContext.DashboardSnapshotAgg.Contracts
@@ -9,5 +10,7 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.Contracts
         void MarkSuccess(string refreshLogId, int durationMs);
 
         void MarkFailed(string refreshLogId, int durationMs, string errorMessage);
+
+        IReadOnlyList<DashboardSnapshotRefreshStatusModel> GetLatestPerDomain();
     }
 }
