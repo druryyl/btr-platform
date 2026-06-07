@@ -3,7 +3,7 @@
 **Audience:** Product Owner, Business Owner, Developers, Future Agents  
 **Purpose:** Define what BTR Portal is, why it exists, and the business meaning of its dashboards, reports, and KPIs.
 
-**Related permanent docs:** [Architecture (WHAT)](./btr-portal-architecture.md) · [Operational (HOW)](./btr-portal-operational.md) · [Extraction report](./knowledge-extraction-report-btr-portal-api-scaffolding.md)
+**Related permanent docs:** [Architecture (WHAT)](./btr-portal-architecture.md) · [Operational (HOW)](./btr-portal-operational.md) · [Materialized dashboards](../materialized-dashboard/materialized-dashboard-domain.md) · [Extraction report M1–M15](./knowledge-extraction-report-m1-m15.md)
 
 For how to use the portal, see [btr-portal-operational.md](./btr-portal-operational.md).  
 For how it is built, see [btr-portal-architecture.md](./btr-portal-architecture.md).
@@ -124,7 +124,7 @@ Summary landing page with three KPI cards (Sales, Piutang, Inventory). Each card
 
 ### Piutang Dashboard (`/dashboard/piutang`)
 
-**Period:** Current outstanding snapshot (`2000-01-01` through today; open balances only).
+**Period:** Current open receivables snapshot — rows where `Sisa > 1` at refresh time (business rule: `KurangBayar > 1`). See [materialized dashboard domain](../materialized-dashboard/materialized-dashboard-domain.md).
 
 **Purpose:** Finance monitoring and collection prioritization through aging and customer concentration.
 

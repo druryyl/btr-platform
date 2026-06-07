@@ -3,7 +3,7 @@
 **Audience:** Developers, Architects, Future Agents  
 **Purpose:** Describe how BTR Portal is built and the conventions to follow when extending it.
 
-**Related permanent docs:** [Domain (WHY)](./btr-portal-domain.md) · [Operational (HOW)](./btr-portal-operational.md) · [Extraction report](./knowledge-extraction-report-btr-portal-api-scaffolding.md)
+**Related permanent docs:** [Domain (WHY)](./btr-portal-domain.md) · [Operational (HOW)](./btr-portal-operational.md) · [Materialized dashboards](../materialized-dashboard/materialized-dashboard-architecture.md) · [Extraction report M1–M15](./knowledge-extraction-report-m1-m15.md)
 
 For business definitions, see [btr-portal-domain.md](./btr-portal-domain.md).  
 For user-facing behavior, see [btr-portal-operational.md](./btr-portal-operational.md).
@@ -229,7 +229,7 @@ Aggregation runs in `Dashboard{Domain}Aggregator` during snapshot refresh (worke
 | Sales achievement % | `SalesOmzetChartAchievementPolicy.ComputePercent()` | Applied to aggregate totals |
 | Sales weekly trend | Faktur `GrandTotal` grouped by calendar week | 7-day segments from month start |
 | Sales ranking | `SUM(GrandTotal)` per `SalesPersonName`, top 10 descending | Completed Omzet = invoiced omzet |
-| Piutang | `IPiutangSalesWilayahDal` + inline aggregation | Period 2000→today; `KurangBayar > 1`; customer key resolution |
+| Piutang | `IPiutangOpenBalanceDal` (`Sisa > 1`) + inline aggregation | Open balances only; `KurangBayar > 1`; customer key resolution |
 | Piutang aging | Inline bucket assignment | `DaysOverdue = Today − JatuhTempo`; five inclusive buckets |
 | Inventory | `IStokBalanceViewDal` + BrgId-first pipeline | Exclude In-Transit; group by `BrgId`; sum Qty and Hpp×Qty |
 | Inventory rollup | Category/supplier grouping after BrgId step | Blank → `"Unknown"` |
