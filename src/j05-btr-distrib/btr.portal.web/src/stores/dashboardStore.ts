@@ -5,6 +5,7 @@ import {
   fetchDashboardSalesman,
   fetchDashboardExecutive,
   fetchDashboardInventory,
+  fetchDashboardInventoryRisk,
   fetchDashboardOverview,
   fetchDashboardPiutang,
   fetchDashboardPurchasing,
@@ -16,6 +17,7 @@ import type {
   DashboardSalesmanResponse,
   DashboardExecutiveResponse,
   DashboardInventoryResponse,
+  DashboardInventoryRiskResponse,
   DashboardOverviewResponse,
   DashboardPiutangResponse,
   DashboardPurchasingResponse,
@@ -28,6 +30,7 @@ export const useDashboardStore = defineStore('dashboard', () => {
   const sales = ref<DashboardSalesResponse | null>(null)
   const piutang = ref<DashboardPiutangResponse | null>(null)
   const inventory = ref<DashboardInventoryResponse | null>(null)
+  const inventoryRisk = ref<DashboardInventoryRiskResponse | null>(null)
   const purchasing = ref<DashboardPurchasingResponse | null>(null)
   const customer = ref<DashboardCustomerResponse | null>(null)
   const salesman = ref<DashboardSalesmanResponse | null>(null)
@@ -107,6 +110,23 @@ export const useDashboardStore = defineStore('dashboard', () => {
     }
   }
 
+  async function loadInventoryRisk(): Promise<void> {
+    loading.value = true
+    error.value = null
+
+    try {
+      inventoryRisk.value = await fetchDashboardInventoryRisk()
+
+      if (!inventoryRisk.value.IsAvailable) {
+        error.value = 'Inventory risk data is not yet available. Run the snapshot refresh worker.'
+      }
+    } catch (err) {
+      error.value = getApiErrorMessage(err, 'Failed to load inventory risk dashboard.')
+    } finally {
+      loading.value = false
+    }
+  }
+
   async function loadPurchasing(): Promise<void> {
     loading.value = true
     error.value = null
@@ -160,6 +180,7 @@ export const useDashboardStore = defineStore('dashboard', () => {
     sales.value = null
     piutang.value = null
     inventory.value = null
+    inventoryRisk.value = null
     purchasing.value = null
     customer.value = null
     salesman.value = null
@@ -173,6 +194,7 @@ export const useDashboardStore = defineStore('dashboard', () => {
     sales,
     piutang,
     inventory,
+    inventoryRisk,
     purchasing,
     customer,
     salesman,
@@ -183,6 +205,7 @@ export const useDashboardStore = defineStore('dashboard', () => {
     loadSales,
     loadPiutang,
     loadInventory,
+    loadInventoryRisk,
     loadPurchasing,
     loadCustomer,
     loadSalesman,

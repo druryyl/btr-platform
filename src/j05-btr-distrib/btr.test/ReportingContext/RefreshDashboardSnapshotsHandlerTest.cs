@@ -107,6 +107,7 @@ namespace btr.test.ReportingContext
             StubAllWorker allWorker = null,
             StubPiutangWorker piutangWorker = null,
             StubInventoryWorker inventoryWorker = null,
+            StubInventoryRiskWorker inventoryRiskWorker = null,
             StubSalesWorker salesWorker = null,
             StubPurchasingWorker purchasingWorker = null,
             StubCustomerWorker customerWorker = null,
@@ -116,6 +117,7 @@ namespace btr.test.ReportingContext
                 allWorker ?? new StubAllWorker(),
                 piutangWorker ?? new StubPiutangWorker(),
                 inventoryWorker ?? new StubInventoryWorker(),
+                inventoryRiskWorker ?? new StubInventoryRiskWorker(),
                 salesWorker ?? new StubSalesWorker(),
                 purchasingWorker ?? new StubPurchasingWorker(),
                 customerWorker ?? new StubCustomerWorker(),
@@ -164,6 +166,13 @@ namespace btr.test.ReportingContext
         private sealed class StubInventoryWorker : IRefreshDashboardInventorySnapshotWorker
         {
             public void Execute(RefreshDashboardInventorySnapshotRequest request)
+            {
+            }
+        }
+
+        private sealed class StubInventoryRiskWorker : IRefreshDashboardInventoryRiskSnapshotWorker
+        {
+            public void Execute(RefreshDashboardInventoryRiskSnapshotRequest request)
             {
             }
         }

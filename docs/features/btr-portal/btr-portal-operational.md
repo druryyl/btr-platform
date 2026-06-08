@@ -3,7 +3,7 @@
 **Audience:** End Users, Trainers, Support Team  
 **Purpose:** Explain how to use BTR Portal day to day.
 
-**Related permanent docs:** [Domain (WHY)](./btr-portal-domain.md) · [Architecture (WHAT)](./btr-portal-architecture.md) · [Materialized dashboard ops](../materialized-dashboard/materialized-dashboard-operational.md) · [Extraction — M16/M17](./knowledge-extraction-report-m16-m17.md) · [Extraction — M18](./knowledge-extraction-report-m18.md) · [Extraction — Purchasing](./knowledge-extraction-report-purchasing-dashboard.md)
+**Related permanent docs:** [Domain (WHY)](./btr-portal-domain.md) · [Architecture (WHAT)](./btr-portal-architecture.md) · [Materialized dashboard ops](../materialized-dashboard/materialized-dashboard-operational.md) · [Extraction — M16/M17](./knowledge-extraction-report-m16-m17.md) · [Extraction — M18](./knowledge-extraction-report-m18.md) · [Extraction — M19](./knowledge-extraction-report-m19.md) · [Extraction — Purchasing](./knowledge-extraction-report-purchasing-dashboard.md)
 
 For business definitions and KPI formulas, see [btr-portal-domain.md](./btr-portal-domain.md).
 
@@ -30,7 +30,7 @@ The Dashboard has two levels:
 | Level | Route | What You See |
 | ----- | ----- | ------------ |
 | **Executive (Home)** | `/dashboard` | **Management Attention Center** — attention-oriented KPIs across Sales, Piutang, Inventory, and Purchasing; Top 5 exposure lists; domain summaries. Links go to domain dashboards only. |
-| **Detail** | `/dashboard/sales`, `/dashboard/piutang`, `/dashboard/customers`, `/dashboard/salesmen`, `/dashboard/inventory`, `/dashboard/purchasing` | Full KPI row, charts, and Top 10 tables for that business area (Customer Analytics and Salesman Performance use attention-oriented layout). |
+| **Detail** | `/dashboard/sales`, `/dashboard/piutang`, `/dashboard/customers`, `/dashboard/salesmen`, `/dashboard/inventory`, `/dashboard/inventory-risk`, `/dashboard/purchasing` | Full KPI row, charts, and Top 10 tables for that business area (Customer, Salesman, and Inventory Risk use attention-oriented layout). |
 
 **Navigate:** Sidebar → Dashboard → **Executive** (default home).
 
@@ -238,6 +238,52 @@ Piutang dashboard uses all-time open balance; Piutang Report defaults to a perio
 
 ---
 
+## Slow Moving & Dead Stock Dashboard (M19)
+
+**Navigate:** Sidebar → Dashboard → **Inventory Risk**.
+
+**Route:** `/dashboard/inventory-risk`
+
+**Question answered:** Which inventory requires management attention and why?
+
+### What You See (fixed section order)
+
+1. **Attention Cards** — Dead Stock Item Count/Value, Slow Moving Item Count/Value, At-Risk Inventory %
+2. **Attention Indicator** — when any at-risk inventory exists (generic M16–M18 style)
+3. **Inventory Aging Distribution** — pie chart: Active, Slow Moving, Dead Stock, Never Sold
+4. **Category Risk Exposure** — horizontal bar of at-risk value by category (Top 10)
+5. **Supplier Risk Exposure** — horizontal bar of at-risk value by supplier/principal (Top 10)
+6. **Inventory Attention List** — one row per item × signal (Dead Stock · Slow Moving · Never Sold)
+7. **Top 10 Rankings** — Dead Stock by Value \| Slow Moving by Value
+8. **Navigation** — links to Inventory Dashboard and Inventory Report
+
+### Classification signals
+
+| Signal | Rule |
+| ------ | ---- |
+| Never Sold | Item has stock but no Faktur sales history |
+| Slow Moving | Last Faktur **90–179 days** ago |
+| Dead Stock | Last Faktur **≥ 180 days** ago |
+
+Items with a Faktur within the last **89 days** are **Active** — excluded from at-risk KPIs. An item appears in **at most one** signal row.
+
+**Movement basis:** Last Faktur Date per item (gross invoice history). Returns, stock transfers, and adjustments do not reset the aging clock on this dashboard.
+
+### Drill-down
+
+Click an attention list row or Top 10 row → **Inventory Report** opens with item name pre-filter (`?q=`).
+
+**Navigation path:** Inventory Risk → Inventory Dashboard → Inventory Report.
+
+**Supplements** the Inventory Dashboard (composition view) — does not replace it.
+
+### Freshness
+
+- **⚠ Dashboard Data Not Fresh** when snapshot exceeds **60-minute** refresh interval.
+- **Total Inventory Value** on this dashboard should match the Inventory Dashboard and Inventory Report footer (same BrgId-first aggregation).
+
+---
+
 ## Purchasing Dashboard
 
 **Navigate:** Sidebar → Dashboard → Purchasing, or click the Purchasing attention card on the Management Attention Center.
@@ -366,6 +412,7 @@ The **Piutang Dashboard** shows **all** open receivables (all-time analytics). T
 3. Confirm footer totals match the Inventory Dashboard (when search is empty).
 4. Remember: footer totals group by item first — the sum of visible row values may differ from the footer.
 5. Use **Refresh** after stock movements in BTR Desktop.
+6. When opened from **Inventory Risk** drill-down, the search box is pre-filled from `?q=` (item name).
 
 **Search fields:** Item, Warehouse.
 
@@ -410,6 +457,7 @@ BTR Portal
 │   ├── Customers         → /dashboard/customers
 │   ├── Salesmen          → /dashboard/salesmen
 │   ├── Inventory         → /dashboard/inventory
+│   ├── Inventory Risk    → /dashboard/inventory-risk
 │   └── Purchasing        → /dashboard/purchasing
 └── Reports
     ├── Sales Report      → /reports/sales
@@ -430,6 +478,7 @@ BTR Portal
 | `/dashboard/customers` | Customer Analytics | Yes |
 | `/dashboard/salesmen` | Salesman Performance | Yes |
 | `/dashboard/inventory` | Inventory analytics | Yes |
+| `/dashboard/inventory-risk` | Slow Moving & Dead Stock | Yes |
 | `/dashboard/purchasing` | Purchasing analytics | Yes |
 | `/reports/sales` | Sales Report | Yes |
 | `/reports/piutang` | Piutang Report | Yes |
@@ -445,10 +494,12 @@ Login → Dashboard Home (Management Attention Center)
           ├── Sidebar → Customer Analytics
           ├── Sidebar → Salesman Performance
           ├── Sidebar → Inventory Dashboard
+          ├── Sidebar → Inventory Risk
           └── Sidebar → Purchasing Dashboard
 
 Customer Analytics → click customer row → Sales or Piutang Report (pre-filtered)
 Salesman Performance → click salesman row → Sales or Piutang Report (pre-filtered)
+Inventory Risk → click item row → Inventory Report (pre-filtered)
 Executive / Domain Dashboard → Report (domain reports)
 
 Sidebar → Reports → [Sales | Piutang | Inventory | Purchasing] Report
@@ -510,6 +561,16 @@ Authenticated users visiting `/login` are redirected to Dashboard home.
 4. Open **Reports → Purchasing Report** → scan Posting Stok column for `BELUM` invoices needing warehouse action in BTR Desktop.
 5. Confirm report footer matches dashboard KPIs.
 
+### Reviewing Inventory Risk (M19)
+
+1. Sign in → **Dashboard → Inventory Risk** (`/dashboard/inventory-risk`).
+2. Scan **Attention Cards** — dead stock value, slow moving value, at-risk %.
+3. Review **Aging Distribution** pie for capital split across movement classes.
+4. Check **Category** and **Supplier Risk Exposure** bars for concentration.
+5. Use **Inventory Attention List** for item-level signals and days since last Faktur.
+6. Click an item row → Inventory Report opens with item name pre-filled.
+7. Cross-check **Total Inventory Value** against **Dashboard → Inventory** when reconciling.
+
 ---
 
 ## Frequently Asked Questions
@@ -523,7 +584,7 @@ Authenticated users visiting `/login` are redirected to Dashboard home.
 
 ### Why does the dashboard show an old timestamp?
 
-Dashboard data refreshes on a background schedule, not on every page load. The **generated-at** time shows when snapshots were last rebuilt. Piutang refreshes every 15 minutes; Sales, Purchasing, Customer, and Salesman every 30 minutes; Inventory every 60 minutes. Click **Refresh** to re-read the latest stored snapshot; it does not force an immediate recalculation unless an administrator triggers a manual rebuild.
+Dashboard data refreshes on a background schedule, not on every page load. The **generated-at** time shows when snapshots were last rebuilt. Piutang refreshes every 15 minutes; Sales, Purchasing, Customer, and Salesman every 30 minutes; Inventory and Inventory Risk every 60 minutes. Click **Refresh** to re-read the latest stored snapshot; it does not force an immediate recalculation unless an administrator triggers a manual rebuild.
 
 ### Why does the dashboard say data is not available?
 
@@ -560,6 +621,14 @@ Any BTR user with valid credentials. All authenticated users see the same menus.
 ### How do I export to Excel?
 
 Export is not available in the current version. Use BTR Desktop reports for Excel export if needed.
+
+### Why does Inventory Risk differ from Kartu Stok on Desktop?
+
+The portal uses **Last Faktur Date** per item for slow/dead/never-sold classification. Desktop Kartu Stok Summary may use different movement logic. Use Desktop Faktur Brg Info to validate days since last Faktur for spot checks.
+
+### What is "Never Sold" vs "Dead Stock"?
+
+**Never Sold** means the item has stock but has never appeared on a non-void Faktur. **Dead Stock** means the item was sold before but the last Faktur was at least 180 days ago. An item cannot be both.
 
 ---
 
@@ -626,9 +695,9 @@ cd C:\path\to\btr.portal.worker
 .\btr.portal.worker.exe --domain All --triggered-by Manual
 ```
 
-Verify `BTR_PortalDashboardRefreshLog` shows `Success` for Piutang, Inventory, Sales, Purchasing, Customer, and Salesman.
+Verify `BTR_PortalDashboardRefreshLog` shows `Success` for Piutang, Inventory, InventoryRisk, Sales, Purchasing, Customer, and Salesman.
 
-**Scheduled tasks** — create six separate Windows Task Scheduler jobs:
+**Scheduled tasks** — create seven separate Windows Task Scheduler jobs:
 
 | Task name | Interval | Command |
 | --------- | -------- | ------- |
@@ -636,6 +705,7 @@ Verify `BTR_PortalDashboardRefreshLog` shows `Success` for Piutang, Inventory, S
 | `BTR-Portal-Dashboard-Sales` | Every 30 min | `btr.portal.worker.exe --domain Sales --triggered-by Scheduler` |
 | `BTR-Portal-Dashboard-Purchasing` | Every 30 min | `btr.portal.worker.exe --domain Purchasing --triggered-by Scheduler` |
 | `BTR-Portal-Dashboard-Inventory` | Every 60 min | `btr.portal.worker.exe --domain Inventory --triggered-by Scheduler` |
+| `BTR-Portal-Dashboard-InventoryRisk` | Every 60 min | `btr.portal.worker.exe --domain InventoryRisk --triggered-by Scheduler` |
 | `BTR-Portal-Dashboard-Customer` | Every 30 min | `btr.portal.worker.exe --domain Customer --triggered-by Scheduler` |
 | `BTR-Portal-Dashboard-Salesman` | Every 30 min | `btr.portal.worker.exe --domain Salesman --triggered-by Scheduler` |
 
@@ -645,7 +715,7 @@ Task settings: run whether user is logged on or not; service account with SQL ac
 
 | Argument | Values | Default |
 | -------- | ------ | ------- |
-| `--domain` | `All`, `Piutang`, `Inventory`, `Sales`, `Purchasing`, `Customer`, `Salesman` | `All` |
+| `--domain` | `All`, `Piutang`, `Inventory`, `InventoryRisk`, `Sales`, `Purchasing`, `Customer`, `Salesman` | `All` |
 | `--triggered-by` | `Scheduler`, `Manual` | `Scheduler` |
 
 Exit code `0` = success. Logs: `{worker-folder}/logs/btr-portal-worker-{date}.log`.
@@ -662,7 +732,7 @@ Content-Type: application/json
 { "domain": "All" }
 ```
 
-`domain` accepts `All` (default), `Piutang`, `Inventory`, `Sales`, `Purchasing`, `Customer`, or `Salesman` (case-insensitive).
+`domain` accepts `All` (default), `Piutang`, `Inventory`, `InventoryRisk`, `Sales`, `Purchasing`, `Customer`, or `Salesman` (case-insensitive).
 
 **Prefer worker CLI** for full rebuilds — the API runs refresh synchronously and may hit IIS request timeout (~110 seconds). Use the API for single-domain ad-hoc refresh; use the worker for `--domain All` or initial backfill.
 
@@ -671,7 +741,7 @@ Content-Type: application/json
 | Check | How |
 | ----- | --- |
 | API health | `GET /api/health` → 200 |
-| Snapshot health | `GET /api/health/dashboard-snapshots` — status: `unknown`, `ok`, `refreshing`, or `degraded`; each domain (Piutang, Sales, Purchasing, Inventory, Customer, Salesman) shows `LastRefresh.Status` |
+| Snapshot health | `GET /api/health/dashboard-snapshots` — status: `unknown`, `ok`, `refreshing`, or `degraded`; each domain (Piutang, Inventory, InventoryRisk, Sales, Purchasing, Customer, Salesman) shows `LastRefresh.Status` |
 | Last refresh (SQL) | `SELECT TOP 1 * FROM BTR_PortalDashboardRefreshLog WHERE Domain = 'Purchasing' ORDER BY CompletedAt DESC` |
 | Worker log | `{worker-folder}/logs/btr-portal-worker-{date}.log` |
 | Task Scheduler | History tab on each scheduled task |
@@ -695,6 +765,7 @@ POST /api/auth/login                     → 200 with token
 GET  /api/dashboard/executive            → 200 with token (after worker run)
 GET  /api/dashboard/customers            → 200 with token (after Customer worker run)
 GET  /api/dashboard/salesmen             → 200 with token (after Salesman worker run)
+GET  /api/dashboard/inventory-risk       → 200 with token (after InventoryRisk worker run)
 GET  /api/dashboard/sales                → 200 with token
 GET  /api/dashboard/purchasing           → 200 with token
 GET  /api/reports/sales                  → 200 with token

@@ -125,6 +125,7 @@
     <Compile Include="Helpers\CodingPlayground.cs" />
     <Compile Include="ReportingContext\InventoryReportDalTest.cs" />
     <Compile Include="ReportingContext\DashboardInventoryAggregatorTest.cs" />
+    <Compile Include="ReportingContext\DashboardInventoryRiskAggregatorTest.cs" />
     <Compile Include="ReportingContext\DashboardInventoryDalTest.cs" />
     <Compile Include="ReportingContext\DashboardInventorySnapshotVerificationTest.cs" />
     <Compile Include="ReportingContext\DashboardSalesFakturAggregatorTest.cs" />

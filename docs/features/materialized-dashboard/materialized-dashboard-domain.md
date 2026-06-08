@@ -56,7 +56,7 @@ For portal navigation, report definitions, and full KPI catalog, see [btr-portal
 | -------- | ------ | ----------- |
 | Overview home data source | Layer A KPI snapshots via `GET /api/dashboard/overview` | Fast home page; per-domain `GeneratedAt` may differ |
 | Sales KPI source | **Faktur only** — `SUM(GrandTotal)` for non-void current-month Fakturs | Aligns with Sales Report; pipeline excluded |
-| Refresh cadence | Piutang **15 min**, Sales **30 min**, Purchasing **30 min**, Customer **30 min**, Salesman **30 min**, Inventory **60 min** | Six Task Scheduler jobs |
+| Refresh cadence | Piutang **15 min**, Sales **30 min**, Purchasing **30 min**, Customer **30 min**, Salesman **30 min**, Inventory **60 min**, InventoryRisk **60 min** | Seven Task Scheduler jobs |
 | Snapshot history | **`CURRENT` row only** | Delete-and-replace each refresh |
 | Manual refresh | Portal API + worker CLI | BTR Desktop trigger deferred |
 | Live aggregation fallback | **Removed** after Phase 4 cutover | Dashboards require populated snapshots |
@@ -85,7 +85,7 @@ Dashboard numbers are **point-in-time snapshots**, not live operational balances
 | Concept | Definition |
 | ------- | ---------- |
 | `GeneratedAt` | When the background worker last successfully rebuilt that domain's snapshot |
-| Maximum staleness | One refresh interval (15 / 30 / 60 min per domain; Purchasing, Customer, Salesman 30 min) |
+| Maximum staleness | One refresh interval (15 / 30 / 60 min per domain; Purchasing, Customer, Salesman 30 min; Inventory, InventoryRisk 60 min) |
 | User Refresh button | Re-reads stored snapshot from API — does **not** trigger recalculation |
 | Manual rebuild | Administrator triggers worker or `POST /api/admin/dashboard/refresh` |
 
@@ -196,6 +196,30 @@ Reads **source DALs** at refresh (Faktur with `SalesPersonId`, piutang open bala
 
 **Protected modules unchanged:** `DashboardSalesFakturAggregator`, `BTR_PortalDashboardSalesTopSalesman`, `DashboardExecutiveComposer`.
 
+### Inventory Risk (slow moving & dead stock — M19)
+
+Reads **source DALs** at refresh (`IStokBalanceViewDal` + `IBrgLastFakturDal`) — not M15 Inventory snapshot tables. Uses shared `DashboardInventoryItemGroupBuilder` for position rules.
+
+| KPI | Definition |
+| --- | ---------- |
+| **Dead Stock** | Items with `LastFakturDate` idle ≥ 180 days; value = `Hpp × Qty` |
+| **Slow Moving** | Items with idle **90–179 days** (mutually exclusive with Dead; excludes Never Sold) |
+| **Never Sold** | Stock with no non-void FakturItem history — separate signal |
+| **At-Risk Inventory %** | `(NeverSold + Slow + Dead value) / TotalInventoryValue` |
+| **Aging buckets** | Active (≤89 days) · Slow Moving · Dead Stock · Never Sold |
+| **Attention list** | One row per item × signal: DeadStock, SlowMoving, NeverSold |
+| **Category/Supplier exposure** | Top 10 at-risk value per dimension |
+
+**Classification authority:** `MAX(FakturDate)` per `BrgId` from gross Faktur only. Retur and non-sales outflows do not reset the clock.
+
+**Refresh order in `All`:** Piutang → Inventory → **InventoryRisk** → Sales → Purchasing → Customer → Salesman.
+
+**Snapshot tables:** `BTR_PortalDashboardInventoryRiskKpi`, `Aging`, `Attention`, `TopDead`, `TopSlow`, `Breakdown`.
+
+**Protected modules unchanged:** `DashboardInventoryAggregator`, `BTR_PortalDashboardInventory*`, `GET /api/dashboard/inventory`.
+
+**Executive promotion (Phase 2 — deferred):** Dead Stock Value, At-Risk %, Inventory Risk Attention Indicator on Management Attention Center.
+
 ---
 
 ## Dashboard–Report Traceability Matrix
@@ -206,6 +230,8 @@ Reads **source DALs** at refresh (Faktur with `SalesPersonId`, piutang open bala
 | Total Customer (Piutang) | Piutang Report footer | Distinct customer key count |
 | Total Inventory Value | Inventory Report footer | BrgId-grouped `Sum(Hpp × Qty)` excl. In-Transit |
 | Total Item | Inventory Report footer | Count BrgId where aggregated Qty > 0 |
+| Total Inventory Value (Inventory Risk) | Inventory Dashboard / Report footer | Same BrgId-first denominator as M15 |
+| At-Risk Inventory % | — | Sum of disjoint Never/Slow/Dead values ÷ TotalInventoryValue |
 | Sales Total Omzet / Achievement | Sales Report | Sum of `GrandTotal` from report rows (same month) |
 | Grand Total Purchase / Total Invoice | Purchasing Report footer | Same invoice source and current-month period |
 
@@ -234,10 +260,11 @@ If dashboard and report totals diverge after both pages are refreshed, escalate 
 5. `GeneratedAt` reflects last successful background refresh.
 6. `BTR_SalesOmzet` reconcile workflow unaffected.
 7. Overview home loads from Layer A snapshots only.
-8. Refresh cadence operational: 15 / 30 / 30 / 30 / 30 / 60 min per domain (Piutang / Sales / Purchasing / Customer / Salesman / Inventory).
+8. Refresh cadence operational: 15 / 30 / 30 / 30 / 30 / 60 / 60 min per domain (Piutang / Sales / Purchasing / Customer / Salesman / Inventory / InventoryRisk).
 9. Purchasing KPIs reconcile with Purchasing Report footer totals.
 10. Customer snapshot populated by dedicated worker reading source DALs; Customer Analytics API serves from `BTR_PortalDashboardCustomer*` tables.
 11. Salesman snapshot populated by dedicated worker reading source DALs; Salesman Performance API serves from `BTR_PortalDashboardSalesman*` tables; Top 10 Omzet reconciles with Sales Report totals grouped by salesman name for current month.
+12. Inventory Risk snapshot populated by dedicated worker reading `IStokBalanceViewDal` + `IBrgLastFakturDal`; API serves from `BTR_PortalDashboardInventoryRisk*` tables; `TotalInventoryValue` reconciles with M15 Inventory Dashboard.
 
 ---
 

@@ -9,6 +9,8 @@ import type { DashboardPiutangAgingBucket } from '@/models/dashboard'
 const props = defineProps<{
   buckets: DashboardPiutangAgingBucket[]
   loading: boolean
+  title?: string
+  emptyMessage?: string
 }>()
 
 const BUCKET_COLORS: Record<string, string> = {
@@ -17,7 +19,14 @@ const BUCKET_COLORS: Record<string, string> = {
   Days31To60: '#f97316',
   Days61To90: '#ef4444',
   DaysOver90: '#991b1b',
+  Active: '#22c55e',
+  SlowMoving: '#f97316',
+  DeadStock: '#ef4444',
+  NeverSold: '#64748b',
 }
+
+const chartTitle = computed(() => props.title ?? 'Aging Distribution')
+const chartEmptyMessage = computed(() => props.emptyMessage ?? 'No outstanding piutang data.')
 
 const sortedBuckets = computed(() =>
   [...props.buckets].sort((a, b) => a.SortOrder - b.SortOrder),
@@ -62,7 +71,7 @@ const chartOptions = computed(() => ({
     <template #title>
       <div class="aging-pie-chart__title">
         <i class="pi pi-chart-pie" aria-hidden="true" />
-        <span>Aging Distribution</span>
+        <span>{{ chartTitle }}</span>
       </div>
     </template>
 
@@ -76,7 +85,7 @@ const chartOptions = computed(() => ({
           <Chart type="pie" :data="chartData" :options="chartOptions" />
         </div>
         <p v-else class="aging-pie-chart__empty">
-          No outstanding piutang data.
+          {{ chartEmptyMessage }}
         </p>
       </template>
     </template>

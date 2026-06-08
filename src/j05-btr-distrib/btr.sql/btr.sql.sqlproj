@@ -156,6 +156,12 @@
     <Build Include="Tables\ReportingContext\BTR_PortalDashboardPiutangTopCustomer.sql" />
     <Build Include="Tables\ReportingContext\BTR_PortalDashboardInventoryKpi.sql" />
     <Build Include="Tables\ReportingContext\BTR_PortalDashboardInventoryBreakdown.sql" />
+    <Build Include="Tables\ReportingContext\BTR_PortalDashboardInventoryRiskKpi.sql" />
+    <Build Include="Tables\ReportingContext\BTR_PortalDashboardInventoryRiskAging.sql" />
+    <Build Include="Tables\ReportingContext\BTR_PortalDashboardInventoryRiskAttention.sql" />
+    <Build Include="Tables\ReportingContext\BTR_PortalDashboardInventoryRiskTopDead.sql" />
+    <Build Include="Tables\ReportingContext\BTR_PortalDashboardInventoryRiskTopSlow.sql" />
+    <Build Include="Tables\ReportingContext\BTR_PortalDashboardInventoryRiskBreakdown.sql" />
     <Build Include="Tables\ReportingContext\BTR_PortalDashboardSalesKpi.sql" />
     <Build Include="Tables\ReportingContext\BTR_PortalDashboardSalesWeekTrend.sql" />
     <Build Include="Tables\ReportingContext\BTR_PortalDashboardSalesTopSalesman.sql" />

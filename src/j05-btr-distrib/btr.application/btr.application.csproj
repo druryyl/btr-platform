@@ -253,6 +253,8 @@
     <Compile Include="PurchaseContext\SupplierAgg\Workers\SupplierWriter.cs" />
     <Compile Include="ReportingContext\DashboardInventoryAgg\Contracts\IDashboardInventoryDal.cs" />
     <Compile Include="ReportingContext\DashboardInventoryAgg\Queries\GetDashboardInventoryQuery.cs" />
+    <Compile Include="ReportingContext\DashboardInventoryRiskAgg\Contracts\IDashboardInventoryRiskDal.cs" />
+    <Compile Include="ReportingContext\DashboardInventoryRiskAgg\Queries\GetDashboardInventoryRiskQuery.cs" />
     <Compile Include="ReportingContext\DashboardCustomerAgg\Contracts\IDashboardCustomerDal.cs" />
     <Compile Include="ReportingContext\DashboardCustomerAgg\Queries\GetDashboardCustomerQuery.cs" />
     <Compile Include="ReportingContext\DashboardSalesmanAgg\Contracts\IDashboardSalesmanDal.cs" />
@@ -266,6 +268,7 @@
     <Compile Include="ReportingContext\DashboardExecutiveAgg\Services\DashboardExecutiveComposer.cs" />
     <Compile Include="ReportingContext\DashboardExecutiveAgg\Services\ExecutiveSalesAchievementBandResolver.cs" />
     <Compile Include="ReportingContext\DashboardSnapshotAgg\Contracts\IDashboardInventorySnapshotDal.cs" />
+    <Compile Include="ReportingContext\DashboardSnapshotAgg\Contracts\IDashboardInventoryRiskSnapshotDal.cs" />
     <Compile Include="ReportingContext\DashboardSnapshotAgg\Contracts\IDashboardPiutangSnapshotDal.cs" />
     <Compile Include="ReportingContext\DashboardSnapshotAgg\Contracts\IDashboardSalesSnapshotDal.cs" />
     <Compile Include="ReportingContext\DashboardSnapshotAgg\Contracts\IDashboardPurchasingSnapshotDal.cs" />
@@ -278,6 +281,7 @@
     <Compile Include="ReportingContext\DashboardSnapshotAgg\DashboardSnapshotOptions.cs" />
     <Compile Include="ReportingContext\DashboardSnapshotAgg\DashboardSnapshotUnavailableException.cs" />
     <Compile Include="ReportingContext\DashboardSnapshotAgg\Models\DashboardInventoryAggregateResult.cs" />
+    <Compile Include="ReportingContext\DashboardSnapshotAgg\Models\DashboardInventoryRiskAggregateResult.cs" />
     <Compile Include="ReportingContext\DashboardSnapshotAgg\Models\DashboardPiutangAggregateResult.cs" />
     <Compile Include="ReportingContext\DashboardSnapshotAgg\Models\DashboardSalesAggregateResult.cs" />
     <Compile Include="ReportingContext\DashboardSnapshotAgg\Models\DashboardPurchasingAggregateResult.cs" />
@@ -287,7 +291,9 @@
     <Compile Include="ReportingContext\DashboardSnapshotAgg\DashboardSnapshotHealthStatusResolver.cs" />
     <Compile Include="ReportingContext\DashboardSnapshotAgg\Models\DashboardSnapshotRefreshStatusModel.cs" />
     <Compile Include="ReportingContext\DashboardSnapshotAgg\Models\PiutangOpenBalanceDto.cs" />
+    <Compile Include="ReportingContext\DashboardSnapshotAgg\Services\DashboardInventoryItemGroupBuilder.cs" />
     <Compile Include="ReportingContext\DashboardSnapshotAgg\Services\DashboardInventoryAggregator.cs" />
+    <Compile Include="ReportingContext\DashboardSnapshotAgg\Services\DashboardInventoryRiskAggregator.cs" />
     <Compile Include="ReportingContext\DashboardSnapshotAgg\Services\DashboardPiutangAggregator.cs" />
     <Compile Include="ReportingContext\DashboardSnapshotAgg\Services\DashboardSalesFakturAggregator.cs" />
     <Compile Include="ReportingContext\DashboardSnapshotAgg\Services\DashboardPurchasingInvoiceAggregator.cs" />
@@ -299,6 +305,8 @@
     <Compile Include="ReportingContext\DashboardSnapshotAgg\UseCases\RefreshAllDashboardSnapshotsWorker.cs" />
     <Compile Include="ReportingContext\DashboardSnapshotAgg\UseCases\RefreshDashboardInventorySnapshotRequest.cs" />
     <Compile Include="ReportingContext\DashboardSnapshotAgg\UseCases\RefreshDashboardInventorySnapshotWorker.cs" />
+    <Compile Include="ReportingContext\DashboardSnapshotAgg\UseCases\RefreshDashboardInventoryRiskSnapshotRequest.cs" />
+    <Compile Include="ReportingContext\DashboardSnapshotAgg\UseCases\RefreshDashboardInventoryRiskSnapshotWorker.cs" />
     <Compile Include="ReportingContext\DashboardSnapshotAgg\UseCases\RefreshDashboardPiutangSnapshotRequest.cs" />
     <Compile Include="ReportingContext\DashboardSnapshotAgg\UseCases\RefreshDashboardPiutangSnapshotWorker.cs" />
     <Compile Include="ReportingContext\DashboardSnapshotAgg\UseCases\RefreshDashboardSalesSnapshotRequest.cs" />
@@ -364,6 +372,7 @@
     <Compile Include="SalesContext\FakturControlAgg\ListFakturControlWorker.cs" />
     <Compile Include="SalesContext\FakturInfo\FakturView.cs" />
     <Compile Include="SalesContext\FakturInfo\ICustomerLastFakturDal.cs" />
+    <Compile Include="SalesContext\FakturInfo\IBrgLastFakturDal.cs" />
     <Compile Include="SalesContext\FakturInfo\IFakturViewDal.cs" />
     <Compile Include="SalesContext\FakturPajakInfo\IFakturPajakDal.cs" />
     <Compile Include="SalesContext\FakturPajakVoidAgg\FaktuPajakVoidWriter.cs" />

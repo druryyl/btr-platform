@@ -176,6 +176,80 @@ export interface DashboardInventoryResponse {
   TopSuppliers: DashboardInventoryRankingItem[]
 }
 
+export interface DashboardInventoryRiskAttentionCards {
+  TotalInventoryValue: number
+  DeadStockItemCount: number
+  DeadStockValue: number
+  SlowMovingItemCount: number
+  SlowMovingValue: number
+  AtRiskInventoryPercent: number
+  RequiresAttention: boolean
+}
+
+export interface DashboardInventoryRiskAgingBucket {
+  BucketKey: string
+  BucketLabel: string
+  Amount: number
+  ItemCount: number
+  SortOrder: number
+}
+
+export interface DashboardInventoryRiskBreakdownItem {
+  Name: string
+  AtRiskValue: number
+  ItemCount: number
+  PercentOfAtRisk: number | null
+}
+
+export interface DashboardInventoryRiskAttentionItem {
+  BrgCode: string
+  BrgName: string
+  KategoriName: string
+  SupplierName: string
+  Qty: number
+  InventoryValue: number
+  DaysSinceLastFaktur: number | null
+  SignalKey: string
+  SignalLabel: string
+  ReportRoute: string
+}
+
+export interface DashboardInventoryRiskRankingRow {
+  Rank: number
+  BrgCode: string
+  BrgName: string
+  KategoriName: string
+  SupplierName: string
+  Qty: number
+  InventoryValue: number
+  DaysSinceLastFaktur: number
+  PercentOfAtRisk: number | null
+  ReportRoute: string
+}
+
+export interface DashboardInventoryRiskRankings {
+  TopDead: DashboardInventoryRiskRankingRow[]
+  TopSlow: DashboardInventoryRiskRankingRow[]
+}
+
+export interface DashboardInventoryRiskNavigationLinks {
+  InventoryDashboardRoute: string
+  InventoryReportRoute: string
+}
+
+export interface DashboardInventoryRiskResponse {
+  IsAvailable: boolean
+  IsDataFresh: boolean
+  GeneratedAt: string | null
+  AttentionCards: DashboardInventoryRiskAttentionCards | null
+  AgingBuckets: DashboardInventoryRiskAgingBucket[]
+  CategoryRiskExposure: DashboardInventoryRiskBreakdownItem[]
+  SupplierRiskExposure: DashboardInventoryRiskBreakdownItem[]
+  AttentionList: DashboardInventoryRiskAttentionItem[]
+  Rankings: DashboardInventoryRiskRankings | null
+  Navigation: DashboardInventoryRiskNavigationLinks | null
+}
+
 export interface DashboardPurchasingWeekTrendItem {
   WeekStart: string
   WeekEnd: string

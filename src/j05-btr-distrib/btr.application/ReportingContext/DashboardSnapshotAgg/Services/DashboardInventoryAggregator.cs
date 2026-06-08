@@ -8,8 +8,8 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.Services
 {
     public class DashboardInventoryAggregator
     {
-        public const string InTransitWarehouseName = "In-Transit";
-        public const string UnknownLabel = "Unknown";
+        public const string InTransitWarehouseName = DashboardInventoryItemGroupBuilder.InTransitWarehouseName;
+        public const string UnknownLabel = DashboardInventoryItemGroupBuilder.UnknownLabel;
         public const string DimensionCategory = "Category";
         public const string DimensionSupplier = "Supplier";
 
@@ -17,7 +17,7 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.Services
             IEnumerable<StokBalanceView> rows,
             DateTime generatedAt)
         {
-            var itemGroups = BuildItemGroups(rows);
+            var itemGroups = DashboardInventoryItemGroupBuilder.BuildItemGroups(rows);
             var categoryRollup = BuildDimensionRollup(itemGroups, g => g.CategoryName);
             var supplierRollup = BuildDimensionRollup(itemGroups, g => g.SupplierName);
             var topCategories = BuildTop10(categoryRollup);
@@ -36,44 +36,9 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.Services
             };
         }
 
-        private sealed class ItemGroup
-        {
-            public string BrgId { get; set; }
-            public decimal Qty { get; set; }
-            public decimal InventoryValue { get; set; }
-            public string CategoryName { get; set; }
-            public string SupplierName { get; set; }
-        }
-
-        private static List<ItemGroup> BuildItemGroups(IEnumerable<StokBalanceView> rows)
-        {
-            var filtered = (rows ?? Enumerable.Empty<StokBalanceView>())
-                .Where(x => x.WarehouseName != InTransitWarehouseName)
-                .ToList();
-
-            return (
-                from row in filtered
-                group row by row.BrgId into g
-                let qty = g.Sum(x => x.Qty)
-                where qty > 0
-                select new ItemGroup
-                {
-                    BrgId = g.Key ?? string.Empty,
-                    Qty = qty,
-                    InventoryValue = g.Sum(x => x.Hpp * x.Qty),
-                    CategoryName = NormalizeDimensionName(g.Select(x => x.KategoriName).FirstOrDefault()),
-                    SupplierName = NormalizeDimensionName(g.Select(x => x.SupplierName).FirstOrDefault())
-                }).ToList();
-        }
-
-        private static string NormalizeDimensionName(string name)
-        {
-            return string.IsNullOrWhiteSpace(name) ? UnknownLabel : name.Trim();
-        }
-
         private static List<(string Name, decimal InventoryValue)> BuildDimensionRollup(
-            List<ItemGroup> itemGroups,
-            Func<ItemGroup, string> dimensionSelector)
+            List<DashboardInventoryItemGroup> itemGroups,
+            Func<DashboardInventoryItemGroup, string> dimensionSelector)
         {
             return itemGroups
                 .GroupBy(dimensionSelector, StringComparer.OrdinalIgnoreCase)

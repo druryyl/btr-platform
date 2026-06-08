@@ -3,7 +3,7 @@
 **Audience:** Product Owner, Business Owner, Developers, Future Agents  
 **Purpose:** Define what BTR Portal is, why it exists, and the business meaning of its dashboards, reports, and KPIs.
 
-**Related permanent docs:** [Architecture (WHAT)](./btr-portal-architecture.md) · [Operational (HOW)](./btr-portal-operational.md) · [Materialized dashboards](../materialized-dashboard/materialized-dashboard-domain.md) · [Extraction — M16/M17](./knowledge-extraction-report-m16-m17.md) · [Extraction — M18](./knowledge-extraction-report-m18.md) · [Extraction — Purchasing](./knowledge-extraction-report-purchasing-dashboard.md)
+**Related permanent docs:** [Architecture (WHAT)](./btr-portal-architecture.md) · [Operational (HOW)](./btr-portal-operational.md) · [Materialized dashboards](../materialized-dashboard/materialized-dashboard-domain.md) · [Extraction — M16/M17](./knowledge-extraction-report-m16-m17.md) · [Extraction — M18](./knowledge-extraction-report-m18.md) · [Extraction — M19](./knowledge-extraction-report-m19.md) · [Extraction — Purchasing](./knowledge-extraction-report-purchasing-dashboard.md)
 
 For how to use the portal, see [btr-portal-operational.md](./btr-portal-operational.md).  
 For how it is built, see [btr-portal-architecture.md](./btr-portal-architecture.md).
@@ -38,7 +38,7 @@ The portal complements BTR Desktop; it does not replace operational transaction 
 | Area | Capabilities |
 | ---- | ------------ |
 | Authentication | Sign in with existing BTR user credentials |
-| Dashboards | Executive home (Management Attention Center), Sales, Piutang, Customer Analytics, Salesman Performance, Inventory, Purchasing — detail analytics per domain |
+| Dashboards | Executive home (Management Attention Center), Sales, Piutang, Customer Analytics, Salesman Performance, Inventory, Inventory Risk (Slow Moving & Dead Stock), Purchasing — detail analytics per domain |
 | Reports | Sales, Piutang, Inventory, Purchasing — tabular transaction/detail views |
 | Analytics | KPI cards, charts, Top 10 rankings, footer summary totals |
 
@@ -50,7 +50,7 @@ The portal complements BTR Desktop; it does not replace operational transaction 
 | Finance (Piutang) | Dashboard KPIs, aging analysis, overdue customers, Top 10 customers; Piutang Report |
 | Customer (cross-domain) | Customer Analytics dashboard — attention signals, rankings, segmentation across Sales + Piutang; drill-down to Sales/Piutang reports |
 | Salesman (cross-domain) | Salesman Performance dashboard — per-rep attention signals, achievement %, piutang exposure, rankings across Sales + Piutang; drill-down to Sales/Piutang reports |
-| Inventory | Dashboard KPIs, category/supplier breakdown; Inventory Report |
+| Inventory | Composition dashboard (value, category/supplier breakdown); Inventory Risk dashboard (slow moving, dead stock, never sold); Inventory Report |
 | Purchasing | Dashboard KPIs, weekly trend, posting-status breakdown, Top 10 Principal; Purchasing Report |
 
 See `docs/foundation/LANDSCAPE.md` for BTR business area ownership. See `docs/foundation/DOMAIN.md` for business terminology (Faktur, Piutang, Item, etc.).
@@ -87,7 +87,7 @@ Management monitors total outstanding receivables, customer exposure, aging dist
 
 ### Inventory
 
-Management monitors total inventory value, item count, and how value is distributed across categories and suppliers. Users validate dashboard numbers against the Inventory Report (per-item × warehouse stock balance).
+Management monitors total inventory value, item count, and how value is distributed across categories and suppliers. **Inventory Risk** (M19) adds slow-moving, dead-stock, and never-sold signals based on last Faktur date per item. Users validate composition KPIs against the Inventory Report (per-item × warehouse stock balance) and spot-check idle items against Desktop Faktur history.
 
 ### Purchasing
 
@@ -117,7 +117,7 @@ Executive landing page titled **Management Attention Center** — answers *What 
 
 **Legacy endpoint:** `GET /api/dashboard/overview` retained but no longer used by the home page.
 
-**Background refresh:** Scheduled by `btr.portal.worker` via Windows Task Scheduler (per-domain jobs). Authenticated users may trigger an on-demand rebuild via `POST /api/admin/dashboard/refresh` with optional body `{ "domain": "All|Piutang|Inventory|Sales|Purchasing|Customer|Salesman" }` (default `All`; domain values are case-insensitive). For full rebuilds or long-running refreshes, prefer the worker CLI — the API runs synchronously and is subject to IIS request timeouts (~110 s default). Operations may also use: `btr.portal.worker.exe --domain All --triggered-by Manual`.
+**Background refresh:** Scheduled by `btr.portal.worker` via Windows Task Scheduler (per-domain jobs). Authenticated users may trigger an on-demand rebuild via `POST /api/admin/dashboard/refresh` with optional body `{ "domain": "All|Piutang|Inventory|InventoryRisk|Sales|Purchasing|Customer|Salesman" }` (default `All`; domain values are case-insensitive). For full rebuilds or long-running refreshes, prefer the worker CLI — the API runs synchronously and is subject to IIS request timeouts (~110 s default). Operations may also use: `btr.portal.worker.exe --domain All --triggered-by Manual`.
 
 **Observability:** `GET /api/health/dashboard-snapshots` (no auth) returns the latest refresh attempt per domain from `BTR_PortalDashboardRefreshLog`, including status, duration, and configured interval minutes. Overall health is `unknown` when no domain has a refresh log yet; otherwise `ok`, `refreshing` (any domain `Running`), or `degraded` (any domain `Failed`).
 
@@ -236,6 +236,46 @@ Executive landing page titled **Management Attention Center** — answers *What 
 
 **Home card metrics (summary):** Total Inventory Value, Total Item.
 
+### Slow Moving & Dead Stock Dashboard (`/dashboard/inventory-risk`)
+
+**Period:** Point-in-time snapshot (no date filter). Classification uses **Last Faktur Date** per item at refresh time.
+
+**Purpose:** Inventory health view — answers *Which inventory requires management attention and why?* **Supplements** the Inventory Dashboard (`/dashboard/inventory`); does not replace composition analytics.
+
+| Section | Content |
+| ------- | ------- |
+| Attention Cards | Dead Stock Item Count/Value, Slow Moving Item Count/Value, At-Risk Inventory % |
+| Attention Indicator | Generic M16–M18 presentation when `RequiresAttention` |
+| Aging Distribution | Four-bucket pie: Active, Slow Moving, Dead Stock, Never Sold |
+| Category Risk Exposure | Top 10 categories by at-risk inventory value |
+| Supplier Risk Exposure | Top 10 suppliers/principals by at-risk inventory value |
+| Attention List | One row per item × signal — Dead Stock · Slow Moving · Never Sold |
+| Rankings | Top 10 Dead Stock by Value \| Top 10 Slow Moving by Value |
+| Navigation | Links to Inventory Dashboard and Inventory Report |
+
+**Data source:** Dedicated `BTR_PortalDashboardInventoryRisk*` snapshot domain — refreshed from `IStokBalanceViewDal` + `IBrgLastFakturDal` (full FakturItem history aggregate), **not** composed from M15 Inventory snapshot tables.
+
+**Classification rules (authoritative):**
+
+| Class | Rule | Valuation |
+| ----- | ---- | --------- |
+| **Never Sold** | Aggregated `Qty > 0`; no non-void `FakturItem` history | `Hpp × Qty` (BrgId-first, exclude In-Transit) |
+| **Slow Moving** | `LastFakturDate` exists AND idle **90–179 days** | Same |
+| **Dead Stock** | `LastFakturDate` exists AND idle **≥ 180 days** | Same |
+| **Active** | `LastFakturDate` within last **89 days** | Excluded from at-risk KPIs |
+
+**Supporting rules:** Authoritative movement signal = `MAX(FakturDate)` per `BrgId` from gross Faktur only (`VoidDate = '3000-01-01'`); retur and non-sales outflows do not reset the aging clock; mutually exclusive KPI counts (Never Sold excluded from Slow/Dead counts and dead/slow Top 10).
+
+**At-Risk Inventory %:** `(NeverSoldValue + SlowMovingValue + DeadStockValue) / TotalInventoryValue × 100` — denominator uses same BrgId-first pipeline as M15 Inventory Dashboard.
+
+**Attention Indicator:** `RequiresAttention` when `AtRiskInventoryValue > 0` or any headline at-risk count > 0.
+
+**Drill-down:** Item row click → Inventory Report with item **name** pre-filter (`?q=`). Path: Inventory Risk → Inventory Dashboard → Inventory Report.
+
+**Executive integration (Phase 2 — not yet delivered):** Promote Dead Stock Value, At-Risk Inventory %, and Inventory Risk Attention Indicator to Management Attention Center while preserving composition metrics.
+
+**Explicitly out of scope:** Salesman dimension, ABC classification, warehouse breakdown, export, Kartu Stok drill-down, retur-adjusted demand, mutasi-based movement classification for portal KPIs.
+
 ### Purchasing Dashboard (`/dashboard/purchasing`)
 
 **Period:** Current calendar month — non-void purchase Invoices only (`InvoiceDate` within month).
@@ -299,6 +339,8 @@ Reports allow users to **validate dashboard KPIs** against underlying records. F
 **Columns:** Item, Warehouse, Qty, HPP, Nilai Sediaan (`HPP × Qty`).
 
 **Note:** Footer totals use BrgId-first aggregation (group by item, then sum). Summing visible rows naively may not match the footer.
+
+**Drill-down from Inventory Risk:** Dashboard row click opens this report with `?q=` pre-filled (item name search). Same free-text search fields: item display name/code, warehouse.
 
 ### Purchasing Report (`/reports/purchasing`)
 
@@ -416,6 +458,27 @@ Dedicated snapshot domain — `BTR_PortalDashboardSalesman*`. Refreshed from sou
 
 **Traceability:** Total Inventory Value and Total Item = Inventory Report footer totals.
 
+### Inventory Risk KPIs (M19)
+
+Dedicated snapshot domain — `BTR_PortalDashboardInventoryRisk*`. Refreshed from `IStokBalanceViewDal` + `IBrgLastFakturDal` (not M15 Inventory snapshot).
+
+| KPI | Definition | Business meaning |
+| --- | ---------- | ---------------- |
+| **Dead Stock Item Count** | Items with `LastFakturDate` idle ≥ 180 days | SKUs with no recent sales |
+| **Dead Stock Value** | `SUM(Hpp × Qty)` for dead-stock class | Capital in dead inventory |
+| **Slow Moving Item Count** | Items with idle **90–179 days** (excludes Never Sold) | SKUs losing velocity |
+| **Slow Moving Value** | `SUM(Hpp × Qty)` for slow-moving class | Capital in slow inventory |
+| **Never Sold Item Count** | Items with stock but no Faktur history | SKUs never invoiced |
+| **Never Sold Value** | `SUM(Hpp × Qty)` for never-sold class | Capital in unsold inventory |
+| **At-Risk Inventory %** | `(NeverSold + Slow + Dead value) / TotalInventoryValue` | Share of inventory capital requiring attention |
+| **Aging buckets** | Active · Slow Moving · Dead Stock · Never Sold | Value distribution by movement class |
+| **Category/Supplier risk exposure** | Top 10 by at-risk value per dimension | Where risk capital concentrates |
+| **Top 10 Dead / Slow** | Ranked by inventory value within class | Highest-impact items per signal |
+
+**Attention list:** One row per item × signal (Dead Stock, Slow Moving, Never Sold) — classes are mutually exclusive.
+
+**Portal vs Desktop:** Portal uses **Last Faktur Date** per PO decision. Desktop Kartu Stok Summary (IF8) may differ — use Desktop for validation only, not as portal authority.
+
 ### Purchasing KPIs
 
 | KPI | Definition | Formula | Business Meaning |
@@ -461,7 +524,15 @@ Approved rules governing portal calculations and filters:
 | Active salesman | Salesman Performance | ≥1 current-month Faktur for rep |
 | Inactive salesman | Salesman Performance | No current-month Faktur — in segmentation; excluded from Top rankings when value = 0 |
 | Salesman snapshot source | Salesman Performance worker | Reads source DALs — does not compose from Sales/Piutang/Customer snapshot tables |
-| Unknown dimensions | Inventory M15 | Blank category or supplier displayed and aggregated as `"Unknown"` |
+| Unknown dimensions | Inventory M15/M19 | Blank category or supplier displayed and aggregated as `"Unknown"` |
+| Last Faktur signal | Inventory Risk M19 | `MAX(FakturDate)` per `BrgId` from gross non-void Faktur / FakturItem |
+| Slow moving threshold | Inventory Risk M19 | Idle **90–179 days** since last Faktur (item on `today − 90` = Slow Moving) |
+| Dead stock threshold | Inventory Risk M19 | Idle **≥ 180 days** since last Faktur |
+| Never sold | Inventory Risk M19 | Stock with no FakturItem history — separate signal; excluded from Slow/Dead counts |
+| Mutual exclusivity | Inventory Risk M19 | Item counts disjoint across Never Sold, Slow Moving, Dead Stock |
+| At-risk denominator | Inventory Risk M19 | `TotalInventoryValue` — same BrgId-first pipeline as M15 |
+| Inventory risk snapshot source | Inventory Risk worker | Reads `IStokBalanceViewDal` + `IBrgLastFakturDal` — not M15 snapshot tables |
+| Retur / mutasi | Inventory Risk M19 | Do not affect classification clock (gross Faktur only) |
 | Top N | All rankings | Top 10 for salesman, customer, category, supplier |
 | Posting Stok | Purchasing report | `SUDAH` = stock posted; `BELUM` = not yet posted |
 | Faktur Kembali | Sales report | `StatusFaktur == 2` displays as `"Kembali"` |
@@ -477,7 +548,7 @@ Approved rules governing portal calculations and filters:
 
 ## Current Product State
 
-Capabilities delivered across milestones M1–M18:
+Capabilities delivered across milestones M1–M19:
 
 | Capability | Status |
 | ---------- | ------ |
@@ -491,6 +562,7 @@ Capabilities delivered across milestones M1–M18:
 | Sales detail dashboard (target, achievement, weekly trend, Top 10 salesman) | Complete |
 | Piutang detail dashboard (aging, overdue customers, Top 10 customers) | Complete |
 | Inventory detail dashboard (category/supplier charts, Top 10 tables) | Complete |
+| Inventory Risk dashboard — Slow Moving & Dead Stock (M19) | Complete (Phase 1) |
 | Dashboard overview endpoint (`GET /api/dashboard/overview`) | Complete (retained; home uses executive) |
 | Executive dashboard endpoint (`GET /api/dashboard/executive`) | Complete |
 | Snapshot worker (`btr.portal.worker`) + Task Scheduler jobs | Complete |
@@ -508,11 +580,11 @@ Capabilities delivered across milestones M1–M18:
 
 ## Future Direction
 
-Approved milestone roadmap after M18 (not yet delivered):
+Approved milestone roadmap after M19 (not yet delivered):
 
 | Milestone | Focus |
 | --------- | ----- |
-| M19 | Slow Moving & Dead Stock |
+| M19 Phase 2 | Executive Dashboard — promote Dead Stock Value, At-Risk %, Inventory Risk Attention Indicator |
 | M20 | Collection Dashboard (collection effectiveness / DSO) |
 
 Known capabilities explicitly **deferred** (not committed scope):
@@ -524,7 +596,7 @@ Known capabilities explicitly **deferred** (not committed scope):
 | Filtering | Date-range parameters, search, advanced filters on reports |
 | Sales analytics | Margin analysis, status breakdown chart, sales period mode toggle |
 | Piutang analytics | Collection effectiveness KPIs (planned M20) |
-| Inventory analytics | ABC analysis, warehouse breakdown, pie/donut composition views, Kartu Stok drilldown |
+| Inventory analytics | ABC analysis, warehouse breakdown, Kartu Stok drilldown (slow/dead/never-sold delivered M19) |
 | Purchasing | Warehouse breakdown, pending posting value KPI, PF2 line detail, PF3 daily detail, PF4 retur beli |
 | Platform | Export (Excel/PDF), drilldown from charts to transactions, role-based menu visibility, server-side pagination |
 | Reports | Sales Report footer totals (retrofit) |

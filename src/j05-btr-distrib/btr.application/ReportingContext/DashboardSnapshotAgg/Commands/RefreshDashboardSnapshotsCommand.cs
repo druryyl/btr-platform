@@ -28,6 +28,7 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.Commands
         private readonly IRefreshAllDashboardSnapshotsWorker _allWorker;
         private readonly IRefreshDashboardPiutangSnapshotWorker _piutangWorker;
         private readonly IRefreshDashboardInventorySnapshotWorker _inventoryWorker;
+        private readonly IRefreshDashboardInventoryRiskSnapshotWorker _inventoryRiskWorker;
         private readonly IRefreshDashboardSalesSnapshotWorker _salesWorker;
         private readonly IRefreshDashboardPurchasingSnapshotWorker _purchasingWorker;
         private readonly IRefreshDashboardCustomerSnapshotWorker _customerWorker;
@@ -37,6 +38,7 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.Commands
             IRefreshAllDashboardSnapshotsWorker allWorker,
             IRefreshDashboardPiutangSnapshotWorker piutangWorker,
             IRefreshDashboardInventorySnapshotWorker inventoryWorker,
+            IRefreshDashboardInventoryRiskSnapshotWorker inventoryRiskWorker,
             IRefreshDashboardSalesSnapshotWorker salesWorker,
             IRefreshDashboardPurchasingSnapshotWorker purchasingWorker,
             IRefreshDashboardCustomerSnapshotWorker customerWorker,
@@ -45,6 +47,7 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.Commands
             _allWorker = allWorker;
             _piutangWorker = piutangWorker;
             _inventoryWorker = inventoryWorker;
+            _inventoryRiskWorker = inventoryRiskWorker;
             _salesWorker = salesWorker;
             _purchasingWorker = purchasingWorker;
             _customerWorker = customerWorker;
@@ -108,6 +111,14 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.Commands
                     _inventoryWorker.Execute(inventoryRequest);
                     return MapResult("Inventory", inventoryRequest.Result);
 
+                case "InventoryRisk":
+                    var inventoryRiskRequest = new RefreshDashboardInventoryRiskSnapshotRequest
+                    {
+                        TriggeredBy = triggeredBy
+                    };
+                    _inventoryRiskWorker.Execute(inventoryRiskRequest);
+                    return MapResult("InventoryRisk", inventoryRiskRequest.Result);
+
                 case "Sales":
                     var salesRequest = new RefreshDashboardSalesSnapshotRequest
                     {
@@ -142,7 +153,7 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.Commands
 
                 default:
                     throw new ArgumentException(
-                        "Domain must be All, Piutang, Inventory, Sales, Purchasing, Customer, or Salesman.",
+                        "Domain must be All, Piutang, Inventory, InventoryRisk, Sales, Purchasing, Customer, or Salesman.",
                         nameof(RefreshDashboardSnapshotsCommand.Domain));
             }
         }
@@ -162,6 +173,18 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.Commands
         private static RefreshDashboardDomainResult MapResult(
             string domain,
             RefreshDashboardInventorySnapshotResult result)
+        {
+            return new RefreshDashboardDomainResult
+            {
+                Domain = domain,
+                RefreshLogId = result?.RefreshLogId,
+                DurationMs = result?.DurationMs ?? 0
+            };
+        }
+
+        private static RefreshDashboardDomainResult MapResult(
+            string domain,
+            RefreshDashboardInventoryRiskSnapshotResult result)
         {
             return new RefreshDashboardDomainResult
             {
@@ -234,6 +257,9 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.Commands
 
             if (string.Equals(trimmed, "Inventory", StringComparison.OrdinalIgnoreCase))
                 return "Inventory";
+
+            if (string.Equals(trimmed, "InventoryRisk", StringComparison.OrdinalIgnoreCase))
+                return "InventoryRisk";
 
             if (string.Equals(trimmed, "Sales", StringComparison.OrdinalIgnoreCase))
                 return "Sales";

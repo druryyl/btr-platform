@@ -14,6 +14,7 @@ namespace btr.test.ReportingContext
             _callSequence = 0;
             var piutangWorker = new StubPiutangWorker();
             var inventoryWorker = new StubInventoryWorker();
+            var inventoryRiskWorker = new StubInventoryRiskWorker();
             var salesWorker = new StubSalesWorker();
             var purchasingWorker = new StubPurchasingWorker();
             var customerWorker = new StubCustomerWorker();
@@ -21,6 +22,7 @@ namespace btr.test.ReportingContext
             var worker = new RefreshAllDashboardSnapshotsWorker(
                 piutangWorker,
                 inventoryWorker,
+                inventoryRiskWorker,
                 salesWorker,
                 purchasingWorker,
                 customerWorker,
@@ -35,22 +37,25 @@ namespace btr.test.ReportingContext
 
             piutangWorker.WasCalled.Should().BeTrue();
             inventoryWorker.WasCalled.Should().BeTrue();
+            inventoryRiskWorker.WasCalled.Should().BeTrue();
             salesWorker.WasCalled.Should().BeTrue();
             purchasingWorker.WasCalled.Should().BeTrue();
             customerWorker.WasCalled.Should().BeTrue();
             salesmanWorker.WasCalled.Should().BeTrue();
             piutangWorker.CallOrder.Should().BeLessThan(inventoryWorker.CallOrder);
-            inventoryWorker.CallOrder.Should().BeLessThan(salesWorker.CallOrder);
+            inventoryWorker.CallOrder.Should().BeLessThan(inventoryRiskWorker.CallOrder);
+            inventoryRiskWorker.CallOrder.Should().BeLessThan(salesWorker.CallOrder);
             salesWorker.CallOrder.Should().BeLessThan(purchasingWorker.CallOrder);
             purchasingWorker.CallOrder.Should().BeLessThan(customerWorker.CallOrder);
             customerWorker.CallOrder.Should().BeLessThan(salesmanWorker.CallOrder);
-            request.Result.Domains.Should().HaveCount(6);
+            request.Result.Domains.Should().HaveCount(7);
             request.Result.Domains[0].Domain.Should().Be("Piutang");
             request.Result.Domains[1].Domain.Should().Be("Inventory");
-            request.Result.Domains[2].Domain.Should().Be("Sales");
-            request.Result.Domains[3].Domain.Should().Be("Purchasing");
-            request.Result.Domains[4].Domain.Should().Be("Customer");
-            request.Result.Domains[5].Domain.Should().Be("Salesman");
+            request.Result.Domains[2].Domain.Should().Be("InventoryRisk");
+            request.Result.Domains[3].Domain.Should().Be("Sales");
+            request.Result.Domains[4].Domain.Should().Be("Purchasing");
+            request.Result.Domains[5].Domain.Should().Be("Customer");
+            request.Result.Domains[6].Domain.Should().Be("Salesman");
         }
 
         [Fact]
@@ -59,6 +64,7 @@ namespace btr.test.ReportingContext
             var worker = new RefreshAllDashboardSnapshotsWorker(
                 new StubPiutangWorker(),
                 new StubInventoryWorker { ShouldFail = true },
+                new StubInventoryRiskWorker(),
                 new StubSalesWorker(),
                 new StubPurchasingWorker(),
                 new StubCustomerWorker(),
@@ -110,6 +116,24 @@ namespace btr.test.ReportingContext
                 {
                     RefreshLogId = "PDI0001",
                     DurationMs = 200
+                };
+            }
+        }
+
+        private sealed class StubInventoryRiskWorker : IRefreshDashboardInventoryRiskSnapshotWorker
+        {
+            public bool WasCalled { get; private set; }
+
+            public int CallOrder { get; private set; }
+
+            public void Execute(RefreshDashboardInventoryRiskSnapshotRequest request)
+            {
+                WasCalled = true;
+                CallOrder = ++_callSequence;
+                request.Result = new RefreshDashboardInventoryRiskSnapshotResult
+                {
+                    RefreshLogId = "PDIR001",
+                    DurationMs = 250
                 };
             }
         }

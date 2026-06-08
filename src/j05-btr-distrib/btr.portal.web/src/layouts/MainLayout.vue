@@ -51,6 +51,12 @@ const menuItems = computed(() => [
         class: route.path === '/dashboard/inventory' ? 'layout-menu-item--active' : '',
       },
       {
+        label: 'Inventory Risk',
+        icon: 'pi pi-exclamation-triangle',
+        command: () => router.push('/dashboard/inventory-risk'),
+        class: route.path === '/dashboard/inventory-risk' ? 'layout-menu-item--active' : '',
+      },
+      {
         label: 'Purchasing',
         icon: 'pi pi-shopping-cart',
         command: () => router.push('/dashboard/purchasing'),

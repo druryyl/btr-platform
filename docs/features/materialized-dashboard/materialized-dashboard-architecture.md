@@ -18,9 +18,9 @@ Reports (`/reports/*`) are **not** materialized — they continue live Desktop D
 ## Topology
 
 ```text
-Windows Task Scheduler (per-domain jobs, 15 / 30 / 30 / 30 / 30 / 60 min)
+Windows Task Scheduler (per-domain jobs, 15 / 30 / 30 / 30 / 30 / 60 / 60 min)
         ↓
-btr.portal.worker.exe  (--domain Piutang|Sales|Purchasing|Customer|Salesman|Inventory|All)
+btr.portal.worker.exe  (--domain Piutang|Inventory|InventoryRisk|Sales|Purchasing|Customer|Salesman|All)
         ↓
 RefreshDashboard{Domain}SnapshotWorker
         ↓
@@ -65,13 +65,14 @@ Browser → GET /api/dashboard/{sales|piutang|inventory|purchasing}  (detail —
 | `RefreshDashboardPurchasingSnapshotWorker` | `IInvoiceViewDal` (current month) | `DashboardPurchasingInvoiceAggregator` |
 | `RefreshDashboardCustomerSnapshotWorker` | `IFakturViewDal`, `ICustomerLastFakturDal`, `IPiutangOpenBalanceDal`, `ICustomerDal` | `DashboardCustomerAggregator` |
 | `RefreshDashboardSalesmanSnapshotWorker` | `IFakturViewDal`, `IPiutangOpenBalanceWithSalesmanDal`, `ICustomerLastFakturDal.ListLastFakturWithSalesmanByCustomer()`, `ISalesPersonDal`, `ISalesOmzetTargetDal.ListTargetsForMonth()` | `DashboardSalesmanAggregator` |
-| `RefreshAllDashboardSnapshotsWorker` | Orchestrator | Piutang → Inventory → Sales → Purchasing → Customer → Salesman; per-domain failure isolation |
+| `RefreshDashboardInventoryRiskSnapshotWorker` | `IStokBalanceViewDal`, `IBrgLastFakturDal` | `DashboardInventoryRiskAggregator` (+ `DashboardInventoryItemGroupBuilder`) |
+| `RefreshAllDashboardSnapshotsWorker` | Orchestrator | Piutang → Inventory → InventoryRisk → Sales → Purchasing → Customer → Salesman; per-domain failure isolation |
 
 **CLI arguments:**
 
 | Argument | Values | Default |
 | -------- | ------ | ------- |
-| `--domain` | `All`, `Piutang`, `Inventory`, `Sales`, `Purchasing`, `Customer`, `Salesman` | `All` |
+| `--domain` | `All`, `Piutang`, `Inventory`, `InventoryRisk`, `Sales`, `Purchasing`, `Customer`, `Salesman` | `All` |
 | `--triggered-by` | `Scheduler`, `Manual` | `Scheduler` |
 
 Exit code `0` = success. Logs: `{worker-folder}/logs/btr-portal-worker-{date}.log`.
@@ -86,6 +87,7 @@ Exit code `0` = success. Logs: `{worker-folder}/logs/btr-portal-worker-{date}.lo
 | Customer | 30 minutes |
 | Salesman | 30 minutes |
 | Inventory | 60 minutes |
+| InventoryRisk | 60 minutes |
 
 ---
 
@@ -95,7 +97,7 @@ Exit code `0` = success. Logs: `{worker-folder}/logs/btr-portal-worker-{date}.lo
 btr.application/ReportingContext/
 ├── DashboardSnapshotAgg/
 │   ├── Contracts/          IDashboard*SnapshotDal, IPiutangOpenBalanceDal, IDashboardSnapshotRefreshLogDal
-│   ├── Services/           DashboardPiutangAggregator, DashboardInventoryAggregator, DashboardSalesFakturAggregator, DashboardPurchasingInvoiceAggregator, DashboardCustomerAggregator, DashboardSalesmanAggregator
+│   ├── Services/           DashboardPiutangAggregator, DashboardInventoryAggregator, DashboardInventoryRiskAggregator, DashboardInventoryItemGroupBuilder, DashboardSalesFakturAggregator, DashboardPurchasingInvoiceAggregator, DashboardCustomerAggregator, DashboardSalesmanAggregator
 │   ├── Models/             Aggregate result DTOs
 │   └── UseCases/           RefreshDashboard*SnapshotWorker, RefreshAllDashboardSnapshotsWorker
 ├── DashboardOverviewAgg/   GetDashboardOverviewQuery, IDashboardOverviewDal
@@ -104,7 +106,8 @@ btr.application/ReportingContext/
 ├── DashboardInventoryAgg/  DashboardInventoryDal (read facade)
 ├── DashboardPurchasingAgg/ DashboardPurchasingDal (read facade)
 ├── DashboardCustomerAgg/   DashboardCustomerDal (read facade)
-└── DashboardSalesmanAgg/   DashboardSalesmanDal (read facade)
+├── DashboardSalesmanAgg/   DashboardSalesmanDal (read facade)
+└── DashboardInventoryRiskAgg/ DashboardInventoryRiskDal (read facade)
 
 btr.infrastructure/ReportingContext/
 ├── DashboardSnapshotAgg/   Snapshot readers/writers, PiutangOpenBalanceDal, RefreshLogDal
@@ -177,6 +180,19 @@ Customer worker reads **source DALs** at refresh — not Sales/Piutang snapshot 
 
 Salesman worker reads **source DALs** at refresh — not Sales/Piutang/Customer snapshot tables. Child row ID prefix: **PDS**.
 
+### Inventory Risk tables (M19 — dedicated domain)
+
+| Table | Content |
+| ----- | ------- |
+| `BTR_PortalDashboardInventoryRiskKpi` | Headline KPIs, at-risk %, `RequiresAttention` |
+| `BTR_PortalDashboardInventoryRiskAging` | Four aging buckets (Active, Slow, Dead, Never Sold) |
+| `BTR_PortalDashboardInventoryRiskAttention` | Attention list rows (item × signal) |
+| `BTR_PortalDashboardInventoryRiskTopDead` | Top 10 dead stock by value |
+| `BTR_PortalDashboardInventoryRiskTopSlow` | Top 10 slow moving by value |
+| `BTR_PortalDashboardInventoryRiskBreakdown` | Category/Supplier at-risk exposure (Top 10 each) |
+
+Inventory Risk worker reads **source DALs** at refresh — not M15 Inventory snapshot tables. Child row ID prefix: **PDIR**.
+
 ### Supporting objects
 
 | Object | Purpose |
@@ -200,6 +216,7 @@ SQL definitions: `btr.sql/Tables/ReportingContext/BTR_PortalDashboard*.sql`
 | `GET /api/dashboard/purchasing` | JWT | Layer A + B | Full purchasing analytics |
 | `GET /api/dashboard/customers` | JWT | Customer snapshot (5 tables) | Customer Analytics (M17) |
 | `GET /api/dashboard/salesmen` | JWT | Salesman snapshot (6 tables) | Salesman Performance (M18) |
+| `GET /api/dashboard/inventory-risk` | JWT | Inventory Risk snapshot (6 tables) | Slow Moving & Dead Stock (M19) |
 | `POST /api/admin/dashboard/refresh` | JWT | Triggers workers synchronously | IIS timeout risk for `--domain All` |
 | `GET /api/health/dashboard-snapshots` | None | `BTR_PortalDashboardRefreshLog` | `unknown` / `ok` / `refreshing` / `degraded` |
 
@@ -208,6 +225,7 @@ SQL definitions: `btr.sql/Tables/ReportingContext/BTR_PortalDashboard*.sql`
 - Domain detail endpoints (Sales, Piutang, Inventory, Purchasing) → HTTP 503 (`DashboardSnapshotUnavailableException`)
 - Customer Analytics → `IsAvailable = false` (graceful; navigation links retained)
 - Salesman Performance → `IsAvailable = false` (graceful; navigation links retained)
+- Inventory Risk → `IsAvailable = false` (graceful; navigation links retained)
 - Overview → partial response with `HasUnavailableDomain = true` when any Layer A row missing
 
 ---
@@ -251,6 +269,7 @@ Aggregation rules unchanged (`KurangBayar > 1`, aging buckets, customer key, Top
   "DashboardSnapshot": {
     "PiutangIntervalMinutes": 15,
     "InventoryIntervalMinutes": 60,
+    "InventoryRiskIntervalMinutes": 60,
     "SalesIntervalMinutes": 30,
     "PurchasingIntervalMinutes": 30,
     "CustomerIntervalMinutes": 30,
@@ -270,6 +289,9 @@ Portal API and worker both require `Database` section (JSON only — no registry
 | Piutang aggregator | `btr.application/ReportingContext/DashboardSnapshotAgg/Services/DashboardPiutangAggregator.cs` |
 | Sales Faktur aggregator | `.../DashboardSalesFakturAggregator.cs` |
 | Inventory aggregator | `.../DashboardInventoryAggregator.cs` |
+| Shared inventory item groups | `.../DashboardInventoryItemGroupBuilder.cs` |
+| Inventory Risk aggregator | `.../DashboardInventoryRiskAggregator.cs` |
+| Item last Faktur DAL | `btr.infrastructure/SalesContext/FakturInfoAgg/BrgLastFakturDal.cs` |
 | Purchasing aggregator | `.../DashboardPurchasingInvoiceAggregator.cs` |
 | Customer aggregator | `.../DashboardCustomerAggregator.cs` |
 | Salesman aggregator | `.../DashboardSalesmanAggregator.cs` |
@@ -298,6 +320,9 @@ Portal API and worker both require `Database` section (JSON only — no registry
 | 7 | `SnapshotKey = 'CURRENT'` only — no historical snapshot tables unless product adds date-range analytics |
 | 8 | Customer and Salesman workers read source DALs — do not compose from domain snapshot tables |
 | 9 | Do not modify `DashboardSalesFakturAggregator` or `BTR_PortalDashboardSalesTopSalesman` for salesman performance |
+| 10 | Inventory Risk worker reads source DALs — do not derive risk metrics from M15 Inventory snapshot |
+| 11 | M15 and M19 share `DashboardInventoryItemGroupBuilder` — prevent denominator drift |
+| 12 | Do not modify `DashboardInventoryAggregator` or `BTR_PortalDashboardInventory*` for inventory risk |
 
 ---
 

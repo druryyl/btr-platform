@@ -13,6 +13,7 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.UseCases
     {
         private readonly IRefreshDashboardPiutangSnapshotWorker _piutangWorker;
         private readonly IRefreshDashboardInventorySnapshotWorker _inventoryWorker;
+        private readonly IRefreshDashboardInventoryRiskSnapshotWorker _inventoryRiskWorker;
         private readonly IRefreshDashboardSalesSnapshotWorker _salesWorker;
         private readonly IRefreshDashboardPurchasingSnapshotWorker _purchasingWorker;
         private readonly IRefreshDashboardCustomerSnapshotWorker _customerWorker;
@@ -21,6 +22,7 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.UseCases
         public RefreshAllDashboardSnapshotsWorker(
             IRefreshDashboardPiutangSnapshotWorker piutangWorker,
             IRefreshDashboardInventorySnapshotWorker inventoryWorker,
+            IRefreshDashboardInventoryRiskSnapshotWorker inventoryRiskWorker,
             IRefreshDashboardSalesSnapshotWorker salesWorker,
             IRefreshDashboardPurchasingSnapshotWorker purchasingWorker,
             IRefreshDashboardCustomerSnapshotWorker customerWorker,
@@ -28,6 +30,7 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.UseCases
         {
             _piutangWorker = piutangWorker;
             _inventoryWorker = inventoryWorker;
+            _inventoryRiskWorker = inventoryRiskWorker;
             _salesWorker = salesWorker;
             _purchasingWorker = purchasingWorker;
             _customerWorker = customerWorker;
@@ -67,6 +70,20 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.UseCases
                     };
                     _inventoryWorker.Execute(inventoryRequest);
                     return inventoryRequest.Result;
+                },
+                domainResults,
+                failures);
+
+            RunDomain(
+                "InventoryRisk",
+                () =>
+                {
+                    var inventoryRiskRequest = new RefreshDashboardInventoryRiskSnapshotRequest
+                    {
+                        TriggeredBy = triggeredBy
+                    };
+                    _inventoryRiskWorker.Execute(inventoryRiskRequest);
+                    return inventoryRiskRequest.Result;
                 },
                 domainResults,
                 failures);
@@ -171,6 +188,13 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.UseCases
                         Domain = domain,
                         RefreshLogId = inventory.RefreshLogId,
                         DurationMs = inventory.DurationMs
+                    };
+                case RefreshDashboardInventoryRiskSnapshotResult inventoryRisk:
+                    return new RefreshDashboardDomainResult
+                    {
+                        Domain = domain,
+                        RefreshLogId = inventoryRisk.RefreshLogId,
+                        DurationMs = inventoryRisk.DurationMs
                     };
                 case RefreshDashboardSalesSnapshotResult sales:
                     return new RefreshDashboardDomainResult

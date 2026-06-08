@@ -3,7 +3,7 @@
 **Audience:** Developers, Architects, Future Agents  
 **Purpose:** Describe how BTR Portal is built and the conventions to follow when extending it.
 
-**Related permanent docs:** [Domain (WHY)](./btr-portal-domain.md) · [Operational (HOW)](./btr-portal-operational.md) · [Materialized dashboards](../materialized-dashboard/materialized-dashboard-architecture.md) · [Extraction — M16/M17](./knowledge-extraction-report-m16-m17.md) · [Extraction — M18](./knowledge-extraction-report-m18.md) · [Extraction — Purchasing](./knowledge-extraction-report-purchasing-dashboard.md)
+**Related permanent docs:** [Domain (WHY)](./btr-portal-domain.md) · [Operational (HOW)](./btr-portal-operational.md) · [Materialized dashboards](../materialized-dashboard/materialized-dashboard-architecture.md) · [Extraction — M16/M17](./knowledge-extraction-report-m16-m17.md) · [Extraction — M18](./knowledge-extraction-report-m18.md) · [Extraction — M19](./knowledge-extraction-report-m19.md) · [Extraction — Purchasing](./knowledge-extraction-report-purchasing-dashboard.md)
 
 For business definitions, see [btr-portal-domain.md](./btr-portal-domain.md).  
 For user-facing behavior, see [btr-portal-operational.md](./btr-portal-operational.md).
@@ -72,6 +72,7 @@ btr.application/ReportingContext/
 ├── DashboardSalesAgg/
 ├── DashboardPiutangAgg/
 ├── DashboardInventoryAgg/
+├── DashboardInventoryRiskAgg/         ← inventory risk read path (M19)
 ├── DashboardPurchasingAgg/
 ├── SalesReportAgg/
 ├── PiutangReportAgg/
@@ -86,6 +87,7 @@ btr.infrastructure/ReportingContext/
 ├── DashboardSalesAgg/DashboardSalesDal.cs
 ├── DashboardPiutangAgg/DashboardPiutangDal.cs
 ├── DashboardInventoryAgg/DashboardInventoryDal.cs
+├── DashboardInventoryRiskAgg/DashboardInventoryRiskDal.cs
 ├── DashboardPurchasingAgg/DashboardPurchasingDal.cs
 ├── SalesReportAgg/SalesReportDal.cs
 ├── PiutangReportAgg/PiutangReportDal.cs
@@ -151,6 +153,7 @@ Browser → GET /api/dashboard/{sales|piutang|inventory|purchasing}  (detail —
 | **B — Dimensional** | Week trend, aging, breakdown, Top-N tables | Detail dashboards only |
 | **Customer (dedicated)** | `BTR_PortalDashboardCustomer*` (5 tables) | Customer Analytics only — not composed from domain snapshots |
 | **Salesman (dedicated)** | `BTR_PortalDashboardSalesman*` (6 tables) | Salesman Performance only — not composed from domain snapshots |
+| **Inventory Risk (dedicated)** | `BTR_PortalDashboardInventoryRisk*` (6 tables) | Slow Moving & Dead Stock only — not composed from M15 Inventory snapshot |
 
 All snapshots use `SnapshotKey = 'CURRENT'`. `GeneratedAt` on every dashboard response reflects the last successful background refresh, not request execution time.
 
@@ -164,8 +167,9 @@ All snapshots use `SnapshotKey = 'CURRENT'`. `GeneratedAt` on every dashboard re
 | Customer | 30 minutes |
 | Salesman | 30 minutes |
 | Inventory | 60 minutes |
+| InventoryRisk | 60 minutes |
 
-**Refresh order (`--domain All`):** Piutang → Inventory → Sales → Purchasing → Customer → **Salesman** (last).
+**Refresh order (`--domain All`):** Piutang → Inventory → **InventoryRisk** → Sales → Purchasing → Customer → **Salesman** (last).
 
 **Operational metadata:** `BTR_PortalDashboardRefreshLog` records each refresh attempt (domain, status, duration, error, trigger source).
 
@@ -221,6 +225,25 @@ RefreshDashboardSalesmanSnapshotWorker
 
 **Protected modules unchanged:** `DashboardSalesFakturAggregator`, `BTR_PortalDashboardSalesTopSalesman`, `DashboardExecutiveComposer`.
 
+### Inventory Risk Snapshot Domain (M19)
+
+Slow Moving & Dead Stock uses a **dedicated** snapshot domain — worker reads **source DALs**, not M15 Inventory snapshot tables:
+
+```text
+RefreshDashboardInventoryRiskSnapshotWorker
+        ↓ IStokBalanceViewDal, IBrgLastFakturDal.ListLastFakturByBrg()
+        ↓ DashboardInventoryRiskAggregator (+ DashboardInventoryItemGroupBuilder shared with M15)
+        ↓ IDashboardInventoryRiskSnapshotDal.ReplaceCurrent (6 tables, transactional)
+```
+
+**Why separate domain:** Last-sale aging, Never Sold detection, and at-risk classification require full `FakturItem` history aggregate not present in M15 composition snapshots. Position rules must use the same BrgId-first pipeline as M15 for denominator reconciliation.
+
+**Shared item groups:** `DashboardInventoryItemGroupBuilder` extracted from `DashboardInventoryAggregator` — both M15 and M19 use identical In-Transit exclusion, zero-qty filter, and Hpp×Qty valuation.
+
+**Item last Faktur DAL:** `IBrgLastFakturDal` / `BrgLastFakturDal` — `MAX(FakturDate)` per `BrgId` from gross non-void Faktur (mirrors `CustomerLastFakturDal` at item grain).
+
+**Protected modules unchanged:** `DashboardInventoryAggregator`, `BTR_PortalDashboardInventory*`, `GET /api/dashboard/inventory`, `DashboardExecutiveComposer` (Phase 2 executive promotion is separate).
+
 ### Dashboard API Strategy
 
 | Endpoint | Controller | Data source | Purpose |
@@ -233,12 +256,13 @@ RefreshDashboardSalesmanSnapshotWorker
 | `GET /api/dashboard/purchasing` | `PurchasingDashboardController` | Layer A + B snapshots | Purchasing detail analytics |
 | `GET /api/dashboard/customers` | `CustomerDashboardController` | Dedicated Customer snapshot (`DashboardCustomerAgg`) | Customer Analytics (M17) |
 | `GET /api/dashboard/salesmen` | `SalesmanDashboardController` | Dedicated Salesman snapshot (`DashboardSalesmanAgg`) | Salesman Performance (M18) |
+| `GET /api/dashboard/inventory-risk` | `InventoryRiskDashboardController` | Dedicated Inventory Risk snapshot (`DashboardInventoryRiskAgg`) | Slow Moving & Dead Stock (M19) |
 | `POST /api/admin/dashboard/refresh` | `AdminDashboardRefreshController` | Triggers snapshot rebuild | On-demand refresh (sync; IIS timeout risk) |
 | `GET /api/health/dashboard-snapshots` | `HealthController` | `BTR_PortalDashboardRefreshLog` | Monitoring — no auth |
 
 Domain detail endpoints were extended additively across M8 and M13–M15; response DTOs unchanged in shape. All dashboard data endpoints require JWT except health.
 
-**Empty snapshot behavior:** Domain detail endpoints (Sales, Piutang, Inventory, Purchasing) return HTTP 503 when snapshot tables are empty. **Customer Analytics** and **Salesman Performance** return `IsAvailable = false` with navigation links (graceful degradation). Overview sets `HasUnavailableDomain = true` when any Layer A row is missing. Executive sets `HasUnavailableDomain` when any composed domain is missing.
+**Empty snapshot behavior:** Domain detail endpoints (Sales, Piutang, Inventory, Purchasing) return HTTP 503 when snapshot tables are empty. **Customer Analytics**, **Salesman Performance**, and **Inventory Risk** return `IsAvailable = false` with navigation links (graceful degradation). Overview sets `HasUnavailableDomain = true` when any Layer A row is missing. Executive sets `HasUnavailableDomain` when any composed domain is missing.
 
 ### Dashboard Routing Strategy (Frontend)
 
@@ -251,6 +275,7 @@ Domain detail endpoints were extended additively across M8 and M13–M15; respon
 | `/dashboard/purchasing` | `PurchasingDashboardView` | `GET /api/dashboard/purchasing` |
 | `/dashboard/customers` | `CustomerDashboardView` | `GET /api/dashboard/customers` |
 | `/dashboard/salesmen` | `SalesmanDashboardView` | `GET /api/dashboard/salesmen` |
+| `/dashboard/inventory-risk` | `InventoryRiskDashboardView` | `GET /api/dashboard/inventory-risk` |
 
 Home shows summary KPI cards with per-domain `GeneratedAt` timestamps and links to detail pages. Detail pages consume the full API response (including chart/ranking sections not shown on home).
 
@@ -323,6 +348,18 @@ Home shows summary KPI cards with per-domain `GeneratedAt` timestamps and links 
 | Segmentation | `ByWilayah[]`, `BySegment[]`, `ActiveSummary`, `InactiveSummary` | Blank dimensions → `"Unknown"` |
 | Navigation | `DashboardSalesmanNavigation` | Links to domain dashboards and reports |
 
+**Inventory Risk response sections (M19):**
+
+| Section | DTO | Notes |
+| ------- | --- | ----- |
+| Availability | `IsAvailable`, `IsDataFresh`, `GeneratedAt` | Graceful when snapshot empty |
+| Attention cards | `DashboardInventoryRiskAttentionCards` | Dead/Slow counts and values, At-Risk %, `RequiresAttention` |
+| Aging | `AgingBuckets[]` | Four buckets; `Amount` = inventory value |
+| Risk exposure | `CategoryRiskExposure[]`, `SupplierRiskExposure[]` | Top 10 at-risk value per dimension |
+| Attention list | `DashboardInventoryRiskAttentionItem[]` | One row per item × signal; `ReportRoute` |
+| Rankings | `TopDead[]`, `TopSlow[]` | Include days idle, `PercentOfAtRisk`, `ReportRoute` |
+| Navigation | `DashboardInventoryRiskNavigation` | Links to Inventory dashboard and report |
+
 ### KPI Aggregation Patterns
 
 Aggregation runs in `Dashboard{Domain}Aggregator` during snapshot refresh (worker path). Read DALs map snapshot rows to response DTOs.
@@ -336,8 +373,9 @@ Aggregation runs in `Dashboard{Domain}Aggregator` during snapshot refresh (worke
 | Sales ranking | `SUM(GrandTotal)` per `SalesPersonName`, top 10 descending | Completed Omzet = invoiced omzet |
 | Piutang | `IPiutangOpenBalanceDal` (`Sisa > 1`) + inline aggregation | Open balances only; `KurangBayar > 1`; customer key resolution |
 | Piutang aging | Inline bucket assignment | `DaysOverdue = Today − JatuhTempo`; five inclusive buckets |
-| Inventory | `IStokBalanceViewDal` + BrgId-first pipeline | Exclude In-Transit; group by `BrgId`; sum Qty and Hpp×Qty |
+| Inventory | `IStokBalanceViewDal` + `DashboardInventoryItemGroupBuilder` | Exclude In-Transit; group by `BrgId`; sum Qty and Hpp×Qty |
 | Inventory rollup | Category/supplier grouping after BrgId step | Blank → `"Unknown"` |
+| Inventory Risk | `IStokBalanceViewDal` + `IBrgLastFakturDal` + shared item groups | Classify Never Sold / Slow (90–179d) / Dead (≥180d) / Active; at-risk %; aging buckets; Top 10 dead/slow; category/supplier at-risk exposure |
 | Purchasing | `IInvoiceViewDal` (Invoice list) | Current month non-void invoices; `SUM(GrandTotal)`; posting status from `PostingStok` |
 | Purchasing weekly trend | Invoice `GrandTotal` grouped by calendar week | Reuses `SalesOmzetChartWeekGrouper` |
 | Purchasing ranking | `SUM(GrandTotal)` per trimmed `SupplierName`, top 10 descending | Blank → `"Unknown"`; UI label **Principal** |
@@ -373,7 +411,8 @@ PrimeVue `Chart` + Chart.js on detail pages.
 | ----- | ---- | -------- | ------ |
 | Target vs Achievement | `bar` | `DashboardSalesTargetVsAchievement` | Two categories: Target, Achievement |
 | Chart | Weekly Trend | `line` | `DashboardSalesWeekTrendItem[]` | X: `WeekLabel`; Y: Faktur `GrandTotal` per week |
-| Aging Distribution | `pie` | `DashboardPiutangAgingBucket[]` | 5 buckets; `SortOrder` for stable sequence |
+| Aging Distribution (Piutang) | `pie` | `DashboardPiutangAgingBucket[]` | 5 buckets; `SortOrder` for stable sequence |
+| Inventory Aging Distribution | `pie` | `DashboardInventoryRiskAgingBucket[]` | 4 buckets (Active, Slow, Dead, Never Sold); reusable `AgingPieChart` with inventory colors |
 | Category / Supplier | `bar` (`indexAxis: 'y'`) | `DashboardInventoryBreakdownItem[]` | Horizontal bars |
 | Posting Status | `pie` | `DashboardPurchasingPostingStatusItem[]` | `SUDAH` / `BELUM`; `SortOrder` for stable sequence |
 | Weekly Purchase Trend | `line` | `DashboardPurchasingWeekTrendItem[]` | Reuses `WeeklyTrendChart` with domain-specific title |
@@ -556,7 +595,7 @@ btr.portal.web/src/
 | Store | Responsibility |
 | ----- | -------------- |
 | `authStore` | Login, logout, JWT hydration from localStorage |
-| `dashboardStore` | `loadExecutive()` → executive endpoint (home); `loadDashboard()` → overview (legacy); `loadSales()`, `loadPiutang()`, `loadCustomer()`, `loadSalesman()`, `loadInventory()`, `loadPurchasing()` (detail pages) |
+| `dashboardStore` | `loadExecutive()` → executive endpoint (home); `loadDashboard()` → overview (legacy); `loadSales()`, `loadPiutang()`, `loadCustomer()`, `loadSalesman()`, `loadInventory()`, `loadInventoryRisk()`, `loadPurchasing()` (detail pages) |
 | `{domain}ReportStore` | `report`, `loading`, `error`; `loadReport()`, `reset()` |
 
 One store per report. No premature module stores beyond auth, dashboard, and reports.
@@ -576,7 +615,9 @@ One store per report. No premature module stores beyond auth, dashboard, and rep
 | `SalesmanAttentionList.vue` | Per-salesman signal list with report drill-down |
 | `SalesmanSegmentationSection.vue` | Wilayah, Segment, Active/Inactive breakdown |
 | `SalesmanNavigationSection.vue` | Links to domain dashboards and reports |
-| `navigateToReport.ts` | Shared helper — `router.push({ path, query: { q: name } })` for customer or salesman pre-filter |
+| `InventoryRiskAttentionList.vue` | M19 per-item signal list with report drill-down |
+| `InventoryRiskNavigationSection.vue` | Links to Inventory dashboard and report |
+| `navigateToReport.ts` | Shared helper — `router.push({ path, query: { q: name } })` for customer, salesman, or item pre-filter |
 | `TargetVsAchievementChart.vue` | M13 company bar chart |
 | `WeeklyTrendChart.vue` | M8/M13 line chart |
 | `AgingPieChart.vue` | M14 pie chart |
@@ -719,6 +760,10 @@ Rules that must be preserved when extending the portal:
 | 21 | Do not modify `DashboardPiutangAggregator` or `BTR_PortalDashboardPiutangTopCustomer` for customer analytics |
 | 22 | Salesman worker reads source DALs — do not compose Salesman snapshot from Sales/Piutang/Customer snapshots |
 | 23 | Do not modify `DashboardSalesFakturAggregator`, `BTR_PortalDashboardSalesTopSalesman`, or `DashboardExecutiveComposer` for salesman performance |
+| 24 | Inventory Risk worker reads source DALs — do not compose risk metrics from M15 Inventory snapshot tables |
+| 25 | Use shared `DashboardInventoryItemGroupBuilder` for M15 and M19 — prevent denominator drift |
+| 26 | Do not modify `DashboardInventoryAggregator` or `BTR_PortalDashboardInventory*` for inventory risk |
+| 27 | Last Faktur classification lives in `DashboardInventoryRiskAggregator` — not Kartu Stok `MovingStok` |
 
 ### Dashboard–Report Traceability Matrix
 
@@ -728,6 +773,8 @@ Rules that must be preserved when extending the portal:
 | Total Customer (Piutang) | Piutang Report footer | Distinct customer key count |
 | Total Inventory Value | Inventory Report footer | BrgId-grouped `Sum(Hpp × Qty)` excl. In-Transit |
 | Total Item | Inventory Report footer | Count BrgId where aggregated Qty > 0 |
+| Total Inventory Value (Inventory Risk) | Inventory Dashboard / Report footer | Same BrgId-first `Sum(Hpp × Qty)` denominator as M15 |
+| At-Risk Inventory % (Inventory Risk) | — | `(NeverSold + Slow + Dead value) / TotalInventoryValue` from same refresh window |
 | Sales Total Omzet / Achievement | Sales Report | Sum of `GrandTotal` from report rows (same month, same Faktur source) |
 | Grand Total Purchase | Purchasing Report footer | `Sum(GrandTotal)` for current-month invoices |
 | Total Invoice (Purchasing) | Purchasing Report footer | Invoice row count in period |

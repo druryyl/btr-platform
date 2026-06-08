@@ -5,6 +5,7 @@ import type {
   DashboardSalesmanResponse,
   DashboardExecutiveResponse,
   DashboardInventoryResponse,
+  DashboardInventoryRiskResponse,
   DashboardOverviewResponse,
   DashboardPiutangResponse,
   DashboardPurchasingResponse,
@@ -56,6 +57,16 @@ export async function fetchDashboardInventory(): Promise<DashboardInventoryRespo
 
   if (!isApiSuccess(data) || !data.Data) {
     throw new Error(data.Message ?? 'Failed to load inventory dashboard.')
+  }
+
+  return data.Data
+}
+
+export async function fetchDashboardInventoryRisk(): Promise<DashboardInventoryRiskResponse> {
+  const { data } = await httpClient.get<ApiResponse<DashboardInventoryRiskResponse>>('/api/dashboard/inventory-risk')
+
+  if (!isApiSuccess(data) || !data.Data) {
+    throw new Error(data.Message ?? 'Failed to load inventory risk dashboard.')
   }
 
   return data.Data

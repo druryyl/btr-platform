@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted } from 'vue'
+import { useRoute } from 'vue-router'
 import { storeToRefs } from 'pinia'
 import Button from 'primevue/button'
 import Card from 'primevue/card'
@@ -15,6 +16,7 @@ import { useInventoryReportStore } from '@/stores/inventoryReportStore'
 import type { InventoryReportRow } from '@/models/reports'
 
 const inventoryReport = useInventoryReportStore()
+const route = useRoute()
 const { freeText } = storeToRefs(inventoryReport)
 
 interface InventoryReportTableRow extends InventoryReportRow {
@@ -54,6 +56,10 @@ const summaryItems = computed(() => {
 })
 
 onMounted(() => {
+  if (typeof route.query.q === 'string' && route.query.q.trim()) {
+    inventoryReport.freeText = route.query.q.trim()
+  }
+
   void inventoryReport.loadReport()
 })
 </script>

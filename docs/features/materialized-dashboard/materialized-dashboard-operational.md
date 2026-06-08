@@ -40,8 +40,9 @@ Click **Refresh** on any dashboard page to reload the latest stored snapshot fro
 | Customer | 30 minutes |
 | Salesman | 30 minutes |
 | Inventory | 60 minutes |
+| Inventory Risk | 60 minutes |
 
-Piutang refreshes most often because receivable balances change throughout the day (payments, new invoices).
+Piutang refreshes most often because receivable balances change throughout the day (payments, new invoices). Inventory and Inventory Risk share the 60-minute cadence; Inventory Risk runs immediately after Inventory in `--domain All`.
 
 ### When Dashboards Are Unavailable
 
@@ -83,7 +84,7 @@ FROM BTR_PortalDashboardRefreshLog
 ORDER BY CompletedAt DESC;
 ```
 
-All six domains (Piutang, Inventory, Sales, Purchasing, Customer, Salesman) should show `Status = 'Success'`.
+All seven domains (Piutang, Inventory, InventoryRisk, Sales, Purchasing, Customer, Salesman) should show `Status = 'Success'`.
 
 Confirm KPI rows exist:
 
@@ -98,12 +99,14 @@ SELECT 'Purchasing', GeneratedAt FROM BTR_PortalDashboardPurchasingKpi WHERE Sna
 UNION ALL
 SELECT 'Customer', GeneratedAt FROM BTR_PortalDashboardCustomerKpi WHERE SnapshotKey = 'CURRENT'
 UNION ALL
-SELECT 'Salesman', GeneratedAt FROM BTR_PortalDashboardSalesmanKpi WHERE SnapshotKey = 'CURRENT';
+SELECT 'Salesman', GeneratedAt FROM BTR_PortalDashboardSalesmanKpi WHERE SnapshotKey = 'CURRENT'
+UNION ALL
+SELECT 'InventoryRisk', GeneratedAt FROM BTR_PortalDashboardInventoryRiskKpi WHERE SnapshotKey = 'CURRENT';
 ```
 
 ### Scheduled Tasks
 
-Create **six separate** Windows Task Scheduler jobs:
+Create **seven separate** Windows Task Scheduler jobs:
 
 | Task name | Interval | Command |
 | --------- | -------- | ------- |
@@ -111,6 +114,7 @@ Create **six separate** Windows Task Scheduler jobs:
 | `BTR-Portal-Dashboard-Sales` | Every **30 min** | `btr.portal.worker.exe --domain Sales --triggered-by Scheduler` |
 | `BTR-Portal-Dashboard-Purchasing` | Every **30 min** | `btr.portal.worker.exe --domain Purchasing --triggered-by Scheduler` |
 | `BTR-Portal-Dashboard-Inventory` | Every **60 min** | `btr.portal.worker.exe --domain Inventory --triggered-by Scheduler` |
+| `BTR-Portal-Dashboard-InventoryRisk` | Every **60 min** | `btr.portal.worker.exe --domain InventoryRisk --triggered-by Scheduler` |
 | `BTR-Portal-Dashboard-Customer` | Every **30 min** | `btr.portal.worker.exe --domain Customer --triggered-by Scheduler` |
 | `BTR-Portal-Dashboard-Salesman` | Every **30 min** | `btr.portal.worker.exe --domain Salesman --triggered-by Scheduler` |
 
@@ -133,7 +137,7 @@ $trigger = New-ScheduledTaskTrigger -Once -At (Get-Date) -RepetitionInterval (Ne
 Register-ScheduledTask -TaskName "BTR-Portal-Dashboard-Piutang" -Action $action -Trigger $trigger -User "DOMAIN\svc-btr-portal" -RunLevel Highest
 ```
 
-Repeat for Sales (30 min), Purchasing (30 min), Customer (30 min), Salesman (30 min), and Inventory (60 min).
+Repeat for Sales (30 min), Purchasing (30 min), Customer (30 min), Salesman (30 min), Inventory (60 min), and InventoryRisk (60 min).
 
 ### Manual Refresh Options
 
@@ -161,8 +165,8 @@ Content-Type: application/json
 
 | `domain` value | Behavior |
 | -------------- | -------- |
-| `All` (default) | Piutang → Inventory → Sales → Purchasing → Customer → Salesman |
-| `Piutang`, `Inventory`, `Sales`, `Purchasing`, `Customer`, `Salesman` | Single domain only |
+| `All` (default) | Piutang → Inventory → InventoryRisk → Sales → Purchasing → Customer → Salesman |
+| `Piutang`, `Inventory`, `InventoryRisk`, `Sales`, `Purchasing`, `Customer`, `Salesman` | Single domain only |
 
 Domain values are case-insensitive. Logged as `TriggeredBy = Manual` in refresh log.
 
@@ -219,6 +223,7 @@ GET  /api/dashboard/inventory            → 200 with token
 GET  /api/dashboard/purchasing           → 200 with token
 GET  /api/dashboard/customers            → 200 with token
 GET  /api/dashboard/salesmen             → 200 with token
+GET  /api/dashboard/inventory-risk       → 200 with token
 ```
 
 ---
@@ -227,7 +232,7 @@ GET  /api/dashboard/salesmen             → 200 with token
 
 ```text
 INITIAL SETUP     btr.portal.worker.exe --domain All --triggered-by Manual
-SCHEDULE          6 Task Scheduler jobs: 15 / 30 / 30 / 30 / 30 / 60 min
+SCHEDULE          7 Task Scheduler jobs: 15 / 30 / 30 / 30 / 30 / 60 / 60 min
 MANUAL (FULL)     Worker CLI --domain All
 MANUAL (ONE)      API POST { "domain": "Piutang" }  OR  worker --domain Piutang
 MONITOR           GET /api/health/dashboard-snapshots
