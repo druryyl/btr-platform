@@ -97,6 +97,10 @@ namespace btr.test.ReportingContext
             }
 
             public IEnumerable<PiutangSalesWilayahDto> ListData(Periode periode) => _rows;
+
+            public IEnumerable<PiutangSalesWilayahDto> ListData(
+                Periode filter,
+                btr.application.ReportingContext.PiutangReportAgg.PiutangReportDateField dateField) => _rows;
         }
 
         private sealed class StubTglJamDal : ITglJamDal

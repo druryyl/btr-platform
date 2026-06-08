@@ -163,6 +163,11 @@
     <Build Include="Tables\ReportingContext\BTR_PortalDashboardPurchasingWeekTrend.sql" />
     <Build Include="Tables\ReportingContext\BTR_PortalDashboardPurchasingPostingStatus.sql" />
     <Build Include="Tables\ReportingContext\BTR_PortalDashboardPurchasingTopPrincipal.sql" />
+    <Build Include="Tables\ReportingContext\BTR_PortalDashboardCustomerKpi.sql" />
+    <Build Include="Tables\ReportingContext\BTR_PortalDashboardCustomerTopOmzet.sql" />
+    <Build Include="Tables\ReportingContext\BTR_PortalDashboardCustomerTopPiutang.sql" />
+    <Build Include="Tables\ReportingContext\BTR_PortalDashboardCustomerAttention.sql" />
+    <Build Include="Tables\ReportingContext\BTR_PortalDashboardCustomerSegmentation.sql" />
     <Build Include="Tables\ReportingContext\IX_BTR_Piutang_OpenBalance.sql" />
   </ItemGroup>
   <ItemGroup>

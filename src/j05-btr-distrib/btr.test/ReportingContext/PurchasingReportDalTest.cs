@@ -25,6 +25,9 @@ namespace btr.test.ReportingContext
     {
 
         private static readonly DateTime FixedToday = new DateTime(2026, 6, 6, 14, 30, 0);
+        private static readonly Periode June2026 = new Periode(
+            new DateTime(2026, 6, 1),
+            new DateTime(2026, 6, 30));
 
 
 
@@ -50,7 +53,7 @@ namespace btr.test.ReportingContext
 
 
 
-            var result = dal.GetReport();
+            var result = dal.GetReport(June2026);
 
 
 
@@ -92,7 +95,7 @@ namespace btr.test.ReportingContext
 
 
 
-            var result = dal.GetReport();
+            var result = dal.GetReport(June2026);
 
 
 
@@ -128,7 +131,7 @@ namespace btr.test.ReportingContext
 
 
 
-            var result = dal.GetReport();
+            var result = dal.GetReport(June2026);
 
 
 

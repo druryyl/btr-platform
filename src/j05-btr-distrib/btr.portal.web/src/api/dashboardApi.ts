@@ -1,6 +1,8 @@
 import { httpClient } from '@/api/httpClient'
 import { isApiSuccess, type ApiResponse } from '@/models/api'
 import type {
+  DashboardCustomerResponse,
+  DashboardExecutiveResponse,
   DashboardInventoryResponse,
   DashboardOverviewResponse,
   DashboardPiutangResponse,
@@ -13,6 +15,16 @@ export async function fetchDashboardOverview(): Promise<DashboardOverviewRespons
 
   if (!isApiSuccess(data) || !data.Data) {
     throw new Error(data.Message ?? 'Failed to load dashboard overview.')
+  }
+
+  return data.Data
+}
+
+export async function fetchDashboardExecutive(): Promise<DashboardExecutiveResponse> {
+  const { data } = await httpClient.get<ApiResponse<DashboardExecutiveResponse>>('/api/dashboard/executive')
+
+  if (!isApiSuccess(data) || !data.Data) {
+    throw new Error(data.Message ?? 'Failed to load executive dashboard.')
   }
 
   return data.Data
@@ -53,6 +65,16 @@ export async function fetchDashboardPurchasing(): Promise<DashboardPurchasingRes
 
   if (!isApiSuccess(data) || !data.Data) {
     throw new Error(data.Message ?? 'Failed to load purchasing dashboard.')
+  }
+
+  return data.Data
+}
+
+export async function fetchDashboardCustomer(): Promise<DashboardCustomerResponse> {
+  const { data } = await httpClient.get<ApiResponse<DashboardCustomerResponse>>('/api/dashboard/customers')
+
+  if (!isApiSuccess(data) || !data.Data) {
+    throw new Error(data.Message ?? 'Failed to load customer analytics dashboard.')
   }
 
   return data.Data

@@ -67,7 +67,7 @@ namespace btr.portal.api.Controllers
             IReadOnlyList<DashboardSnapshotRefreshStatusModel> latest)
         {
             var byDomain = latest.ToDictionary(x => x.Domain, StringComparer.OrdinalIgnoreCase);
-            var domains = new[] { "Piutang", "Inventory", "Sales", "Purchasing" };
+            var domains = new[] { "Piutang", "Inventory", "Sales", "Purchasing", "Customer" };
             var result = new List<DashboardSnapshotDomainHealth>();
 
             foreach (var domain in domains)
@@ -108,6 +108,8 @@ namespace btr.portal.api.Controllers
                     return _snapshotOptions.SalesIntervalMinutes;
                 case "Purchasing":
                     return _snapshotOptions.PurchasingIntervalMinutes;
+                case "Customer":
+                    return _snapshotOptions.CustomerIntervalMinutes;
                 default:
                     return 0;
             }

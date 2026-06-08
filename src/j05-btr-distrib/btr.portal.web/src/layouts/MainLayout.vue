@@ -15,7 +15,7 @@ const menuItems = computed(() => [
     icon: 'pi pi-home',
     items: [
       {
-        label: 'Overview',
+        label: 'Executive',
         icon: 'pi pi-th-large',
         command: () => router.push('/dashboard'),
         class: route.path === '/dashboard' ? 'layout-menu-item--active' : '',
@@ -31,6 +31,12 @@ const menuItems = computed(() => [
         icon: 'pi pi-wallet',
         command: () => router.push('/dashboard/piutang'),
         class: route.path === '/dashboard/piutang' ? 'layout-menu-item--active' : '',
+      },
+      {
+        label: 'Customers',
+        icon: 'pi pi-users',
+        command: () => router.push('/dashboard/customers'),
+        class: route.path === '/dashboard/customers' ? 'layout-menu-item--active' : '',
       },
       {
         label: 'Inventory',

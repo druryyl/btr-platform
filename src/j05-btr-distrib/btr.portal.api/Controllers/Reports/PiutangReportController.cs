@@ -18,9 +18,17 @@ namespace btr.portal.api.Controllers.Reports
         }
 
         [HttpGet, Route("")]
-        public async Task<IHttpActionResult> Get()
+        public async Task<IHttpActionResult> Get(
+            [FromUri] System.DateTime? from = null,
+            [FromUri] System.DateTime? to = null,
+            [FromUri] string dateField = "DueDate")
         {
-            var result = await _mediator.Send(new GetPiutangReportQuery());
+            var result = await _mediator.Send(new GetPiutangReportQuery
+            {
+                From = from,
+                To = to,
+                DateField = dateField,
+            });
             return Ok(ApiResponse<PiutangReportResponse>.Success(result));
         }
     }

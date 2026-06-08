@@ -3,7 +3,7 @@ import Card from 'primevue/card'
 import DataTable from 'primevue/datatable'
 import Column from 'primevue/column'
 import ProgressSpinner from 'primevue/progressspinner'
-import { formatCurrency } from '@/services/formatters'
+import { formatCurrency, formatPercent } from '@/services/formatters'
 
 defineProps<{
   title: string
@@ -11,8 +11,30 @@ defineProps<{
   rows: Record<string, unknown>[]
   loading: boolean
   valueField: string
+  percentField?: string
   emptyMessage: string
+  clickable?: boolean
 }>()
+
+const emit = defineEmits<{
+  rowClick: [row: Record<string, unknown>]
+}>()
+
+function onRowClick(event: { data: Record<string, unknown> }): void {
+  emit('rowClick', event.data)
+}
+
+function formatCell(field: string, value: unknown, valueField: string, percentField?: string): string {
+  if (field === valueField) {
+    return formatCurrency(value as number)
+  }
+
+  if (percentField && field === percentField) {
+    return value != null ? formatPercent(value as number) : '—'
+  }
+
+  return String(value ?? '')
+}
 </script>
 
 <template>
@@ -34,6 +56,8 @@ defineProps<{
         :value="rows"
         striped-rows
         class="top10-ranking-table__table"
+        :class="{ 'top10-ranking-table__table--clickable': clickable }"
+        @row-click="onRowClick"
       >
         <template #empty>
           <p class="top10-ranking-table__empty">{{ emptyMessage }}</p>
@@ -46,10 +70,7 @@ defineProps<{
           :header="col.header"
         >
           <template #body="{ data }">
-            <span v-if="col.field === valueField">
-              {{ formatCurrency(data[col.field] as number) }}
-            </span>
-            <span v-else>{{ data[col.field] }}</span>
+            {{ formatCell(col.field, data[col.field], valueField, percentField) }}
           </template>
         </Column>
       </DataTable>
@@ -75,5 +96,9 @@ defineProps<{
   padding: 1.5rem 0;
   text-align: center;
   color: var(--p-text-muted-color);
+}
+
+.top10-ranking-table__table--clickable :deep(.p-datatable-tbody > tr) {
+  cursor: pointer;
 }
 </style>

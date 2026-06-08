@@ -1,16 +1,27 @@
 <script setup lang="ts">
 import { computed, onMounted } from 'vue'
+import { useRoute } from 'vue-router'
+import { storeToRefs } from 'pinia'
 import Button from 'primevue/button'
 import Card from 'primevue/card'
 import Column from 'primevue/column'
 import DataTable from 'primevue/datatable'
 import Message from 'primevue/message'
+import ReportFilterBar from '@/components/reports/ReportFilterBar.vue'
+import { useReportFreeTextFilter } from '@/composables/useReportFreeTextFilter'
 import { formatCurrency, formatDate, formatDateTime } from '@/services/formatters'
 import { useSalesReportStore } from '@/stores/salesReportStore'
 
+const route = useRoute()
 const salesReport = useSalesReportStore()
+const { freeText } = storeToRefs(salesReport)
 
-const rows = computed(() => salesReport.report?.Rows ?? [])
+const sourceRows = computed(() => salesReport.report?.Rows ?? [])
+const { filteredRows, hasFreeTextFilter } = useReportFreeTextFilter(
+  sourceRows,
+  ['FakturCode', 'CustomerName', 'SalesName', 'Status'],
+  freeText,
+)
 
 const periodLabel = computed(() => {
   if (!salesReport.report) {
@@ -21,6 +32,10 @@ const periodLabel = computed(() => {
 })
 
 onMounted(() => {
+  if (typeof route.query.q === 'string' && route.query.q.trim()) {
+    salesReport.freeText = route.query.q.trim()
+  }
+
   void salesReport.loadReport()
 })
 </script>
@@ -52,8 +67,20 @@ onMounted(() => {
 
     <Card>
       <template #content>
+        <ReportFilterBar
+          v-model:from="salesReport.from"
+          v-model:to="salesReport.to"
+          v-model:free-text="salesReport.freeText"
+          :loading="salesReport.loading"
+          @apply="salesReport.loadReport()"
+        />
+
+        <p v-if="hasFreeTextFilter" class="sales-report__filter-hint">
+          Showing rows matching your search filter.
+        </p>
+
         <DataTable
-          :value="rows"
+          :value="filteredRows"
           :loading="salesReport.loading"
           paginator
           :rows="25"
@@ -115,6 +142,12 @@ onMounted(() => {
 
 .sales-report__header p {
   margin: 0;
+  color: var(--p-text-muted-color);
+}
+
+.sales-report__filter-hint {
+  margin: 0 0 0.75rem;
+  font-size: 0.85rem;
   color: var(--p-text-muted-color);
 }
 

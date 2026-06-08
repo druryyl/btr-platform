@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using btr.application.FinanceContext.PiutangAgg.Contracts;
+using btr.application.ReportingContext.PiutangReportAgg;
 using btr.application.SupportContext.TglJamAgg;
 using btr.infrastructure.ReportingContext.PiutangReportAgg;
 using btr.nuna.Domain;
@@ -12,6 +13,9 @@ namespace btr.test.ReportingContext
     public class PiutangReportDalTest
     {
         private static readonly DateTime FixedToday = new DateTime(2026, 6, 6, 14, 30, 0);
+        private static readonly Periode June2026 = new Periode(
+            new DateTime(2026, 6, 1),
+            new DateTime(2026, 6, 30));
 
         [Fact]
         public void GetReport_FiltersOutstandingRows_AndComputesSummary()
@@ -26,10 +30,11 @@ namespace btr.test.ReportingContext
                 }),
                 new StubTglJamDal(FixedToday));
 
-            var result = dal.GetReport();
+            var result = dal.GetReport(June2026, PiutangReportDateField.DueDate);
 
-            result.PeriodFrom.Should().Be(new DateTime(2000, 1, 1));
-            result.PeriodTo.Should().Be(FixedToday.Date.AddHours(23).AddMinutes(59).AddSeconds(59));
+            result.PeriodFrom.Should().Be(new DateTime(2026, 6, 1));
+            result.PeriodTo.Should().Be(new DateTime(2026, 6, 30, 23, 59, 59));
+            result.DateField.Should().Be("DueDate");
             result.GeneratedAt.Should().Be(FixedToday);
             result.Rows.Should().HaveCount(2);
             result.Rows.Should().OnlyContain(r => r.KurangBayar > 1);
@@ -49,7 +54,7 @@ namespace btr.test.ReportingContext
                 }),
                 new StubTglJamDal(FixedToday));
 
-            var result = dal.GetReport();
+            var result = dal.GetReport(June2026, PiutangReportDateField.DueDate);
 
             result.Summary.TotalCustomer.Should().Be(2);
         }
@@ -65,10 +70,21 @@ namespace btr.test.ReportingContext
                 }),
                 new StubTglJamDal(FixedToday));
 
-            var result = dal.GetReport();
+            var result = dal.GetReport(June2026, PiutangReportDateField.DueDate);
 
             result.Rows[0].CustomerName.Should().Be("Alpha");
             result.Rows[1].CustomerName.Should().Be("Zeta");
+        }
+
+        [Fact]
+        public void GetReport_PassesDateField_ToUnderlyingDal()
+        {
+            var stub = new StubPiutangSalesWilayahDal(Array.Empty<PiutangSalesWilayahDto>());
+            var dal = new PiutangReportDal(stub, new StubTglJamDal(FixedToday));
+
+            dal.GetReport(June2026, PiutangReportDateField.PiutangDate);
+
+            stub.LastDateField.Should().Be(PiutangReportDateField.PiutangDate);
         }
 
         private static PiutangSalesWilayahDto Row(
@@ -110,7 +126,15 @@ namespace btr.test.ReportingContext
                 _rows = rows;
             }
 
+            public PiutangReportDateField? LastDateField { get; private set; }
+
             public IEnumerable<PiutangSalesWilayahDto> ListData(Periode periode) => _rows;
+
+            public IEnumerable<PiutangSalesWilayahDto> ListData(Periode filter, PiutangReportDateField dateField)
+            {
+                LastDateField = dateField;
+                return _rows;
+            }
         }
 
         private sealed class StubTglJamDal : ITglJamDal

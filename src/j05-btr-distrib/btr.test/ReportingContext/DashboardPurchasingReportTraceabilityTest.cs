@@ -33,7 +33,7 @@ namespace btr.test.ReportingContext
             var reportDal = new PurchasingReportDal(stubDal, stubTglJam);
 
             var aggregate = aggregator.Aggregate(rows, June2026, FixedToday);
-            var report = reportDal.GetReport();
+            var report = reportDal.GetReport(June2026);
 
             aggregate.GrandTotalPurchase.Should().Be(report.Summary.GrandTotalPurchase);
             aggregate.TotalInvoice.Should().Be(report.Summary.TotalInvoice);

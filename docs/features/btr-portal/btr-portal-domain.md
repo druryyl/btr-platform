@@ -3,7 +3,7 @@
 **Audience:** Product Owner, Business Owner, Developers, Future Agents  
 **Purpose:** Define what BTR Portal is, why it exists, and the business meaning of its dashboards, reports, and KPIs.
 
-**Related permanent docs:** [Architecture (WHAT)](./btr-portal-architecture.md) · [Operational (HOW)](./btr-portal-operational.md) · [Materialized dashboards](../materialized-dashboard/materialized-dashboard-domain.md) · [Extraction report — Purchasing Dashboard](./knowledge-extraction-report-purchasing-dashboard.md)
+**Related permanent docs:** [Architecture (WHAT)](./btr-portal-architecture.md) · [Operational (HOW)](./btr-portal-operational.md) · [Materialized dashboards](../materialized-dashboard/materialized-dashboard-domain.md) · [Extraction — M16/M17](./knowledge-extraction-report-m16-m17.md) · [Extraction — Purchasing](./knowledge-extraction-report-purchasing-dashboard.md)
 
 For how to use the portal, see [btr-portal-operational.md](./btr-portal-operational.md).  
 For how it is built, see [btr-portal-architecture.md](./btr-portal-architecture.md).
@@ -38,7 +38,7 @@ The portal complements BTR Desktop; it does not replace operational transaction 
 | Area | Capabilities |
 | ---- | ------------ |
 | Authentication | Sign in with existing BTR user credentials |
-| Dashboards | Sales, Piutang (receivables), Inventory, Purchasing — summary home plus detail analytics |
+| Dashboards | Executive home (Management Attention Center), Sales, Piutang, Customer Analytics, Inventory, Purchasing — detail analytics per domain |
 | Reports | Sales, Piutang, Inventory, Purchasing — tabular transaction/detail views |
 | Analytics | KPI cards, charts, Top 10 rankings, footer summary totals |
 
@@ -48,6 +48,7 @@ The portal complements BTR Desktop; it does not replace operational transaction 
 | ------------- | --------------- |
 | Sales | Dashboard KPIs, weekly trend, target vs achievement, salesman ranking; Sales Report |
 | Finance (Piutang) | Dashboard KPIs, aging analysis, overdue customers, Top 10 customers; Piutang Report |
+| Customer (cross-domain) | Customer Analytics dashboard — attention signals, rankings, segmentation across Sales + Piutang; drill-down to Sales/Piutang reports |
 | Inventory | Dashboard KPIs, category/supplier breakdown; Inventory Report |
 | Purchasing | Dashboard KPIs, weekly trend, posting-status breakdown, Top 10 Principal; Purchasing Report |
 
@@ -95,13 +96,27 @@ Management reviews purchase invoice activity for the current month, including wh
 
 ## Dashboard Definitions
 
-### Dashboard Home (`/dashboard`)
+### Management Attention Center (`/dashboard`)
 
-Summary landing page with four KPI cards (Sales, Piutang, Inventory, Purchasing). Each card shows compact headline metrics and a link to the corresponding detail dashboard. No charts on the home page.
+Executive landing page titled **Management Attention Center** — answers *What requires management attention today?* for all authenticated users.
 
-**Data source:** `GET /api/dashboard/overview` reads Layer A KPI snapshot tables only (`BTR_PortalDashboard*Kpi`). Each card displays its domain's `GeneratedAt` timestamp from the last successful background refresh. Domains may show different refresh times when per-domain scheduler cadences differ (Piutang 15 min, Sales 30 min, Purchasing 30 min, Inventory 60 min).
+| Section | Content |
+| ------- | ------- |
+| Attention Cards | Sales Achievement % (Healthy/Warning/Critical band), Piutang exposure signals, Purchasing pending posting, Inventory concentration |
+| Critical Exposures | Top 5 Customers, Categories, Suppliers, Principals (grouped by domain) |
+| Domain Summaries | One-line summary + link to domain dashboard |
 
-**Background refresh:** Scheduled by `btr.portal.worker` via Windows Task Scheduler (per-domain jobs). Authenticated users may trigger an on-demand rebuild via `POST /api/admin/dashboard/refresh` with optional body `{ "domain": "All|Piutang|Inventory|Sales|Purchasing" }` (default `All`; domain values are case-insensitive). For full rebuilds or long-running refreshes, prefer the worker CLI — the API runs synchronously and is subject to IIS request timeouts (~110 s default). Operations may also use: `btr.portal.worker.exe --domain All --triggered-by Manual`.
+**Data source:** `GET /api/dashboard/executive` composes existing snapshot data via `DashboardExecutiveComposer` — no new snapshot tables or aggregators. Reads four domain snapshot DALs plus refresh log for health.
+
+**Promoted executive metrics:** Achievement % and Total Achievement (Sales); Total Piutang, Overdue Customer, > 90 Day amount/% (Piutang); Pending Posting count/value (Purchasing); Total Inventory Value, Top Category/Supplier % (Inventory).
+
+**Excluded from executive view:** Total Faktur, Total Customer, Total Item, Total Invoice, weekly trends, direct report links.
+
+**Freshness:** Consolidated `LastRefreshed` = `Min(GeneratedAt)` across domains. `IsDataFresh` when all available domains are within configured interval minutes.
+
+**Legacy endpoint:** `GET /api/dashboard/overview` retained but no longer used by the home page.
+
+**Background refresh:** Scheduled by `btr.portal.worker` via Windows Task Scheduler (per-domain jobs). Authenticated users may trigger an on-demand rebuild via `POST /api/admin/dashboard/refresh` with optional body `{ "domain": "All|Piutang|Inventory|Sales|Purchasing|Customer" }` (default `All`; domain values are case-insensitive). For full rebuilds or long-running refreshes, prefer the worker CLI — the API runs synchronously and is subject to IIS request timeouts (~110 s default). Operations may also use: `btr.portal.worker.exe --domain All --triggered-by Manual`.
 
 **Observability:** `GET /api/health/dashboard-snapshots` (no auth) returns the latest refresh attempt per domain from `BTR_PortalDashboardRefreshLog`, including status, duration, and configured interval minutes. Overall health is `unknown` when no domain has a refresh log yet; otherwise `ok`, `refreshing` (any domain `Running`), or `degraded` (any domain `Failed`).
 
@@ -135,6 +150,28 @@ Summary landing page with four KPI cards (Sales, Piutang, Inventory, Purchasing)
 | Table | Top 10 Outstanding Customers |
 
 **Home card metrics (summary):** Total Piutang, Total Customer.
+
+### Customer Analytics Dashboard (`/dashboard/customers`)
+
+**Period:** Sales metrics use **current calendar month** non-void Faktur (`GrandTotal`). Piutang metrics use **all-time open balance** (`KurangBayar > 1`) at refresh time.
+
+**Purpose:** Cross-domain customer management view — answers *Which customers require management attention?* across sales activity and receivable exposure. **Supplements** the executive Top 5 Customers list; does not replace the Management Attention Center.
+
+| Section | Content |
+| ------- | ------- |
+| Attention Cards | Collection (overdue, >90d exposure) · Concentration (Top Omzet %, Top Piutang %) · Activity (active count) · Inactivity (dormant count) · Credit (plafond breach, suspended + sales) |
+| Attention List | One row per customer × signal — Overdue, Dormant, Plafond breach, Suspended + Sales |
+| Rankings | Top 10 by Omzet (month) and Top 10 by Piutang (all open) — each with `CustomerCode` and % of domain total |
+| Segmentation | By Klasifikasi, By Wilayah, Active vs Dormant |
+| Navigation | Links to Sales/Piutang dashboards and reports |
+
+**Data source:** Dedicated `BTR_PortalDashboardCustomer*` snapshot domain — refreshed from source DALs (Faktur, piutang open balance, customer master, last Faktur per customer), **not** composed from Sales/Piutang snapshot tables.
+
+**Attention Indicator:** Generic M16 presentation on cards when `*RequiresAttention` is true. Concentration percentages have **no** automatic warning thresholds.
+
+**Drill-down:** Customer row click opens Sales or Piutang Report with customer **name** pre-filter (`?q=`). Path: Customer Analytics → Domain Dashboard → Report.
+
+**Explicitly out of scope:** Retur analytics, Effective Call, GPS, Faktur Kembali aggregates, collection effectiveness / DSO, new Customer Report route, executive dashboard changes.
 
 ### Inventory Dashboard (`/dashboard/inventory`)
 
@@ -277,6 +314,26 @@ All monetary values are in Indonesian Rupiah (IDR). Dashboard and report totals 
 
 **Traceability:** Total Piutang and Total Customer = Piutang Report footer totals.
 
+### Customer Analytics KPIs (M17)
+
+Dedicated snapshot domain — `BTR_PortalDashboardCustomer*`. Refreshed from source DALs (not composed from Sales/Piutang snapshots).
+
+| KPI | Period / scope | Formula | Business meaning |
+| --- | -------------- | ------- | ---------------- |
+| **Active Customer** | Current month | Distinct customer keys with non-void Faktur `GrandTotal` | Customers invoiced this month |
+| **Dormant Customer** | 90-day rule | Last Faktur ≤ today − 90 days with prior history; exclude active this month | Inactive accounts needing attention |
+| **Overdue Customer** | All-time open | Distinct customers with any non-Current aging bucket balance | Collection attention count |
+| **Plafond breach** | All-time open | `SUM(KurangBayar) > Plafond` where `Plafond > 0` | Credit policy violations |
+| **Suspended + Sales** | Current month + master | `IsSuspend` and Faktur in current month | Policy violation with active billing |
+| **Top Omzet Customer %** | Current month | Top-1 omzet ÷ Total Omzet × 100% | Revenue concentration (informational) |
+| **Top Piutang Customer %** | All-time open | Top-1 balance ÷ Total Piutang × 100% | Receivable concentration (informational) |
+| **Top 10 Omzet** | Current month | `SUM(GrandTotal)` per customer, descending | Revenue priority ranking |
+| **Top 10 Piutang** | All-time open | `SUM(KurangBayar)` per customer, descending | Collection priority ranking |
+
+**Customer key:** `CustomerCode` when non-empty, else `CustomerName` (same as Sales/Piutang aggregators).
+
+**Attention list:** One row per customer × signal (Overdue, Dormant, Plafond breach, Suspended + Sales).
+
 ### Inventory KPIs
 
 | KPI | Definition | Formula | Business Meaning |
@@ -320,7 +377,12 @@ Approved rules governing portal calculations and filters:
 | In-Transit exclusion | Inventory | Warehouse named `"In-Transit"` excluded from all inventory calculations |
 | Zero quantity exclusion | Inventory report & dashboard analytics | Rows/groups with `Qty ≤ 0` excluded after BrgId aggregation |
 | BrgId-first grouping | Inventory | Aggregate by item (`BrgId`) before category/supplier rollup or footer totals |
-| Customer key | Piutang | `CustomerCode` when non-empty; fallback to `CustomerName` |
+| Customer key | Piutang, Customer Analytics | `CustomerCode` when non-empty; fallback to `CustomerName` |
+| Dormant customer | Customer Analytics | No Faktur for **90 days** with **prior Faktur history**; customers active this month excluded; never-invoiced customers excluded |
+| Plafond breach | Customer Analytics | Open balance **>** `Plafond` only when `Plafond > 0` |
+| Suspended + sales | Customer Analytics | `IsSuspend = true` AND Faktur in **current calendar month** |
+| Attention list grain | Customer Analytics | One row per customer × signal (duplicate signals expected) |
+| Customer snapshot source | Customer Analytics worker | Reads source DALs — does not compose from Sales/Piutang snapshot tables |
 | Unknown dimensions | Inventory M15 | Blank category or supplier displayed and aggregated as `"Unknown"` |
 | Top N | All rankings | Top 10 for salesman, customer, category, supplier |
 | Posting Stok | Purchasing report | `SUDAH` = stock posted; `BELUM` = not yet posted |
@@ -337,7 +399,7 @@ Approved rules governing portal calculations and filters:
 
 ## Current Product State
 
-Capabilities delivered and accepted across milestones M1–M15:
+Capabilities delivered across milestones M1–M17:
 
 | Capability | Status |
 | ---------- | ------ |
@@ -345,11 +407,13 @@ Capabilities delivered and accepted across milestones M1–M15:
 | Materialized dashboard snapshots (background worker + admin refresh) | Complete |
 | JWT authentication with BTR users | Complete |
 | ReportingContext architecture | Complete |
-| Dashboard home with Sales, Piutang, Inventory, Purchasing summary KPIs | Complete |
+| Dashboard home — Management Attention Center (M16) | Complete |
+| Customer Analytics dashboard — dedicated snapshot domain (M17) | Complete |
 | Sales detail dashboard (target, achievement, weekly trend, Top 10 salesman) | Complete |
 | Piutang detail dashboard (aging, overdue customers, Top 10 customers) | Complete |
 | Inventory detail dashboard (category/supplier charts, Top 10 tables) | Complete |
-| Dashboard overview endpoint (`GET /api/dashboard/overview`) | Complete |
+| Dashboard overview endpoint (`GET /api/dashboard/overview`) | Complete (retained; home uses executive) |
+| Executive dashboard endpoint (`GET /api/dashboard/executive`) | Complete |
 | Snapshot worker (`btr.portal.worker`) + Task Scheduler jobs | Complete |
 | Admin on-demand refresh (`POST /api/admin/dashboard/refresh`) | Complete |
 | Snapshot health endpoint (`GET /api/health/dashboard-snapshots`) | Complete |
@@ -365,13 +429,22 @@ Capabilities delivered and accepted across milestones M1–M15:
 
 ## Future Direction
 
-Known roadmap items explicitly **deferred** beyond M15 (not committed scope):
+Approved milestone roadmap after M17 (not yet delivered):
+
+| Milestone | Focus |
+| --------- | ----- |
+| M18 | Salesman Performance |
+| M19 | Slow Moving & Dead Stock |
+| M20 | Collection Dashboard (collection effectiveness / DSO) |
+
+Known capabilities explicitly **deferred** (not committed scope):
 
 | Area | Deferred Capabilities |
 | ---- | --------------------- |
+| Customer analytics | Retur, Effective Call, GPS, Faktur Kembali aggregates, declining purchase trends, Harga Type segmentation |
 | Filtering | Date-range parameters, search, advanced filters on reports |
 | Sales analytics | Margin analysis, status breakdown chart, sales period mode toggle |
-| Piutang analytics | Collection effectiveness KPIs |
+| Piutang analytics | Collection effectiveness KPIs (planned M20) |
 | Inventory analytics | ABC analysis, warehouse breakdown, pie/donut composition views, Kartu Stok drilldown |
 | Purchasing | Warehouse breakdown, pending posting value KPI, PF2 line detail, PF3 daily detail, PF4 retur beli |
 | Platform | Export (Excel/PDF), drilldown from charts to transactions, role-based menu visibility, server-side pagination |

@@ -30,19 +30,22 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.Commands
         private readonly IRefreshDashboardInventorySnapshotWorker _inventoryWorker;
         private readonly IRefreshDashboardSalesSnapshotWorker _salesWorker;
         private readonly IRefreshDashboardPurchasingSnapshotWorker _purchasingWorker;
+        private readonly IRefreshDashboardCustomerSnapshotWorker _customerWorker;
 
         public RefreshDashboardSnapshotsHandler(
             IRefreshAllDashboardSnapshotsWorker allWorker,
             IRefreshDashboardPiutangSnapshotWorker piutangWorker,
             IRefreshDashboardInventorySnapshotWorker inventoryWorker,
             IRefreshDashboardSalesSnapshotWorker salesWorker,
-            IRefreshDashboardPurchasingSnapshotWorker purchasingWorker)
+            IRefreshDashboardPurchasingSnapshotWorker purchasingWorker,
+            IRefreshDashboardCustomerSnapshotWorker customerWorker)
         {
             _allWorker = allWorker;
             _piutangWorker = piutangWorker;
             _inventoryWorker = inventoryWorker;
             _salesWorker = salesWorker;
             _purchasingWorker = purchasingWorker;
+            _customerWorker = customerWorker;
         }
 
         public Task<RefreshDashboardSnapshotsResponse> Handle(
@@ -118,9 +121,17 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.Commands
                     _purchasingWorker.Execute(purchasingRequest);
                     return MapResult("Purchasing", purchasingRequest.Result);
 
+                case "Customer":
+                    var customerRequest = new RefreshDashboardCustomerSnapshotRequest
+                    {
+                        TriggeredBy = triggeredBy
+                    };
+                    _customerWorker.Execute(customerRequest);
+                    return MapResult("Customer", customerRequest.Result);
+
                 default:
                     throw new ArgumentException(
-                        "Domain must be All, Piutang, Inventory, Sales, or Purchasing.",
+                        "Domain must be All, Piutang, Inventory, Sales, Purchasing, or Customer.",
                         nameof(RefreshDashboardSnapshotsCommand.Domain));
             }
         }
@@ -173,6 +184,18 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.Commands
             };
         }
 
+        private static RefreshDashboardDomainResult MapResult(
+            string domain,
+            RefreshDashboardCustomerSnapshotResult result)
+        {
+            return new RefreshDashboardDomainResult
+            {
+                Domain = domain,
+                RefreshLogId = result?.RefreshLogId,
+                DurationMs = result?.DurationMs ?? 0
+            };
+        }
+
         private static string NormalizeDomain(string domain)
         {
             if (string.IsNullOrWhiteSpace(domain))
@@ -194,6 +217,9 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.Commands
 
             if (string.Equals(trimmed, "Purchasing", StringComparison.OrdinalIgnoreCase))
                 return "Purchasing";
+
+            if (string.Equals(trimmed, "Customer", StringComparison.OrdinalIgnoreCase))
+                return "Customer";
 
             return trimmed;
         }

@@ -22,9 +22,9 @@ Every dashboard page shows when data was last rebuilt (e.g. "Generated at 08:45"
 | What it means | What it does **not** mean |
 | ------------- | ------------------------ |
 | When the background job last finished updating that domain | When you clicked Refresh |
-| How old the numbers may be (up to 15 / 30 / 30 / 60 min) | That BTR Desktop was updated at that exact second |
+| How old the numbers may be (up to 15 / 30 / 30 / 30 / 60 min) | That BTR Desktop was updated at that exact second |
 
-**Home page:** Sales, Piutang, Inventory, and Purchasing cards may show **different** generated-at times because each domain refreshes on its own schedule.
+**Home page:** Executive view uses consolidated freshness (`Min(GeneratedAt)`). Domain detail pages may show different generated-at times per domain refresh schedule.
 
 ### Refresh Button
 
@@ -37,6 +37,7 @@ Click **Refresh** on any dashboard page to reload the latest stored snapshot fro
 | Piutang | 15 minutes |
 | Sales | 30 minutes |
 | Purchasing | 30 minutes |
+| Customer | 30 minutes |
 | Inventory | 60 minutes |
 
 Piutang refreshes most often because receivable balances change throughout the day (payments, new invoices).
@@ -81,7 +82,7 @@ FROM BTR_PortalDashboardRefreshLog
 ORDER BY CompletedAt DESC;
 ```
 
-All four domains (Piutang, Inventory, Sales, Purchasing) should show `Status = 'Success'`.
+All five domains (Piutang, Inventory, Sales, Purchasing, Customer) should show `Status = 'Success'`.
 
 Confirm KPI rows exist:
 
@@ -92,12 +93,14 @@ SELECT 'Inventory', GeneratedAt FROM BTR_PortalDashboardInventoryKpi WHERE Snaps
 UNION ALL
 SELECT 'Sales', GeneratedAt FROM BTR_PortalDashboardSalesKpi WHERE SnapshotKey = 'CURRENT'
 UNION ALL
-SELECT 'Purchasing', GeneratedAt FROM BTR_PortalDashboardPurchasingKpi WHERE SnapshotKey = 'CURRENT';
+SELECT 'Purchasing', GeneratedAt FROM BTR_PortalDashboardPurchasingKpi WHERE SnapshotKey = 'CURRENT'
+UNION ALL
+SELECT 'Customer', GeneratedAt FROM BTR_PortalDashboardCustomerKpi WHERE SnapshotKey = 'CURRENT';
 ```
 
 ### Scheduled Tasks
 
-Create **four separate** Windows Task Scheduler jobs:
+Create **five separate** Windows Task Scheduler jobs:
 
 | Task name | Interval | Command |
 | --------- | -------- | ------- |
@@ -105,6 +108,7 @@ Create **four separate** Windows Task Scheduler jobs:
 | `BTR-Portal-Dashboard-Sales` | Every **30 min** | `btr.portal.worker.exe --domain Sales --triggered-by Scheduler` |
 | `BTR-Portal-Dashboard-Purchasing` | Every **30 min** | `btr.portal.worker.exe --domain Purchasing --triggered-by Scheduler` |
 | `BTR-Portal-Dashboard-Inventory` | Every **60 min** | `btr.portal.worker.exe --domain Inventory --triggered-by Scheduler` |
+| `BTR-Portal-Dashboard-Customer` | Every **30 min** | `btr.portal.worker.exe --domain Customer --triggered-by Scheduler` |
 
 **Task checklist:**
 
@@ -125,7 +129,7 @@ $trigger = New-ScheduledTaskTrigger -Once -At (Get-Date) -RepetitionInterval (Ne
 Register-ScheduledTask -TaskName "BTR-Portal-Dashboard-Piutang" -Action $action -Trigger $trigger -User "DOMAIN\svc-btr-portal" -RunLevel Highest
 ```
 
-Repeat for Sales (30 min), Purchasing (30 min), and Inventory (60 min).
+Repeat for Sales (30 min), Purchasing (30 min), Customer (30 min), and Inventory (60 min).
 
 ### Manual Refresh Options
 
@@ -153,8 +157,8 @@ Content-Type: application/json
 
 | `domain` value | Behavior |
 | -------------- | -------- |
-| `All` (default) | Piutang → Inventory → Sales → Purchasing |
-| `Piutang`, `Inventory`, `Sales`, `Purchasing` | Single domain only |
+| `All` (default) | Piutang → Inventory → Sales → Purchasing → Customer |
+| `Piutang`, `Inventory`, `Sales`, `Purchasing`, `Customer` | Single domain only |
 
 Domain values are case-insensitive. Logged as `TriggeredBy = Manual` in refresh log.
 
@@ -209,6 +213,7 @@ GET  /api/dashboard/sales                → 200 with token
 GET  /api/dashboard/piutang            → 200 with token
 GET  /api/dashboard/inventory            → 200 with token
 GET  /api/dashboard/purchasing           → 200 with token
+GET  /api/dashboard/customers            → 200 with token
 ```
 
 ---
@@ -217,7 +222,7 @@ GET  /api/dashboard/purchasing           → 200 with token
 
 ```text
 INITIAL SETUP     btr.portal.worker.exe --domain All --triggered-by Manual
-SCHEDULE          4 Task Scheduler jobs: 15 / 30 / 30 / 60 min
+SCHEDULE          5 Task Scheduler jobs: 15 / 30 / 30 / 30 / 60 min
 MANUAL (FULL)     Worker CLI --domain All
 MANUAL (ONE)      API POST { "domain": "Piutang" }  OR  worker --domain Piutang
 MONITOR           GET /api/health/dashboard-snapshots

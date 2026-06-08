@@ -3,7 +3,7 @@
 **Audience:** End Users, Trainers, Support Team  
 **Purpose:** Explain how to use BTR Portal day to day.
 
-**Related permanent docs:** [Domain (WHY)](./btr-portal-domain.md) · [Architecture (WHAT)](./btr-portal-architecture.md) · [Materialized dashboard ops](../materialized-dashboard/materialized-dashboard-operational.md) · [Extraction report — Purchasing Dashboard](./knowledge-extraction-report-purchasing-dashboard.md)
+**Related permanent docs:** [Domain (WHY)](./btr-portal-domain.md) · [Architecture (WHAT)](./btr-portal-architecture.md) · [Materialized dashboard ops](../materialized-dashboard/materialized-dashboard-operational.md) · [Extraction — M16/M17](./knowledge-extraction-report-m16-m17.md) · [Extraction — Purchasing](./knowledge-extraction-report-purchasing-dashboard.md)
 
 For business definitions and KPI formulas, see [btr-portal-domain.md](./btr-portal-domain.md).
 
@@ -14,7 +14,7 @@ For business definitions and KPI formulas, see [btr-portal-domain.md](./btr-port
 1. Open the BTR Portal URL in a web browser.
 2. Enter your **User ID** and **Password** (same credentials as BTR Desktop).
 3. Click **Login**.
-4. On success, you are redirected to the Dashboard home.
+4. On success, you are redirected to the **Management Attention Center** at `/dashboard`.
 5. Your session persists across browser refreshes until you log out or the token expires.
 6. If you access a protected page without signing in, you are redirected to Login and returned to your original page after authentication.
 7. Click **Logout** in the header to end your session.
@@ -23,24 +23,48 @@ For business definitions and KPI formulas, see [btr-portal-domain.md](./btr-port
 
 ---
 
-## Dashboard Overview
+## Management Attention Center (Executive Dashboard)
 
 The Dashboard has two levels:
 
 | Level | Route | What You See |
 | ----- | ----- | ------------ |
-| **Home** | `/dashboard` | Four summary KPI cards: Sales, Piutang, Inventory, Purchasing. Each card links to detailed analytics. |
-| **Detail** | `/dashboard/sales`, `/dashboard/piutang`, `/dashboard/inventory`, `/dashboard/purchasing` | Full KPI row, charts, and Top 10 tables for that business area. |
+| **Executive (Home)** | `/dashboard` | **Management Attention Center** — attention-oriented KPIs across Sales, Piutang, Inventory, and Purchasing; Top 5 exposure lists; domain summaries. Links go to domain dashboards only. |
+| **Detail** | `/dashboard/sales`, `/dashboard/piutang`, `/dashboard/customers`, `/dashboard/inventory`, `/dashboard/purchasing` | Full KPI row, charts, and Top 10 tables for that business area (Customer Analytics uses attention-oriented layout). |
 
-Use **Refresh** on any dashboard page to reload data from the server. Each page shows a **generated-at** timestamp indicating when the underlying snapshot was last refreshed (not necessarily when you clicked Refresh — Refresh re-reads the stored snapshot).
+**Navigate:** Sidebar → Dashboard → **Executive** (default home).
 
-**Data freshness:** Dashboard numbers update on a background schedule (Piutang every 15 minutes, Sales and Purchasing every 30 minutes, Inventory every 60 minutes). Home cards may show different timestamps per domain. If data looks stale, wait for the next scheduled refresh or ask your administrator to trigger a manual refresh.
+**Daily review question:** *What requires management attention today?*
 
-**Unavailable data:** If the dashboard home shows a warning that data is not yet available, snapshot tables have not been populated. An administrator must run the snapshot worker before dashboards will load.
+### Executive Page Sections
+
+1. **Attention Cards** — Sales (Achievement % band), Piutang (overdue, > 90 day exposure), Purchasing (pending posting), Inventory (value and concentration).
+2. **Critical Exposure Lists** — Top 5 Customers, Categories, Suppliers, Principals.
+3. **Domain Summaries** — Compact summary with link to each domain dashboard.
+
+**Navigation path:** Executive → Domain Dashboard → Report. No direct report links on the executive page. For customer-specific attention, use **Dashboard → Customers** (M17).
+
+### Sales Achievement Bands
+
+| Achievement % | Band |
+| ------------- | ---- |
+| ≥ 100% | Healthy |
+| 80–99% | Warning |
+| < 80% | Critical |
+| No target | Unknown |
+
+### Freshness
+
+- **Last Refreshed** — Single timestamp in header (oldest domain snapshot on screen).
+- **⚠ Dashboard Data Not Fresh** — When any domain exceeds its refresh interval.
+
+Use **Refresh** on any dashboard page to reload data from the server. Detail pages show a **generated-at** timestamp per domain.
+
+**Unavailable data:** If the executive page shows a warning that data is not yet available, snapshot tables have not been populated. An administrator must run the snapshot worker before dashboards will load.
 
 ## Sales Dashboard
 
-**Navigate:** Sidebar → Dashboard → Sales, or click **View details** on the Sales card at Dashboard home.
+**Navigate:** Sidebar → Dashboard → Sales, or click the Sales attention card on the Management Attention Center.
 
 **Route:** `/dashboard/sales`
 
@@ -66,9 +90,46 @@ Use **Refresh** on any dashboard page to reload data from the server. Each page 
 
 ---
 
+## Customer Analytics Dashboard (M17)
+
+**Navigate:** Sidebar → Dashboard → Customers.
+
+**Route:** `/dashboard/customers`
+
+**Question answered:** Which customers require management attention?
+
+### What You See (fixed section order)
+
+1. **Attention Cards** — Collection, Concentration, Activity, Inactivity, Credit
+2. **Customer Attention List** — one row per customer × signal
+3. **Top 10 Rankings** — Omzet (current month) and Piutang (all open)
+4. **Segmentation** — By Klasifikasi, By Wilayah, Active vs Dormant
+5. **Navigation** — links to Sales/Piutang dashboards and reports
+
+### Attention signals
+
+| Signal | Rule |
+| ------ | ---- |
+| Overdue | Any overdue balance on the customer |
+| Dormant | No Faktur for 90 days with prior purchase history; active this month excluded |
+| Plafond breach | Open balance > `Plafond` when `Plafond > 0` |
+| Suspended + Sales | `IsSuspend` and Faktur in current calendar month |
+
+Concentration percentages (Top Omzet %, Top Piutang %) are informational — no automatic warning thresholds.
+
+**Card shortcuts:** Collection card → Piutang Dashboard; Activity card → Sales Dashboard; Credit card → Attention List on this page.
+
+### Drill-down
+
+Click a customer row (attention list or rankings) → Sales or Piutang Report with customer name pre-filter (`?q=`). Piutang dashboard uses all-time open balance; Piutang Report defaults to a period filter — same semantic gap as the Piutang Dashboard.
+
+**Supplements** Executive Dashboard Top 5 Customers — does not replace it.
+
+---
+
 ## Piutang Dashboard
 
-**Navigate:** Sidebar → Dashboard → Piutang, or click the link on the Piutang card at Dashboard home.
+**Navigate:** Sidebar → Dashboard → Piutang, or click the Piutang attention card on the Management Attention Center.
 
 **Route:** `/dashboard/piutang`
 
@@ -96,7 +157,7 @@ Use **Refresh** on any dashboard page to reload data from the server. Each page 
 
 ## Inventory Dashboard
 
-**Navigate:** Sidebar → Dashboard → Inventory, or click the link on the Inventory card at Dashboard home.
+**Navigate:** Sidebar → Dashboard → Inventory, or click the Inventory attention card on the Management Attention Center.
 
 **Route:** `/dashboard/inventory`
 
@@ -126,7 +187,7 @@ Use **Refresh** on any dashboard page to reload data from the server. Each page 
 
 ## Purchasing Dashboard
 
-**Navigate:** Sidebar → Dashboard → Purchasing, or click the link on the Purchasing card at Dashboard home.
+**Navigate:** Sidebar → Dashboard → Purchasing, or click the Purchasing attention card on the Management Attention Center.
 
 **Route:** `/dashboard/purchasing`
 
@@ -154,6 +215,22 @@ Use **Refresh** on any dashboard page to reload data from the server. Each page 
 
 ---
 
+## Report Filtering (All Reports)
+
+Each report includes a filter bar above the table:
+
+| Filter | Applies to | Behavior |
+|--------|------------|----------|
+| **Period** (date range) | Sales, Piutang, Purchasing | Server-side query; max **31 days**; defaults to current calendar month |
+| **Filter by** (date field) | Piutang only | `Jatuh Tempo` (DueDate, default) or `Piutang Date` (PiutangDate) |
+| **Search** (free text) | All four reports | Client-side only; filters visible rows instantly |
+
+Click **Apply** after changing the period (or Piutang date field). **Refresh** reloads data using the active period filters.
+
+When search text is active on reports with a summary bar, footer totals recalculate from the filtered rows.
+
+---
+
 ## Sales Report
 
 **Navigate:** Sidebar → Reports → Sales Report
@@ -162,7 +239,8 @@ Use **Refresh** on any dashboard page to reload data from the server. Each page 
 
 ### What You See
 
-- Period label showing the **current calendar month**
+- Period label reflecting the active date range (default: current calendar month)
+- Filter bar: period picker and search box
 - DataTable with columns: Date, Faktur, Customer, Sales, Total, Status
 - Client-side pagination (default 25 rows per page)
 - Sortable columns
@@ -170,11 +248,14 @@ Use **Refresh** on any dashboard page to reload data from the server. Each page 
 
 ### How to Use
 
-1. Open the report to see all Fakturs issued in the current month.
-2. Sort by any column (click column header).
-3. Paginate through results using the table controls.
-4. **Status** shows `Kembali` when the signed Faktur has been physically returned.
-5. Use **Refresh** to reload after new Desktop transactions.
+1. Open the report to see Fakturs issued in the selected period (default: current month).
+2. Adjust the period (max 31 days) and click **Apply** to reload from the server.
+3. Use **Search** to filter by Faktur code, customer, sales person, or status (`Kembali`).
+4. Sort by any column (click column header).
+5. **Status** shows `Kembali` when the signed Faktur has been physically returned.
+6. Use **Refresh** to reload after new Desktop transactions.
+
+**Search fields:** Faktur, Customer, Sales, Status.
 
 **Note:** This report does not show footer summary totals. Use the Sales Dashboard for aggregate KPIs.
 
@@ -188,17 +269,25 @@ Use **Refresh** on any dashboard page to reload data from the server. Each page 
 
 ### What You See
 
-- Period label: open receivables from **2000 through today**
+- Period label with active date field (`Jatuh Tempo` or `Piutang Date`) and range (default: current month on Jatuh Tempo)
+- Filter bar: period picker, date-field selector, and search box
 - DataTable columns: Customer, Sales, Faktur, Tanggal, Jatuh Tempo, Total Jual, Kurang Bayar
 - **Summary bar** below the table: Total Piutang, Total Customer
 - Only open balances (`Kurang Bayar > 1`) — paid invoices are not shown
 
+### Piutang Report vs Piutang Dashboard
+
+The **Piutang Dashboard** shows **all** open receivables (all-time analytics). The **Piutang Report** shows open receivables whose selected date field falls within the chosen period (max 31 days). Footer totals on the report therefore **do not** match the Piutang Dashboard when a period filter is applied.
+
 ### How to Use
 
-1. Review individual open Fakturs and their due dates.
-2. Sort by Jatuh Tempo to prioritize collection calls.
-3. Confirm footer **Total Piutang** and **Total Customer** match the Piutang Dashboard home card.
-4. Use **Refresh** after payments are recorded in BTR Desktop.
+1. Choose **Filter by**: `Jatuh Tempo` (collection planning) or `Piutang Date` (receivable record date).
+2. Set the period (max 31 days) and click **Apply**.
+3. Use **Search** to filter by customer, sales person, or faktur code.
+4. Sort by Jatuh Tempo to prioritize collection calls.
+5. Use **Refresh** after payments are recorded in BTR Desktop.
+
+**Search fields:** Customer, Sales, Faktur.
 
 ---
 
@@ -210,7 +299,8 @@ Use **Refresh** on any dashboard page to reload data from the server. Each page 
 
 ### What You See
 
-- Point-in-time stock balance (no date-range label)
+- Point-in-time stock balance (no date-range filter — current snapshot only)
+- Filter bar: search box only
 - DataTable columns: Item, Warehouse, Qty, HPP, Nilai Sediaan
 - Only rows with Qty > 0; In-Transit warehouse excluded
 - **Summary bar:** Total Inventory Value, Total Item
@@ -219,9 +309,12 @@ Use **Refresh** on any dashboard page to reload data from the server. Each page 
 ### How to Use
 
 1. Browse stock by item and warehouse.
-2. Confirm footer totals match the Inventory Dashboard.
-3. Remember: footer totals group by item first — the sum of visible row values may differ from the footer.
-4. Use **Refresh** after stock movements in BTR Desktop.
+2. Use **Search** to filter by item name/code or warehouse.
+3. Confirm footer totals match the Inventory Dashboard (when search is empty).
+4. Remember: footer totals group by item first — the sum of visible row values may differ from the footer.
+5. Use **Refresh** after stock movements in BTR Desktop.
+
+**Search fields:** Item, Warehouse.
 
 ---
 
@@ -233,17 +326,21 @@ Use **Refresh** on any dashboard page to reload data from the server. Each page 
 
 ### What You See
 
-- Period label: **current calendar month**
+- Period label reflecting the active date range (default: current calendar month)
+- Filter bar: period picker and search box
 - DataTable columns: Invoice, Date, Supplier, Warehouse, Total, Disc, Tax, Grand Total, Posting Stok
 - **Posting Stok:** `SUDAH` (stock posted) or `BELUM` (not yet posted)
 - **Summary bar:** Grand Total Purchase, Total Invoice
 
 ### How to Use
 
-1. Review purchase invoices received this month.
-2. Filter visually for `BELUM` posting status to find invoices awaiting stock receipt.
-3. Confirm footer **Grand Total Purchase** and **Total Invoice** match the Purchasing Dashboard home card and detail KPI row.
-4. Use **Refresh** after new purchases are entered in BTR Desktop.
+1. Review purchase invoices in the selected period (default: current month).
+2. Adjust the period (max 31 days) and click **Apply** to reload from the server.
+3. Use **Search** to filter by invoice code, supplier, warehouse, or posting status (`SUDAH` / `BELUM`).
+4. Confirm footer **Grand Total Purchase** and **Total Invoice** match the Purchasing Dashboard when viewing the same period without search text.
+5. Use **Refresh** after new purchases are entered in BTR Desktop.
+
+**Search fields:** Invoice, Supplier, Warehouse, Posting Stok.
 
 ---
 
@@ -257,6 +354,7 @@ BTR Portal
 │   ├── Overview          → /dashboard
 │   ├── Sales             → /dashboard/sales
 │   ├── Piutang           → /dashboard/piutang
+│   ├── Customers         → /dashboard/customers
 │   ├── Inventory         → /dashboard/inventory
 │   └── Purchasing        → /dashboard/purchasing
 └── Reports
@@ -275,6 +373,7 @@ BTR Portal
 | `/dashboard` | Dashboard home (summary KPIs) | Yes |
 | `/dashboard/sales` | Sales analytics | Yes |
 | `/dashboard/piutang` | Piutang analytics | Yes |
+| `/dashboard/customers` | Customer Analytics | Yes |
 | `/dashboard/inventory` | Inventory analytics | Yes |
 | `/dashboard/purchasing` | Purchasing analytics | Yes |
 | `/reports/sales` | Sales Report | Yes |
@@ -285,11 +384,15 @@ BTR Portal
 ### Navigation Flow
 
 ```text
-Login → Dashboard Home
-          ├── "View details" / Sidebar → Sales Dashboard
-          ├── "View details" / Sidebar → Piutang Dashboard
-          ├── "View details" / Sidebar → Inventory Dashboard
-          └── "View details" / Sidebar → Purchasing Dashboard
+Login → Dashboard Home (Management Attention Center)
+          ├── Sidebar → Sales Dashboard
+          ├── Sidebar → Piutang Dashboard
+          ├── Sidebar → Customer Analytics
+          ├── Sidebar → Inventory Dashboard
+          └── Sidebar → Purchasing Dashboard
+
+Customer Analytics → click customer row → Sales or Piutang Report (pre-filtered)
+Executive / Domain Dashboard → Report (domain reports)
 
 Sidebar → Reports → [Sales | Piutang | Inventory | Purchasing] Report
 ```
@@ -313,6 +416,16 @@ Authenticated users visiting `/login` are redirected to Dashboard home.
 3. Check **Top 10 Outstanding Customers** for collection priorities.
 4. Open **Reports → Piutang Report** → sort by Jatuh Tempo → follow up on oldest balances.
 5. Confirm report footer matches dashboard KPIs.
+
+### Reviewing Customer Attention (M17)
+
+1. Sign in → **Dashboard → Customers** (`/dashboard/customers`).
+2. Scan **Attention Cards** — Collection (overdue, >90d exposure), Inactivity (dormant), Credit (plafond breach, suspended + sales).
+3. Review **Customer Attention List** for specific customers and signals.
+4. Check **Top 10 Rankings** for revenue and receivable concentration.
+5. Click a customer row → Sales or Piutang Report opens with customer name pre-filled in search.
+6. Use **Navigation** section to jump to Sales/Piutang dashboards for domain context.
+7. Cross-check overdue count against **Dashboard → Piutang** when reconciling collection exposure.
 
 ### Monitoring Inventory Value
 
@@ -343,7 +456,7 @@ Authenticated users visiting `/login` are redirected to Dashboard home.
 
 ### Why does the dashboard show an old timestamp?
 
-Dashboard data refreshes on a background schedule, not on every page load. The **generated-at** time shows when snapshots were last rebuilt. Piutang refreshes every 15 minutes, Sales and Purchasing every 30 minutes, Inventory every 60 minutes. Click **Refresh** to re-read the latest stored snapshot; it does not force an immediate recalculation unless an administrator triggers a manual rebuild.
+Dashboard data refreshes on a background schedule, not on every page load. The **generated-at** time shows when snapshots were last rebuilt. Piutang refreshes every 15 minutes, Sales, Purchasing, and Customer every 30 minutes, Inventory every 60 minutes. Click **Refresh** to re-read the latest stored snapshot; it does not force an immediate recalculation unless an administrator triggers a manual rebuild.
 
 ### Why does the dashboard say data is not available?
 
@@ -446,9 +559,9 @@ cd C:\path\to\btr.portal.worker
 .\btr.portal.worker.exe --domain All --triggered-by Manual
 ```
 
-Verify `BTR_PortalDashboardRefreshLog` shows `Success` for Piutang, Inventory, Sales, and Purchasing.
+Verify `BTR_PortalDashboardRefreshLog` shows `Success` for Piutang, Inventory, Sales, Purchasing, and Customer.
 
-**Scheduled tasks** — create four separate Windows Task Scheduler jobs:
+**Scheduled tasks** — create five separate Windows Task Scheduler jobs:
 
 | Task name | Interval | Command |
 | --------- | -------- | ------- |
@@ -456,6 +569,7 @@ Verify `BTR_PortalDashboardRefreshLog` shows `Success` for Piutang, Inventory, S
 | `BTR-Portal-Dashboard-Sales` | Every 30 min | `btr.portal.worker.exe --domain Sales --triggered-by Scheduler` |
 | `BTR-Portal-Dashboard-Purchasing` | Every 30 min | `btr.portal.worker.exe --domain Purchasing --triggered-by Scheduler` |
 | `BTR-Portal-Dashboard-Inventory` | Every 60 min | `btr.portal.worker.exe --domain Inventory --triggered-by Scheduler` |
+| `BTR-Portal-Dashboard-Customer` | Every 30 min | `btr.portal.worker.exe --domain Customer --triggered-by Scheduler` |
 
 Task settings: run whether user is logged on or not; service account with SQL access; **Start in** = worker folder; stop if running longer than 30 minutes.
 
@@ -463,7 +577,7 @@ Task settings: run whether user is logged on or not; service account with SQL ac
 
 | Argument | Values | Default |
 | -------- | ------ | ------- |
-| `--domain` | `All`, `Piutang`, `Inventory`, `Sales`, `Purchasing` | `All` |
+| `--domain` | `All`, `Piutang`, `Inventory`, `Sales`, `Purchasing`, `Customer` | `All` |
 | `--triggered-by` | `Scheduler`, `Manual` | `Scheduler` |
 
 Exit code `0` = success. Logs: `{worker-folder}/logs/btr-portal-worker-{date}.log`.
@@ -480,7 +594,7 @@ Content-Type: application/json
 { "domain": "All" }
 ```
 
-`domain` accepts `All` (default), `Piutang`, `Inventory`, `Sales`, or `Purchasing` (case-insensitive).
+`domain` accepts `All` (default), `Piutang`, `Inventory`, `Sales`, `Purchasing`, or `Customer` (case-insensitive).
 
 **Prefer worker CLI** for full rebuilds — the API runs refresh synchronously and may hit IIS request timeout (~110 seconds). Use the API for single-domain ad-hoc refresh; use the worker for `--domain All` or initial backfill.
 
@@ -489,7 +603,7 @@ Content-Type: application/json
 | Check | How |
 | ----- | --- |
 | API health | `GET /api/health` → 200 |
-| Snapshot health | `GET /api/health/dashboard-snapshots` — status: `unknown`, `ok`, `refreshing`, or `degraded`; each domain (Piutang, Sales, Purchasing, Inventory) shows `LastRefresh.Status` |
+| Snapshot health | `GET /api/health/dashboard-snapshots` — status: `unknown`, `ok`, `refreshing`, or `degraded`; each domain (Piutang, Sales, Purchasing, Inventory, Customer) shows `LastRefresh.Status` |
 | Last refresh (SQL) | `SELECT TOP 1 * FROM BTR_PortalDashboardRefreshLog WHERE Domain = 'Purchasing' ORDER BY CompletedAt DESC` |
 | Worker log | `{worker-folder}/logs/btr-portal-worker-{date}.log` |
 | Task Scheduler | History tab on each scheduled task |
@@ -510,7 +624,8 @@ Content-Type: application/json
 GET  /api/health                         → 200
 GET  /api/health/dashboard-snapshots     → 200
 POST /api/auth/login                     → 200 with token
-GET  /api/dashboard/overview             → 200 with KPI data (after worker run)
+GET  /api/dashboard/executive            → 200 with token (after worker run)
+GET  /api/dashboard/customers            → 200 with token (after Customer worker run)
 GET  /api/dashboard/sales                → 200 with token
 GET  /api/dashboard/purchasing           → 200 with token
 GET  /api/reports/sales                  → 200 with token

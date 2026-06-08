@@ -3,7 +3,7 @@
 **Audience:** Developers, Architects, Future Agents  
 **Purpose:** Describe how BTR Portal is built and the conventions to follow when extending it.
 
-**Related permanent docs:** [Domain (WHY)](./btr-portal-domain.md) · [Operational (HOW)](./btr-portal-operational.md) · [Materialized dashboards](../materialized-dashboard/materialized-dashboard-architecture.md) · [Extraction report — Purchasing Dashboard](./knowledge-extraction-report-purchasing-dashboard.md)
+**Related permanent docs:** [Domain (WHY)](./btr-portal-domain.md) · [Operational (HOW)](./btr-portal-operational.md) · [Materialized dashboards](../materialized-dashboard/materialized-dashboard-architecture.md) · [Extraction — M16/M17](./knowledge-extraction-report-m16-m17.md) · [Extraction — Purchasing](./knowledge-extraction-report-purchasing-dashboard.md)
 
 For business definitions, see [btr-portal-domain.md](./btr-portal-domain.md).  
 For user-facing behavior, see [btr-portal-operational.md](./btr-portal-operational.md).
@@ -65,6 +65,8 @@ All portal reporting features live under `ReportingContext` in Application and I
 ```text
 btr.application/ReportingContext/
 ├── DashboardOverviewAgg/
+├── DashboardExecutiveAgg/           ← executive composition (M16)
+├── DashboardCustomerAgg/            ← customer analytics read path (M17)
 ├── DashboardSnapshotAgg/          ← workers, aggregators, refresh commands
 ├── DashboardSalesAgg/
 ├── DashboardPiutangAgg/
@@ -77,6 +79,8 @@ btr.application/ReportingContext/
 
 btr.infrastructure/ReportingContext/
 ├── DashboardSnapshotAgg/            ← snapshot readers/writers, overview DAL
+├── DashboardExecutiveAgg/DashboardExecutiveDal.cs
+├── DashboardCustomerAgg/DashboardCustomerDal.cs
 ├── DashboardSalesAgg/DashboardSalesDal.cs
 ├── DashboardPiutangAgg/DashboardPiutangDal.cs
 ├── DashboardInventoryAgg/DashboardInventoryDal.cs
@@ -131,7 +135,8 @@ Dashboard{Domain}Aggregator  (shared aggregation rules)
         ↓
 SnapshotWriter → BTR_PortalDashboard* tables
 
-Browser → GET /api/dashboard/overview          (home — Layer A KPI only)
+Browser → GET /api/dashboard/executive       (home — composed attention view, M16)
+Browser → GET /api/dashboard/overview          (legacy Layer A KPI — retained)
 Browser → GET /api/dashboard/{sales|piutang|inventory|purchasing}  (detail — Layer A + B)
         ↓ MediatR → Dashboard*Dal → Dashboard*SnapshotDal → snapshot tables
 ```
@@ -142,6 +147,7 @@ Browser → GET /api/dashboard/{sales|piutang|inventory|purchasing}  (detail —
 | ----- | ------ | ------- |
 | **A — KPI** | `BTR_PortalDashboard{Sales,Piutang,Inventory,Purchasing}Kpi` | Overview home + detail KPI rows |
 | **B — Dimensional** | Week trend, aging, breakdown, Top-N tables | Detail dashboards only |
+| **Customer (dedicated)** | `BTR_PortalDashboardCustomer*` (5 tables) | Customer Analytics only — not composed from domain snapshots |
 
 All snapshots use `SnapshotKey = 'CURRENT'`. `GeneratedAt` on every dashboard response reflects the last successful background refresh, not request execution time.
 
@@ -152,37 +158,75 @@ All snapshots use `SnapshotKey = 'CURRENT'`. `GeneratedAt` on every dashboard re
 | Piutang | 15 minutes |
 | Sales | 30 minutes |
 | Purchasing | 30 minutes |
+| Customer | 30 minutes |
 | Inventory | 60 minutes |
+
+**Refresh order (`--domain All`):** Piutang → Inventory → Sales → Purchasing → **Customer** (last).
 
 **Operational metadata:** `BTR_PortalDashboardRefreshLog` records each refresh attempt (domain, status, duration, error, trigger source).
 
 Reports (`/api/reports/*`) remain **live queries** — unaffected by snapshot materialization.
 
+### Executive Composition (M16)
+
+The Management Attention Center does **not** add snapshot tables or aggregators. It composes existing domain snapshots at read time:
+
+```text
+GET /api/dashboard/executive
+        ↓ GetDashboardExecutiveHandler
+        ↓ IDashboardExecutiveDal (DashboardExecutiveDal)
+        ↓ reads Piutang, Sales, Inventory, Purchasing snapshot DALs + refresh log
+        ↓ DashboardExecutiveComposer + ExecutiveSalesAchievementBandResolver
+DashboardExecutiveResponse
+```
+
+**Sales achievement bands:** ≥ 100% Healthy · 80–99% Warning · < 80% Critical · no target Unknown.
+
+**Concentration ratios (derived):** Top Customer %, Top Category %, Top Supplier %, Top Principal % — informational, no threshold coloring.
+
+**Freshness:** `LastRefreshed = Min(GeneratedAt)` across available domains; `IsDataFresh` when all available domains are within interval minutes.
+
+### Customer Snapshot Domain (M17)
+
+Customer Analytics uses a **dedicated** snapshot domain — worker reads **source DALs**, not Sales/Piutang snapshot tables:
+
+```text
+RefreshDashboardCustomerSnapshotWorker
+        ↓ IFakturViewDal, ICustomerLastFakturDal, IPiutangOpenBalanceDal, ICustomerDal
+        ↓ DashboardCustomerAggregator (+ DashboardCustomerKeyResolver)
+        ↓ IDashboardCustomerSnapshotDal.ReplaceCurrent (5 tables, transactional)
+```
+
+**Why separate domain:** CustomerCode on rankings, dormant/plafond/suspended logic, and cross-domain attention list require source-level aggregation — composing from existing snapshots would lose precision.
+
 ### Dashboard API Strategy
 
 | Endpoint | Controller | Data source | Purpose |
 | -------- | ---------- | ----------- | ------- |
-| `GET /api/dashboard/overview` | `OverviewDashboardController` | Layer A KPI snapshots only | Dashboard home — fast summary cards |
+| `GET /api/dashboard/executive` | `ExecutiveDashboardController` | Composed from existing snapshots via `DashboardExecutiveComposer` | Management Attention Center home |
+| `GET /api/dashboard/overview` | `OverviewDashboardController` | Layer A KPI snapshots only | Legacy summary (retained) |
 | `GET /api/dashboard/sales` | `SalesDashboardController` | Layer A + B snapshots | Sales detail analytics |
 | `GET /api/dashboard/piutang` | `PiutangDashboardController` | Layer A + B snapshots | Piutang detail analytics |
 | `GET /api/dashboard/inventory` | `InventoryDashboardController` | Layer A + B snapshots | Inventory detail analytics |
 | `GET /api/dashboard/purchasing` | `PurchasingDashboardController` | Layer A + B snapshots | Purchasing detail analytics |
+| `GET /api/dashboard/customers` | `CustomerDashboardController` | Dedicated Customer snapshot (`DashboardCustomerAgg`) | Customer Analytics (M17) |
 | `POST /api/admin/dashboard/refresh` | `AdminDashboardRefreshController` | Triggers snapshot rebuild | On-demand refresh (sync; IIS timeout risk) |
 | `GET /api/health/dashboard-snapshots` | `HealthController` | `BTR_PortalDashboardRefreshLog` | Monitoring — no auth |
 
 Domain detail endpoints were extended additively across M8 and M13–M15; response DTOs unchanged in shape. All dashboard data endpoints require JWT except health.
 
-**Empty snapshot behavior:** Detail endpoints return HTTP 503 when snapshot tables are empty. Overview sets `HasUnavailableDomain = true` when any Layer A row is missing.
+**Empty snapshot behavior:** Domain detail endpoints (Sales, Piutang, Inventory, Purchasing) return HTTP 503 when snapshot tables are empty. **Customer Analytics** returns `IsAvailable = false` with navigation links (graceful degradation). Overview sets `HasUnavailableDomain = true` when any Layer A row is missing. Executive sets `HasUnavailableDomain` when any composed domain is missing.
 
 ### Dashboard Routing Strategy (Frontend)
 
 | Route | View | API Call |
 | ----- | ---- | -------- |
-| `/dashboard` | `DashboardHomeView` | `GET /api/dashboard/overview` (single call) |
+| `/dashboard` | `DashboardHomeView` | `GET /api/dashboard/executive` (Management Attention Center) |
 | `/dashboard/sales` | `SalesDashboardView` | `GET /api/dashboard/sales` |
 | `/dashboard/piutang` | `PiutangDashboardView` | `GET /api/dashboard/piutang` |
 | `/dashboard/inventory` | `InventoryDashboardView` | `GET /api/dashboard/inventory` |
 | `/dashboard/purchasing` | `PurchasingDashboardView` | `GET /api/dashboard/purchasing` |
+| `/dashboard/customers` | `CustomerDashboardView` | `GET /api/dashboard/customers` |
 
 Home shows summary KPI cards with per-domain `GeneratedAt` timestamps and links to detail pages. Detail pages consume the full API response (including chart/ranking sections not shown on home).
 
@@ -232,6 +276,17 @@ Home shows summary KPI cards with per-domain `GeneratedAt` timestamps and links 
 | Posting | `PostingStatusBreakdown[]` | Purchasing V1 |
 | Ranking | `TopPrincipalRanking[]` | Purchasing V1 |
 
+**Customer response sections (M17):**
+
+| Section | DTO | Notes |
+| ------- | --- | ----- |
+| Availability | `IsAvailable`, `IsDataFresh`, `GeneratedAt` | Graceful when snapshot empty |
+| Attention cards | `DashboardCustomerAttentionCards` | Five card groups with `*RequiresAttention` flags |
+| Attention list | `DashboardCustomerAttentionItem[]` | One row per customer × signal |
+| Rankings | `TopOmzet[]`, `TopPiutang[]` | Include `CustomerCode`, `PercentOfTotal`, `ReportRoute` |
+| Segmentation | `ByKlasifikasi[]`, `ByWilayah[]`, `ActivitySummary` | Blank dimensions → `"Unknown"` |
+| Navigation | `DashboardCustomerNavigation` | Links to domain dashboards and reports |
+
 ### KPI Aggregation Patterns
 
 Aggregation runs in `Dashboard{Domain}Aggregator` during snapshot refresh (worker path). Read DALs map snapshot rows to response DTOs.
@@ -250,8 +305,9 @@ Aggregation runs in `Dashboard{Domain}Aggregator` during snapshot refresh (worke
 | Purchasing | `IInvoiceViewDal` (Invoice list) | Current month non-void invoices; `SUM(GrandTotal)`; posting status from `PostingStok` |
 | Purchasing weekly trend | Invoice `GrandTotal` grouped by calendar week | Reuses `SalesOmzetChartWeekGrouper` |
 | Purchasing ranking | `SUM(GrandTotal)` per trimmed `SupplierName`, top 10 descending | Blank → `"Unknown"`; UI label **Principal** |
+| Customer | `IFakturViewDal` + `IPiutangOpenBalanceDal` + `ICustomerLastFakturDal` + `ICustomerDal` | Cross-domain attention list; dormant 90-day rule; plafond breach; suspended + sales; Top 10 omzet/piutang with `CustomerCode` |
 
-All chart and ranking values are computed **server-side** in the DAL. Frontend never sums rows to derive KPIs.
+All chart and ranking values are computed **server-side** in the aggregator/worker. Frontend never sums rows to derive KPIs.
 
 ### Ranking Patterns
 
@@ -413,6 +469,8 @@ btr.portal.api/
 │   │   └── AdminDashboardRefreshController.cs
 │   ├── Dashboard/
 │   │   ├── OverviewDashboardController.cs
+│   │   ├── ExecutiveDashboardController.cs
+│   │   ├── CustomerDashboardController.cs
 │   │   ├── SalesDashboardController.cs
 │   │   ├── PiutangDashboardController.cs
 │   │   ├── InventoryDashboardController.cs
@@ -460,7 +518,7 @@ btr.portal.web/src/
 | Store | Responsibility |
 | ----- | -------------- |
 | `authStore` | Login, logout, JWT hydration from localStorage |
-| `dashboardStore` | `loadDashboard()` → overview endpoint (home); `loadSales()`, `loadPiutang()`, `loadInventory()`, `loadPurchasing()` (detail pages) |
+| `dashboardStore` | `loadExecutive()` → executive endpoint (home); `loadDashboard()` → overview (legacy); `loadSales()`, `loadPiutang()`, `loadCustomer()`, `loadInventory()`, `loadPurchasing()` (detail pages) |
 | `{domain}ReportStore` | `report`, `loading`, `error`; `loadReport()`, `reset()` |
 
 One store per report. No premature module stores beyond auth, dashboard, and reports.
@@ -471,7 +529,12 @@ One store per report. No premature module stores beyond auth, dashboard, and rep
 | --------- | ------- |
 | `KpiCard.vue` | Reusable card shell for home summary metrics |
 | `DashboardDetailLayout.vue` | Shared detail page header, refresh, error slot |
-| `Top10RankingTable.vue` | Generic ranked DataTable (salesman, customer, category, supplier) |
+| `Top10RankingTable.vue` | Generic ranked DataTable (salesman, customer, category, supplier); optional percent column and row click |
+| `CustomerAttentionCardGroup.vue` | M17 attention card with M16 indicator styling |
+| `CustomerAttentionList.vue` | Per-customer signal list with report drill-down |
+| `CustomerSegmentationSection.vue` | Klasifikasi, Wilayah, Active/Dormant breakdown |
+| `CustomerNavigationSection.vue` | Links to domain dashboards and reports |
+| `navigateToReport.ts` | Shared helper — `router.push({ path, query: { q: customerName } })` |
 | `TargetVsAchievementChart.vue` | M13 company bar chart |
 | `WeeklyTrendChart.vue` | M8/M13 line chart |
 | `AgingPieChart.vue` | M14 pie chart |
@@ -609,6 +672,9 @@ Rules that must be preserved when extending the portal:
 | 16 | Dashboard read path uses snapshot tables only — no live aggregation fallback |
 | 17 | Snapshot refresh runs in `btr.portal.worker`, not inside IIS app pool |
 | 18 | Portal SQL config via JSON only — never registry under IIS app pool identity |
+| 19 | Executive dashboard composes existing snapshots — no new snapshot tables for M16 |
+| 20 | Customer worker reads source DALs — do not compose Customer snapshot from Sales/Piutang snapshots |
+| 21 | Do not modify `DashboardPiutangAggregator` or `BTR_PortalDashboardPiutangTopCustomer` for customer analytics |
 
 ### Dashboard–Report Traceability Matrix
 

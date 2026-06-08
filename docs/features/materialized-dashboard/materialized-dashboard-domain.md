@@ -56,7 +56,7 @@ For portal navigation, report definitions, and full KPI catalog, see [btr-portal
 | -------- | ------ | ----------- |
 | Overview home data source | Layer A KPI snapshots via `GET /api/dashboard/overview` | Fast home page; per-domain `GeneratedAt` may differ |
 | Sales KPI source | **Faktur only** — `SUM(GrandTotal)` for non-void current-month Fakturs | Aligns with Sales Report; pipeline excluded |
-| Refresh cadence | Piutang **15 min**, Sales **30 min**, Purchasing **30 min**, Inventory **60 min** | Four Task Scheduler jobs |
+| Refresh cadence | Piutang **15 min**, Sales **30 min**, Purchasing **30 min**, Customer **30 min**, Inventory **60 min** | Five Task Scheduler jobs |
 | Snapshot history | **`CURRENT` row only** | Delete-and-replace each refresh |
 | Manual refresh | Portal API + worker CLI | BTR Desktop trigger deferred |
 | Live aggregation fallback | **Removed** after Phase 4 cutover | Dashboards require populated snapshots |
@@ -157,6 +157,22 @@ Void exclusion: `VoidDate = '3000-01-01'` (handled by `InvoiceViewDal`).
 
 **Snapshot tables:** `BTR_PortalDashboardPurchasingKpi`, `BTR_PortalDashboardPurchasingWeekTrend`, `BTR_PortalDashboardPurchasingPostingStatus`, `BTR_PortalDashboardPurchasingTopPrincipal`.
 
+### Customer (cross-domain — M17)
+
+Reads **source DALs** at refresh (Faktur, piutang open balance, customer master, last Faktur per customer) — not Sales/Piutang snapshot tables.
+
+| KPI | Definition |
+| --- | ---------- |
+| **Attention cards** | Overdue count, >90d exposure, concentration %, active/dormant counts, plafond breach, suspended+sales |
+| **Attention list** | Per customer × signal: Overdue, Dormant (90-day), Plafond breach, Suspended + Sales |
+| **Top 10 Omzet** | Current-month `SUM(GrandTotal)` per customer with `CustomerCode` |
+| **Top 10 Piutang** | All-time open `SUM(KurangBayar)` per customer with `CustomerCode` |
+| **Segmentation** | Counts by Klasifikasi, Wilayah, Active vs Dormant |
+
+**Refresh order in `All`:** Piutang → Inventory → Sales → Purchasing → **Customer** (last).
+
+**Snapshot tables:** `BTR_PortalDashboardCustomerKpi`, `BTR_PortalDashboardCustomerTopOmzet`, `BTR_PortalDashboardCustomerTopPiutang`, `BTR_PortalDashboardCustomerAttention`, `BTR_PortalDashboardCustomerSegmentation`.
+
 ---
 
 ## Dashboard–Report Traceability Matrix
@@ -195,8 +211,9 @@ If dashboard and report totals diverge after both pages are refreshed, escalate 
 5. `GeneratedAt` reflects last successful background refresh.
 6. `BTR_SalesOmzet` reconcile workflow unaffected.
 7. Overview home loads from Layer A snapshots only.
-8. Refresh cadence operational: 15 / 30 / 30 / 60 min per domain (Piutang / Sales / Purchasing / Inventory).
+8. Refresh cadence operational: 15 / 30 / 30 / 30 / 60 min per domain (Piutang / Sales / Purchasing / Customer / Inventory).
 9. Purchasing KPIs reconcile with Purchasing Report footer totals.
+10. Customer snapshot populated by dedicated worker reading source DALs; Customer Analytics API serves from `BTR_PortalDashboardCustomer*` tables.
 
 ---
 

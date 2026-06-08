@@ -1,42 +1,64 @@
 <script setup lang="ts">
 import { computed, onMounted } from 'vue'
+import { useRoute } from 'vue-router'
+import { storeToRefs } from 'pinia'
 import Button from 'primevue/button'
 import Card from 'primevue/card'
 import Column from 'primevue/column'
 import DataTable from 'primevue/datatable'
 import Message from 'primevue/message'
+import ReportFilterBar from '@/components/reports/ReportFilterBar.vue'
 import ReportSummaryBar from '@/components/reports/ReportSummaryBar.vue'
+import { useReportFreeTextFilter } from '@/composables/useReportFreeTextFilter'
 import { formatCurrency, formatDate, formatDateTime } from '@/services/formatters'
+import { piutangDateFieldLabel } from '@/services/reportFilterDefaults'
+import { summarizePiutangRows } from '@/services/reportSummaryHelpers'
 import { usePiutangReportStore } from '@/stores/piutangReportStore'
 
+const route = useRoute()
 const piutangReport = usePiutangReportStore()
+const { freeText } = storeToRefs(piutangReport)
 
-const rows = computed(() => piutangReport.report?.Rows ?? [])
+const sourceRows = computed(() => piutangReport.report?.Rows ?? [])
+const { filteredRows, hasFreeTextFilter } = useReportFreeTextFilter(
+  sourceRows,
+  ['CustomerName', 'SalesName', 'FakturCode'],
+  freeText,
+)
 
 const periodLabel = computed(() => {
   if (!piutangReport.report) {
     return ''
   }
 
-  return `${formatDate(piutangReport.report.PeriodFrom)} – ${formatDate(piutangReport.report.PeriodTo)}`
+  const fieldLabel = piutangDateFieldLabel(piutangReport.dateField)
+  return `${fieldLabel}: ${formatDate(piutangReport.report.PeriodFrom)} – ${formatDate(piutangReport.report.PeriodTo)}`
 })
 
 const summaryItems = computed(() => {
   if (!piutangReport.report?.Summary) return []
 
+  const summary = hasFreeTextFilter.value
+    ? summarizePiutangRows(filteredRows.value)
+    : piutangReport.report.Summary
+
   return [
     {
       label: 'Total Piutang',
-      value: formatCurrency(piutangReport.report.Summary.TotalPiutang),
+      value: formatCurrency(summary.TotalPiutang),
     },
     {
       label: 'Total Customer',
-      value: String(piutangReport.report.Summary.TotalCustomer),
+      value: String(summary.TotalCustomer),
     },
   ]
 })
 
 onMounted(() => {
+  if (typeof route.query.q === 'string' && route.query.q.trim()) {
+    piutangReport.freeText = route.query.q.trim()
+  }
+
   void piutangReport.loadReport()
 })
 </script>
@@ -47,7 +69,7 @@ onMounted(() => {
       <div>
         <h1>Piutang Report</h1>
         <p v-if="piutangReport.report">
-          Open receivables from {{ periodLabel }}.
+          Open receivables filtered by {{ periodLabel }}.
         </p>
         <p v-else>
           Open receivables (outstanding balance only).
@@ -68,8 +90,22 @@ onMounted(() => {
 
     <Card>
       <template #content>
+        <ReportFilterBar
+          v-model:from="piutangReport.from"
+          v-model:to="piutangReport.to"
+          v-model:free-text="piutangReport.freeText"
+          v-model:date-field="piutangReport.dateField"
+          :loading="piutangReport.loading"
+          show-date-field
+          @apply="piutangReport.loadReport()"
+        />
+
+        <p v-if="hasFreeTextFilter" class="piutang-report__filter-hint">
+          Summary reflects filtered rows.
+        </p>
+
         <DataTable
-          :value="rows"
+          :value="filteredRows"
           :loading="piutangReport.loading"
           paginator
           :rows="25"
@@ -139,6 +175,12 @@ onMounted(() => {
 
 .piutang-report__header p {
   margin: 0;
+  color: var(--p-text-muted-color);
+}
+
+.piutang-report__filter-hint {
+  margin: 0 0 0.75rem;
+  font-size: 0.85rem;
   color: var(--p-text-muted-color);
 }
 

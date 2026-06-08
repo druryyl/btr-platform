@@ -18,9 +18,9 @@ Reports (`/reports/*`) are **not** materialized — they continue live Desktop D
 ## Topology
 
 ```text
-Windows Task Scheduler (per-domain jobs, 15 / 30 / 30 / 60 min)
+Windows Task Scheduler (per-domain jobs, 15 / 30 / 30 / 30 / 60 min)
         ↓
-btr.portal.worker.exe  (--domain Piutang|Sales|Purchasing|Inventory|All)
+btr.portal.worker.exe  (--domain Piutang|Sales|Purchasing|Customer|Inventory|All)
         ↓
 RefreshDashboard{Domain}SnapshotWorker
         ↓
@@ -63,24 +63,26 @@ Browser → GET /api/dashboard/{sales|piutang|inventory|purchasing}  (detail —
 | `RefreshDashboardInventorySnapshotWorker` | `IStokBalanceViewDal.ListData()` | `DashboardInventoryAggregator` |
 | `RefreshDashboardSalesSnapshotWorker` | `IFakturViewDal` (current month) + `ISalesOmzetTargetDal` | `DashboardSalesFakturAggregator` |
 | `RefreshDashboardPurchasingSnapshotWorker` | `IInvoiceViewDal` (current month) | `DashboardPurchasingInvoiceAggregator` |
-| `RefreshAllDashboardSnapshotsWorker` | Orchestrator | Piutang → Inventory → Sales → Purchasing; per-domain failure isolation |
+| `RefreshDashboardCustomerSnapshotWorker` | `IFakturViewDal`, `ICustomerLastFakturDal`, `IPiutangOpenBalanceDal`, `ICustomerDal` | `DashboardCustomerAggregator` |
+| `RefreshAllDashboardSnapshotsWorker` | Orchestrator | Piutang → Inventory → Sales → Purchasing → Customer; per-domain failure isolation |
 
 **CLI arguments:**
 
 | Argument | Values | Default |
 | -------- | ------ | ------- |
-| `--domain` | `All`, `Piutang`, `Inventory`, `Sales`, `Purchasing` | `All` |
+| `--domain` | `All`, `Piutang`, `Inventory`, `Sales`, `Purchasing`, `Customer` | `All` |
 | `--triggered-by` | `Scheduler`, `Manual` | `Scheduler` |
 
 Exit code `0` = success. Logs: `{worker-folder}/logs/btr-portal-worker-{date}.log`.
 
-**Scheduled cadence (Task Scheduler — four separate jobs):**
+**Scheduled cadence (Task Scheduler — five separate jobs):**
 
 | Domain | Interval |
 | ------ | -------- |
 | Piutang | 15 minutes |
 | Sales | 30 minutes |
 | Purchasing | 30 minutes |
+| Customer | 30 minutes |
 | Inventory | 60 minutes |
 
 ---
@@ -91,14 +93,15 @@ Exit code `0` = success. Logs: `{worker-folder}/logs/btr-portal-worker-{date}.lo
 btr.application/ReportingContext/
 ├── DashboardSnapshotAgg/
 │   ├── Contracts/          IDashboard*SnapshotDal, IPiutangOpenBalanceDal, IDashboardSnapshotRefreshLogDal
-│   ├── Services/           DashboardPiutangAggregator, DashboardInventoryAggregator, DashboardSalesFakturAggregator, DashboardPurchasingInvoiceAggregator
+│   ├── Services/           DashboardPiutangAggregator, DashboardInventoryAggregator, DashboardSalesFakturAggregator, DashboardPurchasingInvoiceAggregator, DashboardCustomerAggregator
 │   ├── Models/             Aggregate result DTOs
 │   └── UseCases/           RefreshDashboard*SnapshotWorker, RefreshAllDashboardSnapshotsWorker
 ├── DashboardOverviewAgg/   GetDashboardOverviewQuery, IDashboardOverviewDal
 ├── DashboardSalesAgg/      DashboardSalesDal (read facade)
 ├── DashboardPiutangAgg/    DashboardPiutangDal (read facade)
 ├── DashboardInventoryAgg/  DashboardInventoryDal (read facade)
-└── DashboardPurchasingAgg/ DashboardPurchasingDal (read facade)
+├── DashboardPurchasingAgg/ DashboardPurchasingDal (read facade)
+└── DashboardCustomerAgg/   DashboardCustomerDal (read facade)
 
 btr.infrastructure/ReportingContext/
 ├── DashboardSnapshotAgg/   Snapshot readers/writers, PiutangOpenBalanceDal, RefreshLogDal
@@ -146,6 +149,18 @@ btr.portal.worker/          Program.cs, WorkerDependencyConfig, appsettings.json
 | `BTR_PortalDashboardPurchasingPostingStatus` | `SUDAH` / `BELUM` purchase value buckets |
 | `BTR_PortalDashboardPurchasingTopPrincipal` | Top 10 principals by purchase amount |
 
+### Customer tables (M17 — dedicated cross-domain domain)
+
+| Table | Content |
+| ----- | ------- |
+| `BTR_PortalDashboardCustomerKpi` | Attention card counts, concentration %, period metadata |
+| `BTR_PortalDashboardCustomerTopOmzet` | Top 10 customers by current-month omzet |
+| `BTR_PortalDashboardCustomerTopPiutang` | Top 10 customers by all-time open balance |
+| `BTR_PortalDashboardCustomerAttention` | Attention list rows (customer × signal) |
+| `BTR_PortalDashboardCustomerSegmentation` | Klasifikasi, Wilayah, Active/Dormant counts |
+
+Customer worker reads **source DALs** at refresh — not Sales/Piutang snapshot tables.
+
 ### Supporting objects
 
 | Object | Purpose |
@@ -167,12 +182,14 @@ SQL definitions: `btr.sql/Tables/ReportingContext/BTR_PortalDashboard*.sql`
 | `GET /api/dashboard/piutang` | JWT | Layer A + B | Full piutang analytics |
 | `GET /api/dashboard/inventory` | JWT | Layer A + B | Full inventory analytics |
 | `GET /api/dashboard/purchasing` | JWT | Layer A + B | Full purchasing analytics |
+| `GET /api/dashboard/customers` | JWT | Customer snapshot (5 tables) | Customer Analytics (M17) |
 | `POST /api/admin/dashboard/refresh` | JWT | Triggers workers synchronously | IIS timeout risk for `--domain All` |
 | `GET /api/health/dashboard-snapshots` | None | `BTR_PortalDashboardRefreshLog` | `unknown` / `ok` / `refreshing` / `degraded` |
 
 **Empty snapshot behavior:**
 
-- Detail endpoints → HTTP 503 (`DashboardSnapshotUnavailableException`)
+- Domain detail endpoints (Sales, Piutang, Inventory, Purchasing) → HTTP 503 (`DashboardSnapshotUnavailableException`)
+- Customer Analytics → `IsAvailable = false` (graceful; navigation links retained)
 - Overview → partial response with `HasUnavailableDomain = true` when any Layer A row missing
 
 ---
@@ -217,7 +234,8 @@ Aggregation rules unchanged (`KurangBayar > 1`, aging buckets, customer key, Top
     "PiutangIntervalMinutes": 15,
     "InventoryIntervalMinutes": 60,
     "SalesIntervalMinutes": 30,
-    "PurchasingIntervalMinutes": 30
+    "PurchasingIntervalMinutes": 30,
+    "CustomerIntervalMinutes": 30
   }
 }
 ```
@@ -234,6 +252,8 @@ Portal API and worker both require `Database` section (JSON only — no registry
 | Sales Faktur aggregator | `.../DashboardSalesFakturAggregator.cs` |
 | Inventory aggregator | `.../DashboardInventoryAggregator.cs` |
 | Purchasing aggregator | `.../DashboardPurchasingInvoiceAggregator.cs` |
+| Customer aggregator | `.../DashboardCustomerAggregator.cs` |
+| Customer last Faktur DAL | `btr.infrastructure/SalesContext/FakturInfoAgg/CustomerLastFakturDal.cs` |
 | Snapshot workers | `.../DashboardSnapshotAgg/UseCases/RefreshDashboard*SnapshotWorker.cs` |
 | Worker CLI | `btr.portal.worker/Program.cs` |
 | Read DALs | `btr.infrastructure/ReportingContext/Dashboard*Agg/Dashboard*Dal.cs` |

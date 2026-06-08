@@ -31,6 +31,75 @@ export interface DashboardOverviewResponse {
   HasUnavailableDomain: boolean
 }
 
+export type AchievementBand = 'Healthy' | 'Warning' | 'Critical' | 'Unknown'
+
+export interface DashboardExecutiveSalesAttention {
+  AchievementPercent: number | null
+  TotalAchievement: number
+  AchievementBand: AchievementBand
+  RequiresAttention: boolean
+  IsAvailable: boolean
+}
+
+export interface DashboardExecutivePiutangAttention {
+  TotalPiutang: number
+  OverdueCustomer: number
+  AgingOver90Amount: number
+  AgingOver90Percent: number | null
+  TopCustomerPercent: number | null
+  RequiresAttention: boolean
+  IsAvailable: boolean
+}
+
+export interface DashboardExecutivePurchasingAttention {
+  PendingPostingInvoiceCount: number
+  PendingPostingValue: number
+  TopPrincipalPercent: number | null
+  RequiresAttention: boolean
+  IsAvailable: boolean
+}
+
+export interface DashboardExecutiveInventoryAttention {
+  TotalInventoryValue: number
+  TopCategoryPercent: number | null
+  TopSupplierPercent: number | null
+  RequiresAttention: boolean
+  IsAvailable: boolean
+}
+
+export interface DashboardExecutiveRiskItem {
+  Rank: number
+  Name: string
+  Amount: number
+}
+
+export interface DashboardExecutiveCriticalExposures {
+  TopCustomers: DashboardExecutiveRiskItem[]
+  TopCategories: DashboardExecutiveRiskItem[]
+  TopSuppliers: DashboardExecutiveRiskItem[]
+  TopPrincipals: DashboardExecutiveRiskItem[]
+}
+
+export interface DashboardExecutiveDomainSummary {
+  Domain: string
+  SummaryText: string
+  DetailDashboardRoute: string
+  IsAvailable: boolean
+}
+
+export interface DashboardExecutiveResponse {
+  HasUnavailableDomain: boolean
+  IsDataFresh: boolean
+  LastRefreshed: string | null
+  OverallHealthStatus: string
+  Sales: DashboardExecutiveSalesAttention
+  Piutang: DashboardExecutivePiutangAttention
+  Purchasing: DashboardExecutivePurchasingAttention
+  Inventory: DashboardExecutiveInventoryAttention
+  CriticalExposures: DashboardExecutiveCriticalExposures
+  DomainSummaries: DashboardExecutiveDomainSummary[]
+}
+
 export interface DashboardSalesWeekTrendItem {
   WeekStart: string
   WeekEnd: string
@@ -135,4 +204,79 @@ export interface DashboardPurchasingResponse {
   WeeklyTrend: DashboardPurchasingWeekTrendItem[]
   PostingStatusBreakdown: DashboardPurchasingPostingStatusItem[]
   TopPrincipalRanking: DashboardPurchasingRankingItem[]
+}
+
+export interface DashboardCustomerAttentionCards {
+  OverdueCustomerCount: number
+  AgingOver90Amount: number
+  CollectionRequiresAttention: boolean
+  TopOmzetCustomerPercent: number | null
+  TopPiutangCustomerPercent: number | null
+  ActiveCustomerCount: number
+  DormantCustomerCount: number
+  InactivityRequiresAttention: boolean
+  PlafondBreachCount: number
+  SuspendedWithSalesCount: number
+  CreditRequiresAttention: boolean
+}
+
+export interface DashboardCustomerAttentionItem {
+  CustomerCode: string
+  CustomerName: string
+  SignalKey: string
+  SignalLabel: string
+  ValueAmount: number | null
+  ValueText: string | null
+  WilayahName: string
+  ReportRoute: string
+  RequiresAttention: boolean
+}
+
+export interface DashboardCustomerRankingRow {
+  Rank: number
+  CustomerCode: string
+  CustomerName: string
+  Amount: number
+  PercentOfTotal: number | null
+  ReportRoute: string
+}
+
+export interface DashboardCustomerRankings {
+  TopOmzet: DashboardCustomerRankingRow[]
+  TopPiutang: DashboardCustomerRankingRow[]
+}
+
+export interface DashboardCustomerSegmentRow {
+  SegmentType: string
+  SegmentLabel: string
+  CustomerCount: number
+  ActiveCount: number
+  DormantCount: number
+}
+
+export interface DashboardCustomerSegmentationSummary {
+  ByKlasifikasi: DashboardCustomerSegmentRow[]
+  ByWilayah: DashboardCustomerSegmentRow[]
+  ActiveSummary: DashboardCustomerSegmentRow | null
+  DormantSummary: DashboardCustomerSegmentRow | null
+}
+
+export interface DashboardCustomerNavigationLinks {
+  SalesDashboardRoute: string
+  PiutangDashboardRoute: string
+  SalesReportRoute: string
+  PiutangReportRoute: string
+}
+
+export interface DashboardCustomerResponse {
+  IsAvailable: boolean
+  IsDataFresh: boolean
+  GeneratedAt: string | null
+  PeriodYear: number
+  PeriodMonth: number
+  AttentionCards: DashboardCustomerAttentionCards | null
+  AttentionList: DashboardCustomerAttentionItem[]
+  Rankings: DashboardCustomerRankings | null
+  Segmentation: DashboardCustomerSegmentationSummary | null
+  Navigation: DashboardCustomerNavigationLinks | null
 }
