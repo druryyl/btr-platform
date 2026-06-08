@@ -3,7 +3,7 @@
 **Audience:** End Users, Trainers, Support Team  
 **Purpose:** Explain how to use BTR Portal day to day.
 
-**Related permanent docs:** [Domain (WHY)](./btr-portal-domain.md) · [Architecture (WHAT)](./btr-portal-architecture.md) · [Materialized dashboard ops](../materialized-dashboard/materialized-dashboard-operational.md) · [Extraction — M16/M17](./knowledge-extraction-report-m16-m17.md) · [Extraction — Purchasing](./knowledge-extraction-report-purchasing-dashboard.md)
+**Related permanent docs:** [Domain (WHY)](./btr-portal-domain.md) · [Architecture (WHAT)](./btr-portal-architecture.md) · [Materialized dashboard ops](../materialized-dashboard/materialized-dashboard-operational.md) · [Extraction — M16/M17](./knowledge-extraction-report-m16-m17.md) · [Extraction — M18](./knowledge-extraction-report-m18.md) · [Extraction — Purchasing](./knowledge-extraction-report-purchasing-dashboard.md)
 
 For business definitions and KPI formulas, see [btr-portal-domain.md](./btr-portal-domain.md).
 
@@ -30,7 +30,7 @@ The Dashboard has two levels:
 | Level | Route | What You See |
 | ----- | ----- | ------------ |
 | **Executive (Home)** | `/dashboard` | **Management Attention Center** — attention-oriented KPIs across Sales, Piutang, Inventory, and Purchasing; Top 5 exposure lists; domain summaries. Links go to domain dashboards only. |
-| **Detail** | `/dashboard/sales`, `/dashboard/piutang`, `/dashboard/customers`, `/dashboard/inventory`, `/dashboard/purchasing` | Full KPI row, charts, and Top 10 tables for that business area (Customer Analytics uses attention-oriented layout). |
+| **Detail** | `/dashboard/sales`, `/dashboard/piutang`, `/dashboard/customers`, `/dashboard/salesmen`, `/dashboard/inventory`, `/dashboard/purchasing` | Full KPI row, charts, and Top 10 tables for that business area (Customer Analytics and Salesman Performance use attention-oriented layout). |
 
 **Navigate:** Sidebar → Dashboard → **Executive** (default home).
 
@@ -124,6 +124,59 @@ Concentration percentages (Top Omzet %, Top Piutang %) are informational — no 
 Click a customer row (attention list or rankings) → Sales or Piutang Report with customer name pre-filter (`?q=`). Piutang dashboard uses all-time open balance; Piutang Report defaults to a period filter — same semantic gap as the Piutang Dashboard.
 
 **Supplements** Executive Dashboard Top 5 Customers — does not replace it.
+
+---
+
+## Salesman Performance Dashboard (M18)
+
+**Navigate:** Sidebar → Dashboard → Salesmen.
+
+**Route:** `/dashboard/salesmen`
+
+**Question answered:** Which salesman requires management attention?
+
+### What You See (fixed section order)
+
+1. **Attention Cards** — Performance, Collection Exposure, Portfolio
+2. **Salesman Attention List** — one row per salesman × signal
+3. **Performance Rankings** — Top 10 Omzet (current month) and Top 10 Achievement %
+4. **Exposure Rankings** — Top 10 Piutang (all open)
+5. **Segmentation** — By Wilayah, Active vs Inactive, By Segment (when configured)
+6. **Navigation** — links to Sales/Piutang dashboards and reports
+
+### Attention signals
+
+| Signal | Rule |
+| ------ | ---- |
+| Below Target | Target configured AND achievement % in Warning (80–99%) or Critical (<80%) band |
+| No Target | Month activity (omzet or customers) but no target configured |
+| High Overdue Exposure | Any overdue balance on rep's invoiced open Faktur |
+| High Piutang Exposure | Open piutang balance > 0 for rep |
+| Customer Concentration | Top-customer % of rep omzet (informational — no automatic threshold) |
+| Dormant Customer Portfolio | ≥1 dormant customer (90-day rule) attributed via last invoicing salesman |
+
+Concentration percentages on Portfolio card (Top Omzet Salesman %, Top Piutang Salesman %) are informational — no automatic warning thresholds.
+
+**Card shortcuts:** Performance card → Sales Dashboard; Collection Exposure card → Piutang Dashboard; Portfolio card → Attention List on this page.
+
+### Achievement bands (Top Achievement % table)
+
+Same M16 thresholds as executive Sales card: ≥100% Healthy · 80–99% Warning · <80% Critical · no target Unknown.
+
+### Drill-down
+
+Click a salesman row (attention list or rankings) → Sales or Piutang Report with salesman name pre-filter (`?q=`).
+
+| Signal type | Report |
+| ----------- | ------ |
+| Below Target, No Target, Customer Concentration, Dormant Portfolio | Sales Report |
+| High Overdue Exposure, High Piutang Exposure | Piutang Report |
+| Top Omzet, Top Achievement % | Sales Report |
+| Top Piutang | Piutang Report |
+
+Piutang dashboard uses all-time open balance; Piutang Report defaults to a period filter — same semantic gap as Piutang/Customer dashboards.
+
+**Supplements** Sales Dashboard Top 10 Salesman — does not replace executive dashboard or Sales Top 10 table.
 
 ---
 
@@ -355,6 +408,7 @@ BTR Portal
 │   ├── Sales             → /dashboard/sales
 │   ├── Piutang           → /dashboard/piutang
 │   ├── Customers         → /dashboard/customers
+│   ├── Salesmen          → /dashboard/salesmen
 │   ├── Inventory         → /dashboard/inventory
 │   └── Purchasing        → /dashboard/purchasing
 └── Reports
@@ -374,6 +428,7 @@ BTR Portal
 | `/dashboard/sales` | Sales analytics | Yes |
 | `/dashboard/piutang` | Piutang analytics | Yes |
 | `/dashboard/customers` | Customer Analytics | Yes |
+| `/dashboard/salesmen` | Salesman Performance | Yes |
 | `/dashboard/inventory` | Inventory analytics | Yes |
 | `/dashboard/purchasing` | Purchasing analytics | Yes |
 | `/reports/sales` | Sales Report | Yes |
@@ -388,10 +443,12 @@ Login → Dashboard Home (Management Attention Center)
           ├── Sidebar → Sales Dashboard
           ├── Sidebar → Piutang Dashboard
           ├── Sidebar → Customer Analytics
+          ├── Sidebar → Salesman Performance
           ├── Sidebar → Inventory Dashboard
           └── Sidebar → Purchasing Dashboard
 
 Customer Analytics → click customer row → Sales or Piutang Report (pre-filtered)
+Salesman Performance → click salesman row → Sales or Piutang Report (pre-filtered)
 Executive / Domain Dashboard → Report (domain reports)
 
 Sidebar → Reports → [Sales | Piutang | Inventory | Purchasing] Report
@@ -427,6 +484,16 @@ Authenticated users visiting `/login` are redirected to Dashboard home.
 6. Use **Navigation** section to jump to Sales/Piutang dashboards for domain context.
 7. Cross-check overdue count against **Dashboard → Piutang** when reconciling collection exposure.
 
+### Reviewing Salesman Attention (M18)
+
+1. Sign in → **Dashboard → Salesmen** (`/dashboard/salesmen`).
+2. Scan **Attention Cards** — Performance (below/no target), Collection Exposure (overdue/piutang), Portfolio (dormant, concentration %).
+3. Review **Salesman Attention List** for specific reps and signals.
+4. Check **Performance Rankings** (Top 10 Omzet, Top 10 Achievement %) and **Exposure Rankings** (Top 10 Piutang).
+5. Click a salesman row → Sales or Piutang Report opens with salesman name pre-filled in search.
+6. Use **Navigation** section to jump to Sales/Piutang dashboards for domain context.
+7. Cross-check Top 10 Omzet against **Dashboard → Sales** Top 10 Salesman (same omzet by name; M18 adds Code, target, achievement %).
+
 ### Monitoring Inventory Value
 
 1. Sign in → Dashboard home → check Total Inventory Value and Total Item.
@@ -456,7 +523,7 @@ Authenticated users visiting `/login` are redirected to Dashboard home.
 
 ### Why does the dashboard show an old timestamp?
 
-Dashboard data refreshes on a background schedule, not on every page load. The **generated-at** time shows when snapshots were last rebuilt. Piutang refreshes every 15 minutes, Sales, Purchasing, and Customer every 30 minutes, Inventory every 60 minutes. Click **Refresh** to re-read the latest stored snapshot; it does not force an immediate recalculation unless an administrator triggers a manual rebuild.
+Dashboard data refreshes on a background schedule, not on every page load. The **generated-at** time shows when snapshots were last rebuilt. Piutang refreshes every 15 minutes; Sales, Purchasing, Customer, and Salesman every 30 minutes; Inventory every 60 minutes. Click **Refresh** to re-read the latest stored snapshot; it does not force an immediate recalculation unless an administrator triggers a manual rebuild.
 
 ### Why does the dashboard say data is not available?
 
@@ -559,9 +626,9 @@ cd C:\path\to\btr.portal.worker
 .\btr.portal.worker.exe --domain All --triggered-by Manual
 ```
 
-Verify `BTR_PortalDashboardRefreshLog` shows `Success` for Piutang, Inventory, Sales, Purchasing, and Customer.
+Verify `BTR_PortalDashboardRefreshLog` shows `Success` for Piutang, Inventory, Sales, Purchasing, Customer, and Salesman.
 
-**Scheduled tasks** — create five separate Windows Task Scheduler jobs:
+**Scheduled tasks** — create six separate Windows Task Scheduler jobs:
 
 | Task name | Interval | Command |
 | --------- | -------- | ------- |
@@ -570,6 +637,7 @@ Verify `BTR_PortalDashboardRefreshLog` shows `Success` for Piutang, Inventory, S
 | `BTR-Portal-Dashboard-Purchasing` | Every 30 min | `btr.portal.worker.exe --domain Purchasing --triggered-by Scheduler` |
 | `BTR-Portal-Dashboard-Inventory` | Every 60 min | `btr.portal.worker.exe --domain Inventory --triggered-by Scheduler` |
 | `BTR-Portal-Dashboard-Customer` | Every 30 min | `btr.portal.worker.exe --domain Customer --triggered-by Scheduler` |
+| `BTR-Portal-Dashboard-Salesman` | Every 30 min | `btr.portal.worker.exe --domain Salesman --triggered-by Scheduler` |
 
 Task settings: run whether user is logged on or not; service account with SQL access; **Start in** = worker folder; stop if running longer than 30 minutes.
 
@@ -577,7 +645,7 @@ Task settings: run whether user is logged on or not; service account with SQL ac
 
 | Argument | Values | Default |
 | -------- | ------ | ------- |
-| `--domain` | `All`, `Piutang`, `Inventory`, `Sales`, `Purchasing`, `Customer` | `All` |
+| `--domain` | `All`, `Piutang`, `Inventory`, `Sales`, `Purchasing`, `Customer`, `Salesman` | `All` |
 | `--triggered-by` | `Scheduler`, `Manual` | `Scheduler` |
 
 Exit code `0` = success. Logs: `{worker-folder}/logs/btr-portal-worker-{date}.log`.
@@ -594,7 +662,7 @@ Content-Type: application/json
 { "domain": "All" }
 ```
 
-`domain` accepts `All` (default), `Piutang`, `Inventory`, `Sales`, `Purchasing`, or `Customer` (case-insensitive).
+`domain` accepts `All` (default), `Piutang`, `Inventory`, `Sales`, `Purchasing`, `Customer`, or `Salesman` (case-insensitive).
 
 **Prefer worker CLI** for full rebuilds — the API runs refresh synchronously and may hit IIS request timeout (~110 seconds). Use the API for single-domain ad-hoc refresh; use the worker for `--domain All` or initial backfill.
 
@@ -603,7 +671,7 @@ Content-Type: application/json
 | Check | How |
 | ----- | --- |
 | API health | `GET /api/health` → 200 |
-| Snapshot health | `GET /api/health/dashboard-snapshots` — status: `unknown`, `ok`, `refreshing`, or `degraded`; each domain (Piutang, Sales, Purchasing, Inventory, Customer) shows `LastRefresh.Status` |
+| Snapshot health | `GET /api/health/dashboard-snapshots` — status: `unknown`, `ok`, `refreshing`, or `degraded`; each domain (Piutang, Sales, Purchasing, Inventory, Customer, Salesman) shows `LastRefresh.Status` |
 | Last refresh (SQL) | `SELECT TOP 1 * FROM BTR_PortalDashboardRefreshLog WHERE Domain = 'Purchasing' ORDER BY CompletedAt DESC` |
 | Worker log | `{worker-folder}/logs/btr-portal-worker-{date}.log` |
 | Task Scheduler | History tab on each scheduled task |
@@ -626,6 +694,7 @@ GET  /api/health/dashboard-snapshots     → 200
 POST /api/auth/login                     → 200 with token
 GET  /api/dashboard/executive            → 200 with token (after worker run)
 GET  /api/dashboard/customers            → 200 with token (after Customer worker run)
+GET  /api/dashboard/salesmen             → 200 with token (after Salesman worker run)
 GET  /api/dashboard/sales                → 200 with token
 GET  /api/dashboard/purchasing           → 200 with token
 GET  /api/reports/sales                  → 200 with token

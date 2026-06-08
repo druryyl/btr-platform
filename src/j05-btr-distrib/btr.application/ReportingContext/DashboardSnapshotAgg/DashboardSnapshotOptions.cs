@@ -13,5 +13,7 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg
         public int PurchasingIntervalMinutes { get; set; } = 30;
 
         public int CustomerIntervalMinutes { get; set; } = 30;
+
+        public int SalesmanIntervalMinutes { get; set; } = 30;
     }
 }

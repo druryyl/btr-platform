@@ -193,6 +193,7 @@
     <Compile Include="Controllers\Dashboard\InventoryDashboardController.cs" />
     <Compile Include="Controllers\Dashboard\PiutangDashboardController.cs" />
     <Compile Include="Controllers\Dashboard\CustomerDashboardController.cs" />
+    <Compile Include="Controllers\Dashboard\SalesmanDashboardController.cs" />
     <Compile Include="Controllers\Dashboard\SalesDashboardController.cs" />
     <Compile Include="Controllers\Dashboard\PurchasingDashboardController.cs" />
     <Compile Include="Controllers\HealthController.cs" />

@@ -3,7 +3,7 @@
 **Audience:** Product Owner, Business Owner, Developers, Future Agents  
 **Purpose:** Define what BTR Portal is, why it exists, and the business meaning of its dashboards, reports, and KPIs.
 
-**Related permanent docs:** [Architecture (WHAT)](./btr-portal-architecture.md) · [Operational (HOW)](./btr-portal-operational.md) · [Materialized dashboards](../materialized-dashboard/materialized-dashboard-domain.md) · [Extraction — M16/M17](./knowledge-extraction-report-m16-m17.md) · [Extraction — Purchasing](./knowledge-extraction-report-purchasing-dashboard.md)
+**Related permanent docs:** [Architecture (WHAT)](./btr-portal-architecture.md) · [Operational (HOW)](./btr-portal-operational.md) · [Materialized dashboards](../materialized-dashboard/materialized-dashboard-domain.md) · [Extraction — M16/M17](./knowledge-extraction-report-m16-m17.md) · [Extraction — M18](./knowledge-extraction-report-m18.md) · [Extraction — Purchasing](./knowledge-extraction-report-purchasing-dashboard.md)
 
 For how to use the portal, see [btr-portal-operational.md](./btr-portal-operational.md).  
 For how it is built, see [btr-portal-architecture.md](./btr-portal-architecture.md).
@@ -38,7 +38,7 @@ The portal complements BTR Desktop; it does not replace operational transaction 
 | Area | Capabilities |
 | ---- | ------------ |
 | Authentication | Sign in with existing BTR user credentials |
-| Dashboards | Executive home (Management Attention Center), Sales, Piutang, Customer Analytics, Inventory, Purchasing — detail analytics per domain |
+| Dashboards | Executive home (Management Attention Center), Sales, Piutang, Customer Analytics, Salesman Performance, Inventory, Purchasing — detail analytics per domain |
 | Reports | Sales, Piutang, Inventory, Purchasing — tabular transaction/detail views |
 | Analytics | KPI cards, charts, Top 10 rankings, footer summary totals |
 
@@ -49,6 +49,7 @@ The portal complements BTR Desktop; it does not replace operational transaction 
 | Sales | Dashboard KPIs, weekly trend, target vs achievement, salesman ranking; Sales Report |
 | Finance (Piutang) | Dashboard KPIs, aging analysis, overdue customers, Top 10 customers; Piutang Report |
 | Customer (cross-domain) | Customer Analytics dashboard — attention signals, rankings, segmentation across Sales + Piutang; drill-down to Sales/Piutang reports |
+| Salesman (cross-domain) | Salesman Performance dashboard — per-rep attention signals, achievement %, piutang exposure, rankings across Sales + Piutang; drill-down to Sales/Piutang reports |
 | Inventory | Dashboard KPIs, category/supplier breakdown; Inventory Report |
 | Purchasing | Dashboard KPIs, weekly trend, posting-status breakdown, Top 10 Principal; Purchasing Report |
 
@@ -116,7 +117,7 @@ Executive landing page titled **Management Attention Center** — answers *What 
 
 **Legacy endpoint:** `GET /api/dashboard/overview` retained but no longer used by the home page.
 
-**Background refresh:** Scheduled by `btr.portal.worker` via Windows Task Scheduler (per-domain jobs). Authenticated users may trigger an on-demand rebuild via `POST /api/admin/dashboard/refresh` with optional body `{ "domain": "All|Piutang|Inventory|Sales|Purchasing|Customer" }` (default `All`; domain values are case-insensitive). For full rebuilds or long-running refreshes, prefer the worker CLI — the API runs synchronously and is subject to IIS request timeouts (~110 s default). Operations may also use: `btr.portal.worker.exe --domain All --triggered-by Manual`.
+**Background refresh:** Scheduled by `btr.portal.worker` via Windows Task Scheduler (per-domain jobs). Authenticated users may trigger an on-demand rebuild via `POST /api/admin/dashboard/refresh` with optional body `{ "domain": "All|Piutang|Inventory|Sales|Purchasing|Customer|Salesman" }` (default `All`; domain values are case-insensitive). For full rebuilds or long-running refreshes, prefer the worker CLI — the API runs synchronously and is subject to IIS request timeouts (~110 s default). Operations may also use: `btr.portal.worker.exe --domain All --triggered-by Manual`.
 
 **Observability:** `GET /api/health/dashboard-snapshots` (no auth) returns the latest refresh attempt per domain from `BTR_PortalDashboardRefreshLog`, including status, duration, and configured interval minutes. Overall health is `unknown` when no domain has a refresh log yet; otherwise `ok`, `refreshing` (any domain `Running`), or `degraded` (any domain `Failed`).
 
@@ -172,6 +173,52 @@ Executive landing page titled **Management Attention Center** — answers *What 
 **Drill-down:** Customer row click opens Sales or Piutang Report with customer **name** pre-filter (`?q=`). Path: Customer Analytics → Domain Dashboard → Report.
 
 **Explicitly out of scope:** Retur analytics, Effective Call, GPS, Faktur Kembali aggregates, collection effectiveness / DSO, new Customer Report route, executive dashboard changes.
+
+### Salesman Performance Dashboard (`/dashboard/salesmen`)
+
+**Period:** Sales metrics use **current calendar month** non-void Faktur (`GrandTotal`). Piutang metrics use **all-time open balance** (`KurangBayar > 1`) at refresh time.
+
+**Purpose:** Cross-domain salesman management view — answers *Which salesman requires management attention and why?* across sales performance and receivable exposure. **Supplements** the Sales Dashboard Top 10 Salesman ranking; does not replace the Management Attention Center or executive dashboard.
+
+| Section | Content |
+| ------- | ------- |
+| Attention Cards | Performance (Below Target, No Target) · Collection Exposure (High Overdue, High Piutang) · Portfolio (Dormant Portfolio, Top Omzet/Piutang Salesman %) |
+| Attention List | One row per salesman × signal — six approved signals |
+| Performance Rankings | Top 10 Omzet (month) · Top 10 Achievement % |
+| Exposure Rankings | Top 10 Piutang (all open) |
+| Segmentation | By Wilayah, Active vs Inactive, By Segment (when configured) |
+| Navigation | Links to Sales/Piutang dashboards and reports |
+
+**Data source:** Dedicated `BTR_PortalDashboardSalesman*` snapshot domain — refreshed from source DALs (Faktur, piutang with invoicing salesman, salesman master, targets, last Faktur per customer with salesman), **not** composed from Sales/Piutang/Customer snapshot tables.
+
+**Salesman key:** `SalesPersonId` internal; `SalesPersonName` display; `SalesPersonCode` on ranking rows.
+
+**Attribution rules:**
+
+| Metric | Attribution |
+| ------ | ----------- |
+| Sales omzet | `Faktur.SalesPersonId` at invoice time |
+| Piutang | **Invoicing salesman** — FF1 model (`SalesName` on open Faktur rows) |
+| Dormant customers | **Last Invoicing Salesman** — salesman on customer's most recent Faktur |
+| Achievement % | `SalesOmzetChartAchievementPolicy.ComputePercent(omzet, target)` per rep |
+| Achievement bands | M16 thresholds: ≥100% Healthy · 80–99% Warning · <80% Critical · null Unknown |
+
+**Attention signals (approved):**
+
+| Signal | Inclusion rule |
+| ------ | -------------- |
+| Below Target | Target exists (`> 0`) AND achievement % in Warning or Critical band |
+| No Target | Month activity (`Omzet > 0` OR distinct customers > 0) AND no configured target |
+| High Overdue Exposure | Any overdue balance on rep's invoiced open Faktur rows |
+| High Piutang Exposure | Open piutang balance `> 0` for rep (informational; no % threshold) |
+| Customer Concentration | `Omzet > 0` AND top-customer % computable (informational; no % threshold) |
+| Dormant Customer Portfolio | ≥1 dormant customer on rep's book via last-invoicing attribution |
+
+**Attention Indicator:** Generic M16/M17 presentation on cards when `*RequiresAttention` is true. Concentration percentages have **no** automatic warning thresholds.
+
+**Drill-down:** Salesman row click opens Sales or Piutang Report with salesman **name** pre-filter (`?q=`). Path: Salesman Performance → Domain Dashboard → Report.
+
+**Explicitly out of scope:** Pipeline omzet, Effective Call, route coverage, visit compliance, GPS, retur, Faktur Kembali aggregates, collection effectiveness / DSO (M20), field activity metrics (M25), Bottom 10 rankings, historical trends, unified salesman score, new Salesman Report route, executive dashboard changes, changes to Sales Dashboard Top 10 Salesman table.
 
 ### Inventory Dashboard (`/dashboard/inventory`)
 
@@ -334,6 +381,29 @@ Dedicated snapshot domain — `BTR_PortalDashboardCustomer*`. Refreshed from sou
 
 **Attention list:** One row per customer × signal (Overdue, Dormant, Plafond breach, Suspended + Sales).
 
+### Salesman Performance KPIs (M18)
+
+Dedicated snapshot domain — `BTR_PortalDashboardSalesman*`. Refreshed from source DALs (not composed from Sales/Piutang/Customer snapshots).
+
+| KPI | Period / scope | Formula | Business meaning |
+| --- | -------------- | ------- | ---------------- |
+| **Below Target** | Current month | Reps with target `> 0` AND achievement % in Warning or Critical band | Underperforming against plan |
+| **No Target** | Current month | Month activity AND target null or `≤ 0` | Activity without configured plan |
+| **High Overdue Exposure** | All-time open | Distinct reps with any overdue customer on invoiced Faktur | Collection risk by rep |
+| **High Piutang Exposure** | All-time open | Distinct reps with open balance `> 0` | Receivable concentration by rep |
+| **Customer Concentration** | Current month | Rep with computable top-customer % of omzet | Portfolio dependency on few accounts |
+| **Dormant Portfolio** | 90-day rule | Distinct reps with ≥1 dormant customer on book (last-invoicing attribution) | Inactive accounts on rep's book |
+| **Top 10 Omzet** | Current month | `SUM(GrandTotal)` per `SalesPersonId`, descending; exclude zero omzet | Revenue leaders |
+| **Top 10 Achievement %** | Current month | Achievement % per rep with target; exclude null % and zero omzet | Target attainment leaders |
+| **Top 10 Piutang** | All-time open | `SUM(KurangBayar)` per invoicing salesman, descending; exclude zero balance | Receivable exposure leaders |
+| **Top Omzet Salesman %** | Current month | Top-1 rep omzet ÷ team total omzet × 100% | Team revenue concentration (informational) |
+| **Top Piutang Salesman %** | All-time open | Top-1 rep balance ÷ company total × 100% | Team receivable concentration (informational) |
+| **Active vs Inactive** | Current month | Active = Faktur in month; inactive = no current-month Faktur | Team activity segmentation |
+
+**Salesman key:** `SalesPersonId` primary; name fallback map for piutang rows where only `SalesPersonName` is populated. Rows with blank `SalesPersonId` and no name match are excluded from aggregates.
+
+**Attention list:** One row per salesman × signal (Below Target, No Target, High Overdue Exposure, High Piutang Exposure, Customer Concentration, Dormant Customer Portfolio).
+
 ### Inventory KPIs
 
 | KPI | Definition | Formula | Business Meaning |
@@ -383,6 +453,14 @@ Approved rules governing portal calculations and filters:
 | Suspended + sales | Customer Analytics | `IsSuspend = true` AND Faktur in **current calendar month** |
 | Attention list grain | Customer Analytics | One row per customer × signal (duplicate signals expected) |
 | Customer snapshot source | Customer Analytics worker | Reads source DALs — does not compose from Sales/Piutang snapshot tables |
+| Salesman key | Salesman Performance | `SalesPersonId` primary; `SalesPersonCode` on rankings; name for display and report pre-filter |
+| Sales omzet attribution | Salesman Performance | `Faktur.SalesPersonId` at invoice time |
+| Piutang attribution | Salesman Performance | Invoicing salesman via FF1 join on open Faktur rows |
+| Dormant attribution | Salesman Performance | Last invoicing `SalesPersonId` from most recent Faktur per customer |
+| No Target activity | Salesman Performance | `OmzetAmount > 0` OR `CustomerCount > 0` in current month |
+| Active salesman | Salesman Performance | ≥1 current-month Faktur for rep |
+| Inactive salesman | Salesman Performance | No current-month Faktur — in segmentation; excluded from Top rankings when value = 0 |
+| Salesman snapshot source | Salesman Performance worker | Reads source DALs — does not compose from Sales/Piutang/Customer snapshot tables |
 | Unknown dimensions | Inventory M15 | Blank category or supplier displayed and aggregated as `"Unknown"` |
 | Top N | All rankings | Top 10 for salesman, customer, category, supplier |
 | Posting Stok | Purchasing report | `SUDAH` = stock posted; `BELUM` = not yet posted |
@@ -399,7 +477,7 @@ Approved rules governing portal calculations and filters:
 
 ## Current Product State
 
-Capabilities delivered across milestones M1–M17:
+Capabilities delivered across milestones M1–M18:
 
 | Capability | Status |
 | ---------- | ------ |
@@ -409,6 +487,7 @@ Capabilities delivered across milestones M1–M17:
 | ReportingContext architecture | Complete |
 | Dashboard home — Management Attention Center (M16) | Complete |
 | Customer Analytics dashboard — dedicated snapshot domain (M17) | Complete |
+| Salesman Performance dashboard — dedicated snapshot domain (M18) | Complete |
 | Sales detail dashboard (target, achievement, weekly trend, Top 10 salesman) | Complete |
 | Piutang detail dashboard (aging, overdue customers, Top 10 customers) | Complete |
 | Inventory detail dashboard (category/supplier charts, Top 10 tables) | Complete |
@@ -429,11 +508,10 @@ Capabilities delivered across milestones M1–M17:
 
 ## Future Direction
 
-Approved milestone roadmap after M17 (not yet delivered):
+Approved milestone roadmap after M18 (not yet delivered):
 
 | Milestone | Focus |
 | --------- | ----- |
-| M18 | Salesman Performance |
 | M19 | Slow Moving & Dead Stock |
 | M20 | Collection Dashboard (collection effectiveness / DSO) |
 
@@ -442,6 +520,7 @@ Known capabilities explicitly **deferred** (not committed scope):
 | Area | Deferred Capabilities |
 | ---- | --------------------- |
 | Customer analytics | Retur, Effective Call, GPS, Faktur Kembali aggregates, declining purchase trends, Harga Type segmentation |
+| Salesman analytics | Pipeline omzet, Effective Call, route coverage, visit compliance, GPS, retur, collection effectiveness / DSO (M20), field activity (M25), Bottom 10 rankings, historical trends, unified salesman score |
 | Filtering | Date-range parameters, search, advanced filters on reports |
 | Sales analytics | Margin analysis, status breakdown chart, sales period mode toggle |
 | Piutang analytics | Collection effectiveness KPIs (planned M20) |

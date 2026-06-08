@@ -1,4 +1,5 @@
 using btr.application.ReportingContext.DashboardCustomerAgg.Contracts;
+using btr.application.ReportingContext.DashboardSalesmanAgg.Contracts;
 using btr.application.ReportingContext.DashboardExecutiveAgg.Contracts;
 using btr.application.ReportingContext.DashboardExecutiveAgg.Services;
 using btr.application.ReportingContext.DashboardInventoryAgg.Contracts;
@@ -17,6 +18,7 @@ using btr.application.SalesContext.SalesOmzetHealthWeeklyAgg.Contracts;
 using btr.infrastructure;
 using btr.infrastructure.Helpers;
 using btr.infrastructure.ReportingContext.DashboardCustomerAgg;
+using btr.infrastructure.ReportingContext.DashboardSalesmanAgg;
 using btr.infrastructure.ReportingContext.DashboardExecutiveAgg;
 using btr.infrastructure.ReportingContext.DashboardInventoryAgg;
 using btr.infrastructure.ReportingContext.DashboardPiutangAgg;
@@ -53,12 +55,14 @@ namespace btr.portal.api.Configurations
             services.AddScoped<ISalesOmzetTargetDal, SalesOmzetTargetDal>();
             services.AddScoped<ISalesOmzetHealthMetricsDal, SalesOmzetHealthMetricsDal>();
             services.AddScoped<IPiutangOpenBalanceDal, PiutangOpenBalanceDal>();
+            services.AddScoped<IPiutangOpenBalanceWithSalesmanDal, PiutangOpenBalanceWithSalesmanDal>();
             services.AddScoped<IDashboardSnapshotRefreshLogDal, DashboardSnapshotRefreshLogDal>();
             services.AddScoped<IDashboardPiutangSnapshotDal, DashboardPiutangSnapshotDal>();
             services.AddScoped<IDashboardInventorySnapshotDal, DashboardInventorySnapshotDal>();
             services.AddScoped<IDashboardSalesSnapshotDal, DashboardSalesSnapshotDal>();
             services.AddScoped<IDashboardPurchasingSnapshotDal, DashboardPurchasingSnapshotDal>();
             services.AddScoped<IDashboardCustomerSnapshotDal, DashboardCustomerSnapshotDal>();
+            services.AddScoped<IDashboardSalesmanSnapshotDal, DashboardSalesmanSnapshotDal>();
             services.AddScoped<ICustomerLastFakturDal, CustomerLastFakturDal>();
             services.AddScoped<IDashboardOverviewDal, DashboardOverviewDal>();
             services.AddScoped<IDashboardExecutiveDal, DashboardExecutiveDal>();
@@ -68,6 +72,7 @@ namespace btr.portal.api.Configurations
             services.AddScoped<IDashboardPiutangDal, DashboardPiutangDal>();
             services.AddScoped<IDashboardInventoryDal, DashboardInventoryDal>();
             services.AddScoped<IDashboardCustomerDal, DashboardCustomerDal>();
+            services.AddScoped<IDashboardSalesmanDal, DashboardSalesmanDal>();
             services.AddScoped<ISalesReportDal, SalesReportDal>();
             services.AddScoped<IInventoryReportDal, InventoryReportDal>();
             services.AddScoped<IPiutangReportDal, PiutangReportDal>();

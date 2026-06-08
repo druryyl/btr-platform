@@ -40,6 +40,11 @@ const router = createRouter({
           component: () => import('@/views/dashboard/CustomerDashboardView.vue'),
         },
         {
+          path: 'dashboard/salesmen',
+          name: 'salesmen-dashboard',
+          component: () => import('@/views/dashboard/SalesmanDashboardView.vue'),
+        },
+        {
           path: 'dashboard/inventory',
           name: 'inventory-dashboard',
           component: () => import('@/views/dashboard/InventoryDashboardView.vue'),

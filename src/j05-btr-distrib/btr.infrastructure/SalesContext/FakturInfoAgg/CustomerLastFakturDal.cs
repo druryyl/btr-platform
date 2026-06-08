@@ -33,5 +33,34 @@ GROUP BY cc.CustomerId, cc.CustomerCode, cc.CustomerName";
                 return conn.Query<CustomerLastFakturDto>(sql);
             }
         }
+
+        public IEnumerable<CustomerLastFakturWithSalesmanDto> ListLastFakturWithSalesmanByCustomer()
+        {
+            const string sql = @"
+WITH Ranked AS (
+    SELECT
+        ISNULL(cc.CustomerCode, '') AS CustomerCode,
+        ISNULL(cc.CustomerName, '') AS CustomerName,
+        aa.FakturDate AS LastFakturDate,
+        ISNULL(sp.SalesPersonId, '') AS SalesPersonId,
+        ISNULL(sp.SalesPersonName, '') AS SalesPersonName,
+        ROW_NUMBER() OVER (
+            PARTITION BY cc.CustomerId
+            ORDER BY aa.FakturDate DESC, aa.FakturId DESC
+        ) AS rn
+    FROM BTR_Faktur aa
+    INNER JOIN BTR_Customer cc ON aa.CustomerId = cc.CustomerId
+    LEFT JOIN BTR_SalesPerson sp ON aa.SalesPersonId = sp.SalesPersonId
+    WHERE aa.VoidDate = '3000-01-01'
+)
+SELECT CustomerCode, CustomerName, LastFakturDate, SalesPersonId, SalesPersonName
+FROM Ranked
+WHERE rn = 1";
+
+            using (var conn = new SqlConnection(ConnStringHelper.Get(_opt)))
+            {
+                return conn.Query<CustomerLastFakturWithSalesmanDto>(sql);
+            }
+        }
     }
 }

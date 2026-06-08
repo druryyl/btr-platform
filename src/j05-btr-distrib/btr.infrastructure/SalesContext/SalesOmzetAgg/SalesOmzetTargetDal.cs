@@ -1,3 +1,5 @@
+using System;
+using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlClient;
 using System.Linq;
@@ -60,8 +62,44 @@ namespace btr.infrastructure.SalesContext.SalesOmzetAgg
             }
         }
 
+        public IReadOnlyDictionary<string, decimal?> ListTargetsForMonth(int year, int month)
+        {
+            const string sql = @"
+                SELECT SalesPersonId, TargetAmount
+                FROM BTR_SalesOmzetTarget
+                WHERE TargetYear = @TargetYear
+                  AND TargetMonth = @TargetMonth";
+
+            var dp = new DynamicParameters();
+            dp.AddParam("@TargetYear", year, SqlDbType.Int);
+            dp.AddParam("@TargetMonth", month, SqlDbType.Int);
+
+            using (var conn = new SqlConnection(ConnStringHelper.Get(_opt)))
+            {
+                var rows = conn.Read<TargetRowWithId>(sql, dp).ToList();
+                var dict = new Dictionary<string, decimal?>(StringComparer.OrdinalIgnoreCase);
+
+                foreach (var row in rows)
+                {
+                    if (string.IsNullOrWhiteSpace(row.SalesPersonId))
+                        continue;
+
+                    dict[row.SalesPersonId.Trim()] = row.TargetAmount;
+                }
+
+                return dict;
+            }
+        }
+
         private sealed class TargetRow
         {
+            public decimal TargetAmount { get; set; }
+        }
+
+        private sealed class TargetRowWithId
+        {
+            public string SalesPersonId { get; set; }
+
             public decimal TargetAmount { get; set; }
         }
     }

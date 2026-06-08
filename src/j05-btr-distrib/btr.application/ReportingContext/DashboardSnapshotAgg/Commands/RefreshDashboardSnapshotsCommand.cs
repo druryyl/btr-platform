@@ -31,6 +31,7 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.Commands
         private readonly IRefreshDashboardSalesSnapshotWorker _salesWorker;
         private readonly IRefreshDashboardPurchasingSnapshotWorker _purchasingWorker;
         private readonly IRefreshDashboardCustomerSnapshotWorker _customerWorker;
+        private readonly IRefreshDashboardSalesmanSnapshotWorker _salesmanWorker;
 
         public RefreshDashboardSnapshotsHandler(
             IRefreshAllDashboardSnapshotsWorker allWorker,
@@ -38,7 +39,8 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.Commands
             IRefreshDashboardInventorySnapshotWorker inventoryWorker,
             IRefreshDashboardSalesSnapshotWorker salesWorker,
             IRefreshDashboardPurchasingSnapshotWorker purchasingWorker,
-            IRefreshDashboardCustomerSnapshotWorker customerWorker)
+            IRefreshDashboardCustomerSnapshotWorker customerWorker,
+            IRefreshDashboardSalesmanSnapshotWorker salesmanWorker)
         {
             _allWorker = allWorker;
             _piutangWorker = piutangWorker;
@@ -46,6 +48,7 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.Commands
             _salesWorker = salesWorker;
             _purchasingWorker = purchasingWorker;
             _customerWorker = customerWorker;
+            _salesmanWorker = salesmanWorker;
         }
 
         public Task<RefreshDashboardSnapshotsResponse> Handle(
@@ -129,9 +132,17 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.Commands
                     _customerWorker.Execute(customerRequest);
                     return MapResult("Customer", customerRequest.Result);
 
+                case "Salesman":
+                    var salesmanRequest = new RefreshDashboardSalesmanSnapshotRequest
+                    {
+                        TriggeredBy = triggeredBy
+                    };
+                    _salesmanWorker.Execute(salesmanRequest);
+                    return MapResult("Salesman", salesmanRequest.Result);
+
                 default:
                     throw new ArgumentException(
-                        "Domain must be All, Piutang, Inventory, Sales, Purchasing, or Customer.",
+                        "Domain must be All, Piutang, Inventory, Sales, Purchasing, Customer, or Salesman.",
                         nameof(RefreshDashboardSnapshotsCommand.Domain));
             }
         }
@@ -196,6 +207,18 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.Commands
             };
         }
 
+        private static RefreshDashboardDomainResult MapResult(
+            string domain,
+            RefreshDashboardSalesmanSnapshotResult result)
+        {
+            return new RefreshDashboardDomainResult
+            {
+                Domain = domain,
+                RefreshLogId = result?.RefreshLogId,
+                DurationMs = result?.DurationMs ?? 0
+            };
+        }
+
         private static string NormalizeDomain(string domain)
         {
             if (string.IsNullOrWhiteSpace(domain))
@@ -220,6 +243,9 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.Commands
 
             if (string.Equals(trimmed, "Customer", StringComparison.OrdinalIgnoreCase))
                 return "Customer";
+
+            if (string.Equals(trimmed, "Salesman", StringComparison.OrdinalIgnoreCase))
+                return "Salesman";
 
             return trimmed;
         }

@@ -3,7 +3,7 @@
 **Audience:** Developers, Architects, Future Agents  
 **Purpose:** Describe how BTR Portal is built and the conventions to follow when extending it.
 
-**Related permanent docs:** [Domain (WHY)](./btr-portal-domain.md) · [Operational (HOW)](./btr-portal-operational.md) · [Materialized dashboards](../materialized-dashboard/materialized-dashboard-architecture.md) · [Extraction — M16/M17](./knowledge-extraction-report-m16-m17.md) · [Extraction — Purchasing](./knowledge-extraction-report-purchasing-dashboard.md)
+**Related permanent docs:** [Domain (WHY)](./btr-portal-domain.md) · [Operational (HOW)](./btr-portal-operational.md) · [Materialized dashboards](../materialized-dashboard/materialized-dashboard-architecture.md) · [Extraction — M16/M17](./knowledge-extraction-report-m16-m17.md) · [Extraction — M18](./knowledge-extraction-report-m18.md) · [Extraction — Purchasing](./knowledge-extraction-report-purchasing-dashboard.md)
 
 For business definitions, see [btr-portal-domain.md](./btr-portal-domain.md).  
 For user-facing behavior, see [btr-portal-operational.md](./btr-portal-operational.md).
@@ -67,6 +67,7 @@ btr.application/ReportingContext/
 ├── DashboardOverviewAgg/
 ├── DashboardExecutiveAgg/           ← executive composition (M16)
 ├── DashboardCustomerAgg/            ← customer analytics read path (M17)
+├── DashboardSalesmanAgg/            ← salesman performance read path (M18)
 ├── DashboardSnapshotAgg/          ← workers, aggregators, refresh commands
 ├── DashboardSalesAgg/
 ├── DashboardPiutangAgg/
@@ -81,6 +82,7 @@ btr.infrastructure/ReportingContext/
 ├── DashboardSnapshotAgg/            ← snapshot readers/writers, overview DAL
 ├── DashboardExecutiveAgg/DashboardExecutiveDal.cs
 ├── DashboardCustomerAgg/DashboardCustomerDal.cs
+├── DashboardSalesmanAgg/DashboardSalesmanDal.cs
 ├── DashboardSalesAgg/DashboardSalesDal.cs
 ├── DashboardPiutangAgg/DashboardPiutangDal.cs
 ├── DashboardInventoryAgg/DashboardInventoryDal.cs
@@ -148,6 +150,7 @@ Browser → GET /api/dashboard/{sales|piutang|inventory|purchasing}  (detail —
 | **A — KPI** | `BTR_PortalDashboard{Sales,Piutang,Inventory,Purchasing}Kpi` | Overview home + detail KPI rows |
 | **B — Dimensional** | Week trend, aging, breakdown, Top-N tables | Detail dashboards only |
 | **Customer (dedicated)** | `BTR_PortalDashboardCustomer*` (5 tables) | Customer Analytics only — not composed from domain snapshots |
+| **Salesman (dedicated)** | `BTR_PortalDashboardSalesman*` (6 tables) | Salesman Performance only — not composed from domain snapshots |
 
 All snapshots use `SnapshotKey = 'CURRENT'`. `GeneratedAt` on every dashboard response reflects the last successful background refresh, not request execution time.
 
@@ -159,9 +162,10 @@ All snapshots use `SnapshotKey = 'CURRENT'`. `GeneratedAt` on every dashboard re
 | Sales | 30 minutes |
 | Purchasing | 30 minutes |
 | Customer | 30 minutes |
+| Salesman | 30 minutes |
 | Inventory | 60 minutes |
 
-**Refresh order (`--domain All`):** Piutang → Inventory → Sales → Purchasing → **Customer** (last).
+**Refresh order (`--domain All`):** Piutang → Inventory → Sales → Purchasing → Customer → **Salesman** (last).
 
 **Operational metadata:** `BTR_PortalDashboardRefreshLog` records each refresh attempt (domain, status, duration, error, trigger source).
 
@@ -199,6 +203,24 @@ RefreshDashboardCustomerSnapshotWorker
 
 **Why separate domain:** CustomerCode on rankings, dormant/plafond/suspended logic, and cross-domain attention list require source-level aggregation — composing from existing snapshots would lose precision.
 
+### Salesman Snapshot Domain (M18)
+
+Salesman Performance uses a **dedicated** snapshot domain — worker reads **source DALs**, not Sales/Piutang/Customer snapshot tables:
+
+```text
+RefreshDashboardSalesmanSnapshotWorker
+        ↓ IFakturViewDal, IPiutangOpenBalanceWithSalesmanDal,
+          ICustomerLastFakturDal.ListLastFakturWithSalesmanByCustomer(),
+          ISalesPersonDal, ISalesOmzetTargetDal.ListTargetsForMonth()
+        ↓ DashboardSalesmanAggregator (+ DashboardSalesmanKeyResolver,
+          ExecutiveSalesAchievementBandResolver)
+        ↓ IDashboardSalesmanSnapshotDal.ReplaceCurrent (6 tables, transactional)
+```
+
+**Why separate domain:** Per-rep target, achievement %, piutang with invoicing salesman, dormant attribution via last-invoicing salesman, and six cross-domain attention signals require source-level aggregation keyed by `SalesPersonId` — Sales Top 10 snapshot stores name-only omzet and omits piutang/target signals.
+
+**Protected modules unchanged:** `DashboardSalesFakturAggregator`, `BTR_PortalDashboardSalesTopSalesman`, `DashboardExecutiveComposer`.
+
 ### Dashboard API Strategy
 
 | Endpoint | Controller | Data source | Purpose |
@@ -210,12 +232,13 @@ RefreshDashboardCustomerSnapshotWorker
 | `GET /api/dashboard/inventory` | `InventoryDashboardController` | Layer A + B snapshots | Inventory detail analytics |
 | `GET /api/dashboard/purchasing` | `PurchasingDashboardController` | Layer A + B snapshots | Purchasing detail analytics |
 | `GET /api/dashboard/customers` | `CustomerDashboardController` | Dedicated Customer snapshot (`DashboardCustomerAgg`) | Customer Analytics (M17) |
+| `GET /api/dashboard/salesmen` | `SalesmanDashboardController` | Dedicated Salesman snapshot (`DashboardSalesmanAgg`) | Salesman Performance (M18) |
 | `POST /api/admin/dashboard/refresh` | `AdminDashboardRefreshController` | Triggers snapshot rebuild | On-demand refresh (sync; IIS timeout risk) |
 | `GET /api/health/dashboard-snapshots` | `HealthController` | `BTR_PortalDashboardRefreshLog` | Monitoring — no auth |
 
 Domain detail endpoints were extended additively across M8 and M13–M15; response DTOs unchanged in shape. All dashboard data endpoints require JWT except health.
 
-**Empty snapshot behavior:** Domain detail endpoints (Sales, Piutang, Inventory, Purchasing) return HTTP 503 when snapshot tables are empty. **Customer Analytics** returns `IsAvailable = false` with navigation links (graceful degradation). Overview sets `HasUnavailableDomain = true` when any Layer A row is missing. Executive sets `HasUnavailableDomain` when any composed domain is missing.
+**Empty snapshot behavior:** Domain detail endpoints (Sales, Piutang, Inventory, Purchasing) return HTTP 503 when snapshot tables are empty. **Customer Analytics** and **Salesman Performance** return `IsAvailable = false` with navigation links (graceful degradation). Overview sets `HasUnavailableDomain = true` when any Layer A row is missing. Executive sets `HasUnavailableDomain` when any composed domain is missing.
 
 ### Dashboard Routing Strategy (Frontend)
 
@@ -227,6 +250,7 @@ Domain detail endpoints were extended additively across M8 and M13–M15; respon
 | `/dashboard/inventory` | `InventoryDashboardView` | `GET /api/dashboard/inventory` |
 | `/dashboard/purchasing` | `PurchasingDashboardView` | `GET /api/dashboard/purchasing` |
 | `/dashboard/customers` | `CustomerDashboardView` | `GET /api/dashboard/customers` |
+| `/dashboard/salesmen` | `SalesmanDashboardView` | `GET /api/dashboard/salesmen` |
 
 Home shows summary KPI cards with per-domain `GeneratedAt` timestamps and links to detail pages. Detail pages consume the full API response (including chart/ranking sections not shown on home).
 
@@ -287,6 +311,18 @@ Home shows summary KPI cards with per-domain `GeneratedAt` timestamps and links 
 | Segmentation | `ByKlasifikasi[]`, `ByWilayah[]`, `ActivitySummary` | Blank dimensions → `"Unknown"` |
 | Navigation | `DashboardCustomerNavigation` | Links to domain dashboards and reports |
 
+**Salesman response sections (M18):**
+
+| Section | DTO | Notes |
+| ------- | --- | ----- |
+| Availability | `IsAvailable`, `IsDataFresh`, `GeneratedAt` | Graceful when snapshot empty |
+| Attention cards | `DashboardSalesmanAttentionCards` | Three card groups with `*RequiresAttention` flags |
+| Attention list | `DashboardSalesmanAttentionItem[]` | One row per salesman × signal; `ReportRoute` per signal |
+| Performance rankings | `TopOmzet[]`, `TopAchievement[]` | Include `SalesPersonCode`, `PercentOfTotal`, achievement % |
+| Exposure rankings | `TopPiutang[]` | All-time open balance with `PercentOfTotal` |
+| Segmentation | `ByWilayah[]`, `BySegment[]`, `ActiveSummary`, `InactiveSummary` | Blank dimensions → `"Unknown"` |
+| Navigation | `DashboardSalesmanNavigation` | Links to domain dashboards and reports |
+
 ### KPI Aggregation Patterns
 
 Aggregation runs in `Dashboard{Domain}Aggregator` during snapshot refresh (worker path). Read DALs map snapshot rows to response DTOs.
@@ -306,6 +342,7 @@ Aggregation runs in `Dashboard{Domain}Aggregator` during snapshot refresh (worke
 | Purchasing weekly trend | Invoice `GrandTotal` grouped by calendar week | Reuses `SalesOmzetChartWeekGrouper` |
 | Purchasing ranking | `SUM(GrandTotal)` per trimmed `SupplierName`, top 10 descending | Blank → `"Unknown"`; UI label **Principal** |
 | Customer | `IFakturViewDal` + `IPiutangOpenBalanceDal` + `ICustomerLastFakturDal` + `ICustomerDal` | Cross-domain attention list; dormant 90-day rule; plafond breach; suspended + sales; Top 10 omzet/piutang with `CustomerCode` |
+| Salesman | `IFakturViewDal` + `IPiutangOpenBalanceWithSalesmanDal` + `ICustomerLastFakturDal.ListLastFakturWithSalesmanByCustomer()` + `ISalesPersonDal` + `ISalesOmzetTargetDal.ListTargetsForMonth()` | Per-rep omzet, target, achievement %, piutang/overdue, dormant (last-invoicing), concentration; six attention signals; Top 10 omzet/achievement/piutang with `SalesPersonCode` |
 
 All chart and ranking values are computed **server-side** in the aggregator/worker. Frontend never sums rows to derive KPIs.
 
@@ -471,6 +508,7 @@ btr.portal.api/
 │   │   ├── OverviewDashboardController.cs
 │   │   ├── ExecutiveDashboardController.cs
 │   │   ├── CustomerDashboardController.cs
+│   │   ├── SalesmanDashboardController.cs
 │   │   ├── SalesDashboardController.cs
 │   │   ├── PiutangDashboardController.cs
 │   │   ├── InventoryDashboardController.cs
@@ -518,7 +556,7 @@ btr.portal.web/src/
 | Store | Responsibility |
 | ----- | -------------- |
 | `authStore` | Login, logout, JWT hydration from localStorage |
-| `dashboardStore` | `loadExecutive()` → executive endpoint (home); `loadDashboard()` → overview (legacy); `loadSales()`, `loadPiutang()`, `loadCustomer()`, `loadInventory()`, `loadPurchasing()` (detail pages) |
+| `dashboardStore` | `loadExecutive()` → executive endpoint (home); `loadDashboard()` → overview (legacy); `loadSales()`, `loadPiutang()`, `loadCustomer()`, `loadSalesman()`, `loadInventory()`, `loadPurchasing()` (detail pages) |
 | `{domain}ReportStore` | `report`, `loading`, `error`; `loadReport()`, `reset()` |
 
 One store per report. No premature module stores beyond auth, dashboard, and reports.
@@ -534,7 +572,11 @@ One store per report. No premature module stores beyond auth, dashboard, and rep
 | `CustomerAttentionList.vue` | Per-customer signal list with report drill-down |
 | `CustomerSegmentationSection.vue` | Klasifikasi, Wilayah, Active/Dormant breakdown |
 | `CustomerNavigationSection.vue` | Links to domain dashboards and reports |
-| `navigateToReport.ts` | Shared helper — `router.push({ path, query: { q: customerName } })` |
+| `SalesmanAttentionCardGroup.vue` | M18 attention card with M16 indicator styling |
+| `SalesmanAttentionList.vue` | Per-salesman signal list with report drill-down |
+| `SalesmanSegmentationSection.vue` | Wilayah, Segment, Active/Inactive breakdown |
+| `SalesmanNavigationSection.vue` | Links to domain dashboards and reports |
+| `navigateToReport.ts` | Shared helper — `router.push({ path, query: { q: name } })` for customer or salesman pre-filter |
 | `TargetVsAchievementChart.vue` | M13 company bar chart |
 | `WeeklyTrendChart.vue` | M8/M13 line chart |
 | `AgingPieChart.vue` | M14 pie chart |
@@ -675,6 +717,8 @@ Rules that must be preserved when extending the portal:
 | 19 | Executive dashboard composes existing snapshots — no new snapshot tables for M16 |
 | 20 | Customer worker reads source DALs — do not compose Customer snapshot from Sales/Piutang snapshots |
 | 21 | Do not modify `DashboardPiutangAggregator` or `BTR_PortalDashboardPiutangTopCustomer` for customer analytics |
+| 22 | Salesman worker reads source DALs — do not compose Salesman snapshot from Sales/Piutang/Customer snapshots |
+| 23 | Do not modify `DashboardSalesFakturAggregator`, `BTR_PortalDashboardSalesTopSalesman`, or `DashboardExecutiveComposer` for salesman performance |
 
 ### Dashboard–Report Traceability Matrix
 

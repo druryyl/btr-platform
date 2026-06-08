@@ -116,6 +116,9 @@ namespace btr.test.SalesContext
             }
 
             public decimal SumTargetAmountForMonth(int year, int month) => MonthSum;
+
+            public System.Collections.Generic.IReadOnlyDictionary<string, decimal?> ListTargetsForMonth(int year, int month)
+                => new System.Collections.Generic.Dictionary<string, decimal?>();
         }
 
         private sealed class StubSalesPersonDal : ISalesPersonDal

@@ -280,3 +280,87 @@ export interface DashboardCustomerResponse {
   Segmentation: DashboardCustomerSegmentationSummary | null
   Navigation: DashboardCustomerNavigationLinks | null
 }
+
+export interface DashboardSalesmanAttentionCards {
+  BelowTargetCount: number
+  NoTargetCount: number
+  HighOverdueExposureCount: number
+  HighPiutangExposureCount: number
+  CustomerConcentrationCount: number
+  DormantPortfolioCount: number
+  TopOmzetSalesmanPercent: number | null
+  TopPiutangSalesmanPercent: number | null
+  PerformanceRequiresAttention: boolean
+  CollectionRequiresAttention: boolean
+  PortfolioRequiresAttention: boolean
+}
+
+export interface DashboardSalesmanAttentionItem {
+  SalesPersonId: string
+  SalesPersonCode: string
+  SalesPersonName: string
+  SignalKey: string
+  SignalLabel: string
+  ValueAmount: number | null
+  ValueText: string | null
+  WilayahName: string
+  ReportRoute: string
+  RequiresAttention: boolean
+}
+
+export interface DashboardSalesmanRankingRow {
+  Rank: number
+  SalesPersonId: string
+  SalesPersonCode: string
+  SalesPersonName: string
+  Amount: number
+  PercentOfTotal: number | null
+  AchievementPercent?: number | null
+  TargetAmount?: number | null
+  ReportRoute: string
+}
+
+export interface DashboardSalesmanPerformanceRankings {
+  TopOmzet: DashboardSalesmanRankingRow[]
+  TopAchievement: DashboardSalesmanRankingRow[]
+}
+
+export interface DashboardSalesmanExposureRankings {
+  TopPiutang: DashboardSalesmanRankingRow[]
+}
+
+export interface DashboardSalesmanSegmentRow {
+  SegmentType: string
+  SegmentLabel: string
+  SalesmanCount: number
+  ActiveCount: number
+  InactiveCount: number
+}
+
+export interface DashboardSalesmanSegmentationSummary {
+  ByWilayah: DashboardSalesmanSegmentRow[]
+  BySegment: DashboardSalesmanSegmentRow[]
+  ActiveSummary: DashboardSalesmanSegmentRow | null
+  InactiveSummary: DashboardSalesmanSegmentRow | null
+}
+
+export interface DashboardSalesmanNavigationLinks {
+  SalesDashboardRoute: string
+  PiutangDashboardRoute: string
+  SalesReportRoute: string
+  PiutangReportRoute: string
+}
+
+export interface DashboardSalesmanResponse {
+  IsAvailable: boolean
+  IsDataFresh: boolean
+  GeneratedAt: string | null
+  PeriodYear: number
+  PeriodMonth: number
+  AttentionCards: DashboardSalesmanAttentionCards | null
+  AttentionList: DashboardSalesmanAttentionItem[]
+  PerformanceRankings: DashboardSalesmanPerformanceRankings | null
+  ExposureRankings: DashboardSalesmanExposureRankings | null
+  Segmentation: DashboardSalesmanSegmentationSummary | null
+  Navigation: DashboardSalesmanNavigationLinks | null
+}

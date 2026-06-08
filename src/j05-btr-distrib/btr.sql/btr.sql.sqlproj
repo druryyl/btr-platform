@@ -168,6 +168,12 @@
     <Build Include="Tables\ReportingContext\BTR_PortalDashboardCustomerTopPiutang.sql" />
     <Build Include="Tables\ReportingContext\BTR_PortalDashboardCustomerAttention.sql" />
     <Build Include="Tables\ReportingContext\BTR_PortalDashboardCustomerSegmentation.sql" />
+    <Build Include="Tables\ReportingContext\BTR_PortalDashboardSalesmanKpi.sql" />
+    <Build Include="Tables\ReportingContext\BTR_PortalDashboardSalesmanTopOmzet.sql" />
+    <Build Include="Tables\ReportingContext\BTR_PortalDashboardSalesmanTopAchievement.sql" />
+    <Build Include="Tables\ReportingContext\BTR_PortalDashboardSalesmanTopPiutang.sql" />
+    <Build Include="Tables\ReportingContext\BTR_PortalDashboardSalesmanAttention.sql" />
+    <Build Include="Tables\ReportingContext\BTR_PortalDashboardSalesmanSegmentation.sql" />
     <Build Include="Tables\ReportingContext\IX_BTR_Piutang_OpenBalance.sql" />
   </ItemGroup>
   <ItemGroup>

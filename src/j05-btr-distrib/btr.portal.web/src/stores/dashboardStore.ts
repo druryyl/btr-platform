@@ -2,6 +2,7 @@ import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import {
   fetchDashboardCustomer,
+  fetchDashboardSalesman,
   fetchDashboardExecutive,
   fetchDashboardInventory,
   fetchDashboardOverview,
@@ -12,6 +13,7 @@ import {
 import { getApiErrorMessage } from '@/api/httpClient'
 import type {
   DashboardCustomerResponse,
+  DashboardSalesmanResponse,
   DashboardExecutiveResponse,
   DashboardInventoryResponse,
   DashboardOverviewResponse,
@@ -28,6 +30,7 @@ export const useDashboardStore = defineStore('dashboard', () => {
   const inventory = ref<DashboardInventoryResponse | null>(null)
   const purchasing = ref<DashboardPurchasingResponse | null>(null)
   const customer = ref<DashboardCustomerResponse | null>(null)
+  const salesman = ref<DashboardSalesmanResponse | null>(null)
   const loading = ref(false)
   const error = ref<string | null>(null)
 
@@ -134,6 +137,23 @@ export const useDashboardStore = defineStore('dashboard', () => {
     }
   }
 
+  async function loadSalesman(): Promise<void> {
+    loading.value = true
+    error.value = null
+
+    try {
+      salesman.value = await fetchDashboardSalesman()
+
+      if (!salesman.value.IsAvailable) {
+        error.value = 'Salesman performance data is not yet available. Run the snapshot refresh worker.'
+      }
+    } catch (err) {
+      error.value = getApiErrorMessage(err, 'Failed to load salesman performance dashboard.')
+    } finally {
+      loading.value = false
+    }
+  }
+
   function reset(): void {
     overview.value = null
     executive.value = null
@@ -142,6 +162,7 @@ export const useDashboardStore = defineStore('dashboard', () => {
     inventory.value = null
     purchasing.value = null
     customer.value = null
+    salesman.value = null
     loading.value = false
     error.value = null
   }
@@ -154,6 +175,7 @@ export const useDashboardStore = defineStore('dashboard', () => {
     inventory,
     purchasing,
     customer,
+    salesman,
     loading,
     error,
     loadDashboard,
@@ -163,6 +185,7 @@ export const useDashboardStore = defineStore('dashboard', () => {
     loadInventory,
     loadPurchasing,
     loadCustomer,
+    loadSalesman,
     reset,
   }
 })

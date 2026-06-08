@@ -16,19 +16,22 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.UseCases
         private readonly IRefreshDashboardSalesSnapshotWorker _salesWorker;
         private readonly IRefreshDashboardPurchasingSnapshotWorker _purchasingWorker;
         private readonly IRefreshDashboardCustomerSnapshotWorker _customerWorker;
+        private readonly IRefreshDashboardSalesmanSnapshotWorker _salesmanWorker;
 
         public RefreshAllDashboardSnapshotsWorker(
             IRefreshDashboardPiutangSnapshotWorker piutangWorker,
             IRefreshDashboardInventorySnapshotWorker inventoryWorker,
             IRefreshDashboardSalesSnapshotWorker salesWorker,
             IRefreshDashboardPurchasingSnapshotWorker purchasingWorker,
-            IRefreshDashboardCustomerSnapshotWorker customerWorker)
+            IRefreshDashboardCustomerSnapshotWorker customerWorker,
+            IRefreshDashboardSalesmanSnapshotWorker salesmanWorker)
         {
             _piutangWorker = piutangWorker;
             _inventoryWorker = inventoryWorker;
             _salesWorker = salesWorker;
             _purchasingWorker = purchasingWorker;
             _customerWorker = customerWorker;
+            _salesmanWorker = salesmanWorker;
         }
 
         public void Execute(RefreshAllDashboardSnapshotsRequest request)
@@ -110,6 +113,20 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.UseCases
                 domainResults,
                 failures);
 
+            RunDomain(
+                "Salesman",
+                () =>
+                {
+                    var salesmanRequest = new RefreshDashboardSalesmanSnapshotRequest
+                    {
+                        TriggeredBy = triggeredBy
+                    };
+                    _salesmanWorker.Execute(salesmanRequest);
+                    return salesmanRequest.Result;
+                },
+                domainResults,
+                failures);
+
             request.Result = new RefreshAllDashboardSnapshotsResult
             {
                 Domains = domainResults
@@ -175,6 +192,13 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.UseCases
                         Domain = domain,
                         RefreshLogId = customer.RefreshLogId,
                         DurationMs = customer.DurationMs
+                    };
+                case RefreshDashboardSalesmanSnapshotResult salesman:
+                    return new RefreshDashboardDomainResult
+                    {
+                        Domain = domain,
+                        RefreshLogId = salesman.RefreshLogId,
+                        DurationMs = salesman.DurationMs
                     };
                 default:
                     return new RefreshDashboardDomainResult { Domain = domain };

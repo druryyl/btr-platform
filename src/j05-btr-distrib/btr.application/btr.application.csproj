@@ -255,6 +255,8 @@
     <Compile Include="ReportingContext\DashboardInventoryAgg\Queries\GetDashboardInventoryQuery.cs" />
     <Compile Include="ReportingContext\DashboardCustomerAgg\Contracts\IDashboardCustomerDal.cs" />
     <Compile Include="ReportingContext\DashboardCustomerAgg\Queries\GetDashboardCustomerQuery.cs" />
+    <Compile Include="ReportingContext\DashboardSalesmanAgg\Contracts\IDashboardSalesmanDal.cs" />
+    <Compile Include="ReportingContext\DashboardSalesmanAgg\Queries\GetDashboardSalesmanQuery.cs" />
     <Compile Include="ReportingContext\DashboardPiutangAgg\Contracts\IDashboardPiutangDal.cs" />
     <Compile Include="ReportingContext\DashboardPiutangAgg\Queries\GetDashboardPiutangQuery.cs" />
     <Compile Include="ReportingContext\DashboardOverviewAgg\Contracts\IDashboardOverviewDal.cs" />
@@ -268,6 +270,8 @@
     <Compile Include="ReportingContext\DashboardSnapshotAgg\Contracts\IDashboardSalesSnapshotDal.cs" />
     <Compile Include="ReportingContext\DashboardSnapshotAgg\Contracts\IDashboardPurchasingSnapshotDal.cs" />
     <Compile Include="ReportingContext\DashboardSnapshotAgg\Contracts\IDashboardCustomerSnapshotDal.cs" />
+    <Compile Include="ReportingContext\DashboardSnapshotAgg\Contracts\IDashboardSalesmanSnapshotDal.cs" />
+    <Compile Include="ReportingContext\DashboardSnapshotAgg\Contracts\IPiutangOpenBalanceWithSalesmanDal.cs" />
     <Compile Include="ReportingContext\DashboardSnapshotAgg\Commands\RefreshDashboardSnapshotsCommand.cs" />
     <Compile Include="ReportingContext\DashboardSnapshotAgg\Contracts\IDashboardSnapshotRefreshLogDal.cs" />
     <Compile Include="ReportingContext\DashboardSnapshotAgg\Contracts\IPiutangOpenBalanceDal.cs" />
@@ -278,6 +282,7 @@
     <Compile Include="ReportingContext\DashboardSnapshotAgg\Models\DashboardSalesAggregateResult.cs" />
     <Compile Include="ReportingContext\DashboardSnapshotAgg\Models\DashboardPurchasingAggregateResult.cs" />
     <Compile Include="ReportingContext\DashboardSnapshotAgg\Models\DashboardCustomerAggregateResult.cs" />
+    <Compile Include="ReportingContext\DashboardSnapshotAgg\Models\DashboardSalesmanAggregateResult.cs" />
     <Compile Include="ReportingContext\DashboardSnapshotAgg\Models\DashboardSnapshotRefreshLogModel.cs" />
     <Compile Include="ReportingContext\DashboardSnapshotAgg\DashboardSnapshotHealthStatusResolver.cs" />
     <Compile Include="ReportingContext\DashboardSnapshotAgg\Models\DashboardSnapshotRefreshStatusModel.cs" />
@@ -288,6 +293,8 @@
     <Compile Include="ReportingContext\DashboardSnapshotAgg\Services\DashboardPurchasingInvoiceAggregator.cs" />
     <Compile Include="ReportingContext\DashboardSnapshotAgg\Services\DashboardCustomerAggregator.cs" />
     <Compile Include="ReportingContext\DashboardSnapshotAgg\Services\DashboardCustomerKeyResolver.cs" />
+    <Compile Include="ReportingContext\DashboardSnapshotAgg\Services\DashboardSalesmanAggregator.cs" />
+    <Compile Include="ReportingContext\DashboardSnapshotAgg\Services\DashboardSalesmanKeyResolver.cs" />
     <Compile Include="ReportingContext\DashboardSnapshotAgg\UseCases\RefreshAllDashboardSnapshotsRequest.cs" />
     <Compile Include="ReportingContext\DashboardSnapshotAgg\UseCases\RefreshAllDashboardSnapshotsWorker.cs" />
     <Compile Include="ReportingContext\DashboardSnapshotAgg\UseCases\RefreshDashboardInventorySnapshotRequest.cs" />
@@ -300,6 +307,8 @@
     <Compile Include="ReportingContext\DashboardSnapshotAgg\UseCases\RefreshDashboardPurchasingSnapshotWorker.cs" />
     <Compile Include="ReportingContext\DashboardSnapshotAgg\UseCases\RefreshDashboardCustomerSnapshotRequest.cs" />
     <Compile Include="ReportingContext\DashboardSnapshotAgg\UseCases\RefreshDashboardCustomerSnapshotWorker.cs" />
+    <Compile Include="ReportingContext\DashboardSnapshotAgg\UseCases\RefreshDashboardSalesmanSnapshotRequest.cs" />
+    <Compile Include="ReportingContext\DashboardSnapshotAgg\UseCases\RefreshDashboardSalesmanSnapshotWorker.cs" />
     <Compile Include="ReportingContext\DashboardPurchasingAgg\Contracts\IDashboardPurchasingDal.cs" />
     <Compile Include="ReportingContext\DashboardPurchasingAgg\Queries\GetDashboardPurchasingQuery.cs" />
     <Compile Include="ReportingContext\DashboardSalesAgg\Contracts\IDashboardSalesDal.cs" />

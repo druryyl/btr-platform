@@ -56,7 +56,7 @@ For portal navigation, report definitions, and full KPI catalog, see [btr-portal
 | -------- | ------ | ----------- |
 | Overview home data source | Layer A KPI snapshots via `GET /api/dashboard/overview` | Fast home page; per-domain `GeneratedAt` may differ |
 | Sales KPI source | **Faktur only** — `SUM(GrandTotal)` for non-void current-month Fakturs | Aligns with Sales Report; pipeline excluded |
-| Refresh cadence | Piutang **15 min**, Sales **30 min**, Purchasing **30 min**, Customer **30 min**, Inventory **60 min** | Five Task Scheduler jobs |
+| Refresh cadence | Piutang **15 min**, Sales **30 min**, Purchasing **30 min**, Customer **30 min**, Salesman **30 min**, Inventory **60 min** | Six Task Scheduler jobs |
 | Snapshot history | **`CURRENT` row only** | Delete-and-replace each refresh |
 | Manual refresh | Portal API + worker CLI | BTR Desktop trigger deferred |
 | Live aggregation fallback | **Removed** after Phase 4 cutover | Dashboards require populated snapshots |
@@ -85,7 +85,7 @@ Dashboard numbers are **point-in-time snapshots**, not live operational balances
 | Concept | Definition |
 | ------- | ---------- |
 | `GeneratedAt` | When the background worker last successfully rebuilt that domain's snapshot |
-| Maximum staleness | One refresh interval (15 / 30 / 60 min per domain; Purchasing 30 min) |
+| Maximum staleness | One refresh interval (15 / 30 / 60 min per domain; Purchasing, Customer, Salesman 30 min) |
 | User Refresh button | Re-reads stored snapshot from API — does **not** trigger recalculation |
 | Manual rebuild | Administrator triggers worker or `POST /api/admin/dashboard/refresh` |
 
@@ -169,9 +169,32 @@ Reads **source DALs** at refresh (Faktur, piutang open balance, customer master,
 | **Top 10 Piutang** | All-time open `SUM(KurangBayar)` per customer with `CustomerCode` |
 | **Segmentation** | Counts by Klasifikasi, Wilayah, Active vs Dormant |
 
-**Refresh order in `All`:** Piutang → Inventory → Sales → Purchasing → **Customer** (last).
+**Refresh order in `All`:** Piutang → Inventory → Sales → Purchasing → Customer → **Salesman** (last).
 
 **Snapshot tables:** `BTR_PortalDashboardCustomerKpi`, `BTR_PortalDashboardCustomerTopOmzet`, `BTR_PortalDashboardCustomerTopPiutang`, `BTR_PortalDashboardCustomerAttention`, `BTR_PortalDashboardCustomerSegmentation`.
+
+### Salesman (cross-domain — M18)
+
+Reads **source DALs** at refresh (Faktur with `SalesPersonId`, piutang open balance with invoicing salesman via FF1 join, salesman master, per-rep targets, last Faktur per customer with salesman) — not Sales/Piutang/Customer snapshot tables.
+
+| KPI | Definition |
+| --- | ---------- |
+| **Attention cards** | Below Target count, No Target count, High Overdue count, High Piutang count, Dormant Portfolio count, concentration % |
+| **Attention list** | Per salesman × signal: BelowTarget, NoTarget, HighOverdueExposure, HighPiutangExposure, CustomerConcentration, DormantCustomerPortfolio |
+| **Top 10 Omzet** | Current-month `SUM(GrandTotal)` per `SalesPersonId` with `SalesPersonCode` |
+| **Top 10 Achievement** | Achievement % per rep (omzet ÷ target); reps with no target excluded from ranking |
+| **Top 10 Piutang** | All-time open `SUM(KurangBayar)` per invoicing salesman with `SalesPersonCode` |
+| **Segmentation** | Counts by Wilayah, Segment, Active vs Inactive (current-month Faktur) |
+
+**Salesman key:** `SalesPersonId` primary; `SalesPersonName` display; `SalesPersonCode` on ranking rows. Piutang rows without `SalesPersonId` resolved via name fallback map.
+
+**Attribution rules:** Sales omzet from `Faktur.SalesPersonId`; piutang from invoicing salesman on open Faktur; dormant customers attributed to last-invoicing salesman (90-day rule, same as Customer Analytics).
+
+**Achievement bands:** M16 thresholds — ≥100% Healthy · 80–99% Warning · <80% Critical · no target Unknown.
+
+**Snapshot tables:** `BTR_PortalDashboardSalesmanKpi`, `BTR_PortalDashboardSalesmanTopOmzet`, `BTR_PortalDashboardSalesmanTopAchievement`, `BTR_PortalDashboardSalesmanTopPiutang`, `BTR_PortalDashboardSalesmanAttention`, `BTR_PortalDashboardSalesmanSegmentation`.
+
+**Protected modules unchanged:** `DashboardSalesFakturAggregator`, `BTR_PortalDashboardSalesTopSalesman`, `DashboardExecutiveComposer`.
 
 ---
 
@@ -211,9 +234,10 @@ If dashboard and report totals diverge after both pages are refreshed, escalate 
 5. `GeneratedAt` reflects last successful background refresh.
 6. `BTR_SalesOmzet` reconcile workflow unaffected.
 7. Overview home loads from Layer A snapshots only.
-8. Refresh cadence operational: 15 / 30 / 30 / 30 / 60 min per domain (Piutang / Sales / Purchasing / Customer / Inventory).
+8. Refresh cadence operational: 15 / 30 / 30 / 30 / 30 / 60 min per domain (Piutang / Sales / Purchasing / Customer / Salesman / Inventory).
 9. Purchasing KPIs reconcile with Purchasing Report footer totals.
 10. Customer snapshot populated by dedicated worker reading source DALs; Customer Analytics API serves from `BTR_PortalDashboardCustomer*` tables.
+11. Salesman snapshot populated by dedicated worker reading source DALs; Salesman Performance API serves from `BTR_PortalDashboardSalesman*` tables; Top 10 Omzet reconciles with Sales Report totals grouped by salesman name for current month.
 
 ---
 

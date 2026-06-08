@@ -126,6 +126,9 @@ namespace btr.test.ReportingContext
             public decimal SumTargetAmountForMonth(int year, int month) => _totalTarget;
 
             public decimal? GetTargetAmount(string salesPersonId, int year, int month) => null;
+
+            public System.Collections.Generic.IReadOnlyDictionary<string, decimal?> ListTargetsForMonth(int year, int month)
+                => new System.Collections.Generic.Dictionary<string, decimal?>();
         }
 
         private sealed class StubTglJamDal : btr.application.SupportContext.TglJamAgg.ITglJamDal

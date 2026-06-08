@@ -2,6 +2,7 @@ import { httpClient } from '@/api/httpClient'
 import { isApiSuccess, type ApiResponse } from '@/models/api'
 import type {
   DashboardCustomerResponse,
+  DashboardSalesmanResponse,
   DashboardExecutiveResponse,
   DashboardInventoryResponse,
   DashboardOverviewResponse,
@@ -75,6 +76,16 @@ export async function fetchDashboardCustomer(): Promise<DashboardCustomerRespons
 
   if (!isApiSuccess(data) || !data.Data) {
     throw new Error(data.Message ?? 'Failed to load customer analytics dashboard.')
+  }
+
+  return data.Data
+}
+
+export async function fetchDashboardSalesman(): Promise<DashboardSalesmanResponse> {
+  const { data } = await httpClient.get<ApiResponse<DashboardSalesmanResponse>>('/api/dashboard/salesmen')
+
+  if (!isApiSuccess(data) || !data.Data) {
+    throw new Error(data.Message ?? 'Failed to load salesman performance dashboard.')
   }
 
   return data.Data
