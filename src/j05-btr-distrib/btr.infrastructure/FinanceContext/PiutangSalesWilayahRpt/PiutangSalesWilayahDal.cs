@@ -1,4 +1,5 @@
 ﻿using btr.application.FinanceContext.PiutangAgg.Contracts;
+using btr.application.ReportingContext.PiutangReportAgg;
 using btr.infrastructure.Helpers;
 using btr.nuna.Domain;
 using btr.nuna.Infrastructure;
@@ -12,16 +13,7 @@ namespace btr.infrastructure.FinanceContext.PiutangSalesWilayahRpt
 {
     public class PiutangSalesWilayahDal : IPiutangSalesWilayahDal
     {
-        private readonly DatabaseOptions _opt;
-
-        public PiutangSalesWilayahDal(IOptions<DatabaseOptions> opt)
-        {
-            _opt = opt.Value;
-        }
-
-        public IEnumerable<PiutangSalesWilayahDto> ListData(Periode filter)
-        {
-            const string sql = @"
+        private const string SelectSql = @"
             SELECT
                 ISNULL(cc.SalesPersonName, '') AS SalesName,
                 ISNULL(dd.WilayahName, '') AS WilayahName,
@@ -68,9 +60,26 @@ namespace btr.infrastructure.FinanceContext.PiutangSalesWilayahRpt
                     SELECT  PiutangId, SUM(aa1.NilaiPlus - aa1.NilaiMinus) MateraiAdmin
                     FROM BTR_PiutangElement aa1
                     WHERE aa1.ElementName = 'Materai' OR aa1.ElementName = 'Admin' 
-                    GROUP BY PiutangId) jj ON aa.PiutangId = jj.PiutangId
-            WHERE
-                aa.PiutangDate BETWEEN @Tgl1 AND @Tgl2 ";
+                    GROUP BY PiutangId) jj ON aa.PiutangId = jj.PiutangId";
+
+        private readonly DatabaseOptions _opt;
+
+        public PiutangSalesWilayahDal(IOptions<DatabaseOptions> opt)
+        {
+            _opt = opt.Value;
+        }
+
+        public IEnumerable<PiutangSalesWilayahDto> ListData(Periode filter)
+        {
+            return ListData(filter, PiutangReportDateField.PiutangDate);
+        }
+
+        public IEnumerable<PiutangSalesWilayahDto> ListData(Periode filter, PiutangReportDateField dateField)
+        {
+            var dateColumn = dateField == PiutangReportDateField.DueDate
+                ? "aa.DueDate"
+                : "aa.PiutangDate";
+            var sql = $"{SelectSql} WHERE {dateColumn} BETWEEN @Tgl1 AND @Tgl2 ";
 
             var dp = new DynamicParameters();
             dp.AddParam("@Tgl1", filter.Tgl1, SqlDbType.DateTime);

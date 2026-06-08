@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using btr.application.FinanceContext.PiutangAgg.Contracts;
+using btr.application.ReportingContext.PiutangReportAgg;
 using btr.application.ReportingContext.PiutangReportAgg.Contracts;
 using btr.application.ReportingContext.PiutangReportAgg.Queries;
 using btr.application.SupportContext.TglJamAgg;
@@ -22,10 +23,9 @@ namespace btr.infrastructure.ReportingContext.PiutangReportAgg
             _tglJamDal = tglJamDal;
         }
 
-        public PiutangReportResponse GetReport()
+        public PiutangReportResponse GetReport(Periode periode, PiutangReportDateField dateField)
         {
-            var periode = OpenReceivablesPeriode();
-            var rows = _piutangSalesWilayahDal.ListData(periode)?.ToList()
+            var rows = _piutangSalesWilayahDal.ListData(periode, dateField)?.ToList()
                        ?? new List<PiutangSalesWilayahDto>();
 
             var outstanding = rows.Where(r => r.KurangBayar > 1).ToList();
@@ -34,6 +34,7 @@ namespace btr.infrastructure.ReportingContext.PiutangReportAgg
             {
                 PeriodFrom = periode.Tgl1,
                 PeriodTo = periode.Tgl2,
+                DateField = dateField.ToString(),
                 GeneratedAt = _tglJamDal.Now,
                 Summary = new PiutangReportSummary
                 {
@@ -51,12 +52,6 @@ namespace btr.infrastructure.ReportingContext.PiutangReportAgg
                     .Select(MapRow)
                     .ToList()
             };
-        }
-
-        private Periode OpenReceivablesPeriode()
-        {
-            var today = _tglJamDal.Now.Date;
-            return new Periode(new DateTime(2000, 1, 1), today);
         }
 
         private static string ResolveCustomerKey(PiutangSalesWilayahDto row)

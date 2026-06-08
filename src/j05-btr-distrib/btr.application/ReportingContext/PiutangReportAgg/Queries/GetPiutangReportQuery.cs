@@ -3,12 +3,19 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using btr.application.ReportingContext.PiutangReportAgg.Contracts;
+using btr.application.ReportingContext.Shared;
+using btr.application.SupportContext.TglJamAgg;
 using MediatR;
 
 namespace btr.application.ReportingContext.PiutangReportAgg.Queries
 {
     public class GetPiutangReportQuery : IRequest<PiutangReportResponse>
     {
+        public DateTime? From { get; set; }
+
+        public DateTime? To { get; set; }
+
+        public string DateField { get; set; }
     }
 
     public class PiutangReportResponse
@@ -16,6 +23,8 @@ namespace btr.application.ReportingContext.PiutangReportAgg.Queries
         public DateTime PeriodFrom { get; set; }
 
         public DateTime PeriodTo { get; set; }
+
+        public string DateField { get; set; }
 
         public DateTime GeneratedAt { get; set; }
 
@@ -52,17 +61,24 @@ namespace btr.application.ReportingContext.PiutangReportAgg.Queries
         : IRequestHandler<GetPiutangReportQuery, PiutangReportResponse>
     {
         private readonly IPiutangReportDal _dal;
+        private readonly ITglJamDal _tglJamDal;
 
-        public GetPiutangReportHandler(IPiutangReportDal dal)
+        public GetPiutangReportHandler(IPiutangReportDal dal, ITglJamDal tglJamDal)
         {
             _dal = dal;
+            _tglJamDal = tglJamDal;
         }
 
         public Task<PiutangReportResponse> Handle(
             GetPiutangReportQuery request,
             CancellationToken cancellationToken)
         {
-            return Task.FromResult(_dal.GetReport());
+            var periode = ReportPeriodValidator.ResolveAndValidate(
+                new ReportPeriodRequest { From = request.From, To = request.To },
+                _tglJamDal.Now);
+            var dateField = PiutangReportDateFieldParser.Parse(request.DateField);
+
+            return Task.FromResult(_dal.GetReport(periode, dateField));
         }
     }
 }

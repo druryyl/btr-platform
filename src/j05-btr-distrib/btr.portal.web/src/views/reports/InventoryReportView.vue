@@ -1,39 +1,54 @@
 <script setup lang="ts">
 import { computed, onMounted } from 'vue'
+import { storeToRefs } from 'pinia'
 import Button from 'primevue/button'
 import Card from 'primevue/card'
 import Column from 'primevue/column'
 import DataTable from 'primevue/datatable'
 import Message from 'primevue/message'
+import ReportFilterBar from '@/components/reports/ReportFilterBar.vue'
 import ReportSummaryBar from '@/components/reports/ReportSummaryBar.vue'
+import { useReportFreeTextFilter } from '@/composables/useReportFreeTextFilter'
 import { formatCurrency, formatDateTime } from '@/services/formatters'
+import { summarizeInventoryRows } from '@/services/reportSummaryHelpers'
 import { useInventoryReportStore } from '@/stores/inventoryReportStore'
 import type { InventoryReportRow } from '@/models/reports'
 
 const inventoryReport = useInventoryReportStore()
+const { freeText } = storeToRefs(inventoryReport)
 
 interface InventoryReportTableRow extends InventoryReportRow {
   dataKey: string
 }
 
-const rows = computed<InventoryReportTableRow[]>(() =>
+const sourceRows = computed<InventoryReportTableRow[]>(() =>
   (inventoryReport.report?.Rows ?? []).map((row) => ({
     ...row,
     dataKey: `${row.BrgId}|${row.WarehouseName}`,
   })),
 )
 
+const { filteredRows, hasFreeTextFilter } = useReportFreeTextFilter(
+  sourceRows,
+  ['ItemDisplay', 'WarehouseName'],
+  freeText,
+)
+
 const summaryItems = computed(() => {
   if (!inventoryReport.report?.Summary) return []
+
+  const summary = hasFreeTextFilter.value
+    ? summarizeInventoryRows(filteredRows.value)
+    : inventoryReport.report.Summary
 
   return [
     {
       label: 'Total Inventory Value',
-      value: formatCurrency(inventoryReport.report.Summary.TotalInventoryValue),
+      value: formatCurrency(summary.TotalInventoryValue),
     },
     {
       label: 'Total Item',
-      value: String(inventoryReport.report.Summary.TotalItem),
+      value: String(summary.TotalItem),
     },
   ]
 })
@@ -65,8 +80,18 @@ onMounted(() => {
 
     <Card>
       <template #content>
+        <ReportFilterBar
+          v-model:free-text="inventoryReport.freeText"
+          :loading="inventoryReport.loading"
+          :show-date-range="false"
+        />
+
+        <p v-if="hasFreeTextFilter" class="inventory-report__filter-hint">
+          Summary reflects filtered rows.
+        </p>
+
         <DataTable
-          :value="rows"
+          :value="filteredRows"
           :loading="inventoryReport.loading"
           paginator
           :rows="25"
@@ -132,6 +157,12 @@ onMounted(() => {
 
 .inventory-report__header p {
   margin: 0;
+  color: var(--p-text-muted-color);
+}
+
+.inventory-report__filter-hint {
+  margin: 0 0 0.75rem;
+  font-size: 0.85rem;
   color: var(--p-text-muted-color);
 }
 

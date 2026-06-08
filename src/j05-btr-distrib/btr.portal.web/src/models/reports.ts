@@ -32,9 +32,19 @@ export interface PiutangReportSummary {
 export interface PiutangReportResponse {
   PeriodFrom: string
   PeriodTo: string
+  DateField: string
   GeneratedAt: string
   Summary: PiutangReportSummary
   Rows: PiutangReportRow[]
+}
+
+export interface ReportDateQuery {
+  from: string
+  to: string
+}
+
+export interface PiutangReportQuery extends ReportDateQuery {
+  dateField: 'DueDate' | 'PiutangDate'
 }
 
 export interface InventoryReportRow {

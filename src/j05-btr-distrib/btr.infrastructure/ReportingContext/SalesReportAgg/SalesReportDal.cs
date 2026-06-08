@@ -20,9 +20,8 @@ namespace btr.infrastructure.ReportingContext.SalesReportAgg
             _tglJamDal = tglJamDal;
         }
 
-        public SalesReportResponse GetReport()
+        public SalesReportResponse GetReport(Periode periode)
         {
-            var periode = CurrentMonthPeriode();
             var rows = _fakturViewDal.ListData(periode)?.ToList()
                        ?? new List<FakturView>();
 
@@ -60,12 +59,5 @@ namespace btr.infrastructure.ReportingContext.SalesReportAgg
             return row.StatusFaktur == 2 ? "Kembali" : string.Empty;
         }
 
-        private Periode CurrentMonthPeriode()
-        {
-            var today = _tglJamDal.Now.Date;
-            var monthStart = new DateTime(today.Year, today.Month, 1);
-            var monthEnd = new DateTime(today.Year, today.Month, DateTime.DaysInMonth(today.Year, today.Month));
-            return new Periode(monthStart, monthEnd);
-        }
     }
 }

@@ -8,6 +8,7 @@ export const useInventoryReportStore = defineStore('inventoryReport', () => {
   const report = ref<InventoryReportResponse | null>(null)
   const loading = ref(false)
   const error = ref<string | null>(null)
+  const freeText = ref('')
 
   async function loadReport(): Promise<void> {
     loading.value = true
@@ -26,12 +27,14 @@ export const useInventoryReportStore = defineStore('inventoryReport', () => {
     report.value = null
     loading.value = false
     error.value = null
+    freeText.value = ''
   }
 
   return {
     report,
     loading,
     error,
+    freeText,
     loadReport,
     reset,
   }
