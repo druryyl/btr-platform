@@ -3,7 +3,7 @@
 **Audience:** Product Owner, Business Owner, Developers, Future Agents  
 **Purpose:** Define what BTR Portal is, why it exists, and the business meaning of its dashboards, reports, and KPIs.
 
-**Related permanent docs:** [Architecture (WHAT)](./btr-portal-architecture.md) · [Operational (HOW)](./btr-portal-operational.md) · [Materialized dashboards](../materialized-dashboard/materialized-dashboard-domain.md) · [Extraction — M16/M17](./knowledge-extraction-report-m16-m17.md) · [Extraction — M18](./knowledge-extraction-report-m18.md) · [Extraction — M19](./knowledge-extraction-report-m19.md) · [Extraction — Purchasing](./knowledge-extraction-report-purchasing-dashboard.md)
+**Related permanent docs:** [Architecture (WHAT)](./btr-portal-architecture.md) · [Operational (HOW)](./btr-portal-operational.md) · [Materialized dashboards](../materialized-dashboard/materialized-dashboard-domain.md) · [Extraction — M16/M17](./knowledge-extraction-report-m16-m17.md) · [Extraction — M18](./knowledge-extraction-report-m18.md) · [Extraction — M19](./knowledge-extraction-report-m19.md) · [Extraction — M21](./knowledge-extraction-report-m21.md) · [Extraction — Purchasing V1](./knowledge-extraction-report-purchasing-dashboard.md)
 
 For how to use the portal, see [btr-portal-operational.md](./btr-portal-operational.md).  
 For how it is built, see [btr-portal-architecture.md](./btr-portal-architecture.md).
@@ -38,7 +38,7 @@ The portal complements BTR Desktop; it does not replace operational transaction 
 | Area | Capabilities |
 | ---- | ------------ |
 | Authentication | Sign in with existing BTR user credentials |
-| Dashboards | Executive home (Management Attention Center), Sales, Piutang, Customer Analytics, Salesman Performance, Inventory, Inventory Risk (Slow Moving & Dead Stock), Purchasing — detail analytics per domain |
+| Dashboards | Executive home (Management Attention Center), Sales, Piutang, Customer Analytics, Salesman Performance, Inventory, Inventory Risk (Slow Moving & Dead Stock), Purchasing Management — detail analytics per domain |
 | Reports | Sales, Piutang, Inventory, Purchasing — tabular transaction/detail views |
 | Analytics | KPI cards, charts, Top 10 rankings, footer summary totals |
 | Investigation / drill-down (M24) | Signal → report evidence navigation with traceability metadata across dashboards, Alert Center, and rankings |
@@ -52,7 +52,7 @@ The portal complements BTR Desktop; it does not replace operational transaction 
 | Customer (cross-domain) | Customer Analytics dashboard — attention signals, rankings, segmentation across Sales + Piutang; drill-down to Sales/Piutang reports |
 | Salesman (cross-domain) | Salesman Performance dashboard — per-rep attention signals, achievement %, piutang exposure, rankings across Sales + Piutang; drill-down to Sales/Piutang reports |
 | Inventory | Composition dashboard (value, category/supplier breakdown); Inventory Risk dashboard (slow moving, dead stock, never sold); Inventory Report |
-| Purchasing | Dashboard KPIs, weekly trend, posting-status breakdown, Top 10 Principal; Purchasing Report |
+| Purchasing | Management attention dashboard (qualified backlog, attention list, cross-domain exposure); V1 KPIs, weekly trend, posting breakdown, Top 10 Principal; Purchasing Report |
 
 See `docs/foundation/LANDSCAPE.md` for BTR business area ownership. See `docs/foundation/DOMAIN.md` for business terminology (Faktur, Piutang, Item, etc.).
 
@@ -92,7 +92,7 @@ Management monitors total inventory value, item count, and how value is distribu
 
 ### Purchasing
 
-Management reviews purchase invoice activity for the current month, including whether stock has been posted (`SUDAH` / `BELUM`). Users validate dashboard KPIs against the Purchasing Report footer totals (Grand Total Purchase, Total Invoice).
+Management reviews which suppliers and purchasing activities require attention — qualified posting backlog, principal concentration, and cross-domain inventory/at-risk exposure — alongside monthly purchase statistics. Users validate traceability KPIs (Grand Total Purchase, Total Invoice) against the Purchasing Report footer totals.
 
 ---
 
@@ -580,6 +580,25 @@ Dedicated snapshot domain — `BTR_PortalDashboardInventoryRisk*`. Refreshed fro
 
 **Traceability:** Grand Total Purchase and Total Invoice = Purchasing Report footer totals (same `IInvoiceViewDal` source and period).
 
+### Purchasing Management KPIs (M21)
+
+Management KPIs are materialized in `BTR_PortalDashboardPurchasingManagement*` — dashboard-only unless noted.
+
+| KPI | Definition | Business Meaning |
+| --- | ---------- | ---------------- |
+| **Qualified Backlog Count** | Count of `BELUM` invoices where `(today − LastUpdate.Date).TotalDays ≥ 3` | Actionable posting backlog (excludes in-progress drafts) |
+| **Qualified Backlog Value** | Sum `GrandTotal` of qualified `BELUM` invoices | Monetary exposure of actionable backlog |
+| **Pending Posting Value (unqualified)** | Sum `GrandTotal` where `BELUM` (all unposted) | Supporting context — includes normal staging |
+| **Posted %** | `SUDAH` value ÷ (`SUDAH` + `BELUM`) × 100 | Posting completion ratio for the month |
+| **Top 1 / Top 3 Principal %** | Top N MTD purchase ÷ Grand Total Purchase × 100 | Monthly spend concentration |
+| **Compound Dependency Count** | Principals in purchase Top 10 AND (inventory Top 10 OR at-risk Top 10) | Multi-dimensional supplier dependency |
+| **Principal Inventory No Purchase Count** | M15 supplier Top 10 with zero MTD purchase | Legacy stock without current intake |
+| **Purchasing Inactivity** | Zero invoices in month when calendar day ≥ 15 | Company-level replenishment gap signal |
+
+**BELUM workflow:** Invoice save always sets `IsStokPosted = false`. Stock posting (PT2) is a separate deliberate step. Not every `BELUM` invoice requires management attention.
+
+**Executive integration (Phase 2 — not yet delivered):** Promote Compound Dependency Count, Qualified Backlog Value, and Top 3 Principal % to Management Attention Center purchasing card while retaining qualified-backlog `RequiresAttention`.
+
 ---
 
 ## Business Rules
@@ -620,7 +639,14 @@ Approved rules governing portal calculations and filters:
 | Inventory risk snapshot source | Inventory Risk worker | Reads `IStokBalanceViewDal` + `IBrgLastFakturDal` — not M15 snapshot tables |
 | Retur / mutasi | Inventory Risk M19 | Do not affect classification clock (gross Faktur only) |
 | Top N | All rankings | Top 10 for salesman, customer, category, supplier |
-| Posting Stok | Purchasing report | `SUDAH` = stock posted; `BELUM` = not yet posted |
+| Posting Stok | Purchasing report | `SUDAH` = stock posted; `BELUM` = not yet posted (default after invoice save) |
+| Qualified backlog | Purchasing M21 | `BELUM` AND `LastUpdate` age ≥ `PurchasingQualifiedBacklogDays` (default 3) |
+| Purchasing inactivity | Purchasing M21 | `TotalInvoice = 0` for current month AND calendar day ≥ 15 |
+| Compound dependency | Purchasing M21 | Purchase Top 10 AND (inventory Top 10 OR at-risk Top 10) by principal name |
+| Principal inventory no purchase | Purchasing M21 | M15 supplier Top 10 with zero MTD purchase amount |
+| Attention list grain | Purchasing M21 | One row per principal × signal; invoice detail in drill-down only |
+| Purchasing snapshot source | Purchasing M21 management worker | Reads invoice view + V1 purchasing + M15 + M19 snapshots — no duplicate inventory SQL |
+| Executive purchasing attention | Executive M21 | `RequiresAttention` when `QualifiedBacklogCount > 0` only |
 | Faktur Kembali | Sales report | `StatusFaktur == 2` displays as `"Kembali"` |
 | No paid toggle | Piutang report | Paid invoices always hidden; no user toggle |
 | Fixed periods V1 | All reports | No date-range or search parameters; fixed defaults per report |
@@ -634,7 +660,7 @@ Approved rules governing portal calculations and filters:
 
 ## Current Product State
 
-Capabilities delivered across milestones M1–M19:
+Capabilities delivered across milestones M1–M21 (Phase 1 where noted):
 
 | Capability | Status |
 | ---------- | ------ |
@@ -660,18 +686,19 @@ Capabilities delivered across milestones M1–M19:
 | Inventory Report (stock balance with footer totals) | Complete |
 | Purchasing Report (current month invoices with footer totals) | Complete |
 | Purchasing detail dashboard (weekly trend, posting breakdown, Top 10 Principal) | Complete |
+| Purchasing Management Dashboard — qualified backlog, attention list, cross-domain exposure (M21) | Complete (Phase 1) |
 | Vue 3 frontend with login, layout, sidebar navigation | Complete |
 
 ---
 
 ## Future Direction
 
-Approved milestone roadmap after M19 (not yet delivered):
+Approved milestone roadmap (not yet delivered unless noted):
 
 | Milestone | Focus |
 | --------- | ----- |
 | M19 Phase 2 | Executive Dashboard — promote Dead Stock Value, At-Risk %, Inventory Risk Attention Indicator |
-| M20 | Collection Dashboard (collection effectiveness / DSO) |
+| M21 Phase 2 | Executive Dashboard — promote Compound Dependency, Qualified Backlog Value, Top 3 Principal % |
 
 Known capabilities explicitly **deferred** (not committed scope):
 
@@ -683,7 +710,7 @@ Known capabilities explicitly **deferred** (not committed scope):
 | Sales analytics | Margin analysis, status breakdown chart, sales period mode toggle |
 | Piutang analytics | Collection effectiveness KPIs (planned M20) |
 | Inventory analytics | ABC analysis, warehouse breakdown, Kartu Stok drilldown (slow/dead/never-sold delivered M19) |
-| Purchasing | Warehouse breakdown, pending posting value KPI, PF2 line detail, PF3 daily detail, PF4 retur beli |
+| Purchasing | Warehouse breakdown, PF2 line detail, PF3 daily detail, PF4 retur beli, purchase-to-sales ratio, automated weekly spike flags |
 | Platform | Export (Excel/PDF), drilldown from charts to transactions, role-based menu visibility, server-side pagination |
 | Reports | Sales Report footer totals (retrofit) |
 

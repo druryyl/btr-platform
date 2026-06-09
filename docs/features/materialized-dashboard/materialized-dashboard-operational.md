@@ -37,6 +37,7 @@ Click **Refresh** on any dashboard page to reload the latest stored snapshot fro
 | Piutang | 15 minutes |
 | Sales | 30 minutes |
 | Purchasing | 30 minutes |
+| Purchasing Management | 30 minutes |
 | Customer | 30 minutes |
 | Salesman | 30 minutes |
 | Inventory | 60 minutes |
@@ -84,7 +85,7 @@ FROM BTR_PortalDashboardRefreshLog
 ORDER BY CompletedAt DESC;
 ```
 
-All seven domains (Piutang, Inventory, InventoryRisk, Sales, Purchasing, Customer, Salesman) should show `Status = 'Success'`.
+All domains (Piutang, Inventory, InventoryRisk, Sales, Purchasing, PurchasingManagement, Customer, Salesman, Collection, Location — as deployed) should show `Status = 'Success'`.
 
 Confirm KPI rows exist:
 
@@ -101,18 +102,21 @@ SELECT 'Customer', GeneratedAt FROM BTR_PortalDashboardCustomerKpi WHERE Snapsho
 UNION ALL
 SELECT 'Salesman', GeneratedAt FROM BTR_PortalDashboardSalesmanKpi WHERE SnapshotKey = 'CURRENT'
 UNION ALL
-SELECT 'InventoryRisk', GeneratedAt FROM BTR_PortalDashboardInventoryRiskKpi WHERE SnapshotKey = 'CURRENT';
+SELECT 'InventoryRisk', GeneratedAt FROM BTR_PortalDashboardInventoryRiskKpi WHERE SnapshotKey = 'CURRENT'
+UNION ALL
+SELECT 'PurchasingManagement', GeneratedAt FROM BTR_PortalDashboardPurchasingManagementKpi WHERE SnapshotKey = 'CURRENT';
 ```
 
 ### Scheduled Tasks
 
-Create **seven separate** Windows Task Scheduler jobs:
+Create **separate** Windows Task Scheduler jobs per domain (minimum set below; include Collection and Location when those milestones are deployed):
 
 | Task name | Interval | Command |
 | --------- | -------- | ------- |
 | `BTR-Portal-Dashboard-Piutang` | Every **15 min** | `btr.portal.worker.exe --domain Piutang --triggered-by Scheduler` |
 | `BTR-Portal-Dashboard-Sales` | Every **30 min** | `btr.portal.worker.exe --domain Sales --triggered-by Scheduler` |
 | `BTR-Portal-Dashboard-Purchasing` | Every **30 min** | `btr.portal.worker.exe --domain Purchasing --triggered-by Scheduler` |
+| `BTR-Portal-Dashboard-PurchasingManagement` | Every **30 min** | `btr.portal.worker.exe --domain PurchasingManagement --triggered-by Scheduler` |
 | `BTR-Portal-Dashboard-Inventory` | Every **60 min** | `btr.portal.worker.exe --domain Inventory --triggered-by Scheduler` |
 | `BTR-Portal-Dashboard-InventoryRisk` | Every **60 min** | `btr.portal.worker.exe --domain InventoryRisk --triggered-by Scheduler` |
 | `BTR-Portal-Dashboard-Customer` | Every **30 min** | `btr.portal.worker.exe --domain Customer --triggered-by Scheduler` |
@@ -137,7 +141,7 @@ $trigger = New-ScheduledTaskTrigger -Once -At (Get-Date) -RepetitionInterval (Ne
 Register-ScheduledTask -TaskName "BTR-Portal-Dashboard-Piutang" -Action $action -Trigger $trigger -User "DOMAIN\svc-btr-portal" -RunLevel Highest
 ```
 
-Repeat for Sales (30 min), Purchasing (30 min), Customer (30 min), Salesman (30 min), Inventory (60 min), and InventoryRisk (60 min).
+Repeat for Sales (30 min), Purchasing (30 min), PurchasingManagement (30 min), Customer (30 min), Salesman (30 min), Inventory (60 min), and InventoryRisk (60 min).
 
 ### Manual Refresh Options
 
@@ -165,8 +169,8 @@ Content-Type: application/json
 
 | `domain` value | Behavior |
 | -------------- | -------- |
-| `All` (default) | Piutang → Inventory → InventoryRisk → Sales → Purchasing → Customer → Salesman |
-| `Piutang`, `Inventory`, `InventoryRisk`, `Sales`, `Purchasing`, `Customer`, `Salesman` | Single domain only |
+| `All` (default) | Piutang → Inventory → InventoryRisk → Sales → Purchasing → PurchasingManagement → Customer → Salesman |
+| `Piutang`, `Inventory`, `InventoryRisk`, `Sales`, `Purchasing`, `PurchasingManagement`, `Customer`, `Salesman` | Single domain only |
 
 Domain values are case-insensitive. Logged as `TriggeredBy = Manual` in refresh log.
 

@@ -3,7 +3,7 @@
 **Audience:** Developers, Architects, Future Agents  
 **Purpose:** Describe how BTR Portal is built and the conventions to follow when extending it.
 
-**Related permanent docs:** [Domain (WHY)](./btr-portal-domain.md) · [Operational (HOW)](./btr-portal-operational.md) · [Materialized dashboards](../materialized-dashboard/materialized-dashboard-architecture.md) · [Extraction — M16/M17](./knowledge-extraction-report-m16-m17.md) · [Extraction — M18](./knowledge-extraction-report-m18.md) · [Extraction — M19](./knowledge-extraction-report-m19.md) · [Extraction — Purchasing](./knowledge-extraction-report-purchasing-dashboard.md)
+**Related permanent docs:** [Domain (WHY)](./btr-portal-domain.md) · [Operational (HOW)](./btr-portal-operational.md) · [Materialized dashboards](../materialized-dashboard/materialized-dashboard-architecture.md) · [Extraction — M16/M17](./knowledge-extraction-report-m16-m17.md) · [Extraction — M18](./knowledge-extraction-report-m18.md) · [Extraction — M19](./knowledge-extraction-report-m19.md) · [Extraction — M21](./knowledge-extraction-report-m21.md) · [Extraction — Purchasing V1](./knowledge-extraction-report-purchasing-dashboard.md)
 
 For business definitions, see [btr-portal-domain.md](./btr-portal-domain.md).  
 For user-facing behavior, see [btr-portal-operational.md](./btr-portal-operational.md).
@@ -156,6 +156,7 @@ Browser → GET /api/dashboard/{sales|piutang|inventory|purchasing}  (detail —
 | **Customer (dedicated)** | `BTR_PortalDashboardCustomer*` (5 tables) | Customer Analytics only — not composed from domain snapshots |
 | **Salesman (dedicated)** | `BTR_PortalDashboardSalesman*` (6 tables) | Salesman Performance only — not composed from domain snapshots |
 | **Inventory Risk (dedicated)** | `BTR_PortalDashboardInventoryRisk*` (6 tables) | Slow Moving & Dead Stock only — not composed from M15 Inventory snapshot |
+| **Purchasing Management (dedicated)** | `BTR_PortalDashboardPurchasingManagement*` (3 tables) | Management attention layers on `/dashboard/purchasing` — not composed at read time |
 
 All snapshots use `SnapshotKey = 'CURRENT'`. `GeneratedAt` on every dashboard response reflects the last successful background refresh, not request execution time.
 
@@ -166,12 +167,13 @@ All snapshots use `SnapshotKey = 'CURRENT'`. `GeneratedAt` on every dashboard re
 | Piutang | 15 minutes |
 | Sales | 30 minutes |
 | Purchasing | 30 minutes |
+| PurchasingManagement | 30 minutes |
 | Customer | 30 minutes |
 | Salesman | 30 minutes |
 | Inventory | 60 minutes |
 | InventoryRisk | 60 minutes |
 
-**Refresh order (`--domain All`):** Piutang → Inventory → **InventoryRisk** → Sales → Purchasing → Customer → **Salesman** (last).
+**Refresh order (`--domain All`):** Piutang → Inventory → **InventoryRisk** → Sales → Purchasing → **PurchasingManagement** → Customer → **Salesman** (last).
 
 **Operational metadata:** `BTR_PortalDashboardRefreshLog` records each refresh attempt (domain, status, duration, error, trigger source).
 
@@ -246,6 +248,33 @@ RefreshDashboardInventoryRiskSnapshotWorker
 
 **Protected modules unchanged:** `DashboardInventoryAggregator`, `BTR_PortalDashboardInventory*`, `GET /api/dashboard/inventory`, `DashboardExecutiveComposer` (Phase 2 executive promotion is separate).
 
+### Purchasing Management Architecture (M21)
+
+Dedicated cross-domain snapshot extending V1 purchasing on the same route and API:
+
+```text
+Refresh time inputs:
+  IInvoiceViewDal (+ CreateTime, LastUpdate)
+  IDashboardPurchasingSnapshotDal (V1)
+  IDashboardInventorySnapshotDal (M15)
+  IDashboardInventoryRiskSnapshotDal (M19)
+        ↓
+RefreshDashboardPurchasingManagementSnapshotWorker
+        ↓ DashboardPurchasingManagementAggregator
+BTR_PortalDashboardPurchasingManagement* (Kpi, Attention, TopPrincipal)
+        ↓
+GET /api/dashboard/purchasing
+        ↓ DashboardPurchasingDal merges V1 + management snapshots
+```
+
+**Why separate domain from V1 Purchasing:** V1 traceability tables and `DashboardPurchasingInvoiceAggregator` formulas must remain unchanged. Management worker depends on Inventory/InventoryRisk snapshots and runs after V1 Purchasing in refresh order.
+
+**Protected modules unchanged:** `DashboardPurchasingInvoiceAggregator`, `BTR_PortalDashboardPurchasing*` (4 tables), `RefreshDashboardPurchasingSnapshotWorker`.
+
+**Executive revision (Phase 1):** `DashboardExecutiveComposer.ComposePurchasing` — `RequiresAttention` when `QualifiedBacklogCount > 0` only. Phase 2 promotes additional M21 KPIs to executive card UI.
+
+**InvoiceView extension:** `CreateTime` and `LastUpdate` added to `InvoiceView` / `InvoiceViewDal` for age-qualified backlog; age rule uses `LastUpdate`.
+
 ### Dashboard API Strategy
 
 | Endpoint | Controller | Data source | Purpose |
@@ -256,7 +285,7 @@ RefreshDashboardInventoryRiskSnapshotWorker
 | `GET /api/dashboard/sales` | `SalesDashboardController` | Layer A + B snapshots | Sales detail analytics |
 | `GET /api/dashboard/piutang` | `PiutangDashboardController` | Layer A + B snapshots | Piutang detail analytics |
 | `GET /api/dashboard/inventory` | `InventoryDashboardController` | Layer A + B snapshots | Inventory detail analytics |
-| `GET /api/dashboard/purchasing` | `PurchasingDashboardController` | Layer A + B snapshots | Purchasing detail analytics |
+| `GET /api/dashboard/purchasing` | `PurchasingDashboardController` | V1 Layer A + B + PurchasingManagement snapshot | Purchasing Management Dashboard (M21 extends response) |
 | `GET /api/dashboard/customers` | `CustomerDashboardController` | Dedicated Customer snapshot (`DashboardCustomerAgg`) | Customer Analytics (M17) |
 | `GET /api/dashboard/salesmen` | `SalesmanDashboardController` | Dedicated Salesman snapshot (`DashboardSalesmanAgg`) | Salesman Performance (M18) |
 | `GET /api/dashboard/collection` | `CollectionDashboardController` | Dedicated Collection snapshot (`DashboardCollectionAgg`) | Collection Dashboard (M20) |
@@ -332,6 +361,7 @@ Home shows summary KPI cards with per-domain `GeneratedAt` timestamps and links 
 | Trend | `WeeklyTrend[]` | Purchasing V1 |
 | Posting | `PostingStatusBreakdown[]` | Purchasing V1 |
 | Ranking | `TopPrincipalRanking[]` | Purchasing V1 |
+| Management (M21) | `IsManagementAvailable`, `IsDataFresh`, `AttentionCards`, `Summary`, `AttentionList[]`, `PrincipalExposure[]`, `Navigation` | Merged from PurchasingManagement snapshot; `GeneratedAt` = min(V1, Management) |
 
 **Customer response sections (M17):**
 
@@ -387,6 +417,7 @@ Aggregation runs in `Dashboard{Domain}Aggregator` during snapshot refresh (worke
 | Purchasing | `IInvoiceViewDal` (Invoice list) | Current month non-void invoices; `SUM(GrandTotal)`; posting status from `PostingStok` |
 | Purchasing weekly trend | Invoice `GrandTotal` grouped by calendar week | Reuses `SalesOmzetChartWeekGrouper` |
 | Purchasing ranking | `SUM(GrandTotal)` per trimmed `SupplierName`, top 10 descending | Blank → `"Unknown"`; UI label **Principal** |
+| Purchasing Management | `IInvoiceViewDal` + V1/M15/M19 snapshot DALs at refresh | Qualified backlog (LastUpdate age ≥ 3d); 8 attention signals; principal exposure cross-domain join; compound dependency intersection |
 | Customer | `IFakturViewDal` + `IPiutangOpenBalanceDal` + `ICustomerLastFakturDal` + `ICustomerDal` | Cross-domain attention list; dormant 90-day rule; plafond breach; suspended + sales; Top 10 omzet/piutang with `CustomerCode` |
 | Salesman | `IFakturViewDal` + `IPiutangOpenBalanceWithSalesmanDal` + `ICustomerLastFakturDal.ListLastFakturWithSalesmanByCustomer()` + `ISalesPersonDal` + `ISalesOmzetTargetDal.ListTargetsForMonth()` | Per-rep omzet, target, achievement %, piutang/overdue, dormant (last-invoicing), concentration; six attention signals; Top 10 omzet/achievement/piutang with `SalesPersonCode` |
 
@@ -633,6 +664,10 @@ One store per report. No premature module stores beyond auth, dashboard, and rep
 | `WeeklyTrendChart.vue` | M8/M13 line chart |
 | `AgingPieChart.vue` | M14 pie chart |
 | `PostingStatusPieChart.vue` | Purchasing posting-status pie (`SUDAH` / `BELUM`) |
+| `PurchasingAttentionCards.vue` | M21 four attention card groups |
+| `PurchasingAttentionList.vue` | M21 principal × signal list with report drill-down |
+| `PurchasingPrincipalExposureTable.vue` | M21 cross-domain MTD purchase · inventory · at-risk grid |
+| `PurchasingNavigationSection.vue` | M21 links to report, Inventory, Inventory Risk |
 | `InventoryHorizontalBarChart.vue` | M15 horizontal bar (category + supplier) |
 
 Detail page section order is fixed per domain (see operational doc).

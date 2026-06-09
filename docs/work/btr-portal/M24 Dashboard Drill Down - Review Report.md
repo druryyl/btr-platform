@@ -1,49 +1,31 @@
-# Review Report
+# Review Report (Re-Review)
 
 **Phase:** M24 — Dashboard Drill Down & Investigation Framework  
-**Review Date:** 2026-06-09  
+**Review Date:** 2026-06-09 (re-review)  
 **Reviewer:** Reviewer Agent  
 **Plan:** [M24 Dashboard Drill Down - Plan.md](./M24%20Dashboard%20Drill%20Down%20-%20Plan.md)  
-**Implementation Summary:** [M24 Dashboard Drill Down - Implementation Summary.md](./M24%20Dashboard%20Drill%20Down%20-%20Implementation%20Summary.md)
+**Implementation Summary:** [M24 Dashboard Drill Down - Implementation Summary.md](./M24%20Dashboard%20Drill%20Down%20-%20Implementation%20Summary.md)  
+**Prior review:** Rejected 2026-06-09 — documentation and test gaps (see remediation section below)
 
 ---
 
 ## Reviewed Artifacts
 
-### Backend
-- `btr.application/ReportingContext/Shared/InvestigationMetadata.cs`
-- `btr.application/ReportingContext/Shared/InvestigationRegistry.cs`
-- `btr.application/ReportingContext/Shared/InvestigationMetadataBuilder.cs`
-- `btr.application/ReportingContext/DashboardExecutiveAgg/Services/DashboardExecutiveComposer.cs`
-- `btr.application/ReportingContext/DashboardAlertCenterAgg/Services/DashboardAlertCenterComposer.cs`
-- `btr.application/ReportingContext/PiutangReportAgg/Queries/GetPiutangReportQuery.cs`
-- `btr.infrastructure/ReportingContext/PiutangReportAgg/PiutangReportDal.cs`
-- `btr.infrastructure/FinanceContext/PiutangSalesWilayahRpt/PiutangSalesWilayahDal.cs`
-- Dashboard infrastructure DALs (Customer, Salesman, Collection, Inventory Risk, Purchasing, Location, Sales, Piutang, Inventory snapshot)
+### Remediation (this re-review focus)
+- `docs/features/btr-portal/btr-portal-domain.md` — M24 platform capability section
+- `docs/features/btr-portal/ALERT-REGISTRY.md` — Investigation column group + ranking keys subsection
+- `btr.test/ReportingContext/InvestigationRegistryTest.cs` — expanded key coverage + route/period theories
+- `btr.portal.web/src/services/buildInvestigationQuery.spec.ts` — Vitest query encoder tests
+- `btr.portal.web/vitest.config.ts`, `package.json` (`vitest run` script)
+- Domain dashboard ranking retrofit: `CustomerDashboardView`, `CollectionDashboardView`, `SalesmanDashboardView`, `PurchasingDashboardView`, `InventoryRiskDashboardView`, `LocationDashboardView` + backend ranking `Investigation` DAL mapping
 
-### Frontend
-- `btr.portal.web/src/models/investigation.ts`
-- `btr.portal.web/src/services/navigateToInvestigation.ts`
-- `btr.portal.web/src/services/buildInvestigationQuery.ts`
-- `btr.portal.web/src/services/applyInvestigationQuery.ts`
-- `btr.portal.web/src/composables/useReportInvestigationFilter.ts`
-- `btr.portal.web/src/composables/useReportInvestigationHydration.ts`
-- `btr.portal.web/src/components/reports/InvestigationBreadcrumb.vue`
-- `btr.portal.web/src/components/reports/InvestigationStepsList.vue`
-- Report views: Sales, Piutang, Inventory, Purchasing
-- Attention components + `AlertCenterAlertTable.vue`
-- Legacy dashboards: Sales, Piutang, Inventory + `ExecutiveExposureSection.vue`
-
-### Tests
-- `btr.test/ReportingContext/InvestigationRegistryTest.cs`
-- `btr.test/ReportingContext/PiutangReportDalTest.cs`
-- `btr.test/ReportingContext/DashboardExecutiveComposerTest.cs`
-
-### Documentation
-- `docs/features/btr-portal/btr-portal-operational.md`
-- `docs/features/btr-portal/btr-portal-architecture.md`
-- `docs/features/btr-portal/ALERT-REGISTRY.md` *(see finding — partial)*
-- `docs/features/btr-portal/btr-portal-domain.md` *(see finding — missing)*
+### Full implementation (spot-checked; unchanged from prior review)
+- Investigation contract, registry, builder (C# + TypeScript)
+- `navigateToInvestigation`, `buildInvestigationQuery`, `applyInvestigationQuery`, `useReportInvestigationFilter`
+- All four report views + `InvestigationBreadcrumb.vue`, `InvestigationStepsList.vue`
+- Piutang `allOpenBalances` API/DAL/UI path
+- Executive Top 5, legacy M11/M14/M15 rankings, M17–M22 attention lists, `AlertCenterAlertTable.vue`
+- `btr-portal-operational.md`, `btr-portal-architecture.md`
 
 ---
 
@@ -51,12 +33,24 @@
 
 | Area | Result | Notes |
 | ---- | ------ | ----- |
-| Requirement implementation | **PASS** | Mandatory investigation contract, navigation, reports, executive Top 5, legacy M11/M14/M15 rankings, attention retrofit, Alert Center report-first |
-| Acceptance criteria (mandatory tier) | **PASS** | PO mandatory outcomes (Section 2.1) are implemented in code |
-| Architecture compliance | **PASS** | Matches plan topology; no new APIs/endpoints; additive DTO fields |
-| Test coverage | **FAIL** | Registry cross-check incomplete; frontend query encoder tests absent |
-| Documentation | **FAIL** | Two required doc updates not delivered per plan Sections 5.5 and 10 |
-| Scope control | **PASS** | No unauthorized KPI/snapshot/alert-rule changes observed |
+| Requirement implementation | **PASS** | All mandatory tier outcomes (Plan §2.1) present |
+| Acceptance criteria (mandatory tier) | **PASS** | PO success test (Appendix C) satisfied in code |
+| Architecture compliance | **PASS** | No new endpoints; additive DTOs; router state for non-URL metadata |
+| Test coverage | **PASS** | Registry cross-check, query encoder, Piutang all-open, executive composer — executed and passing |
+| Documentation | **PASS** | All Plan §10 documents updated including prior gaps |
+| Scope control | **PASS** | No unauthorized KPI/snapshot/alert-rule changes |
+
+---
+
+## Prior Findings — Remediation Verification
+
+| # | Prior finding | Required action | Evidence | Status |
+| - | ------------- | --------------- | -------- | ------ |
+| 1 | `btr-portal-domain.md` not updated | Add M24 platform capability | § Investigation Framework (M24) — depth model, report-first defaults, Piutang alignment, contract cross-refs | ✅ Resolved |
+| 2 | `ALERT-REGISTRY.md` missing Investigation columns | Add report route, period mode, desktop next step | All registry tables include **Investigate →**, **Period mode**, **Desktop next step**; ranking keys subsection added | ✅ Resolved |
+| 3 | `InvestigationRegistryTest` incomplete | Cross-check all M17–M22 aggregator keys | 34 aggregator constants + 4 executive + 4 legacy + 8 ranking keys enumerated; route/period theories for piutang, sales, executive | ✅ Resolved |
+| 4 | `buildInvestigationQuery` tests absent | Plan §8.2 three cases | `buildInvestigationQuery.spec.ts` — piutang all-open, Qualified Backlog BELUM, minimal sales `q`-only | ✅ Resolved |
+| 5 | Non-legacy ranking drill-down gap (recommended) | Retrofit M17/M18/M20 rankings | Backend `Investigation` on ranking DTOs/DALs; six domain dashboard views call `navigateToInvestigation` | ✅ Resolved |
 
 ---
 
@@ -66,16 +60,37 @@
 | ----------------------------- | -------- | ------ |
 | Investigation Metadata Contract (C# + TS) | `InvestigationMetadata.cs`, `models/investigation.ts` | ✅ |
 | Purchasing Report `?q=` hydration | `PurchasingReportView.vue` + `useReportInvestigationHydration` | ✅ |
-| Piutang `allOpenBalances` mode | API flag, DAL `ListAllOpenBalances`, UI label "All open balances" | ✅ |
-| Executive Critical Exposure Top 5 clickable | `DashboardExecutiveComposer.ComposeCriticalExposures`, `ExecutiveExposureSection.vue` | ✅ |
-| Legacy M11/M14/M15 ranking drill-down | `DashboardSalesLiveDal`, `DashboardPiutangDal`, inventory snapshot DAL + dashboard views | ✅ |
-| Investigation breadcrumb on all four reports | `InvestigationBreadcrumb.vue` wired in all `*ReportView.vue` | ✅ |
-| Stable entity ID report filtering | `SalesPersonId` on `SalesReportRow`; `CustomerCode` on `PiutangReportRow`; `useReportInvestigationFilter` | ✅ |
-| Qualified Backlog `posting=BELUM` | Registry default + Purchasing report client filter | ✅ |
+| Piutang `allOpenBalances` mode | API flag, `ListAllOpenBalances`, UI "All open balances" label | ✅ |
+| Executive Critical Exposure Top 5 clickable | `DashboardExecutiveComposer`, `ExecutiveExposureSection.vue` | ✅ |
+| Legacy M11/M14/M15 ranking drill-down | Sales/Piutang/Inventory snapshot DALs + dashboard views | ✅ |
+| Investigation breadcrumb on all four reports | `InvestigationBreadcrumb.vue` in all `*ReportView.vue` | ✅ |
+| Stable entity ID report filtering | `SalesPersonId`, `CustomerCode`, `useReportInvestigationFilter` | ✅ |
+| Qualified Backlog `posting=BELUM` | Registry default + Purchasing client filter | ✅ |
 | **Investigate** label | All M17–M22 attention list components | ✅ |
-| Report-first Alert Center | `AlertCenterAlertTable.vue` — Investigate primary, View Dashboard secondary; Company/Wilayah blocked | ✅ |
+| Report-first Alert Center | `AlertCenterAlertTable.vue` — Investigate primary; Company/Wilayah suppressed | ✅ |
 
-Nice-to-have items (investigation steps list, desktop next-step text) are also delivered.
+Nice-to-have items (investigation steps list, desktop next-step text) remain delivered.
+
+---
+
+## Test Execution (re-review)
+
+### Backend
+
+```text
+dotnet build src/j05-btr-distrib/btr.test/btr.test.csproj
+dotnet vstest btr.test/bin/Debug/btr.test.dll --TestCaseFilter:"FullyQualifiedName~InvestigationRegistry|FullyQualifiedName~PiutangReportDal|FullyQualifiedName~DashboardExecutiveComposer"
+```
+
+**Result:** 36 passed, 0 failed
+
+### Frontend
+
+```text
+cd src/j05-btr-distrib/btr.portal.web && npm test
+```
+
+**Result:** 3 passed (`buildInvestigationQuery.spec.ts`)
 
 ---
 
@@ -83,107 +98,43 @@ Nice-to-have items (investigation steps list, desktop next-step text) are also d
 
 ### Critical
 
-None identified. Core mandatory behavior is present and structurally sound.
+None.
 
 ### Major
 
-#### 1. `btr-portal-domain.md` not updated
-
-**Plan reference:** Section 10 — `btr-portal-domain.md` must include M24 as a platform capability reference.
-
-**Evidence:** No `M24`, `Investigation`, or investigation-framework content in `docs/features/btr-portal/btr-portal-domain.md`.
-
-**Impact:** Domain documentation does not reflect the new horizontal capability; future milestones lack an authoritative domain anchor.
-
----
-
-#### 2. `ALERT-REGISTRY.md` missing Investigation column group
-
-**Plan reference:** Section 5 implementer requirement #5 — add Investigation columns (report route, period mode, desktop next step).
-
-**Evidence:** `ALERT-REGISTRY.md` references `InvestigationRegistry.cs` in the purpose paragraph only. Registry entry tables still have `Drill-down dashboard` columns only — no Investigation column group.
-
-**Impact:** Alert catalog documentation is out of sync with the investigation routing contract; implementers cannot trace signal → report evidence from the registry doc alone.
-
----
-
-#### 3. `InvestigationRegistryTest` does not fulfill stated cross-check requirement
-
-**Plan reference:** Section 5.4 / 8.1 — `InvestigationRegistry_ContainsAllAttentionSignalKeys` must cross-check **all** M17–M22 attention `SignalKey` constants.
-
-**Evidence:** Test asserts only ~15 keys (subset). Registry implementation includes all aggregator constants (verified by code review), but the test does not enforce completeness. A future missing registry entry would not be caught.
-
-**Missing from test (examples):** `SlowMoving`, `NeverSold`, `SignalLegacyTopCustomer`, `SignalLegacyTopCategory`, `SignalLegacyTopSupplier`, all six `DashboardLocationAggregator` warehouse signals, several purchasing principal signals, `LowRecoveryVsBilling`, `LegacyDebt`, etc.
-
-**Impact:** Regression guard for the investigation contract is weaker than specified.
-
----
-
-#### 4. Frontend `buildInvestigationQuery` unit tests not delivered
-
-**Plan reference:** Section 8.2 — unit tests for Piutang customer drill-down, Qualified Backlog `posting=BELUM`, minimal sales drill-down.
-
-**Evidence:** No `*.spec.ts` / `*.test.ts` files in `btr.portal.web`. `buildInvestigationQuery.ts` has no automated coverage.
-
-**Impact:** Query encoding is a critical navigation contract; regressions in param mapping would not be caught in CI.
-
----
+None. All prior Major findings are resolved with verified evidence.
 
 ### Minor
 
-#### 5. Non-legacy ranking surfaces still use legacy navigation
+#### 1. `CustomerCode` snapshot DDL still deferred
 
-**Evidence:** `CustomerDashboardView.vue`, `CollectionDashboardView.vue`, `SalesmanDashboardView.vue`, and others call `navigateToReport` for ranking row clicks without `Investigation` metadata. Piutang-bound collection rankings (e.g. Top Overdue Customers) navigate with `q=` only — no `periodMode=allOpenBalances`, no breadcrumb signal context.
+**Evidence:** Implementation summary documents optional DDL not applied; executive Top Customer drill-down uses aggregator-populated code with name/`q` fallback.
 
-**Note:** Plan mandatory legacy retrofit explicitly lists M11/M14/M15 only. This is **out of stated mandatory scope** but weakens the horizontal framework goal (Appendix C) for M17/M18/M20 ranking clicks.
-
----
-
-#### 6. `CustomerCode` snapshot persistence deferred
-
-**Evidence:** Implementation summary acknowledges optional DDL not applied; executive Top Customer drill-down relies on aggregator-populated code with name/`q` fallback.
-
-**Note:** Plan Section 6.5 allows this deferral. Acceptable for approval once other findings are resolved.
-
----
+**Note:** Plan Section 6.5 explicitly allows this deferral. Does not block approval.
 
 ### Observation
 
-- `navigateToReport.ts` correctly delegates to `navigateToInvestigation` as a thin deprecated wrapper.
-- Router state carries `dashboardRoute`, `desktopNextStep`, and `investigationSteps` without URL pollution — matches plan Section 2.4.2.
-- Alert Center correctly suppresses **Investigate** for `Company` and `Wilayah` entity types.
-- Backend unit tests could not be executed in the review environment (`.NET Framework 4.8` test project; `dotnet test` did not run test cases). Test source code for Piutang all-open and executive investigation assertions is present and appears correct.
+- Domain dashboard ranking retrofit (Finding 5) exceeds mandatory Plan §2.4.7 scope and strengthens horizontal framework consistency for M17/M18/M20/M21/M22 ranking clicks.
+- `navigateToReport` remains a thin deprecated wrapper delegating to `navigateToInvestigation`.
+- `WarehouseAtRiskConcentration` correctly has no direct report route; multi-step metadata guides users via dashboard context (per plan §2.4.9).
+- Manual checklist (Plan §8.5) not executed in review environment; recommend spot-check before production deploy.
 
 ---
 
-## Required Actions
+## Re-Review Criteria (from prior report)
 
-1. **Update `docs/features/btr-portal/btr-portal-domain.md`** — add M24 Investigation Framework as a platform capability (depth model, report-first navigation, contract reference).
-
-2. **Update `docs/features/btr-portal/ALERT-REGISTRY.md`** — add Investigation column group to registry tables (report route, period mode, desktop next step) per plan Section 5.5.
-
-3. **Expand `InvestigationRegistryTest`** — enumerate all M17–M22 aggregator `SignalKey` constants plus executive synthetic and legacy ranking keys; assert each has a registry entry with expected `ReportRoute` / `DefaultPeriodMode` where applicable.
-
-4. **Add frontend unit tests for `buildInvestigationQuery`** — at minimum the three cases in plan Section 8.2 (Piutang all-open + customerId, Qualified Backlog posting, minimal sales `q`-only). Introduce a minimal test runner if none exists.
-
-5. **(Recommended)** Retrofit M17/M18/M20 ranking row clicks to use producer `Investigation` metadata where rankings navigate to reports — especially collection piutang rankings — or document explicit deferral in the implementation summary.
-
----
-
-## Re-Review Criteria
-
-Re-review may approve when:
-
-- [ ] `btr-portal-domain.md` updated
-- [ ] `ALERT-REGISTRY.md` Investigation columns added
-- [ ] `InvestigationRegistryTest` covers all attention signal keys
-- [ ] `buildInvestigationQuery` unit tests exist and pass
-- [ ] Backend M24-related unit tests pass in CI (InvestigationRegistry, PiutangReportDal all-open, DashboardExecutiveComposer)
+- [x] `btr-portal-domain.md` updated
+- [x] `ALERT-REGISTRY.md` Investigation columns added
+- [x] `InvestigationRegistryTest` covers all attention signal keys
+- [x] `buildInvestigationQuery` unit tests exist and pass
+- [x] Backend M24-related unit tests pass (36/36 verified in re-review)
 
 ---
 
 ## Status
 
-**REJECTED**
+**APPROVED**
 
-Mandatory implementation work is substantially complete and architecturally aligned with the plan. Rejection is due to **unresolved Major findings** in required documentation and test artifacts specified in the implementation plan. Correct and re-submit for re-review.
+All required implementation work has been reviewed. No unresolved Critical or Major findings remain. M24 mandatory scope is complete, documented, and covered by passing unit tests. The project may proceed past the M24 phase gate.
+
+**Approved By:** Reviewer Agent

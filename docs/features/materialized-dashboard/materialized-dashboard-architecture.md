@@ -18,9 +18,9 @@ Reports (`/reports/*`) are **not** materialized — they continue live Desktop D
 ## Topology
 
 ```text
-Windows Task Scheduler (per-domain jobs, 15 / 30 / 30 / 30 / 30 / 60 / 60 min)
+Windows Task Scheduler (per-domain jobs; see cadence table below)
         ↓
-btr.portal.worker.exe  (--domain Piutang|Inventory|InventoryRisk|Sales|Purchasing|Customer|Salesman|All)
+btr.portal.worker.exe  (--domain Piutang|Inventory|InventoryRisk|Sales|Purchasing|PurchasingManagement|Customer|Salesman|All)
         ↓
 RefreshDashboard{Domain}SnapshotWorker
         ↓
@@ -63,27 +63,29 @@ Browser → GET /api/dashboard/{sales|piutang|inventory|purchasing}  (detail —
 | `RefreshDashboardInventorySnapshotWorker` | `IStokBalanceViewDal.ListData()` | `DashboardInventoryAggregator` |
 | `RefreshDashboardSalesSnapshotWorker` | `IFakturViewDal` (current month) + `ISalesOmzetTargetDal` | `DashboardSalesFakturAggregator` |
 | `RefreshDashboardPurchasingSnapshotWorker` | `IInvoiceViewDal` (current month) | `DashboardPurchasingInvoiceAggregator` |
+| `RefreshDashboardPurchasingManagementSnapshotWorker` | `IInvoiceViewDal` (+ `CreateTime`/`LastUpdate`), V1/M15/M19 snapshot DALs | `DashboardPurchasingManagementAggregator` |
 | `RefreshDashboardCustomerSnapshotWorker` | `IFakturViewDal`, `ICustomerLastFakturDal`, `IPiutangOpenBalanceDal`, `ICustomerDal` | `DashboardCustomerAggregator` |
 | `RefreshDashboardSalesmanSnapshotWorker` | `IFakturViewDal`, `IPiutangOpenBalanceWithSalesmanDal`, `ICustomerLastFakturDal.ListLastFakturWithSalesmanByCustomer()`, `ISalesPersonDal`, `ISalesOmzetTargetDal.ListTargetsForMonth()` | `DashboardSalesmanAggregator` |
 | `RefreshDashboardInventoryRiskSnapshotWorker` | `IStokBalanceViewDal`, `IBrgLastFakturDal` | `DashboardInventoryRiskAggregator` (+ `DashboardInventoryItemGroupBuilder`) |
-| `RefreshAllDashboardSnapshotsWorker` | Orchestrator | Piutang → Inventory → InventoryRisk → Sales → Purchasing → Customer → Salesman; per-domain failure isolation |
+| `RefreshAllDashboardSnapshotsWorker` | Orchestrator | Piutang → Inventory → InventoryRisk → Sales → Purchasing → PurchasingManagement → Customer → Salesman; per-domain failure isolation |
 
 **CLI arguments:**
 
 | Argument | Values | Default |
 | -------- | ------ | ------- |
-| `--domain` | `All`, `Piutang`, `Inventory`, `InventoryRisk`, `Sales`, `Purchasing`, `Customer`, `Salesman` | `All` |
+| `--domain` | `All`, `Piutang`, `Inventory`, `InventoryRisk`, `Sales`, `Purchasing`, `PurchasingManagement`, `Customer`, `Salesman` | `All` |
 | `--triggered-by` | `Scheduler`, `Manual` | `Scheduler` |
 
 Exit code `0` = success. Logs: `{worker-folder}/logs/btr-portal-worker-{date}.log`.
 
-**Scheduled cadence (Task Scheduler — six separate jobs):**
+**Scheduled cadence (Task Scheduler — separate job per domain):**
 
 | Domain | Interval |
 | ------ | -------- |
 | Piutang | 15 minutes |
 | Sales | 30 minutes |
 | Purchasing | 30 minutes |
+| PurchasingManagement | 30 minutes |
 | Customer | 30 minutes |
 | Salesman | 30 minutes |
 | Inventory | 60 minutes |
@@ -97,7 +99,7 @@ Exit code `0` = success. Logs: `{worker-folder}/logs/btr-portal-worker-{date}.lo
 btr.application/ReportingContext/
 ├── DashboardSnapshotAgg/
 │   ├── Contracts/          IDashboard*SnapshotDal, IPiutangOpenBalanceDal, IDashboardSnapshotRefreshLogDal
-│   ├── Services/           DashboardPiutangAggregator, DashboardInventoryAggregator, DashboardInventoryRiskAggregator, DashboardInventoryItemGroupBuilder, DashboardSalesFakturAggregator, DashboardPurchasingInvoiceAggregator, DashboardCustomerAggregator, DashboardSalesmanAggregator
+│   ├── Services/           DashboardPiutangAggregator, DashboardInventoryAggregator, DashboardInventoryRiskAggregator, DashboardInventoryItemGroupBuilder, DashboardSalesFakturAggregator, DashboardPurchasingInvoiceAggregator, DashboardPurchasingManagementAggregator, DashboardCustomerAggregator, DashboardSalesmanAggregator
 │   ├── Models/             Aggregate result DTOs
 │   └── UseCases/           RefreshDashboard*SnapshotWorker, RefreshAllDashboardSnapshotsWorker
 ├── DashboardOverviewAgg/   GetDashboardOverviewQuery, IDashboardOverviewDal
@@ -193,6 +195,16 @@ Salesman worker reads **source DALs** at refresh — not Sales/Piutang/Customer 
 
 Inventory Risk worker reads **source DALs** at refresh — not M15 Inventory snapshot tables. Child row ID prefix: **PDIR**.
 
+### Purchasing Management tables (M21 — dedicated cross-domain domain)
+
+| Table | Content |
+| ----- | ------- |
+| `BTR_PortalDashboardPurchasingManagementKpi` | Qualified backlog, concentration %, compound counts, inactivity flag |
+| `BTR_PortalDashboardPurchasingManagementAttention` | Attention list rows (principal × signal) |
+| `BTR_PortalDashboardPurchasingManagementTopPrincipal` | Top 10 MTD purchase with % and cross-domain inventory/at-risk columns |
+
+Purchasing Management worker reads extended `IInvoiceViewDal` plus V1 purchasing, M15 inventory, and M19 inventory-risk snapshots at refresh — does not duplicate inventory aggregation SQL. V1 `BTR_PortalDashboardPurchasing*` tables remain unchanged.
+
 ### Supporting objects
 
 | Object | Purpose |
@@ -272,6 +284,8 @@ Aggregation rules unchanged (`KurangBayar > 1`, aging buckets, customer key, Top
     "InventoryRiskIntervalMinutes": 60,
     "SalesIntervalMinutes": 30,
     "PurchasingIntervalMinutes": 30,
+    "PurchasingManagementIntervalMinutes": 30,
+    "PurchasingQualifiedBacklogDays": 3,
     "CustomerIntervalMinutes": 30,
     "SalesmanIntervalMinutes": 30
   }
@@ -293,6 +307,8 @@ Portal API and worker both require `Database` section (JSON only — no registry
 | Inventory Risk aggregator | `.../DashboardInventoryRiskAggregator.cs` |
 | Item last Faktur DAL | `btr.infrastructure/SalesContext/FakturInfoAgg/BrgLastFakturDal.cs` |
 | Purchasing aggregator | `.../DashboardPurchasingInvoiceAggregator.cs` |
+| Purchasing Management aggregator | `.../DashboardPurchasingManagementAggregator.cs` |
+| Purchasing Management worker | `.../RefreshDashboardPurchasingManagementSnapshotWorker.cs` |
 | Customer aggregator | `.../DashboardCustomerAggregator.cs` |
 | Salesman aggregator | `.../DashboardSalesmanAggregator.cs` |
 | Salesman key resolver | `.../DashboardSalesmanKeyResolver.cs` |

@@ -3,7 +3,7 @@
 **Audience:** End Users, Trainers, Support Team  
 **Purpose:** Explain how to use BTR Portal day to day.
 
-**Related permanent docs:** [Domain (WHY)](./btr-portal-domain.md) · [Architecture (WHAT)](./btr-portal-architecture.md) · [Materialized dashboard ops](../materialized-dashboard/materialized-dashboard-operational.md) · [Extraction — M16/M17](./knowledge-extraction-report-m16-m17.md) · [Extraction — M18](./knowledge-extraction-report-m18.md) · [Extraction — M19](./knowledge-extraction-report-m19.md) · [Extraction — Purchasing](./knowledge-extraction-report-purchasing-dashboard.md)
+**Related permanent docs:** [Domain (WHY)](./btr-portal-domain.md) · [Architecture (WHAT)](./btr-portal-architecture.md) · [Materialized dashboard ops](../materialized-dashboard/materialized-dashboard-operational.md) · [Extraction — M16/M17](./knowledge-extraction-report-m16-m17.md) · [Extraction — M18](./knowledge-extraction-report-m18.md) · [Extraction — M19](./knowledge-extraction-report-m19.md) · [Extraction — M21](./knowledge-extraction-report-m21.md) · [Extraction — Purchasing V1](./knowledge-extraction-report-purchasing-dashboard.md)
 
 For business definitions and KPI formulas, see [btr-portal-domain.md](./btr-portal-domain.md).
 
@@ -441,6 +441,11 @@ Purchasing **RequiresAttention** on the Management Attention Center uses **Quali
 - Cross-check purchase concentration against inventory and at-risk exposure (M15/M19 snapshots)
 - Validate KPIs on Purchasing Report; complete posting in BTR Desktop PT2 when needed
 
+### Freshness
+
+- **⚠ Dashboard Data Not Fresh** when either V1 or management snapshot exceeds the **30-minute** refresh interval.
+- Grand Total Purchase and Total Invoice come from the V1 purchasing snapshot; management sections may share a different refresh timestamp — the page shows the earlier of the two as freshness anchor.
+
 ---
 
 ## Report Filtering (All Reports)
@@ -747,7 +752,7 @@ Authenticated users visiting `/login` are redirected to Dashboard home.
 
 ### Why does the dashboard show an old timestamp?
 
-Dashboard data refreshes on a background schedule, not on every page load. The **generated-at** time shows when snapshots were last rebuilt. Piutang refreshes every 15 minutes; Sales, Purchasing, Customer, and Salesman every 30 minutes; Inventory and Inventory Risk every 60 minutes. Click **Refresh** to re-read the latest stored snapshot; it does not force an immediate recalculation unless an administrator triggers a manual rebuild.
+Dashboard data refreshes on a background schedule, not on every page load. The **generated-at** time shows when snapshots were last rebuilt. Piutang refreshes every 15 minutes; Sales, Purchasing, PurchasingManagement, Customer, and Salesman every 30 minutes; Inventory and Inventory Risk every 60 minutes. Click **Refresh** to re-read the latest stored snapshot; it does not force an immediate recalculation unless an administrator triggers a manual rebuild.
 
 ### Why does the dashboard say data is not available?
 
