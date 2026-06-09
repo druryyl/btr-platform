@@ -21,13 +21,15 @@ namespace btr.portal.api.Controllers.Reports
         public async Task<IHttpActionResult> Get(
             [FromUri] System.DateTime? from = null,
             [FromUri] System.DateTime? to = null,
-            [FromUri] string dateField = "DueDate")
+            [FromUri] string dateField = "DueDate",
+            [FromUri] bool allOpenBalances = false)
         {
             var result = await _mediator.Send(new GetPiutangReportQuery
             {
                 From = from,
                 To = to,
                 DateField = dateField,
+                AllOpenBalances = allOpenBalances,
             });
             return Ok(ApiResponse<PiutangReportResponse>.Success(result));
         }

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import Card from 'primevue/card'
 import Column from 'primevue/column'
 import DataTable from 'primevue/datatable'
@@ -7,7 +7,8 @@ import Button from 'primevue/button'
 import ProgressSpinner from 'primevue/progressspinner'
 import type { DashboardCustomerAttentionItem } from '@/models/dashboard'
 import { formatCurrency } from '@/services/formatters'
-import { navigateToReport } from '@/services/navigateToReport'
+import { resolveInvestigationSourceLabel } from '@/services/investigationSourceLabels'
+import { navigateToInvestigation } from '@/services/navigateToInvestigation'
 
 defineProps<{
   items: DashboardCustomerAttentionItem[]
@@ -15,6 +16,7 @@ defineProps<{
 }>()
 
 const router = useRouter()
+const route = useRoute()
 
 function formatValue(item: DashboardCustomerAttentionItem): string {
   if (item.ValueText) {
@@ -28,8 +30,13 @@ function formatValue(item: DashboardCustomerAttentionItem): string {
   return '—'
 }
 
-function openReport(item: DashboardCustomerAttentionItem): void {
-  navigateToReport(router, item.ReportRoute, item.CustomerName)
+function investigate(item: DashboardCustomerAttentionItem): void {
+  if (!item.Investigation) return
+  navigateToInvestigation(
+    router,
+    item.Investigation,
+    resolveInvestigationSourceLabel(route.path),
+  )
 }
 </script>
 
@@ -69,12 +76,11 @@ function openReport(item: DashboardCustomerAttentionItem): void {
         <Column header="">
           <template #body="{ data }">
             <Button
-              icon="pi pi-arrow-right"
+              v-if="data.Investigation"
+              label="Investigate"
               text
-              rounded
-              severity="secondary"
-              aria-label="Open report"
-              @click="openReport(data)"
+              size="small"
+              @click="investigate(data)"
             />
           </template>
         </Column>

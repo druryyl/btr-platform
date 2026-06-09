@@ -189,6 +189,7 @@
     <Compile Include="Controllers\Admin\AdminDashboardRefreshController.cs" />
     <Compile Include="Controllers\AuthController.cs" />
     <Compile Include="Controllers\Dashboard\OverviewDashboardController.cs" />
+    <Compile Include="Controllers\Dashboard\AlertCenterDashboardController.cs" />
     <Compile Include="Controllers\Dashboard\ExecutiveDashboardController.cs" />
     <Compile Include="Controllers\Dashboard\InventoryDashboardController.cs" />
     <Compile Include="Controllers\Dashboard\InventoryRiskDashboardController.cs" />

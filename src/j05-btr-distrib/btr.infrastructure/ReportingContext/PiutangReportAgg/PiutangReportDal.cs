@@ -28,13 +28,37 @@ namespace btr.infrastructure.ReportingContext.PiutangReportAgg
             var rows = _piutangSalesWilayahDal.ListData(periode, dateField)?.ToList()
                        ?? new List<PiutangSalesWilayahDto>();
 
+            return BuildResponse(rows, periode.Tgl1, periode.Tgl2, dateField, allOpenBalances: false);
+        }
+
+        public PiutangReportResponse GetAllOpenBalancesReport(PiutangReportDateField dateField)
+        {
+            var rows = _piutangSalesWilayahDal.ListAllOpenBalances()?.ToList()
+                       ?? new List<PiutangSalesWilayahDto>();
+
+            return BuildResponse(
+                rows,
+                new DateTime(1900, 1, 1),
+                new DateTime(1900, 1, 1),
+                dateField,
+                allOpenBalances: true);
+        }
+
+        private PiutangReportResponse BuildResponse(
+            List<PiutangSalesWilayahDto> rows,
+            DateTime periodFrom,
+            DateTime periodTo,
+            PiutangReportDateField dateField,
+            bool allOpenBalances)
+        {
             var outstanding = rows.Where(r => r.KurangBayar > 1).ToList();
 
             return new PiutangReportResponse
             {
-                PeriodFrom = periode.Tgl1,
-                PeriodTo = periode.Tgl2,
+                PeriodFrom = periodFrom,
+                PeriodTo = periodTo,
                 DateField = dateField.ToString(),
+                AllOpenBalances = allOpenBalances,
                 GeneratedAt = _tglJamDal.Now,
                 Summary = new PiutangReportSummary
                 {
@@ -67,6 +91,7 @@ namespace btr.infrastructure.ReportingContext.PiutangReportAgg
 
         private static PiutangReportRow MapRow(PiutangSalesWilayahDto row) => new PiutangReportRow
         {
+            CustomerCode = row.CustomerCode ?? string.Empty,
             CustomerName = row.CustomerName ?? string.Empty,
             SalesName = row.SalesName ?? string.Empty,
             FakturCode = row.FakturCode ?? string.Empty,

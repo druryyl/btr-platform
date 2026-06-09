@@ -1,13 +1,19 @@
 <script setup lang="ts">
 import { computed, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 import DashboardDetailLayout from '@/components/dashboard/DashboardDetailLayout.vue'
 import TargetVsAchievementChart from '@/components/dashboard/TargetVsAchievementChart.vue'
 import Top10RankingTable from '@/components/dashboard/Top10RankingTable.vue'
 import WeeklyTrendChart from '@/components/dashboard/WeeklyTrendChart.vue'
 import { formatCurrency, formatPercent } from '@/services/formatters'
+import type { DashboardSalesRankingItem } from '@/models/dashboard'
+import { resolveInvestigationSourceLabel } from '@/services/investigationSourceLabels'
+import { navigateToInvestigation } from '@/services/navigateToInvestigation'
 import { useDashboardStore } from '@/stores/dashboardStore'
 
 const dashboard = useDashboardStore()
+const router = useRouter()
+const sourceLabel = resolveInvestigationSourceLabel('/dashboard/sales')
 
 const rankingColumns = [
   { field: 'Rank', header: 'Rank' },
@@ -18,6 +24,12 @@ const rankingColumns = [
 const rankingRows = computed(
   () => (dashboard.sales?.TopSalesmanRanking ?? []) as Record<string, unknown>[],
 )
+
+function onRankingClick(row: Record<string, unknown>): void {
+  const item = row as unknown as DashboardSalesRankingItem
+  if (!item.Investigation) return
+  navigateToInvestigation(router, item.Investigation, sourceLabel)
+}
 
 onMounted(() => {
   void dashboard.loadSales()
@@ -73,7 +85,9 @@ onMounted(() => {
       :rows="rankingRows"
       :loading="dashboard.loading"
       value-field="CompletedOmzet"
+      clickable
       empty-message="No salesman ranking data for the current period."
+      @row-click="onRankingClick"
     />
   </DashboardDetailLayout>
 </template>

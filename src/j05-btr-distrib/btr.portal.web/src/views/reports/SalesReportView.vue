@@ -7,20 +7,24 @@ import Card from 'primevue/card'
 import Column from 'primevue/column'
 import DataTable from 'primevue/datatable'
 import Message from 'primevue/message'
+import InvestigationBreadcrumb from '@/components/reports/InvestigationBreadcrumb.vue'
 import ReportFilterBar from '@/components/reports/ReportFilterBar.vue'
-import { useReportFreeTextFilter } from '@/composables/useReportFreeTextFilter'
+import { useReportInvestigationFilter } from '@/composables/useReportInvestigationFilter'
+import { useReportInvestigationHydration } from '@/composables/useReportInvestigationHydration'
 import { formatCurrency, formatDate, formatDateTime } from '@/services/formatters'
 import { useSalesReportStore } from '@/stores/salesReportStore'
 
 const route = useRoute()
 const salesReport = useSalesReportStore()
 const { freeText } = storeToRefs(salesReport)
+const { breadcrumb, salesmanId, hydrateFromRoute } = useReportInvestigationHydration()
 
 const sourceRows = computed(() => salesReport.report?.Rows ?? [])
-const { filteredRows, hasFreeTextFilter } = useReportFreeTextFilter(
+const { filteredRows, hasActiveFilter } = useReportInvestigationFilter(
   sourceRows,
   ['FakturCode', 'CustomerName', 'SalesName', 'Status'],
   freeText,
+  { salesmanId },
 )
 
 const periodLabel = computed(() => {
@@ -32,8 +36,10 @@ const periodLabel = computed(() => {
 })
 
 onMounted(() => {
-  if (typeof route.query.q === 'string' && route.query.q.trim()) {
-    salesReport.freeText = route.query.q.trim()
+  const hydration = hydrateFromRoute(route)
+
+  if (hydration.freeText) {
+    salesReport.freeText = hydration.freeText
   }
 
   void salesReport.loadReport()
@@ -61,6 +67,8 @@ onMounted(() => {
       />
     </div>
 
+    <InvestigationBreadcrumb :context="breadcrumb" />
+
     <Message v-if="salesReport.error" severity="error" :closable="false">
       {{ salesReport.error }}
     </Message>
@@ -75,7 +83,7 @@ onMounted(() => {
           @apply="salesReport.loadReport()"
         />
 
-        <p v-if="hasFreeTextFilter" class="sales-report__filter-hint">
+        <p v-if="hasActiveFilter" class="sales-report__filter-hint">
           Showing rows matching your search filter.
         </p>
 
@@ -93,11 +101,11 @@ onMounted(() => {
           <template #empty>
             <div class="sales-report__empty">
               <i class="pi pi-inbox sales-report__empty-icon" />
-              <p>No faktur found for this period.</p>
+              <p>No Faktur found for this period.</p>
             </div>
           </template>
 
-          <Column field="FakturDate" header="Date" sortable>
+          <Column field="FakturDate" header="Tanggal" sortable>
             <template #body="{ data }">
               {{ formatDate(data.FakturDate) }}
             </template>
@@ -110,12 +118,7 @@ onMounted(() => {
               {{ formatCurrency(data.FakturTotal) }}
             </template>
           </Column>
-          <Column field="Status" header="Status" sortable>
-            <template #body="{ data }">
-              <span v-if="data.Status">{{ data.Status }}</span>
-              <span v-else class="sales-report__status-empty">—</span>
-            </template>
-          </Column>
+          <Column field="Status" header="Status" sortable />
         </DataTable>
 
         <div v-if="salesReport.report" class="sales-report__meta">
@@ -170,10 +173,6 @@ onMounted(() => {
 
 .sales-report__empty p {
   margin: 0;
-}
-
-.sales-report__status-empty {
-  color: var(--p-text-muted-color);
 }
 
 .sales-report__meta {

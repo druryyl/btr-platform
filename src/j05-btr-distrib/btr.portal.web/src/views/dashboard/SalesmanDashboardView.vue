@@ -8,49 +8,29 @@ import SalesmanAttentionList from '@/components/dashboard/SalesmanAttentionList.
 import SalesmanSegmentationSection from '@/components/dashboard/SalesmanSegmentationSection.vue'
 import SalesmanNavigationSection from '@/components/dashboard/SalesmanNavigationSection.vue'
 import Top10RankingTable from '@/components/dashboard/Top10RankingTable.vue'
+import type { DashboardSalesmanRankingRow } from '@/models/dashboard'
 import { formatNumber, formatPercent } from '@/services/formatters'
-import { navigateToReport } from '@/services/navigateToReport'
+import { resolveInvestigationSourceLabel } from '@/services/investigationSourceLabels'
+import { navigateToInvestigation } from '@/services/navigateToInvestigation'
 import { useDashboardStore } from '@/stores/dashboardStore'
 
 const dashboard = useDashboardStore()
 const router = useRouter()
+const sourceLabel = resolveInvestigationSourceLabel('/dashboard/salesmen')
 
 const cards = computed(() => dashboard.salesman?.AttentionCards)
 const unavailable = computed(() => dashboard.salesman != null && !dashboard.salesman.IsAvailable)
 
-const omzetRankingRows = computed(() =>
-  (dashboard.salesman?.PerformanceRankings?.TopOmzet ?? []).map((row) => ({
-    Rank: row.Rank,
-    SalesPersonCode: row.SalesPersonCode,
-    SalesPersonName: row.SalesPersonName,
-    Amount: row.Amount,
-    PercentOfTotal: row.PercentOfTotal,
-    ReportRoute: row.ReportRoute,
-  })),
+const omzetRankingRows = computed(
+  () => (dashboard.salesman?.PerformanceRankings?.TopOmzet ?? []) as Record<string, unknown>[],
 )
 
-const achievementRankingRows = computed(() =>
-  (dashboard.salesman?.PerformanceRankings?.TopAchievement ?? []).map((row) => ({
-    Rank: row.Rank,
-    SalesPersonCode: row.SalesPersonCode,
-    SalesPersonName: row.SalesPersonName,
-    Amount: row.Amount,
-    PercentOfTotal: row.PercentOfTotal,
-    AchievementPercent: row.AchievementPercent,
-    TargetAmount: row.TargetAmount,
-    ReportRoute: row.ReportRoute,
-  })),
+const achievementRankingRows = computed(
+  () => (dashboard.salesman?.PerformanceRankings?.TopAchievement ?? []) as Record<string, unknown>[],
 )
 
-const piutangRankingRows = computed(() =>
-  (dashboard.salesman?.ExposureRankings?.TopPiutang ?? []).map((row) => ({
-    Rank: row.Rank,
-    SalesPersonCode: row.SalesPersonCode,
-    SalesPersonName: row.SalesPersonName,
-    Amount: row.Amount,
-    PercentOfTotal: row.PercentOfTotal,
-    ReportRoute: row.ReportRoute,
-  })),
+const piutangRankingRows = computed(
+  () => (dashboard.salesman?.ExposureRankings?.TopPiutang ?? []) as Record<string, unknown>[],
 )
 
 const omzetColumns = [
@@ -78,11 +58,9 @@ const piutangColumns = [
 ]
 
 function onRankingRowClick(row: Record<string, unknown>): void {
-  const salesmanName = String(row.SalesPersonName ?? '')
-  const reportRoute = String(row.ReportRoute ?? '')
-  if (salesmanName && reportRoute) {
-    navigateToReport(router, reportRoute, salesmanName)
-  }
+  const item = row as unknown as DashboardSalesmanRankingRow
+  if (!item.Investigation) return
+  navigateToInvestigation(router, item.Investigation, sourceLabel)
 }
 
 onMounted(() => {

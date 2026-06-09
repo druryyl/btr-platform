@@ -11,12 +11,14 @@ import PurchasingNavigationSection from '@/components/dashboard/PurchasingNaviga
 import PostingStatusPieChart from '@/components/dashboard/PostingStatusPieChart.vue'
 import Top10RankingTable from '@/components/dashboard/Top10RankingTable.vue'
 import WeeklyTrendChart from '@/components/dashboard/WeeklyTrendChart.vue'
-import type { DashboardSalesWeekTrendItem } from '@/models/dashboard'
-import { navigateToReport } from '@/services/navigateToReport'
+import type { DashboardPurchasingPrincipalExposureItem, DashboardSalesWeekTrendItem } from '@/models/dashboard'
+import { resolveInvestigationSourceLabel } from '@/services/investigationSourceLabels'
+import { navigateToInvestigation } from '@/services/navigateToInvestigation'
 import { useDashboardStore } from '@/stores/dashboardStore'
 
 const dashboard = useDashboardStore()
 const router = useRouter()
+const sourceLabel = resolveInvestigationSourceLabel('/dashboard/purchasing')
 
 const managementUnavailable = computed(
   () => dashboard.purchasing != null && !dashboard.purchasing.IsManagementAvailable,
@@ -29,14 +31,8 @@ const top10Columns = [
   { field: 'PercentOfPurchase', header: '% of Purchase' },
 ]
 
-const top10Rows = computed(() =>
-  (dashboard.purchasing?.PrincipalExposure ?? []).map((row) => ({
-    Rank: row.Rank,
-    PrincipalName: row.PrincipalName,
-    MtdPurchaseAmount: row.MtdPurchaseAmount,
-    PercentOfPurchase: row.PercentOfPurchase,
-    ReportRoute: row.ReportRoute,
-  })),
+const top10Rows = computed(
+  () => (dashboard.purchasing?.PrincipalExposure ?? []) as Record<string, unknown>[],
 )
 
 const weeklyTrendForChart = computed((): DashboardSalesWeekTrendItem[] =>
@@ -49,11 +45,9 @@ const weeklyTrendForChart = computed((): DashboardSalesWeekTrendItem[] =>
 )
 
 function onTop10RowClick(row: Record<string, unknown>): void {
-  const principalName = String(row.PrincipalName ?? '')
-  const reportRoute = String(row.ReportRoute ?? '/reports/purchasing')
-  if (principalName) {
-    navigateToReport(router, reportRoute, principalName)
-  }
+  const item = row as unknown as DashboardPurchasingPrincipalExposureItem
+  if (!item.Investigation) return
+  navigateToInvestigation(router, item.Investigation, sourceLabel)
 }
 
 onMounted(() => {

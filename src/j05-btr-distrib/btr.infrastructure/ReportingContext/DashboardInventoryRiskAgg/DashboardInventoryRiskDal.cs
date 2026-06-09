@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using btr.application.ReportingContext.DashboardInventoryRiskAgg.Contracts;
 using btr.application.ReportingContext.DashboardInventoryRiskAgg.Queries;
+using btr.application.ReportingContext.Shared;
 using btr.application.ReportingContext.DashboardSnapshotAgg;
 using btr.application.ReportingContext.DashboardSnapshotAgg.Contracts;
 using btr.application.ReportingContext.DashboardSnapshotAgg.Models;
@@ -100,10 +101,10 @@ namespace btr.infrastructure.ReportingContext.DashboardInventoryRiskAgg
                 Rankings = new DashboardInventoryRiskRankings
                 {
                     TopDead = snapshot.TopDead?
-                        .Select(r => MapRankingRow(r))
+                        .Select(r => MapRankingRow(r, DashboardInventoryRiskAggregator.SignalDeadStock))
                         .ToList() ?? new List<DashboardInventoryRiskRankingRow>(),
                     TopSlow = snapshot.TopSlow?
-                        .Select(r => MapRankingRow(r))
+                        .Select(r => MapRankingRow(r, DashboardInventoryRiskAggregator.SignalSlowMoving))
                         .ToList() ?? new List<DashboardInventoryRiskRankingRow>()
                 },
                 Navigation = BuildNavigation()
@@ -133,10 +134,19 @@ namespace btr.infrastructure.ReportingContext.DashboardInventoryRiskAgg
                 DaysSinceLastFaktur = row.DaysSinceLastFaktur,
                 SignalKey = row.SignalKey,
                 SignalLabel = row.SignalLabel,
-                ReportRoute = InventoryReportRoute
+                ReportRoute = InventoryReportRoute,
+                Investigation = InvestigationMetadataBuilder.Build(
+                    row.SignalKey,
+                    InvestigationMetadataBuilder.EntityTypeItem,
+                    row.BrgCode,
+                    row.BrgName,
+                    signalLabelOverride: row.SignalLabel,
+                    reportRouteOverride: InventoryReportRoute)
             };
 
-        private static DashboardInventoryRiskRankingRow MapRankingRow(DashboardInventoryRiskTopRow row) =>
+        private static DashboardInventoryRiskRankingRow MapRankingRow(
+            DashboardInventoryRiskTopRow row,
+            string signalKey) =>
             new DashboardInventoryRiskRankingRow
             {
                 Rank = row.Rank,
@@ -148,7 +158,13 @@ namespace btr.infrastructure.ReportingContext.DashboardInventoryRiskAgg
                 InventoryValue = row.InventoryValue,
                 DaysSinceLastFaktur = row.DaysSinceLastFaktur,
                 PercentOfAtRisk = row.PercentOfAtRisk,
-                ReportRoute = InventoryReportRoute
+                ReportRoute = InventoryReportRoute,
+                Investigation = InvestigationMetadataBuilder.Build(
+                    signalKey,
+                    InvestigationMetadataBuilder.EntityTypeItem,
+                    row.BrgId,
+                    row.BrgName,
+                    reportRouteOverride: InventoryReportRoute)
             };
 
         private static DashboardInventoryRiskNavigationLinks BuildNavigation() =>

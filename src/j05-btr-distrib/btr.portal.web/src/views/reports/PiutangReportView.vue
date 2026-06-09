@@ -7,9 +7,11 @@ import Card from 'primevue/card'
 import Column from 'primevue/column'
 import DataTable from 'primevue/datatable'
 import Message from 'primevue/message'
+import InvestigationBreadcrumb from '@/components/reports/InvestigationBreadcrumb.vue'
 import ReportFilterBar from '@/components/reports/ReportFilterBar.vue'
 import ReportSummaryBar from '@/components/reports/ReportSummaryBar.vue'
-import { useReportFreeTextFilter } from '@/composables/useReportFreeTextFilter'
+import { useReportInvestigationFilter } from '@/composables/useReportInvestigationFilter'
+import { useReportInvestigationHydration } from '@/composables/useReportInvestigationHydration'
 import { formatCurrency, formatDate, formatDateTime } from '@/services/formatters'
 import { piutangDateFieldLabel } from '@/services/reportFilterDefaults'
 import { summarizePiutangRows } from '@/services/reportSummaryHelpers'
@@ -18,17 +20,23 @@ import { usePiutangReportStore } from '@/stores/piutangReportStore'
 const route = useRoute()
 const piutangReport = usePiutangReportStore()
 const { freeText } = storeToRefs(piutangReport)
+const { breadcrumb, customerId, hydrateFromRoute } = useReportInvestigationHydration()
 
 const sourceRows = computed(() => piutangReport.report?.Rows ?? [])
-const { filteredRows, hasFreeTextFilter } = useReportFreeTextFilter(
+const { filteredRows, hasActiveFilter } = useReportInvestigationFilter(
   sourceRows,
-  ['CustomerName', 'SalesName', 'FakturCode'],
+  ['CustomerName', 'SalesName', 'FakturCode', 'CustomerCode'],
   freeText,
+  { customerId },
 )
 
 const periodLabel = computed(() => {
   if (!piutangReport.report) {
     return ''
+  }
+
+  if (piutangReport.report.AllOpenBalances) {
+    return 'All open balances'
   }
 
   const fieldLabel = piutangDateFieldLabel(piutangReport.dateField)
@@ -38,7 +46,7 @@ const periodLabel = computed(() => {
 const summaryItems = computed(() => {
   if (!piutangReport.report?.Summary) return []
 
-  const summary = hasFreeTextFilter.value
+  const summary = hasActiveFilter.value
     ? summarizePiutangRows(filteredRows.value)
     : piutangReport.report.Summary
 
@@ -55,11 +63,13 @@ const summaryItems = computed(() => {
 })
 
 onMounted(() => {
-  if (typeof route.query.q === 'string' && route.query.q.trim()) {
-    piutangReport.freeText = route.query.q.trim()
+  const hydration = hydrateFromRoute(route)
+
+  if (hydration.freeText) {
+    piutangReport.freeText = hydration.freeText
   }
 
-  void piutangReport.loadReport()
+  void piutangReport.loadReport({ allOpenBalances: hydration.allOpenBalances })
 })
 </script>
 
@@ -69,7 +79,7 @@ onMounted(() => {
       <div>
         <h1>Piutang Report</h1>
         <p v-if="piutangReport.report">
-          Open receivables filtered by {{ periodLabel }}.
+          Open receivables — {{ periodLabel }}.
         </p>
         <p v-else>
           Open receivables (outstanding balance only).
@@ -83,6 +93,8 @@ onMounted(() => {
         @click="piutangReport.loadReport()"
       />
     </div>
+
+    <InvestigationBreadcrumb :context="breadcrumb" />
 
     <Message v-if="piutangReport.error" severity="error" :closable="false">
       {{ piutangReport.error }}
@@ -100,7 +112,7 @@ onMounted(() => {
           @apply="piutangReport.loadReport()"
         />
 
-        <p v-if="hasFreeTextFilter" class="piutang-report__filter-hint">
+        <p v-if="hasActiveFilter" class="piutang-report__filter-hint">
           Summary reflects filtered rows.
         </p>
 

@@ -4,6 +4,7 @@ using btr.application.ReportingContext.DashboardPiutangAgg.Queries;
 using btr.application.ReportingContext.DashboardSnapshotAgg;
 using btr.application.ReportingContext.DashboardSnapshotAgg.Contracts;
 using btr.application.ReportingContext.DashboardSnapshotAgg.Models;
+using btr.application.ReportingContext.Shared;
 
 namespace btr.infrastructure.ReportingContext.DashboardPiutangAgg
 {
@@ -35,8 +36,26 @@ namespace btr.infrastructure.ReportingContext.DashboardPiutangAgg
                 OverdueCustomer = snapshot.OverdueCustomer,
                 AgingBuckets = snapshot.AgingBuckets?.ToList()
                     ?? new System.Collections.Generic.List<DashboardPiutangAgingBucket>(),
-                TopCustomers = snapshot.TopCustomers?.ToList()
+                TopCustomers = snapshot.TopCustomers?
+                    .Select(MapTopCustomer)
+                    .ToList()
                     ?? new System.Collections.Generic.List<DashboardPiutangTopCustomer>()
+            };
+        }
+
+        private static DashboardPiutangTopCustomer MapTopCustomer(DashboardPiutangTopCustomer customer)
+        {
+            return new DashboardPiutangTopCustomer
+            {
+                Rank = customer.Rank,
+                CustomerName = customer.CustomerName,
+                CustomerCode = customer.CustomerCode,
+                OutstandingBalance = customer.OutstandingBalance,
+                Investigation = InvestigationMetadataBuilder.Build(
+                    InvestigationRegistry.SignalLegacyTopCustomer,
+                    InvestigationMetadataBuilder.EntityTypeCustomer,
+                    customer.CustomerCode,
+                    customer.CustomerName)
             };
         }
     }

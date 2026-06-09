@@ -5,7 +5,7 @@ import Column from 'primevue/column'
 import ProgressSpinner from 'primevue/progressspinner'
 import { formatCurrency, formatPercent } from '@/services/formatters'
 
-defineProps<{
+const props = defineProps<{
   title: string
   columns: { field: string; header: string }[]
   rows: Record<string, unknown>[]
@@ -21,6 +21,7 @@ const emit = defineEmits<{
 }>()
 
 function onRowClick(event: { data: Record<string, unknown> }): void {
+  if (!props.clickable) return
   emit('rowClick', event.data)
 }
 

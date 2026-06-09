@@ -16,6 +16,8 @@ namespace btr.application.ReportingContext.PiutangReportAgg.Queries
         public DateTime? To { get; set; }
 
         public string DateField { get; set; }
+
+        public bool AllOpenBalances { get; set; }
     }
 
     public class PiutangReportResponse
@@ -25,6 +27,8 @@ namespace btr.application.ReportingContext.PiutangReportAgg.Queries
         public DateTime PeriodTo { get; set; }
 
         public string DateField { get; set; }
+
+        public bool AllOpenBalances { get; set; }
 
         public DateTime GeneratedAt { get; set; }
 
@@ -42,6 +46,8 @@ namespace btr.application.ReportingContext.PiutangReportAgg.Queries
 
     public class PiutangReportRow
     {
+        public string CustomerCode { get; set; }
+
         public string CustomerName { get; set; }
 
         public string SalesName { get; set; }
@@ -73,10 +79,16 @@ namespace btr.application.ReportingContext.PiutangReportAgg.Queries
             GetPiutangReportQuery request,
             CancellationToken cancellationToken)
         {
+            var dateField = PiutangReportDateFieldParser.Parse(request.DateField);
+
+            if (request.AllOpenBalances)
+            {
+                return Task.FromResult(_dal.GetAllOpenBalancesReport(dateField));
+            }
+
             var periode = ReportPeriodValidator.ResolveAndValidate(
                 new ReportPeriodRequest { From = request.From, To = request.To },
                 _tglJamDal.Now);
-            var dateField = PiutangReportDateFieldParser.Parse(request.DateField);
 
             return Task.FromResult(_dal.GetReport(periode, dateField));
         }

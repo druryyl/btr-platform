@@ -27,6 +27,7 @@ export async function fetchPiutangReport(query: PiutangReportQuery): Promise<Piu
       from: query.from,
       to: query.to,
       dateField: query.dateField,
+      allOpenBalances: query.allOpenBalances ?? false,
     },
   })
 

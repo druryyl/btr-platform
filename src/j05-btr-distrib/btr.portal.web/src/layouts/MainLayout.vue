@@ -21,6 +21,12 @@ const menuItems = computed(() => [
         class: route.path === '/dashboard' ? 'layout-menu-item--active' : '',
       },
       {
+        label: 'Alert Center',
+        icon: 'pi pi-bell',
+        command: () => router.push('/alerts'),
+        class: route.path === '/alerts' ? 'layout-menu-item--active' : '',
+      },
+      {
         label: 'Sales',
         icon: 'pi pi-chart-line',
         command: () => router.push('/dashboard/sales'),

@@ -10,35 +10,24 @@ import CollectionAttentionList from '@/components/dashboard/CollectionAttentionL
 import CollectionNavigationSection from '@/components/dashboard/CollectionNavigationSection.vue'
 import Top10RankingTable from '@/components/dashboard/Top10RankingTable.vue'
 import { formatCurrency, formatNumber, formatPercent } from '@/services/formatters'
-import { navigateToReport } from '@/services/navigateToReport'
+import type { DashboardCollectionRankingRow } from '@/models/dashboard'
+import { resolveInvestigationSourceLabel } from '@/services/investigationSourceLabels'
+import { navigateToInvestigation } from '@/services/navigateToInvestigation'
 import { useDashboardStore } from '@/stores/dashboardStore'
 
 const dashboard = useDashboardStore()
 const router = useRouter()
+const sourceLabel = resolveInvestigationSourceLabel('/dashboard/collection')
 
 const cards = computed(() => dashboard.collection?.AttentionCards)
 const unavailable = computed(() => dashboard.collection != null && !dashboard.collection.IsAvailable)
 
-const customerRankingRows = computed(() =>
-  (dashboard.collection?.TopOverdueCustomers ?? []).map((row) => ({
-    Rank: row.Rank,
-    EntityCode: row.EntityCode,
-    EntityName: row.EntityName,
-    Amount: row.Amount,
-    PercentOfTotal: row.PercentOfTotal,
-    ReportRoute: row.ReportRoute,
-  })),
+const customerRankingRows = computed(
+  () => (dashboard.collection?.TopOverdueCustomers ?? []) as Record<string, unknown>[],
 )
 
-const salesmanRankingRows = computed(() =>
-  (dashboard.collection?.TopOverdueSalesmen ?? []).map((row) => ({
-    Rank: row.Rank,
-    EntityCode: row.EntityCode,
-    EntityName: row.EntityName,
-    Amount: row.Amount,
-    PercentOfTotal: row.PercentOfTotal,
-    ReportRoute: row.ReportRoute,
-  })),
+const salesmanRankingRows = computed(
+  () => (dashboard.collection?.TopOverdueSalesmen ?? []) as Record<string, unknown>[],
 )
 
 const wilayahRankingRows = computed(() =>
@@ -60,11 +49,9 @@ const rankingColumns = [
 ]
 
 function onRankingRowClick(row: Record<string, unknown>): void {
-  const entityName = String(row.EntityName ?? '')
-  const reportRoute = String(row.ReportRoute ?? '')
-  if (entityName && reportRoute) {
-    navigateToReport(router, reportRoute, entityName)
-  }
+  const item = row as unknown as DashboardCollectionRankingRow
+  if (!item.Investigation) return
+  navigateToInvestigation(router, item.Investigation, sourceLabel)
 }
 
 onMounted(() => {

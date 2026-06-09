@@ -51,6 +51,8 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.Services
                 .Select(g => new
                 {
                     CustomerName = ResolveCustomerDisplayName(g),
+                    CustomerCode = g.Select(r => r.CustomerCode?.Trim())
+                        .FirstOrDefault(c => !string.IsNullOrEmpty(c)) ?? g.Key,
                     OutstandingBalance = g.Sum(r => r.KurangBayar)
                 })
                 .OrderByDescending(x => x.OutstandingBalance)
@@ -60,6 +62,7 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.Services
                 {
                     Rank = index + 1,
                     CustomerName = x.CustomerName,
+                    CustomerCode = x.CustomerCode,
                     OutstandingBalance = x.OutstandingBalance
                 })
                 .ToList();

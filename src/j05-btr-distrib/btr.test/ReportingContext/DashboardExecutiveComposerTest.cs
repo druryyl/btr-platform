@@ -6,6 +6,7 @@ using btr.application.ReportingContext.DashboardPiutangAgg.Queries;
 using btr.application.ReportingContext.DashboardSnapshotAgg;
 using btr.application.ReportingContext.DashboardSnapshotAgg.Models;
 using btr.application.ReportingContext.DashboardSnapshotAgg.Services;
+using btr.application.ReportingContext.Shared;
 using FluentAssertions;
 using Xunit;
 
@@ -310,6 +311,40 @@ namespace btr.test.ReportingContext
                     TopPrincipal = new List<DashboardPurchasingTopPrincipalRow>()
                 }
             };
+        }
+
+        [Fact]
+        public void Compose_CriticalExposures_AttachInvestigationMetadata()
+        {
+            var input = FullInput();
+            input.Piutang.TopCustomers = new List<DashboardPiutangTopCustomer>
+            {
+                new DashboardPiutangTopCustomer
+                {
+                    Rank = 1,
+                    CustomerName = "Alpha Corp",
+                    CustomerCode = "C001",
+                    OutstandingBalance = 5_000_000m
+                }
+            };
+            input.Purchasing.TopPrincipal = new List<DashboardPurchasingTopPrincipalRow>
+            {
+                new DashboardPurchasingTopPrincipalRow
+                {
+                    Rank = 1,
+                    PrincipalName = "Principal A",
+                    PurchaseAmount = 1_000_000m
+                }
+            };
+
+            var result = Compose(input);
+
+            result.CriticalExposures.TopCustomers[0].Investigation.ReportRoute
+                .Should().Be(InvestigationRegistry.PiutangReportRoute);
+            result.CriticalExposures.TopCustomers[0].Investigation.SuggestedQuery.PeriodMode
+                .Should().Be(InvestigationRegistry.PeriodModeAllOpenBalances);
+            result.CriticalExposures.TopPrincipals[0].Investigation.ReportRoute
+                .Should().Be(InvestigationRegistry.PurchasingReportRoute);
         }
 
         private btr.application.ReportingContext.DashboardExecutiveAgg.Queries.DashboardExecutiveResponse Compose(

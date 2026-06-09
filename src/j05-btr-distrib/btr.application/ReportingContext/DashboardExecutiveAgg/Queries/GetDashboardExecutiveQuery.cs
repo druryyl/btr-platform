@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using btr.application.ReportingContext.DashboardExecutiveAgg.Contracts;
+using btr.application.ReportingContext.Shared;
 using MediatR;
 
 namespace btr.application.ReportingContext.DashboardExecutiveAgg.Queries
@@ -110,6 +111,8 @@ namespace btr.application.ReportingContext.DashboardExecutiveAgg.Queries
         public string Name { get; set; }
 
         public decimal Amount { get; set; }
+
+        public InvestigationMetadata Investigation { get; set; }
     }
 
     public class DashboardExecutiveDomainSummary

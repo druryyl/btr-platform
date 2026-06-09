@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.Data.SqlClient;
 using System.Linq;
 using btr.application.ReportingContext.DashboardPurchasingAgg.Queries;
+using btr.application.ReportingContext.Shared;
 using btr.application.ReportingContext.DashboardSnapshotAgg.Contracts;
 using btr.application.ReportingContext.DashboardSnapshotAgg.Models;
 using btr.infrastructure.Helpers;
@@ -240,7 +241,12 @@ VALUES (
                     {
                         Rank = r.Rank,
                         PrincipalName = r.PrincipalName,
-                        PurchaseAmount = r.PurchaseAmount
+                        PurchaseAmount = r.PurchaseAmount,
+                        Investigation = InvestigationMetadataBuilder.Build(
+                            InvestigationRegistry.SignalRankingTopPrincipal,
+                            InvestigationMetadataBuilder.EntityTypePrincipal,
+                            null,
+                            r.PrincipalName)
                     })
                     .ToList()
             };

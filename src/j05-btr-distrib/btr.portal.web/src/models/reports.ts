@@ -2,6 +2,7 @@ export interface SalesReportRow {
   FakturDate: string
   FakturCode: string
   CustomerName: string
+  SalesPersonId: string
   SalesName: string
   FakturTotal: number
   Status: string
@@ -15,6 +16,7 @@ export interface SalesReportResponse {
 }
 
 export interface PiutangReportRow {
+  CustomerCode: string
   CustomerName: string
   SalesName: string
   FakturCode: string
@@ -33,6 +35,7 @@ export interface PiutangReportResponse {
   PeriodFrom: string
   PeriodTo: string
   DateField: string
+  AllOpenBalances: boolean
   GeneratedAt: string
   Summary: PiutangReportSummary
   Rows: PiutangReportRow[]
@@ -45,6 +48,7 @@ export interface ReportDateQuery {
 
 export interface PiutangReportQuery extends ReportDateQuery {
   dateField: 'DueDate' | 'PiutangDate'
+  allOpenBalances?: boolean
 }
 
 export interface InventoryReportRow {

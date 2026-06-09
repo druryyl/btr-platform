@@ -32,9 +32,11 @@ The Dashboard has two levels:
 | **Executive (Home)** | `/dashboard` | **Management Attention Center** — attention-oriented KPIs across Sales, Piutang, Inventory, and Purchasing; Top 5 exposure lists; domain summaries. Links go to domain dashboards only. |
 | **Detail** | `/dashboard/sales`, `/dashboard/piutang`, `/dashboard/customers`, `/dashboard/salesmen`, `/dashboard/inventory`, `/dashboard/inventory-risk`, `/dashboard/purchasing` | Full KPI row, charts, and Top 10 tables for that business area (Customer, Salesman, and Inventory Risk use attention-oriented layout). |
 
-**Navigate:** Sidebar → Dashboard → **Executive** (default home).
+**Navigate:** Sidebar → Dashboard → **Executive** (default home). Use **Open Alert Center** on the executive page or Sidebar → **Alert Center** for the company-wide exception feed.
 
 **Daily review question:** *What requires management attention today?*
+
+**Related:** For cross-domain exception review, use **Alert Center** at `/alerts` (M23).
 
 ### Executive Page Sections
 
@@ -231,6 +233,42 @@ Dashboard uses all open balances; Piutang Report may default to a period filter.
 **Refresh cadence:** 30 minutes (`CollectionIntervalMinutes`). Worker domain: `Collection`.
 
 **Supplements** Piutang, Customer, and Salesman dashboards — does not duplicate Total Piutang or full aging pie.
+
+---
+
+## Alert Center (M23)
+
+**Route:** `/alerts`  
+**Page title:** **Alert Center**
+
+**Purpose:** Company-wide management attention feed — answers *What requires attention right now across the entire business?* Aggregates attention signals from M17–M22 snapshots; does not define new signals.
+
+**Entry points:**
+- Sidebar → Dashboard → **Alert Center**
+- Executive Dashboard → **Open Alert Center**
+
+**Daily review question:** *What requires attention right now across the business?*
+
+### Page Sections (fixed order)
+
+1. **Platform Alerts** — pinned stale/degraded/unavailable warnings
+2. **Alert Summary by Category** — count badges (Sales, Customer, Collection, Inventory, Purchasing, Location)
+3. **Alerts** — exception entity rows, Top 20 per category, producer priority sort
+4. **Inventory Risk Summary** — M19 KPI counts only (no SKU rows); link to Inventory Risk dashboard
+5. **Concentrations** — informational concentration metrics (separate from exceptions)
+6. **Domain Dashboards** — navigation links to all dashboards
+
+### Drill-down path
+
+```text
+Alert Center → Domain Dashboard → Report (?q= pre-filter when available)
+```
+
+**Deduplication (automatic):** M20 wins customer overdue over M17; Legacy Debt replaces Dormant; M20 High Overdue Workload replaces M18 High Overdue Exposure.
+
+**Out of scope:** Alert acknowledgment, history, Desktop deep links, real-time refresh.
+
+**Catalog:** See [ALERT-REGISTRY.md](./ALERT-REGISTRY.md).
 
 ---
 
@@ -467,15 +505,16 @@ When search text is active on reports with a summary bar, footer totals recalcul
 
 ### Piutang Report vs Piutang Dashboard
 
-The **Piutang Dashboard** shows **all** open receivables (all-time analytics). The **Piutang Report** shows open receivables whose selected date field falls within the chosen period (max 31 days). Footer totals on the report therefore **do not** match the Piutang Dashboard when a period filter is applied.
+The **Piutang Dashboard** shows **all** open receivables (all-time analytics). The **Piutang Report** defaults to open receivables whose selected date field falls within the chosen period (max 31 days). When opened from dashboard or alert drill-down with `periodMode=allOpenBalances`, the report shows **All open balances** (no period constraint) so footer totals can reconcile with the Piutang Dashboard.
 
 ### How to Use
 
 1. Choose **Filter by**: `Jatuh Tempo` (collection planning) or `Piutang Date` (receivable record date).
-2. Set the period (max 31 days) and click **Apply**.
+2. Set the period (max 31 days) and click **Apply** (not required in all-open investigation mode).
 3. Use **Search** to filter by customer, sales person, or faktur code.
 4. Sort by Jatuh Tempo to prioritize collection calls.
 5. Use **Refresh** after payments are recorded in BTR Desktop.
+6. After drill-down, read the **Investigating** breadcrumb for signal and source context.
 
 **Search fields:** Customer, Sales, Faktur.
 
@@ -530,8 +569,36 @@ The **Piutang Dashboard** shows **all** open receivables (all-time analytics). T
 3. Use **Search** to filter by invoice code, supplier, warehouse, or posting status (`SUDAH` / `BELUM`).
 4. Confirm footer **Grand Total Purchase** and **Total Invoice** match the Purchasing Dashboard when viewing the same period without search text.
 5. Use **Refresh** after new purchases are entered in BTR Desktop.
+6. When opened from dashboard or Alert Center drill-down, the search box is pre-filled from `?q=` (supplier/principal name).
+7. **Qualified Backlog** investigations auto-filter to `Posting Stok = BELUM` when `posting=BELUM` is present in the URL.
 
 **Search fields:** Invoice, Supplier, Warehouse, Posting Stok.
+
+---
+
+## Investigation Framework (M24)
+
+Management can move from **signal → evidence** consistently across dashboards and Alert Center.
+
+### Workflow
+
+1. **Signal** — KPI card, attention row, ranking row, or alert row shows *what* requires attention.
+2. **Investigate** — primary action opens the matching report with structured query params (`q`, entity IDs, `periodMode`, `posting`).
+3. **Breadcrumb** — report pages show *Investigating: {entity} · Signal: {label} · Source: {dashboard}*.
+4. **View Dashboard** — optional secondary action (Alert Center, breadcrumb link) for domain context.
+5. **Desktop** — optional next-step text (e.g. Piutang Tracker FT5); transaction work remains in BTR Desktop.
+
+### Report-first alert path (M23 + M24)
+
+| Entity type | Primary | Secondary |
+| ----------- | ------- | --------- |
+| Customer, Salesman, Warehouse, Principal, Item | **Investigate** → Report | View Dashboard |
+| Company, System | View Dashboard only | — |
+| Wilayah | View Dashboard → Collection | — |
+
+### Piutang all-open balances
+
+Drill-down from Customer Analytics, Collection, Piutang Dashboard, or piutang-bound alerts opens Piutang Report in **All open balances** mode (`periodMode=allOpenBalances`) so report evidence matches dashboard open-balance semantics.
 
 ---
 
@@ -542,7 +609,8 @@ The **Piutang Dashboard** shows **all** open receivables (all-time analytics). T
 ```text
 BTR Portal
 ├── Dashboard
-│   ├── Overview          → /dashboard
+│   ├── Executive         → /dashboard
+│   ├── Alert Center      → /alerts
 │   ├── Sales             → /dashboard/sales
 │   ├── Piutang           → /dashboard/piutang
 │   ├── Customers         → /dashboard/customers
@@ -563,7 +631,8 @@ BTR Portal
 | ----- | ---- | ------------- |
 | `/login` | Login | No |
 | `/` | Redirect to `/dashboard` | — |
-| `/dashboard` | Dashboard home (summary KPIs) | Yes |
+| `/dashboard` | Management Attention Center (executive) | Yes |
+| `/alerts` | Alert Center | Yes |
 | `/dashboard/sales` | Sales analytics | Yes |
 | `/dashboard/piutang` | Piutang analytics | Yes |
 | `/dashboard/customers` | Customer Analytics | Yes |

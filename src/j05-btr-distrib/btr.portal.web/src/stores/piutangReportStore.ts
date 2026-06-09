@@ -13,16 +13,22 @@ export const usePiutangReportStore = defineStore('piutangReport', () => {
   const to = ref(currentMonthRange().to)
   const dateField = ref<PiutangDateField>('DueDate')
   const freeText = ref('')
+  const allOpenBalances = ref(false)
 
-  async function loadReport(): Promise<void> {
+  async function loadReport(options?: { allOpenBalances?: boolean }): Promise<void> {
     loading.value = true
     error.value = null
+
+    if (options?.allOpenBalances !== undefined) {
+      allOpenBalances.value = options.allOpenBalances
+    }
 
     try {
       report.value = await fetchPiutangReport({
         from: from.value,
         to: to.value,
         dateField: dateField.value,
+        allOpenBalances: allOpenBalances.value,
       })
     } catch (err) {
       error.value = getApiErrorMessage(err, 'Failed to load piutang report.')
@@ -40,6 +46,7 @@ export const usePiutangReportStore = defineStore('piutangReport', () => {
     to.value = defaults.to
     dateField.value = 'DueDate'
     freeText.value = ''
+    allOpenBalances.value = false
   }
 
   return {
@@ -50,6 +57,7 @@ export const usePiutangReportStore = defineStore('piutangReport', () => {
     to,
     dateField,
     freeText,
+    allOpenBalances,
     loadReport,
     reset,
   }

@@ -2,8 +2,11 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
+using btr.application.ReportingContext.DashboardAlertCenterAgg.Services;
 using btr.application.ReportingContext.DashboardExecutiveAgg.Queries;
+using btr.application.ReportingContext.DashboardPiutangAgg.Queries;
 using btr.application.ReportingContext.DashboardSnapshotAgg;
+using btr.application.ReportingContext.Shared;
 using btr.application.ReportingContext.DashboardSnapshotAgg.Models;
 using btr.application.ReportingContext.DashboardSnapshotAgg.Services;
 
@@ -27,7 +30,8 @@ namespace btr.application.ReportingContext.DashboardExecutiveAgg.Services
             var inventory = input.Inventory;
             var purchasing = input.Purchasing;
 
-            var hasUnavailable = sales == null || piutang == null || inventory == null || purchasing == null;
+            var hasUnavailable = DashboardSnapshotHealthHelper.HasExecutiveUnavailableDomain(
+                sales, piutang, inventory, purchasing);
 
             var salesAttention = ComposeSales(sales);
             var piutangAttention = ComposePiutang(piutang);
@@ -35,20 +39,16 @@ namespace btr.application.ReportingContext.DashboardExecutiveAgg.Services
             var inventoryAttention = ComposeInventory(inventory);
             var criticalExposures = ComposeCriticalExposures(piutang, inventory, purchasing);
 
-            var generatedAtValues = new List<DateTime>();
-            if (sales != null) generatedAtValues.Add(sales.GeneratedAt);
-            if (piutang != null) generatedAtValues.Add(piutang.GeneratedAt);
-            if (inventory != null) generatedAtValues.Add(inventory.GeneratedAt);
-            if (purchasing != null) generatedAtValues.Add(purchasing.GeneratedAt);
+            var lastRefreshed = DashboardSnapshotHealthHelper.ResolveLastRefreshed(
+                sales?.GeneratedAt,
+                piutang?.GeneratedAt,
+                inventory?.GeneratedAt,
+                purchasing?.GeneratedAt);
 
-            var lastRefreshed = generatedAtValues.Count > 0
-                ? (DateTime?)generatedAtValues.Min()
-                : null;
+            var isDataFresh = DashboardSnapshotHealthHelper.IsExecutiveDataFresh(
+                sales, piutang, inventory, purchasing, options, utcNow);
 
-            var isDataFresh = IsAllDataFresh(sales, piutang, inventory, purchasing, options, utcNow);
-
-            var overallHealth = DashboardSnapshotHealthStatusResolver.ResolveOverallStatus(
-                refreshStatuses.Select(s => s?.Status).ToList());
+            var overallHealth = DashboardSnapshotHealthHelper.ResolveOverallHealth(refreshStatuses);
 
             var domainSummaries = ComposeDomainSummaries(
                 salesAttention, piutangAttention, purchasingAttention, inventoryAttention);
@@ -207,7 +207,12 @@ namespace btr.application.ReportingContext.DashboardExecutiveAgg.Services
                 {
                     Rank = c.Rank,
                     Name = c.CustomerName,
-                    Amount = c.OutstandingBalance
+                    Amount = c.OutstandingBalance,
+                    Investigation = InvestigationMetadataBuilder.Build(
+                        InvestigationRegistry.SignalExecutiveTopCustomerExposure,
+                        InvestigationMetadataBuilder.EntityTypeCustomer,
+                        c.CustomerCode,
+                        c.CustomerName)
                 })
                 .ToList() ?? new List<DashboardExecutiveRiskItem>();
 
@@ -221,7 +226,12 @@ namespace btr.application.ReportingContext.DashboardExecutiveAgg.Services
                 {
                     Rank = r.Top10Rank ?? 0,
                     Name = r.Name,
-                    Amount = r.InventoryValue
+                    Amount = r.InventoryValue,
+                    Investigation = InvestigationMetadataBuilder.Build(
+                        InvestigationRegistry.SignalExecutiveTopCategoryExposure,
+                        InvestigationMetadataBuilder.EntityTypeCategory,
+                        null,
+                        r.Name)
                 })
                 .ToList();
 
@@ -233,7 +243,12 @@ namespace btr.application.ReportingContext.DashboardExecutiveAgg.Services
                 {
                     Rank = r.Top10Rank ?? 0,
                     Name = r.Name,
-                    Amount = r.InventoryValue
+                    Amount = r.InventoryValue,
+                    Investigation = InvestigationMetadataBuilder.Build(
+                        InvestigationRegistry.SignalExecutiveTopSupplierExposure,
+                        InvestigationMetadataBuilder.EntityTypeSupplier,
+                        null,
+                        r.Name)
                 })
                 .ToList();
 
@@ -244,7 +259,12 @@ namespace btr.application.ReportingContext.DashboardExecutiveAgg.Services
                 {
                     Rank = p.Rank,
                     Name = p.PrincipalName,
-                    Amount = p.PurchaseAmount
+                    Amount = p.PurchaseAmount,
+                    Investigation = InvestigationMetadataBuilder.Build(
+                        InvestigationRegistry.SignalExecutiveTopPrincipalExposure,
+                        InvestigationMetadataBuilder.EntityTypePrincipal,
+                        null,
+                        p.PrincipalName)
                 })
                 .ToList() ?? new List<DashboardExecutiveRiskItem>();
 
@@ -255,38 +275,6 @@ namespace btr.application.ReportingContext.DashboardExecutiveAgg.Services
                 TopSuppliers = topSuppliers,
                 TopPrincipals = topPrincipals
             };
-        }
-
-        private static bool IsAllDataFresh(
-            DashboardSalesAggregateResult sales,
-            DashboardPiutangAggregateResult piutang,
-            DashboardInventoryAggregateResult inventory,
-            DashboardPurchasingAggregateResult purchasing,
-            DashboardSnapshotOptions options,
-            DateTime utcNow)
-        {
-            var hasAnyDomain = sales != null || piutang != null || inventory != null || purchasing != null;
-            if (!hasAnyDomain)
-                return false;
-
-            if (sales != null && !IsDomainFresh(sales.GeneratedAt, options.SalesIntervalMinutes, utcNow))
-                return false;
-
-            if (piutang != null && !IsDomainFresh(piutang.GeneratedAt, options.PiutangIntervalMinutes, utcNow))
-                return false;
-
-            if (inventory != null && !IsDomainFresh(inventory.GeneratedAt, options.InventoryIntervalMinutes, utcNow))
-                return false;
-
-            if (purchasing != null && !IsDomainFresh(purchasing.GeneratedAt, options.PurchasingIntervalMinutes, utcNow))
-                return false;
-
-            return true;
-        }
-
-        private static bool IsDomainFresh(DateTime generatedAt, int intervalMinutes, DateTime utcNow)
-        {
-            return (utcNow - generatedAt).TotalMinutes <= intervalMinutes;
         }
 
         private static IList<DashboardExecutiveDomainSummary> ComposeDomainSummaries(

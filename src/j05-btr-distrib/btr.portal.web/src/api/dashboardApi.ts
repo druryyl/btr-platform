@@ -1,6 +1,7 @@
 import { httpClient } from '@/api/httpClient'
 import { isApiSuccess, type ApiResponse } from '@/models/api'
 import type {
+  DashboardAlertCenterResponse,
   DashboardCollectionResponse,
   DashboardLocationResponse,
   DashboardCustomerResponse,
@@ -119,6 +120,16 @@ export async function fetchDashboardLocation(): Promise<DashboardLocationRespons
 
   if (!isApiSuccess(data) || !data.Data) {
     throw new Error(data.Message ?? 'Failed to load location dashboard.')
+  }
+
+  return data.Data
+}
+
+export async function fetchDashboardAlerts(): Promise<DashboardAlertCenterResponse> {
+  const { data } = await httpClient.get<ApiResponse<DashboardAlertCenterResponse>>('/api/dashboard/alerts')
+
+  if (!isApiSuccess(data) || !data.Data) {
+    throw new Error(data.Message ?? 'Failed to load alert center.')
   }
 
   return data.Data

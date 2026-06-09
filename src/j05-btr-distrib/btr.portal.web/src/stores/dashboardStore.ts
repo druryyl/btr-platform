@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import {
+  fetchDashboardAlerts,
   fetchDashboardCustomer,
   fetchDashboardCollection,
   fetchDashboardLocation,
@@ -15,6 +16,7 @@ import {
 } from '@/api/dashboardApi'
 import { getApiErrorMessage } from '@/api/httpClient'
 import type {
+  DashboardAlertCenterResponse,
   DashboardCollectionResponse,
   DashboardLocationResponse,
   DashboardCustomerResponse,
@@ -31,6 +33,7 @@ import type {
 export const useDashboardStore = defineStore('dashboard', () => {
   const overview = ref<DashboardOverviewResponse | null>(null)
   const executive = ref<DashboardExecutiveResponse | null>(null)
+  const alerts = ref<DashboardAlertCenterResponse | null>(null)
   const sales = ref<DashboardSalesResponse | null>(null)
   const piutang = ref<DashboardPiutangResponse | null>(null)
   const inventory = ref<DashboardInventoryResponse | null>(null)
@@ -55,6 +58,23 @@ export const useDashboardStore = defineStore('dashboard', () => {
       }
     } catch (err) {
       error.value = getApiErrorMessage(err, 'Failed to load executive dashboard.')
+    } finally {
+      loading.value = false
+    }
+  }
+
+  async function loadAlerts(): Promise<void> {
+    loading.value = true
+    error.value = null
+
+    try {
+      alerts.value = await fetchDashboardAlerts()
+
+      if (alerts.value.HasUnavailableDomain) {
+        error.value = 'Some dashboard data is not yet available. Run the snapshot refresh worker.'
+      }
+    } catch (err) {
+      error.value = getApiErrorMessage(err, 'Failed to load alert center.')
     } finally {
       loading.value = false
     }
@@ -217,6 +237,7 @@ export const useDashboardStore = defineStore('dashboard', () => {
   function reset(): void {
     overview.value = null
     executive.value = null
+    alerts.value = null
     sales.value = null
     piutang.value = null
     inventory.value = null
@@ -233,6 +254,7 @@ export const useDashboardStore = defineStore('dashboard', () => {
   return {
     overview,
     executive,
+    alerts,
     sales,
     piutang,
     inventory,
@@ -246,6 +268,7 @@ export const useDashboardStore = defineStore('dashboard', () => {
     error,
     loadDashboard,
     loadExecutive,
+    loadAlerts,
     loadSales,
     loadPiutang,
     loadInventory,

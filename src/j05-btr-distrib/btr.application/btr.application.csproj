@@ -62,6 +62,9 @@
     <Reference Include="Newtonsoft.Json, Version=13.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
       <HintPath>..\packages\Newtonsoft.Json.13.0.1\lib\net45\Newtonsoft.Json.dll</HintPath>
     </Reference>
+    <Reference Include="NLog, Version=5.0.0.0, Culture=neutral, PublicKeyToken=5120e14c03d0593c, processorArchitecture=MSIL">
+      <HintPath>..\packages\NLog.5.2.8\lib\net46\NLog.dll</HintPath>
+    </Reference>
     <Reference Include="Polly, Version=7.0.0.0, Culture=neutral, PublicKeyToken=c8a3ffc3f8f825cc, processorArchitecture=MSIL">
       <HintPath>..\packages\Polly.7.2.4\lib\net472\Polly.dll</HintPath>
     </Reference>
@@ -267,6 +270,11 @@
     <Compile Include="ReportingContext\DashboardPiutangAgg\Queries\GetDashboardPiutangQuery.cs" />
     <Compile Include="ReportingContext\DashboardOverviewAgg\Contracts\IDashboardOverviewDal.cs" />
     <Compile Include="ReportingContext\DashboardOverviewAgg\Queries\GetDashboardOverviewQuery.cs" />
+    <Compile Include="ReportingContext\DashboardAlertCenterAgg\Contracts\IDashboardAlertCenterDal.cs" />
+    <Compile Include="ReportingContext\DashboardAlertCenterAgg\Queries\GetDashboardAlertCenterQuery.cs" />
+    <Compile Include="ReportingContext\DashboardAlertCenterAgg\Services\AlertCenterRegistry.cs" />
+    <Compile Include="ReportingContext\DashboardAlertCenterAgg\Services\DashboardAlertCenterComposer.cs" />
+    <Compile Include="ReportingContext\DashboardAlertCenterAgg\Services\DashboardSnapshotHealthHelper.cs" />
     <Compile Include="ReportingContext\DashboardExecutiveAgg\Contracts\IDashboardExecutiveDal.cs" />
     <Compile Include="ReportingContext\DashboardExecutiveAgg\Queries\GetDashboardExecutiveQuery.cs" />
     <Compile Include="ReportingContext\DashboardExecutiveAgg\Services\DashboardExecutiveComposer.cs" />
@@ -350,6 +358,9 @@
     <Compile Include="ReportingContext\PiutangReportAgg\Contracts\IPiutangReportDal.cs" />
     <Compile Include="ReportingContext\PiutangReportAgg\PiutangReportDateField.cs" />
     <Compile Include="ReportingContext\PiutangReportAgg\Queries\GetPiutangReportQuery.cs" />
+    <Compile Include="ReportingContext\Shared\InvestigationMetadata.cs" />
+    <Compile Include="ReportingContext\Shared\InvestigationMetadataBuilder.cs" />
+    <Compile Include="ReportingContext\Shared\InvestigationRegistry.cs" />
     <Compile Include="ReportingContext\Shared\ReportPeriodRequest.cs" />
     <Compile Include="ReportingContext\Shared\ReportPeriodValidator.cs" />
     <Compile Include="ReportingContext\PurchasingReportAgg\Contracts\IPurchasingReportDal.cs" />

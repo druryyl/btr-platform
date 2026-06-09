@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using btr.application.ReportingContext.DashboardInventoryAgg.Contracts;
+using btr.application.ReportingContext.Shared;
 using MediatR;
 
 namespace btr.application.ReportingContext.DashboardInventoryAgg.Queries
@@ -42,6 +43,8 @@ namespace btr.application.ReportingContext.DashboardInventoryAgg.Queries
         public string Name { get; set; }
 
         public decimal InventoryValue { get; set; }
+
+        public InvestigationMetadata Investigation { get; set; }
     }
 
     public class GetDashboardInventoryHandler

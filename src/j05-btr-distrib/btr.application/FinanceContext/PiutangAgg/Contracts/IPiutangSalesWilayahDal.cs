@@ -9,6 +9,8 @@ namespace btr.application.FinanceContext.PiutangAgg.Contracts
     public interface IPiutangSalesWilayahDal : IListData<PiutangSalesWilayahDto, Periode>
     {
         IEnumerable<PiutangSalesWilayahDto> ListData(Periode filter, PiutangReportDateField dateField);
+
+        IEnumerable<PiutangSalesWilayahDto> ListAllOpenBalances();
     }
 
     public class PiutangSalesWilayahDto

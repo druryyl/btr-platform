@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using btr.application.ReportingContext.DashboardSalesAgg.Contracts;
+using btr.application.ReportingContext.Shared;
 using MediatR;
 
 namespace btr.application.ReportingContext.DashboardSalesAgg.Queries
@@ -53,7 +54,11 @@ namespace btr.application.ReportingContext.DashboardSalesAgg.Queries
 
         public string SalesPersonName { get; set; }
 
+        public string SalesPersonId { get; set; }
+
         public decimal CompletedOmzet { get; set; }
+
+        public InvestigationMetadata Investigation { get; set; }
     }
 
     public class DashboardSalesWeekTrendItem

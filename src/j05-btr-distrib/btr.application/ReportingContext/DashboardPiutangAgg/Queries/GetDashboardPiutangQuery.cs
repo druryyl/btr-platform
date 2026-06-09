@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using btr.application.ReportingContext.DashboardPiutangAgg.Contracts;
+using btr.application.ReportingContext.Shared;
 using MediatR;
 
 namespace btr.application.ReportingContext.DashboardPiutangAgg.Queries
@@ -45,7 +46,11 @@ namespace btr.application.ReportingContext.DashboardPiutangAgg.Queries
 
         public string CustomerName { get; set; }
 
+        public string CustomerCode { get; set; }
+
         public decimal OutstandingBalance { get; set; }
+
+        public InvestigationMetadata Investigation { get; set; }
     }
 
     public class GetDashboardPiutangHandler

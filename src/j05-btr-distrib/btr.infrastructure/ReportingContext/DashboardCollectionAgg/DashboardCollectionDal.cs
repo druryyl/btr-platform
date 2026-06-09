@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using btr.application.ReportingContext.DashboardCollectionAgg.Contracts;
 using btr.application.ReportingContext.DashboardCollectionAgg.Queries;
+using btr.application.ReportingContext.Shared;
 using btr.application.ReportingContext.DashboardSnapshotAgg;
 using btr.application.ReportingContext.DashboardSnapshotAgg.Contracts;
 using btr.application.ReportingContext.DashboardSnapshotAgg.Models;
@@ -100,7 +101,12 @@ namespace btr.infrastructure.ReportingContext.DashboardCollectionAgg
                         EntityName = r.CustomerName,
                         Amount = r.OverdueBalance,
                         PercentOfTotal = r.PercentOfTotal,
-                        ReportRoute = PiutangReportRoute
+                        ReportRoute = PiutangReportRoute,
+                        Investigation = InvestigationMetadataBuilder.Build(
+                            InvestigationRegistry.SignalRankingCollectionTopOverdueCustomer,
+                            InvestigationMetadataBuilder.EntityTypeCustomer,
+                            r.CustomerCode,
+                            r.CustomerName)
                     })
                     .ToList() ?? new List<DashboardCollectionRankingRow>(),
                 TopOverdueSalesmen = snapshot.TopOverdueSalesmen?
@@ -111,7 +117,12 @@ namespace btr.infrastructure.ReportingContext.DashboardCollectionAgg
                         EntityName = r.SalesPersonName,
                         Amount = r.OverdueBalance,
                         PercentOfTotal = r.PercentOfTotal,
-                        ReportRoute = PiutangReportRoute
+                        ReportRoute = PiutangReportRoute,
+                        Investigation = InvestigationMetadataBuilder.Build(
+                            InvestigationRegistry.SignalRankingCollectionTopOverdueSalesman,
+                            InvestigationMetadataBuilder.EntityTypeSalesman,
+                            r.SalesPersonId,
+                            r.SalesPersonName)
                     })
                     .ToList() ?? new List<DashboardCollectionRankingRow>(),
                 TopOverdueWilayah = snapshot.TopOverdueWilayah?
@@ -141,7 +152,14 @@ namespace btr.infrastructure.ReportingContext.DashboardCollectionAgg
                 ValueAmount = row.ValueAmount,
                 ValueText = row.ValueText,
                 WilayahName = row.WilayahName,
-                ReportRoute = row.ReportRoute
+                ReportRoute = row.ReportRoute,
+                Investigation = InvestigationMetadataBuilder.Build(
+                    row.SignalKey,
+                    row.EntityType,
+                    row.EntityCode,
+                    row.EntityName,
+                    signalLabelOverride: row.SignalLabel,
+                    reportRouteOverride: row.ReportRoute)
             };
         }
 

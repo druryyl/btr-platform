@@ -251,6 +251,17 @@ Reads **source DALs** at refresh (stok balance, faktur, invoice, warehouse maste
 
 **Executive promotion (Phase 2 — deferred):** Top 1 Warehouse Inventory %, Top 1 Warehouse Sales %, Inactive Warehouse With Stock Count.
 
+### Alert Center consumer (M23 — no new snapshot domain)
+
+M23 **Alert Center** reads existing producer snapshots at API request time via `DashboardAlertCenterComposer`. **No** new `BTR_PortalDashboard*` tables, refresh workers, or aggregator domains.
+
+| Reads from | M23 use |
+| --- | --- |
+| Customer, Salesman, Collection, PurchasingManagement, Location attention tables | Entity alert rows (deduplicated, capped) |
+| Inventory Risk KPI snapshot | Summary panel only — not item attention rows |
+| Sales KPI + executive health inputs | Company achievement alert; platform stale/degraded flags |
+| Domain KPI snapshots (Customer, Collection, Location, Piutang, Inventory Risk) | Concentration section metrics |
+
 ### Inventory Risk (slow moving & dead stock — M19)
 
 Reads **source DALs** at refresh (`IStokBalanceViewDal` + `IBrgLastFakturDal`) — not M15 Inventory snapshot tables. Uses shared `DashboardInventoryItemGroupBuilder` for position rules.

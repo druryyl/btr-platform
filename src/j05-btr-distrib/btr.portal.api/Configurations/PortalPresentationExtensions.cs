@@ -20,9 +20,11 @@ namespace btr.portal.api.Configurations
             services.AddTransient<Controllers.Admin.AdminDashboardRefreshController>();
             services.AddTransient<Controllers.Dashboard.OverviewDashboardController>();
             services.AddTransient<Controllers.Dashboard.ExecutiveDashboardController>();
+            services.AddTransient<Controllers.Dashboard.AlertCenterDashboardController>();
             services.AddTransient<Controllers.Dashboard.SalesDashboardController>();
             services.AddTransient<Controllers.Dashboard.PiutangDashboardController>();
             services.AddTransient<Controllers.Dashboard.InventoryDashboardController>();
+            services.AddTransient<Controllers.Dashboard.InventoryRiskDashboardController>();
             services.AddTransient<Controllers.Dashboard.PurchasingDashboardController>();
             services.AddTransient<Controllers.Dashboard.CustomerDashboardController>();
             services.AddTransient<Controllers.Dashboard.SalesmanDashboardController>();

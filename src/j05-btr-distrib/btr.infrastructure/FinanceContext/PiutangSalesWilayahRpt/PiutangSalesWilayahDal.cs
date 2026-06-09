@@ -90,5 +90,15 @@ namespace btr.infrastructure.FinanceContext.PiutangSalesWilayahRpt
                 return conn.Read<PiutangSalesWilayahDto>(sql, dp);
             }
         }
+
+        public IEnumerable<PiutangSalesWilayahDto> ListAllOpenBalances()
+        {
+            var sql = $"{SelectSql} WHERE aa.Sisa > 1";
+
+            using (var conn = new SqlConnection(ConnStringHelper.Get(_opt)))
+            {
+                return conn.Read<PiutangSalesWilayahDto>(sql);
+            }
+        }
     }
 }

@@ -1,12 +1,18 @@
 <script setup lang="ts">
 import { computed, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 import DashboardDetailLayout from '@/components/dashboard/DashboardDetailLayout.vue'
 import AgingPieChart from '@/components/dashboard/AgingPieChart.vue'
 import Top10RankingTable from '@/components/dashboard/Top10RankingTable.vue'
 import { formatCurrency, formatNumber } from '@/services/formatters'
+import type { DashboardPiutangTopCustomer } from '@/models/dashboard'
+import { resolveInvestigationSourceLabel } from '@/services/investigationSourceLabels'
+import { navigateToInvestigation } from '@/services/navigateToInvestigation'
 import { useDashboardStore } from '@/stores/dashboardStore'
 
 const dashboard = useDashboardStore()
+const router = useRouter()
+const sourceLabel = resolveInvestigationSourceLabel('/dashboard/piutang')
 
 const rankingColumns = [
   { field: 'Rank', header: 'Rank' },
@@ -17,6 +23,12 @@ const rankingColumns = [
 const rankingRows = computed(
   () => (dashboard.piutang?.TopCustomers ?? []) as Record<string, unknown>[],
 )
+
+function onRankingClick(row: Record<string, unknown>): void {
+  const item = row as unknown as DashboardPiutangTopCustomer
+  if (!item.Investigation) return
+  navigateToInvestigation(router, item.Investigation, sourceLabel)
+}
 
 onMounted(() => {
   void dashboard.loadPiutang()
@@ -65,7 +77,9 @@ onMounted(() => {
       :rows="rankingRows"
       :loading="dashboard.loading"
       value-field="OutstandingBalance"
+      clickable
       empty-message="No outstanding customer data."
+      @row-click="onRankingClick"
     />
   </DashboardDetailLayout>
 </template>

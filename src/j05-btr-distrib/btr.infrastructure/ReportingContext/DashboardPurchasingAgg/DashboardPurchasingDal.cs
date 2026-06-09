@@ -4,6 +4,7 @@ using System.Globalization;
 using System.Linq;
 using btr.application.ReportingContext.DashboardPurchasingAgg.Contracts;
 using btr.application.ReportingContext.DashboardPurchasingAgg.Queries;
+using btr.application.ReportingContext.Shared;
 using btr.application.ReportingContext.DashboardSnapshotAgg;
 using btr.application.ReportingContext.DashboardSnapshotAgg.Contracts;
 using btr.application.ReportingContext.DashboardSnapshotAgg.Models;
@@ -129,7 +130,14 @@ namespace btr.infrastructure.ReportingContext.DashboardPurchasingAgg
                     SignalLabel = row.SignalLabel,
                     ValueAmount = row.ValueAmount,
                     ValueText = row.ValueText,
-                    ReportRoute = row.ReportRoute
+                    ReportRoute = row.ReportRoute,
+                    Investigation = InvestigationMetadataBuilder.Build(
+                        row.SignalKey,
+                        row.EntityType ?? InvestigationMetadataBuilder.EntityTypePrincipal,
+                        row.EntityName,
+                        row.EntityName,
+                        signalLabelOverride: row.SignalLabel,
+                        reportRouteOverride: row.ReportRoute)
                 })
                 .ToList() ?? new List<DashboardPurchasingAttentionItem>();
 
@@ -146,7 +154,12 @@ namespace btr.infrastructure.ReportingContext.DashboardPurchasingAgg
                     PercentOfAtRisk = row.PercentOfAtRisk,
                     IsCompoundDependency = row.IsCompoundDependency,
                     IsInventoryNoPurchase = row.IsInventoryNoPurchase,
-                    ReportRoute = row.ReportRoute ?? PurchasingReportRoute
+                    ReportRoute = row.ReportRoute ?? PurchasingReportRoute,
+                    Investigation = InvestigationMetadataBuilder.Build(
+                        InvestigationRegistry.SignalRankingTopPrincipal,
+                        InvestigationMetadataBuilder.EntityTypePrincipal,
+                        null,
+                        row.PrincipalName)
                 })
                 .ToList() ?? new List<DashboardPurchasingPrincipalExposureItem>();
 

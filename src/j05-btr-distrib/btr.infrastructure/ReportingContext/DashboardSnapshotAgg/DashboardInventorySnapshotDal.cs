@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.Data.SqlClient;
 using System.Linq;
 using btr.application.ReportingContext.DashboardInventoryAgg.Queries;
+using btr.application.ReportingContext.Shared;
 using btr.application.ReportingContext.DashboardSnapshotAgg.Contracts;
 using btr.application.ReportingContext.DashboardSnapshotAgg.Models;
 using btr.application.ReportingContext.DashboardSnapshotAgg.Services;
@@ -135,7 +136,12 @@ VALUES (
                 {
                     Rank = r.Top10Rank ?? 0,
                     Name = r.Name,
-                    InventoryValue = r.InventoryValue
+                    InventoryValue = r.InventoryValue,
+                    Investigation = InvestigationMetadataBuilder.Build(
+                        InvestigationRegistry.SignalLegacyTopCategory,
+                        InvestigationMetadataBuilder.EntityTypeCategory,
+                        null,
+                        r.Name)
                 })
                 .ToList();
 
@@ -146,7 +152,12 @@ VALUES (
                 {
                     Rank = r.Top10Rank ?? 0,
                     Name = r.Name,
-                    InventoryValue = r.InventoryValue
+                    InventoryValue = r.InventoryValue,
+                    Investigation = InvestigationMetadataBuilder.Build(
+                        InvestigationRegistry.SignalLegacyTopSupplier,
+                        InvestigationMetadataBuilder.EntityTypeSupplier,
+                        null,
+                        r.Name)
                 })
                 .ToList();
 

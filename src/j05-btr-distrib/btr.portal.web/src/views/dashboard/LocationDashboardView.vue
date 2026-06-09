@@ -18,7 +18,8 @@ import Top10RankingTable from '@/components/dashboard/Top10RankingTable.vue'
 
 import { formatNumber, formatPercent } from '@/services/formatters'
 
-import { navigateToReport } from '@/services/navigateToReport'
+import { resolveInvestigationSourceLabel } from '@/services/investigationSourceLabels'
+import { navigateToDashboard, navigateToInvestigation } from '@/services/navigateToInvestigation'
 
 import type { DashboardLocationRankingRow } from '@/models/dashboard'
 import { useDashboardStore } from '@/stores/dashboardStore'
@@ -29,7 +30,7 @@ const dashboard = useDashboardStore()
 
 const router = useRouter()
 
-
+const sourceLabel = resolveInvestigationSourceLabel('/dashboard/locations')
 
 const cards = computed(() => dashboard.location?.AttentionCards)
 
@@ -68,14 +69,7 @@ const wilayahRankingColumns = [
 
 
 function mapWarehouseRows(rows: DashboardLocationRankingRow[] | undefined) {
-  return (rows ?? []).map((row) => ({
-    Rank: row.Rank,
-    EntityCode: row.EntityCode,
-    EntityName: row.EntityName,
-    Amount: row.Amount,
-    PercentOfTotal: row.PercentOfTotal,
-    ReportRoute: row.ReportRoute,
-  }))
+  return (rows ?? []) as Record<string, unknown>[]
 }
 
 
@@ -111,25 +105,15 @@ const wilayahRankingRows = computed(() =>
 
 
 function onInventoryRankingRowClick(row: Record<string, unknown>): void {
-
-  const entityName = String(row.EntityName ?? '')
-
-  const reportRoute = String(row.ReportRoute ?? '/reports/inventory')
-
-  if (entityName) {
-
-    navigateToReport(router, reportRoute, entityName)
-
-  }
-
+  const item = row as unknown as DashboardLocationRankingRow
+  if (!item.Investigation) return
+  navigateToInvestigation(router, item.Investigation, sourceLabel)
 }
 
-
-
-function onAtRiskRankingRowClick(): void {
-
-  void router.push('/dashboard/inventory-risk')
-
+function onAtRiskRankingRowClick(row: Record<string, unknown>): void {
+  const item = row as unknown as DashboardLocationRankingRow
+  const dashboardRoute = item.Investigation?.DashboardRoute ?? '/dashboard/inventory-risk'
+  navigateToDashboard(router, dashboardRoute)
 }
 
 

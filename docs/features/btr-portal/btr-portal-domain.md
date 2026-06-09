@@ -41,6 +41,7 @@ The portal complements BTR Desktop; it does not replace operational transaction 
 | Dashboards | Executive home (Management Attention Center), Sales, Piutang, Customer Analytics, Salesman Performance, Inventory, Inventory Risk (Slow Moving & Dead Stock), Purchasing — detail analytics per domain |
 | Reports | Sales, Piutang, Inventory, Purchasing — tabular transaction/detail views |
 | Analytics | KPI cards, charts, Top 10 rankings, footer summary totals |
+| Investigation / drill-down (M24) | Signal → report evidence navigation with traceability metadata across dashboards, Alert Center, and rankings |
 
 ### Business Areas Covered
 
@@ -116,6 +117,53 @@ Executive landing page titled **Management Attention Center** — answers *What 
 **Freshness:** Consolidated `LastRefreshed` = `Min(GeneratedAt)` across domains. `IsDataFresh` when all available domains are within configured interval minutes.
 
 **Legacy endpoint:** `GET /api/dashboard/overview` retained but no longer used by the home page.
+
+### Alert Center (`/alerts`) — M23
+
+Cross-domain **management attention aggregator** — consumes M17–M22 snapshot attention rows and selected platform/executive flags. **Does not** define signals, refresh workers, or snapshot tables.
+
+| Aspect | Rule |
+| ------ | ---- |
+| Role | Consumer only — read-time composition via `DashboardAlertCenterComposer` |
+| Categories | Sales · Customer · Collection · Inventory · Purchasing · Location · Platform |
+| Volume | Top 20 entity alerts per category; M19 item rows excluded (summary KPI panel only) |
+| Deduplication | M20 canonical for customer overdue; Legacy Debt suppresses Dormant; M20 workload suppresses M18 overdue exposure |
+| Catalog | `AlertCenterRegistry` mirrors [ALERT-REGISTRY.md](./ALERT-REGISTRY.md) |
+
+**API:** `GET /api/dashboard/alerts`
+
+**Relationship to M16:** M16 answers *What is happening?* (executive summary). M23 answers *What needs attention?* (exception workspace). Landing page remains `/dashboard`.
+
+### Investigation Framework (M24) — platform capability
+
+Horizontal **investigation and navigation framework** unifying drill-down from KPIs, alerts, rankings, and attention signals (M16–M23) to report evidence. Answers three management questions:
+
+1. **Why am I seeing this?** — signal label and originating surface shown on report breadcrumb
+2. **Show me the evidence.** — report opens with correct filters, entity IDs, and period semantics
+3. **What should I inspect next?** — optional dashboard context, multi-step guidance, or Desktop screen name (text only)
+
+**Investigation depth model (portal):**
+
+| Depth | Surface | M24 role |
+| ----- | ------- | -------- |
+| 1 — Signal | KPI card, alert row, attention / ranking row | Emit `InvestigationMetadata` |
+| 2 — Context | Domain dashboard | Optional via **View Dashboard** |
+| 3 — Tabular evidence | Four reports | Primary terminus — breadcrumb + filters |
+| 4 — Transaction audit | BTR Desktop | Text guidance only — no deep links |
+
+**Report-first navigation defaults:**
+
+| Entity type | Primary action | Secondary |
+| ----------- | -------------- | --------- |
+| Customer, Salesman, Warehouse, Principal, Item | **Investigate** → Report | View Dashboard |
+| Company, System | View Dashboard only | — |
+| Wilayah | View Dashboard → Collection | — |
+
+**Piutang alignment:** Drill-down from Customer Analytics, Collection, Piutang Dashboard, piutang-bound alerts, and piutang rankings opens Piutang Report in **All open balances** mode so report evidence matches dashboard open-balance semantics (`Sisa > 1`).
+
+**Contract:** Shared `InvestigationMetadata` shape and `InvestigationRegistry` routing defaults — see [btr-portal-architecture.md](./btr-portal-architecture.md). Operational workflow — see [btr-portal-operational.md](./btr-portal-operational.md) § Investigation Framework.
+
+**Relationship to M16 / M23:** M16 surfaces executive Top 5 exposures (clickable with investigation metadata). M23 Alert Center uses **Investigate** (report) as primary action for entity alerts; M24 does not change alert qualification or deduplication (M23 ownership preserved).
 
 **Background refresh:** Scheduled by `btr.portal.worker` via Windows Task Scheduler (per-domain jobs). Authenticated users may trigger an on-demand rebuild via `POST /api/admin/dashboard/refresh` with optional body `{ "domain": "All|Piutang|Inventory|InventoryRisk|Sales|Purchasing|Customer|Salesman" }` (default `All`; domain values are case-insensitive). For full rebuilds or long-running refreshes, prefer the worker CLI — the API runs synchronously and is subject to IIS request timeouts (~110 s default). Operations may also use: `btr.portal.worker.exe --domain All --triggered-by Manual`.
 

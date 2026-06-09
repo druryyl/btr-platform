@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using btr.application.ReportingContext.DashboardCustomerAgg.Contracts;
+using btr.application.ReportingContext.Shared;
 using MediatR;
 
 namespace btr.application.ReportingContext.DashboardCustomerAgg.Queries
@@ -79,6 +80,8 @@ namespace btr.application.ReportingContext.DashboardCustomerAgg.Queries
         public string ReportRoute { get; set; }
 
         public bool RequiresAttention { get; set; }
+
+        public InvestigationMetadata Investigation { get; set; }
     }
 
     public class DashboardCustomerRankingRow
@@ -94,6 +97,8 @@ namespace btr.application.ReportingContext.DashboardCustomerAgg.Queries
         public decimal? PercentOfTotal { get; set; }
 
         public string ReportRoute { get; set; }
+
+        public InvestigationMetadata Investigation { get; set; }
     }
 
     public class DashboardCustomerRankings

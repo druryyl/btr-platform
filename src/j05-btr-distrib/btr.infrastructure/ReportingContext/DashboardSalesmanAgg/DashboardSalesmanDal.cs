@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using btr.application.ReportingContext.DashboardSalesmanAgg.Contracts;
 using btr.application.ReportingContext.DashboardSalesmanAgg.Queries;
+using btr.application.ReportingContext.Shared;
 using btr.application.ReportingContext.DashboardSnapshotAgg;
 using btr.application.ReportingContext.DashboardSnapshotAgg.Contracts;
 using btr.application.ReportingContext.DashboardSnapshotAgg.Models;
@@ -90,7 +91,12 @@ namespace btr.infrastructure.ReportingContext.DashboardSalesmanAgg
                             SalesPersonName = r.SalesPersonName,
                             Amount = r.CompletedOmzet,
                             PercentOfTotal = r.PercentOfTotal,
-                            ReportRoute = SalesReportRoute
+                            ReportRoute = SalesReportRoute,
+                            Investigation = InvestigationMetadataBuilder.Build(
+                                InvestigationRegistry.SignalRankingSalesmanTopOmzet,
+                                InvestigationMetadataBuilder.EntityTypeSalesman,
+                                r.SalesPersonId,
+                                r.SalesPersonName)
                         })
                         .ToList() ?? new List<DashboardSalesmanRankingRow>(),
                     TopAchievement = snapshot.TopAchievement?
@@ -104,7 +110,12 @@ namespace btr.infrastructure.ReportingContext.DashboardSalesmanAgg
                             PercentOfTotal = r.PercentOfTotal,
                             AchievementPercent = r.AchievementPercent,
                             TargetAmount = r.TargetAmount,
-                            ReportRoute = SalesReportRoute
+                            ReportRoute = SalesReportRoute,
+                            Investigation = InvestigationMetadataBuilder.Build(
+                                InvestigationRegistry.SignalRankingSalesmanTopAchievement,
+                                InvestigationMetadataBuilder.EntityTypeSalesman,
+                                r.SalesPersonId,
+                                r.SalesPersonName)
                         })
                         .ToList() ?? new List<DashboardSalesmanRankingRow>()
                 },
@@ -119,7 +130,12 @@ namespace btr.infrastructure.ReportingContext.DashboardSalesmanAgg
                             SalesPersonName = r.SalesPersonName,
                             Amount = r.OutstandingBalance,
                             PercentOfTotal = r.PercentOfTotal,
-                            ReportRoute = PiutangReportRoute
+                            ReportRoute = PiutangReportRoute,
+                            Investigation = InvestigationMetadataBuilder.Build(
+                                InvestigationRegistry.SignalRankingSalesmanTopPiutang,
+                                InvestigationMetadataBuilder.EntityTypeSalesman,
+                                r.SalesPersonId,
+                                r.SalesPersonName)
                         })
                         .ToList() ?? new List<DashboardSalesmanRankingRow>()
                 },
@@ -141,7 +157,14 @@ namespace btr.infrastructure.ReportingContext.DashboardSalesmanAgg
                 ValueText = row.ValueText,
                 WilayahName = row.WilayahName,
                 ReportRoute = ResolveReportRoute(row.SignalKey),
-                RequiresAttention = true
+                RequiresAttention = true,
+                Investigation = InvestigationMetadataBuilder.Build(
+                    row.SignalKey,
+                    InvestigationMetadataBuilder.EntityTypeSalesman,
+                    row.SalesPersonId,
+                    row.SalesPersonName,
+                    signalLabelOverride: row.SignalLabel,
+                    reportRouteOverride: ResolveReportRoute(row.SignalKey))
             };
         }
 

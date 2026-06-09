@@ -11,12 +11,14 @@ import InventoryRiskAttentionList from '@/components/dashboard/InventoryRiskAtte
 import InventoryRiskNavigationSection from '@/components/dashboard/InventoryRiskNavigationSection.vue'
 import Top10RankingTable from '@/components/dashboard/Top10RankingTable.vue'
 import { formatCurrency, formatNumber, formatPercent } from '@/services/formatters'
-import { navigateToReport } from '@/services/navigateToReport'
+import { resolveInvestigationSourceLabel } from '@/services/investigationSourceLabels'
+import { navigateToInvestigation } from '@/services/navigateToInvestigation'
 import { useDashboardStore } from '@/stores/dashboardStore'
-import type { DashboardInventoryBreakdownItem } from '@/models/dashboard'
+import type { DashboardInventoryBreakdownItem, DashboardInventoryRiskRankingRow } from '@/models/dashboard'
 
 const dashboard = useDashboardStore()
 const router = useRouter()
+const sourceLabel = resolveInvestigationSourceLabel('/dashboard/inventory-risk')
 
 const cards = computed(() => dashboard.inventoryRisk?.AttentionCards)
 const unavailable = computed(() => dashboard.inventoryRisk != null && !dashboard.inventoryRisk.IsAvailable)
@@ -44,28 +46,12 @@ const supplierRiskItems = computed<DashboardInventoryBreakdownItem[]>(() =>
   })),
 )
 
-const deadRankingRows = computed(() =>
-  (dashboard.inventoryRisk?.Rankings?.TopDead ?? []).map((row) => ({
-    Rank: row.Rank,
-    BrgCode: row.BrgCode,
-    BrgName: row.BrgName,
-    InventoryValue: row.InventoryValue,
-    DaysSinceLastFaktur: row.DaysSinceLastFaktur,
-    PercentOfAtRisk: row.PercentOfAtRisk,
-    ReportRoute: row.ReportRoute,
-  })),
+const deadRankingRows = computed(
+  () => (dashboard.inventoryRisk?.Rankings?.TopDead ?? []) as Record<string, unknown>[],
 )
 
-const slowRankingRows = computed(() =>
-  (dashboard.inventoryRisk?.Rankings?.TopSlow ?? []).map((row) => ({
-    Rank: row.Rank,
-    BrgCode: row.BrgCode,
-    BrgName: row.BrgName,
-    InventoryValue: row.InventoryValue,
-    DaysSinceLastFaktur: row.DaysSinceLastFaktur,
-    PercentOfAtRisk: row.PercentOfAtRisk,
-    ReportRoute: row.ReportRoute,
-  })),
+const slowRankingRows = computed(
+  () => (dashboard.inventoryRisk?.Rankings?.TopSlow ?? []) as Record<string, unknown>[],
 )
 
 const deadColumns = [
@@ -87,11 +73,9 @@ const slowColumns = [
 ]
 
 function onRankingRowClick(row: Record<string, unknown>): void {
-  const brgName = String(row.BrgName ?? '')
-  const reportRoute = String(row.ReportRoute ?? '/reports/inventory')
-  if (brgName) {
-    navigateToReport(router, reportRoute, brgName)
-  }
+  const item = row as unknown as DashboardInventoryRiskRankingRow
+  if (!item.Investigation) return
+  navigateToInvestigation(router, item.Investigation, sourceLabel)
 }
 
 onMounted(() => {

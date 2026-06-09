@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using btr.application.ReportingContext.DashboardInventoryRiskAgg.Contracts;
+using btr.application.ReportingContext.Shared;
 using MediatR;
 
 namespace btr.application.ReportingContext.DashboardInventoryRiskAgg.Queries
@@ -100,6 +101,8 @@ namespace btr.application.ReportingContext.DashboardInventoryRiskAgg.Queries
         public string SignalLabel { get; set; }
 
         public string ReportRoute { get; set; }
+
+        public InvestigationMetadata Investigation { get; set; }
     }
 
     public class DashboardInventoryRiskRankingRow
@@ -123,6 +126,8 @@ namespace btr.application.ReportingContext.DashboardInventoryRiskAgg.Queries
         public decimal? PercentOfAtRisk { get; set; }
 
         public string ReportRoute { get; set; }
+
+        public InvestigationMetadata Investigation { get; set; }
     }
 
     public class DashboardInventoryRiskRankings

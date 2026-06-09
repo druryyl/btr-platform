@@ -7,9 +7,11 @@ import Card from 'primevue/card'
 import Column from 'primevue/column'
 import DataTable from 'primevue/datatable'
 import Message from 'primevue/message'
+import InvestigationBreadcrumb from '@/components/reports/InvestigationBreadcrumb.vue'
 import ReportFilterBar from '@/components/reports/ReportFilterBar.vue'
 import ReportSummaryBar from '@/components/reports/ReportSummaryBar.vue'
-import { useReportFreeTextFilter } from '@/composables/useReportFreeTextFilter'
+import { useReportInvestigationFilter } from '@/composables/useReportInvestigationFilter'
+import { useReportInvestigationHydration } from '@/composables/useReportInvestigationHydration'
 import { formatCurrency, formatDateTime } from '@/services/formatters'
 import { summarizeInventoryRows } from '@/services/reportSummaryHelpers'
 import { useInventoryReportStore } from '@/stores/inventoryReportStore'
@@ -18,6 +20,7 @@ import type { InventoryReportRow } from '@/models/reports'
 const inventoryReport = useInventoryReportStore()
 const route = useRoute()
 const { freeText } = storeToRefs(inventoryReport)
+const { breadcrumb, brgId, warehouseId, hydrateFromRoute } = useReportInvestigationHydration()
 
 interface InventoryReportTableRow extends InventoryReportRow {
   dataKey: string
@@ -30,16 +33,17 @@ const sourceRows = computed<InventoryReportTableRow[]>(() =>
   })),
 )
 
-const { filteredRows, hasFreeTextFilter } = useReportFreeTextFilter(
+const { filteredRows, hasActiveFilter } = useReportInvestigationFilter(
   sourceRows,
   ['ItemDisplay', 'WarehouseName'],
   freeText,
+  { brgId, warehouseId },
 )
 
 const summaryItems = computed(() => {
   if (!inventoryReport.report?.Summary) return []
 
-  const summary = hasFreeTextFilter.value
+  const summary = hasActiveFilter.value
     ? summarizeInventoryRows(filteredRows.value)
     : inventoryReport.report.Summary
 
@@ -56,8 +60,10 @@ const summaryItems = computed(() => {
 })
 
 onMounted(() => {
-  if (typeof route.query.q === 'string' && route.query.q.trim()) {
-    inventoryReport.freeText = route.query.q.trim()
+  const hydration = hydrateFromRoute(route)
+
+  if (hydration.freeText) {
+    inventoryReport.freeText = hydration.freeText
   }
 
   void inventoryReport.loadReport()
@@ -80,6 +86,8 @@ onMounted(() => {
       />
     </div>
 
+    <InvestigationBreadcrumb :context="breadcrumb" />
+
     <Message v-if="inventoryReport.error" severity="error" :closable="false">
       {{ inventoryReport.error }}
     </Message>
@@ -92,7 +100,7 @@ onMounted(() => {
           :show-date-range="false"
         />
 
-        <p v-if="hasFreeTextFilter" class="inventory-report__filter-hint">
+        <p v-if="hasActiveFilter" class="inventory-report__filter-hint">
           Summary reflects filtered rows.
         </p>
 

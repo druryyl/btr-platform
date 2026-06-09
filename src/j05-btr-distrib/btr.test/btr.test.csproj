@@ -147,6 +147,9 @@
     <Compile Include="ReportingContext\DashboardCollectionAggregatorTest.cs" />
     <Compile Include="ReportingContext\DashboardLocationAggregatorTest.cs" />
     <Compile Include="ReportingContext\DashboardOverviewDalTest.cs" />
+    <Compile Include="ReportingContext\AlertCenterRegistryTest.cs" />
+    <Compile Include="ReportingContext\InvestigationRegistryTest.cs" />
+    <Compile Include="ReportingContext\DashboardAlertCenterComposerTest.cs" />
     <Compile Include="ReportingContext\DashboardExecutiveComposerTest.cs" />
     <Compile Include="ReportingContext\ExecutiveSalesAchievementBandResolverTest.cs" />
     <Compile Include="ReportingContext\DashboardPiutangDalTest.cs" />

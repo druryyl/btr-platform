@@ -3,9 +3,11 @@ using System.Collections.Generic;
 using System.Linq;
 using btr.application.ReportingContext.DashboardLocationAgg.Contracts;
 using btr.application.ReportingContext.DashboardLocationAgg.Queries;
+using btr.application.ReportingContext.Shared;
 using btr.application.ReportingContext.DashboardSnapshotAgg;
 using btr.application.ReportingContext.DashboardSnapshotAgg.Contracts;
 using btr.application.ReportingContext.DashboardSnapshotAgg.Models;
+using btr.application.ReportingContext.DashboardSnapshotAgg.Services;
 using Microsoft.Extensions.Options;
 
 namespace btr.infrastructure.ReportingContext.DashboardLocationAgg
@@ -62,48 +64,44 @@ namespace btr.infrastructure.ReportingContext.DashboardLocationAgg
                     WarehouseNoSalesWithInventoryCount = snapshot.WarehouseNoSalesWithInventoryCount
                 },
                 TopWarehouseInventory = snapshot.TopWarehouseInventory?
-                    .Select(r => new DashboardLocationRankingRow
-                    {
-                        Rank = r.Rank,
-                        EntityCode = r.WarehouseId,
-                        EntityName = r.WarehouseName,
-                        Amount = r.InventoryValue,
-                        PercentOfTotal = r.PercentOfTotal,
-                        ReportRoute = r.ReportRoute ?? InventoryReportRoute
-                    })
+                    .Select(r => MapWarehouseRankingRow(
+                        r.Rank,
+                        r.WarehouseId,
+                        r.WarehouseName,
+                        r.InventoryValue,
+                        r.PercentOfTotal,
+                        r.ReportRoute ?? InventoryReportRoute,
+                        DashboardLocationAggregator.SignalWarehouseInventoryConcentration))
                     .ToList() ?? new List<DashboardLocationRankingRow>(),
                 TopWarehouseAtRisk = snapshot.TopWarehouseAtRisk?
-                    .Select(r => new DashboardLocationRankingRow
-                    {
-                        Rank = r.Rank,
-                        EntityCode = r.WarehouseId,
-                        EntityName = r.WarehouseName,
-                        Amount = r.AtRiskValue,
-                        PercentOfTotal = r.PercentOfTotal,
-                        ReportRoute = r.ReportRoute ?? InventoryReportRoute
-                    })
+                    .Select(r => MapWarehouseRankingRow(
+                        r.Rank,
+                        r.WarehouseId,
+                        r.WarehouseName,
+                        r.AtRiskValue,
+                        r.PercentOfTotal,
+                        r.ReportRoute ?? InventoryReportRoute,
+                        DashboardLocationAggregator.SignalWarehouseAtRiskConcentration))
                     .ToList() ?? new List<DashboardLocationRankingRow>(),
                 TopWarehouseSales = snapshot.TopWarehouseSales?
-                    .Select(r => new DashboardLocationRankingRow
-                    {
-                        Rank = r.Rank,
-                        EntityCode = r.WarehouseId,
-                        EntityName = r.WarehouseName,
-                        Amount = r.MtdOmzet,
-                        PercentOfTotal = r.PercentOfTotal,
-                        ReportRoute = r.ReportRoute
-                    })
+                    .Select(r => MapWarehouseRankingRow(
+                        r.Rank,
+                        r.WarehouseId,
+                        r.WarehouseName,
+                        r.MtdOmzet,
+                        r.PercentOfTotal,
+                        r.ReportRoute,
+                        DashboardLocationAggregator.SignalWarehouseSalesConcentration))
                     .ToList() ?? new List<DashboardLocationRankingRow>(),
                 TopWarehousePurchasing = snapshot.TopWarehousePurchasing?
-                    .Select(r => new DashboardLocationRankingRow
-                    {
-                        Rank = r.Rank,
-                        EntityCode = r.WarehouseId,
-                        EntityName = r.WarehouseName,
-                        Amount = r.MtdPurchaseAmount,
-                        PercentOfTotal = r.PercentOfTotal,
-                        ReportRoute = r.ReportRoute
-                    })
+                    .Select(r => MapWarehouseRankingRow(
+                        r.Rank,
+                        r.WarehouseId,
+                        r.WarehouseName,
+                        r.MtdPurchaseAmount,
+                        r.PercentOfTotal,
+                        r.ReportRoute,
+                        DashboardLocationAggregator.SignalWarehousePurchasingConcentration))
                     .ToList() ?? new List<DashboardLocationRankingRow>(),
                 TopWilayahSales = snapshot.TopWilayahSales?
                     .Select(r => new DashboardLocationWilayahRankingRow
@@ -126,7 +124,14 @@ namespace btr.infrastructure.ReportingContext.DashboardLocationAgg
                         SignalLabel = r.SignalLabel,
                         ValueAmount = r.ValueAmount,
                         ValueText = r.ValueText,
-                        ReportRoute = r.ReportRoute ?? InventoryReportRoute
+                        ReportRoute = r.ReportRoute ?? InventoryReportRoute,
+                        Investigation = InvestigationMetadataBuilder.Build(
+                            r.SignalKey,
+                            r.EntityType,
+                            r.EntityCode,
+                            r.EntityName,
+                            signalLabelOverride: r.SignalLabel,
+                            reportRouteOverride: r.ReportRoute ?? InventoryReportRoute)
                     })
                     .ToList() ?? new List<DashboardLocationAttentionItem>(),
                 Navigation = BuildNavigation()
@@ -146,6 +151,30 @@ namespace btr.infrastructure.ReportingContext.DashboardLocationAgg
                 SalesmanDashboardRoute = "/dashboard/salesmen"
             };
         }
+
+        private static DashboardLocationRankingRow MapWarehouseRankingRow(
+            int rank,
+            string warehouseId,
+            string warehouseName,
+            decimal amount,
+            decimal? percentOfTotal,
+            string reportRoute,
+            string signalKey) =>
+            new DashboardLocationRankingRow
+            {
+                Rank = rank,
+                EntityCode = warehouseId,
+                EntityName = warehouseName,
+                Amount = amount,
+                PercentOfTotal = percentOfTotal,
+                ReportRoute = reportRoute,
+                Investigation = InvestigationMetadataBuilder.Build(
+                    signalKey,
+                    InvestigationMetadataBuilder.EntityTypeWarehouse,
+                    warehouseId,
+                    warehouseName,
+                    reportRouteOverride: reportRoute)
+            };
 
         private static bool IsDomainFresh(DateTime generatedAt, int intervalMinutes, DateTime utcNow)
         {

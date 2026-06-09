@@ -35,6 +35,8 @@ namespace btr.application.ReportingContext.SalesReportAgg.Queries
 
         public string CustomerName { get; set; }
 
+        public string SalesPersonId { get; set; }
+
         public string SalesName { get; set; }
 
         public decimal FakturTotal { get; set; }

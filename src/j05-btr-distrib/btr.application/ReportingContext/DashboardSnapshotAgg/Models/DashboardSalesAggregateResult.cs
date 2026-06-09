@@ -49,6 +49,8 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.Models
     {
         public int Rank { get; set; }
 
+        public string SalesPersonId { get; set; }
+
         public string SalesPersonName { get; set; }
 
         public decimal CompletedOmzet { get; set; }

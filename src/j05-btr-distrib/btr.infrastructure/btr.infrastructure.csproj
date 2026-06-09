@@ -161,6 +161,7 @@
     <Compile Include="ReportingContext\DashboardInventoryAgg\DashboardInventoryDal.cs" />
     <Compile Include="ReportingContext\DashboardInventoryRiskAgg\DashboardInventoryRiskDal.cs" />
     <Compile Include="ReportingContext\DashboardPiutangAgg\DashboardPiutangDal.cs" />
+    <Compile Include="ReportingContext\DashboardAlertCenterAgg\DashboardAlertCenterDal.cs" />
     <Compile Include="ReportingContext\DashboardExecutiveAgg\DashboardExecutiveDal.cs" />
     <Compile Include="ReportingContext\DashboardPiutangAgg\DashboardPiutangLiveDal.cs" />
     <Compile Include="ReportingContext\DashboardInventoryAgg\DashboardInventoryLiveDal.cs" />

@@ -77,6 +77,24 @@ namespace btr.test.ReportingContext
         }
 
         [Fact]
+        public void GetAllOpenBalancesReport_ReturnsOutstandingRows_WithoutPeriodFilter()
+        {
+            var stub = new StubPiutangSalesWilayahDal(new[]
+            {
+                Row("C001", "Alpha", "FK-OLD", new DateTime(2020, 1, 1), 1_000_000m, 500_000m),
+                Row("C002", "Beta", "FK-NEW", new DateTime(2026, 6, 1), 1_000_000m, 0m),
+            });
+            var dal = new PiutangReportDal(stub, new StubTglJamDal(FixedToday));
+
+            var result = dal.GetAllOpenBalancesReport(PiutangReportDateField.DueDate);
+
+            result.AllOpenBalances.Should().BeTrue();
+            result.Rows.Should().ContainSingle();
+            result.Rows[0].CustomerName.Should().Be("Alpha");
+            result.Rows[0].CustomerCode.Should().Be("C001");
+        }
+
+        [Fact]
         public void GetReport_PassesDateField_ToUnderlyingDal()
         {
             var stub = new StubPiutangSalesWilayahDal(Array.Empty<PiutangSalesWilayahDto>());
@@ -135,6 +153,8 @@ namespace btr.test.ReportingContext
                 LastDateField = dateField;
                 return _rows;
             }
+
+            public IEnumerable<PiutangSalesWilayahDto> ListAllOpenBalances() => _rows;
         }
 
         private sealed class StubTglJamDal : ITglJamDal

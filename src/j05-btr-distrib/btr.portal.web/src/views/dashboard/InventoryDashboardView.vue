@@ -1,12 +1,18 @@
 <script setup lang="ts">
 import { computed, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 import DashboardDetailLayout from '@/components/dashboard/DashboardDetailLayout.vue'
 import InventoryHorizontalBarChart from '@/components/dashboard/InventoryHorizontalBarChart.vue'
 import Top10RankingTable from '@/components/dashboard/Top10RankingTable.vue'
 import { formatCurrency, formatNumber } from '@/services/formatters'
+import type { DashboardInventoryRankingItem } from '@/models/dashboard'
+import { resolveInvestigationSourceLabel } from '@/services/investigationSourceLabels'
+import { navigateToInvestigation } from '@/services/navigateToInvestigation'
 import { useDashboardStore } from '@/stores/dashboardStore'
 
 const dashboard = useDashboardStore()
+const router = useRouter()
+const sourceLabel = resolveInvestigationSourceLabel('/dashboard/inventory')
 
 const categoryColumns = [
   { field: 'Rank', header: 'Rank' },
@@ -27,6 +33,12 @@ const categoryRows = computed(
 const supplierRows = computed(
   () => (dashboard.inventory?.TopSuppliers ?? []) as Record<string, unknown>[],
 )
+
+function onRankingClick(row: Record<string, unknown>): void {
+  const item = row as unknown as DashboardInventoryRankingItem
+  if (!item.Investigation) return
+  navigateToInvestigation(router, item.Investigation, sourceLabel)
+}
 
 onMounted(() => {
   void dashboard.loadInventory()
@@ -77,7 +89,9 @@ onMounted(() => {
       :rows="categoryRows"
       :loading="dashboard.loading"
       value-field="InventoryValue"
+      clickable
       empty-message="No category data available."
+      @row-click="onRankingClick"
     />
 
     <Top10RankingTable
@@ -87,7 +101,9 @@ onMounted(() => {
       :rows="supplierRows"
       :loading="dashboard.loading"
       value-field="InventoryValue"
+      clickable
       empty-message="No supplier data available."
+      @row-click="onRankingClick"
     />
   </DashboardDetailLayout>
 </template>

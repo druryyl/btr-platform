@@ -45,6 +45,7 @@ namespace btr.infrastructure.ReportingContext.SalesReportAgg
                 FakturDate = row.Tgl.Date,
                 FakturCode = row.FakturCode ?? string.Empty,
                 CustomerName = row.Customer ?? string.Empty,
+                SalesPersonId = row.SalesPersonId ?? string.Empty,
                 SalesName = row.SalesPersonName ?? string.Empty,
                 FakturTotal = row.GrandTotal,
                 Status = ResolveStatus(row)

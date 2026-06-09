@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using btr.application.ReportingContext.DashboardCustomerAgg.Contracts;
 using btr.application.ReportingContext.DashboardCustomerAgg.Queries;
+using btr.application.ReportingContext.Shared;
 using btr.application.ReportingContext.DashboardSnapshotAgg;
 using btr.application.ReportingContext.DashboardSnapshotAgg.Contracts;
 using btr.application.ReportingContext.DashboardSnapshotAgg.Models;
@@ -88,7 +89,12 @@ namespace btr.infrastructure.ReportingContext.DashboardCustomerAgg
                             CustomerName = r.CustomerName,
                             Amount = r.OmzetAmount,
                             PercentOfTotal = r.PercentOfTotal,
-                            ReportRoute = SalesReportRoute
+                            ReportRoute = SalesReportRoute,
+                            Investigation = InvestigationMetadataBuilder.Build(
+                                InvestigationRegistry.SignalRankingCustomerTopOmzet,
+                                InvestigationMetadataBuilder.EntityTypeCustomer,
+                                r.CustomerCode,
+                                r.CustomerName)
                         })
                         .ToList() ?? new List<DashboardCustomerRankingRow>(),
                     TopPiutang = snapshot.TopPiutang?
@@ -99,7 +105,12 @@ namespace btr.infrastructure.ReportingContext.DashboardCustomerAgg
                             CustomerName = r.CustomerName,
                             Amount = r.OutstandingBalance,
                             PercentOfTotal = r.PercentOfTotal,
-                            ReportRoute = PiutangReportRoute
+                            ReportRoute = PiutangReportRoute,
+                            Investigation = InvestigationMetadataBuilder.Build(
+                                InvestigationRegistry.SignalRankingCustomerTopPiutang,
+                                InvestigationMetadataBuilder.EntityTypeCustomer,
+                                r.CustomerCode,
+                                r.CustomerName)
                         })
                         .ToList() ?? new List<DashboardCustomerRankingRow>()
                 },
@@ -120,7 +131,14 @@ namespace btr.infrastructure.ReportingContext.DashboardCustomerAgg
                 ValueText = row.ValueText,
                 WilayahName = row.WilayahName,
                 ReportRoute = ResolveReportRoute(row.SignalKey),
-                RequiresAttention = true
+                RequiresAttention = true,
+                Investigation = InvestigationMetadataBuilder.Build(
+                    row.SignalKey,
+                    InvestigationMetadataBuilder.EntityTypeCustomer,
+                    row.CustomerCode,
+                    row.CustomerName,
+                    signalLabelOverride: row.SignalLabel,
+                    reportRouteOverride: ResolveReportRoute(row.SignalKey))
             };
         }
 

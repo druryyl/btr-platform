@@ -66,6 +66,7 @@ All portal reporting features live under `ReportingContext` in Application and I
 btr.application/ReportingContext/
 ├── DashboardOverviewAgg/
 ├── DashboardExecutiveAgg/           ← executive composition (M16)
+├── DashboardAlertCenterAgg/         ← alert center composition (M23)
 ├── DashboardCustomerAgg/            ← customer analytics read path (M17)
 ├── DashboardSalesmanAgg/            ← salesman performance read path (M18)
 ├── DashboardSnapshotAgg/          ← workers, aggregators, refresh commands
@@ -82,6 +83,7 @@ btr.application/ReportingContext/
 btr.infrastructure/ReportingContext/
 ├── DashboardSnapshotAgg/            ← snapshot readers/writers, overview DAL
 ├── DashboardExecutiveAgg/DashboardExecutiveDal.cs
+├── DashboardAlertCenterAgg/DashboardAlertCenterDal.cs
 ├── DashboardCustomerAgg/DashboardCustomerDal.cs
 ├── DashboardSalesmanAgg/DashboardSalesmanDal.cs
 ├── DashboardSalesAgg/DashboardSalesDal.cs
@@ -249,6 +251,7 @@ RefreshDashboardInventoryRiskSnapshotWorker
 | Endpoint | Controller | Data source | Purpose |
 | -------- | ---------- | ----------- | ------- |
 | `GET /api/dashboard/executive` | `ExecutiveDashboardController` | Composed from existing snapshots via `DashboardExecutiveComposer` | Management Attention Center home |
+| `GET /api/dashboard/alerts` | `AlertCenterDashboardController` | Composed from M17–M22 snapshots via `DashboardAlertCenterComposer` | Alert Center (M23) |
 | `GET /api/dashboard/overview` | `OverviewDashboardController` | Layer A KPI snapshots only | Legacy summary (retained) |
 | `GET /api/dashboard/sales` | `SalesDashboardController` | Layer A + B snapshots | Sales detail analytics |
 | `GET /api/dashboard/piutang` | `PiutangDashboardController` | Layer A + B snapshots | Piutang detail analytics |
@@ -271,6 +274,7 @@ Domain detail endpoints were extended additively across M8 and M13–M15; respon
 | Route | View | API Call |
 | ----- | ---- | -------- |
 | `/dashboard` | `DashboardHomeView` | `GET /api/dashboard/executive` (Management Attention Center) |
+| `/alerts` | `AlertCenterView` | `GET /api/dashboard/alerts` (Alert Center) |
 | `/dashboard/sales` | `SalesDashboardView` | `GET /api/dashboard/sales` |
 | `/dashboard/piutang` | `PiutangDashboardView` | `GET /api/dashboard/piutang` |
 | `/dashboard/inventory` | `InventoryDashboardView` | `GET /api/dashboard/inventory` |
@@ -621,7 +625,10 @@ One store per report. No premature module stores beyond auth, dashboard, and rep
 | `SalesmanNavigationSection.vue` | Links to domain dashboards and reports |
 | `InventoryRiskAttentionList.vue` | M19 per-item signal list with report drill-down |
 | `InventoryRiskNavigationSection.vue` | Links to Inventory dashboard and report |
-| `navigateToReport.ts` | Shared helper — `router.push({ path, query: { q: name } })` for customer, salesman, or item pre-filter |
+| `navigateToInvestigation.ts` | Primary navigation — encodes `InvestigationMetadata` into structured report query params |
+| `navigateToReport.ts` | Deprecated wrapper — delegates to `navigateToInvestigation` with `q` only |
+| `InvestigationBreadcrumb.vue` | Report breadcrumb — signal, source, entity, optional dashboard link |
+| `InvestigationRegistry.cs` | PO-governed investigation routing defaults (mirrors alert registry pattern) |
 | `TargetVsAchievementChart.vue` | M13 company bar chart |
 | `WeeklyTrendChart.vue` | M8/M13 line chart |
 | `AgingPieChart.vue` | M14 pie chart |
@@ -630,12 +637,30 @@ One store per report. No premature module stores beyond auth, dashboard, and rep
 
 Detail page section order is fixed per domain (see operational doc).
 
+### Investigation Metadata Contract (M24)
+
+Shared shape in `ReportingContext/Shared/InvestigationMetadata.cs` (backend) and `models/investigation.ts` (frontend). Producers attach `Investigation` to attention rows, executive Top 5, legacy rankings, and Alert Center rows.
+
+| Field | Role |
+| ----- | ---- |
+| `SignalKey` / `SignalLabel` | Breadcrumb — which rule fired |
+| `EntityType` / `EntityId` / `EntityName` | Stable entity grain + display name |
+| `ReportRoute` / `DashboardRoute` | Evidence vs context destinations |
+| `SuggestedQuery` | `q`, ID params, `periodMode`, `posting` |
+| `InvestigationSteps` | Optional multi-hop metadata (e.g. Compound Dependency) |
+| `DesktopNextStep` | Text-only Desktop handoff guidance |
+
+**Consumer rule:** `sourceDashboard` label is set at click time in `navigateToInvestigation`, not by producers.
+
+**Piutang alignment:** `GET /api/reports/piutang?allOpenBalances=true` skips period validator and loads all outstanding rows (`aa.Sisa > 1`).
+
 ### Report Layout Conventions
 
 Each report view follows:
 
 ```text
 Page header (title + period label)
+InvestigationBreadcrumb (when drill-down params present)
 Refresh button
 PrimeVue Card
   └── DataTable

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using btr.application.ReportingContext.DashboardLocationAgg.Contracts;
+using btr.application.ReportingContext.Shared;
 using MediatR;
 
 namespace btr.application.ReportingContext.DashboardLocationAgg.Queries
@@ -72,6 +73,8 @@ namespace btr.application.ReportingContext.DashboardLocationAgg.Queries
         public decimal? PercentOfTotal { get; set; }
 
         public string ReportRoute { get; set; }
+
+        public InvestigationMetadata Investigation { get; set; }
     }
 
     public class DashboardLocationWilayahRankingRow
@@ -106,6 +109,8 @@ namespace btr.application.ReportingContext.DashboardLocationAgg.Queries
         public string ValueText { get; set; }
 
         public string ReportRoute { get; set; }
+
+        public InvestigationMetadata Investigation { get; set; }
     }
 
     public class DashboardLocationNavigationLinks

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using btr.application.ReportingContext.DashboardPurchasingAgg.Contracts;
+using btr.application.ReportingContext.Shared;
 using MediatR;
 
 namespace btr.application.ReportingContext.DashboardPurchasingAgg.Queries
@@ -95,6 +96,8 @@ namespace btr.application.ReportingContext.DashboardPurchasingAgg.Queries
         public string ValueText { get; set; }
 
         public string ReportRoute { get; set; }
+
+        public InvestigationMetadata Investigation { get; set; }
     }
 
     public class DashboardPurchasingPrincipalExposureItem
@@ -120,6 +123,8 @@ namespace btr.application.ReportingContext.DashboardPurchasingAgg.Queries
         public bool IsInventoryNoPurchase { get; set; }
 
         public string ReportRoute { get; set; }
+
+        public InvestigationMetadata Investigation { get; set; }
     }
 
     public class DashboardPurchasingNavigationLinks
@@ -160,6 +165,8 @@ namespace btr.application.ReportingContext.DashboardPurchasingAgg.Queries
         public string PrincipalName { get; set; }
 
         public decimal PurchaseAmount { get; set; }
+
+        public InvestigationMetadata Investigation { get; set; }
     }
 
     public class GetDashboardPurchasingHandler

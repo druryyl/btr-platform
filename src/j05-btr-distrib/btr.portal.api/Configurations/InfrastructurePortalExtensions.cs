@@ -1,4 +1,8 @@
+using btr.application.ReportingContext.DashboardAlertCenterAgg.Contracts;
+using btr.application.ReportingContext.DashboardAlertCenterAgg.Services;
+using btr.application.ReportingContext.DashboardCollectionAgg.Contracts;
 using btr.application.ReportingContext.DashboardCustomerAgg.Contracts;
+using btr.application.ReportingContext.DashboardLocationAgg.Contracts;
 using btr.application.ReportingContext.DashboardSalesmanAgg.Contracts;
 using btr.application.ReportingContext.DashboardExecutiveAgg.Contracts;
 using btr.application.ReportingContext.DashboardExecutiveAgg.Services;
@@ -18,7 +22,10 @@ using btr.application.SalesContext.SalesOmzetAgg.Contracts;
 using btr.application.SalesContext.SalesOmzetHealthWeeklyAgg.Contracts;
 using btr.infrastructure;
 using btr.infrastructure.Helpers;
+using btr.infrastructure.ReportingContext.DashboardAlertCenterAgg;
+using btr.infrastructure.ReportingContext.DashboardCollectionAgg;
 using btr.infrastructure.ReportingContext.DashboardCustomerAgg;
+using btr.infrastructure.ReportingContext.DashboardLocationAgg;
 using btr.infrastructure.ReportingContext.DashboardSalesmanAgg;
 using btr.infrastructure.ReportingContext.DashboardExecutiveAgg;
 using btr.infrastructure.ReportingContext.DashboardInventoryAgg;
@@ -75,6 +82,8 @@ namespace btr.portal.api.Configurations
             services.AddScoped<IDashboardOverviewDal, DashboardOverviewDal>();
             services.AddScoped<IDashboardExecutiveDal, DashboardExecutiveDal>();
             services.AddScoped<DashboardExecutiveComposer>();
+            services.AddScoped<IDashboardAlertCenterDal, DashboardAlertCenterDal>();
+            services.AddScoped<DashboardAlertCenterComposer>();
             services.AddScoped<IDashboardSalesDal, DashboardSalesDal>();
             services.AddScoped<IDashboardPurchasingDal, DashboardPurchasingDal>();
             services.AddScoped<IDashboardPiutangDal, DashboardPiutangDal>();

@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.Data.SqlClient;
 using System.Linq;
 using btr.application.ReportingContext.DashboardSalesAgg.Queries;
+using btr.application.ReportingContext.Shared;
 using btr.application.ReportingContext.DashboardSnapshotAgg.Contracts;
 using btr.application.ReportingContext.DashboardSnapshotAgg.Models;
 using btr.infrastructure.Helpers;
@@ -220,8 +221,14 @@ VALUES (
                     .Select(r => new DashboardSalesRankingItem
                     {
                         Rank = r.Rank,
+                        SalesPersonId = r.SalesPersonId,
                         SalesPersonName = r.SalesPersonName,
-                        CompletedOmzet = r.CompletedOmzet
+                        CompletedOmzet = r.CompletedOmzet,
+                        Investigation = InvestigationMetadataBuilder.Build(
+                            InvestigationRegistry.SignalLegacyTopSalesman,
+                            InvestigationMetadataBuilder.EntityTypeSalesman,
+                            r.SalesPersonId,
+                            r.SalesPersonName)
                     })
                     .ToList()
             };

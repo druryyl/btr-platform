@@ -8,35 +8,24 @@ import CustomerAttentionList from '@/components/dashboard/CustomerAttentionList.
 import CustomerSegmentationSection from '@/components/dashboard/CustomerSegmentationSection.vue'
 import CustomerNavigationSection from '@/components/dashboard/CustomerNavigationSection.vue'
 import Top10RankingTable from '@/components/dashboard/Top10RankingTable.vue'
+import type { DashboardCustomerRankingRow } from '@/models/dashboard'
 import { formatCurrency, formatNumber, formatPercent } from '@/services/formatters'
-import { navigateToReport } from '@/services/navigateToReport'
+import { resolveInvestigationSourceLabel } from '@/services/investigationSourceLabels'
+import { navigateToInvestigation } from '@/services/navigateToInvestigation'
 import { useDashboardStore } from '@/stores/dashboardStore'
 const dashboard = useDashboardStore()
 const router = useRouter()
+const sourceLabel = resolveInvestigationSourceLabel('/dashboard/customers')
 
 const cards = computed(() => dashboard.customer?.AttentionCards)
 const unavailable = computed(() => dashboard.customer != null && !dashboard.customer.IsAvailable)
 
-const omzetRankingRows = computed(() =>
-  (dashboard.customer?.Rankings?.TopOmzet ?? []).map((row) => ({
-    Rank: row.Rank,
-    CustomerCode: row.CustomerCode,
-    CustomerName: row.CustomerName,
-    Amount: row.Amount,
-    PercentOfTotal: row.PercentOfTotal,
-    ReportRoute: row.ReportRoute,
-  })),
+const omzetRankingRows = computed(
+  () => (dashboard.customer?.Rankings?.TopOmzet ?? []) as Record<string, unknown>[],
 )
 
-const piutangRankingRows = computed(() =>
-  (dashboard.customer?.Rankings?.TopPiutang ?? []).map((row) => ({
-    Rank: row.Rank,
-    CustomerCode: row.CustomerCode,
-    CustomerName: row.CustomerName,
-    Amount: row.Amount,
-    PercentOfTotal: row.PercentOfTotal,
-    ReportRoute: row.ReportRoute,
-  })),
+const piutangRankingRows = computed(
+  () => (dashboard.customer?.Rankings?.TopPiutang ?? []) as Record<string, unknown>[],
 )
 
 const omzetColumns = [
@@ -56,11 +45,9 @@ const piutangColumns = [
 ]
 
 function onRankingRowClick(row: Record<string, unknown>): void {
-  const customerName = String(row.CustomerName ?? '')
-  const reportRoute = String(row.ReportRoute ?? '')
-  if (customerName && reportRoute) {
-    navigateToReport(router, reportRoute, customerName)
-  }
+  const item = row as unknown as DashboardCustomerRankingRow
+  if (!item.Investigation) return
+  navigateToInvestigation(router, item.Investigation, sourceLabel)
 }
 
 onMounted(() => {

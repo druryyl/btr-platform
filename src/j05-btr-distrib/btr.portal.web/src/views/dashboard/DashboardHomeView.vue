@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 import Button from 'primevue/button'
 import Message from 'primevue/message'
 import ExecutiveAttentionCard from '@/components/dashboard/ExecutiveAttentionCard.vue'
@@ -9,6 +10,7 @@ import { formatCurrency, formatDateTime, formatPercent } from '@/services/format
 import { useDashboardStore } from '@/stores/dashboardStore'
 
 const dashboard = useDashboardStore()
+const router = useRouter()
 
 onMounted(() => {
   void dashboard.loadExecutive()
@@ -25,13 +27,20 @@ onMounted(() => {
           Last Refreshed: {{ formatDateTime(dashboard.executive.LastRefreshed) }}
         </p>
       </div>
-      <Button
-        label="Refresh"
-        icon="pi pi-refresh"
-        outlined
-        :loading="dashboard.loading"
-        @click="dashboard.loadExecutive()"
-      />
+      <div class="dashboard-home__actions">
+        <Button
+          label="Open Alert Center"
+          icon="pi pi-bell"
+          @click="router.push('/alerts')"
+        />
+        <Button
+          label="Refresh"
+          icon="pi pi-refresh"
+          outlined
+          :loading="dashboard.loading"
+          @click="dashboard.loadExecutive()"
+        />
+      </div>
     </div>
 
     <Message
@@ -250,6 +259,13 @@ onMounted(() => {
   justify-content: space-between;
   gap: 1rem;
   margin-bottom: 1.5rem;
+}
+
+.dashboard-home__actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-shrink: 0;
 }
 
 .dashboard-home__header h1 {

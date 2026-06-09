@@ -81,11 +81,14 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.Services
         private static List<DashboardSalesTopSalesmanRow> BuildTopSalesman(List<FakturView> rows)
         {
             return rows
-                .GroupBy(r => r.SalesPersonName?.Trim() ?? string.Empty, StringComparer.OrdinalIgnoreCase)
+                .GroupBy(ResolveSalesPersonKey, StringComparer.OrdinalIgnoreCase)
                 .Where(g => g.Key.Length > 0)
                 .Select(g => new
                 {
-                    SalesPersonName = g.Key,
+                    SalesPersonId = g.Select(r => r.SalesPersonId?.Trim())
+                        .FirstOrDefault(id => !string.IsNullOrEmpty(id)) ?? string.Empty,
+                    SalesPersonName = g.Select(r => r.SalesPersonName?.Trim())
+                        .FirstOrDefault(name => !string.IsNullOrEmpty(name)) ?? g.Key,
                     CompletedOmzet = g.Sum(r => r.GrandTotal)
                 })
                 .OrderByDescending(x => x.CompletedOmzet)
@@ -94,10 +97,19 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.Services
                 .Select((x, index) => new DashboardSalesTopSalesmanRow
                 {
                     Rank = index + 1,
+                    SalesPersonId = x.SalesPersonId,
                     SalesPersonName = x.SalesPersonName,
                     CompletedOmzet = x.CompletedOmzet
                 })
                 .ToList();
+        }
+
+        private static string ResolveSalesPersonKey(FakturView row)
+        {
+            if (!string.IsNullOrWhiteSpace(row.SalesPersonId))
+                return row.SalesPersonId.Trim();
+
+            return row.SalesPersonName?.Trim() ?? string.Empty;
         }
 
         private static string ResolveCustomerKey(FakturView row)

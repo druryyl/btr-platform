@@ -1,27 +1,43 @@
 <script setup lang="ts">
 import { computed, onMounted } from 'vue'
+import { useRoute } from 'vue-router'
 import { storeToRefs } from 'pinia'
 import Button from 'primevue/button'
 import Card from 'primevue/card'
 import Column from 'primevue/column'
 import DataTable from 'primevue/datatable'
 import Message from 'primevue/message'
+import InvestigationBreadcrumb from '@/components/reports/InvestigationBreadcrumb.vue'
 import ReportFilterBar from '@/components/reports/ReportFilterBar.vue'
 import ReportSummaryBar from '@/components/reports/ReportSummaryBar.vue'
-import { useReportFreeTextFilter } from '@/composables/useReportFreeTextFilter'
+import { useReportInvestigationFilter } from '@/composables/useReportInvestigationFilter'
+import { useReportInvestigationHydration } from '@/composables/useReportInvestigationHydration'
 import { formatCurrency, formatDate, formatDateTime } from '@/services/formatters'
 import { summarizePurchasingRows } from '@/services/reportSummaryHelpers'
 import { usePurchasingReportStore } from '@/stores/purchasingReportStore'
 
+const route = useRoute()
 const purchasingReport = usePurchasingReportStore()
 const { freeText } = storeToRefs(purchasingReport)
+const { breadcrumb, supplierId, postingFilter, hydrateFromRoute } = useReportInvestigationHydration()
 
 const sourceRows = computed(() => purchasingReport.report?.Rows ?? [])
-const { filteredRows, hasFreeTextFilter } = useReportFreeTextFilter(
+const { filteredRows: textFilteredRows, hasActiveFilter } = useReportInvestigationFilter(
   sourceRows,
   ['InvoiceCode', 'SupplierName', 'WarehouseName', 'PostingStok'],
   freeText,
+  { supplierId },
 )
+
+const filteredRows = computed(() => {
+  if (!postingFilter.value) {
+    return textFilteredRows.value
+  }
+
+  return textFilteredRows.value.filter(
+    (row) => row.PostingStok === postingFilter.value,
+  )
+})
 
 const periodLabel = computed(() => {
   if (!purchasingReport.report) {
@@ -34,7 +50,7 @@ const periodLabel = computed(() => {
 const summaryItems = computed(() => {
   if (!purchasingReport.report?.Summary) return []
 
-  const summary = hasFreeTextFilter.value
+  const summary = hasActiveFilter.value || postingFilter.value
     ? summarizePurchasingRows(filteredRows.value)
     : purchasingReport.report.Summary
 
@@ -57,6 +73,12 @@ function postingStokClass(value: string): string {
 }
 
 onMounted(() => {
+  const hydration = hydrateFromRoute(route)
+
+  if (hydration.freeText) {
+    purchasingReport.freeText = hydration.freeText
+  }
+
   void purchasingReport.loadReport()
 })
 </script>
@@ -82,6 +104,8 @@ onMounted(() => {
       />
     </div>
 
+    <InvestigationBreadcrumb :context="breadcrumb" />
+
     <Message v-if="purchasingReport.error" severity="error" :closable="false">
       {{ purchasingReport.error }}
     </Message>
@@ -96,8 +120,8 @@ onMounted(() => {
           @apply="purchasingReport.loadReport()"
         />
 
-        <p v-if="hasFreeTextFilter" class="purchasing-report__filter-hint">
-          Summary reflects filtered rows.
+        <p v-if="hasActiveFilter || postingFilter" class="purchasing-report__filter-hint">
+          Summary reflects filtered rows<span v-if="postingFilter"> (Posting: {{ postingFilter }})</span>.
         </p>
 
         <DataTable

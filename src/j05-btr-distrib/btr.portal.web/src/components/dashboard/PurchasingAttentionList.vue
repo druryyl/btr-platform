@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import Card from 'primevue/card'
 import Column from 'primevue/column'
 import DataTable from 'primevue/datatable'
@@ -7,7 +7,8 @@ import Button from 'primevue/button'
 import ProgressSpinner from 'primevue/progressspinner'
 import type { DashboardPurchasingAttentionItem } from '@/models/dashboard'
 import { formatCurrency } from '@/services/formatters'
-import { navigateToReport } from '@/services/navigateToReport'
+import { resolveInvestigationSourceLabel } from '@/services/investigationSourceLabels'
+import { navigateToInvestigation } from '@/services/navigateToInvestigation'
 
 defineProps<{
   items: DashboardPurchasingAttentionItem[]
@@ -15,6 +16,7 @@ defineProps<{
 }>()
 
 const router = useRouter()
+const route = useRoute()
 
 function formatValue(item: DashboardPurchasingAttentionItem): string {
   if (item.ValueText) {
@@ -32,9 +34,13 @@ function canOpenReport(item: DashboardPurchasingAttentionItem): boolean {
   return item.ReportRoute != null && item.EntityType !== 'Company'
 }
 
-function openReport(item: DashboardPurchasingAttentionItem): void {
-  if (!canOpenReport(item)) return
-  navigateToReport(router, item.ReportRoute!, item.EntityName)
+function investigate(item: DashboardPurchasingAttentionItem): void {
+  if (!canOpenReport(item) || !item.Investigation) return
+  navigateToInvestigation(
+    router,
+    item.Investigation,
+    resolveInvestigationSourceLabel(route.path),
+  )
 }
 </script>
 
@@ -77,13 +83,11 @@ function openReport(item: DashboardPurchasingAttentionItem): void {
         <Column header="">
           <template #body="{ data }">
             <Button
-              v-if="canOpenReport(data)"
-              icon="pi pi-arrow-right"
+              v-if="canOpenReport(data) && data.Investigation"
+              label="Investigate"
               text
-              rounded
-              severity="secondary"
-              aria-label="Open Purchasing report"
-              @click="openReport(data)"
+              size="small"
+              @click="investigate(data)"
             />
           </template>
         </Column>

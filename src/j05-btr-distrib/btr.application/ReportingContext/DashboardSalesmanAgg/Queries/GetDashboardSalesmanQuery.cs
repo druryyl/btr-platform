@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using btr.application.ReportingContext.DashboardSalesmanAgg.Contracts;
+using btr.application.ReportingContext.Shared;
 using MediatR;
 
 namespace btr.application.ReportingContext.DashboardSalesmanAgg.Queries
@@ -83,6 +84,8 @@ namespace btr.application.ReportingContext.DashboardSalesmanAgg.Queries
         public string ReportRoute { get; set; }
 
         public bool RequiresAttention { get; set; }
+
+        public InvestigationMetadata Investigation { get; set; }
     }
 
     public class DashboardSalesmanRankingRow
@@ -104,6 +107,8 @@ namespace btr.application.ReportingContext.DashboardSalesmanAgg.Queries
         public decimal? TargetAmount { get; set; }
 
         public string ReportRoute { get; set; }
+
+        public InvestigationMetadata Investigation { get; set; }
     }
 
     public class DashboardSalesmanPerformanceRankings

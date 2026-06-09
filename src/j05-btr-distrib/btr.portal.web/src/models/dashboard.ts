@@ -1,3 +1,5 @@
+import type { InvestigationMetadata } from '@/models/investigation'
+
 export interface DashboardOverviewSalesSection {
   TotalOmzet: number
   TotalFaktur: number
@@ -71,6 +73,7 @@ export interface DashboardExecutiveRiskItem {
   Rank: number
   Name: string
   Amount: number
+  Investigation?: InvestigationMetadata | null
 }
 
 export interface DashboardExecutiveCriticalExposures {
@@ -115,7 +118,9 @@ export interface DashboardSalesTargetVsAchievement {
 export interface DashboardSalesRankingItem {
   Rank: number
   SalesPersonName: string
+  SalesPersonId?: string
   CompletedOmzet: number
+  Investigation?: InvestigationMetadata | null
 }
 
 export interface DashboardSalesResponse {
@@ -143,7 +148,9 @@ export interface DashboardPiutangAgingBucket {
 export interface DashboardPiutangTopCustomer {
   Rank: number
   CustomerName: string
+  CustomerCode?: string
   OutstandingBalance: number
+  Investigation?: InvestigationMetadata | null
 }
 
 export interface DashboardPiutangResponse {
@@ -164,6 +171,7 @@ export interface DashboardInventoryRankingItem {
   Rank: number
   Name: string
   InventoryValue: number
+  Investigation?: InvestigationMetadata | null
 }
 
 export interface DashboardInventoryResponse {
@@ -212,6 +220,7 @@ export interface DashboardInventoryRiskAttentionItem {
   SignalKey: string
   SignalLabel: string
   ReportRoute: string
+  Investigation?: InvestigationMetadata | null
 }
 
 export interface DashboardInventoryRiskRankingRow {
@@ -225,6 +234,7 @@ export interface DashboardInventoryRiskRankingRow {
   DaysSinceLastFaktur: number
   PercentOfAtRisk: number | null
   ReportRoute: string
+  Investigation?: InvestigationMetadata | null
 }
 
 export interface DashboardInventoryRiskRankings {
@@ -268,6 +278,7 @@ export interface DashboardPurchasingRankingItem {
   Rank: number
   PrincipalName: string
   PurchaseAmount: number
+  Investigation?: InvestigationMetadata | null
 }
 
 export interface DashboardPurchasingAttentionCardGroup {
@@ -299,6 +310,7 @@ export interface DashboardPurchasingAttentionItem {
   ValueAmount: number | null
   ValueText: string | null
   ReportRoute: string | null
+  Investigation?: InvestigationMetadata | null
 }
 
 export interface DashboardPurchasingPrincipalExposureItem {
@@ -313,6 +325,7 @@ export interface DashboardPurchasingPrincipalExposureItem {
   IsCompoundDependency: boolean
   IsInventoryNoPurchase: boolean
   ReportRoute: string | null
+  Investigation?: InvestigationMetadata | null
 }
 
 export interface DashboardPurchasingNavigationLinks {
@@ -362,6 +375,7 @@ export interface DashboardCustomerAttentionItem {
   WilayahName: string
   ReportRoute: string
   RequiresAttention: boolean
+  Investigation?: InvestigationMetadata | null
 }
 
 export interface DashboardCustomerRankingRow {
@@ -371,6 +385,7 @@ export interface DashboardCustomerRankingRow {
   Amount: number
   PercentOfTotal: number | null
   ReportRoute: string
+  Investigation?: InvestigationMetadata | null
 }
 
 export interface DashboardCustomerRankings {
@@ -438,6 +453,7 @@ export interface DashboardSalesmanAttentionItem {
   WilayahName: string
   ReportRoute: string
   RequiresAttention: boolean
+  Investigation?: InvestigationMetadata | null
 }
 
 export interface DashboardSalesmanRankingRow {
@@ -450,6 +466,7 @@ export interface DashboardSalesmanRankingRow {
   AchievementPercent?: number | null
   TargetAmount?: number | null
   ReportRoute: string
+  Investigation?: InvestigationMetadata | null
 }
 
 export interface DashboardSalesmanPerformanceRankings {
@@ -537,6 +554,7 @@ export interface DashboardCollectionAttentionItem {
   ValueText: string | null
   WilayahName: string
   ReportRoute: string | null
+  Investigation?: InvestigationMetadata | null
 }
 
 export interface DashboardCollectionRankingRow {
@@ -546,6 +564,7 @@ export interface DashboardCollectionRankingRow {
   Amount: number
   PercentOfTotal: number | null
   ReportRoute: string | null
+  Investigation?: InvestigationMetadata | null
 }
 
 export interface DashboardCollectionNavigationLinks {
@@ -586,6 +605,7 @@ export interface DashboardLocationRankingRow {
   Amount: number
   PercentOfTotal: number | null
   ReportRoute: string | null
+  Investigation?: InvestigationMetadata | null
 }
 
 export interface DashboardLocationWilayahRankingRow {
@@ -606,6 +626,7 @@ export interface DashboardLocationAttentionItem {
   ValueAmount: number | null
   ValueText: string | null
   ReportRoute: string | null
+  Investigation?: InvestigationMetadata | null
 }
 
 export interface DashboardLocationNavigationLinks {
@@ -630,4 +651,88 @@ export interface DashboardLocationResponse {
   TopWilayahSales: DashboardLocationWilayahRankingRow[]
   AttentionList: DashboardLocationAttentionItem[]
   Navigation: DashboardLocationNavigationLinks | null
+}
+
+export interface DashboardAlertCenterPlatformAlert {
+  SignalKey: string
+  SignalLabel: string
+  ValueText: string
+  DashboardRoute: string
+}
+
+export interface DashboardAlertCenterCategorySummary {
+  Category: string
+  TotalCount: number
+  DisplayedCount: number
+  HasMore: boolean
+}
+
+export interface DashboardAlertCenterAlertRow {
+  Category: string
+  EntityType: string
+  EntityCode: string | null
+  EntityName: string
+  SignalKey: string
+  SignalLabel: string
+  ValueAmount: number | null
+  ValueText: string | null
+  AchievementBand: AchievementBand | null
+  DashboardRoute: string
+  ReportRoute: string | null
+  EntityFilterQuery: string | null
+  SortOrder: number
+  Investigation?: InvestigationMetadata | null
+}
+
+export interface DashboardAlertCenterCategoryGroup {
+  Category: string
+  Alerts: DashboardAlertCenterAlertRow[]
+}
+
+export interface DashboardAlertCenterInventoryRiskSummary {
+  IsAvailable: boolean
+  DeadStockItemCount: number
+  DeadStockValue: number
+  SlowMovingItemCount: number
+  SlowMovingValue: number
+  NeverSoldItemCount: number
+  NeverSoldValue: number
+  AtRiskInventoryPercent: number | null
+  DashboardRoute: string
+}
+
+export interface DashboardAlertCenterConcentrationItem {
+  Label: string
+  ValueText: string | null
+  ValuePercent: number | null
+  DashboardRoute: string
+  SourceDomain: string
+  SortOrder: number
+}
+
+export interface DashboardAlertCenterNavigationLinks {
+  ExecutiveDashboardRoute: string
+  SalesDashboardRoute: string
+  PiutangDashboardRoute: string
+  CustomerDashboardRoute: string
+  SalesmanDashboardRoute: string
+  CollectionDashboardRoute: string
+  InventoryDashboardRoute: string
+  InventoryRiskDashboardRoute: string
+  PurchasingDashboardRoute: string
+  LocationDashboardRoute: string
+}
+
+export interface DashboardAlertCenterResponse {
+  IsAvailable: boolean
+  IsDataFresh: boolean
+  OverallHealthStatus: string
+  HasUnavailableDomain: boolean
+  LastRefreshed: string | null
+  PlatformAlerts: DashboardAlertCenterPlatformAlert[]
+  CategorySummaries: DashboardAlertCenterCategorySummary[]
+  AlertGroups: DashboardAlertCenterCategoryGroup[]
+  InventoryRiskSummary: DashboardAlertCenterInventoryRiskSummary
+  Concentrations: DashboardAlertCenterConcentrationItem[]
+  Navigation: DashboardAlertCenterNavigationLinks
 }
