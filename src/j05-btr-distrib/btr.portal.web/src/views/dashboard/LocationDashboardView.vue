@@ -69,7 +69,7 @@ const wilayahRankingColumns = [
 
 
 function mapWarehouseRows(rows: DashboardLocationRankingRow[] | undefined) {
-  return (rows ?? []) as Record<string, unknown>[]
+  return (rows ?? []) as unknown as Record<string, unknown>[]
 }
 
 

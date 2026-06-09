@@ -42,6 +42,7 @@ export interface InvestigationBreadcrumbContext {
 }
 
 export interface InvestigationQueryParams {
+  [key: string]: string | undefined
   q?: string
   customerId?: string
   salesmanId?: string

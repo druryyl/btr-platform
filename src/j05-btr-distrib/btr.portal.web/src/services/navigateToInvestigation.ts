@@ -1,4 +1,4 @@
-import type { Router } from 'vue-router'
+import type { HistoryState, Router } from 'vue-router'
 import type { InvestigationMetadata } from '@/models/investigation'
 import { buildInvestigationQuery } from '@/services/buildInvestigationQuery'
 
@@ -20,7 +20,7 @@ export function navigateToInvestigation(
       investigationDashboardRoute: investigation.DashboardRoute ?? undefined,
       investigationDesktopNextStep: investigation.DesktopNextStep ?? undefined,
       investigationSteps: investigation.InvestigationSteps ?? undefined,
-    },
+    } as HistoryState,
   })
 }
 
