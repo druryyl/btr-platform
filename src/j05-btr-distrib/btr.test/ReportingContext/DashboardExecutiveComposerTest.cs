@@ -130,6 +130,54 @@ namespace btr.test.ReportingContext
         }
 
         [Fact]
+        public void Compose_Purchasing_UnqualifiedBelumOnly_DoesNotRequireAttention()
+        {
+            var input = FullInput();
+            input.PurchasingManagement = new DashboardPurchasingManagementAggregateResult
+            {
+                QualifiedBacklogCount = 0
+            };
+
+            var result = Compose(input);
+
+            result.Purchasing.RequiresAttention.Should().BeFalse();
+        }
+
+        [Fact]
+        public void Compose_Purchasing_QualifiedBacklogPresent_RequiresAttention()
+        {
+            var input = FullInput();
+            input.PurchasingManagement = new DashboardPurchasingManagementAggregateResult
+            {
+                QualifiedBacklogCount = 2
+            };
+
+            var result = Compose(input);
+
+            result.Purchasing.RequiresAttention.Should().BeTrue();
+            result.Purchasing.QualifiedBacklogCount.Should().Be(2);
+        }
+
+        [Fact]
+        public void Compose_Purchasing_QualifiedZeroWithBelumValue_DoesNotRequireAttention()
+        {
+            var input = FullInput();
+            input.Purchasing.PostingStatus = new List<DashboardPurchasingPostingStatusRow>
+            {
+                new DashboardPurchasingPostingStatusRow { StatusKey = "BELUM", PurchaseAmount = 500000m }
+            };
+            input.PurchasingManagement = new DashboardPurchasingManagementAggregateResult
+            {
+                QualifiedBacklogCount = 0
+            };
+
+            var result = Compose(input);
+
+            result.Purchasing.PendingPostingValue.Should().Be(500000m);
+            result.Purchasing.RequiresAttention.Should().BeFalse();
+        }
+
+        [Fact]
         public void Compose_TruncatesCriticalExposuresToTop5()
         {
             var input = FullInput();

@@ -70,6 +70,8 @@ namespace btr.application.ReportingContext.DashboardExecutiveAgg.Queries
 
         public decimal PendingPostingValue { get; set; }
 
+        public int QualifiedBacklogCount { get; set; }
+
         public decimal? TopPrincipalPercent { get; set; }
 
         public bool RequiresAttention { get; set; }

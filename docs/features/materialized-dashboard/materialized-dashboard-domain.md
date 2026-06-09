@@ -56,7 +56,7 @@ For portal navigation, report definitions, and full KPI catalog, see [btr-portal
 | -------- | ------ | ----------- |
 | Overview home data source | Layer A KPI snapshots via `GET /api/dashboard/overview` | Fast home page; per-domain `GeneratedAt` may differ |
 | Sales KPI source | **Faktur only** — `SUM(GrandTotal)` for non-void current-month Fakturs | Aligns with Sales Report; pipeline excluded |
-| Refresh cadence | Piutang **15 min**, Sales **30 min**, Purchasing **30 min**, Customer **30 min**, Salesman **30 min**, Inventory **60 min**, InventoryRisk **60 min** | Seven Task Scheduler jobs |
+| Refresh cadence | Piutang **15 min**, Sales **30 min**, Purchasing **30 min**, Customer **30 min**, Salesman **30 min**, Collection **30 min**, Location **60 min**, Inventory **60 min**, InventoryRisk **60 min** | Nine Task Scheduler jobs |
 | Snapshot history | **`CURRENT` row only** | Delete-and-replace each refresh |
 | Manual refresh | Portal API + worker CLI | BTR Desktop trigger deferred |
 | Live aggregation fallback | **Removed** after Phase 4 cutover | Dashboards require populated snapshots |
@@ -157,6 +157,24 @@ Void exclusion: `VoidDate = '3000-01-01'` (handled by `InvoiceViewDal`).
 
 **Snapshot tables:** `BTR_PortalDashboardPurchasingKpi`, `BTR_PortalDashboardPurchasingWeekTrend`, `BTR_PortalDashboardPurchasingPostingStatus`, `BTR_PortalDashboardPurchasingTopPrincipal`.
 
+### PurchasingManagement (cross-domain — M21)
+
+Dedicated management snapshot domain — extends V1 purchasing statistics with attention KPIs. Reads `IInvoiceViewDal` (with `CreateTime`/`LastUpdate`), V1 purchasing snapshot, M15 inventory snapshot, and M19 inventory-risk snapshot at refresh.
+
+| KPI | Definition |
+| --- | ---------- |
+| **Qualified Backlog Count/Value** | Age-qualified `BELUM` invoices (`LastUpdate` ≥ 3 days) |
+| **Attention list** | Principal × Signal (8 approved signals) |
+| **Top 10 Principal %** | MTD purchase amount ÷ Grand Total Purchase |
+| **Compound Dependency** | Purchase Top 10 AND (Inventory Top 10 OR At-Risk Top 10) |
+| **Principal Inventory No Purchase** | M15 supplier Top 10 with zero MTD purchase |
+
+**Refresh cadence:** 30 minutes (`PurchasingManagementIntervalMinutes`).
+
+**Refresh order in `All`:** … → Purchasing (V1) → **PurchasingManagement** → Customer → …
+
+**Snapshot tables:** `BTR_PortalDashboardPurchasingManagementKpi`, `BTR_PortalDashboardPurchasingManagementAttention`, `BTR_PortalDashboardPurchasingManagementTopPrincipal`.
+
 ### Customer (cross-domain — M17)
 
 Reads **source DALs** at refresh (Faktur, piutang open balance, customer master, last Faktur per customer) — not Sales/Piutang snapshot tables.
@@ -195,6 +213,43 @@ Reads **source DALs** at refresh (Faktur with `SalesPersonId`, piutang open bala
 **Snapshot tables:** `BTR_PortalDashboardSalesmanKpi`, `BTR_PortalDashboardSalesmanTopOmzet`, `BTR_PortalDashboardSalesmanTopAchievement`, `BTR_PortalDashboardSalesmanTopPiutang`, `BTR_PortalDashboardSalesmanAttention`, `BTR_PortalDashboardSalesmanSegmentation`.
 
 **Protected modules unchanged:** `DashboardSalesFakturAggregator`, `BTR_PortalDashboardSalesTopSalesman`, `DashboardExecutiveComposer`.
+
+### Collection (cross-domain — M20)
+
+Reads **source DALs** at refresh — open piutang (customer, with-salesman, with-wilayah), FF2 pelunasan (`SalesPersonId`), month Faktur, customer master, last Faktur, salesman master — not Piutang/Customer/Salesman snapshot tables.
+
+| KPI / section | Definition |
+| --- | --- |
+| **Overdue exposure** | Sum `KurangBayar` where aging bucket ≠ Current |
+| **Recovery vs Billing %** | Month `TotalBayar ÷ month Faktur omzet × 100` |
+| **Cash Collected MTD** | Month `BayarTunai` only |
+| **Top overdue rankings** | Overdue balance only — not total piutang |
+| **Wilayah** | `Customer.WilayahId`; blank → Unknown |
+| **Attention signals** | ChronicOverdue, LegacyDebt, PlafondBreachOverdue, Overdue, HighOverdueWorkload, LowRecoveryVsBilling, WilayahHotspot (≥15%) |
+
+**Refresh order in `All`:** … → Customer → Salesman → **Collection** (last).
+
+**Snapshot tables:** `BTR_PortalDashboardCollectionKpi`, `BTR_PortalDashboardCollectionAging`, `BTR_PortalDashboardCollectionAttention`, `BTR_PortalDashboardCollectionTopOverdueCustomer`, `BTR_PortalDashboardCollectionTopOverdueSalesman`, `BTR_PortalDashboardCollectionTopOverdueWilayah`.
+
+**Executive promotion (Phase 2 — deferred):** Cash Collected MTD, Recovery vs Billing %, Overdue Concentration % on Management Attention Center.
+
+### Location (warehouse + wilayah concentration — M22)
+
+Reads **source DALs** at refresh (stok balance, faktur, invoice, warehouse master, brg last faktur) and **denominator snapshots** from Inventory, InventoryRisk, Sales, Purchasing KPI rows.
+
+| KPI / section | Definition |
+| --- | --- |
+| **Warehouse inventory %** | Top warehouse `Hpp×Qty` ÷ M15 `TotalInventoryValue` (excl. In-Transit) |
+| **Warehouse at-risk %** | M19-classified items allocated by warehouse ÷ M19 at-risk total |
+| **Warehouse / Wilayah sales %** | MTD Faktur omzet by billing warehouse or customer Wilayah ÷ Sales `TotalOmzet` |
+| **Attention signals** | WarehouseInventoryConcentration, WarehouseAtRiskConcentration, WarehouseSalesConcentration, WarehousePurchasingConcentration, WarehouseNoSalesWithInventory, WarehouseInactiveWithStock |
+| **Ranking universe** | Active, non-special warehouses; exclude In-Transit by name |
+
+**Refresh order in `All`:** … → Collection → **Location** (last).
+
+**Snapshot tables:** `BTR_PortalDashboardLocationKpi`, five Top ranking tables, `BTR_PortalDashboardLocationAttention`.
+
+**Executive promotion (Phase 2 — deferred):** Top 1 Warehouse Inventory %, Top 1 Warehouse Sales %, Inactive Warehouse With Stock Count.
 
 ### Inventory Risk (slow moving & dead stock — M19)
 

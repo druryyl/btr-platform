@@ -2,6 +2,8 @@ import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import {
   fetchDashboardCustomer,
+  fetchDashboardCollection,
+  fetchDashboardLocation,
   fetchDashboardSalesman,
   fetchDashboardExecutive,
   fetchDashboardInventory,
@@ -13,6 +15,8 @@ import {
 } from '@/api/dashboardApi'
 import { getApiErrorMessage } from '@/api/httpClient'
 import type {
+  DashboardCollectionResponse,
+  DashboardLocationResponse,
   DashboardCustomerResponse,
   DashboardSalesmanResponse,
   DashboardExecutiveResponse,
@@ -33,6 +37,8 @@ export const useDashboardStore = defineStore('dashboard', () => {
   const inventoryRisk = ref<DashboardInventoryRiskResponse | null>(null)
   const purchasing = ref<DashboardPurchasingResponse | null>(null)
   const customer = ref<DashboardCustomerResponse | null>(null)
+  const collection = ref<DashboardCollectionResponse | null>(null)
+  const location = ref<DashboardLocationResponse | null>(null)
   const salesman = ref<DashboardSalesmanResponse | null>(null)
   const loading = ref(false)
   const error = ref<string | null>(null)
@@ -157,6 +163,40 @@ export const useDashboardStore = defineStore('dashboard', () => {
     }
   }
 
+  async function loadCollection(): Promise<void> {
+    loading.value = true
+    error.value = null
+
+    try {
+      collection.value = await fetchDashboardCollection()
+
+      if (!collection.value.IsAvailable) {
+        error.value = 'Collection dashboard data is not yet available. Run the snapshot refresh worker.'
+      }
+    } catch (err) {
+      error.value = getApiErrorMessage(err, 'Failed to load collection dashboard.')
+    } finally {
+      loading.value = false
+    }
+  }
+
+  async function loadLocation(): Promise<void> {
+    loading.value = true
+    error.value = null
+
+    try {
+      location.value = await fetchDashboardLocation()
+
+      if (!location.value.IsAvailable) {
+        error.value = 'Location dashboard data is not yet available. Run the snapshot refresh worker.'
+      }
+    } catch (err) {
+      error.value = getApiErrorMessage(err, 'Failed to load location dashboard.')
+    } finally {
+      loading.value = false
+    }
+  }
+
   async function loadSalesman(): Promise<void> {
     loading.value = true
     error.value = null
@@ -183,6 +223,8 @@ export const useDashboardStore = defineStore('dashboard', () => {
     inventoryRisk.value = null
     purchasing.value = null
     customer.value = null
+    collection.value = null
+    location.value = null
     salesman.value = null
     loading.value = false
     error.value = null
@@ -197,6 +239,8 @@ export const useDashboardStore = defineStore('dashboard', () => {
     inventoryRisk,
     purchasing,
     customer,
+    collection,
+    location,
     salesman,
     loading,
     error,
@@ -208,6 +252,8 @@ export const useDashboardStore = defineStore('dashboard', () => {
     loadInventoryRisk,
     loadPurchasing,
     loadCustomer,
+    loadCollection,
+    loadLocation,
     loadSalesman,
     reset,
   }

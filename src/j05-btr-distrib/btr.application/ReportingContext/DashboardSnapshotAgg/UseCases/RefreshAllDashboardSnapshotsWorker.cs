@@ -16,8 +16,11 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.UseCases
         private readonly IRefreshDashboardInventoryRiskSnapshotWorker _inventoryRiskWorker;
         private readonly IRefreshDashboardSalesSnapshotWorker _salesWorker;
         private readonly IRefreshDashboardPurchasingSnapshotWorker _purchasingWorker;
+        private readonly IRefreshDashboardPurchasingManagementSnapshotWorker _purchasingManagementWorker;
         private readonly IRefreshDashboardCustomerSnapshotWorker _customerWorker;
         private readonly IRefreshDashboardSalesmanSnapshotWorker _salesmanWorker;
+        private readonly IRefreshDashboardCollectionSnapshotWorker _collectionWorker;
+        private readonly IRefreshDashboardLocationSnapshotWorker _locationWorker;
 
         public RefreshAllDashboardSnapshotsWorker(
             IRefreshDashboardPiutangSnapshotWorker piutangWorker,
@@ -25,16 +28,22 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.UseCases
             IRefreshDashboardInventoryRiskSnapshotWorker inventoryRiskWorker,
             IRefreshDashboardSalesSnapshotWorker salesWorker,
             IRefreshDashboardPurchasingSnapshotWorker purchasingWorker,
+            IRefreshDashboardPurchasingManagementSnapshotWorker purchasingManagementWorker,
             IRefreshDashboardCustomerSnapshotWorker customerWorker,
-            IRefreshDashboardSalesmanSnapshotWorker salesmanWorker)
+            IRefreshDashboardSalesmanSnapshotWorker salesmanWorker,
+            IRefreshDashboardCollectionSnapshotWorker collectionWorker,
+            IRefreshDashboardLocationSnapshotWorker locationWorker)
         {
             _piutangWorker = piutangWorker;
             _inventoryWorker = inventoryWorker;
             _inventoryRiskWorker = inventoryRiskWorker;
             _salesWorker = salesWorker;
             _purchasingWorker = purchasingWorker;
+            _purchasingManagementWorker = purchasingManagementWorker;
             _customerWorker = customerWorker;
             _salesmanWorker = salesmanWorker;
+            _collectionWorker = collectionWorker;
+            _locationWorker = locationWorker;
         }
 
         public void Execute(RefreshAllDashboardSnapshotsRequest request)
@@ -117,6 +126,20 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.UseCases
                 failures);
 
             RunDomain(
+                "PurchasingManagement",
+                () =>
+                {
+                    var purchasingManagementRequest = new RefreshDashboardPurchasingManagementSnapshotRequest
+                    {
+                        TriggeredBy = triggeredBy
+                    };
+                    _purchasingManagementWorker.Execute(purchasingManagementRequest);
+                    return purchasingManagementRequest.Result;
+                },
+                domainResults,
+                failures);
+
+            RunDomain(
                 "Customer",
                 () =>
                 {
@@ -140,6 +163,34 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.UseCases
                     };
                     _salesmanWorker.Execute(salesmanRequest);
                     return salesmanRequest.Result;
+                },
+                domainResults,
+                failures);
+
+            RunDomain(
+                "Collection",
+                () =>
+                {
+                    var collectionRequest = new RefreshDashboardCollectionSnapshotRequest
+                    {
+                        TriggeredBy = triggeredBy
+                    };
+                    _collectionWorker.Execute(collectionRequest);
+                    return collectionRequest.Result;
+                },
+                domainResults,
+                failures);
+
+            RunDomain(
+                "Location",
+                () =>
+                {
+                    var locationRequest = new RefreshDashboardLocationSnapshotRequest
+                    {
+                        TriggeredBy = triggeredBy
+                    };
+                    _locationWorker.Execute(locationRequest);
+                    return locationRequest.Result;
                 },
                 domainResults,
                 failures);
@@ -210,6 +261,13 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.UseCases
                         RefreshLogId = purchasing.RefreshLogId,
                         DurationMs = purchasing.DurationMs
                     };
+                case RefreshDashboardPurchasingManagementSnapshotResult purchasingManagement:
+                    return new RefreshDashboardDomainResult
+                    {
+                        Domain = domain,
+                        RefreshLogId = purchasingManagement.RefreshLogId,
+                        DurationMs = purchasingManagement.DurationMs
+                    };
                 case RefreshDashboardCustomerSnapshotResult customer:
                     return new RefreshDashboardDomainResult
                     {
@@ -223,6 +281,20 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.UseCases
                         Domain = domain,
                         RefreshLogId = salesman.RefreshLogId,
                         DurationMs = salesman.DurationMs
+                    };
+                case RefreshDashboardCollectionSnapshotResult collection:
+                    return new RefreshDashboardDomainResult
+                    {
+                        Domain = domain,
+                        RefreshLogId = collection.RefreshLogId,
+                        DurationMs = collection.DurationMs
+                    };
+                case RefreshDashboardLocationSnapshotResult location:
+                    return new RefreshDashboardDomainResult
+                    {
+                        Domain = domain,
+                        RefreshLogId = location.RefreshLogId,
+                        DurationMs = location.DurationMs
                     };
                 default:
                     return new RefreshDashboardDomainResult { Domain = domain };

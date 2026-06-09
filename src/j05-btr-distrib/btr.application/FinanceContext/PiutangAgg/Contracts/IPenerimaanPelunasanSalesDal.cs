@@ -14,6 +14,7 @@ namespace btr.application.FinanceContext.PiutangAgg.Contracts
 
     public class PenerimaanPelunasanSalesDto
     {
+        public string SalesPersonId { get; set; }
         public string SalesName { get; set; }
         public DateTime LunasDate { get; set; }
 

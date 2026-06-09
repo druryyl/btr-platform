@@ -58,14 +58,18 @@ namespace btr.portal.api.Configurations
             services.AddScoped<ISalesOmzetHealthMetricsDal, SalesOmzetHealthMetricsDal>();
             services.AddScoped<IPiutangOpenBalanceDal, PiutangOpenBalanceDal>();
             services.AddScoped<IPiutangOpenBalanceWithSalesmanDal, PiutangOpenBalanceWithSalesmanDal>();
+            services.AddScoped<IPiutangOpenBalanceWithWilayahDal, PiutangOpenBalanceWithWilayahDal>();
             services.AddScoped<IDashboardSnapshotRefreshLogDal, DashboardSnapshotRefreshLogDal>();
             services.AddScoped<IDashboardPiutangSnapshotDal, DashboardPiutangSnapshotDal>();
             services.AddScoped<IDashboardInventorySnapshotDal, DashboardInventorySnapshotDal>();
             services.AddScoped<IDashboardInventoryRiskSnapshotDal, DashboardInventoryRiskSnapshotDal>();
             services.AddScoped<IDashboardSalesSnapshotDal, DashboardSalesSnapshotDal>();
             services.AddScoped<IDashboardPurchasingSnapshotDal, DashboardPurchasingSnapshotDal>();
+            services.AddScoped<IDashboardPurchasingManagementSnapshotDal, DashboardPurchasingManagementSnapshotDal>();
             services.AddScoped<IDashboardCustomerSnapshotDal, DashboardCustomerSnapshotDal>();
             services.AddScoped<IDashboardSalesmanSnapshotDal, DashboardSalesmanSnapshotDal>();
+            services.AddScoped<IDashboardCollectionSnapshotDal, DashboardCollectionSnapshotDal>();
+            services.AddScoped<IDashboardLocationSnapshotDal, DashboardLocationSnapshotDal>();
             services.AddScoped<ICustomerLastFakturDal, CustomerLastFakturDal>();
             services.AddScoped<IBrgLastFakturDal, BrgLastFakturDal>();
             services.AddScoped<IDashboardOverviewDal, DashboardOverviewDal>();
@@ -78,6 +82,8 @@ namespace btr.portal.api.Configurations
             services.AddScoped<IDashboardInventoryRiskDal, DashboardInventoryRiskDal>();
             services.AddScoped<IDashboardCustomerDal, DashboardCustomerDal>();
             services.AddScoped<IDashboardSalesmanDal, DashboardSalesmanDal>();
+            services.AddScoped<IDashboardCollectionDal, DashboardCollectionDal>();
+            services.AddScoped<IDashboardLocationDal, DashboardLocationDal>();
             services.AddScoped<ISalesReportDal, SalesReportDal>();
             services.AddScoped<IInventoryReportDal, InventoryReportDal>();
             services.AddScoped<IPiutangReportDal, PiutangReportDal>();

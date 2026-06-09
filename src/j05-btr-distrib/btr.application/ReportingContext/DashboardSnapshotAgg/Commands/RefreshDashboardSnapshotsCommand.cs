@@ -31,8 +31,11 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.Commands
         private readonly IRefreshDashboardInventoryRiskSnapshotWorker _inventoryRiskWorker;
         private readonly IRefreshDashboardSalesSnapshotWorker _salesWorker;
         private readonly IRefreshDashboardPurchasingSnapshotWorker _purchasingWorker;
+        private readonly IRefreshDashboardPurchasingManagementSnapshotWorker _purchasingManagementWorker;
         private readonly IRefreshDashboardCustomerSnapshotWorker _customerWorker;
         private readonly IRefreshDashboardSalesmanSnapshotWorker _salesmanWorker;
+        private readonly IRefreshDashboardCollectionSnapshotWorker _collectionWorker;
+        private readonly IRefreshDashboardLocationSnapshotWorker _locationWorker;
 
         public RefreshDashboardSnapshotsHandler(
             IRefreshAllDashboardSnapshotsWorker allWorker,
@@ -41,8 +44,11 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.Commands
             IRefreshDashboardInventoryRiskSnapshotWorker inventoryRiskWorker,
             IRefreshDashboardSalesSnapshotWorker salesWorker,
             IRefreshDashboardPurchasingSnapshotWorker purchasingWorker,
+            IRefreshDashboardPurchasingManagementSnapshotWorker purchasingManagementWorker,
             IRefreshDashboardCustomerSnapshotWorker customerWorker,
-            IRefreshDashboardSalesmanSnapshotWorker salesmanWorker)
+            IRefreshDashboardSalesmanSnapshotWorker salesmanWorker,
+            IRefreshDashboardCollectionSnapshotWorker collectionWorker,
+            IRefreshDashboardLocationSnapshotWorker locationWorker)
         {
             _allWorker = allWorker;
             _piutangWorker = piutangWorker;
@@ -50,8 +56,11 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.Commands
             _inventoryRiskWorker = inventoryRiskWorker;
             _salesWorker = salesWorker;
             _purchasingWorker = purchasingWorker;
+            _purchasingManagementWorker = purchasingManagementWorker;
             _customerWorker = customerWorker;
             _salesmanWorker = salesmanWorker;
+            _collectionWorker = collectionWorker;
+            _locationWorker = locationWorker;
         }
 
         public Task<RefreshDashboardSnapshotsResponse> Handle(
@@ -135,6 +144,14 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.Commands
                     _purchasingWorker.Execute(purchasingRequest);
                     return MapResult("Purchasing", purchasingRequest.Result);
 
+                case "PurchasingManagement":
+                    var purchasingManagementRequest = new RefreshDashboardPurchasingManagementSnapshotRequest
+                    {
+                        TriggeredBy = triggeredBy
+                    };
+                    _purchasingManagementWorker.Execute(purchasingManagementRequest);
+                    return MapResult("PurchasingManagement", purchasingManagementRequest.Result);
+
                 case "Customer":
                     var customerRequest = new RefreshDashboardCustomerSnapshotRequest
                     {
@@ -151,9 +168,25 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.Commands
                     _salesmanWorker.Execute(salesmanRequest);
                     return MapResult("Salesman", salesmanRequest.Result);
 
+                case "Collection":
+                    var collectionRequest = new RefreshDashboardCollectionSnapshotRequest
+                    {
+                        TriggeredBy = triggeredBy
+                    };
+                    _collectionWorker.Execute(collectionRequest);
+                    return MapResult("Collection", collectionRequest.Result);
+
+                case "Location":
+                    var locationRequest = new RefreshDashboardLocationSnapshotRequest
+                    {
+                        TriggeredBy = triggeredBy
+                    };
+                    _locationWorker.Execute(locationRequest);
+                    return MapResult("Location", locationRequest.Result);
+
                 default:
                     throw new ArgumentException(
-                        "Domain must be All, Piutang, Inventory, InventoryRisk, Sales, Purchasing, Customer, or Salesman.",
+                        "Domain must be All, Piutang, Inventory, InventoryRisk, Sales, Purchasing, PurchasingManagement, Customer, Salesman, Collection, or Location.",
                         nameof(RefreshDashboardSnapshotsCommand.Domain));
             }
         }
@@ -220,6 +253,18 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.Commands
 
         private static RefreshDashboardDomainResult MapResult(
             string domain,
+            RefreshDashboardPurchasingManagementSnapshotResult result)
+        {
+            return new RefreshDashboardDomainResult
+            {
+                Domain = domain,
+                RefreshLogId = result?.RefreshLogId,
+                DurationMs = result?.DurationMs ?? 0
+            };
+        }
+
+        private static RefreshDashboardDomainResult MapResult(
+            string domain,
             RefreshDashboardCustomerSnapshotResult result)
         {
             return new RefreshDashboardDomainResult
@@ -233,6 +278,30 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.Commands
         private static RefreshDashboardDomainResult MapResult(
             string domain,
             RefreshDashboardSalesmanSnapshotResult result)
+        {
+            return new RefreshDashboardDomainResult
+            {
+                Domain = domain,
+                RefreshLogId = result?.RefreshLogId,
+                DurationMs = result?.DurationMs ?? 0
+            };
+        }
+
+        private static RefreshDashboardDomainResult MapResult(
+            string domain,
+            RefreshDashboardCollectionSnapshotResult result)
+        {
+            return new RefreshDashboardDomainResult
+            {
+                Domain = domain,
+                RefreshLogId = result?.RefreshLogId,
+                DurationMs = result?.DurationMs ?? 0
+            };
+        }
+
+        private static RefreshDashboardDomainResult MapResult(
+            string domain,
+            RefreshDashboardLocationSnapshotResult result)
         {
             return new RefreshDashboardDomainResult
             {
@@ -267,11 +336,20 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.Commands
             if (string.Equals(trimmed, "Purchasing", StringComparison.OrdinalIgnoreCase))
                 return "Purchasing";
 
+            if (string.Equals(trimmed, "PurchasingManagement", StringComparison.OrdinalIgnoreCase))
+                return "PurchasingManagement";
+
             if (string.Equals(trimmed, "Customer", StringComparison.OrdinalIgnoreCase))
                 return "Customer";
 
             if (string.Equals(trimmed, "Salesman", StringComparison.OrdinalIgnoreCase))
                 return "Salesman";
+
+            if (string.Equals(trimmed, "Collection", StringComparison.OrdinalIgnoreCase))
+                return "Collection";
+
+            if (string.Equals(trimmed, "Location", StringComparison.OrdinalIgnoreCase))
+                return "Location";
 
             return trimmed;
         }

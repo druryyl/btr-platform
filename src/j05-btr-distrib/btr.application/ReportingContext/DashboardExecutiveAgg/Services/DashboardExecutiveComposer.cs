@@ -31,7 +31,7 @@ namespace btr.application.ReportingContext.DashboardExecutiveAgg.Services
 
             var salesAttention = ComposeSales(sales);
             var piutangAttention = ComposePiutang(piutang);
-            var purchasingAttention = ComposePurchasing(purchasing);
+            var purchasingAttention = ComposePurchasing(purchasing, input.PurchasingManagement);
             var inventoryAttention = ComposeInventory(inventory);
             var criticalExposures = ComposeCriticalExposures(piutang, inventory, purchasing);
 
@@ -124,7 +124,8 @@ namespace btr.application.ReportingContext.DashboardExecutiveAgg.Services
         }
 
         private static DashboardExecutivePurchasingAttention ComposePurchasing(
-            DashboardPurchasingAggregateResult purchasing)
+            DashboardPurchasingAggregateResult purchasing,
+            DashboardPurchasingManagementAggregateResult purchasingManagement)
         {
             if (purchasing == null)
             {
@@ -143,13 +144,16 @@ namespace btr.application.ReportingContext.DashboardExecutiveAgg.Services
                 ? topPrincipal.PurchaseAmount / purchasing.GrandTotalPurchase * 100m
                 : (decimal?)null;
 
+            var qualifiedBacklogCount = purchasingManagement?.QualifiedBacklogCount ?? 0;
+
             return new DashboardExecutivePurchasingAttention
             {
                 IsAvailable = true,
                 PendingPostingInvoiceCount = purchasing.PendingPostingInvoiceCount,
                 PendingPostingValue = belumValue,
+                QualifiedBacklogCount = qualifiedBacklogCount,
                 TopPrincipalPercent = topPrincipalPercent,
-                RequiresAttention = purchasing.PendingPostingInvoiceCount > 0 || belumValue > 0
+                RequiresAttention = qualifiedBacklogCount > 0
             };
         }
 
@@ -352,6 +356,11 @@ namespace btr.application.ReportingContext.DashboardExecutiveAgg.Services
 
         private static string FormatPurchasingSummary(DashboardExecutivePurchasingAttention purchasing)
         {
+            if (purchasing.QualifiedBacklogCount > 0)
+            {
+                return $"Qualified Backlog · {purchasing.QualifiedBacklogCount} invoices · Pending {FormatCurrency(purchasing.PendingPostingValue)}";
+            }
+
             return $"Pending Posting · {purchasing.PendingPostingInvoiceCount} invoices · {FormatCurrency(purchasing.PendingPostingValue)}";
         }
 
@@ -379,6 +388,8 @@ namespace btr.application.ReportingContext.DashboardExecutiveAgg.Services
         public DashboardInventoryAggregateResult Inventory { get; set; }
 
         public DashboardPurchasingAggregateResult Purchasing { get; set; }
+
+        public DashboardPurchasingManagementAggregateResult PurchasingManagement { get; set; }
 
         public IReadOnlyList<DashboardSnapshotRefreshStatusModel> RefreshStatuses { get; set; }
 

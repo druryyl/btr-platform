@@ -195,6 +195,8 @@
     <Compile Include="Controllers\Dashboard\PiutangDashboardController.cs" />
     <Compile Include="Controllers\Dashboard\CustomerDashboardController.cs" />
     <Compile Include="Controllers\Dashboard\SalesmanDashboardController.cs" />
+    <Compile Include="Controllers\Dashboard\CollectionDashboardController.cs" />
+    <Compile Include="Controllers\Dashboard\LocationDashboardController.cs" />
     <Compile Include="Controllers\Dashboard\SalesDashboardController.cs" />
     <Compile Include="Controllers\Dashboard\PurchasingDashboardController.cs" />
     <Compile Include="Controllers\HealthController.cs" />

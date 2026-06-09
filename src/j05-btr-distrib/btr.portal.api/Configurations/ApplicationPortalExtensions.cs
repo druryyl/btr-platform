@@ -14,6 +14,7 @@ using btr.nuna.Domain;
 using FluentValidation;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 using Scrutor;
 
 namespace btr.portal.api.Configurations
@@ -32,6 +33,8 @@ namespace btr.portal.api.Configurations
             services.AddScoped<ITglJamDal, TglJamDal>();
             services.Configure<DashboardSnapshotOptions>(
                 configuration.GetSection(DashboardSnapshotOptions.SECTION_NAME));
+            services.AddScoped(sp =>
+                sp.GetRequiredService<IOptions<DashboardSnapshotOptions>>().Value);
 
             services
                 .Scan(selector => selector
@@ -83,8 +86,11 @@ namespace btr.portal.api.Configurations
             services.AddScoped<DashboardInventoryRiskAggregator>();
             services.AddScoped<DashboardSalesFakturAggregator>();
             services.AddScoped<DashboardPurchasingInvoiceAggregator>();
+            services.AddScoped<DashboardPurchasingManagementAggregator>();
             services.AddScoped<DashboardCustomerAggregator>();
             services.AddScoped<DashboardSalesmanAggregator>();
+            services.AddScoped<DashboardCollectionAggregator>();
+            services.AddScoped<DashboardLocationAggregator>();
 
             return services;
         }

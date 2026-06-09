@@ -14,5 +14,7 @@ namespace btr.application.PurchaseContext.InvoiceInfo
         public decimal Tax { get; set; }
         public decimal GrandTotal { get; set; }
         public string PostingStok { get; set; }
+        public DateTime CreateTime { get; set; }
+        public DateTime LastUpdate { get; set; }
     }
 }

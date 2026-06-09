@@ -14,6 +14,7 @@ namespace btr.infrastructure.ReportingContext.DashboardExecutiveAgg
         private readonly IDashboardPiutangSnapshotDal _piutangSnapshotDal;
         private readonly IDashboardInventorySnapshotDal _inventorySnapshotDal;
         private readonly IDashboardPurchasingSnapshotDal _purchasingSnapshotDal;
+        private readonly IDashboardPurchasingManagementSnapshotDal _purchasingManagementSnapshotDal;
         private readonly IDashboardSnapshotRefreshLogDal _refreshLogDal;
         private readonly DashboardExecutiveComposer _composer;
         private readonly DashboardSnapshotOptions _options;
@@ -23,6 +24,7 @@ namespace btr.infrastructure.ReportingContext.DashboardExecutiveAgg
             IDashboardPiutangSnapshotDal piutangSnapshotDal,
             IDashboardInventorySnapshotDal inventorySnapshotDal,
             IDashboardPurchasingSnapshotDal purchasingSnapshotDal,
+            IDashboardPurchasingManagementSnapshotDal purchasingManagementSnapshotDal,
             IDashboardSnapshotRefreshLogDal refreshLogDal,
             DashboardExecutiveComposer composer,
             IOptions<DashboardSnapshotOptions> options)
@@ -31,6 +33,7 @@ namespace btr.infrastructure.ReportingContext.DashboardExecutiveAgg
             _piutangSnapshotDal = piutangSnapshotDal;
             _inventorySnapshotDal = inventorySnapshotDal;
             _purchasingSnapshotDal = purchasingSnapshotDal;
+            _purchasingManagementSnapshotDal = purchasingManagementSnapshotDal;
             _refreshLogDal = refreshLogDal;
             _composer = composer;
             _options = options?.Value ?? new DashboardSnapshotOptions();
@@ -44,6 +47,7 @@ namespace btr.infrastructure.ReportingContext.DashboardExecutiveAgg
                 Piutang = _piutangSnapshotDal.GetCurrent(),
                 Inventory = _inventorySnapshotDal.GetCurrent(),
                 Purchasing = _purchasingSnapshotDal.GetCurrent(),
+                PurchasingManagement = _purchasingManagementSnapshotDal.GetCurrent(),
                 RefreshStatuses = _refreshLogDal.GetLatestPerDomain(),
                 Options = _options,
                 UtcNow = DateTime.UtcNow

@@ -180,6 +180,91 @@ Piutang dashboard uses all-time open balance; Piutang Report defaults to a perio
 
 ---
 
+## Collection Dashboard (M20)
+
+**Navigate:** Sidebar → Dashboard → Collection.
+
+**Route:** `/dashboard/collection`
+
+**Question answered:** Are receivables being converted into cash, and which receivables require collection attention?
+
+### What You See (fixed section order)
+
+1. **Collection Attention Cards** — Exposure, Recovery, Portfolio
+2. **Recovery Summary** — Cash Collected MTD, Recovery vs Billing %, Payment Mix (Cash / Giro / Adjustment)
+3. **Aging Risk Summary** — overdue-only four buckets (1–30, 31–60, 61–90, >90 days)
+4. **Collection Attention List** — Customer, Salesman, or Wilayah × signal
+5. **Top Overdue Customers / Salesmen / Wilayah** — ranked by overdue balance only
+6. **Navigation** — Piutang, Customer, Salesman dashboards and Piutang Report
+
+No Total Piutang headline (differentiator from Piutang Dashboard).
+
+### Recovery KPIs (current calendar month)
+
+| KPI | Definition |
+| --- | --- |
+| Cash Collected MTD | `SUM(BayarTunai)` from FF2 pelunasan |
+| Recovery vs Billing % | `TotalBayar (Cash+Giro) ÷ month Faktur omzet × 100` |
+| Payment Mix | Cash / Giro / Adjustment share of settlement total |
+
+### Attention signals
+
+| Signal | Entity | Rule |
+| --- | --- | --- |
+| ChronicOverdue | Customer | Open balance in >90d bucket |
+| LegacyDebt | Customer | M17 dormant (90-day) + open balance > 1 |
+| PlafondBreachOverdue | Customer | Plafond breach + overdue balance |
+| Overdue | Customer | Any overdue (suppressed when higher-priority signal applies) |
+| HighOverdueWorkload | Salesman | Any overdue on rep's invoiced book |
+| LowRecoveryVsBilling | Salesman | Month omzet > 0 and rep collections < omzet |
+| WilayahHotspot | Wilayah | Wilayah overdue ≥ 15% of company overdue |
+
+### Drill-down
+
+| Row type | Action |
+| --- | --- |
+| Customer / Salesman (attention list or rankings) | Piutang Report with `?q=` name pre-filter |
+| Wilayah ranking | Display only — no row click |
+
+Dashboard uses all open balances; Piutang Report may default to a period filter.
+
+**Refresh cadence:** 30 minutes (`CollectionIntervalMinutes`). Worker domain: `Collection`.
+
+**Supplements** Piutang, Customer, and Salesman dashboards — does not duplicate Total Piutang or full aging pie.
+
+---
+
+## Branch / Warehouse Performance Dashboard (M22 — Location)
+
+**Navigate:** Sidebar → Dashboard → Locations.
+
+**Route:** `/dashboard/locations`
+
+**Question answered:** Are we becoming too dependent on a particular warehouse or territory?
+
+### What You See (fixed section order)
+
+1. **Location Attention Cards** — informational concentration % (inventory, at-risk, sales, wilayah) and operational counts
+2. **Top Warehouse by Inventory / At-Risk / Sales / Purchasing** — Top 10 with % of company total
+3. **Top Wilayah by Sales** — customer Wilayah on Faktur (MTD omzet)
+4. **Location Attention List** — Warehouse × Signal only (six signals)
+5. **Navigation** — Inventory, Inventory Risk, Sales, Purchasing, Collection, Customer Analytics, Salesman Performance
+
+### Drill-down
+
+| Row type | Action |
+| --- | --- |
+| Warehouse inventory ranking / attention list | Inventory Report `?q={WarehouseName}` |
+| Warehouse at-risk ranking | Inventory Risk Dashboard |
+| Wilayah sales ranking | Collection Dashboard (not Piutang Report) |
+| Sales / Purchasing warehouse rankings | No report drill-down in V1 |
+
+**Refresh cadence:** 60 minutes (`LocationIntervalMinutes`). Worker domain: `Location`. Runs **after Collection** in `RefreshAll`.
+
+**Cross-links only** to M20 wilayah overdue and M21 purchasing backlog — no embedded panels.
+
+---
+
 ## Piutang Dashboard
 
 **Navigate:** Sidebar → Dashboard → Piutang, or click the Piutang attention card on the Management Attention Center.
@@ -284,33 +369,39 @@ Click an attention list row or Top 10 row → **Inventory Report** opens with it
 
 ---
 
-## Purchasing Dashboard
+## Purchasing Management Dashboard
 
 **Navigate:** Sidebar → Dashboard → Purchasing, or click the Purchasing attention card on the Management Attention Center.
 
-**Route:** `/dashboard/purchasing`
+**Route:** `/dashboard/purchasing` (page title: **Purchasing Management Dashboard**)
 
-### What You See
+### What You See (attention-first layout)
 
-1. **KPI row** — Grand Total Purchase, Total Invoice, Pending Posting Invoice Count
-2. **Weekly Purchase Trend** — Line chart of purchase invoice totals by week within the current month
-3. **Posting Status Breakdown** — Pie chart with two buckets: `SUDAH` (posted) and `BELUM` (not yet posted)
-4. **Top 10 Principal** — Table ranked by purchase amount (highest first)
+1. **Purchasing Attention Cards** — Posting Exposure, Principal Dependency, Purchasing Pace, Inventory Cross-Risk
+2. **Purchasing Summary** — Grand Total Purchase, Total Invoice, Posted %, pending/qualified posting context
+3. **Purchasing Attention List** — Principal × Signal rows with drill-down to Purchasing Report
+4. **Weekly Purchase Trend** and **Posting Status Breakdown** (V1 statistics — unchanged)
+5. **Top 10 Principals** (with % of purchase) and **Principal Exposure Comparison** (MTD purchase · inventory · at-risk)
+6. **Navigation** — Purchasing Report, Inventory Dashboard, Inventory Risk Dashboard
 
 ### How to Read It
 
-- **Grand Total Purchase** is the sum of `GrandTotal` on purchase invoices for the current calendar month.
-- **Total Invoice** counts purchase invoice rows in the period.
-- **Pending Posting Invoice Count** counts invoices where Posting Stok is `BELUM`.
+- **Grand Total Purchase** and **Total Invoice** remain traceability KPIs — must match the Purchasing Report footer for the current month.
+- **Qualified backlog** = `BELUM` invoices where `LastUpdate` is **3+ calendar days** ago (configurable). Fresh `BELUM` after invoice entry is normal staging, not management attention.
+- **Pending Posting Value** shows all unqualified `BELUM` value as supporting context.
 - **Principal** is the supplier name on the purchase invoice; blank names appear as **Unknown**.
+- Attention list rows open **Purchasing Report** with `?q=` pre-filtered by principal name.
 - Void invoices are excluded from all metrics.
-- The sum of posting-status slices equals Grand Total Purchase.
+
+### Executive Dashboard (M21)
+
+Purchasing **RequiresAttention** on the Management Attention Center uses **Qualified Backlog Count > 0** only — not all unqualified `BELUM` invoices.
 
 ### Typical Use
 
-- Management review of monthly purchasing spend and volume
-- Identifying principals with the largest purchase concentration
-- Spotting backlog of invoices awaiting stock posting (`BELUM`)
+- Identify suppliers and posting situations requiring management attention
+- Cross-check purchase concentration against inventory and at-risk exposure (M15/M19 snapshots)
+- Validate KPIs on Purchasing Report; complete posting in BTR Desktop PT2 when needed
 
 ---
 
@@ -477,6 +568,8 @@ BTR Portal
 | `/dashboard/piutang` | Piutang analytics | Yes |
 | `/dashboard/customers` | Customer Analytics | Yes |
 | `/dashboard/salesmen` | Salesman Performance | Yes |
+| `/dashboard/collection` | Collection Dashboard | Yes |
+| `/dashboard/locations` | Branch / Warehouse Performance Dashboard | Yes |
 | `/dashboard/inventory` | Inventory analytics | Yes |
 | `/dashboard/inventory-risk` | Slow Moving & Dead Stock | Yes |
 | `/dashboard/purchasing` | Purchasing analytics | Yes |
@@ -493,6 +586,7 @@ Login → Dashboard Home (Management Attention Center)
           ├── Sidebar → Piutang Dashboard
           ├── Sidebar → Customer Analytics
           ├── Sidebar → Salesman Performance
+          ├── Sidebar → Collection
           ├── Sidebar → Inventory Dashboard
           ├── Sidebar → Inventory Risk
           └── Sidebar → Purchasing Dashboard
@@ -695,15 +789,16 @@ cd C:\path\to\btr.portal.worker
 .\btr.portal.worker.exe --domain All --triggered-by Manual
 ```
 
-Verify `BTR_PortalDashboardRefreshLog` shows `Success` for Piutang, Inventory, InventoryRisk, Sales, Purchasing, Customer, and Salesman.
+Verify `BTR_PortalDashboardRefreshLog` shows `Success` for Piutang, Inventory, InventoryRisk, Sales, Purchasing, PurchasingManagement, Customer, Salesman, and Collection.
 
-**Scheduled tasks** — create seven separate Windows Task Scheduler jobs:
+**Scheduled tasks** — create separate Windows Task Scheduler jobs (including M21 PurchasingManagement):
 
 | Task name | Interval | Command |
 | --------- | -------- | ------- |
 | `BTR-Portal-Dashboard-Piutang` | Every 15 min | `btr.portal.worker.exe --domain Piutang --triggered-by Scheduler` |
 | `BTR-Portal-Dashboard-Sales` | Every 30 min | `btr.portal.worker.exe --domain Sales --triggered-by Scheduler` |
 | `BTR-Portal-Dashboard-Purchasing` | Every 30 min | `btr.portal.worker.exe --domain Purchasing --triggered-by Scheduler` |
+| `BTR-Portal-Dashboard-PurchasingManagement` | Every 30 min | `btr.portal.worker.exe --domain PurchasingManagement --triggered-by Scheduler` |
 | `BTR-Portal-Dashboard-Inventory` | Every 60 min | `btr.portal.worker.exe --domain Inventory --triggered-by Scheduler` |
 | `BTR-Portal-Dashboard-InventoryRisk` | Every 60 min | `btr.portal.worker.exe --domain InventoryRisk --triggered-by Scheduler` |
 | `BTR-Portal-Dashboard-Customer` | Every 30 min | `btr.portal.worker.exe --domain Customer --triggered-by Scheduler` |

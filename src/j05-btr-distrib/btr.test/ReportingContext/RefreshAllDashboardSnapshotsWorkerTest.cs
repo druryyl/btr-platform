@@ -17,16 +17,22 @@ namespace btr.test.ReportingContext
             var inventoryRiskWorker = new StubInventoryRiskWorker();
             var salesWorker = new StubSalesWorker();
             var purchasingWorker = new StubPurchasingWorker();
+            var purchasingManagementWorker = new StubPurchasingManagementWorker();
             var customerWorker = new StubCustomerWorker();
             var salesmanWorker = new StubSalesmanWorker();
+            var collectionWorker = new StubCollectionWorker();
+            var locationWorker = new StubLocationWorker();
             var worker = new RefreshAllDashboardSnapshotsWorker(
                 piutangWorker,
                 inventoryWorker,
                 inventoryRiskWorker,
                 salesWorker,
                 purchasingWorker,
+                purchasingManagementWorker,
                 customerWorker,
-                salesmanWorker);
+                salesmanWorker,
+                collectionWorker,
+                locationWorker);
 
             var request = new RefreshAllDashboardSnapshotsRequest
             {
@@ -40,22 +46,31 @@ namespace btr.test.ReportingContext
             inventoryRiskWorker.WasCalled.Should().BeTrue();
             salesWorker.WasCalled.Should().BeTrue();
             purchasingWorker.WasCalled.Should().BeTrue();
+            purchasingManagementWorker.WasCalled.Should().BeTrue();
             customerWorker.WasCalled.Should().BeTrue();
             salesmanWorker.WasCalled.Should().BeTrue();
+            collectionWorker.WasCalled.Should().BeTrue();
+            locationWorker.WasCalled.Should().BeTrue();
             piutangWorker.CallOrder.Should().BeLessThan(inventoryWorker.CallOrder);
             inventoryWorker.CallOrder.Should().BeLessThan(inventoryRiskWorker.CallOrder);
             inventoryRiskWorker.CallOrder.Should().BeLessThan(salesWorker.CallOrder);
             salesWorker.CallOrder.Should().BeLessThan(purchasingWorker.CallOrder);
-            purchasingWorker.CallOrder.Should().BeLessThan(customerWorker.CallOrder);
+            purchasingWorker.CallOrder.Should().BeLessThan(purchasingManagementWorker.CallOrder);
+            purchasingManagementWorker.CallOrder.Should().BeLessThan(customerWorker.CallOrder);
             customerWorker.CallOrder.Should().BeLessThan(salesmanWorker.CallOrder);
-            request.Result.Domains.Should().HaveCount(7);
+            salesmanWorker.CallOrder.Should().BeLessThan(collectionWorker.CallOrder);
+            collectionWorker.CallOrder.Should().BeLessThan(locationWorker.CallOrder);
+            request.Result.Domains.Should().HaveCount(10);
             request.Result.Domains[0].Domain.Should().Be("Piutang");
             request.Result.Domains[1].Domain.Should().Be("Inventory");
             request.Result.Domains[2].Domain.Should().Be("InventoryRisk");
             request.Result.Domains[3].Domain.Should().Be("Sales");
             request.Result.Domains[4].Domain.Should().Be("Purchasing");
-            request.Result.Domains[5].Domain.Should().Be("Customer");
-            request.Result.Domains[6].Domain.Should().Be("Salesman");
+            request.Result.Domains[5].Domain.Should().Be("PurchasingManagement");
+            request.Result.Domains[6].Domain.Should().Be("Customer");
+            request.Result.Domains[7].Domain.Should().Be("Salesman");
+            request.Result.Domains[8].Domain.Should().Be("Collection");
+            request.Result.Domains[9].Domain.Should().Be("Location");
         }
 
         [Fact]
@@ -67,8 +82,11 @@ namespace btr.test.ReportingContext
                 new StubInventoryRiskWorker(),
                 new StubSalesWorker(),
                 new StubPurchasingWorker(),
+                new StubPurchasingManagementWorker(),
                 new StubCustomerWorker(),
-                new StubSalesmanWorker());
+                new StubSalesmanWorker(),
+                new StubCollectionWorker(),
+                new StubLocationWorker());
 
             Action act = () => worker.Execute(new RefreshAllDashboardSnapshotsRequest());
 
@@ -174,6 +192,24 @@ namespace btr.test.ReportingContext
             }
         }
 
+        private sealed class StubPurchasingManagementWorker : IRefreshDashboardPurchasingManagementSnapshotWorker
+        {
+            public bool WasCalled { get; private set; }
+
+            public int CallOrder { get; private set; }
+
+            public void Execute(RefreshDashboardPurchasingManagementSnapshotRequest request)
+            {
+                WasCalled = true;
+                CallOrder = ++_callSequence;
+                request.Result = new RefreshDashboardPurchasingManagementSnapshotResult
+                {
+                    RefreshLogId = "PDPM001",
+                    DurationMs = 425
+                };
+            }
+        }
+
         private sealed class StubCustomerWorker : IRefreshDashboardCustomerSnapshotWorker
         {
             public bool WasCalled { get; private set; }
@@ -206,6 +242,42 @@ namespace btr.test.ReportingContext
                 {
                     RefreshLogId = "PDM0001",
                     DurationMs = 600
+                };
+            }
+        }
+
+        private sealed class StubCollectionWorker : IRefreshDashboardCollectionSnapshotWorker
+        {
+            public bool WasCalled { get; private set; }
+
+            public int CallOrder { get; private set; }
+
+            public void Execute(RefreshDashboardCollectionSnapshotRequest request)
+            {
+                WasCalled = true;
+                CallOrder = ++_callSequence;
+                request.Result = new RefreshDashboardCollectionSnapshotResult
+                {
+                    RefreshLogId = "PDCL001",
+                    DurationMs = 700
+                };
+            }
+        }
+
+        private sealed class StubLocationWorker : IRefreshDashboardLocationSnapshotWorker
+        {
+            public bool WasCalled { get; private set; }
+
+            public int CallOrder { get; private set; }
+
+            public void Execute(RefreshDashboardLocationSnapshotRequest request)
+            {
+                WasCalled = true;
+                CallOrder = ++_callSequence;
+                request.Result = new RefreshDashboardLocationSnapshotResult
+                {
+                    RefreshLogId = "PDLO001",
+                    DurationMs = 750
                 };
             }
         }

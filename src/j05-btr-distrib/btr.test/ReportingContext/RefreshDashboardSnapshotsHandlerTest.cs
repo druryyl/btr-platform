@@ -66,7 +66,7 @@ namespace btr.test.ReportingContext
                 default).GetAwaiter().GetResult();
 
             act.Should().Throw<ArgumentException>()
-                .WithMessage("*Domain must be All, Piutang, Inventory, Sales, Purchasing, Customer, or Salesman*");
+                .WithMessage("*Domain must be All, Piutang, Inventory, InventoryRisk, Sales, Purchasing, PurchasingManagement, Customer, Salesman, Collection, or Location*");
         }
 
         [Fact]
@@ -84,6 +84,23 @@ namespace btr.test.ReportingContext
             response.Domain.Should().Be("Purchasing");
             response.Domains.Should().ContainSingle()
                 .Which.RefreshLogId.Should().Be("PDR0001");
+        }
+
+        [Fact]
+        public void Handle_PurchasingManagementDomain_UsesPurchasingManagementWorker()
+        {
+            var purchasingManagementWorker = new StubPurchasingManagementWorker();
+            var handler = CreateHandler(purchasingManagementWorker: purchasingManagementWorker);
+
+            var response = handler.Handle(
+                new RefreshDashboardSnapshotsCommand { Domain = "PurchasingManagement" },
+                default).GetAwaiter().GetResult();
+
+            purchasingManagementWorker.WasCalled.Should().BeTrue();
+            purchasingManagementWorker.LastTriggeredBy.Should().Be("Manual");
+            response.Domain.Should().Be("PurchasingManagement");
+            response.Domains.Should().ContainSingle()
+                .Which.RefreshLogId.Should().Be("PDPM001");
         }
 
         [Fact]
@@ -110,8 +127,11 @@ namespace btr.test.ReportingContext
             StubInventoryRiskWorker inventoryRiskWorker = null,
             StubSalesWorker salesWorker = null,
             StubPurchasingWorker purchasingWorker = null,
+            StubPurchasingManagementWorker purchasingManagementWorker = null,
             StubCustomerWorker customerWorker = null,
-            StubSalesmanWorker salesmanWorker = null)
+            StubSalesmanWorker salesmanWorker = null,
+            StubCollectionWorker collectionWorker = null,
+            StubLocationWorker locationWorker = null)
         {
             return new RefreshDashboardSnapshotsHandler(
                 allWorker ?? new StubAllWorker(),
@@ -120,8 +140,11 @@ namespace btr.test.ReportingContext
                 inventoryRiskWorker ?? new StubInventoryRiskWorker(),
                 salesWorker ?? new StubSalesWorker(),
                 purchasingWorker ?? new StubPurchasingWorker(),
+                purchasingManagementWorker ?? new StubPurchasingManagementWorker(),
                 customerWorker ?? new StubCustomerWorker(),
-                salesmanWorker ?? new StubSalesmanWorker());
+                salesmanWorker ?? new StubSalesmanWorker(),
+                collectionWorker ?? new StubCollectionWorker(),
+                locationWorker ?? new StubLocationWorker());
         }
 
         private sealed class StubAllWorker : IRefreshAllDashboardSnapshotsWorker
@@ -202,6 +225,24 @@ namespace btr.test.ReportingContext
             }
         }
 
+        private sealed class StubPurchasingManagementWorker : IRefreshDashboardPurchasingManagementSnapshotWorker
+        {
+            public bool WasCalled { get; private set; }
+
+            public string LastTriggeredBy { get; private set; }
+
+            public void Execute(RefreshDashboardPurchasingManagementSnapshotRequest request)
+            {
+                WasCalled = true;
+                LastTriggeredBy = request.TriggeredBy;
+                request.Result = new RefreshDashboardPurchasingManagementSnapshotResult
+                {
+                    RefreshLogId = "PDPM001",
+                    DurationMs = 95
+                };
+            }
+        }
+
         private sealed class StubCustomerWorker : IRefreshDashboardCustomerSnapshotWorker
         {
             public bool WasCalled { get; private set; }
@@ -223,6 +264,20 @@ namespace btr.test.ReportingContext
         private sealed class StubSalesmanWorker : IRefreshDashboardSalesmanSnapshotWorker
         {
             public void Execute(RefreshDashboardSalesmanSnapshotRequest request)
+            {
+            }
+        }
+
+        private sealed class StubCollectionWorker : IRefreshDashboardCollectionSnapshotWorker
+        {
+            public void Execute(RefreshDashboardCollectionSnapshotRequest request)
+            {
+            }
+        }
+
+        private sealed class StubLocationWorker : IRefreshDashboardLocationSnapshotWorker
+        {
+            public void Execute(RefreshDashboardLocationSnapshotRequest request)
             {
             }
         }

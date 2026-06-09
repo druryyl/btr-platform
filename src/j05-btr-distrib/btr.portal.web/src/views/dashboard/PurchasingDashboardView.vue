@@ -1,23 +1,42 @@
 <script setup lang="ts">
 import { computed, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
+import Message from 'primevue/message'
 import DashboardDetailLayout from '@/components/dashboard/DashboardDetailLayout.vue'
+import PurchasingAttentionCards from '@/components/dashboard/PurchasingAttentionCards.vue'
+import PurchasingSummaryRow from '@/components/dashboard/PurchasingSummaryRow.vue'
+import PurchasingAttentionList from '@/components/dashboard/PurchasingAttentionList.vue'
+import PurchasingPrincipalExposureTable from '@/components/dashboard/PurchasingPrincipalExposureTable.vue'
+import PurchasingNavigationSection from '@/components/dashboard/PurchasingNavigationSection.vue'
 import PostingStatusPieChart from '@/components/dashboard/PostingStatusPieChart.vue'
 import Top10RankingTable from '@/components/dashboard/Top10RankingTable.vue'
 import WeeklyTrendChart from '@/components/dashboard/WeeklyTrendChart.vue'
-import { formatCurrency, formatNumber } from '@/services/formatters'
 import type { DashboardSalesWeekTrendItem } from '@/models/dashboard'
+import { navigateToReport } from '@/services/navigateToReport'
 import { useDashboardStore } from '@/stores/dashboardStore'
 
 const dashboard = useDashboardStore()
+const router = useRouter()
 
-const rankingColumns = [
+const managementUnavailable = computed(
+  () => dashboard.purchasing != null && !dashboard.purchasing.IsManagementAvailable,
+)
+
+const top10Columns = [
   { field: 'Rank', header: 'Rank' },
   { field: 'PrincipalName', header: 'Principal' },
-  { field: 'PurchaseAmount', header: 'Purchase Amount' },
+  { field: 'MtdPurchaseAmount', header: 'MTD Purchase' },
+  { field: 'PercentOfPurchase', header: '% of Purchase' },
 ]
 
-const rankingRows = computed(
-  () => (dashboard.purchasing?.TopPrincipalRanking ?? []) as Record<string, unknown>[],
+const top10Rows = computed(() =>
+  (dashboard.purchasing?.PrincipalExposure ?? []).map((row) => ({
+    Rank: row.Rank,
+    PrincipalName: row.PrincipalName,
+    MtdPurchaseAmount: row.MtdPurchaseAmount,
+    PercentOfPurchase: row.PercentOfPurchase,
+    ReportRoute: row.ReportRoute,
+  })),
 )
 
 const weeklyTrendForChart = computed((): DashboardSalesWeekTrendItem[] =>
@@ -29,6 +48,14 @@ const weeklyTrendForChart = computed((): DashboardSalesWeekTrendItem[] =>
   })),
 )
 
+function onTop10RowClick(row: Record<string, unknown>): void {
+  const principalName = String(row.PrincipalName ?? '')
+  const reportRoute = String(row.ReportRoute ?? '/reports/purchasing')
+  if (principalName) {
+    navigateToReport(router, reportRoute, principalName)
+  }
+}
+
 onMounted(() => {
   void dashboard.loadPurchasing()
 })
@@ -36,99 +63,122 @@ onMounted(() => {
 
 <template>
   <DashboardDetailLayout
-    title="Purchasing Dashboard"
-    subtitle="Current Month Purchasing Activity (Void invoices excluded)"
+    title="Purchasing Management Dashboard"
+    subtitle="Which suppliers and purchasing activities require management attention? Current Month Purchasing — Management Attention View"
     :loading="dashboard.loading"
     :error="dashboard.error"
     :generated-at="dashboard.purchasing?.GeneratedAt ?? null"
     @refresh="dashboard.loadPurchasing()"
   >
-    <div class="purchasing-dashboard__kpi-row">
-      <div class="metric">
-        <span class="metric__label">Grand Total Purchase</span>
-        <span class="metric__value">
-          {{ dashboard.purchasing ? formatCurrency(dashboard.purchasing.GrandTotalPurchase) : '—' }}
-        </span>
-      </div>
-      <div class="metric">
-        <span class="metric__label">Total Invoice</span>
-        <span class="metric__value">
-          {{ dashboard.purchasing ? formatNumber(dashboard.purchasing.TotalInvoice) : '—' }}
-        </span>
-      </div>
-      <div class="metric">
-        <span class="metric__label">Pending Posting Invoice Count</span>
-        <span class="metric__value">
-          {{
-            dashboard.purchasing
-              ? formatNumber(dashboard.purchasing.PendingPostingInvoiceCount)
-              : '—'
-          }}
-        </span>
-      </div>
-    </div>
+    <Message
+      v-if="dashboard.purchasing && !dashboard.purchasing.IsDataFresh"
+      severity="warn"
+      :closable="false"
+      class="purchasing-dashboard__banner"
+    >
+      ⚠ Dashboard Data Not Fresh
+    </Message>
 
-    <WeeklyTrendChart
+    <Message
+      v-if="managementUnavailable"
+      severity="info"
+      :closable="false"
+      class="purchasing-dashboard__banner"
+    >
+      Management attention data is not yet available. V1 statistics below may still be shown.
+    </Message>
+
+    <section class="purchasing-dashboard__section">
+      <h2 class="purchasing-dashboard__section-title">Purchasing Attention Cards</h2>
+      <PurchasingAttentionCards
+        :cards="dashboard.purchasing?.AttentionCards ?? null"
+        :loading="dashboard.loading"
+        :unavailable="managementUnavailable"
+      />
+    </section>
+
+    <PurchasingSummaryRow
       class="purchasing-dashboard__section"
-      :weekly-trend="weeklyTrendForChart"
-      :loading="dashboard.loading"
-      title="Weekly Purchase Trend"
-      empty-message="No weekly purchase data for the current period."
+      :summary="dashboard.purchasing?.Summary ?? null"
+      :loading="dashboard.loading && !managementUnavailable"
     />
 
-    <PostingStatusPieChart
+    <PurchasingAttentionList
       class="purchasing-dashboard__section"
-      :items="dashboard.purchasing?.PostingStatusBreakdown ?? []"
+      :items="dashboard.purchasing?.AttentionList ?? []"
       :loading="dashboard.loading"
     />
 
-    <Top10RankingTable
+    <section class="purchasing-dashboard__charts">
+      <WeeklyTrendChart
+        :weekly-trend="weeklyTrendForChart"
+        :loading="dashboard.loading"
+        title="Weekly Purchase Trend"
+        empty-message="No weekly purchase data for the current period."
+      />
+
+      <PostingStatusPieChart
+        :items="dashboard.purchasing?.PostingStatusBreakdown ?? []"
+        :loading="dashboard.loading"
+      />
+    </section>
+
+    <section class="purchasing-dashboard__section purchasing-dashboard__rankings">
+      <Top10RankingTable
+        title="Top 10 Principals"
+        :columns="top10Columns"
+        :rows="top10Rows as Record<string, unknown>[]"
+        :loading="dashboard.loading"
+        value-field="MtdPurchaseAmount"
+        percent-field="PercentOfPurchase"
+        empty-message="No principal ranking data for the current period."
+        clickable
+        @row-click="onTop10RowClick"
+      />
+
+      <PurchasingPrincipalExposureTable
+        :items="dashboard.purchasing?.PrincipalExposure ?? []"
+        :loading="dashboard.loading"
+      />
+    </section>
+
+    <PurchasingNavigationSection
       class="purchasing-dashboard__section"
-      title="Top 10 Principal"
-      :columns="rankingColumns"
-      :rows="rankingRows"
-      :loading="dashboard.loading"
-      value-field="PurchaseAmount"
-      empty-message="No principal ranking data for the current period."
+      :navigation="dashboard.purchasing?.Navigation ?? null"
     />
   </DashboardDetailLayout>
 </template>
 
 <style scoped>
-.purchasing-dashboard__kpi-row {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 1rem;
+.purchasing-dashboard__banner {
   margin-bottom: 1rem;
-  padding: 1rem;
-  background: var(--p-surface-0);
-  border: 1px solid var(--p-surface-200);
-  border-radius: var(--p-border-radius);
-}
-
-.metric {
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-}
-
-.metric__label {
-  font-size: 0.875rem;
-  color: var(--p-text-muted-color);
-}
-
-.metric__value {
-  font-size: 1.25rem;
-  font-weight: 700;
-  color: var(--p-text-color);
 }
 
 .purchasing-dashboard__section {
-  margin-top: 1rem;
+  margin-top: 1.5rem;
 }
 
-@media (max-width: 900px) {
-  .purchasing-dashboard__kpi-row {
+.purchasing-dashboard__section-title {
+  margin: 0 0 1rem;
+  font-size: 1.25rem;
+}
+
+.purchasing-dashboard__charts {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+
+.purchasing-dashboard__rankings {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+@media (max-width: 1100px) {
+  .purchasing-dashboard__charts,
+  .purchasing-dashboard__rankings {
     grid-template-columns: 1fr;
   }
 }

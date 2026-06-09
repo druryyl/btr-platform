@@ -45,6 +45,12 @@ const menuItems = computed(() => [
         class: route.path === '/dashboard/salesmen' ? 'layout-menu-item--active' : '',
       },
       {
+        label: 'Collection',
+        icon: 'pi pi-money-bill',
+        command: () => router.push('/dashboard/collection'),
+        class: route.path === '/dashboard/collection' ? 'layout-menu-item--active' : '',
+      },
+      {
         label: 'Inventory',
         icon: 'pi pi-box',
         command: () => router.push('/dashboard/inventory'),
@@ -61,6 +67,12 @@ const menuItems = computed(() => [
         icon: 'pi pi-shopping-cart',
         command: () => router.push('/dashboard/purchasing'),
         class: route.path === '/dashboard/purchasing' ? 'layout-menu-item--active' : '',
+      },
+      {
+        label: 'Locations',
+        icon: 'pi pi-map-marker',
+        command: () => router.push('/dashboard/locations'),
+        class: route.path === '/dashboard/locations' ? 'layout-menu-item--active' : '',
       },
     ],
   },

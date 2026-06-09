@@ -1,6 +1,8 @@
 import { httpClient } from '@/api/httpClient'
 import { isApiSuccess, type ApiResponse } from '@/models/api'
 import type {
+  DashboardCollectionResponse,
+  DashboardLocationResponse,
   DashboardCustomerResponse,
   DashboardSalesmanResponse,
   DashboardExecutiveResponse,
@@ -97,6 +99,26 @@ export async function fetchDashboardSalesman(): Promise<DashboardSalesmanRespons
 
   if (!isApiSuccess(data) || !data.Data) {
     throw new Error(data.Message ?? 'Failed to load salesman performance dashboard.')
+  }
+
+  return data.Data
+}
+
+export async function fetchDashboardCollection(): Promise<DashboardCollectionResponse> {
+  const { data } = await httpClient.get<ApiResponse<DashboardCollectionResponse>>('/api/dashboard/collection')
+
+  if (!isApiSuccess(data) || !data.Data) {
+    throw new Error(data.Message ?? 'Failed to load collection dashboard.')
+  }
+
+  return data.Data
+}
+
+export async function fetchDashboardLocation(): Promise<DashboardLocationResponse> {
+  const { data } = await httpClient.get<ApiResponse<DashboardLocationResponse>>('/api/dashboard/locations')
+
+  if (!isApiSuccess(data) || !data.Data) {
+    throw new Error(data.Message ?? 'Failed to load location dashboard.')
   }
 
   return data.Data

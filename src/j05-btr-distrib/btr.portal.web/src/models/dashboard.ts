@@ -270,6 +270,57 @@ export interface DashboardPurchasingRankingItem {
   PurchaseAmount: number
 }
 
+export interface DashboardPurchasingAttentionCardGroup {
+  RequiresAttention: boolean
+  Metrics: Record<string, string>
+}
+
+export interface DashboardPurchasingAttentionCards {
+  PostingExposure: DashboardPurchasingAttentionCardGroup | null
+  PrincipalDependency: DashboardPurchasingAttentionCardGroup | null
+  PurchasingPace: DashboardPurchasingAttentionCardGroup | null
+  InventoryCrossRisk: DashboardPurchasingAttentionCardGroup | null
+}
+
+export interface DashboardPurchasingSummaryRow {
+  GrandTotalPurchase: number
+  TotalInvoice: number
+  PostedPercent: number | null
+  PendingPostingValue: number
+  QualifiedBacklogCount: number
+  QualifiedBacklogValue: number
+}
+
+export interface DashboardPurchasingAttentionItem {
+  EntityType: string
+  EntityName: string
+  SignalKey: string
+  SignalLabel: string
+  ValueAmount: number | null
+  ValueText: string | null
+  ReportRoute: string | null
+}
+
+export interface DashboardPurchasingPrincipalExposureItem {
+  Rank: number
+  PrincipalName: string
+  MtdPurchaseAmount: number
+  PercentOfPurchase: number | null
+  InventoryValue: number | null
+  PercentOfInventory: number | null
+  AtRiskValue: number | null
+  PercentOfAtRisk: number | null
+  IsCompoundDependency: boolean
+  IsInventoryNoPurchase: boolean
+  ReportRoute: string | null
+}
+
+export interface DashboardPurchasingNavigationLinks {
+  PurchasingReportRoute: string
+  InventoryDashboardRoute: string
+  InventoryRiskDashboardRoute: string
+}
+
 export interface DashboardPurchasingResponse {
   GrandTotalPurchase: number
   TotalInvoice: number
@@ -278,6 +329,13 @@ export interface DashboardPurchasingResponse {
   WeeklyTrend: DashboardPurchasingWeekTrendItem[]
   PostingStatusBreakdown: DashboardPurchasingPostingStatusItem[]
   TopPrincipalRanking: DashboardPurchasingRankingItem[]
+  IsManagementAvailable: boolean
+  IsDataFresh: boolean
+  AttentionCards: DashboardPurchasingAttentionCards | null
+  Summary: DashboardPurchasingSummaryRow | null
+  AttentionList: DashboardPurchasingAttentionItem[]
+  PrincipalExposure: DashboardPurchasingPrincipalExposureItem[]
+  Navigation: DashboardPurchasingNavigationLinks | null
 }
 
 export interface DashboardCustomerAttentionCards {
@@ -437,4 +495,139 @@ export interface DashboardSalesmanResponse {
   ExposureRankings: DashboardSalesmanExposureRankings | null
   Segmentation: DashboardSalesmanSegmentationSummary | null
   Navigation: DashboardSalesmanNavigationLinks | null
+}
+
+export interface DashboardCollectionAttentionCards {
+  OverdueExposure: number
+  AgingOver90Exposure: number
+  OverdueConcentrationPercent: number | null
+  ExposureRequiresAttention: boolean
+  CashCollectedMtd: number
+  RecoveryVsBillingPercent: number | null
+  RecoveryRequiresAttention: boolean
+  LegacyDebtCount: number
+  PortfolioRequiresAttention: boolean
+}
+
+export interface DashboardCollectionRecoverySummary {
+  CashCollectedMtd: number
+  RecoveryVsBillingPercent: number | null
+  PaymentMixCashAmount: number
+  PaymentMixGiroAmount: number
+  PaymentMixAdjustmentAmount: number
+  PaymentMixCashPercent: number | null
+  PaymentMixGiroPercent: number | null
+  PaymentMixAdjustmentPercent: number | null
+}
+
+export interface DashboardCollectionAgingBucket {
+  BucketKey: string
+  BucketLabel: string
+  Amount: number
+  SortOrder: number
+}
+
+export interface DashboardCollectionAttentionItem {
+  EntityType: string
+  EntityCode: string
+  EntityName: string
+  SignalKey: string
+  SignalLabel: string
+  ValueAmount: number | null
+  ValueText: string | null
+  WilayahName: string
+  ReportRoute: string | null
+}
+
+export interface DashboardCollectionRankingRow {
+  Rank: number
+  EntityCode: string
+  EntityName: string
+  Amount: number
+  PercentOfTotal: number | null
+  ReportRoute: string | null
+}
+
+export interface DashboardCollectionNavigationLinks {
+  PiutangDashboardRoute: string
+  CustomerDashboardRoute: string
+  SalesmanDashboardRoute: string
+  PiutangReportRoute: string
+}
+
+export interface DashboardCollectionResponse {
+  IsAvailable: boolean
+  IsDataFresh: boolean
+  GeneratedAt: string | null
+  AttentionCards: DashboardCollectionAttentionCards | null
+  RecoverySummary: DashboardCollectionRecoverySummary | null
+  AgingRiskSummary: DashboardCollectionAgingBucket[]
+  AttentionList: DashboardCollectionAttentionItem[]
+  TopOverdueCustomers: DashboardCollectionRankingRow[]
+  TopOverdueSalesmen: DashboardCollectionRankingRow[]
+  TopOverdueWilayah: DashboardCollectionRankingRow[]
+  Navigation: DashboardCollectionNavigationLinks | null
+}
+
+export interface DashboardLocationAttentionCards {
+  Top1WarehouseInventoryPercent: number | null
+  Top3WarehouseInventoryPercent: number | null
+  Top1WarehouseAtRiskPercent: number | null
+  Top1WarehouseSalesPercent: number | null
+  Top1WilayahSalesPercent: number | null
+  InactiveWarehouseWithStockCount: number
+  WarehouseNoSalesWithInventoryCount: number
+}
+
+export interface DashboardLocationRankingRow {
+  Rank: number
+  EntityCode: string
+  EntityName: string
+  Amount: number
+  PercentOfTotal: number | null
+  ReportRoute: string | null
+}
+
+export interface DashboardLocationWilayahRankingRow {
+  Rank: number
+  EntityCode: string | null
+  EntityName: string
+  Amount: number
+  PercentOfTotal: number | null
+  DashboardRoute: string | null
+}
+
+export interface DashboardLocationAttentionItem {
+  EntityType: string
+  EntityCode: string | null
+  EntityName: string
+  SignalKey: string
+  SignalLabel: string
+  ValueAmount: number | null
+  ValueText: string | null
+  ReportRoute: string | null
+}
+
+export interface DashboardLocationNavigationLinks {
+  InventoryDashboardRoute: string
+  InventoryRiskDashboardRoute: string
+  SalesDashboardRoute: string
+  PurchasingDashboardRoute: string
+  CollectionDashboardRoute: string
+  CustomerDashboardRoute: string
+  SalesmanDashboardRoute: string
+}
+
+export interface DashboardLocationResponse {
+  IsAvailable: boolean
+  IsDataFresh: boolean
+  GeneratedAt: string | null
+  AttentionCards: DashboardLocationAttentionCards | null
+  TopWarehouseInventory: DashboardLocationRankingRow[]
+  TopWarehouseAtRisk: DashboardLocationRankingRow[]
+  TopWarehouseSales: DashboardLocationRankingRow[]
+  TopWarehousePurchasing: DashboardLocationRankingRow[]
+  TopWilayahSales: DashboardLocationWilayahRankingRow[]
+  AttentionList: DashboardLocationAttentionItem[]
+  Navigation: DashboardLocationNavigationLinks | null
 }

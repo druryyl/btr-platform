@@ -29,6 +29,106 @@ namespace btr.application.ReportingContext.DashboardPurchasingAgg.Queries
 
         public List<DashboardPurchasingRankingItem> TopPrincipalRanking { get; set; } =
             new List<DashboardPurchasingRankingItem>();
+
+        public bool IsManagementAvailable { get; set; }
+
+        public bool IsDataFresh { get; set; }
+
+        public DashboardPurchasingAttentionCards AttentionCards { get; set; }
+
+        public DashboardPurchasingSummaryRow Summary { get; set; }
+
+        public List<DashboardPurchasingAttentionItem> AttentionList { get; set; } =
+            new List<DashboardPurchasingAttentionItem>();
+
+        public List<DashboardPurchasingPrincipalExposureItem> PrincipalExposure { get; set; } =
+            new List<DashboardPurchasingPrincipalExposureItem>();
+
+        public DashboardPurchasingNavigationLinks Navigation { get; set; }
+    }
+
+    public class DashboardPurchasingAttentionCards
+    {
+        public DashboardPurchasingAttentionCardGroup PostingExposure { get; set; }
+
+        public DashboardPurchasingAttentionCardGroup PrincipalDependency { get; set; }
+
+        public DashboardPurchasingAttentionCardGroup PurchasingPace { get; set; }
+
+        public DashboardPurchasingAttentionCardGroup InventoryCrossRisk { get; set; }
+    }
+
+    public class DashboardPurchasingAttentionCardGroup
+    {
+        public bool RequiresAttention { get; set; }
+
+        public Dictionary<string, string> Metrics { get; set; } = new Dictionary<string, string>();
+    }
+
+    public class DashboardPurchasingSummaryRow
+    {
+        public decimal GrandTotalPurchase { get; set; }
+
+        public int TotalInvoice { get; set; }
+
+        public decimal? PostedPercent { get; set; }
+
+        public decimal PendingPostingValue { get; set; }
+
+        public int QualifiedBacklogCount { get; set; }
+
+        public decimal QualifiedBacklogValue { get; set; }
+    }
+
+    public class DashboardPurchasingAttentionItem
+    {
+        public string EntityType { get; set; }
+
+        public string EntityName { get; set; }
+
+        public string SignalKey { get; set; }
+
+        public string SignalLabel { get; set; }
+
+        public decimal? ValueAmount { get; set; }
+
+        public string ValueText { get; set; }
+
+        public string ReportRoute { get; set; }
+    }
+
+    public class DashboardPurchasingPrincipalExposureItem
+    {
+        public int Rank { get; set; }
+
+        public string PrincipalName { get; set; }
+
+        public decimal MtdPurchaseAmount { get; set; }
+
+        public decimal? PercentOfPurchase { get; set; }
+
+        public decimal? InventoryValue { get; set; }
+
+        public decimal? PercentOfInventory { get; set; }
+
+        public decimal? AtRiskValue { get; set; }
+
+        public decimal? PercentOfAtRisk { get; set; }
+
+        public bool IsCompoundDependency { get; set; }
+
+        public bool IsInventoryNoPurchase { get; set; }
+
+        public string ReportRoute { get; set; }
+    }
+
+    public class DashboardPurchasingNavigationLinks
+    {
+        public string PurchasingReportRoute { get; set; }
+
+        public string InventoryDashboardRoute { get; set; }
+
+        public string InventoryRiskDashboardRoute { get; set; }
     }
 
     public class DashboardPurchasingWeekTrendItem

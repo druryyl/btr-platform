@@ -256,6 +256,8 @@ RefreshDashboardInventoryRiskSnapshotWorker
 | `GET /api/dashboard/purchasing` | `PurchasingDashboardController` | Layer A + B snapshots | Purchasing detail analytics |
 | `GET /api/dashboard/customers` | `CustomerDashboardController` | Dedicated Customer snapshot (`DashboardCustomerAgg`) | Customer Analytics (M17) |
 | `GET /api/dashboard/salesmen` | `SalesmanDashboardController` | Dedicated Salesman snapshot (`DashboardSalesmanAgg`) | Salesman Performance (M18) |
+| `GET /api/dashboard/collection` | `CollectionDashboardController` | Dedicated Collection snapshot (`DashboardCollectionAgg`) | Collection Dashboard (M20) |
+| `GET /api/dashboard/locations` | `LocationDashboardController` | Dedicated Location snapshot (`DashboardLocationAgg`) | Branch / Warehouse Performance (M22) |
 | `GET /api/dashboard/inventory-risk` | `InventoryRiskDashboardController` | Dedicated Inventory Risk snapshot (`DashboardInventoryRiskAgg`) | Slow Moving & Dead Stock (M19) |
 | `POST /api/admin/dashboard/refresh` | `AdminDashboardRefreshController` | Triggers snapshot rebuild | On-demand refresh (sync; IIS timeout risk) |
 | `GET /api/health/dashboard-snapshots` | `HealthController` | `BTR_PortalDashboardRefreshLog` | Monitoring — no auth |
@@ -275,6 +277,8 @@ Domain detail endpoints were extended additively across M8 and M13–M15; respon
 | `/dashboard/purchasing` | `PurchasingDashboardView` | `GET /api/dashboard/purchasing` |
 | `/dashboard/customers` | `CustomerDashboardView` | `GET /api/dashboard/customers` |
 | `/dashboard/salesmen` | `SalesmanDashboardView` | `GET /api/dashboard/salesmen` |
+| `/dashboard/collection` | `CollectionDashboardView` | `GET /api/dashboard/collection` |
+| `/dashboard/locations` | `LocationDashboardView` | `GET /api/dashboard/locations` |
 | `/dashboard/inventory-risk` | `InventoryRiskDashboardView` | `GET /api/dashboard/inventory-risk` |
 
 Home shows summary KPI cards with per-domain `GeneratedAt` timestamps and links to detail pages. Detail pages consume the full API response (including chart/ranking sections not shown on home).

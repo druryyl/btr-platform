@@ -276,22 +276,29 @@ Executive landing page titled **Management Attention Center** — answers *What 
 
 **Explicitly out of scope:** Salesman dimension, ABC classification, warehouse breakdown, export, Kartu Stok drill-down, retur-adjusted demand, mutasi-based movement classification for portal KPIs.
 
-### Purchasing Dashboard (`/dashboard/purchasing`)
+### Purchasing Management Dashboard (`/dashboard/purchasing`)
 
-**Period:** Current calendar month — non-void purchase Invoices only (`InvoiceDate` within month).
+**Period:** Current calendar month — non-void purchase Invoices only (`InvoiceDate` within month). Cross-domain inventory metrics are point-in-time from M15/M19 snapshots at refresh.
 
-**Purpose:** Management-level purchasing activity — weekly trend, posting-status composition, and principal concentration.
+**Purpose:** *Which suppliers and purchasing activities require management attention?* Extends V1 purchasing statistics with qualified backlog, attention signals, and cross-domain principal exposure.
 
 | Section | Content |
 | ------- | ------- |
-| KPI row | Grand Total Purchase, Total Invoice, Pending Posting Invoice Count |
-| Chart | Weekly Purchase Trend (`SUM(GrandTotal)` by calendar week) |
-| Chart | Posting Status Breakdown (`SUDAH` / `BELUM` by purchase value) |
-| Table | Top 10 Principal by Purchase Amount |
+| Attention cards | Posting Exposure, Principal Dependency, Purchasing Pace, Inventory Cross-Risk |
+| Summary row | Grand Total Purchase, Total Invoice, Posted %, pending/qualified posting |
+| Attention list | Principal × Signal (8 approved signals) |
+| Charts | Weekly Purchase Trend, Posting Status Breakdown (V1) |
+| Tables | Top 10 Principal with %; Principal Exposure Comparison |
 
-**Home card metrics (summary):** Grand Total Purchase, Total Invoice.
+**Qualified backlog rule:** `PostingStok = BELUM` AND `(today − LastUpdate.Date).TotalDays ≥ 3` (default; configurable via `PurchasingQualifiedBacklogDays`).
 
-**Stakeholder note:** Grand Total Purchase and Total Invoice must match the Purchasing Report footer totals for the same month and invoice source (`IInvoiceViewDal`).
+**Approved attention signals:** `QualifiedBacklog`, `PrincipalSpendConcentration`, `PrincipalInventoryConcentration`, `PrincipalAtRiskExposure`, `CompoundDependency`, `PurchasingInactivity`, `PrincipalInventoryNoPurchase`, `UnknownPrincipal`.
+
+**Executive RequiresAttention (M21):** `QualifiedBacklogCount > 0` — not unqualified `BELUM` count/value.
+
+**Stakeholder note:** Grand Total Purchase and Total Invoice must match the Purchasing Report footer totals (sourced from V1 purchasing snapshot unchanged).
+
+**Snapshot domain:** `BTR_PortalDashboardPurchasingManagement*` (separate from V1 `BTR_PortalDashboardPurchasing*`).
 
 ---
 
@@ -445,6 +452,37 @@ Dedicated snapshot domain — `BTR_PortalDashboardSalesman*`. Refreshed from sou
 **Salesman key:** `SalesPersonId` primary; name fallback map for piutang rows where only `SalesPersonName` is populated. Rows with blank `SalesPersonId` and no name match are excluded from aggregates.
 
 **Attention list:** One row per salesman × signal (Below Target, No Target, High Overdue Exposure, High Piutang Exposure, Customer Concentration, Dormant Customer Portfolio).
+
+### Collection Dashboard KPIs (M20)
+
+Dedicated snapshot domain — `BTR_PortalDashboardCollection*`. Refreshed from source DALs (not Piutang/Customer/Salesman snapshots).
+
+| KPI | Period / scope | Formula | Business meaning |
+| --- | -------------- | ------- | ---------------- |
+| **Overdue Exposure** | All-time open | Sum overdue row balances (bucket ≠ Current) | Total past-due receivables |
+| **>90d Exposure** | All-time open | Sum in `DaysOver90` bucket | Chronic overdue amount |
+| **Overdue Concentration %** | All-time open | Top-1 customer overdue ÷ total overdue × 100 | Receivable concentration risk |
+| **Cash Collected MTD** | Current month | `SUM(BayarTunai)` | Cash collections this month |
+| **Recovery vs Billing %** | Current month | `TotalBayar ÷ month Faktur omzet × 100` | Collections pace vs billing |
+| **Payment Mix** | Current month | Cash / Giro / Adjustment share of settlement total | How receivables are settled |
+| **Legacy Debt Count** | Dormant + open | M17 dormant rule with balance > 1 | Stale receivable accounts |
+| **Top Overdue Customers/Salesmen/Wilayah** | All-time open | Rank by overdue balance only | Collection priority by dimension |
+
+**Attention list:** One row per entity × signal with customer signal priority (ChronicOverdue > PlafondBreachOverdue > LegacyDebt > Overdue).
+
+### Location Dashboard KPIs (M22)
+
+Dedicated snapshot domain — `BTR_PortalDashboardLocation*`. Composes stok/faktur/invoice at refresh; denominators from Inventory, InventoryRisk, Sales, Purchasing snapshots.
+
+| KPI | Period / scope | Formula | Business meaning |
+| --- | -------------- | ------- | ---------------- |
+| **Top Warehouse Inventory %** | Point-in-time | Rank-1 warehouse inventory ÷ M15 total × 100 | Inventory concentration |
+| **Top 3 Warehouse Inventory %** | Point-in-time | Sum top 3 warehouse inventory ÷ M15 total × 100 | Multi-site concentration |
+| **Top Warehouse At-Risk %** | Point-in-time | Rank-1 warehouse at-risk ÷ M19 at-risk total × 100 | Obsolescence concentration by site |
+| **Top Warehouse / Wilayah Sales %** | Current month | Rank-1 warehouse or Wilayah omzet ÷ Sales total × 100 | Billing / territory dependency |
+| **Inactive Warehouse With Stock** | Point-in-time | Count `IsAktif = false` warehouses with inventory > 0 | Legacy sites holding capital |
+
+**Attention list:** Warehouse × Signal — WarehouseInactiveWithStock, WarehouseNoSalesWithInventory, Top-10 concentration signals (inventory, at-risk, sales, purchasing). Wilayah collection attention remains on M20.
 
 ### Inventory KPIs
 

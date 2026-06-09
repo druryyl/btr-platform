@@ -1,4 +1,5 @@
-﻿using btr.domain.InventoryContext.WarehouseAgg;
+﻿using System.Collections.Generic;
+using btr.domain.InventoryContext.WarehouseAgg;
 using btr.nuna.Infrastructure;
 
 namespace btr.application.InventoryContext.WarehouseAgg
@@ -10,5 +11,6 @@ namespace btr.application.InventoryContext.WarehouseAgg
         IGetData<WarehouseModel, IWarehouseKey>,
         IListData<WarehouseModel>
     {
+        IEnumerable<WarehouseModel> ListAllForPortal();
     }
 }

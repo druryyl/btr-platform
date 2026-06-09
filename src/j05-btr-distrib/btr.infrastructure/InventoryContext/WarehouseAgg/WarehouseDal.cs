@@ -108,5 +108,19 @@ namespace btr.infrastructure.InventoryContext.WarehouseAgg
                 return conn.Read<WarehouseModel>(sql);
             }
         }
+
+        public IEnumerable<WarehouseModel> ListAllForPortal()
+        {
+            const string sql = @"
+            SELECT
+                WarehouseId, WarehouseName, IsSpecial, IsAktif
+            FROM
+                BTR_Warehouse";
+
+            using (var conn = new SqlConnection(ConnStringHelper.Get(_opt)))
+            {
+                return conn.Read<WarehouseModel>(sql);
+            }
+        }
     }
 }

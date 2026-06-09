@@ -28,6 +28,7 @@ namespace btr.infrastructure.FinanceContext.PiutangAgg
             const string sql = @"
             SELECT
                 CAST(aa.LunasDate AS DATE) AS LunasDate,
+                ISNULL(cc.SalesPersonId, '') AS SalesPersonId,
                 ISNULL(cc.SalesPersonName, '') AS SalesName,
                 SUM(ISNULL(ff.BayarTunai, 0)) AS BayarTunai,
                 SUM(ISNULL(gg.BayarGiro, 0)) AS BayarGiro,
@@ -70,7 +71,7 @@ namespace btr.infrastructure.FinanceContext.PiutangAgg
              WHERE
                  aa.LunasDate BETWEEN @Tgl1 AND @Tgl2
             GROUP BY
-                CAST(aa.LunasDate AS DATE), cc.SalesPersonName ";
+                CAST(aa.LunasDate AS DATE), cc.SalesPersonId, cc.SalesPersonName ";
 
             //  parameter
             var dp = new DynamicParameters();

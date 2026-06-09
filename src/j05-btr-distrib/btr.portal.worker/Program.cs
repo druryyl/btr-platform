@@ -16,7 +16,7 @@ namespace btr.portal.worker
         private static readonly HashSet<string> ValidDomains =
             new HashSet<string>(StringComparer.OrdinalIgnoreCase)
             {
-                "All", "Sales", "Piutang", "Inventory", "InventoryRisk", "Purchasing", "Customer", "Salesman"
+                "All", "Sales", "Piutang", "Inventory", "InventoryRisk", "Purchasing", "PurchasingManagement", "Customer", "Salesman", "Collection", "Location"
             };
 
         private static readonly HashSet<string> ValidTriggers =
@@ -36,7 +36,7 @@ namespace btr.portal.worker
 
                 if (!ValidDomains.Contains(domain))
                     throw new ArgumentException(
-                        $"Invalid --domain '{domain}'. Expected All, Sales, Piutang, Inventory, InventoryRisk, Purchasing, Customer, or Salesman.");
+                        $"Invalid --domain '{domain}'. Expected All, Sales, Piutang, Inventory, InventoryRisk, Purchasing, PurchasingManagement, Customer, Salesman, Collection, or Location.");
 
                 if (!ValidTriggers.Contains(triggeredBy))
                     throw new ArgumentException(
@@ -141,6 +141,15 @@ namespace btr.portal.worker
                     });
                     break;
 
+                case "PURCHASINGMANAGEMENT":
+                    var purchasingManagementWorker =
+                        serviceProvider.GetRequiredService<IRefreshDashboardPurchasingManagementSnapshotWorker>();
+                    purchasingManagementWorker.Execute(new RefreshDashboardPurchasingManagementSnapshotRequest
+                    {
+                        TriggeredBy = triggeredBy
+                    });
+                    break;
+
                 case "CUSTOMER":
                     var customerWorker =
                         serviceProvider.GetRequiredService<IRefreshDashboardCustomerSnapshotWorker>();
@@ -154,6 +163,24 @@ namespace btr.portal.worker
                     var salesmanWorker =
                         serviceProvider.GetRequiredService<IRefreshDashboardSalesmanSnapshotWorker>();
                     salesmanWorker.Execute(new RefreshDashboardSalesmanSnapshotRequest
+                    {
+                        TriggeredBy = triggeredBy
+                    });
+                    break;
+
+                case "COLLECTION":
+                    var collectionWorker =
+                        serviceProvider.GetRequiredService<IRefreshDashboardCollectionSnapshotWorker>();
+                    collectionWorker.Execute(new RefreshDashboardCollectionSnapshotRequest
+                    {
+                        TriggeredBy = triggeredBy
+                    });
+                    break;
+
+                case "LOCATION":
+                    var locationWorker =
+                        serviceProvider.GetRequiredService<IRefreshDashboardLocationSnapshotWorker>();
+                    locationWorker.Execute(new RefreshDashboardLocationSnapshotRequest
                     {
                         TriggeredBy = triggeredBy
                     });
