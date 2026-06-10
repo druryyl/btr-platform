@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using btr.application.ReportingContext.DashboardSnapshotAgg.Progress;
 using btr.nuna.Application;
 
 namespace btr.application.ReportingContext.DashboardSnapshotAgg.UseCases
@@ -211,13 +212,22 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.UseCases
             IList<Exception> failures)
             where T : class
         {
+            var stepId = WorkerProgressStepIds.DomainStep(domain);
+            WorkerProgressScope.Current.StepStarted(stepId, $"Refresh {domain} Snapshot");
+
             try
             {
                 var result = action();
-                domainResults.Add(MapDomainResult(domain, result));
+                var mapped = MapDomainResult(domain, result);
+                domainResults.Add(mapped);
+                WorkerProgressScope.Current.StepCompleted(stepId, new WorkerProgressStepInfo
+                {
+                    Duration = TimeSpan.FromMilliseconds(mapped.DurationMs)
+                });
             }
             catch (Exception ex)
             {
+                WorkerProgressScope.Current.StepFailed(stepId, ex.Message);
                 failures.Add(ex);
             }
         }

@@ -3,6 +3,7 @@ using System.Diagnostics;
 using System.Linq;
 using btr.application.ReportingContext.DashboardSnapshotAgg.Contracts;
 using btr.application.ReportingContext.DashboardSnapshotAgg.Models;
+using btr.application.ReportingContext.DashboardSnapshotAgg.Progress;
 using btr.application.ReportingContext.DashboardSnapshotAgg.Services;
 using btr.application.SalesContext.FakturInfo;
 using btr.application.SalesContext.SalesOmzetAgg.Contracts;
@@ -64,6 +65,7 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.UseCases
             var refreshLogId = Ulid.NewUlid().ToString();
             var startedAt = _tglJamDal.Now;
 
+            WorkerProgressScope.Current.StepStarted($"{Domain}:Initialize", "Initialize refresh log");
             _refreshLogDal.InsertRunning(new DashboardSnapshotRefreshLogModel
             {
                 RefreshLogId = refreshLogId,
@@ -72,23 +74,41 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.UseCases
                 Status = "Running",
                 TriggeredBy = request.TriggeredBy ?? "Scheduler"
             });
+            WorkerProgressScope.Current.StepCompleted($"{Domain}:Initialize");
 
             try
             {
                 var today = _tglJamDal.Now.Date;
                 var periode = CurrentMonthPeriode(today);
                 var generatedAt = _tglJamDal.Now;
+                const int loadSteps = 5;
 
+                WorkerProgressScope.Current.StepStarted($"{Domain}:Load", "Load source data");
+                WorkerProgressScope.Current.ReportPhaseProgress($"{Domain}: Load faktur", 1, loadSteps);
                 var fakturRows = _fakturViewDal.ListData(periode)?.ToList()
                     ?? new System.Collections.Generic.List<FakturView>();
+
+                WorkerProgressScope.Current.ReportPhaseProgress($"{Domain}: Load last faktur by customer", 2, loadSteps);
                 var lastFakturRows = _lastFakturDal.ListLastFakturWithSalesmanByCustomer()?.ToList()
                     ?? new System.Collections.Generic.List<CustomerLastFakturWithSalesmanDto>();
+
+                WorkerProgressScope.Current.ReportPhaseProgress($"{Domain}: Load open balances", 3, loadSteps);
                 var piutangRows = _openBalanceDal.ListOpenBalances()?.ToList()
                     ?? new System.Collections.Generic.List<PiutangOpenBalanceWithSalesmanDto>();
+
+                WorkerProgressScope.Current.ReportPhaseProgress($"{Domain}: Load salespeople", 4, loadSteps);
                 var salespeople = _salesPersonDal.ListData()?.ToList()
                     ?? new System.Collections.Generic.List<btr.domain.SalesContext.SalesPersonAgg.SalesPersonModel>();
-                var targets = _targetDal.ListTargetsForMonth(periode.Tgl1.Year, periode.Tgl1.Month);
 
+                WorkerProgressScope.Current.ReportPhaseProgress($"{Domain}: Load targets", 5, loadSteps);
+                var targets = _targetDal.ListTargetsForMonth(periode.Tgl1.Year, periode.Tgl1.Month);
+                var targetCount = targets == null ? 0 : System.Linq.Enumerable.Count(targets);
+                WorkerProgressScope.Current.StepCompleted($"{Domain}:Load", new WorkerProgressStepInfo
+                {
+                    RecordCount = fakturRows.Count + lastFakturRows.Count + piutangRows.Count + salespeople.Count + targetCount
+                });
+
+                WorkerProgressScope.Current.StepStarted($"{Domain}:Aggregate", "Aggregate metrics");
                 var aggregate = _aggregator.Aggregate(
                     fakturRows,
                     piutangRows,
@@ -98,12 +118,15 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.UseCases
                     periode,
                     today,
                     generatedAt);
+                WorkerProgressScope.Current.StepCompleted($"{Domain}:Aggregate");
 
+                WorkerProgressScope.Current.StepStarted($"{Domain}:Save", "Save snapshot");
                 using (var trans = TransHelper.NewScope())
                 {
                     _snapshotDal.ReplaceCurrent(aggregate, refreshLogId);
                     trans.Complete();
                 }
+                WorkerProgressScope.Current.StepCompleted($"{Domain}:Save");
 
                 sw.Stop();
                 _refreshLogDal.MarkSuccess(refreshLogId, (int)sw.ElapsedMilliseconds);
@@ -122,6 +145,7 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.UseCases
                     message = message.Substring(0, MaxErrorMessageLength);
 
                 _refreshLogDal.MarkFailed(refreshLogId, (int)sw.ElapsedMilliseconds, message);
+                WorkerProgressScope.Current.StepFailed($"{Domain}:Execute", message);
                 throw;
             }
         }

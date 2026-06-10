@@ -312,6 +312,11 @@
     <Compile Include="ReportingContext\DashboardSnapshotAgg\Models\DashboardSnapshotRefreshLogModel.cs" />
     <Compile Include="ReportingContext\DashboardSnapshotAgg\DashboardSnapshotHealthStatusResolver.cs" />
     <Compile Include="ReportingContext\DashboardSnapshotAgg\Models\DashboardSnapshotRefreshStatusModel.cs" />
+    <Compile Include="ReportingContext\DashboardSnapshotAgg\Progress\IWorkerProgressReporter.cs" />
+    <Compile Include="ReportingContext\DashboardSnapshotAgg\Progress\NullWorkerProgressReporter.cs" />
+    <Compile Include="ReportingContext\DashboardSnapshotAgg\Progress\WorkerProgressScope.cs" />
+    <Compile Include="ReportingContext\DashboardSnapshotAgg\Progress\WorkerProgressStepIds.cs" />
+    <Compile Include="ReportingContext\DashboardSnapshotAgg\Progress\WorkerProgressStepInfo.cs" />
     <Compile Include="ReportingContext\DashboardSnapshotAgg\Models\PiutangOpenBalanceDto.cs" />
     <Compile Include="ReportingContext\DashboardSnapshotAgg\Services\DashboardInventoryItemGroupBuilder.cs" />
     <Compile Include="ReportingContext\DashboardSnapshotAgg\Services\DashboardInventoryAggregator.cs" />
@@ -491,6 +496,12 @@
     <Compile Include="SalesContext\SalesPersonAgg\Workers\SalesPersonWriter.cs" />
     <Compile Include="SalesContext\SalesRuteAgg\SalesRuteBuilder.cs" />
     <Compile Include="SalesContext\SalesRuteAgg\SalesRuteWriter.cs" />
+    <Compile Include="SalesContext\SalesPersonSupplierAgg\Contracts\ISalesPersonSupplierDal.cs" />
+    <Compile Include="SalesContext\SalesPersonSupplierAgg\SalesPersonSupplierViewDto.cs" />
+    <Compile Include="SalesContext\SalesPersonSupplierAgg\SalesPersonSupplierWriter.cs" />
+    <Compile Include="SalesContext\SalesPersonPrincipalTargetAgg\Contracts\ISalesPersonPrincipalTargetDal.cs" />
+    <Compile Include="SalesContext\SalesPersonPrincipalTargetAgg\SalesPersonPrincipalTargetViewDto.cs" />
+    <Compile Include="SalesContext\SalesPersonPrincipalTargetAgg\SalesPersonPrincipalTargetWriter.cs" />
     <Compile Include="SalesContext\WilayahAgg\IWilayahDal.cs" />
     <Compile Include="SalesContext\WilayahAgg\WilayahBuilder.cs" />
     <Compile Include="SalesContext\WilayahAgg\WilayahWriter.cs" />

@@ -3,6 +3,7 @@ using System.Diagnostics;
 using btr.application.InventoryContext.StokBalanceInfo;
 using btr.application.ReportingContext.DashboardSnapshotAgg.Contracts;
 using btr.application.ReportingContext.DashboardSnapshotAgg.Models;
+using btr.application.ReportingContext.DashboardSnapshotAgg.Progress;
 using btr.application.ReportingContext.DashboardSnapshotAgg.Services;
 using btr.application.SupportContext.TglJamAgg;
 using btr.nuna.Application;
@@ -49,6 +50,7 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.UseCases
             var refreshLogId = Ulid.NewUlid().ToString();
             var startedAt = _tglJamDal.Now;
 
+            WorkerProgressScope.Current.StepStarted($"{Domain}:Initialize", "Initialize refresh log");
             _refreshLogDal.InsertRunning(new DashboardSnapshotRefreshLogModel
             {
                 RefreshLogId = refreshLogId,
@@ -57,18 +59,31 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.UseCases
                 Status = "Running",
                 TriggeredBy = request.TriggeredBy ?? "Scheduler"
             });
+            WorkerProgressScope.Current.StepCompleted($"{Domain}:Initialize");
 
             try
             {
                 var generatedAt = _tglJamDal.Now;
-                var rows = _stokBalanceViewDal.ListData();
-                var aggregate = _aggregator.Aggregate(rows, generatedAt);
 
+                WorkerProgressScope.Current.StepStarted($"{Domain}:Load", "Load source data");
+                var rows = _stokBalanceViewDal.ListData();
+                var rowCount = rows == null ? 0 : System.Linq.Enumerable.Count(rows);
+                WorkerProgressScope.Current.StepCompleted($"{Domain}:Load", new WorkerProgressStepInfo
+                {
+                    RecordCount = rowCount
+                });
+
+                WorkerProgressScope.Current.StepStarted($"{Domain}:Aggregate", "Aggregate metrics");
+                var aggregate = _aggregator.Aggregate(rows, generatedAt);
+                WorkerProgressScope.Current.StepCompleted($"{Domain}:Aggregate");
+
+                WorkerProgressScope.Current.StepStarted($"{Domain}:Save", "Save snapshot");
                 using (var trans = TransHelper.NewScope())
                 {
                     _snapshotDal.ReplaceCurrent(aggregate, refreshLogId);
                     trans.Complete();
                 }
+                WorkerProgressScope.Current.StepCompleted($"{Domain}:Save");
 
                 sw.Stop();
                 _refreshLogDal.MarkSuccess(refreshLogId, (int)sw.ElapsedMilliseconds);
@@ -87,6 +102,7 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.UseCases
                     message = message.Substring(0, MaxErrorMessageLength);
 
                 _refreshLogDal.MarkFailed(refreshLogId, (int)sw.ElapsedMilliseconds, message);
+                WorkerProgressScope.Current.StepFailed($"{Domain}:Execute", message);
                 throw;
             }
         }

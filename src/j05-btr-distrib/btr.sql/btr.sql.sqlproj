@@ -91,6 +91,8 @@
     <Build Include="Tables\SalesContext\BTR_FakturDiscount.sql" />
     <Build Include="Tables\SalesContext\BTR_FakturItem.sql" />
     <Build Include="Tables\SalesContext\BTR_SalesPerson.sql" />
+    <Build Include="Tables\SalesContext\BTR_SalesPersonSupplier.sql" />
+    <Build Include="Tables\SalesContext\BTR_SalesPersonPrincipalTarget.sql" />
     <Build Include="Tables\SalesContext\BTR_SalesOmzet.sql" />
     <Build Include="Tables\SalesContext\BTR_SalesOmzetTarget.sql" />
     <Build Include="Tables\SalesContext\BTR_SalesOmzetHealthWeekly.sql" />
@@ -208,5 +210,7 @@
     <None Include="Scripts\Upgrade_PortalDashboard_GeneratedIds_ToUlid.sql" />
     <None Include="Scripts\Rename_PortalDashboard_Tables_To_BTRPD.sql" />
     <None Include="Scripts\Create_BTRPD_PortalDashboard_Tables.sql" />
+    <None Include="Scripts\Create_BTR_SalesPersonSupplier.sql" />
+    <None Include="Scripts\Create_BTR_SalesPersonPrincipalTarget.sql" />
   </ItemGroup>
 </Project>

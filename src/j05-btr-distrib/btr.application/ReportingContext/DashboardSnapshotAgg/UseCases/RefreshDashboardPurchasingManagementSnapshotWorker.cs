@@ -4,6 +4,7 @@ using System.Linq;
 using btr.application.PurchaseContext.InvoiceInfo;
 using btr.application.ReportingContext.DashboardSnapshotAgg.Contracts;
 using btr.application.ReportingContext.DashboardSnapshotAgg.Models;
+using btr.application.ReportingContext.DashboardSnapshotAgg.Progress;
 using btr.application.ReportingContext.DashboardSnapshotAgg.Services;
 using btr.application.SupportContext.TglJamAgg;
 using btr.nuna.Application;
@@ -63,6 +64,7 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.UseCases
             var refreshLogId = Ulid.NewUlid().ToString();
             var startedAt = _tglJamDal.Now;
 
+            WorkerProgressScope.Current.StepStarted($"{Domain}:Initialize", "Initialize refresh log");
             _refreshLogDal.InsertRunning(new DashboardSnapshotRefreshLogModel
             {
                 RefreshLogId = refreshLogId,
@@ -71,18 +73,32 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.UseCases
                 Status = "Running",
                 TriggeredBy = request.TriggeredBy ?? "Scheduler"
             });
+            WorkerProgressScope.Current.StepCompleted($"{Domain}:Initialize");
 
             try
             {
                 var today = _tglJamDal.Now.Date;
                 var periode = CurrentMonthPeriode(today);
                 var generatedAt = _tglJamDal.Now;
+                const int loadSteps = 4;
 
+                WorkerProgressScope.Current.StepStarted($"{Domain}:Load", "Load source data");
+                WorkerProgressScope.Current.ReportPhaseProgress($"{Domain}: Load invoices", 1, loadSteps);
                 var invoiceRows = _invoiceViewDal.ListData(periode)?.ToList()
                     ?? new System.Collections.Generic.List<InvoiceView>();
+
+                WorkerProgressScope.Current.ReportPhaseProgress($"{Domain}: Load inventory snapshot", 2, loadSteps);
                 var inventorySnapshot = _inventorySnapshotDal.GetCurrent();
+
+                WorkerProgressScope.Current.ReportPhaseProgress($"{Domain}: Load inventory risk snapshot", 3, loadSteps);
                 var inventoryRiskSnapshot = _inventoryRiskSnapshotDal.GetCurrent();
+
+                WorkerProgressScope.Current.ReportPhaseProgress($"{Domain}: Load purchasing snapshot", 4, loadSteps);
                 var purchasingSnapshot = _purchasingSnapshotDal.GetCurrent();
+                WorkerProgressScope.Current.StepCompleted($"{Domain}:Load", new WorkerProgressStepInfo
+                {
+                    RecordCount = invoiceRows.Count
+                });
 
                 if (inventorySnapshot == null)
                 {
@@ -96,6 +112,7 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.UseCases
                         "PurchasingManagement refresh: inventory risk snapshot unavailable; cross-domain at-risk signals omitted.");
                 }
 
+                WorkerProgressScope.Current.StepStarted($"{Domain}:Aggregate", "Aggregate metrics");
                 var aggregate = _aggregator.Aggregate(
                     invoiceRows,
                     purchasingSnapshot,
@@ -105,12 +122,15 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.UseCases
                     today,
                     generatedAt,
                     _options.PurchasingQualifiedBacklogDays);
+                WorkerProgressScope.Current.StepCompleted($"{Domain}:Aggregate");
 
+                WorkerProgressScope.Current.StepStarted($"{Domain}:Save", "Save snapshot");
                 using (var trans = TransHelper.NewScope())
                 {
                     _snapshotDal.ReplaceCurrent(aggregate, refreshLogId);
                     trans.Complete();
                 }
+                WorkerProgressScope.Current.StepCompleted($"{Domain}:Save");
 
                 sw.Stop();
                 _refreshLogDal.MarkSuccess(refreshLogId, (int)sw.ElapsedMilliseconds);
@@ -129,6 +149,7 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.UseCases
                     message = message.Substring(0, MaxErrorMessageLength);
 
                 _refreshLogDal.MarkFailed(refreshLogId, (int)sw.ElapsedMilliseconds, message);
+                WorkerProgressScope.Current.StepFailed($"{Domain}:Execute", message);
                 throw;
             }
         }

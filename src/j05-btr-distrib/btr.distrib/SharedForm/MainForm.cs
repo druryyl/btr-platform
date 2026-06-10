@@ -45,6 +45,8 @@ using btr.distrib.SalesContext.FakturPerSupplierRpt;
 using btr.distrib.SalesContext.LocationFeature;
 using btr.distrib.SalesContext.OrderFeature;
 using btr.distrib.SalesContext.SalesPersonAgg;
+using btr.distrib.SalesContext.SalesPersonSupplierAgg;
+using btr.distrib.SalesContext.SalesPersonPrincipalTargetAgg;
 using btr.distrib.SalesContext.SalesReplacementFeat;
 using btr.distrib.SalesContext.WilayahAgg;
 using btr.domain.SupportContext.RoleFeature;
@@ -209,6 +211,24 @@ namespace btr.distrib.SharedForm
             if (BringMdiChildToFrontIfLoaded<SalesRuteForm>())
                 return;
             var form = ThisServicesProvider.GetRequiredService<SalesRuteForm>();
+            form.StartPosition = FormStartPosition.CenterScreen;
+            form.MdiParent = this;
+            form.Show();
+        }
+        private void SM5SalesPersonPrincipalButton_Click(object sender, EventArgs e)
+        {
+            if (BringMdiChildToFrontIfLoaded<SalesPersonSupplierForm>())
+                return;
+            var form = ThisServicesProvider.GetRequiredService<SalesPersonSupplierForm>();
+            form.StartPosition = FormStartPosition.CenterScreen;
+            form.MdiParent = this;
+            form.Show();
+        }
+        private void SM6SalesPersonPrincipalTargetButton_Click(object sender, EventArgs e)
+        {
+            if (BringMdiChildToFrontIfLoaded<SalesPersonPrincipalTargetForm>())
+                return;
+            var form = ThisServicesProvider.GetRequiredService<SalesPersonPrincipalTargetForm>();
             form.StartPosition = FormStartPosition.CenterScreen;
             form.MdiParent = this;
             form.Show();

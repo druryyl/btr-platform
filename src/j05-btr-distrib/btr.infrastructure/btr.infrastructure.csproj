@@ -238,6 +238,8 @@
     <Compile Include="SalesContext\SalesRuteAgg\SalesRuteDal.cs" />
     <Compile Include="SalesContext\SalesRuteAgg\SalesRuteItemViewDal.cs" />
     <Compile Include="SalesContext\SalesRuteAgg\SalesRuteItemDal.cs" />
+    <Compile Include="SalesContext\SalesPersonSupplierAgg\SalesPersonSupplierDal.cs" />
+    <Compile Include="SalesContext\SalesPersonPrincipalTargetAgg\SalesPersonPrincipalTargetDal.cs" />
     <Compile Include="SalesContext\WilayahAgg\WilayahDal.cs" />
     <Compile Include="SupportContext\DocAgg\DocActionDal.cs" />
     <Compile Include="SupportContext\DocAgg\DocDal.cs" />

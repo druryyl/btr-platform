@@ -6,6 +6,7 @@ using btr.application.InventoryContext.WarehouseAgg;
 using btr.application.PurchaseContext.InvoiceInfo;
 using btr.application.ReportingContext.DashboardSnapshotAgg.Contracts;
 using btr.application.ReportingContext.DashboardSnapshotAgg.Models;
+using btr.application.ReportingContext.DashboardSnapshotAgg.Progress;
 using btr.application.ReportingContext.DashboardSnapshotAgg.Services;
 using btr.application.SalesContext.FakturInfo;
 using btr.application.SupportContext.TglJamAgg;
@@ -77,6 +78,7 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.UseCases
             var refreshLogId = Ulid.NewUlid().ToString();
             var startedAt = _tglJamDal.Now;
 
+            WorkerProgressScope.Current.StepStarted($"{Domain}:Initialize", "Initialize refresh log");
             _refreshLogDal.InsertRunning(new DashboardSnapshotRefreshLogModel
             {
                 RefreshLogId = refreshLogId,
@@ -85,29 +87,54 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.UseCases
                 Status = "Running",
                 TriggeredBy = request.TriggeredBy ?? "Scheduler"
             });
+            WorkerProgressScope.Current.StepCompleted($"{Domain}:Initialize");
 
             try
             {
                 var today = _tglJamDal.Now.Date;
                 var periode = CurrentMonthPeriode(today);
                 var generatedAt = _tglJamDal.Now;
+                const int loadSteps = 9;
 
+                WorkerProgressScope.Current.StepStarted($"{Domain}:Load", "Load source data");
+                WorkerProgressScope.Current.ReportPhaseProgress($"{Domain}: Load stock balances", 1, loadSteps);
                 var stokRows = _stokBalanceViewDal.ListData()?.ToList()
                     ?? new System.Collections.Generic.List<StokBalanceView>();
+
+                WorkerProgressScope.Current.ReportPhaseProgress($"{Domain}: Load last faktur by item", 2, loadSteps);
                 var lastFakturRows = _brgLastFakturDal.ListLastFakturByBrg()?.ToList()
                     ?? new System.Collections.Generic.List<BrgLastFakturDto>();
+
+                WorkerProgressScope.Current.ReportPhaseProgress($"{Domain}: Load faktur", 3, loadSteps);
                 var fakturRows = _fakturViewDal.ListData(periode)?.ToList()
                     ?? new System.Collections.Generic.List<FakturView>();
+
+                WorkerProgressScope.Current.ReportPhaseProgress($"{Domain}: Load invoices", 4, loadSteps);
                 var invoiceRows = _invoiceViewDal.ListData(periode)?.ToList()
                     ?? new System.Collections.Generic.List<InvoiceView>();
+
+                WorkerProgressScope.Current.ReportPhaseProgress($"{Domain}: Load warehouses", 5, loadSteps);
                 var warehouses = _warehouseDal.ListAllForPortal()?.ToList()
                     ?? new System.Collections.Generic.List<btr.domain.InventoryContext.WarehouseAgg.WarehouseModel>();
 
+                WorkerProgressScope.Current.ReportPhaseProgress($"{Domain}: Load inventory snapshot", 6, loadSteps);
                 var inventorySnapshot = _inventorySnapshotDal.GetCurrent();
-                var inventoryRiskSnapshot = _inventoryRiskSnapshotDal.GetCurrent();
-                var salesSnapshot = _salesSnapshotDal.GetCurrent();
-                var purchasingSnapshot = _purchasingSnapshotDal.GetCurrent();
 
+                WorkerProgressScope.Current.ReportPhaseProgress($"{Domain}: Load inventory risk snapshot", 7, loadSteps);
+                var inventoryRiskSnapshot = _inventoryRiskSnapshotDal.GetCurrent();
+
+                WorkerProgressScope.Current.ReportPhaseProgress($"{Domain}: Load sales snapshot", 8, loadSteps);
+                var salesSnapshot = _salesSnapshotDal.GetCurrent();
+
+                WorkerProgressScope.Current.ReportPhaseProgress($"{Domain}: Load purchasing snapshot", 9, loadSteps);
+                var purchasingSnapshot = _purchasingSnapshotDal.GetCurrent();
+                WorkerProgressScope.Current.StepCompleted($"{Domain}:Load", new WorkerProgressStepInfo
+                {
+                    RecordCount = stokRows.Count + lastFakturRows.Count + fakturRows.Count +
+                                  invoiceRows.Count + warehouses.Count
+                });
+
+                WorkerProgressScope.Current.StepStarted($"{Domain}:Aggregate", "Aggregate metrics");
                 var aggregate = _aggregator.Aggregate(
                     stokRows,
                     lastFakturRows,
@@ -121,12 +148,15 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.UseCases
                     periode,
                     today,
                     generatedAt);
+                WorkerProgressScope.Current.StepCompleted($"{Domain}:Aggregate");
 
+                WorkerProgressScope.Current.StepStarted($"{Domain}:Save", "Save snapshot");
                 using (var trans = TransHelper.NewScope())
                 {
                     _snapshotDal.ReplaceCurrent(aggregate, refreshLogId);
                     trans.Complete();
                 }
+                WorkerProgressScope.Current.StepCompleted($"{Domain}:Save");
 
                 sw.Stop();
                 _refreshLogDal.MarkSuccess(refreshLogId, (int)sw.ElapsedMilliseconds);
@@ -145,6 +175,7 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.UseCases
                     message = message.Substring(0, MaxErrorMessageLength);
 
                 _refreshLogDal.MarkFailed(refreshLogId, (int)sw.ElapsedMilliseconds, message);
+                WorkerProgressScope.Current.StepFailed($"{Domain}:Execute", message);
                 throw;
             }
         }

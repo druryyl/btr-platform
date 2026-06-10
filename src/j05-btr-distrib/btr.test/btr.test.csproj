@@ -169,6 +169,10 @@
     <Compile Include="SalesContext\SalesOmzetTargetTest.cs" />
     <Compile Include="SalesContext\SalesOmzetReconcileTest.cs" />
     <Compile Include="SalesContext\SalesPersonDalTest.cs" />
+    <Compile Include="SalesContext\SalesPersonSupplierDalTest.cs" />
+    <Compile Include="SalesContext\SalesPersonPrincipalTargetDalTest.cs" />
+    <Compile Include="SalesContext\SalesPersonPrincipalTargetWriterTest.cs" />
+    <Compile Include="SalesContext\SalesOmzetTargetResolutionTest.cs" />
     <Compile Include="SalesContext\SegmentDalTest.cs" />
     <Compile Include="Tests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

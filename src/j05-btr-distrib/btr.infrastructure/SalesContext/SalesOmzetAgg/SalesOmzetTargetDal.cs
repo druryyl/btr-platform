@@ -4,6 +4,7 @@ using System.Data;
 using System.Data.SqlClient;
 using System.Linq;
 using btr.application.SalesContext.SalesOmzetAgg.Contracts;
+using btr.application.SalesContext.SalesPersonPrincipalTargetAgg.Contracts;
 using btr.infrastructure.Helpers;
 using btr.nuna.Infrastructure;
 using Dapper;
@@ -14,28 +15,36 @@ namespace btr.infrastructure.SalesContext.SalesOmzetAgg
     public class SalesOmzetTargetDal : ISalesOmzetTargetDal
     {
         private readonly DatabaseOptions _opt;
+        private readonly ISalesPersonPrincipalTargetDal _principalTargetDal;
 
-        public SalesOmzetTargetDal(IOptions<DatabaseOptions> opt)
+        public SalesOmzetTargetDal(
+            IOptions<DatabaseOptions> opt,
+            ISalesPersonPrincipalTargetDal principalTargetDal)
         {
             _opt = opt.Value;
+            _principalTargetDal = principalTargetDal;
         }
 
         public decimal SumTargetAmountForMonth(int year, int month)
         {
-            const string sql = @"
-                SELECT ISNULL(SUM(TargetAmount), 0)
-                FROM BTR_SalesOmzetTarget
-                WHERE TargetYear = @TargetYear
-                  AND TargetMonth = @TargetMonth";
+            var principalSums = _principalTargetDal.SumByPeriod(year, month);
+            var legacyRows = ListLegacyTargetsForMonth(year, month);
 
-            var dp = new DynamicParameters();
-            dp.AddParam("@TargetYear", year, SqlDbType.Int);
-            dp.AddParam("@TargetMonth", month, SqlDbType.Int);
+            var salesPersonIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            foreach (var id in principalSums.Keys)
+                salesPersonIds.Add(id);
+            foreach (var id in legacyRows.Keys)
+                salesPersonIds.Add(id);
 
-            using (var conn = new SqlConnection(ConnStringHelper.Get(_opt)))
+            decimal total = 0m;
+            foreach (var salesPersonId in salesPersonIds)
             {
-                return conn.ExecuteScalar<decimal>(sql, dp);
+                var resolved = ResolveRepTarget(salesPersonId, year, month, principalSums, legacyRows);
+                if (resolved.HasValue)
+                    total += resolved.Value;
             }
+
+            return total;
         }
 
         public decimal? GetTargetAmount(string salesPersonId, int year, int month)
@@ -43,6 +52,52 @@ namespace btr.infrastructure.SalesContext.SalesOmzetAgg
             if (string.IsNullOrWhiteSpace(salesPersonId))
                 return null;
 
+            var principalSum = _principalTargetDal.SumBySalesPersonPeriod(salesPersonId, year, month);
+            if (principalSum > 0)
+                return principalSum;
+
+            return GetLegacyTargetAmount(salesPersonId, year, month);
+        }
+
+        public IReadOnlyDictionary<string, decimal?> ListTargetsForMonth(int year, int month)
+        {
+            var principalSums = _principalTargetDal.SumByPeriod(year, month);
+            var legacyRows = ListLegacyTargetsForMonth(year, month);
+
+            var salesPersonIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            foreach (var id in principalSums.Keys)
+                salesPersonIds.Add(id);
+            foreach (var id in legacyRows.Keys)
+                salesPersonIds.Add(id);
+
+            var dict = new Dictionary<string, decimal?>(StringComparer.OrdinalIgnoreCase);
+            foreach (var salesPersonId in salesPersonIds)
+            {
+                dict[salesPersonId] = ResolveRepTarget(
+                    salesPersonId, year, month, principalSums, legacyRows);
+            }
+
+            return dict;
+        }
+
+        private decimal? ResolveRepTarget(
+            string salesPersonId,
+            int year,
+            int month,
+            IReadOnlyDictionary<string, decimal> principalSums,
+            IReadOnlyDictionary<string, decimal> legacyRows)
+        {
+            if (principalSums.TryGetValue(salesPersonId, out var principalSum) && principalSum > 0)
+                return principalSum;
+
+            if (legacyRows.TryGetValue(salesPersonId, out var legacyAmount))
+                return legacyAmount;
+
+            return null;
+        }
+
+        private decimal? GetLegacyTargetAmount(string salesPersonId, int year, int month)
+        {
             const string sql = @"
                 SELECT TargetAmount
                 FROM BTR_SalesOmzetTarget
@@ -62,7 +117,7 @@ namespace btr.infrastructure.SalesContext.SalesOmzetAgg
             }
         }
 
-        public IReadOnlyDictionary<string, decimal?> ListTargetsForMonth(int year, int month)
+        private IReadOnlyDictionary<string, decimal> ListLegacyTargetsForMonth(int year, int month)
         {
             const string sql = @"
                 SELECT SalesPersonId, TargetAmount
@@ -77,7 +132,7 @@ namespace btr.infrastructure.SalesContext.SalesOmzetAgg
             using (var conn = new SqlConnection(ConnStringHelper.Get(_opt)))
             {
                 var rows = conn.Read<TargetRowWithId>(sql, dp).ToList();
-                var dict = new Dictionary<string, decimal?>(StringComparer.OrdinalIgnoreCase);
+                var dict = new Dictionary<string, decimal>(StringComparer.OrdinalIgnoreCase);
 
                 foreach (var row in rows)
                 {

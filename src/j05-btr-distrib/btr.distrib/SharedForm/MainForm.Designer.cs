@@ -41,6 +41,8 @@
             this.SM2SalesPersonMenu = new System.Windows.Forms.RibbonButton();
             this.SM3WilayahMenu = new System.Windows.Forms.RibbonButton();
             this.SM4RuteMenu = new System.Windows.Forms.RibbonButton();
+            this.SM5SalesPersonPrincipalMenu = new System.Windows.Forms.RibbonButton();
+            this.SM6SalesPersonPrincipalTargetMenu = new System.Windows.Forms.RibbonButton();
             this.SalesInfoPanel = new System.Windows.Forms.RibbonPanel();
             this.ReportingFakturListMenu = new System.Windows.Forms.RibbonButton();
             this.SF1FakturInfoMenu = new System.Windows.Forms.RibbonButton();
@@ -215,6 +217,8 @@
             this.MasterSalesPanel.Items.Add(this.SM2SalesPersonMenu);
             this.MasterSalesPanel.Items.Add(this.SM3WilayahMenu);
             this.MasterSalesPanel.Items.Add(this.SM4RuteMenu);
+            this.MasterSalesPanel.Items.Add(this.SM5SalesPersonPrincipalMenu);
+            this.MasterSalesPanel.Items.Add(this.SM6SalesPersonPrincipalTargetMenu);
             this.MasterSalesPanel.Name = "MasterSalesPanel";
             this.MasterSalesPanel.Text = "";
             // 
@@ -253,6 +257,22 @@
             this.SM4RuteMenu.SmallImage = ((System.Drawing.Image)(resources.GetObject("SM4RuteMenu.SmallImage")));
             this.SM4RuteMenu.Text = "SM4-Rute";
             this.SM4RuteMenu.Click += new System.EventHandler(this.SM4RuteButton_Click);
+            // 
+            // SM5SalesPersonPrincipalMenu
+            // 
+            this.SM5SalesPersonPrincipalMenu.Image = global::btr.distrib.Properties.Resources.icons8_caretaker;
+            this.SM5SalesPersonPrincipalMenu.LargeImage = global::btr.distrib.Properties.Resources.icons8_caretaker;
+            this.SM5SalesPersonPrincipalMenu.Name = "SM5SalesPersonPrincipalMenu";
+            this.SM5SalesPersonPrincipalMenu.Text = "SM5-Principal Assignment";
+            this.SM5SalesPersonPrincipalMenu.Click += new System.EventHandler(this.SM5SalesPersonPrincipalButton_Click);
+            // 
+            // SM6SalesPersonPrincipalTargetMenu
+            // 
+            this.SM6SalesPersonPrincipalTargetMenu.Image = global::btr.distrib.Properties.Resources.icons8_caretaker;
+            this.SM6SalesPersonPrincipalTargetMenu.LargeImage = global::btr.distrib.Properties.Resources.icons8_caretaker;
+            this.SM6SalesPersonPrincipalTargetMenu.Name = "SM6SalesPersonPrincipalTargetMenu";
+            this.SM6SalesPersonPrincipalTargetMenu.Text = "SM6-Principal Target";
+            this.SM6SalesPersonPrincipalTargetMenu.Click += new System.EventHandler(this.SM6SalesPersonPrincipalTargetButton_Click);
             // 
             // SalesInfoPanel
             // 
@@ -1069,6 +1089,8 @@
         private System.Windows.Forms.RibbonButton FF3FpKeluaranMenu;
         private System.Windows.Forms.RibbonButton RF2ReturBrgInfoMenu;
         private System.Windows.Forms.RibbonButton SM4RuteMenu;
+        private System.Windows.Forms.RibbonButton SM5SalesPersonPrincipalMenu;
+        private System.Windows.Forms.RibbonButton SM6SalesPersonPrincipalTargetMenu;
         private System.Windows.Forms.RibbonButton IF8KartuStokMenu;
         private System.Windows.Forms.RibbonButton FF4PelunasanInfoBMenu;
         private System.Windows.Forms.RibbonButton ReportingFakturListMenu;

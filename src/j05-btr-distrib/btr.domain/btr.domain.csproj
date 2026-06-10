@@ -187,6 +187,8 @@
     <Compile Include="SalesContext\SalesPersonAgg\ISalesRuteKey.cs" />
     <Compile Include="SalesContext\SalesPersonAgg\SalesPersonModel.cs" />
     <Compile Include="SalesContext\SalesPersonAgg\SalesRuteModel.cs" />
+    <Compile Include="SalesContext\SalesPersonSupplierAgg\SalesPersonSupplierModel.cs" />
+    <Compile Include="SalesContext\SalesPersonPrincipalTargetAgg\SalesPersonPrincipalTargetModel.cs" />
     <Compile Include="SalesContext\WilayahAgg\IWilayahKey.cs" />
     <Compile Include="SalesContext\WilayahAgg\WilayahModel.cs" />
     <Compile Include="SupportContext\DocAgg\DocActionModel.cs" />

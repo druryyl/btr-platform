@@ -19,6 +19,7 @@ using btr.application.ReportingContext.PurchasingReportAgg.Contracts;
 using btr.application.ReportingContext.SalesReportAgg.Contracts;
 using btr.application.SalesContext.FakturInfo;
 using btr.application.SalesContext.SalesOmzetAgg.Contracts;
+using btr.application.SalesContext.SalesPersonPrincipalTargetAgg.Contracts;
 using btr.application.SalesContext.SalesOmzetHealthWeeklyAgg.Contracts;
 using btr.infrastructure;
 using btr.infrastructure.Helpers;
@@ -40,6 +41,7 @@ using btr.infrastructure.ReportingContext.PurchasingReportAgg;
 using btr.infrastructure.ReportingContext.SalesReportAgg;
 using btr.infrastructure.SalesContext.FakturInfoAgg;
 using btr.infrastructure.SalesContext.SalesOmzetAgg;
+using btr.infrastructure.SalesContext.SalesPersonPrincipalTargetAgg;
 using btr.infrastructure.SalesContext.SalesOmzetHealthWeeklyAgg;
 using btr.nuna.Application;
 using btr.nuna.Infrastructure;
@@ -61,6 +63,7 @@ namespace btr.portal.api.Configurations
             services.AddScoped<INunaCounterDal, ParamNoDal>();
 
             services.AddScoped<ISalesOmzetSourceDal, SalesOmzetSourceDal>();
+            services.AddScoped<ISalesPersonPrincipalTargetDal, SalesPersonPrincipalTargetDal>();
             services.AddScoped<ISalesOmzetTargetDal, SalesOmzetTargetDal>();
             services.AddScoped<ISalesOmzetHealthMetricsDal, SalesOmzetHealthMetricsDal>();
             services.AddScoped<IPiutangOpenBalanceDal, PiutangOpenBalanceDal>();

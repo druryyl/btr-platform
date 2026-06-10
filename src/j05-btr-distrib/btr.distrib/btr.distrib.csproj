@@ -863,6 +863,18 @@
     <Compile Include="SalesContext\SalesRuteAgg\SalesRuteForm.Designer.cs">
       <DependentUpon>SalesRuteForm.cs</DependentUpon>
     </Compile>
+    <Compile Include="SalesContext\SalesPersonSupplierAgg\SalesPersonSupplierForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="SalesContext\SalesPersonSupplierAgg\SalesPersonSupplierForm.Designer.cs">
+      <DependentUpon>SalesPersonSupplierForm.cs</DependentUpon>
+    </Compile>
+    <Compile Include="SalesContext\SalesPersonPrincipalTargetAgg\SalesPersonPrincipalTargetForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="SalesContext\SalesPersonPrincipalTargetAgg\SalesPersonPrincipalTargetForm.Designer.cs">
+      <DependentUpon>SalesPersonPrincipalTargetForm.cs</DependentUpon>
+    </Compile>
     <Compile Include="SalesContext\WilayahAgg\WilayahForm.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -1194,6 +1206,12 @@
     </EmbeddedResource>
     <EmbeddedResource Include="SalesContext\SalesRuteAgg\SalesRuteForm.resx">
       <DependentUpon>SalesRuteForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="SalesContext\SalesPersonSupplierAgg\SalesPersonSupplierForm.resx">
+      <DependentUpon>SalesPersonSupplierForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="SalesContext\SalesPersonPrincipalTargetAgg\SalesPersonPrincipalTargetForm.resx">
+      <DependentUpon>SalesPersonPrincipalTargetForm.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="SharedForm\ParamSistemForm.resx">
       <DependentUpon>ParamSistemForm.cs</DependentUpon>

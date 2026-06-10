@@ -28,6 +28,10 @@ using Microsoft.Win32;
 using System.Threading;
 using System.Collections.Generic;
 using btr.application.SalesContext.SalesOmzetHealthWeeklyAgg.Contracts;
+using btr.application.SalesContext.SalesPersonSupplierAgg;
+using btr.application.SalesContext.SalesPersonPrincipalTargetAgg;
+using btr.application.SalesContext.SalesPersonPrincipalTargetAgg.Contracts;
+using btr.infrastructure.SalesContext.SalesPersonPrincipalTargetAgg;
 
 namespace btr.distrib
 {
@@ -193,6 +197,9 @@ namespace btr.distrib
             services.AddScoped<ISalesOmzetHealthMetricsDal, SalesOmzetHealthMetricsDal>();
             services.AddScoped<ISalesOmzetHealthPolicy, SalesOmzetHealthPolicy>();
             services.AddScoped<ISalesOmzetReportHealthResolver, SalesOmzetReportHealthResolver>();
+            services.AddScoped<ISalesPersonSupplierWriter, SalesPersonSupplierWriter>();
+            services.AddScoped<ISalesPersonPrincipalTargetDal, SalesPersonPrincipalTargetDal>();
+            services.AddScoped<ISalesPersonPrincipalTargetWriter, SalesPersonPrincipalTargetWriter>();
 
             services
                 .Scan(selector => selector

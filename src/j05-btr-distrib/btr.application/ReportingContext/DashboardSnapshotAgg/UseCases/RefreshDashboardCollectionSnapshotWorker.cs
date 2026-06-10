@@ -4,6 +4,7 @@ using System.Linq;
 using btr.application.FinanceContext.PiutangAgg.Contracts;
 using btr.application.ReportingContext.DashboardSnapshotAgg.Contracts;
 using btr.application.ReportingContext.DashboardSnapshotAgg.Models;
+using btr.application.ReportingContext.DashboardSnapshotAgg.Progress;
 using btr.application.ReportingContext.DashboardSnapshotAgg.Services;
 using btr.application.SalesContext.CustomerAgg.Contracts;
 using btr.application.SalesContext.FakturInfo;
@@ -74,6 +75,7 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.UseCases
             var refreshLogId = Ulid.NewUlid().ToString();
             var startedAt = _tglJamDal.Now;
 
+            WorkerProgressScope.Current.StepStarted($"{Domain}:Initialize", "Initialize refresh log");
             _refreshLogDal.InsertRunning(new DashboardSnapshotRefreshLogModel
             {
                 RefreshLogId = refreshLogId,
@@ -82,30 +84,55 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.UseCases
                 Status = "Running",
                 TriggeredBy = request.TriggeredBy ?? "Scheduler"
             });
+            WorkerProgressScope.Current.StepCompleted($"{Domain}:Initialize");
 
             try
             {
                 var today = _tglJamDal.Now.Date;
                 var periode = CurrentMonthPeriode(today);
                 var generatedAt = _tglJamDal.Now;
+                const int loadSteps = 8;
 
+                WorkerProgressScope.Current.StepStarted($"{Domain}:Load", "Load source data");
+                WorkerProgressScope.Current.ReportPhaseProgress($"{Domain}: Load open balances", 1, loadSteps);
                 var openBalanceRows = _openBalanceDal.ListOpenBalances()?.ToList()
                     ?? new System.Collections.Generic.List<PiutangOpenBalanceDto>();
+
+                WorkerProgressScope.Current.ReportPhaseProgress($"{Domain}: Load open balances by salesman", 2, loadSteps);
                 var openBalanceWithSalesmanRows = _openBalanceWithSalesmanDal.ListOpenBalances()?.ToList()
                     ?? new System.Collections.Generic.List<PiutangOpenBalanceWithSalesmanDto>();
+
+                WorkerProgressScope.Current.ReportPhaseProgress($"{Domain}: Load open balances by wilayah", 3, loadSteps);
                 var openBalanceWithWilayahRows = _openBalanceWithWilayahDal.ListOpenBalances()?.ToList()
                     ?? new System.Collections.Generic.List<PiutangOpenBalanceWithWilayahDto>();
+
+                WorkerProgressScope.Current.ReportPhaseProgress($"{Domain}: Load pelunasan", 4, loadSteps);
                 var pelunasanRows = _pelunasanDal.ListData(periode)?.ToList()
                     ?? new System.Collections.Generic.List<PenerimaanPelunasanSalesDto>();
+
+                WorkerProgressScope.Current.ReportPhaseProgress($"{Domain}: Load faktur", 5, loadSteps);
                 var fakturRows = _fakturViewDal.ListData(periode)?.ToList()
                     ?? new System.Collections.Generic.List<FakturView>();
+
+                WorkerProgressScope.Current.ReportPhaseProgress($"{Domain}: Load last faktur by customer", 6, loadSteps);
                 var lastFakturRows = _lastFakturDal.ListLastFakturByCustomer()?.ToList()
                     ?? new System.Collections.Generic.List<CustomerLastFakturDto>();
+
+                WorkerProgressScope.Current.ReportPhaseProgress($"{Domain}: Load customers", 7, loadSteps);
                 var customers = _customerDal.ListData()?.ToList()
                     ?? new System.Collections.Generic.List<btr.domain.SalesContext.CustomerAgg.CustomerModel>();
+
+                WorkerProgressScope.Current.ReportPhaseProgress($"{Domain}: Load salespeople", 8, loadSteps);
                 var salespeople = _salesPersonDal.ListData()?.ToList()
                     ?? new System.Collections.Generic.List<btr.domain.SalesContext.SalesPersonAgg.SalesPersonModel>();
+                WorkerProgressScope.Current.StepCompleted($"{Domain}:Load", new WorkerProgressStepInfo
+                {
+                    RecordCount = openBalanceRows.Count + openBalanceWithSalesmanRows.Count +
+                                  openBalanceWithWilayahRows.Count + pelunasanRows.Count +
+                                  fakturRows.Count + lastFakturRows.Count + customers.Count + salespeople.Count
+                });
 
+                WorkerProgressScope.Current.StepStarted($"{Domain}:Aggregate", "Aggregate metrics");
                 var aggregate = _aggregator.Aggregate(
                     openBalanceRows,
                     openBalanceWithSalesmanRows,
@@ -118,12 +145,15 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.UseCases
                     periode,
                     today,
                     generatedAt);
+                WorkerProgressScope.Current.StepCompleted($"{Domain}:Aggregate");
 
+                WorkerProgressScope.Current.StepStarted($"{Domain}:Save", "Save snapshot");
                 using (var trans = TransHelper.NewScope())
                 {
                     _snapshotDal.ReplaceCurrent(aggregate, refreshLogId);
                     trans.Complete();
                 }
+                WorkerProgressScope.Current.StepCompleted($"{Domain}:Save");
 
                 sw.Stop();
                 _refreshLogDal.MarkSuccess(refreshLogId, (int)sw.ElapsedMilliseconds);
@@ -142,6 +172,7 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.UseCases
                     message = message.Substring(0, MaxErrorMessageLength);
 
                 _refreshLogDal.MarkFailed(refreshLogId, (int)sw.ElapsedMilliseconds, message);
+                WorkerProgressScope.Current.StepFailed($"{Domain}:Execute", message);
                 throw;
             }
         }
