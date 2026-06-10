@@ -17,62 +17,67 @@ const router = createRouter({
       children: [
         {
           path: '',
-          redirect: '/dashboard',
+          redirect: { name: 'dashboard' },
         },
         {
           path: 'dashboard',
-          name: 'dashboard',
-          component: () => import('@/views/dashboard/DashboardHomeView.vue'),
+          children: [
+            {
+              path: '',
+              name: 'dashboard',
+              component: () => import('@/views/dashboard/DashboardHomeView.vue'),
+            },
+            {
+              path: 'sales',
+              name: 'sales-dashboard',
+              component: () => import('@/views/dashboard/SalesDashboardView.vue'),
+            },
+            {
+              path: 'piutang',
+              name: 'piutang-dashboard',
+              component: () => import('@/views/dashboard/PiutangDashboardView.vue'),
+            },
+            {
+              path: 'customers',
+              name: 'customers-dashboard',
+              component: () => import('@/views/dashboard/CustomerDashboardView.vue'),
+            },
+            {
+              path: 'salesmen',
+              name: 'salesmen-dashboard',
+              component: () => import('@/views/dashboard/SalesmanDashboardView.vue'),
+            },
+            {
+              path: 'collection',
+              name: 'collection-dashboard',
+              component: () => import('@/views/dashboard/CollectionDashboardView.vue'),
+            },
+            {
+              path: 'inventory',
+              name: 'inventory-dashboard',
+              component: () => import('@/views/dashboard/InventoryDashboardView.vue'),
+            },
+            {
+              path: 'inventory-risk',
+              name: 'inventory-risk-dashboard',
+              component: () => import('@/views/dashboard/InventoryRiskDashboardView.vue'),
+            },
+            {
+              path: 'purchasing',
+              name: 'purchasing-dashboard',
+              component: () => import('@/views/dashboard/PurchasingDashboardView.vue'),
+            },
+            {
+              path: 'locations',
+              name: 'locations-dashboard',
+              component: () => import('@/views/dashboard/LocationDashboardView.vue'),
+            },
+          ],
         },
         {
           path: 'alerts',
           name: 'alert-center',
           component: () => import('@/views/alerts/AlertCenterView.vue'),
-        },
-        {
-          path: 'dashboard/sales',
-          name: 'sales-dashboard',
-          component: () => import('@/views/dashboard/SalesDashboardView.vue'),
-        },
-        {
-          path: 'dashboard/piutang',
-          name: 'piutang-dashboard',
-          component: () => import('@/views/dashboard/PiutangDashboardView.vue'),
-        },
-        {
-          path: 'dashboard/customers',
-          name: 'customers-dashboard',
-          component: () => import('@/views/dashboard/CustomerDashboardView.vue'),
-        },
-        {
-          path: 'dashboard/salesmen',
-          name: 'salesmen-dashboard',
-          component: () => import('@/views/dashboard/SalesmanDashboardView.vue'),
-        },
-        {
-          path: 'dashboard/collection',
-          name: 'collection-dashboard',
-          component: () => import('@/views/dashboard/CollectionDashboardView.vue'),
-        },
-        {
-          path: 'dashboard/inventory',
-          name: 'inventory-dashboard',
-          component: () => import('@/views/dashboard/InventoryDashboardView.vue'),
-        },
-        {
-          path: 'dashboard/inventory-risk',
-          name: 'inventory-risk-dashboard',
-          component: () => import('@/views/dashboard/InventoryRiskDashboardView.vue'),
-        },
-        {
-          path: 'dashboard/purchasing',
-          name: 'purchasing-dashboard',
-          component: () => import('@/views/dashboard/PurchasingDashboardView.vue'),
-        },
-        {
-          path: 'dashboard/locations',
-          name: 'locations-dashboard',
-          component: () => import('@/views/dashboard/LocationDashboardView.vue'),
         },
         {
           path: 'reports/sales',
@@ -98,7 +103,7 @@ const router = createRouter({
     },
     {
       path: '/:pathMatch(.*)*',
-      redirect: '/dashboard',
+      redirect: { name: 'dashboard' },
     },
   ],
 })
@@ -114,7 +119,7 @@ router.beforeEach((to) => {
   }
 
   if (to.path === '/login' && auth.isAuthenticated) {
-    return { path: '/dashboard' }
+    return { name: 'dashboard' }
   }
 
   return true

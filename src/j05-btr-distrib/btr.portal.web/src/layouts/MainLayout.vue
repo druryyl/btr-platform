@@ -1,122 +1,58 @@
 <script setup lang="ts">
-import { computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import Button from 'primevue/button'
-import Menu from 'primevue/menu'
 import { useAuthStore } from '@/stores/authStore'
 
 const auth = useAuthStore()
 const router = useRouter()
 const route = useRoute()
 
-const menuItems = computed(() => [
+type NavItem = {
+  label: string
+  icon: string
+  routeName: string
+}
+
+type NavSection = {
+  label: string
+  items: NavItem[]
+}
+
+const navSections: NavSection[] = [
   {
     label: 'Dashboard',
-    icon: 'pi pi-home',
     items: [
-      {
-        label: 'Executive',
-        icon: 'pi pi-th-large',
-        command: () => router.push('/dashboard'),
-        class: route.path === '/dashboard' ? 'layout-menu-item--active' : '',
-      },
-      {
-        label: 'Alert Center',
-        icon: 'pi pi-bell',
-        command: () => router.push('/alerts'),
-        class: route.path === '/alerts' ? 'layout-menu-item--active' : '',
-      },
-      {
-        label: 'Sales',
-        icon: 'pi pi-chart-line',
-        command: () => router.push('/dashboard/sales'),
-        class: route.path === '/dashboard/sales' ? 'layout-menu-item--active' : '',
-      },
-      {
-        label: 'Piutang',
-        icon: 'pi pi-wallet',
-        command: () => router.push('/dashboard/piutang'),
-        class: route.path === '/dashboard/piutang' ? 'layout-menu-item--active' : '',
-      },
-      {
-        label: 'Customers',
-        icon: 'pi pi-users',
-        command: () => router.push('/dashboard/customers'),
-        class: route.path === '/dashboard/customers' ? 'layout-menu-item--active' : '',
-      },
-      {
-        label: 'Salesmen',
-        icon: 'pi pi-id-card',
-        command: () => router.push('/dashboard/salesmen'),
-        class: route.path === '/dashboard/salesmen' ? 'layout-menu-item--active' : '',
-      },
-      {
-        label: 'Collection',
-        icon: 'pi pi-money-bill',
-        command: () => router.push('/dashboard/collection'),
-        class: route.path === '/dashboard/collection' ? 'layout-menu-item--active' : '',
-      },
-      {
-        label: 'Inventory',
-        icon: 'pi pi-box',
-        command: () => router.push('/dashboard/inventory'),
-        class: route.path === '/dashboard/inventory' ? 'layout-menu-item--active' : '',
-      },
-      {
-        label: 'Inventory Risk',
-        icon: 'pi pi-exclamation-triangle',
-        command: () => router.push('/dashboard/inventory-risk'),
-        class: route.path === '/dashboard/inventory-risk' ? 'layout-menu-item--active' : '',
-      },
-      {
-        label: 'Purchasing',
-        icon: 'pi pi-shopping-cart',
-        command: () => router.push('/dashboard/purchasing'),
-        class: route.path === '/dashboard/purchasing' ? 'layout-menu-item--active' : '',
-      },
-      {
-        label: 'Locations',
-        icon: 'pi pi-map-marker',
-        command: () => router.push('/dashboard/locations'),
-        class: route.path === '/dashboard/locations' ? 'layout-menu-item--active' : '',
-      },
+      { label: 'Executive', icon: 'pi pi-th-large', routeName: 'dashboard' },
+      { label: 'Alert Center', icon: 'pi pi-bell', routeName: 'alert-center' },
+      { label: 'Sales', icon: 'pi pi-chart-line', routeName: 'sales-dashboard' },
+      { label: 'Piutang', icon: 'pi pi-wallet', routeName: 'piutang-dashboard' },
+      { label: 'Customers', icon: 'pi pi-users', routeName: 'customers-dashboard' },
+      { label: 'Salesmen', icon: 'pi pi-id-card', routeName: 'salesmen-dashboard' },
+      { label: 'Collection', icon: 'pi pi-money-bill', routeName: 'collection-dashboard' },
+      { label: 'Inventory', icon: 'pi pi-box', routeName: 'inventory-dashboard' },
+      { label: 'Inventory Risk', icon: 'pi pi-exclamation-triangle', routeName: 'inventory-risk-dashboard' },
+      { label: 'Purchasing', icon: 'pi pi-shopping-cart', routeName: 'purchasing-dashboard' },
+      { label: 'Locations', icon: 'pi pi-map-marker', routeName: 'locations-dashboard' },
     ],
   },
   {
     label: 'Reports',
-    icon: 'pi pi-file',
     items: [
-      {
-        label: 'Sales Report',
-        icon: 'pi pi-list',
-        command: () => router.push('/reports/sales'),
-        class: route.path === '/reports/sales' ? 'layout-menu-item--active' : '',
-      },
-      {
-        label: 'Piutang Report',
-        icon: 'pi pi-wallet',
-        command: () => router.push('/reports/piutang'),
-        class: route.path === '/reports/piutang' ? 'layout-menu-item--active' : '',
-      },
-      {
-        label: 'Inventory Report',
-        icon: 'pi pi-box',
-        command: () => router.push('/reports/inventory'),
-        class: route.path === '/reports/inventory' ? 'layout-menu-item--active' : '',
-      },
-      {
-        label: 'Purchasing Report',
-        icon: 'pi pi-shopping-cart',
-        command: () => router.push('/reports/purchasing'),
-        class: route.path === '/reports/purchasing' ? 'layout-menu-item--active' : '',
-      },
+      { label: 'Sales Report', icon: 'pi pi-list', routeName: 'sales-report' },
+      { label: 'Piutang Report', icon: 'pi pi-wallet', routeName: 'piutang-report' },
+      { label: 'Inventory Report', icon: 'pi pi-box', routeName: 'inventory-report' },
+      { label: 'Purchasing Report', icon: 'pi pi-shopping-cart', routeName: 'purchasing-report' },
     ],
   },
-])
+]
+
+function isActive(routeName: string): boolean {
+  return route.name === routeName
+}
 
 function logout(): void {
   auth.logout()
-  router.push('/login')
+  router.push({ name: 'login' })
 }
 </script>
 
@@ -148,7 +84,27 @@ function logout(): void {
 
     <div class="layout__body">
       <aside class="layout__sidebar">
-        <Menu :model="menuItems" class="layout__menu" />
+        <nav class="layout__nav" aria-label="Main navigation">
+          <section
+            v-for="section in navSections"
+            :key="section.label"
+            class="layout__nav-section"
+          >
+            <h2 class="layout__nav-heading">{{ section.label }}</h2>
+            <ul class="layout__nav-list">
+              <li v-for="item in section.items" :key="item.routeName">
+                <RouterLink
+                  :to="{ name: item.routeName }"
+                  class="layout__nav-link"
+                  :class="{ 'layout__nav-link--active': isActive(item.routeName) }"
+                >
+                  <i :class="['layout__nav-icon', item.icon]" aria-hidden="true" />
+                  <span>{{ item.label }}</span>
+                </RouterLink>
+              </li>
+            </ul>
+          </section>
+        </nav>
       </aside>
 
       <main class="layout__content">
@@ -234,6 +190,51 @@ function logout(): void {
   border-right: 1px solid var(--p-surface-200);
 }
 
+.layout__nav-section + .layout__nav-section {
+  margin-top: 1rem;
+}
+
+.layout__nav-heading {
+  margin: 0 0 0.5rem;
+  padding: 0 0.75rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--p-text-muted-color);
+}
+
+.layout__nav-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.layout__nav-link {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  padding: 0.625rem 0.75rem;
+  border-radius: var(--p-content-border-radius);
+  color: var(--p-text-color);
+  text-decoration: none;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.layout__nav-link:hover {
+  background: var(--p-surface-100);
+}
+
+.layout__nav-link--active {
+  background: var(--p-primary-50);
+  color: var(--p-primary-700);
+}
+
+.layout__nav-icon {
+  width: 1rem;
+  text-align: center;
+}
+
 .layout__content {
   flex: 1;
   padding: 1.5rem;
@@ -260,12 +261,5 @@ function logout(): void {
     border-right: none;
     border-bottom: 1px solid var(--p-surface-200);
   }
-}
-</style>
-
-<style>
-.layout-menu-item--active > .p-menuitem-content {
-  background: var(--p-primary-50);
-  color: var(--p-primary-700);
 }
 </style>
