@@ -2,24 +2,19 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using btr.application.FinanceContext.PiutangAgg.Contracts;
-using btr.application.ReportingContext.DashboardPiutangAgg.Contracts;
 using btr.application.ReportingContext.DashboardPiutangAgg.Queries;
+using btr.application.ReportingContext.DashboardSnapshotAgg.Services;
 using btr.application.SupportContext.TglJamAgg;
 using btr.nuna.Domain;
 
 namespace btr.infrastructure.ReportingContext.DashboardPiutangAgg
 {
+    /// <summary>
+    /// Legacy live-aggregation helper retained for historical comparison tests.
+    /// Production API reads materialized snapshots only.
+    /// </summary>
     public class DashboardPiutangLiveDal
     {
-        private static readonly (string Key, string Label, int SortOrder)[] AgingBucketDefinitions =
-        {
-            ("Current", "Current (Not Yet Due)", 1),
-            ("Days1To30", "1–30 Days", 2),
-            ("Days31To60", "31–60 Days", 3),
-            ("Days61To90", "61–90 Days", 4),
-            ("DaysOver90", "> 90 Days", 5),
-        };
-
         private readonly IPiutangSalesWilayahDal _piutangSalesWilayahDal;
         private readonly ITglJamDal _tglJamDal;
 
@@ -39,6 +34,7 @@ namespace btr.infrastructure.ReportingContext.DashboardPiutangAgg
 
             var outstanding = rows.Where(r => r.KurangBayar > 1).ToList();
             var today = _tglJamDal.Now.Date;
+            var generatedAt = _tglJamDal.Now;
 
             var totalPiutang = outstanding.Sum(r => r.KurangBayar);
             var totalCustomer = outstanding
@@ -48,57 +44,10 @@ namespace btr.infrastructure.ReportingContext.DashboardPiutangAgg
                 .Count();
 
             var bucketTotals = outstanding
-                .GroupBy(r => ResolveAgingBucketKey(r.JatuhTempo, today))
+                .GroupBy(r => PiutangAgingBucketResolver.ResolveBucketKey(r.JatuhTempo, today))
                 .ToDictionary(g => g.Key, g => g.Sum(r => r.KurangBayar));
 
-            var agingBuckets = BuildAgingBuckets(bucketTotals);
-
-            var overdueCustomerCount = outstanding
-                .Where(r => ResolveAgingBucketKey(r.JatuhTempo, today) != "Current")
-                .GroupBy(r => ResolveCustomerKey(r))
-                .Where(g => g.Key.Length > 0)
-                .Count(g => g.Sum(r => r.KurangBayar) > 0);
-
-            var topCustomers = outstanding
-                .GroupBy(r => ResolveCustomerKey(r))
-                .Where(g => g.Key.Length > 0)
-                .Select(g => new
-                {
-                    CustomerName = ResolveCustomerDisplayName(g),
-                    OutstandingBalance = g.Sum(r => r.KurangBayar)
-                })
-                .OrderByDescending(x => x.OutstandingBalance)
-                .ThenBy(x => x.CustomerName, StringComparer.OrdinalIgnoreCase)
-                .Take(10)
-                .Select((x, index) => new DashboardPiutangTopCustomer
-                {
-                    Rank = index + 1,
-                    CustomerName = x.CustomerName,
-                    OutstandingBalance = x.OutstandingBalance
-                })
-                .ToList();
-
-            return new DashboardPiutangResponse
-            {
-                TotalPiutang = totalPiutang,
-                TotalCustomer = totalCustomer,
-                GeneratedAt = _tglJamDal.Now,
-                OverdueCustomer = overdueCustomerCount,
-                AgingBuckets = agingBuckets,
-                TopCustomers = topCustomers
-            };
-        }
-
-        private Periode OpenReceivablesPeriode()
-        {
-            var today = _tglJamDal.Now.Date;
-            return new Periode(new DateTime(2000, 1, 1), today);
-        }
-
-        private static List<DashboardPiutangAgingBucket> BuildAgingBuckets(
-            Dictionary<string, decimal> bucketTotals)
-        {
-            return AgingBucketDefinitions
+            var agingBuckets = PiutangAgingBucketResolver.BucketDefinitions
                 .Select(def => new DashboardPiutangAgingBucket
                 {
                     BucketKey = def.Key,
@@ -107,17 +56,56 @@ namespace btr.infrastructure.ReportingContext.DashboardPiutangAgg
                     SortOrder = def.SortOrder
                 })
                 .ToList();
+
+            var overdueCustomerCount = outstanding
+                .Where(r => PiutangAgingBucketResolver.ResolveBucketKey(r.JatuhTempo, today) != "Current")
+                .GroupBy(r => ResolveCustomerKey(r))
+                .Where(g => g.Key.Length > 0)
+                .Count(g => g.Sum(r => r.KurangBayar) > 0);
+
+            var current = bucketTotals.TryGetValue("Current", out var currentAmount) ? currentAmount : 0m;
+            var over90 = bucketTotals.TryGetValue("DaysOver90", out var over90Amount) ? over90Amount : 0m;
+
+            var topCustomerRisk = outstanding
+                .GroupBy(r => ResolveCustomerKey(r))
+                .Where(g => g.Key.Length > 0)
+                .Select(g => new
+                {
+                    CustomerName = ResolveCustomerDisplayName(g),
+                    CustomerCode = g.Select(r => r.CustomerCode?.Trim())
+                        .FirstOrDefault(c => !string.IsNullOrEmpty(c)) ?? g.Key,
+                    TotalPiutang = g.Sum(r => r.KurangBayar)
+                })
+                .OrderByDescending(x => x.TotalPiutang)
+                .ThenBy(x => x.CustomerName, StringComparer.OrdinalIgnoreCase)
+                .Take(DashboardPiutangAggregator.TopCustomerRiskCount)
+                .Select((x, index) => new DashboardPiutangTopCustomerRiskRow
+                {
+                    Rank = index + 1,
+                    CustomerName = x.CustomerName,
+                    CustomerCode = x.CustomerCode,
+                    TotalPiutang = x.TotalPiutang
+                })
+                .ToList();
+
+            return new DashboardPiutangResponse
+            {
+                TotalPiutang = totalPiutang,
+                TotalCustomer = totalCustomer,
+                GeneratedAt = generatedAt,
+                OverdueCustomer = overdueCustomerCount,
+                OverduePiutang = totalPiutang - current,
+                AgingOver90Amount = over90,
+                AgingOver90Percent = totalPiutang > 0 ? over90 / totalPiutang * 100m : (decimal?)null,
+                AgingBuckets = agingBuckets,
+                TopCustomerRisk = topCustomerRisk
+            };
         }
 
-        private static string ResolveAgingBucketKey(DateTime jatuhTempo, DateTime today)
+        private Periode OpenReceivablesPeriode()
         {
-            var daysOverdue = (today - jatuhTempo.Date).Days;
-
-            if (daysOverdue <= 0) return "Current";
-            if (daysOverdue <= 30) return "Days1To30";
-            if (daysOverdue <= 60) return "Days31To60";
-            if (daysOverdue <= 90) return "Days61To90";
-            return "DaysOver90";
+            var today = _tglJamDal.Now.Date;
+            return new Periode(new DateTime(2000, 1, 1), today);
         }
 
         private static string ResolveCustomerKey(PiutangSalesWilayahDto row)

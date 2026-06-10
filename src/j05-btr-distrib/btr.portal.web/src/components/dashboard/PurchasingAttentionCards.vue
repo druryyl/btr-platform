@@ -12,6 +12,10 @@ defineProps<{
   loading: boolean
   unavailable: boolean
 }>()
+
+const emit = defineEmits<{
+  filterBySignal: [signalKey: string]
+}>()
 </script>
 
 <template>
@@ -19,9 +23,11 @@ defineProps<{
     <PurchasingAttentionCardGroup
       title="Posting Exposure"
       icon="pi pi-inbox"
+      href="#purchasing-attention-list"
       :loading="loading"
       :requires-attention="cards?.PostingExposure?.RequiresAttention"
       :unavailable="unavailable"
+      @anchor-navigate="emit('filterBySignal', 'QualifiedBacklog')"
     >
       <div
         v-for="(value, label) in cards?.PostingExposure?.Metrics ?? {}"
@@ -36,9 +42,11 @@ defineProps<{
     <PurchasingAttentionCardGroup
       title="Principal Dependency"
       icon="pi pi-sitemap"
+      href="#purchasing-attention-list"
       :loading="loading"
       :requires-attention="cards?.PrincipalDependency?.RequiresAttention"
       :unavailable="unavailable"
+      @anchor-navigate="emit('filterBySignal', 'CompoundDependency')"
     >
       <div
         v-for="(value, label) in cards?.PrincipalDependency?.Metrics ?? {}"
@@ -53,9 +61,11 @@ defineProps<{
     <PurchasingAttentionCardGroup
       title="Purchasing Pace"
       icon="pi pi-calendar"
+      href="#purchasing-attention-list"
       :loading="loading"
       :requires-attention="cards?.PurchasingPace?.RequiresAttention"
       :unavailable="unavailable"
+      @anchor-navigate="emit('filterBySignal', 'PurchasingInactivity')"
     >
       <div
         v-for="(value, label) in cards?.PurchasingPace?.Metrics ?? {}"
@@ -70,9 +80,11 @@ defineProps<{
     <PurchasingAttentionCardGroup
       title="Inventory Cross-Risk"
       icon="pi pi-exclamation-triangle"
+      href="#purchasing-attention-list"
       :loading="loading"
       :requires-attention="cards?.InventoryCrossRisk?.RequiresAttention"
       :unavailable="unavailable"
+      @anchor-navigate="emit('filterBySignal', 'PrincipalInventoryNoPurchase')"
     >
       <div
         v-for="(value, label) in cards?.InventoryCrossRisk?.Metrics ?? {}"

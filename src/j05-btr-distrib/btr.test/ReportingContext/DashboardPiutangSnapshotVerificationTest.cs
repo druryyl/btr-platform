@@ -1,12 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using btr.application.FinanceContext.PiutangAgg.Contracts;
+using btr.application.ReportingContext.DashboardSnapshotAgg.Contracts;
 using btr.application.ReportingContext.DashboardSnapshotAgg.Models;
 using btr.application.ReportingContext.DashboardSnapshotAgg.Services;
-using btr.application.SupportContext.TglJamAgg;
-using btr.infrastructure.ReportingContext.DashboardPiutangAgg;
-using btr.nuna.Domain;
 using FluentAssertions;
 using Xunit;
 
@@ -18,101 +15,116 @@ namespace btr.test.ReportingContext
         private static readonly DateTime FixedGeneratedAt = new DateTime(2026, 6, 6, 14, 30, 0);
 
         [Fact]
-        public void Aggregator_MatchesLiveDal_ForEquivalentOpenBalanceRows()
+        public void Aggregator_ReconcilesCompanyLevelMetrics()
+        {
+            var openBalances = BuildScenarioRows();
+            var aggregate = Aggregate(openBalances);
+
+            AssertCompanyLevelReconciliation(aggregate);
+        }
+
+        [Fact]
+        public void SnapshotRoundTrip_PreservesCustomerAgingAndTopRiskRowCounts()
+        {
+            var openBalances = BuildScenarioRows();
+            var aggregate = Aggregate(openBalances);
+            var snapshotDal = new InMemoryPiutangSnapshotDal();
+
+            snapshotDal.ReplaceCurrent(aggregate, "refresh-log-1");
+            var loaded = snapshotDal.GetCurrent();
+
+            loaded.Should().NotBeNull();
+            loaded.CustomerAging.Should().HaveCount(aggregate.CustomerAging.Count);
+            loaded.CustomerAging.Should().HaveCount(
+                openBalances
+                    .Where(r => !string.IsNullOrWhiteSpace(r.CustomerId))
+                    .Select(r => r.CustomerId)
+                    .Distinct()
+                    .Count());
+            loaded.TopCustomerRisk.Should().HaveCountLessThanOrEqualTo(20);
+            loaded.TopCustomerRisk.Should().HaveCount(aggregate.TopCustomerRisk.Count);
+
+            AssertCompanyLevelReconciliation(loaded);
+            loaded.TotalPiutang.Should().Be(aggregate.TotalPiutang);
+            loaded.Top10CustomerConcentrationPercent.Should().Be(aggregate.Top10CustomerConcentrationPercent);
+            loaded.Top20CustomerConcentrationPercent.Should().Be(aggregate.Top20CustomerConcentrationPercent);
+        }
+
+        private static List<PiutangOpenBalanceDto> BuildScenarioRows()
         {
             var scenarios = new[]
             {
-                OpenRow("C001", "Alpha Corp", FixedToday.AddDays(5), 3_000_000m),
-                OpenRow("C001", "Alpha Corp", FixedToday.AddDays(-10), 500_000m),
-                OpenRow("C002", "Beta Ltd", FixedToday.AddDays(-45), 1_250_000m),
-                OpenRow(null, "Standalone", FixedToday.AddDays(-95), 800_000m),
-                OpenRow("C003", "Gamma Inc", FixedToday, 1m),
-                OpenRow("C004", "Delta Co", FixedToday.AddDays(-5), 0m),
+                OpenRow("CUST001", "C001", "Alpha Corp", FixedToday.AddDays(5), 3_000_000m),
+                OpenRow("CUST001", "C001", "Alpha Corp", FixedToday.AddDays(-10), 500_000m),
+                OpenRow("CUST002", "C002", "Beta Ltd", FixedToday.AddDays(-45), 1_250_000m),
+                OpenRow(null, null, "Standalone", FixedToday.AddDays(-95), 800_000m),
+                OpenRow("CUST003", "C003", "Gamma Inc", FixedToday, 1m),
+                OpenRow("CUST004", "C004", "Delta Co", FixedToday.AddDays(-5), 0m),
             };
 
-            var openBalances = scenarios
+            return scenarios
                 .Where(r => r.KurangBayar > 1)
                 .Select(r => new PiutangOpenBalanceDto
                 {
+                    CustomerId = r.CustomerId,
                     CustomerCode = r.CustomerCode,
                     CustomerName = r.CustomerName,
                     JatuhTempo = r.JatuhTempo,
                     KurangBayar = r.KurangBayar
                 })
                 .ToList();
+        }
 
-            var wilayahRows = scenarios.Select(r => new PiutangSalesWilayahDto
-            {
-                CustomerCode = r.CustomerCode,
-                CustomerName = r.CustomerName,
-                JatuhTempo = r.JatuhTempo,
-                KurangBayar = r.KurangBayar
-            }).ToList();
-
+        private static DashboardPiutangAggregateResult Aggregate(IEnumerable<PiutangOpenBalanceDto> openBalances)
+        {
             var aggregator = new DashboardPiutangAggregator();
-            var aggregate = aggregator.Aggregate(openBalances, FixedToday, FixedGeneratedAt);
+            return aggregator.Aggregate(openBalances, FixedToday, FixedGeneratedAt);
+        }
 
-            var liveDal = new DashboardPiutangLiveDal(
-                new StubPiutangSalesWilayahDal(wilayahRows),
-                new StubTglJamDal(FixedGeneratedAt));
+        private static void AssertCompanyLevelReconciliation(DashboardPiutangAggregateResult aggregate)
+        {
+            aggregate.AgingBuckets.Sum(b => b.Amount).Should().Be(aggregate.TotalPiutang);
 
-            var live = liveDal.GetSummary();
+            var current = aggregate.AgingBuckets.Single(b => b.BucketKey == "Current").Amount;
+            aggregate.OverduePiutang.Should().Be(aggregate.TotalPiutang - current);
 
-            aggregate.TotalPiutang.Should().Be(live.TotalPiutang);
-            aggregate.TotalCustomer.Should().Be(live.TotalCustomer);
-            aggregate.OverdueCustomer.Should().Be(live.OverdueCustomer);
+            aggregate.CustomerAging.Sum(c => c.TotalPiutang).Should().BeLessThanOrEqualTo(aggregate.TotalPiutang);
+            aggregate.TopCustomerRisk.Should().HaveCountLessThanOrEqualTo(20);
 
-            aggregate.AgingBuckets.Should().HaveCount(live.AgingBuckets.Count);
-            foreach (var bucket in aggregate.AgingBuckets)
+            foreach (var customer in aggregate.CustomerAging)
             {
-                var liveBucket = live.AgingBuckets.Single(b => b.BucketKey == bucket.BucketKey);
-                liveBucket.Amount.Should().Be(bucket.Amount);
+                (customer.CurrentAmount + customer.Aging30Amount + customer.Aging60Amount
+                    + customer.Aging90Amount + customer.AgingOver90Amount).Should().Be(customer.TotalPiutang);
             }
 
-            aggregate.TopCustomers.Should().HaveCount(live.TopCustomers.Count);
-            for (var i = 0; i < aggregate.TopCustomers.Count; i++)
+            if (aggregate.Top20CustomerConcentrationPercent.HasValue
+                && aggregate.Top10CustomerConcentrationPercent.HasValue)
             {
-                aggregate.TopCustomers[i].CustomerName.Should().Be(live.TopCustomers[i].CustomerName);
-                aggregate.TopCustomers[i].OutstandingBalance.Should().Be(live.TopCustomers[i].OutstandingBalance);
-                aggregate.TopCustomers[i].Rank.Should().Be(live.TopCustomers[i].Rank);
+                aggregate.Top20CustomerConcentrationPercent.Should()
+                    .BeGreaterThanOrEqualTo(aggregate.Top10CustomerConcentrationPercent.Value);
             }
         }
 
-        private static (string CustomerCode, string CustomerName, DateTime JatuhTempo, decimal KurangBayar) OpenRow(
+        private static (string CustomerId, string CustomerCode, string CustomerName, DateTime JatuhTempo, decimal KurangBayar) OpenRow(
+            string customerId,
             string customerCode,
             string customerName,
             DateTime jatuhTempo,
             decimal kurangBayar)
         {
-            return (customerCode, customerName, jatuhTempo, kurangBayar);
+            return (customerId, customerCode, customerName, jatuhTempo, kurangBayar);
         }
 
-        private sealed class StubPiutangSalesWilayahDal : IPiutangSalesWilayahDal
+        private sealed class InMemoryPiutangSnapshotDal : IDashboardPiutangSnapshotDal
         {
-            private readonly IEnumerable<PiutangSalesWilayahDto> _rows;
+            private DashboardPiutangAggregateResult _current;
 
-            public StubPiutangSalesWilayahDal(IEnumerable<PiutangSalesWilayahDto> rows)
+            public DashboardPiutangAggregateResult GetCurrent() => _current;
+
+            public void ReplaceCurrent(DashboardPiutangAggregateResult result, string refreshLogId)
             {
-                _rows = rows;
+                _current = result;
             }
-
-            public IEnumerable<PiutangSalesWilayahDto> ListData(Periode periode) => _rows;
-
-            public IEnumerable<PiutangSalesWilayahDto> ListData(
-                Periode filter,
-                btr.application.ReportingContext.PiutangReportAgg.PiutangReportDateField dateField) => _rows;
-
-            public IEnumerable<PiutangSalesWilayahDto> ListAllOpenBalances() => _rows;
-        }
-
-        private sealed class StubTglJamDal : ITglJamDal
-        {
-            public StubTglJamDal(DateTime now)
-            {
-                Now = now;
-            }
-
-            public DateTime Now { get; }
         }
     }
 }

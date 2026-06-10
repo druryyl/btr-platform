@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import Message from 'primevue/message'
 import DashboardDetailLayout from '@/components/dashboard/DashboardDetailLayout.vue'
@@ -12,6 +12,7 @@ import PostingStatusPieChart from '@/components/dashboard/PostingStatusPieChart.
 import Top10RankingTable from '@/components/dashboard/Top10RankingTable.vue'
 import WeeklyTrendChart from '@/components/dashboard/WeeklyTrendChart.vue'
 import type { DashboardPurchasingPrincipalExposureItem, DashboardSalesWeekTrendItem } from '@/models/dashboard'
+import { PURCHASING_ATTENTION_SIGNAL_ALL } from '@/services/purchasingAttentionSignals'
 import { resolveInvestigationSourceLabel } from '@/services/investigationSourceLabels'
 import { navigateToInvestigation } from '@/services/navigateToInvestigation'
 import { useDashboardStore } from '@/stores/dashboardStore'
@@ -19,6 +20,7 @@ import { useDashboardStore } from '@/stores/dashboardStore'
 const dashboard = useDashboardStore()
 const router = useRouter()
 const sourceLabel = resolveInvestigationSourceLabel('/dashboard/purchasing')
+const attentionSignalFilter = ref(PURCHASING_ATTENTION_SIGNAL_ALL)
 
 const managementUnavailable = computed(
   () => dashboard.purchasing != null && !dashboard.purchasing.IsManagementAvailable,
@@ -44,10 +46,27 @@ const weeklyTrendForChart = computed((): DashboardSalesWeekTrendItem[] =>
   })),
 )
 
+const sectionNavItems = [
+  { id: 'purchasing-attention-cards', label: 'Attention Cards' },
+  { id: 'purchasing-summary', label: 'Summary' },
+  { id: 'purchasing-attention-list', label: 'Attention List' },
+  { id: 'purchasing-charts', label: 'Charts' },
+  { id: 'purchasing-rankings', label: 'Rankings' },
+]
+
 function onTop10RowClick(row: Record<string, unknown>): void {
   const item = row as unknown as DashboardPurchasingPrincipalExposureItem
   if (!item.Investigation) return
   navigateToInvestigation(router, item.Investigation, sourceLabel)
+}
+
+function setAttentionSignalFilter(signalKey: string): void {
+  attentionSignalFilter.value = signalKey
+}
+
+function onRefresh(): void {
+  attentionSignalFilter.value = PURCHASING_ATTENTION_SIGNAL_ALL
+  void dashboard.loadPurchasing()
 }
 
 onMounted(() => {
@@ -62,7 +81,7 @@ onMounted(() => {
     :loading="dashboard.loading"
     :error="dashboard.error"
     :generated-at="dashboard.purchasing?.GeneratedAt ?? null"
-    @refresh="dashboard.loadPurchasing()"
+    @refresh="onRefresh"
   >
     <Message
       v-if="dashboard.purchasing && !dashboard.purchasing.IsDataFresh"
@@ -82,28 +101,43 @@ onMounted(() => {
       Management attention data is not yet available. V1 statistics below may still be shown.
     </Message>
 
-    <section class="purchasing-dashboard__section">
+    <nav class="purchasing-dashboard__section-nav" aria-label="Dashboard sections">
+      <a
+        v-for="item in sectionNavItems"
+        :key="item.id"
+        :href="`#${item.id}`"
+        class="purchasing-dashboard__section-nav-link"
+      >
+        {{ item.label }}
+      </a>
+    </nav>
+
+    <section id="purchasing-attention-cards" class="purchasing-dashboard__section">
       <h2 class="purchasing-dashboard__section-title">Purchasing Attention Cards</h2>
       <PurchasingAttentionCards
         :cards="dashboard.purchasing?.AttentionCards ?? null"
         :loading="dashboard.loading"
         :unavailable="managementUnavailable"
+        @filter-by-signal="setAttentionSignalFilter"
       />
     </section>
 
     <PurchasingSummaryRow
+      id="purchasing-summary"
       class="purchasing-dashboard__section"
       :summary="dashboard.purchasing?.Summary ?? null"
       :loading="dashboard.loading && !managementUnavailable"
     />
 
     <PurchasingAttentionList
+      id="purchasing-attention-list"
+      v-model:signal-filter="attentionSignalFilter"
       class="purchasing-dashboard__section"
       :items="dashboard.purchasing?.AttentionList ?? []"
       :loading="dashboard.loading"
     />
 
-    <section class="purchasing-dashboard__charts">
+    <section id="purchasing-charts" class="purchasing-dashboard__charts">
       <WeeklyTrendChart
         :weekly-trend="weeklyTrendForChart"
         :loading="dashboard.loading"
@@ -117,7 +151,7 @@ onMounted(() => {
       />
     </section>
 
-    <section class="purchasing-dashboard__section purchasing-dashboard__rankings">
+    <section id="purchasing-rankings" class="purchasing-dashboard__section purchasing-dashboard__rankings">
       <Top10RankingTable
         title="Top 10 Principals"
         :columns="top10Columns"
@@ -148,8 +182,33 @@ onMounted(() => {
   margin-bottom: 1rem;
 }
 
+.purchasing-dashboard__section-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  margin-bottom: 1.5rem;
+  padding: 0.75rem 0;
+  background: var(--p-content-background);
+  border-bottom: 1px solid var(--p-content-border-color);
+}
+
+.purchasing-dashboard__section-nav-link {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--p-primary-color);
+  text-decoration: none;
+}
+
+.purchasing-dashboard__section-nav-link:hover {
+  text-decoration: underline;
+}
+
 .purchasing-dashboard__section {
   margin-top: 1.5rem;
+  scroll-margin-top: 3.5rem;
 }
 
 .purchasing-dashboard__section-title {
@@ -162,6 +221,7 @@ onMounted(() => {
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 1rem;
   margin-top: 1.5rem;
+  scroll-margin-top: 3.5rem;
 }
 
 .purchasing-dashboard__rankings {

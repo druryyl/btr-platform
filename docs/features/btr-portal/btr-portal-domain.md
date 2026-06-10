@@ -192,15 +192,18 @@ Horizontal **investigation and navigation framework** unifying drill-down from K
 
 **Period:** Current open receivables snapshot — rows where `Sisa > 1` at refresh time (business rule: `KurangBayar > 1`). See [materialized dashboard domain](../materialized-dashboard/materialized-dashboard-domain.md).
 
-**Purpose:** Finance monitoring and collection prioritization through aging and customer concentration.
+**Purpose:** Portfolio quality — receivable exposure, aging risk, and customer concentration. Complements the Collection Dashboard (recovery execution); does not duplicate Top Overdue rankings or salesman/wilayah concentration.
 
 | Section | Content |
 | ------- | ------- |
-| KPI row | Total Piutang, Total Customer, Overdue Customer |
-| Chart | Aging Distribution (pie — 5 buckets) |
-| Table | Top 10 Outstanding Customers |
+| KPI row | Total Piutang, Total Customer, Overdue Customer, Overdue Piutang, Piutang > 90 Hari (amount + % of total) |
+| Concentration | Top 10 Customer %, Top 20 Customer % of Total Piutang |
+| Chart | Aging Distribution (pie — 5 buckets, `JatuhTempo` anchor) |
+| Table | Top 20 Outstanding Customers — aging breakdown (Customer · Total · Current · 1–30 · 31–60 · 61–90 · >90) |
 
-**Home card metrics (summary):** Total Piutang, Total Customer.
+**Drill-down:** Row click opens Piutang Report with customer name pre-filter (`?q=`).
+
+**Home card metrics (summary):** Total Piutang, Total Customer (unchanged — overview Layer A only).
 
 ### Customer Analytics Dashboard (`/dashboard/customers`)
 

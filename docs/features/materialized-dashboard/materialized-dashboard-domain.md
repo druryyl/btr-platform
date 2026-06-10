@@ -104,11 +104,17 @@ Materialization must not change KPI meaning. Aggregation rules match pre-materia
 | Rule | Definition |
 | ---- | ---------- |
 | Outstanding filter | `KurangBayar > 1` (equivalent to `BTR_Piutang.Sisa > 1` on refresh path) |
-| Customer key | `CustomerCode` trimmed; fallback to `CustomerName` |
+| Customer key (KPI count) | `CustomerCode` trimmed; fallback to `CustomerName` |
+| Customer key (aging snapshot) | `CustomerId` from `BTR_Customer`; rows without `CustomerId` excluded from per-customer tables but included in company totals |
 | Aging buckets | 5 inclusive buckets from `JatuhTempo` vs refresh date |
 | Overdue customers | Customers with any non-Current bucket exposure |
-| Top 10 | By outstanding balance descending; name ascending tie-break |
+| Overdue Piutang | Total Piutang − Current bucket amount |
+| Piutang > 90 Hari | `DaysOver90` bucket amount; % = amount ÷ Total Piutang |
+| Top 10 / Top 20 concentration | Cumulative share of Total Piutang held by largest customers (by `CustomerId` totals) |
+| Top 20 risk table | By total open balance descending; name ascending tie-break; per-customer aging columns |
 | **Period semantics** | Current open receivables snapshot — not a historical time series |
+
+**Snapshot tables:** `BTRPD_PiutangKpi`, `BTRPD_PiutangAging`, `BTRPD_PiutangCustomerAging`, `BTRPD_PiutangTopCustomerRisk`. Legacy `BTRPD_PiutangTopCustomer` deprecated (no longer written).
 
 **Traceability:** Total Piutang and Total Customer = Piutang Report footer totals.
 
@@ -322,7 +328,7 @@ If dashboard and report totals diverge after both pages are refreshed, escalate 
 ## Acceptance Criteria (Feature Complete)
 
 1. Analytical dashboard APIs read from materialized storage; p95 target &lt; 500 ms with populated snapshots.
-2. Piutang KPIs, aging buckets, and Top 10 match pre-materialization semantics.
+2. Piutang KPIs, aging buckets, concentration metrics, and Top 20 risk table reconcile with open-balance semantics.
 3. Inventory KPIs and breakdowns match pre-materialization semantics.
 4. Sales KPIs match Faktur-based definitions and reconcile with Sales Report for current month.
 5. `GeneratedAt` reflects last successful background refresh.

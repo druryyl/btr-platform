@@ -1,21 +1,18 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using btr.application.ReportingContext.DashboardPiutangAgg.Queries;
 using btr.application.ReportingContext.DashboardSnapshotAgg.Models;
 
 namespace btr.application.ReportingContext.DashboardSnapshotAgg.Services
 {
     public class DashboardPiutangAggregator
     {
-        private static readonly (string Key, string Label, int SortOrder)[] AgingBucketDefinitions =
-        {
-            ("Current", "Current (Not Yet Due)", 1),
-            ("Days1To30", "1–30 Days", 2),
-            ("Days31To60", "31–60 Days", 3),
-            ("Days61To90", "61–90 Days", 4),
-            ("DaysOver90", "> 90 Days", 5),
-        };
+        public const int TopCustomerRiskCount = 20;
+        public const int TopConcentration10 = 10;
+        public const int TopConcentration20 = 20;
+
+        private const string AgingOver90BucketKey = "DaysOver90";
+        private const string CurrentBucketKey = "Current";
 
         public DashboardPiutangAggregateResult Aggregate(
             IEnumerable<PiutangOpenBalanceDto> rows,
@@ -33,39 +30,90 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.Services
                 .Distinct(StringComparer.OrdinalIgnoreCase)
                 .Count();
 
-            var bucketTotals = outstanding
-                .GroupBy(r => ResolveAgingBucketKey(r.JatuhTempo, today))
-                .ToDictionary(g => g.Key, g => g.Sum(r => r.KurangBayar));
+            var bucketTotals = new Dictionary<string, decimal>(StringComparer.Ordinal);
+            foreach (var def in PiutangAgingBucketResolver.BucketDefinitions)
+                bucketTotals[def.Key] = 0m;
+
+            var customerAccumulators = new Dictionary<string, CustomerAgingAccumulator>(StringComparer.Ordinal);
+            var skippedCustomerIdRowCount = 0;
+
+            foreach (var row in outstanding)
+            {
+                var bucketKey = PiutangAgingBucketResolver.ResolveBucketKey(row.JatuhTempo, today);
+                bucketTotals[bucketKey] += row.KurangBayar;
+
+                var customerId = row.CustomerId?.Trim() ?? string.Empty;
+                if (customerId.Length == 0)
+                {
+                    skippedCustomerIdRowCount++;
+                    continue;
+                }
+
+                if (!customerAccumulators.TryGetValue(customerId, out var accumulator))
+                {
+                    accumulator = new CustomerAgingAccumulator
+                    {
+                        CustomerId = customerId,
+                        CustomerCode = row.CustomerCode?.Trim() ?? string.Empty,
+                        CustomerName = row.CustomerName?.Trim() ?? string.Empty
+                    };
+                    customerAccumulators[customerId] = accumulator;
+                }
+
+                accumulator.AddToBucket(bucketKey, row.KurangBayar);
+                accumulator.MergeDisplayFields(row);
+            }
 
             var agingBuckets = BuildAgingBuckets(bucketTotals);
 
             var overdueCustomerCount = outstanding
-                .Where(r => ResolveAgingBucketKey(r.JatuhTempo, today) != "Current")
+                .Where(r => PiutangAgingBucketResolver.ResolveBucketKey(r.JatuhTempo, today) != CurrentBucketKey)
                 .GroupBy(r => ResolveCustomerKey(r))
                 .Where(g => g.Key.Length > 0)
                 .Count(g => g.Sum(r => r.KurangBayar) > 0);
 
-            var topCustomers = outstanding
-                .GroupBy(r => ResolveCustomerKey(r))
-                .Where(g => g.Key.Length > 0)
-                .Select(g => new
-                {
-                    CustomerName = ResolveCustomerDisplayName(g),
-                    CustomerCode = g.Select(r => r.CustomerCode?.Trim())
-                        .FirstOrDefault(c => !string.IsNullOrEmpty(c)) ?? g.Key,
-                    OutstandingBalance = g.Sum(r => r.KurangBayar)
-                })
-                .OrderByDescending(x => x.OutstandingBalance)
-                .ThenBy(x => x.CustomerName, StringComparer.OrdinalIgnoreCase)
-                .Take(10)
-                .Select((x, index) => new DashboardPiutangTopCustomer
+            var currentAmount = bucketTotals.TryGetValue(CurrentBucketKey, out var current) ? current : 0m;
+            var overduePiutang = totalPiutang - currentAmount;
+            var agingOver90Amount = bucketTotals.TryGetValue(AgingOver90BucketKey, out var over90) ? over90 : 0m;
+            decimal? agingOver90Percent = totalPiutang > 0
+                ? agingOver90Amount / totalPiutang * 100m
+                : (decimal?)null;
+
+            var customerAging = customerAccumulators.Values
+                .Select(a => a.ToRow(generatedAt))
+                .ToList();
+
+            var rankedCustomers = customerAging
+                .OrderByDescending(c => c.TotalPiutang)
+                .ThenBy(c => c.CustomerName, StringComparer.OrdinalIgnoreCase)
+                .ToList();
+
+            var topCustomerRisk = rankedCustomers
+                .Take(TopCustomerRiskCount)
+                .Select((c, index) => new DashboardPiutangTopCustomerRiskRow
                 {
                     Rank = index + 1,
-                    CustomerName = x.CustomerName,
-                    CustomerCode = x.CustomerCode,
-                    OutstandingBalance = x.OutstandingBalance
+                    CustomerId = c.CustomerId,
+                    CustomerCode = c.CustomerCode,
+                    CustomerName = c.CustomerName,
+                    TotalPiutang = c.TotalPiutang,
+                    CurrentAmount = c.CurrentAmount,
+                    Aging30Amount = c.Aging30Amount,
+                    Aging60Amount = c.Aging60Amount,
+                    Aging90Amount = c.Aging90Amount,
+                    AgingOver90Amount = c.AgingOver90Amount
                 })
                 .ToList();
+
+            decimal? top10Percent = null;
+            decimal? top20Percent = null;
+            if (totalPiutang > 0)
+            {
+                var top10Sum = rankedCustomers.Take(TopConcentration10).Sum(c => c.TotalPiutang);
+                var top20Sum = rankedCustomers.Take(TopConcentration20).Sum(c => c.TotalPiutang);
+                top10Percent = top10Sum / totalPiutang * 100m;
+                top20Percent = top20Sum / totalPiutang * 100m;
+            }
 
             return new DashboardPiutangAggregateResult
             {
@@ -73,15 +121,22 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.Services
                 TotalCustomer = totalCustomer,
                 GeneratedAt = generatedAt,
                 OverdueCustomer = overdueCustomerCount,
+                OverduePiutang = overduePiutang,
+                AgingOver90Amount = agingOver90Amount,
+                AgingOver90Percent = agingOver90Percent,
+                Top10CustomerConcentrationPercent = top10Percent,
+                Top20CustomerConcentrationPercent = top20Percent,
+                SkippedCustomerIdRowCount = skippedCustomerIdRowCount,
                 AgingBuckets = agingBuckets,
-                TopCustomers = topCustomers
+                CustomerAging = customerAging,
+                TopCustomerRisk = topCustomerRisk
             };
         }
 
         private static List<DashboardPiutangAgingBucket> BuildAgingBuckets(
             Dictionary<string, decimal> bucketTotals)
         {
-            return AgingBucketDefinitions
+            return PiutangAgingBucketResolver.BucketDefinitions
                 .Select(def => new DashboardPiutangAgingBucket
                 {
                     BucketKey = def.Key,
@@ -90,17 +145,6 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.Services
                     SortOrder = def.SortOrder
                 })
                 .ToList();
-        }
-
-        private static string ResolveAgingBucketKey(DateTime jatuhTempo, DateTime today)
-        {
-            var daysOverdue = (today - jatuhTempo.Date).Days;
-
-            if (daysOverdue <= 0) return "Current";
-            if (daysOverdue <= 30) return "Days1To30";
-            if (daysOverdue <= 60) return "Days31To60";
-            if (daysOverdue <= 90) return "Days61To90";
-            return "DaysOver90";
         }
 
         private static string ResolveCustomerKey(PiutangOpenBalanceDto row)
@@ -114,13 +158,70 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.Services
             return row.CustomerName?.Trim() ?? string.Empty;
         }
 
-        private static string ResolveCustomerDisplayName(
-            IGrouping<string, PiutangOpenBalanceDto> group)
+        private sealed class CustomerAgingAccumulator
         {
-            return group
-                .Select(r => r.CustomerName?.Trim())
-                .FirstOrDefault(n => !string.IsNullOrEmpty(n))
-                ?? group.Key;
+            public string CustomerId { get; set; }
+
+            public string CustomerCode { get; set; }
+
+            public string CustomerName { get; set; }
+
+            public decimal CurrentAmount { get; private set; }
+
+            public decimal Aging30Amount { get; private set; }
+
+            public decimal Aging60Amount { get; private set; }
+
+            public decimal Aging90Amount { get; private set; }
+
+            public decimal AgingOver90Amount { get; private set; }
+
+            public void AddToBucket(string bucketKey, decimal amount)
+            {
+                switch (bucketKey)
+                {
+                    case CurrentBucketKey:
+                        CurrentAmount += amount;
+                        break;
+                    case "Days1To30":
+                        Aging30Amount += amount;
+                        break;
+                    case "Days31To60":
+                        Aging60Amount += amount;
+                        break;
+                    case "Days61To90":
+                        Aging90Amount += amount;
+                        break;
+                    case AgingOver90BucketKey:
+                        AgingOver90Amount += amount;
+                        break;
+                }
+            }
+
+            public void MergeDisplayFields(PiutangOpenBalanceDto row)
+            {
+                if (string.IsNullOrWhiteSpace(CustomerCode) && !string.IsNullOrWhiteSpace(row.CustomerCode))
+                    CustomerCode = row.CustomerCode.Trim();
+
+                if (string.IsNullOrWhiteSpace(CustomerName) && !string.IsNullOrWhiteSpace(row.CustomerName))
+                    CustomerName = row.CustomerName.Trim();
+            }
+
+            public DashboardPiutangCustomerAgingRow ToRow(DateTime lastUpdate)
+            {
+                return new DashboardPiutangCustomerAgingRow
+                {
+                    CustomerId = CustomerId,
+                    CustomerCode = CustomerCode,
+                    CustomerName = CustomerName,
+                    CurrentAmount = CurrentAmount,
+                    Aging30Amount = Aging30Amount,
+                    Aging60Amount = Aging60Amount,
+                    Aging90Amount = Aging90Amount,
+                    AgingOver90Amount = AgingOver90Amount,
+                    LastUpdate = lastUpdate
+                };
+            }
         }
     }
 }

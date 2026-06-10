@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import Message from 'primevue/message'
 import DashboardDetailLayout from '@/components/dashboard/DashboardDetailLayout.vue'
@@ -10,12 +10,15 @@ import CustomerNavigationSection from '@/components/dashboard/CustomerNavigation
 import Top10RankingTable from '@/components/dashboard/Top10RankingTable.vue'
 import type { DashboardCustomerRankingRow } from '@/models/dashboard'
 import { formatCurrency, formatNumber, formatPercent } from '@/services/formatters'
+import { CUSTOMER_ATTENTION_SIGNAL_ALL } from '@/services/customerAttentionSignals'
 import { resolveInvestigationSourceLabel } from '@/services/investigationSourceLabels'
 import { navigateToInvestigation } from '@/services/navigateToInvestigation'
 import { useDashboardStore } from '@/stores/dashboardStore'
+
 const dashboard = useDashboardStore()
 const router = useRouter()
 const sourceLabel = resolveInvestigationSourceLabel('/dashboard/customers')
+const attentionSignalFilter = ref(CUSTOMER_ATTENTION_SIGNAL_ALL)
 
 const cards = computed(() => dashboard.customer?.AttentionCards)
 const unavailable = computed(() => dashboard.customer != null && !dashboard.customer.IsAvailable)
@@ -44,10 +47,26 @@ const piutangColumns = [
   { field: 'PercentOfTotal', header: '% of Total' },
 ]
 
+const sectionNavItems = [
+  { id: 'customer-attention-cards', label: 'Attention Cards' },
+  { id: 'customer-attention-list', label: 'Attention List' },
+  { id: 'customer-rankings', label: 'Rankings' },
+  { id: 'customer-segmentation', label: 'Segmentation' },
+]
+
 function onRankingRowClick(row: Record<string, unknown>): void {
   const item = row as unknown as DashboardCustomerRankingRow
   if (!item.Investigation) return
   navigateToInvestigation(router, item.Investigation, sourceLabel)
+}
+
+function setAttentionSignalFilter(signalKey: string): void {
+  attentionSignalFilter.value = signalKey
+}
+
+function onRefresh(): void {
+  attentionSignalFilter.value = CUSTOMER_ATTENTION_SIGNAL_ALL
+  void dashboard.loadCustomer()
 }
 
 onMounted(() => {
@@ -62,7 +81,7 @@ onMounted(() => {
     :loading="dashboard.loading"
     :error="dashboard.error"
     :generated-at="dashboard.customer?.GeneratedAt"
-    @refresh="dashboard.loadCustomer()"
+    @refresh="onRefresh"
   >
     <Message
       v-if="dashboard.customer && !dashboard.customer.IsDataFresh"
@@ -73,7 +92,18 @@ onMounted(() => {
       ⚠ Dashboard Data Not Fresh
     </Message>
 
-    <section class="customer-dashboard__section">
+    <nav class="customer-dashboard__section-nav" aria-label="Dashboard sections">
+      <a
+        v-for="item in sectionNavItems"
+        :key="item.id"
+        :href="`#${item.id}`"
+        class="customer-dashboard__section-nav-link"
+      >
+        {{ item.label }}
+      </a>
+    </nav>
+
+    <section id="customer-attention-cards" class="customer-dashboard__section">
       <h2 class="customer-dashboard__section-title">Attention Cards</h2>
       <div class="customer-dashboard__cards">
         <CustomerAttentionCardGroup
@@ -136,9 +166,11 @@ onMounted(() => {
         <CustomerAttentionCardGroup
           title="Inactivity"
           icon="pi pi-clock"
+          href="#customer-attention-list"
           :loading="dashboard.loading"
           :requires-attention="cards?.InactivityRequiresAttention"
           :unavailable="unavailable"
+          @anchor-navigate="setAttentionSignalFilter('Dormant')"
         >
           <div class="metric">
             <span class="metric__label">Dormant Customers (90-day)</span>
@@ -155,6 +187,7 @@ onMounted(() => {
           :loading="dashboard.loading"
           :requires-attention="cards?.CreditRequiresAttention"
           :unavailable="unavailable"
+          @anchor-navigate="setAttentionSignalFilter('PlafondBreach')"
         >
           <div class="metric">
             <span class="metric__label">Plafond Breach</span>
@@ -172,14 +205,15 @@ onMounted(() => {
       </div>
     </section>
 
-    <CustomerAttentionList
-      id="customer-attention-list"
-      class="customer-dashboard__section"
-      :items="dashboard.customer?.AttentionList ?? []"
-      :loading="dashboard.loading"
-    />
+    <section id="customer-attention-list" class="customer-dashboard__section">
+      <CustomerAttentionList
+        v-model:signal-filter="attentionSignalFilter"
+        :items="dashboard.customer?.AttentionList ?? []"
+        :loading="dashboard.loading"
+      />
+    </section>
 
-    <section class="customer-dashboard__section">
+    <section id="customer-rankings" class="customer-dashboard__section">
       <h2 class="customer-dashboard__section-title">Top Customer Rankings</h2>
       <div class="customer-dashboard__rankings">
         <Top10RankingTable
@@ -208,6 +242,7 @@ onMounted(() => {
     </section>
 
     <CustomerSegmentationSection
+      id="customer-segmentation"
       class="customer-dashboard__section"
       :by-klasifikasi="dashboard.customer?.Segmentation?.ByKlasifikasi ?? []"
       :by-wilayah="dashboard.customer?.Segmentation?.ByWilayah ?? []"
@@ -228,8 +263,33 @@ onMounted(() => {
   margin-bottom: 1rem;
 }
 
+.customer-dashboard__section-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  margin-bottom: 1.5rem;
+  padding: 0.75rem 0;
+  background: var(--p-content-background);
+  border-bottom: 1px solid var(--p-content-border-color);
+}
+
+.customer-dashboard__section-nav-link {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--p-primary-color);
+  text-decoration: none;
+}
+
+.customer-dashboard__section-nav-link:hover {
+  text-decoration: underline;
+}
+
 .customer-dashboard__section {
   margin-bottom: 1.5rem;
+  scroll-margin-top: 3.5rem;
 }
 
 .customer-dashboard__section-title {

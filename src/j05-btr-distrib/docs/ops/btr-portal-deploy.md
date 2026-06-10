@@ -33,7 +33,7 @@ Publish the full `btr.sql` project. All portal snapshot objects are registered i
 | Domain | Tables |
 | ------ | ------ |
 | Shared | `BTRPD_RefreshLog` |
-| Piutang | `BTRPD_PiutangKpi`, `BTRPD_PiutangAging`, `BTRPD_PiutangTopCustomer` |
+| Piutang | `BTRPD_PiutangKpi`, `BTRPD_PiutangAging`, `BTRPD_PiutangCustomerAging`, `BTRPD_PiutangTopCustomerRisk` (`BTRPD_PiutangTopCustomer` deprecated — no longer written after M14 V2) |
 | Inventory | `BTRPD_InventoryKpi`, `BTRPD_InventoryBreakdown` |
 | Inventory Risk | `BTRPD_InventoryRiskKpi`, `BTRPD_InventoryRiskAging`, `BTRPD_InventoryRiskAttention`, `BTRPD_InventoryRiskTopDead`, `BTRPD_InventoryRiskTopSlow`, `BTRPD_InventoryRiskBreakdown` |
 | Sales | `BTRPD_SalesKpi`, `BTRPD_SalesWeekTrend`, `BTRPD_SalesTopSalesman` |

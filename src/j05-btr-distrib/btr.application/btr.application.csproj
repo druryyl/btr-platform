@@ -301,7 +301,10 @@
     <Compile Include="ReportingContext\DashboardSnapshotAgg\DashboardSnapshotUnavailableException.cs" />
     <Compile Include="ReportingContext\DashboardSnapshotAgg\Models\DashboardInventoryAggregateResult.cs" />
     <Compile Include="ReportingContext\DashboardSnapshotAgg\Models\DashboardInventoryRiskAggregateResult.cs" />
+    <Compile Include="ReportingContext\DashboardSnapshotAgg\Models\DashboardPiutangAgingBucket.cs" />
     <Compile Include="ReportingContext\DashboardSnapshotAgg\Models\DashboardPiutangAggregateResult.cs" />
+    <Compile Include="ReportingContext\DashboardSnapshotAgg\Models\DashboardPiutangCustomerAgingRow.cs" />
+    <Compile Include="ReportingContext\DashboardSnapshotAgg\Models\DashboardPiutangTopCustomerRiskRow.cs" />
     <Compile Include="ReportingContext\DashboardSnapshotAgg\Models\DashboardSalesAggregateResult.cs" />
     <Compile Include="ReportingContext\DashboardSnapshotAgg\Models\DashboardPurchasingAggregateResult.cs" />
     <Compile Include="ReportingContext\DashboardSnapshotAgg\Models\DashboardPurchasingManagementAggregateResult.cs" />
@@ -321,6 +324,7 @@
     <Compile Include="ReportingContext\DashboardSnapshotAgg\Services\DashboardInventoryItemGroupBuilder.cs" />
     <Compile Include="ReportingContext\DashboardSnapshotAgg\Services\DashboardInventoryAggregator.cs" />
     <Compile Include="ReportingContext\DashboardSnapshotAgg\Services\DashboardInventoryRiskAggregator.cs" />
+    <Compile Include="ReportingContext\DashboardSnapshotAgg\Services\PiutangAgingBucketResolver.cs" />
     <Compile Include="ReportingContext\DashboardSnapshotAgg\Services\DashboardPiutangAggregator.cs" />
     <Compile Include="ReportingContext\DashboardSnapshotAgg\Services\DashboardSalesFakturAggregator.cs" />
     <Compile Include="ReportingContext\DashboardSnapshotAgg\Services\DashboardPurchasingInvoiceAggregator.cs" />

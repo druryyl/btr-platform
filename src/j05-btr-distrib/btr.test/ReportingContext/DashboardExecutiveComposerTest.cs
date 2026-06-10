@@ -2,9 +2,10 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using btr.application.ReportingContext.DashboardExecutiveAgg.Services;
-using btr.application.ReportingContext.DashboardPiutangAgg.Queries;
 using btr.application.ReportingContext.DashboardSnapshotAgg;
 using btr.application.ReportingContext.DashboardSnapshotAgg.Models;
+using AggregateAgingBucket = btr.application.ReportingContext.DashboardSnapshotAgg.Models.DashboardPiutangAgingBucket;
+using AggregateTopCustomerRiskRow = btr.application.ReportingContext.DashboardSnapshotAgg.Models.DashboardPiutangTopCustomerRiskRow;
 using btr.application.ReportingContext.DashboardSnapshotAgg.Services;
 using btr.application.ReportingContext.Shared;
 using FluentAssertions;
@@ -77,7 +78,7 @@ namespace btr.test.ReportingContext
         {
             var input = FullInput();
             input.Piutang.OverdueCustomer = 3;
-            input.Piutang.AgingBuckets = new List<DashboardPiutangAgingBucket>();
+            input.Piutang.AgingBuckets = new List<AggregateAgingBucket>();
 
             var result = Compose(input);
 
@@ -89,9 +90,9 @@ namespace btr.test.ReportingContext
         {
             var input = FullInput();
             input.Piutang.TotalPiutang = 1000m;
-            input.Piutang.AgingBuckets = new List<DashboardPiutangAgingBucket>
+            input.Piutang.AgingBuckets = new List<AggregateAgingBucket>
             {
-                new DashboardPiutangAgingBucket { BucketKey = "DaysOver90", Amount = 250m }
+                new AggregateAgingBucket { BucketKey = "DaysOver90", Amount = 250m }
             };
 
             var result = Compose(input);
@@ -105,9 +106,9 @@ namespace btr.test.ReportingContext
         {
             var input = FullInput();
             input.Piutang.TotalPiutang = 1000m;
-            input.Piutang.TopCustomers = new List<DashboardPiutangTopCustomer>
+            input.Piutang.TopCustomerRisk = new List<AggregateTopCustomerRiskRow>
             {
-                new DashboardPiutangTopCustomer { Rank = 1, CustomerName = "A", OutstandingBalance = 400m }
+                new AggregateTopCustomerRiskRow { Rank = 1, CustomerName = "A", TotalPiutang = 400m }
             };
 
             var result = Compose(input);
@@ -182,12 +183,12 @@ namespace btr.test.ReportingContext
         public void Compose_TruncatesCriticalExposuresToTop5()
         {
             var input = FullInput();
-            input.Piutang.TopCustomers = Enumerable.Range(1, 10)
-                .Select(i => new DashboardPiutangTopCustomer
+            input.Piutang.TopCustomerRisk = Enumerable.Range(1, 10)
+                .Select(i => new AggregateTopCustomerRiskRow
                 {
                     Rank = i,
                     CustomerName = $"Customer {i}",
-                    OutstandingBalance = 1000m - i
+                    TotalPiutang = 1000m - i
                 })
                 .ToList();
 
@@ -280,8 +281,8 @@ namespace btr.test.ReportingContext
                     GeneratedAt = generatedAt,
                     TotalPiutang = 10000000m,
                     OverdueCustomer = 0,
-                    AgingBuckets = new List<DashboardPiutangAgingBucket>(),
-                    TopCustomers = new List<DashboardPiutangTopCustomer>()
+                    AgingBuckets = new List<AggregateAgingBucket>(),
+                    TopCustomerRisk = new List<AggregateTopCustomerRiskRow>()
                 },
                 Inventory = new DashboardInventoryAggregateResult
                 {
@@ -317,14 +318,14 @@ namespace btr.test.ReportingContext
         public void Compose_CriticalExposures_AttachInvestigationMetadata()
         {
             var input = FullInput();
-            input.Piutang.TopCustomers = new List<DashboardPiutangTopCustomer>
+            input.Piutang.TopCustomerRisk = new List<AggregateTopCustomerRiskRow>
             {
-                new DashboardPiutangTopCustomer
+                new AggregateTopCustomerRiskRow
                 {
                     Rank = 1,
                     CustomerName = "Alpha Corp",
                     CustomerCode = "C001",
-                    OutstandingBalance = 5_000_000m
+                    TotalPiutang = 5_000_000m
                 }
             };
             input.Purchasing.TopPrincipal = new List<DashboardPurchasingTopPrincipalRow>

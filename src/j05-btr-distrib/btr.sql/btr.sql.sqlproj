@@ -157,6 +157,8 @@
     <Build Include="Tables\ReportingContext\BTRPD_PiutangKpi.sql" />
     <Build Include="Tables\ReportingContext\BTRPD_PiutangAging.sql" />
     <Build Include="Tables\ReportingContext\BTRPD_PiutangTopCustomer.sql" />
+    <Build Include="Tables\ReportingContext\BTRPD_PiutangCustomerAging.sql" />
+    <Build Include="Tables\ReportingContext\BTRPD_PiutangTopCustomerRisk.sql" />
     <Build Include="Tables\ReportingContext\BTRPD_InventoryKpi.sql" />
     <Build Include="Tables\ReportingContext\BTRPD_InventoryBreakdown.sql" />
     <Build Include="Tables\ReportingContext\BTRPD_InventoryRiskKpi.sql" />
@@ -210,6 +212,7 @@
     <None Include="Scripts\Upgrade_PortalDashboard_GeneratedIds_ToUlid.sql" />
     <None Include="Scripts\Rename_PortalDashboard_Tables_To_BTRPD.sql" />
     <None Include="Scripts\Create_BTRPD_PortalDashboard_Tables.sql" />
+    <None Include="Scripts\Upgrade_M14_PiutangDashboard_V2.sql" />
     <None Include="Scripts\Create_BTR_SalesPersonSupplier.sql" />
     <None Include="Scripts\Create_BTR_SalesPersonPrincipalTarget.sql" />
   </ItemGroup>

@@ -3,6 +3,7 @@ using btr.application.ReportingContext.DashboardPiutangAgg.Queries;
 using btr.application.ReportingContext.DashboardSnapshotAgg;
 using btr.application.ReportingContext.DashboardSnapshotAgg.Contracts;
 using btr.application.ReportingContext.DashboardSnapshotAgg.Models;
+using AggregateTopCustomerRiskRow = btr.application.ReportingContext.DashboardSnapshotAgg.Models.DashboardPiutangTopCustomerRiskRow;
 using btr.infrastructure.ReportingContext.DashboardPiutangAgg;
 using FluentAssertions;
 using Xunit;
@@ -40,6 +41,49 @@ namespace btr.test.ReportingContext
 
             act.Should().Throw<DashboardSnapshotUnavailableException>()
                 .WithMessage("Dashboard data not yet available");
+        }
+
+        [Fact]
+        public void GetSummary_MapsV2FieldsAndInvestigation()
+        {
+            var snapshot = new DashboardPiutangAggregateResult
+            {
+                TotalPiutang = 1_000_000m,
+                TotalCustomer = 3,
+                GeneratedAt = SnapshotGeneratedAt,
+                OverdueCustomer = 1,
+                OverduePiutang = 400_000m,
+                AgingOver90Amount = 100_000m,
+                AgingOver90Percent = 10m,
+                Top10CustomerConcentrationPercent = 35m,
+                Top20CustomerConcentrationPercent = 50m,
+                TopCustomerRisk = new System.Collections.Generic.List<AggregateTopCustomerRiskRow>
+                {
+                    new AggregateTopCustomerRiskRow
+                    {
+                        Rank = 1,
+                        CustomerCode = "C001",
+                        CustomerName = "Alpha",
+                        TotalPiutang = 350_000m,
+                        CurrentAmount = 100_000m,
+                        Aging30Amount = 50_000m,
+                        Aging60Amount = 50_000m,
+                        Aging90Amount = 50_000m,
+                        AgingOver90Amount = 100_000m
+                    }
+                }
+            };
+
+            var result = CreateDal(snapshot).GetSummary();
+
+            result.OverduePiutang.Should().Be(400_000m);
+            result.AgingOver90Amount.Should().Be(100_000m);
+            result.AgingOver90Percent.Should().Be(10m);
+            result.Top10CustomerConcentrationPercent.Should().Be(35m);
+            result.Top20CustomerConcentrationPercent.Should().Be(50m);
+            result.TopCustomerRisk.Should().HaveCount(1);
+            result.TopCustomerRisk[0].Investigation.Should().NotBeNull();
+            result.TopCustomerRisk[0].TotalPiutang.Should().Be(350_000m);
         }
 
         private static DashboardPiutangDal CreateDal(DashboardPiutangAggregateResult snapshot)

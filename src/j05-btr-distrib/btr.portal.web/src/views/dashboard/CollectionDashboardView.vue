@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import Message from 'primevue/message'
 import DashboardDetailLayout from '@/components/dashboard/DashboardDetailLayout.vue'
@@ -11,6 +11,7 @@ import CollectionNavigationSection from '@/components/dashboard/CollectionNaviga
 import Top10RankingTable from '@/components/dashboard/Top10RankingTable.vue'
 import { formatCurrency, formatNumber, formatPercent } from '@/services/formatters'
 import type { DashboardCollectionRankingRow } from '@/models/dashboard'
+import { COLLECTION_ATTENTION_SIGNAL_ALL } from '@/services/collectionAttentionSignals'
 import { resolveInvestigationSourceLabel } from '@/services/investigationSourceLabels'
 import { navigateToInvestigation } from '@/services/navigateToInvestigation'
 import { useDashboardStore } from '@/stores/dashboardStore'
@@ -18,6 +19,7 @@ import { useDashboardStore } from '@/stores/dashboardStore'
 const dashboard = useDashboardStore()
 const router = useRouter()
 const sourceLabel = resolveInvestigationSourceLabel('/dashboard/collection')
+const attentionSignalFilter = ref(COLLECTION_ATTENTION_SIGNAL_ALL)
 
 const cards = computed(() => dashboard.collection?.AttentionCards)
 const unavailable = computed(() => dashboard.collection != null && !dashboard.collection.IsAvailable)
@@ -48,10 +50,27 @@ const rankingColumns = [
   { field: 'PercentOfTotal', header: '% of Total Overdue' },
 ]
 
+const sectionNavItems = [
+  { id: 'collection-attention-cards', label: 'Attention Cards' },
+  { id: 'collection-recovery-summary', label: 'Recovery' },
+  { id: 'collection-aging-risk', label: 'Aging Risk' },
+  { id: 'collection-attention-list', label: 'Attention List' },
+  { id: 'collection-rankings', label: 'Rankings' },
+]
+
 function onRankingRowClick(row: Record<string, unknown>): void {
   const item = row as unknown as DashboardCollectionRankingRow
   if (!item.Investigation) return
   navigateToInvestigation(router, item.Investigation, sourceLabel)
+}
+
+function setAttentionSignalFilter(signalKey: string): void {
+  attentionSignalFilter.value = signalKey
+}
+
+function onRefresh(): void {
+  attentionSignalFilter.value = COLLECTION_ATTENTION_SIGNAL_ALL
+  void dashboard.loadCollection()
 }
 
 onMounted(() => {
@@ -66,7 +85,7 @@ onMounted(() => {
     :loading="dashboard.loading"
     :error="dashboard.error"
     :generated-at="dashboard.collection?.GeneratedAt"
-    @refresh="dashboard.loadCollection()"
+    @refresh="onRefresh"
   >
     <Message
       v-if="dashboard.collection && !dashboard.collection.IsDataFresh"
@@ -77,15 +96,28 @@ onMounted(() => {
       ⚠ Dashboard Data Not Fresh
     </Message>
 
-    <section class="collection-dashboard__section">
+    <nav class="collection-dashboard__section-nav" aria-label="Dashboard sections">
+      <a
+        v-for="item in sectionNavItems"
+        :key="item.id"
+        :href="`#${item.id}`"
+        class="collection-dashboard__section-nav-link"
+      >
+        {{ item.label }}
+      </a>
+    </nav>
+
+    <section id="collection-attention-cards" class="collection-dashboard__section">
       <h2 class="collection-dashboard__section-title">Collection Attention Cards</h2>
       <div class="collection-dashboard__cards">
         <CollectionAttentionCardGroup
           title="Exposure"
           icon="pi pi-exclamation-circle"
+          href="#collection-attention-list"
           :loading="dashboard.loading"
           :requires-attention="cards?.ExposureRequiresAttention"
           :unavailable="unavailable"
+          @anchor-navigate="setAttentionSignalFilter('ChronicOverdue')"
         >
           <div class="metric">
             <span class="metric__label">Overdue Exposure</span>
@@ -110,9 +142,11 @@ onMounted(() => {
         <CollectionAttentionCardGroup
           title="Recovery"
           icon="pi pi-wallet"
+          href="#collection-attention-list"
           :loading="dashboard.loading"
           :requires-attention="cards?.RecoveryRequiresAttention"
           :unavailable="unavailable"
+          @anchor-navigate="setAttentionSignalFilter('LowRecoveryVsBilling')"
         >
           <div class="metric">
             <span class="metric__label">Cash Collected MTD</span>
@@ -131,9 +165,11 @@ onMounted(() => {
         <CollectionAttentionCardGroup
           title="Portfolio"
           icon="pi pi-clock"
+          href="#collection-attention-list"
           :loading="dashboard.loading"
           :requires-attention="cards?.PortfolioRequiresAttention"
           :unavailable="unavailable"
+          @anchor-navigate="setAttentionSignalFilter('LegacyDebt')"
         >
           <div class="metric">
             <span class="metric__label">Legacy Debt Count</span>
@@ -145,25 +181,29 @@ onMounted(() => {
       </div>
     </section>
 
-    <CollectionRecoverySummary
-      class="collection-dashboard__section"
-      :summary="dashboard.collection?.RecoverySummary ?? null"
-      :loading="dashboard.loading"
-    />
+    <div id="collection-recovery-summary" class="collection-dashboard__section">
+      <CollectionRecoverySummary
+        :summary="dashboard.collection?.RecoverySummary ?? null"
+        :loading="dashboard.loading"
+      />
+    </div>
 
-    <CollectionAgingRiskSummary
-      class="collection-dashboard__section"
-      :buckets="dashboard.collection?.AgingRiskSummary ?? []"
-      :loading="dashboard.loading"
-    />
+    <div id="collection-aging-risk" class="collection-dashboard__section">
+      <CollectionAgingRiskSummary
+        :buckets="dashboard.collection?.AgingRiskSummary ?? []"
+        :loading="dashboard.loading"
+      />
+    </div>
 
     <CollectionAttentionList
+      id="collection-attention-list"
+      v-model:signal-filter="attentionSignalFilter"
       class="collection-dashboard__section"
       :items="dashboard.collection?.AttentionList ?? []"
       :loading="dashboard.loading"
     />
 
-    <section class="collection-dashboard__section">
+    <section id="collection-rankings" class="collection-dashboard__section">
       <h2 class="collection-dashboard__section-title">Top Overdue Customers</h2>
       <Top10RankingTable
         title="Top 10 Overdue Customers"
@@ -176,10 +216,10 @@ onMounted(() => {
         clickable
         @row-click="onRankingRowClick"
       />
-    </section>
 
-    <section class="collection-dashboard__section">
-      <h2 class="collection-dashboard__section-title">Top Overdue Salesmen</h2>
+      <h2 class="collection-dashboard__section-title collection-dashboard__section-title--spaced">
+        Top Overdue Salesmen
+      </h2>
       <Top10RankingTable
         title="Top 10 Overdue Salesmen"
         :columns="rankingColumns"
@@ -191,10 +231,10 @@ onMounted(() => {
         clickable
         @row-click="onRankingRowClick"
       />
-    </section>
 
-    <section class="collection-dashboard__section">
-      <h2 class="collection-dashboard__section-title">Top Overdue Wilayah</h2>
+      <h2 class="collection-dashboard__section-title collection-dashboard__section-title--spaced">
+        Top Overdue Wilayah
+      </h2>
       <Top10RankingTable
         title="Top 10 Overdue Wilayah"
         :columns="rankingColumns"
@@ -218,13 +258,42 @@ onMounted(() => {
   margin-bottom: 1rem;
 }
 
+.collection-dashboard__section-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  margin-bottom: 1.5rem;
+  padding: 0.75rem 0;
+  background: var(--p-content-background);
+  border-bottom: 1px solid var(--p-content-border-color);
+}
+
+.collection-dashboard__section-nav-link {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--p-primary-color);
+  text-decoration: none;
+}
+
+.collection-dashboard__section-nav-link:hover {
+  text-decoration: underline;
+}
+
 .collection-dashboard__section {
   margin-bottom: 1.5rem;
+  scroll-margin-top: 3.5rem;
 }
 
 .collection-dashboard__section-title {
   margin: 0 0 1rem;
   font-size: 1.25rem;
+}
+
+.collection-dashboard__section-title--spaced {
+  margin-top: 1.5rem;
 }
 
 .collection-dashboard__cards {

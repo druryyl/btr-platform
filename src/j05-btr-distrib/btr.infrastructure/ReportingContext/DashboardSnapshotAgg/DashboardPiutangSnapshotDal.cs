@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Data.SqlClient;
 using System.Linq;
-using btr.application.ReportingContext.DashboardPiutangAgg.Queries;
 using btr.application.ReportingContext.DashboardSnapshotAgg.Contracts;
 using btr.application.ReportingContext.DashboardSnapshotAgg.Models;
 using btr.infrastructure.Helpers;
@@ -26,7 +25,9 @@ namespace btr.infrastructure.ReportingContext.DashboardSnapshotAgg
         public DashboardPiutangAggregateResult GetCurrent()
         {
             const string kpiSql = @"
-SELECT SnapshotKey, GeneratedAt, TotalPiutang, TotalCustomer, OverdueCustomer, LastRefreshLogId
+SELECT SnapshotKey, GeneratedAt, TotalPiutang, TotalCustomer, OverdueCustomer,
+       OverduePiutang, AgingOver90Amount, AgingOver90Percent,
+       Top10CustomerConcentrationPercent, Top20CustomerConcentrationPercent, LastRefreshLogId
 FROM BTRPD_PiutangKpi
 WHERE SnapshotKey = @SnapshotKey";
 
@@ -36,9 +37,10 @@ FROM BTRPD_PiutangAging
 WHERE SnapshotKey = @SnapshotKey
 ORDER BY SortOrder";
 
-            const string topCustomerSql = @"
-SELECT Rank, CustomerName, OutstandingBalance
-FROM BTRPD_PiutangTopCustomer
+            const string topRiskSql = @"
+SELECT Rank, CustomerId, CustomerCode, CustomerName, TotalPiutang,
+       CurrentAmount, Aging30Amount, Aging60Amount, Aging90Amount, AgingOver90Amount
+FROM BTRPD_PiutangTopCustomerRisk
 WHERE SnapshotKey = @SnapshotKey
 ORDER BY Rank";
 
@@ -49,7 +51,7 @@ ORDER BY Rank";
                     return null;
 
                 var agingRows = conn.Query<AgingRow>(agingSql, new { SnapshotKey }).ToList();
-                var topRows = conn.Query<TopCustomerRow>(topCustomerSql, new { SnapshotKey }).ToList();
+                var topRiskRows = conn.Query<TopCustomerRiskRow>(topRiskSql, new { SnapshotKey }).ToList();
 
                 return new DashboardPiutangAggregateResult
                 {
@@ -57,6 +59,11 @@ ORDER BY Rank";
                     TotalCustomer = kpi.TotalCustomer,
                     GeneratedAt = kpi.GeneratedAt,
                     OverdueCustomer = kpi.OverdueCustomer,
+                    OverduePiutang = kpi.OverduePiutang,
+                    AgingOver90Amount = kpi.AgingOver90Amount,
+                    AgingOver90Percent = kpi.AgingOver90Percent,
+                    Top10CustomerConcentrationPercent = kpi.Top10CustomerConcentrationPercent,
+                    Top20CustomerConcentrationPercent = kpi.Top20CustomerConcentrationPercent,
                     AgingBuckets = agingRows.Select(r => new DashboardPiutangAgingBucket
                     {
                         BucketKey = r.BucketKey,
@@ -64,11 +71,18 @@ ORDER BY Rank";
                         SortOrder = r.SortOrder,
                         Amount = r.Amount
                     }).ToList(),
-                    TopCustomers = topRows.Select(r => new DashboardPiutangTopCustomer
+                    TopCustomerRisk = topRiskRows.Select(r => new DashboardPiutangTopCustomerRiskRow
                     {
                         Rank = r.Rank,
+                        CustomerId = r.CustomerId,
+                        CustomerCode = r.CustomerCode,
                         CustomerName = r.CustomerName,
-                        OutstandingBalance = r.OutstandingBalance
+                        TotalPiutang = r.TotalPiutang,
+                        CurrentAmount = r.CurrentAmount,
+                        Aging30Amount = r.Aging30Amount,
+                        Aging60Amount = r.Aging60Amount,
+                        Aging90Amount = r.Aging90Amount,
+                        AgingOver90Amount = r.AgingOver90Amount
                     }).ToList()
                 };
             }
@@ -77,7 +91,7 @@ ORDER BY Rank";
         public void ReplaceCurrent(DashboardPiutangAggregateResult result, string refreshLogId)
         {
             if (result is null)
-                throw new System.ArgumentNullException(nameof(result));
+                throw new ArgumentNullException(nameof(result));
 
             using (var conn = new SqlConnection(ConnStringHelper.Get(_opt)))
             {
@@ -88,7 +102,11 @@ ORDER BY Rank";
                     new { SnapshotKey });
 
                 conn.Execute(
-                    "DELETE FROM BTRPD_PiutangTopCustomer WHERE SnapshotKey = @SnapshotKey",
+                    "DELETE FROM BTRPD_PiutangCustomerAging WHERE SnapshotKey = @SnapshotKey",
+                    new { SnapshotKey });
+
+                conn.Execute(
+                    "DELETE FROM BTRPD_PiutangTopCustomerRisk WHERE SnapshotKey = @SnapshotKey",
                     new { SnapshotKey });
 
                 const string mergeKpiSql = @"
@@ -101,10 +119,19 @@ WHEN MATCHED THEN
         TotalPiutang = @TotalPiutang,
         TotalCustomer = @TotalCustomer,
         OverdueCustomer = @OverdueCustomer,
+        OverduePiutang = @OverduePiutang,
+        AgingOver90Amount = @AgingOver90Amount,
+        AgingOver90Percent = @AgingOver90Percent,
+        Top10CustomerConcentrationPercent = @Top10CustomerConcentrationPercent,
+        Top20CustomerConcentrationPercent = @Top20CustomerConcentrationPercent,
         LastRefreshLogId = @LastRefreshLogId
 WHEN NOT MATCHED THEN
-    INSERT (SnapshotKey, GeneratedAt, TotalPiutang, TotalCustomer, OverdueCustomer, LastRefreshLogId)
-    VALUES (@SnapshotKey, @GeneratedAt, @TotalPiutang, @TotalCustomer, @OverdueCustomer, @LastRefreshLogId);";
+    INSERT (SnapshotKey, GeneratedAt, TotalPiutang, TotalCustomer, OverdueCustomer,
+            OverduePiutang, AgingOver90Amount, AgingOver90Percent,
+            Top10CustomerConcentrationPercent, Top20CustomerConcentrationPercent, LastRefreshLogId)
+    VALUES (@SnapshotKey, @GeneratedAt, @TotalPiutang, @TotalCustomer, @OverdueCustomer,
+            @OverduePiutang, @AgingOver90Amount, @AgingOver90Percent,
+            @Top10CustomerConcentrationPercent, @Top20CustomerConcentrationPercent, @LastRefreshLogId);";
 
                 conn.Execute(mergeKpiSql, new
                 {
@@ -113,6 +140,11 @@ WHEN NOT MATCHED THEN
                     result.TotalPiutang,
                     result.TotalCustomer,
                     result.OverdueCustomer,
+                    result.OverduePiutang,
+                    result.AgingOver90Amount,
+                    result.AgingOver90Percent,
+                    result.Top10CustomerConcentrationPercent,
+                    result.Top20CustomerConcentrationPercent,
                     LastRefreshLogId = refreshLogId ?? string.Empty
                 });
 
@@ -135,21 +167,56 @@ VALUES (
                     });
                 }
 
-                const string insertTopSql = @"
-INSERT INTO BTRPD_PiutangTopCustomer (
-    PiutangTopCustomerId, SnapshotKey, Rank, CustomerName, OutstandingBalance)
+                const string insertCustomerAgingSql = @"
+INSERT INTO BTRPD_PiutangCustomerAging (
+    PiutangCustomerAgingId, SnapshotKey, CustomerId, CustomerCode, CustomerName,
+    CurrentAmount, Aging30Amount, Aging60Amount, Aging90Amount, AgingOver90Amount, LastUpdate)
 VALUES (
-    @PiutangTopCustomerId, @SnapshotKey, @Rank, @CustomerName, @OutstandingBalance)";
+    @PiutangCustomerAgingId, @SnapshotKey, @CustomerId, @CustomerCode, @CustomerName,
+    @CurrentAmount, @Aging30Amount, @Aging60Amount, @Aging90Amount, @AgingOver90Amount, @LastUpdate)";
 
-                foreach (var customer in result.TopCustomers ?? new List<DashboardPiutangTopCustomer>())
+                foreach (var customer in result.CustomerAging ?? new List<DashboardPiutangCustomerAgingRow>())
                 {
-                    conn.Execute(insertTopSql, new
+                    conn.Execute(insertCustomerAgingSql, new
                     {
-                        PiutangTopCustomerId = Ulid.NewUlid().ToString(),
+                        PiutangCustomerAgingId = Ulid.NewUlid().ToString(),
+                        SnapshotKey,
+                        customer.CustomerId,
+                        CustomerCode = customer.CustomerCode ?? string.Empty,
+                        CustomerName = customer.CustomerName ?? string.Empty,
+                        customer.CurrentAmount,
+                        customer.Aging30Amount,
+                        customer.Aging60Amount,
+                        customer.Aging90Amount,
+                        customer.AgingOver90Amount,
+                        customer.LastUpdate
+                    });
+                }
+
+                const string insertTopRiskSql = @"
+INSERT INTO BTRPD_PiutangTopCustomerRisk (
+    PiutangTopCustomerRiskId, SnapshotKey, Rank, CustomerId, CustomerCode, CustomerName,
+    TotalPiutang, CurrentAmount, Aging30Amount, Aging60Amount, Aging90Amount, AgingOver90Amount)
+VALUES (
+    @PiutangTopCustomerRiskId, @SnapshotKey, @Rank, @CustomerId, @CustomerCode, @CustomerName,
+    @TotalPiutang, @CurrentAmount, @Aging30Amount, @Aging60Amount, @Aging90Amount, @AgingOver90Amount)";
+
+                foreach (var customer in result.TopCustomerRisk ?? new List<DashboardPiutangTopCustomerRiskRow>())
+                {
+                    conn.Execute(insertTopRiskSql, new
+                    {
+                        PiutangTopCustomerRiskId = Ulid.NewUlid().ToString(),
                         SnapshotKey,
                         customer.Rank,
+                        customer.CustomerId,
+                        CustomerCode = customer.CustomerCode ?? string.Empty,
                         CustomerName = customer.CustomerName ?? string.Empty,
-                        customer.OutstandingBalance
+                        customer.TotalPiutang,
+                        customer.CurrentAmount,
+                        customer.Aging30Amount,
+                        customer.Aging60Amount,
+                        customer.Aging90Amount,
+                        customer.AgingOver90Amount
                     });
                 }
             }
@@ -158,10 +225,15 @@ VALUES (
         private sealed class KpiRow
         {
             public string SnapshotKey { get; set; }
-            public System.DateTime GeneratedAt { get; set; }
+            public DateTime GeneratedAt { get; set; }
             public decimal TotalPiutang { get; set; }
             public int TotalCustomer { get; set; }
             public int OverdueCustomer { get; set; }
+            public decimal OverduePiutang { get; set; }
+            public decimal AgingOver90Amount { get; set; }
+            public decimal? AgingOver90Percent { get; set; }
+            public decimal? Top10CustomerConcentrationPercent { get; set; }
+            public decimal? Top20CustomerConcentrationPercent { get; set; }
             public string LastRefreshLogId { get; set; }
         }
 
@@ -173,11 +245,18 @@ VALUES (
             public decimal Amount { get; set; }
         }
 
-        private sealed class TopCustomerRow
+        private sealed class TopCustomerRiskRow
         {
             public int Rank { get; set; }
+            public string CustomerId { get; set; }
+            public string CustomerCode { get; set; }
             public string CustomerName { get; set; }
-            public decimal OutstandingBalance { get; set; }
+            public decimal TotalPiutang { get; set; }
+            public decimal CurrentAmount { get; set; }
+            public decimal Aging30Amount { get; set; }
+            public decimal Aging60Amount { get; set; }
+            public decimal Aging90Amount { get; set; }
+            public decimal AgingOver90Amount { get; set; }
         }
     }
 }

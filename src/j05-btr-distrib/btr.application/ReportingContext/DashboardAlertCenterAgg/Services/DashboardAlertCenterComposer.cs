@@ -639,14 +639,14 @@ namespace btr.application.ReportingContext.DashboardAlertCenterAgg.Services
             if (piutang == null || piutang.TotalPiutang <= 0)
                 return null;
 
-            var topCustomer = piutang.TopCustomers?
+            var topCustomer = piutang.TopCustomerRisk?
                 .OrderBy(c => c.Rank)
                 .FirstOrDefault();
 
             if (topCustomer == null)
                 return null;
 
-            return topCustomer.OutstandingBalance / piutang.TotalPiutang * 100m;
+            return topCustomer.TotalPiutang / piutang.TotalPiutang * 100m;
         }
 
         private static DashboardAlertCenterNavigationLinks BuildNavigation()

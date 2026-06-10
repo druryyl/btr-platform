@@ -4,7 +4,6 @@ using System.Globalization;
 using System.Linq;
 using btr.application.ReportingContext.DashboardAlertCenterAgg.Services;
 using btr.application.ReportingContext.DashboardExecutiveAgg.Queries;
-using btr.application.ReportingContext.DashboardPiutangAgg.Queries;
 using btr.application.ReportingContext.DashboardSnapshotAgg;
 using btr.application.ReportingContext.Shared;
 using btr.application.ReportingContext.DashboardSnapshotAgg.Models;
@@ -96,19 +95,20 @@ namespace btr.application.ReportingContext.DashboardExecutiveAgg.Services
                 return new DashboardExecutivePiutangAttention { IsAvailable = false };
             }
 
-            var over90Amount = piutang.AgingBuckets?
-                .FirstOrDefault(b => b.BucketKey == AgingOver90BucketKey)?.Amount ?? 0m;
+            var over90Amount = piutang.AgingOver90Amount > 0
+                ? piutang.AgingOver90Amount
+                : piutang.AgingBuckets?
+                    .FirstOrDefault(b => b.BucketKey == AgingOver90BucketKey)?.Amount ?? 0m;
 
-            decimal? over90Percent = piutang.TotalPiutang > 0
-                ? over90Amount / piutang.TotalPiutang * 100m
-                : (decimal?)null;
+            decimal? over90Percent = piutang.AgingOver90Percent
+                ?? (piutang.TotalPiutang > 0 ? over90Amount / piutang.TotalPiutang * 100m : (decimal?)null);
 
-            var topCustomer = piutang.TopCustomers?
+            var topCustomer = piutang.TopCustomerRisk?
                 .OrderBy(c => c.Rank)
                 .FirstOrDefault();
 
             decimal? topCustomerPercent = topCustomer != null && piutang.TotalPiutang > 0
-                ? topCustomer.OutstandingBalance / piutang.TotalPiutang * 100m
+                ? topCustomer.TotalPiutang / piutang.TotalPiutang * 100m
                 : (decimal?)null;
 
             return new DashboardExecutivePiutangAttention
@@ -200,14 +200,14 @@ namespace btr.application.ReportingContext.DashboardExecutiveAgg.Services
             DashboardInventoryAggregateResult inventory,
             DashboardPurchasingAggregateResult purchasing)
         {
-            var topCustomers = piutang?.TopCustomers?
+            var topCustomers = piutang?.TopCustomerRisk?
                 .OrderBy(c => c.Rank)
                 .Take(ExecutiveRiskListCount)
                 .Select(c => new DashboardExecutiveRiskItem
                 {
                     Rank = c.Rank,
                     Name = c.CustomerName,
-                    Amount = c.OutstandingBalance,
+                    Amount = c.TotalPiutang,
                     Investigation = InvestigationMetadataBuilder.Build(
                         InvestigationRegistry.SignalExecutiveTopCustomerExposure,
                         InvestigationMetadataBuilder.EntityTypeCustomer,

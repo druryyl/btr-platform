@@ -4,6 +4,8 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.Models
 {
     public class PiutangOpenBalanceDto
     {
+        public string CustomerId { get; set; }
+
         public string CustomerCode { get; set; }
 
         public string CustomerName { get; set; }

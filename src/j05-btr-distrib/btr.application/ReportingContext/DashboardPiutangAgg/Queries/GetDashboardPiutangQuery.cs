@@ -22,11 +22,21 @@ namespace btr.application.ReportingContext.DashboardPiutangAgg.Queries
 
         public int OverdueCustomer { get; set; }
 
+        public decimal OverduePiutang { get; set; }
+
+        public decimal AgingOver90Amount { get; set; }
+
+        public decimal? AgingOver90Percent { get; set; }
+
+        public decimal? Top10CustomerConcentrationPercent { get; set; }
+
+        public decimal? Top20CustomerConcentrationPercent { get; set; }
+
         public List<DashboardPiutangAgingBucket> AgingBuckets { get; set; }
             = new List<DashboardPiutangAgingBucket>();
 
-        public List<DashboardPiutangTopCustomer> TopCustomers { get; set; }
-            = new List<DashboardPiutangTopCustomer>();
+        public List<DashboardPiutangTopCustomerRiskRow> TopCustomerRisk { get; set; }
+            = new List<DashboardPiutangTopCustomerRiskRow>();
     }
 
     public class DashboardPiutangAgingBucket
@@ -40,15 +50,25 @@ namespace btr.application.ReportingContext.DashboardPiutangAgg.Queries
         public int SortOrder { get; set; }
     }
 
-    public class DashboardPiutangTopCustomer
+    public class DashboardPiutangTopCustomerRiskRow
     {
         public int Rank { get; set; }
 
-        public string CustomerName { get; set; }
-
         public string CustomerCode { get; set; }
 
-        public decimal OutstandingBalance { get; set; }
+        public string CustomerName { get; set; }
+
+        public decimal TotalPiutang { get; set; }
+
+        public decimal CurrentAmount { get; set; }
+
+        public decimal Aging30Amount { get; set; }
+
+        public decimal Aging60Amount { get; set; }
+
+        public decimal Aging90Amount { get; set; }
+
+        public decimal AgingOver90Amount { get; set; }
 
         public InvestigationMetadata Investigation { get; set; }
     }

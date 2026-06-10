@@ -75,7 +75,12 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.UseCases
 
                 WorkerProgressScope.Current.StepStarted($"{Domain}:Aggregate", "Aggregate metrics");
                 var aggregate = _aggregator.Aggregate(rows, today, generatedAt);
-                WorkerProgressScope.Current.StepCompleted($"{Domain}:Aggregate");
+                WorkerProgressScope.Current.StepCompleted($"{Domain}:Aggregate", new WorkerProgressStepInfo
+                {
+                    Detail = aggregate.SkippedCustomerIdRowCount > 0
+                        ? $"{aggregate.SkippedCustomerIdRowCount} open rows without CustomerId excluded from customer aging"
+                        : null
+                });
 
                 WorkerProgressScope.Current.StepStarted($"{Domain}:Save", "Save snapshot");
                 using (var trans = TransHelper.NewScope())

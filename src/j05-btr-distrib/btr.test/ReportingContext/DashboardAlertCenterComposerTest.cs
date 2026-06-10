@@ -3,9 +3,9 @@ using System.Collections.Generic;
 using System.Linq;
 using btr.application.ReportingContext.DashboardAlertCenterAgg.Services;
 using btr.application.ReportingContext.DashboardExecutiveAgg.Services;
-using btr.application.ReportingContext.DashboardPiutangAgg.Queries;
 using btr.application.ReportingContext.DashboardSnapshotAgg;
 using btr.application.ReportingContext.DashboardSnapshotAgg.Models;
+using AggregateTopCustomerRiskRow = btr.application.ReportingContext.DashboardSnapshotAgg.Models.DashboardPiutangTopCustomerRiskRow;
 using btr.application.ReportingContext.DashboardSnapshotAgg.Services;
 using FluentAssertions;
 using Xunit;
@@ -487,7 +487,7 @@ namespace btr.test.ReportingContext
                 {
                     GeneratedAt = generatedAt,
                     TotalPiutang = 10000000m,
-                    TopCustomers = new List<DashboardPiutangTopCustomer>()
+                    TopCustomerRisk = new List<AggregateTopCustomerRiskRow>()
                 },
                 Inventory = new DashboardInventoryAggregateResult { GeneratedAt = generatedAt },
                 Purchasing = new DashboardPurchasingAggregateResult { GeneratedAt = generatedAt },

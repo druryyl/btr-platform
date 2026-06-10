@@ -145,11 +145,16 @@ export interface DashboardPiutangAgingBucket {
   SortOrder: number
 }
 
-export interface DashboardPiutangTopCustomer {
+export interface DashboardPiutangTopCustomerRiskRow {
   Rank: number
   CustomerName: string
   CustomerCode?: string
-  OutstandingBalance: number
+  TotalPiutang: number
+  CurrentAmount: number
+  Aging30Amount: number
+  Aging60Amount: number
+  Aging90Amount: number
+  AgingOver90Amount: number
   Investigation?: InvestigationMetadata | null
 }
 
@@ -158,8 +163,13 @@ export interface DashboardPiutangResponse {
   TotalCustomer: number
   GeneratedAt: string
   OverdueCustomer: number
+  OverduePiutang: number
+  AgingOver90Amount: number
+  AgingOver90Percent: number | null
+  Top10CustomerConcentrationPercent: number | null
+  Top20CustomerConcentrationPercent: number | null
   AgingBuckets: DashboardPiutangAgingBucket[]
-  TopCustomers: DashboardPiutangTopCustomer[]
+  TopCustomerRisk: DashboardPiutangTopCustomerRiskRow[]
 }
 
 export interface DashboardInventoryBreakdownItem {

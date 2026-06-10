@@ -13,6 +13,7 @@ namespace btr.infrastructure.ReportingContext.DashboardSnapshotAgg
     {
         private const string Sql = @"
 SELECT
+    ISNULL(ee.CustomerId, '') AS CustomerId,
     ISNULL(ee.CustomerCode, '') AS CustomerCode,
     ISNULL(ee.CustomerName, '') AS CustomerName,
     ISNULL(aa.DueDate, '3000-01-01') AS JatuhTempo,
