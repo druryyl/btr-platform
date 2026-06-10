@@ -235,10 +235,12 @@ Horizontal **investigation and navigation framework** unifying drill-down from K
 
 | Section | Content |
 | ------- | ------- |
-| Attention Cards | Performance (Below Target, No Target) · Collection Exposure (High Overdue, High Piutang) · Portfolio (Dormant Portfolio, Top Omzet/Piutang Salesman %) |
-| Attention List | One row per salesman × signal — six approved signals |
-| Performance Rankings | Top 10 Omzet (month) · Top 10 Achievement % |
-| Exposure Rankings | Top 10 Piutang (all open) |
+| Attention Cards | Performance (Below Target, Missing Target Setup) · Collection Exposure (High Overdue, High Piutang) · Portfolio (Dormant Portfolio, Top Omzet/Piutang Salesman %) |
+| Toolbar | **Show Inactive Salesmen** toggle (default off — active reps only) · exposure threshold subtitle |
+| Attention List | One row per salesman × signal — six approved signals; click salesman name for detail drawer |
+| Performance Rankings | Top 10 Omzet (month) · Top 10 Achievement % — click row for detail drawer |
+| Exposure Rankings | Top 10 Piutang (all open) — click row for detail drawer |
+| Salesman Detail Drawer | Principal Achievement table · Achievement trend (up to 12 months) |
 | Segmentation | By Wilayah, Active vs Inactive, By Segment (when configured) |
 | Navigation | Links to Sales/Piutang dashboards and reports |
 
@@ -261,17 +263,21 @@ Horizontal **investigation and navigation framework** unifying drill-down from K
 | Signal | Inclusion rule |
 | ------ | -------------- |
 | Below Target | Target exists (`> 0`) AND achievement % in Warning or Critical band |
-| No Target | Month activity (`Omzet > 0` OR distinct customers > 0) AND no configured target |
-| High Overdue Exposure | Any overdue balance on rep's invoiced open Faktur rows |
-| High Piutang Exposure | Open piutang balance `> 0` for rep (informational; no % threshold) |
+| Missing Target Setup | Month activity (`Omzet > 0` OR distinct customers > 0) AND no configured target |
+| High Overdue Exposure | Rep in **Top N%** by overdue balance among reps with overdue balance `> 0` (default N = 20, configurable via `SalesmanExposureTopPercent`) |
+| High Piutang Exposure | Rep in **Top N%** by open balance among reps with open balance `> 0` (same threshold config) |
 | Customer Concentration | `Omzet > 0` AND top-customer % computable (informational; no % threshold) |
 | Dormant Customer Portfolio | ≥1 dormant customer on rep's book via last-invoicing attribution |
 
+**Active filter (V2):** Default view shows **active salesmen only** (≥1 current-month Faktur). Toggle reveals inactive reps in attention list and rankings. Snapshot still materializes full rep universe; filtering is presentation-side.
+
 **Attention Indicator:** Generic M16/M17 presentation on cards when `*RequiresAttention` is true. Concentration percentages have **no** automatic warning thresholds.
 
-**Drill-down:** Salesman row click opens Sales or Piutang Report with salesman **name** pre-filter (`?q=`). Path: Salesman Performance → Domain Dashboard → Report.
+**Drill-down:** Click salesman name or ranking row → detail drawer with Principal Achievement (per-supplier target, omzet, achievement %) and monthly achievement trend (from `BTRPD_SalesmanRepHistory`, up to 12 months). Investigate button still routes to Sales/Piutang Report with salesman **name** pre-filter (`?q=`).
 
-**Explicitly out of scope:** Pipeline omzet, Effective Call, route coverage, visit compliance, GPS, retur, Faktur Kembali aggregates, collection effectiveness / DSO (M20), field activity metrics (M25), Bottom 10 rankings, historical trends, unified salesman score, new Salesman Report route, executive dashboard changes, changes to Sales Dashboard Top 10 Salesman table.
+**Principal achievement:** Materialized from SM6 principal targets + `FakturItem.Total` grouped by `SalesPersonId` + `SupplierId` — no live query on drill-down.
+
+**Explicitly out of scope:** Pipeline omzet, Effective Call, route coverage, visit compliance (M18.5), GPS, retur, Faktur Kembali aggregates, collection effectiveness / DSO (M20), field activity metrics (M25), Bottom 10 rankings, team-level trend on dashboard home, unified salesman score, new Salesman Report route, executive dashboard changes, changes to Sales Dashboard Top 10 Salesman table.
 
 ### Inventory Dashboard (`/dashboard/inventory`)
 
@@ -490,9 +496,9 @@ Dedicated snapshot domain — `BTRPD_Salesman*`. Refreshed from source DALs (not
 | KPI | Period / scope | Formula | Business meaning |
 | --- | -------------- | ------- | ---------------- |
 | **Below Target** | Current month | Reps with target `> 0` AND achievement % in Warning or Critical band | Underperforming against plan |
-| **No Target** | Current month | Month activity AND target null or `≤ 0` | Activity without configured plan |
-| **High Overdue Exposure** | All-time open | Distinct reps with any overdue customer on invoiced Faktur | Collection risk by rep |
-| **High Piutang Exposure** | All-time open | Distinct reps with open balance `> 0` | Receivable concentration by rep |
+| **Missing Target Setup** | Current month | Month activity AND target null or `≤ 0` | Activity without configured plan |
+| **High Overdue Exposure** | All-time open | Top N% reps by overdue balance (default 20%) among reps with overdue `> 0` | Collection risk by rep |
+| **High Piutang Exposure** | All-time open | Top N% reps by open balance (default 20%) among reps with balance `> 0` | Receivable concentration by rep |
 | **Customer Concentration** | Current month | Rep with computable top-customer % of omzet | Portfolio dependency on few accounts |
 | **Dormant Portfolio** | 90-day rule | Distinct reps with ≥1 dormant customer on book (last-invoicing attribution) | Inactive accounts on rep's book |
 | **Top 10 Omzet** | Current month | `SUM(GrandTotal)` per `SalesPersonId`, descending; exclude zero omzet | Revenue leaders |
@@ -504,7 +510,7 @@ Dedicated snapshot domain — `BTRPD_Salesman*`. Refreshed from source DALs (not
 
 **Salesman key:** `SalesPersonId` primary; name fallback map for piutang rows where only `SalesPersonName` is populated. Rows with blank `SalesPersonId` and no name match are excluded from aggregates.
 
-**Attention list:** One row per salesman × signal (Below Target, No Target, High Overdue Exposure, High Piutang Exposure, Customer Concentration, Dormant Customer Portfolio).
+**Attention list:** One row per salesman × signal (Below Target, Missing Target Setup, High Overdue Exposure, High Piutang Exposure, Customer Concentration, Dormant Customer Portfolio).
 
 ### Collection Dashboard KPIs (M20)
 
@@ -630,9 +636,12 @@ Approved rules governing portal calculations and filters:
 | Sales omzet attribution | Salesman Performance | `Faktur.SalesPersonId` at invoice time |
 | Piutang attribution | Salesman Performance | Invoicing salesman via FF1 join on open Faktur rows |
 | Dormant attribution | Salesman Performance | Last invoicing `SalesPersonId` from most recent Faktur per customer |
-| No Target activity | Salesman Performance | `OmzetAmount > 0` OR `CustomerCount > 0` in current month |
-| Active salesman | Salesman Performance | ≥1 current-month Faktur for rep |
-| Inactive salesman | Salesman Performance | No current-month Faktur — in segmentation; excluded from Top rankings when value = 0 |
+| Missing Target Setup activity | Salesman Performance | `OmzetAmount > 0` OR `CustomerCount > 0` in current month |
+| Active salesman | Salesman Performance | ≥1 current-month Faktur for rep; default list/ranking filter |
+| Inactive salesman | Salesman Performance | No current-month Faktur — visible when **Show Inactive Salesmen** enabled |
+| Exposure threshold | Salesman Performance | Top N% by balance among reps with balance > 0; default 20% (`DashboardSnapshot:SalesmanExposureTopPercent`) |
+| Principal drill-down | Salesman Performance | `BTRPD_SalesmanPrincipalAchievement` snapshot; API `GET .../principals` |
+| Achievement trend | Salesman Performance | `BTRPD_SalesmanRepHistory` upserted each refresh; API `GET .../trend?months=12` |
 | Salesman snapshot source | Salesman Performance worker | Reads source DALs — does not compose from Sales/Piutang/Customer snapshot tables |
 | Unknown dimensions | Inventory M15/M19 | Blank category or supplier displayed and aggregated as `"Unknown"` |
 | Last Faktur signal | Inventory Risk M19 | `MAX(FakturDate)` per `BrgId` from gross non-void Faktur / FakturItem |

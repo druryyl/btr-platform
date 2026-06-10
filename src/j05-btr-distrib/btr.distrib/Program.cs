@@ -31,7 +31,10 @@ using btr.application.SalesContext.SalesOmzetHealthWeeklyAgg.Contracts;
 using btr.application.SalesContext.SalesPersonSupplierAgg;
 using btr.application.SalesContext.SalesPersonPrincipalTargetAgg;
 using btr.application.SalesContext.SalesPersonPrincipalTargetAgg.Contracts;
+using btr.application.SalesContext.VisitPlanAgg;
+using btr.application.SalesContext.VisitPlanAgg.Services;
 using btr.infrastructure.SalesContext.SalesPersonPrincipalTargetAgg;
+using btr.infrastructure.SalesContext.VisitPlanAgg;
 
 namespace btr.distrib
 {
@@ -200,6 +203,11 @@ namespace btr.distrib
             services.AddScoped<ISalesPersonSupplierWriter, SalesPersonSupplierWriter>();
             services.AddScoped<ISalesPersonPrincipalTargetDal, SalesPersonPrincipalTargetDal>();
             services.AddScoped<ISalesPersonPrincipalTargetWriter, SalesPersonPrincipalTargetWriter>();
+            services.AddScoped<IRuteCycleCalendar, RuteCycleCalendar>();
+            services.AddScoped<IEffectiveVisitPlanResolver, EffectiveVisitPlanResolver>();
+            services.AddScoped<IVisitPlanExceptionWriter, VisitPlanExceptionWriter>();
+            services.AddScoped<IVisitPlanDal, VisitPlanDal>();
+            services.AddScoped<IEffectiveVisitPlanDal, EffectiveVisitPlanDal>();
 
             services
                 .Scan(selector => selector

@@ -22,7 +22,7 @@ namespace btr.test.ReportingContext
 
                 // Salesman (M18)
                 DashboardSalesmanAggregator.SignalBelowTarget,
-                DashboardSalesmanAggregator.SignalNoTarget,
+                DashboardSalesmanAggregator.SignalMissingTargetSetup,
                 DashboardSalesmanAggregator.SignalHighOverdueExposure,
                 DashboardSalesmanAggregator.SignalHighPiutangExposure,
                 DashboardSalesmanAggregator.SignalCustomerConcentration,

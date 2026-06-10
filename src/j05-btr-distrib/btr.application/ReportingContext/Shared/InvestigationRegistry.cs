@@ -147,7 +147,7 @@ namespace btr.application.ReportingContext.Shared
                 // Salesman
                 Entry(DashboardSalesmanAggregator.SignalBelowTarget, "Below Target", InvestigationMetadataBuilder.EntityTypeSalesman,
                     "/dashboard/salesmen", SalesReportRoute, "Next validation: Sales Omzet Chart (RO2)", PeriodModeCurrentMonth),
-                Entry(DashboardSalesmanAggregator.SignalNoTarget, "No Target", InvestigationMetadataBuilder.EntityTypeSalesman,
+                Entry(DashboardSalesmanAggregator.SignalMissingTargetSetup, "Missing Target Setup", InvestigationMetadataBuilder.EntityTypeSalesman,
                     "/dashboard/salesmen", SalesReportRoute, null, PeriodModeCurrentMonth),
                 Entry(DashboardSalesmanAggregator.SignalHighOverdueExposure, "High Overdue Exposure", InvestigationMetadataBuilder.EntityTypeSalesman,
                     "/dashboard/salesmen", PiutangReportRoute, "Next validation: Piutang Tracker (FT5)", PeriodModeAllOpenBalances),

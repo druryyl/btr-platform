@@ -6,6 +6,7 @@ using btr.application.ReportingContext.DashboardSnapshotAgg.Models;
 using btr.application.ReportingContext.DashboardSnapshotAgg.Services;
 using btr.application.SalesContext.FakturInfo;
 using btr.domain.SalesContext.SalesPersonAgg;
+using btr.domain.SalesContext.SalesPersonPrincipalTargetAgg;
 using btr.nuna.Domain;
 using FluentAssertions;
 using Xunit;
@@ -140,19 +141,19 @@ namespace btr.test.ReportingContext
         }
 
         [Fact]
-        public void Aggregate_NoTarget_WhenActivityWithoutTarget()
+        public void Aggregate_MissingTargetSetup_WhenActivityWithoutTarget()
         {
             var result = Aggregate(
                 faktur: new[] { Faktur("SP001", "S001", "No Target Rep", 50m) },
                 salespeople: new[] { SalesPerson("SP001", "S001", "No Target Rep") });
 
-            result.NoTargetCount.Should().Be(1);
+            result.MissingTargetSetupCount.Should().Be(1);
             result.AttentionList.Should().ContainSingle(a =>
-                a.SignalKey == DashboardSalesmanAggregator.SignalNoTarget);
+                a.SignalKey == DashboardSalesmanAggregator.SignalMissingTargetSetup);
         }
 
         [Fact]
-        public void Aggregate_NoTarget_NotWhenTargetExists()
+        public void Aggregate_MissingTargetSetup_NotWhenTargetExists()
         {
             var result = Aggregate(
                 faktur: new[] { Faktur("SP001", "S001", "Target Rep", 50m) },
@@ -160,18 +161,18 @@ namespace btr.test.ReportingContext
                 salespeople: new[] { SalesPerson("SP001", "S001", "Target Rep") });
 
             result.AttentionList.Should().NotContain(a =>
-                a.SignalKey == DashboardSalesmanAggregator.SignalNoTarget);
+                a.SignalKey == DashboardSalesmanAggregator.SignalMissingTargetSetup);
             result.AttentionList.Should().Contain(a =>
                 a.SignalKey == DashboardSalesmanAggregator.SignalBelowTarget);
         }
 
         [Fact]
-        public void Aggregate_NoTarget_NotWhenInactiveZeroActivity()
+        public void Aggregate_MissingTargetSetup_NotWhenInactiveZeroActivity()
         {
             var result = Aggregate(
                 salespeople: new[] { SalesPerson("SP001", "S001", "Idle Rep") });
 
-            result.NoTargetCount.Should().Be(0);
+            result.MissingTargetSetupCount.Should().Be(0);
         }
 
         [Fact]
@@ -205,11 +206,147 @@ namespace btr.test.ReportingContext
                     SalesPerson("SP002", "S002", "Other Rep"),
                 });
 
-            result.HighPiutangExposureCount.Should().Be(2);
-            result.AttentionList.Should().Contain(a =>
+            result.HighPiutangExposureCount.Should().Be(1);
+            result.AttentionList.Should().ContainSingle(a =>
                 a.SignalKey == DashboardSalesmanAggregator.SignalHighPiutangExposure &&
                 a.SalesPersonName == "Piutang Rep" &&
                 a.ValueText.Contains("80.0%"));
+        }
+
+        [Fact]
+        public void Aggregate_HighPiutangTop20Percent_TenReps_SelectsTwo()
+        {
+            var piutang = Enumerable.Range(1, 10)
+                .Select(i => Piutang($"SP{i:D3}", $"Rep {i}", $"C{i:D3}", FixedToday, i * 100m))
+                .ToArray();
+
+            var salespeople = Enumerable.Range(1, 10)
+                .Select(i => SalesPerson($"SP{i:D3}", $"S{i:D3}", $"Rep {i}"))
+                .ToArray();
+
+            var result = Aggregate(piutang: piutang, salespeople: salespeople, exposureTopPercent: 20m);
+
+            result.HighPiutangExposureCount.Should().Be(2);
+            result.AttentionList
+                .Where(a => a.SignalKey == DashboardSalesmanAggregator.SignalHighPiutangExposure)
+                .Select(a => a.SalesPersonId)
+                .Should().BeEquivalentTo(new[] { "SP010", "SP009" });
+        }
+
+        [Fact]
+        public void Aggregate_HighPiutangTop20Percent_SingleRep_IncludesRep()
+        {
+            var result = Aggregate(
+                piutang: new[] { Piutang("SP001", "Only Rep", "C001", FixedToday, 500m) },
+                salespeople: new[] { SalesPerson("SP001", "S001", "Only Rep") });
+
+            result.HighPiutangExposureCount.Should().Be(1);
+        }
+
+        [Fact]
+        public void Aggregate_HighPiutangTop20Percent_ZeroBalances_EmptySet()
+        {
+            var result = Aggregate(
+                salespeople: new[] { SalesPerson("SP001", "S001", "Idle Rep") });
+
+            result.HighPiutangExposureCount.Should().Be(0);
+        }
+
+        [Fact]
+        public void Aggregate_HighOverdueTop20Percent_TenReps_SelectsTwo()
+        {
+            var piutang = Enumerable.Range(1, 10)
+                .Select(i => Piutang($"SP{i:D3}", $"Rep {i}", $"C{i:D3}", FixedToday.AddDays(-5), i * 50m))
+                .ToArray();
+
+            var salespeople = Enumerable.Range(1, 10)
+                .Select(i => SalesPerson($"SP{i:D3}", $"S{i:D3}", $"Rep {i}"))
+                .ToArray();
+
+            var result = Aggregate(piutang: piutang, salespeople: salespeople, exposureTopPercent: 20m);
+
+            result.HighOverdueExposureCount.Should().Be(2);
+        }
+
+        [Fact]
+        public void Aggregate_IsActive_OnRankingRowWhenMonthFaktur()
+        {
+            var result = Aggregate(
+                faktur: new[] { Faktur("SP001", "S001", "Active Rep", 100m) },
+                salespeople: new[] { SalesPerson("SP001", "S001", "Active Rep") });
+
+            result.TopOmzet.Should().ContainSingle(r => r.IsActive);
+            result.TopOmzet[0].IsActive.Should().BeTrue();
+        }
+
+        [Fact]
+        public void Aggregate_PrincipalRows_TargetAndOmzet_ComputesAchievement()
+        {
+            var result = Aggregate(
+                faktur: new[] { Faktur("SP001", "S001", "Rep A", 100m) },
+                targets: new Dictionary<string, decimal?> { ["SP001"] = 100m },
+                salespeople: new[] { SalesPerson("SP001", "S001", "Rep A") },
+                principalTargets: new[]
+                {
+                    new SalesPersonPrincipalTargetModel
+                    {
+                        SalesPersonId = "SP001",
+                        SupplierId = "SUP001",
+                        SupplierName = "Principal A",
+                        TargetAmount = 100m,
+                        TargetYear = 2026,
+                        TargetMonth = 6
+                    }
+                },
+                principalOmzet: new[]
+                {
+                    new FakturPrincipalOmzetDto
+                    {
+                        SalesPersonId = "SP001",
+                        SupplierId = "SUP001",
+                        SupplierName = "Principal A",
+                        CompletedOmzet = 80m
+                    }
+                });
+
+            result.PrincipalAchievement.Should().ContainSingle();
+            result.PrincipalAchievement[0].AchievementPercent.Should().Be(80m);
+        }
+
+        [Fact]
+        public void Aggregate_PrincipalRows_OmzetOnly_StillListed()
+        {
+            var result = Aggregate(
+                salespeople: new[] { SalesPerson("SP001", "S001", "Rep A") },
+                principalOmzet: new[]
+                {
+                    new FakturPrincipalOmzetDto
+                    {
+                        SalesPersonId = "SP001",
+                        SupplierId = "SUP001",
+                        SupplierName = "Principal A",
+                        CompletedOmzet = 50m
+                    }
+                });
+
+            result.PrincipalAchievement.Should().ContainSingle();
+            result.PrincipalAchievement[0].TargetAmount.Should().BeNull();
+            result.PrincipalAchievement[0].CompletedOmzet.Should().Be(50m);
+        }
+
+        [Fact]
+        public void Aggregate_RepHistory_EmitsRowPerRep()
+        {
+            var result = Aggregate(
+                faktur: new[] { Faktur("SP001", "S001", "Rep A", 100m) },
+                targets: new Dictionary<string, decimal?> { ["SP001"] = 200m },
+                salespeople: new[] { SalesPerson("SP001", "S001", "Rep A") });
+
+            result.RepHistory.Should().ContainSingle();
+            result.RepHistory[0].PeriodYear.Should().Be(2026);
+            result.RepHistory[0].PeriodMonth.Should().Be(6);
+            result.RepHistory[0].CompletedOmzet.Should().Be(100m);
+            result.RepHistory[0].IsActive.Should().BeTrue();
         }
 
         [Fact]
@@ -339,7 +476,10 @@ namespace btr.test.ReportingContext
             IEnumerable<PiutangOpenBalanceWithSalesmanDto> piutang = null,
             IEnumerable<CustomerLastFakturWithSalesmanDto> lastFaktur = null,
             IEnumerable<SalesPersonModel> salespeople = null,
-            IReadOnlyDictionary<string, decimal?> targets = null)
+            IReadOnlyDictionary<string, decimal?> targets = null,
+            decimal exposureTopPercent = 20m,
+            IEnumerable<SalesPersonPrincipalTargetModel> principalTargets = null,
+            IEnumerable<FakturPrincipalOmzetDto> principalOmzet = null)
         {
             return _aggregator.Aggregate(
                 faktur ?? Array.Empty<FakturView>(),
@@ -349,7 +489,10 @@ namespace btr.test.ReportingContext
                 targets ?? new Dictionary<string, decimal?>(),
                 FixedPeriode,
                 FixedToday,
-                FixedGeneratedAt);
+                FixedGeneratedAt,
+                exposureTopPercent,
+                principalTargets,
+                principalOmzet);
         }
 
         private static FakturView Faktur(

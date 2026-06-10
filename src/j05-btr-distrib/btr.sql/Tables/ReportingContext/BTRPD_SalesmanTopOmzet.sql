@@ -8,6 +8,7 @@ CREATE TABLE BTRPD_SalesmanTopOmzet
     SalesPersonName    VARCHAR(50)   NOT NULL CONSTRAINT DF_BTRPD_SalesmanTopOmzet_SalesPersonName DEFAULT(''),
     CompletedOmzet     DECIMAL(18,2) NOT NULL CONSTRAINT DF_BTRPD_SalesmanTopOmzet_CompletedOmzet DEFAULT(0),
     PercentOfTotal     DECIMAL(9,4)  NULL,
+    IsActive           BIT           NOT NULL CONSTRAINT DF_BTRPD_SalesmanTopOmzet_IsActive DEFAULT(0),
 
     CONSTRAINT PK_BTRPD_SalesmanTopOmzet PRIMARY KEY CLUSTERED (SalesmanTopOmzetId),
     CONSTRAINT UX_BTRPD_SalesmanTopOmzet_SnapshotKey_Rank UNIQUE (SnapshotKey, Rank)

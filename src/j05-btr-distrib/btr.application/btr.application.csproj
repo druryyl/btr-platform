@@ -265,6 +265,8 @@
     <Compile Include="ReportingContext\DashboardCustomerAgg\Queries\GetDashboardCustomerQuery.cs" />
     <Compile Include="ReportingContext\DashboardSalesmanAgg\Contracts\IDashboardSalesmanDal.cs" />
     <Compile Include="ReportingContext\DashboardSalesmanAgg\Queries\GetDashboardSalesmanQuery.cs" />
+    <Compile Include="ReportingContext\DashboardSalesmanAgg\Queries\GetSalesmanPrincipalAchievementQuery.cs" />
+    <Compile Include="ReportingContext\DashboardSalesmanAgg\Queries\GetSalesmanAchievementTrendQuery.cs" />
     <Compile Include="ReportingContext\DashboardCollectionAgg\Contracts\IDashboardCollectionDal.cs" />
     <Compile Include="ReportingContext\DashboardCollectionAgg\Queries\GetDashboardCollectionQuery.cs" />
     <Compile Include="ReportingContext\DashboardLocationAgg\Contracts\IDashboardLocationDal.cs" />
@@ -421,6 +423,7 @@
     <Compile Include="SalesContext\FakturInfo\ICustomerLastFakturDal.cs" />
     <Compile Include="SalesContext\FakturInfo\IBrgLastFakturDal.cs" />
     <Compile Include="SalesContext\FakturInfo\IFakturViewDal.cs" />
+    <Compile Include="SalesContext\FakturInfo\IFakturPrincipalOmzetDal.cs" />
     <Compile Include="SalesContext\FakturPajakInfo\IFakturPajakDal.cs" />
     <Compile Include="SalesContext\FakturPajakVoidAgg\FaktuPajakVoidWriter.cs" />
     <Compile Include="SalesContext\FakturPajakVoidAgg\FakturPajakVoidBuilder.cs" />
@@ -500,6 +503,20 @@
     <Compile Include="SalesContext\SalesPersonAgg\Workers\SalesPersonWriter.cs" />
     <Compile Include="SalesContext\SalesRuteAgg\SalesRuteBuilder.cs" />
     <Compile Include="SalesContext\SalesRuteAgg\SalesRuteWriter.cs" />
+    <Compile Include="SalesContext\VisitPlanAgg\IEffectiveVisitPlanDal.cs" />
+    <Compile Include="SalesContext\VisitPlanAgg\IVisitPlanDal.cs" />
+    <Compile Include="SalesContext\VisitPlanAgg\IVisitPlanExceptionDal.cs" />
+    <Compile Include="SalesContext\VisitPlanAgg\IVisitPlanExceptionWriter.cs" />
+    <Compile Include="SalesContext\VisitPlanAgg\Services\EffectiveVisitPlanResolver.cs" />
+    <Compile Include="SalesContext\VisitPlanAgg\Services\IEffectiveVisitPlanResolver.cs" />
+    <Compile Include="SalesContext\VisitPlanAgg\Services\IRuteCycleCalendar.cs" />
+    <Compile Include="SalesContext\VisitPlanAgg\Services\RuteCycleCalendar.cs" />
+    <Compile Include="SalesContext\VisitPlanAgg\UseCases\IMaintainVisitPlanHorizonWorker.cs" />
+    <Compile Include="SalesContext\VisitPlanAgg\UseCases\IRegenerateVisitPlanWorker.cs" />
+    <Compile Include="SalesContext\VisitPlanAgg\UseCases\MaintainVisitPlanHorizonWorker.cs" />
+    <Compile Include="SalesContext\VisitPlanAgg\UseCases\RegenerateVisitPlanRequest.cs" />
+    <Compile Include="SalesContext\VisitPlanAgg\UseCases\RegenerateVisitPlanWorker.cs" />
+    <Compile Include="SalesContext\VisitPlanAgg\VisitPlanExceptionWriter.cs" />
     <Compile Include="SalesContext\SalesPersonSupplierAgg\Contracts\ISalesPersonSupplierDal.cs" />
     <Compile Include="SalesContext\SalesPersonSupplierAgg\SalesPersonSupplierViewDto.cs" />
     <Compile Include="SalesContext\SalesPersonSupplierAgg\SalesPersonSupplierWriter.cs" />

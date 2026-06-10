@@ -8,7 +8,7 @@ CREATE TABLE BTRPD_SalesmanKpi
     TotalPiutang                DECIMAL(18,2) NOT NULL CONSTRAINT DF_BTRPD_SalesmanKpi_TotalPiutang DEFAULT(0),
     ActiveSalesmanCount         INT           NOT NULL CONSTRAINT DF_BTRPD_SalesmanKpi_ActiveSalesmanCount DEFAULT(0),
     BelowTargetCount            INT           NOT NULL CONSTRAINT DF_BTRPD_SalesmanKpi_BelowTargetCount DEFAULT(0),
-    NoTargetCount               INT           NOT NULL CONSTRAINT DF_BTRPD_SalesmanKpi_NoTargetCount DEFAULT(0),
+    MissingTargetSetupCount     INT           NOT NULL CONSTRAINT DF_BTRPD_SalesmanKpi_MissingTargetSetupCount DEFAULT(0),
     HighOverdueExposureCount    INT           NOT NULL CONSTRAINT DF_BTRPD_SalesmanKpi_HighOverdueExposureCount DEFAULT(0),
     HighPiutangExposureCount    INT           NOT NULL CONSTRAINT DF_BTRPD_SalesmanKpi_HighPiutangExposureCount DEFAULT(0),
     CustomerConcentrationCount  INT           NOT NULL CONSTRAINT DF_BTRPD_SalesmanKpi_CustomerConcentrationCount DEFAULT(0),

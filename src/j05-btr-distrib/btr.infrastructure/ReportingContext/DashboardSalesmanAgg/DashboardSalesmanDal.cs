@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
+using btr.application.ReportingContext.DashboardExecutiveAgg.Services;
 using btr.application.ReportingContext.DashboardSalesmanAgg.Contracts;
 using btr.application.ReportingContext.DashboardSalesmanAgg.Queries;
 using btr.application.ReportingContext.Shared;
@@ -37,11 +39,59 @@ namespace btr.infrastructure.ReportingContext.DashboardSalesmanAgg
                 {
                     IsAvailable = false,
                     IsDataFresh = false,
-                    Navigation = BuildNavigation()
+                    Navigation = BuildNavigation(),
+                    Filters = BuildFilters()
                 };
             }
 
             return MapToResponse(snapshot);
+        }
+
+        public SalesmanPrincipalAchievementResponse GetPrincipalAchievement(string salesPersonId)
+        {
+            var snapshot = _snapshotDal.GetCurrent();
+            var rows = _snapshotDal.ListPrincipalAchievement(salesPersonId) ?? new List<DashboardSalesmanPrincipalAchievementRow>();
+
+            var salesPersonName = rows.FirstOrDefault()?.SalesPersonName ?? string.Empty;
+
+            return new SalesmanPrincipalAchievementResponse
+            {
+                SalesPersonId = salesPersonId,
+                SalesPersonName = salesPersonName,
+                PeriodYear = snapshot?.PeriodYear ?? 0,
+                PeriodMonth = snapshot?.PeriodMonth ?? 0,
+                Principals = rows.Select(r => new SalesmanPrincipalAchievementRow
+                {
+                    SupplierId = r.SupplierId,
+                    SupplierName = r.SupplierName,
+                    TargetAmount = r.TargetAmount,
+                    CompletedOmzet = r.CompletedOmzet,
+                    AchievementPercent = r.AchievementPercent,
+                    AchievementBand = ExecutiveSalesAchievementBandResolver.Resolve(r.AchievementPercent)
+                }).ToList()
+            };
+        }
+
+        public SalesmanAchievementTrendResponse GetAchievementTrend(string salesPersonId, int months)
+        {
+            var rows = _snapshotDal.ListRepHistory(salesPersonId, months) ?? new List<DashboardSalesmanRepHistoryRow>();
+            var salesPersonName = rows.LastOrDefault()?.SalesPersonName ?? string.Empty;
+
+            return new SalesmanAchievementTrendResponse
+            {
+                SalesPersonId = salesPersonId,
+                SalesPersonName = salesPersonName,
+                Points = rows.Select(r => new SalesmanAchievementTrendPoint
+                {
+                    PeriodYear = r.PeriodYear,
+                    PeriodMonth = r.PeriodMonth,
+                    PeriodLabel = FormatPeriodLabel(r.PeriodYear, r.PeriodMonth),
+                    TargetAmount = r.TargetAmount,
+                    CompletedOmzet = r.CompletedOmzet,
+                    AchievementPercent = r.AchievementPercent,
+                    AchievementBand = r.AchievementBand
+                }).ToList()
+            };
         }
 
         private DashboardSalesmanResponse MapToResponse(DashboardSalesmanAggregateResult snapshot)
@@ -50,7 +100,7 @@ namespace btr.infrastructure.ReportingContext.DashboardSalesmanAgg
             var isFresh = IsDomainFresh(snapshot.GeneratedAt, _options.SalesmanIntervalMinutes, utcNow);
 
             var belowTarget = snapshot.BelowTargetCount;
-            var noTarget = snapshot.NoTargetCount;
+            var missingTargetSetup = snapshot.MissingTargetSetupCount;
             var highOverdue = snapshot.HighOverdueExposureCount;
             var highPiutang = snapshot.HighPiutangExposureCount;
             var concentration = snapshot.CustomerConcentrationCount;
@@ -63,17 +113,18 @@ namespace btr.infrastructure.ReportingContext.DashboardSalesmanAgg
                 GeneratedAt = snapshot.GeneratedAt,
                 PeriodYear = snapshot.PeriodYear,
                 PeriodMonth = snapshot.PeriodMonth,
+                Filters = BuildFilters(),
                 AttentionCards = new DashboardSalesmanAttentionCards
                 {
                     BelowTargetCount = belowTarget,
-                    NoTargetCount = noTarget,
+                    MissingTargetSetupCount = missingTargetSetup,
                     HighOverdueExposureCount = highOverdue,
                     HighPiutangExposureCount = highPiutang,
                     CustomerConcentrationCount = concentration,
                     DormantPortfolioCount = dormant,
                     TopOmzetSalesmanPercent = snapshot.TopOmzetSalesmanPercent,
                     TopPiutangSalesmanPercent = snapshot.TopPiutangSalesmanPercent,
-                    PerformanceRequiresAttention = belowTarget > 0 || noTarget > 0,
+                    PerformanceRequiresAttention = belowTarget > 0 || missingTargetSetup > 0,
                     CollectionRequiresAttention = highOverdue > 0 || highPiutang > 0,
                     PortfolioRequiresAttention = dormant > 0 || concentration > 0
                 },
@@ -91,6 +142,7 @@ namespace btr.infrastructure.ReportingContext.DashboardSalesmanAgg
                             SalesPersonName = r.SalesPersonName,
                             Amount = r.CompletedOmzet,
                             PercentOfTotal = r.PercentOfTotal,
+                            IsActive = r.IsActive,
                             ReportRoute = SalesReportRoute,
                             Investigation = InvestigationMetadataBuilder.Build(
                                 InvestigationRegistry.SignalRankingSalesmanTopOmzet,
@@ -110,6 +162,7 @@ namespace btr.infrastructure.ReportingContext.DashboardSalesmanAgg
                             PercentOfTotal = r.PercentOfTotal,
                             AchievementPercent = r.AchievementPercent,
                             TargetAmount = r.TargetAmount,
+                            IsActive = r.IsActive,
                             ReportRoute = SalesReportRoute,
                             Investigation = InvestigationMetadataBuilder.Build(
                                 InvestigationRegistry.SignalRankingSalesmanTopAchievement,
@@ -130,6 +183,7 @@ namespace btr.infrastructure.ReportingContext.DashboardSalesmanAgg
                             SalesPersonName = r.SalesPersonName,
                             Amount = r.OutstandingBalance,
                             PercentOfTotal = r.PercentOfTotal,
+                            IsActive = r.IsActive,
                             ReportRoute = PiutangReportRoute,
                             Investigation = InvestigationMetadataBuilder.Build(
                                 InvestigationRegistry.SignalRankingSalesmanTopPiutang,
@@ -141,6 +195,15 @@ namespace btr.infrastructure.ReportingContext.DashboardSalesmanAgg
                 },
                 Segmentation = MapSegmentation(snapshot.Segmentation),
                 Navigation = BuildNavigation()
+            };
+        }
+
+        private DashboardSalesmanFilterDefaults BuildFilters()
+        {
+            return new DashboardSalesmanFilterDefaults
+            {
+                DefaultActiveOnly = true,
+                ExposureTopPercent = _options.SalesmanExposureTopPercent
             };
         }
 
@@ -156,6 +219,7 @@ namespace btr.infrastructure.ReportingContext.DashboardSalesmanAgg
                 ValueAmount = row.ValueAmount,
                 ValueText = row.ValueText,
                 WilayahName = row.WilayahName,
+                IsActive = row.IsActive,
                 ReportRoute = ResolveReportRoute(row.SignalKey),
                 RequiresAttention = true,
                 Investigation = InvestigationMetadataBuilder.Build(
@@ -176,7 +240,7 @@ namespace btr.infrastructure.ReportingContext.DashboardSalesmanAgg
                 case DashboardSalesmanAggregator.SignalHighPiutangExposure:
                     return PiutangReportRoute;
                 case DashboardSalesmanAggregator.SignalBelowTarget:
-                case DashboardSalesmanAggregator.SignalNoTarget:
+                case DashboardSalesmanAggregator.SignalMissingTargetSetup:
                 case DashboardSalesmanAggregator.SignalCustomerConcentration:
                 case DashboardSalesmanAggregator.SignalDormantCustomerPortfolio:
                     return SalesReportRoute;
@@ -233,6 +297,11 @@ namespace btr.infrastructure.ReportingContext.DashboardSalesmanAgg
                 SalesReportRoute = SalesReportRoute,
                 PiutangReportRoute = PiutangReportRoute
             };
+        }
+
+        private static string FormatPeriodLabel(int year, int month)
+        {
+            return new DateTime(year, month, 1).ToString("MMM yyyy", CultureInfo.InvariantCulture);
         }
 
         private static bool IsDomainFresh(DateTime generatedAt, int intervalMinutes, DateTime utcNow)

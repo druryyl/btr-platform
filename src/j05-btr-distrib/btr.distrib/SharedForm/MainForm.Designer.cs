@@ -43,6 +43,7 @@
             this.SM4RuteMenu = new System.Windows.Forms.RibbonButton();
             this.SM5SalesPersonPrincipalMenu = new System.Windows.Forms.RibbonButton();
             this.SM6SalesPersonPrincipalTargetMenu = new System.Windows.Forms.RibbonButton();
+            this.SM7JadwalKunjunganMenu = new System.Windows.Forms.RibbonButton();
             this.SalesInfoPanel = new System.Windows.Forms.RibbonPanel();
             this.ReportingFakturListMenu = new System.Windows.Forms.RibbonButton();
             this.SF1FakturInfoMenu = new System.Windows.Forms.RibbonButton();
@@ -219,6 +220,7 @@
             this.MasterSalesPanel.Items.Add(this.SM4RuteMenu);
             this.MasterSalesPanel.Items.Add(this.SM5SalesPersonPrincipalMenu);
             this.MasterSalesPanel.Items.Add(this.SM6SalesPersonPrincipalTargetMenu);
+            this.MasterSalesPanel.Items.Add(this.SM7JadwalKunjunganMenu);
             this.MasterSalesPanel.Name = "MasterSalesPanel";
             this.MasterSalesPanel.Text = "";
             // 
@@ -273,6 +275,14 @@
             this.SM6SalesPersonPrincipalTargetMenu.Name = "SM6SalesPersonPrincipalTargetMenu";
             this.SM6SalesPersonPrincipalTargetMenu.Text = "SM6-Principal Target";
             this.SM6SalesPersonPrincipalTargetMenu.Click += new System.EventHandler(this.SM6SalesPersonPrincipalTargetButton_Click);
+            // 
+            // SM7JadwalKunjunganMenu
+            // 
+            this.SM7JadwalKunjunganMenu.Image = global::btr.distrib.Properties.Resources.icons8_route_32;
+            this.SM7JadwalKunjunganMenu.LargeImage = global::btr.distrib.Properties.Resources.icons8_route_32;
+            this.SM7JadwalKunjunganMenu.Name = "SM7JadwalKunjunganMenu";
+            this.SM7JadwalKunjunganMenu.Text = "SM7-Jadwal Kunjungan";
+            this.SM7JadwalKunjunganMenu.Click += new System.EventHandler(this.SM7JadwalKunjunganButton_Click);
             // 
             // SalesInfoPanel
             // 
@@ -1091,6 +1101,7 @@
         private System.Windows.Forms.RibbonButton SM4RuteMenu;
         private System.Windows.Forms.RibbonButton SM5SalesPersonPrincipalMenu;
         private System.Windows.Forms.RibbonButton SM6SalesPersonPrincipalTargetMenu;
+        private System.Windows.Forms.RibbonButton SM7JadwalKunjunganMenu;
         private System.Windows.Forms.RibbonButton IF8KartuStokMenu;
         private System.Windows.Forms.RibbonButton FF4PelunasanInfoBMenu;
         private System.Windows.Forms.RibbonButton ReportingFakturListMenu;

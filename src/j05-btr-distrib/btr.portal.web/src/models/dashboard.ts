@@ -438,9 +438,14 @@ export interface DashboardCustomerResponse {
   Navigation: DashboardCustomerNavigationLinks | null
 }
 
+export interface DashboardSalesmanFilterDefaults {
+  DefaultActiveOnly: boolean
+  ExposureTopPercent: number
+}
+
 export interface DashboardSalesmanAttentionCards {
   BelowTargetCount: number
-  NoTargetCount: number
+  MissingTargetSetupCount: number
   HighOverdueExposureCount: number
   HighPiutangExposureCount: number
   CustomerConcentrationCount: number
@@ -463,6 +468,7 @@ export interface DashboardSalesmanAttentionItem {
   WilayahName: string
   ReportRoute: string
   RequiresAttention: boolean
+  IsActive: boolean
   Investigation?: InvestigationMetadata | null
 }
 
@@ -476,7 +482,41 @@ export interface DashboardSalesmanRankingRow {
   AchievementPercent?: number | null
   TargetAmount?: number | null
   ReportRoute: string
+  IsActive: boolean
   Investigation?: InvestigationMetadata | null
+}
+
+export interface SalesmanPrincipalAchievementRow {
+  SupplierId: string
+  SupplierName: string
+  TargetAmount: number | null
+  CompletedOmzet: number
+  AchievementPercent: number | null
+  AchievementBand: string | null
+}
+
+export interface SalesmanPrincipalAchievementResponse {
+  SalesPersonId: string
+  SalesPersonName: string
+  PeriodYear: number
+  PeriodMonth: number
+  Principals: SalesmanPrincipalAchievementRow[]
+}
+
+export interface SalesmanAchievementTrendPoint {
+  PeriodYear: number
+  PeriodMonth: number
+  PeriodLabel: string
+  TargetAmount: number | null
+  CompletedOmzet: number
+  AchievementPercent: number | null
+  AchievementBand: string | null
+}
+
+export interface SalesmanAchievementTrendResponse {
+  SalesPersonId: string
+  SalesPersonName: string
+  Points: SalesmanAchievementTrendPoint[]
 }
 
 export interface DashboardSalesmanPerformanceRankings {
@@ -522,6 +562,7 @@ export interface DashboardSalesmanResponse {
   ExposureRankings: DashboardSalesmanExposureRankings | null
   Segmentation: DashboardSalesmanSegmentationSummary | null
   Navigation: DashboardSalesmanNavigationLinks | null
+  Filters: DashboardSalesmanFilterDefaults | null
 }
 
 export interface DashboardCollectionAttentionCards {

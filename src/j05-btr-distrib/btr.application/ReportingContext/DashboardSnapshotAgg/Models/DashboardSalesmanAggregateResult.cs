@@ -17,7 +17,7 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.Models
 
         public int BelowTargetCount { get; set; }
 
-        public int NoTargetCount { get; set; }
+        public int MissingTargetSetupCount { get; set; }
 
         public int HighOverdueExposureCount { get; set; }
 
@@ -47,6 +47,12 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.Models
 
         public List<DashboardSalesmanSegmentationRow> Segmentation { get; set; }
             = new List<DashboardSalesmanSegmentationRow>();
+
+        public List<DashboardSalesmanPrincipalAchievementRow> PrincipalAchievement { get; set; }
+            = new List<DashboardSalesmanPrincipalAchievementRow>();
+
+        public List<DashboardSalesmanRepHistoryRow> RepHistory { get; set; }
+            = new List<DashboardSalesmanRepHistoryRow>();
     }
 
     public class DashboardSalesmanTopOmzetRow
@@ -62,6 +68,8 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.Models
         public decimal CompletedOmzet { get; set; }
 
         public decimal? PercentOfTotal { get; set; }
+
+        public bool IsActive { get; set; }
     }
 
     public class DashboardSalesmanTopAchievementRow
@@ -81,6 +89,8 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.Models
         public decimal? AchievementPercent { get; set; }
 
         public decimal? PercentOfTotal { get; set; }
+
+        public bool IsActive { get; set; }
     }
 
     public class DashboardSalesmanTopPiutangRow
@@ -96,6 +106,8 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.Models
         public decimal OutstandingBalance { get; set; }
 
         public decimal? PercentOfTotal { get; set; }
+
+        public bool IsActive { get; set; }
     }
 
     public class DashboardSalesmanAttentionRow
@@ -117,6 +129,8 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.Models
         public string WilayahName { get; set; }
 
         public int SortOrder { get; set; }
+
+        public bool IsActive { get; set; }
     }
 
     public class DashboardSalesmanSegmentationRow
@@ -134,5 +148,51 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.Models
         public int InactiveCount { get; set; }
 
         public int SortOrder { get; set; }
+    }
+
+    public class DashboardSalesmanPrincipalAchievementRow
+    {
+        public string SalesPersonId { get; set; }
+
+        public string SalesPersonCode { get; set; }
+
+        public string SalesPersonName { get; set; }
+
+        public string SupplierId { get; set; }
+
+        public string SupplierName { get; set; }
+
+        public decimal? TargetAmount { get; set; }
+
+        public decimal CompletedOmzet { get; set; }
+
+        public decimal? AchievementPercent { get; set; }
+
+        public int SortOrder { get; set; }
+    }
+
+    public class DashboardSalesmanRepHistoryRow
+    {
+        public int PeriodYear { get; set; }
+
+        public int PeriodMonth { get; set; }
+
+        public string SalesPersonId { get; set; }
+
+        public string SalesPersonCode { get; set; }
+
+        public string SalesPersonName { get; set; }
+
+        public decimal? TargetAmount { get; set; }
+
+        public decimal CompletedOmzet { get; set; }
+
+        public decimal? AchievementPercent { get; set; }
+
+        public string AchievementBand { get; set; }
+
+        public decimal OpenBalance { get; set; }
+
+        public bool IsActive { get; set; }
     }
 }

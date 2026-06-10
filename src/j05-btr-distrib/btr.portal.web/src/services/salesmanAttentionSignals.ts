@@ -4,7 +4,7 @@ export const SALESMAN_ATTENTION_SIGNAL_ALL = ''
 
 export const SALESMAN_ATTENTION_SIGNAL_KEYS = [
   'BelowTarget',
-  'NoTarget',
+  'MissingTargetSetup',
   'HighOverdueExposure',
   'HighPiutangExposure',
   'CustomerConcentration',
@@ -15,7 +15,7 @@ export type SalesmanAttentionSignalKey = (typeof SALESMAN_ATTENTION_SIGNAL_KEYS)
 
 export const SALESMAN_ATTENTION_SIGNAL_LABELS: Record<SalesmanAttentionSignalKey, string> = {
   BelowTarget: 'Below Target',
-  NoTarget: 'No Target',
+  MissingTargetSetup: 'Missing Target Setup',
   HighOverdueExposure: 'High Overdue Exposure',
   HighPiutangExposure: 'High Piutang Exposure',
   CustomerConcentration: 'Customer Concentration',
@@ -33,12 +33,23 @@ export function filterSalesmanAttentionItems(
   return items.filter((item) => item.SignalKey === signalKey)
 }
 
+export function filterActiveSalesmen<T extends { IsActive: boolean }>(
+  rows: T[],
+  showInactive: boolean,
+): T[] {
+  if (showInactive) {
+    return rows
+  }
+
+  return rows.filter((row) => row.IsActive)
+}
+
 export function countSalesmanAttentionBySignal(
   items: DashboardSalesmanAttentionItem[],
 ): Record<SalesmanAttentionSignalKey, number> {
   const counts: Record<SalesmanAttentionSignalKey, number> = {
     BelowTarget: 0,
-    NoTarget: 0,
+    MissingTargetSetup: 0,
     HighOverdueExposure: 0,
     HighPiutangExposure: 0,
     CustomerConcentration: 0,

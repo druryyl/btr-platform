@@ -1,38 +1,68 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
-import { useRouter } from 'vue-router'
 import Message from 'primevue/message'
+import InputSwitch from 'primevue/inputswitch'
 import DashboardDetailLayout from '@/components/dashboard/DashboardDetailLayout.vue'
 import SalesmanAttentionCardGroup from '@/components/dashboard/SalesmanAttentionCardGroup.vue'
 import SalesmanAttentionList from '@/components/dashboard/SalesmanAttentionList.vue'
 import SalesmanSegmentationSection from '@/components/dashboard/SalesmanSegmentationSection.vue'
 import SalesmanNavigationSection from '@/components/dashboard/SalesmanNavigationSection.vue'
+import SalesmanDetailDrawer from '@/components/dashboard/SalesmanDetailDrawer.vue'
 import Top10RankingTable from '@/components/dashboard/Top10RankingTable.vue'
-import type { DashboardSalesmanRankingRow } from '@/models/dashboard'
+import type {
+  DashboardSalesmanAttentionItem,
+  DashboardSalesmanRankingRow,
+} from '@/models/dashboard'
 import { formatNumber, formatPercent } from '@/services/formatters'
-import { SALESMAN_ATTENTION_SIGNAL_ALL } from '@/services/salesmanAttentionSignals'
-import { resolveInvestigationSourceLabel } from '@/services/investigationSourceLabels'
-import { navigateToInvestigation } from '@/services/navigateToInvestigation'
+import {
+  filterActiveSalesmen,
+  SALESMAN_ATTENTION_SIGNAL_ALL,
+} from '@/services/salesmanAttentionSignals'
 import { useDashboardStore } from '@/stores/dashboardStore'
 
 const dashboard = useDashboardStore()
-const router = useRouter()
-const sourceLabel = resolveInvestigationSourceLabel('/dashboard/salesmen')
 const attentionSignalFilter = ref(SALESMAN_ATTENTION_SIGNAL_ALL)
+const showInactiveSalesmen = ref(false)
+const drawerVisible = ref(false)
+const selectedSalesPersonId = ref<string | null>(null)
+const selectedSalesPersonName = ref<string | null>(null)
 
 const cards = computed(() => dashboard.salesman?.AttentionCards)
+const filters = computed(() => dashboard.salesman?.Filters)
 const unavailable = computed(() => dashboard.salesman != null && !dashboard.salesman.IsAvailable)
 
-const omzetRankingRows = computed(
-  () => (dashboard.salesman?.PerformanceRankings?.TopOmzet ?? []) as Record<string, unknown>[],
+const toolbarSubtitle = computed(() => {
+  if (showInactiveSalesmen.value) {
+    return 'Showing all salesmen including inactive.'
+  }
+
+  const exposurePercent = filters.value?.ExposureTopPercent ?? 20
+  return `Showing active salesmen only (current-month Faktur). High exposure signals use top ${exposurePercent}% threshold.`
+})
+
+const filteredAttentionList = computed(() =>
+  filterActiveSalesmen(dashboard.salesman?.AttentionList ?? [], showInactiveSalesmen.value),
 )
 
-const achievementRankingRows = computed(
-  () => (dashboard.salesman?.PerformanceRankings?.TopAchievement ?? []) as Record<string, unknown>[],
+const omzetRankingRows = computed(() =>
+  filterActiveSalesmen(
+    (dashboard.salesman?.PerformanceRankings?.TopOmzet ?? []) as DashboardSalesmanRankingRow[],
+    showInactiveSalesmen.value,
+  ) as Record<string, unknown>[],
 )
 
-const piutangRankingRows = computed(
-  () => (dashboard.salesman?.ExposureRankings?.TopPiutang ?? []) as Record<string, unknown>[],
+const achievementRankingRows = computed(() =>
+  filterActiveSalesmen(
+    (dashboard.salesman?.PerformanceRankings?.TopAchievement ?? []) as DashboardSalesmanRankingRow[],
+    showInactiveSalesmen.value,
+  ) as Record<string, unknown>[],
+)
+
+const piutangRankingRows = computed(() =>
+  filterActiveSalesmen(
+    (dashboard.salesman?.ExposureRankings?.TopPiutang ?? []) as DashboardSalesmanRankingRow[],
+    showInactiveSalesmen.value,
+  ) as Record<string, unknown>[],
 )
 
 const omzetColumns = [
@@ -61,16 +91,26 @@ const piutangColumns = [
 
 const sectionNavItems = [
   { id: 'salesman-attention-cards', label: 'Attention Cards' },
+  { id: 'salesman-toolbar', label: 'Filters' },
   { id: 'salesman-attention-list', label: 'Attention List' },
   { id: 'salesman-performance-rankings', label: 'Performance Rankings' },
   { id: 'salesman-exposure-rankings', label: 'Exposure Rankings' },
   { id: 'salesman-segmentation', label: 'Segmentation' },
 ]
 
+function openSalesmanDetail(salesPersonId: string, salesPersonName: string): void {
+  selectedSalesPersonId.value = salesPersonId
+  selectedSalesPersonName.value = salesPersonName
+  drawerVisible.value = true
+}
+
 function onRankingRowClick(row: Record<string, unknown>): void {
   const item = row as unknown as DashboardSalesmanRankingRow
-  if (!item.Investigation) return
-  navigateToInvestigation(router, item.Investigation, sourceLabel)
+  openSalesmanDetail(item.SalesPersonId, item.SalesPersonName)
+}
+
+function onAttentionSalesmanClick(item: DashboardSalesmanAttentionItem): void {
+  openSalesmanDetail(item.SalesPersonId, item.SalesPersonName)
 }
 
 function setAttentionSignalFilter(signalKey: string): void {
@@ -134,9 +174,9 @@ onMounted(() => {
             </span>
           </div>
           <div class="metric">
-            <span class="metric__label">No Target</span>
+            <span class="metric__label">Missing Target Setup</span>
             <span class="metric__value">
-              {{ cards ? formatNumber(cards.NoTargetCount) : '—' }}
+              {{ cards ? formatNumber(cards.MissingTargetSetupCount) : '—' }}
             </span>
           </div>
         </SalesmanAttentionCardGroup>
@@ -194,11 +234,22 @@ onMounted(() => {
       </div>
     </section>
 
+    <section id="salesman-toolbar" class="salesman-dashboard__section salesman-dashboard__toolbar">
+      <div class="salesman-dashboard__toolbar-row">
+        <label class="salesman-dashboard__toggle">
+          <InputSwitch v-model="showInactiveSalesmen" />
+          <span>Show Inactive Salesmen</span>
+        </label>
+      </div>
+      <p class="salesman-dashboard__toolbar-subtitle">{{ toolbarSubtitle }}</p>
+    </section>
+
     <section id="salesman-attention-list" class="salesman-dashboard__section">
       <SalesmanAttentionList
         v-model:signal-filter="attentionSignalFilter"
-        :items="dashboard.salesman?.AttentionList ?? []"
+        :items="filteredAttentionList"
         :loading="dashboard.loading"
+        @salesman-click="onAttentionSalesmanClick"
       />
     </section>
 
@@ -258,6 +309,12 @@ onMounted(() => {
       class="salesman-dashboard__section"
       :navigation="dashboard.salesman?.Navigation ?? null"
     />
+
+    <SalesmanDetailDrawer
+      v-model:visible="drawerVisible"
+      :sales-person-id="selectedSalesPersonId"
+      :sales-person-name="selectedSalesPersonName"
+    />
   </DashboardDetailLayout>
 </template>
 
@@ -310,6 +367,26 @@ onMounted(() => {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
   gap: 1rem;
+}
+
+.salesman-dashboard__toolbar-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 1rem;
+}
+
+.salesman-dashboard__toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-weight: 600;
+}
+
+.salesman-dashboard__toolbar-subtitle {
+  margin: 0.75rem 0 0;
+  font-size: 0.875rem;
+  color: var(--p-text-muted-color);
 }
 
 .metric__label {

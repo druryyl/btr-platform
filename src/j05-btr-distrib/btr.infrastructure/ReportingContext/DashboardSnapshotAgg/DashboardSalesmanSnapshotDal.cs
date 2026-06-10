@@ -26,34 +26,34 @@ namespace btr.infrastructure.ReportingContext.DashboardSnapshotAgg
         {
             const string kpiSql = @"
 SELECT SnapshotKey, GeneratedAt, PeriodYear, PeriodMonth, TotalTeamOmzet, TotalPiutang,
-       ActiveSalesmanCount, BelowTargetCount, NoTargetCount, HighOverdueExposureCount,
+       ActiveSalesmanCount, BelowTargetCount, MissingTargetSetupCount, HighOverdueExposureCount,
        HighPiutangExposureCount, CustomerConcentrationCount, DormantPortfolioCount,
        TopOmzetSalesmanPercent, TopPiutangSalesmanPercent, LastRefreshLogId
 FROM BTRPD_SalesmanKpi
 WHERE SnapshotKey = @SnapshotKey";
 
             const string topOmzetSql = @"
-SELECT Rank, SalesPersonId, SalesPersonCode, SalesPersonName, CompletedOmzet, PercentOfTotal
+SELECT Rank, SalesPersonId, SalesPersonCode, SalesPersonName, CompletedOmzet, PercentOfTotal, IsActive
 FROM BTRPD_SalesmanTopOmzet
 WHERE SnapshotKey = @SnapshotKey
 ORDER BY Rank";
 
             const string topAchievementSql = @"
 SELECT Rank, SalesPersonId, SalesPersonCode, SalesPersonName, TargetAmount, CompletedOmzet,
-       AchievementPercent, PercentOfTotal
+       AchievementPercent, PercentOfTotal, IsActive
 FROM BTRPD_SalesmanTopAchievement
 WHERE SnapshotKey = @SnapshotKey
 ORDER BY Rank";
 
             const string topPiutangSql = @"
-SELECT Rank, SalesPersonId, SalesPersonCode, SalesPersonName, OutstandingBalance, PercentOfTotal
+SELECT Rank, SalesPersonId, SalesPersonCode, SalesPersonName, OutstandingBalance, PercentOfTotal, IsActive
 FROM BTRPD_SalesmanTopPiutang
 WHERE SnapshotKey = @SnapshotKey
 ORDER BY Rank";
 
             const string attentionSql = @"
 SELECT SalesPersonId, SalesPersonCode, SalesPersonName, SignalKey, SignalLabel, ValueAmount,
-       ValueText, WilayahName, SortOrder
+       ValueText, WilayahName, SortOrder, IsActive
 FROM BTRPD_SalesmanAttention
 WHERE SnapshotKey = @SnapshotKey
 ORDER BY SortOrder";
@@ -78,7 +78,7 @@ ORDER BY SegmentType, SortOrder";
                     TotalPiutang = kpi.TotalPiutang,
                     ActiveSalesmanCount = kpi.ActiveSalesmanCount,
                     BelowTargetCount = kpi.BelowTargetCount,
-                    NoTargetCount = kpi.NoTargetCount,
+                    MissingTargetSetupCount = kpi.MissingTargetSetupCount,
                     HighOverdueExposureCount = kpi.HighOverdueExposureCount,
                     HighPiutangExposureCount = kpi.HighPiutangExposureCount,
                     CustomerConcentrationCount = kpi.CustomerConcentrationCount,
@@ -94,7 +94,8 @@ ORDER BY SegmentType, SortOrder";
                             SalesPersonCode = r.SalesPersonCode,
                             SalesPersonName = r.SalesPersonName,
                             CompletedOmzet = r.CompletedOmzet,
-                            PercentOfTotal = r.PercentOfTotal
+                            PercentOfTotal = r.PercentOfTotal,
+                            IsActive = r.IsActive
                         }).ToList(),
                     TopAchievement = conn.Query<TopAchievementRow>(topAchievementSql, new { SnapshotKey })
                         .Select(r => new DashboardSalesmanTopAchievementRow
@@ -106,7 +107,8 @@ ORDER BY SegmentType, SortOrder";
                             TargetAmount = r.TargetAmount,
                             CompletedOmzet = r.CompletedOmzet,
                             AchievementPercent = r.AchievementPercent,
-                            PercentOfTotal = r.PercentOfTotal
+                            PercentOfTotal = r.PercentOfTotal,
+                            IsActive = r.IsActive
                         }).ToList(),
                     TopPiutang = conn.Query<TopPiutangRow>(topPiutangSql, new { SnapshotKey })
                         .Select(r => new DashboardSalesmanTopPiutangRow
@@ -116,7 +118,8 @@ ORDER BY SegmentType, SortOrder";
                             SalesPersonCode = r.SalesPersonCode,
                             SalesPersonName = r.SalesPersonName,
                             OutstandingBalance = r.OutstandingBalance,
-                            PercentOfTotal = r.PercentOfTotal
+                            PercentOfTotal = r.PercentOfTotal,
+                            IsActive = r.IsActive
                         }).ToList(),
                     AttentionList = conn.Query<AttentionRow>(attentionSql, new { SnapshotKey })
                         .Select(r => new DashboardSalesmanAttentionRow
@@ -129,7 +132,8 @@ ORDER BY SegmentType, SortOrder";
                             ValueAmount = r.ValueAmount,
                             ValueText = r.ValueText,
                             WilayahName = r.WilayahName,
-                            SortOrder = r.SortOrder
+                            SortOrder = r.SortOrder,
+                            IsActive = r.IsActive
                         }).ToList(),
                     Segmentation = conn.Query<SegmentationRow>(segmentationSql, new { SnapshotKey })
                         .Select(r => new DashboardSalesmanSegmentationRow
@@ -146,10 +150,60 @@ ORDER BY SegmentType, SortOrder";
             }
         }
 
+        public IList<DashboardSalesmanPrincipalAchievementRow> ListPrincipalAchievement(string salesPersonId)
+        {
+            const string sql = @"
+SELECT SalesPersonId, SalesPersonCode, SalesPersonName, SupplierId, SupplierName,
+       TargetAmount, CompletedOmzet, AchievementPercent, SortOrder
+FROM BTRPD_SalesmanPrincipalAchievement
+WHERE SnapshotKey = @SnapshotKey AND SalesPersonId = @SalesPersonId
+ORDER BY SortOrder";
+
+            using (var conn = new SqlConnection(ConnStringHelper.Get(_opt)))
+            {
+                return conn.Query<DashboardSalesmanPrincipalAchievementRow>(sql, new
+                {
+                    SnapshotKey,
+                    SalesPersonId = salesPersonId ?? string.Empty
+                }).ToList();
+            }
+        }
+
+        public IList<DashboardSalesmanRepHistoryRow> ListRepHistory(string salesPersonId, int months)
+        {
+            if (months <= 0)
+                months = 12;
+
+            if (months > 12)
+                months = 12;
+
+            const string sql = @"
+SELECT TOP (@Months)
+    PeriodYear, PeriodMonth, SalesPersonId, SalesPersonCode, SalesPersonName,
+    TargetAmount, CompletedOmzet, AchievementPercent, AchievementBand, OpenBalance, IsActive
+FROM BTRPD_SalesmanRepHistory
+WHERE SalesPersonId = @SalesPersonId
+ORDER BY PeriodYear DESC, PeriodMonth DESC";
+
+            using (var conn = new SqlConnection(ConnStringHelper.Get(_opt)))
+            {
+                var rows = conn.Query<DashboardSalesmanRepHistoryRow>(sql, new
+                {
+                    SalesPersonId = salesPersonId ?? string.Empty,
+                    Months = months
+                }).ToList();
+
+                return rows
+                    .OrderBy(r => r.PeriodYear)
+                    .ThenBy(r => r.PeriodMonth)
+                    .ToList();
+            }
+        }
+
         public void ReplaceCurrent(DashboardSalesmanAggregateResult result, string refreshLogId)
         {
             if (result is null)
-                throw new System.ArgumentNullException(nameof(result));
+                throw new ArgumentNullException(nameof(result));
 
             using (var conn = new SqlConnection(ConnStringHelper.Get(_opt)))
             {
@@ -196,6 +250,10 @@ ORDER BY SegmentType, SortOrder";
                 "DELETE FROM BTRPD_SalesmanSegmentation WHERE SnapshotKey = @SnapshotKey",
                 new { SnapshotKey },
                 transaction);
+            conn.Execute(
+                "DELETE FROM BTRPD_SalesmanPrincipalAchievement WHERE SnapshotKey = @SnapshotKey",
+                new { SnapshotKey },
+                transaction);
 
             const string mergeKpiSql = @"
 MERGE BTRPD_SalesmanKpi AS target
@@ -210,7 +268,7 @@ WHEN MATCHED THEN
         TotalPiutang = @TotalPiutang,
         ActiveSalesmanCount = @ActiveSalesmanCount,
         BelowTargetCount = @BelowTargetCount,
-        NoTargetCount = @NoTargetCount,
+        MissingTargetSetupCount = @MissingTargetSetupCount,
         HighOverdueExposureCount = @HighOverdueExposureCount,
         HighPiutangExposureCount = @HighPiutangExposureCount,
         CustomerConcentrationCount = @CustomerConcentrationCount,
@@ -221,12 +279,12 @@ WHEN MATCHED THEN
 WHEN NOT MATCHED THEN
     INSERT (
         SnapshotKey, GeneratedAt, PeriodYear, PeriodMonth, TotalTeamOmzet, TotalPiutang,
-        ActiveSalesmanCount, BelowTargetCount, NoTargetCount, HighOverdueExposureCount,
+        ActiveSalesmanCount, BelowTargetCount, MissingTargetSetupCount, HighOverdueExposureCount,
         HighPiutangExposureCount, CustomerConcentrationCount, DormantPortfolioCount,
         TopOmzetSalesmanPercent, TopPiutangSalesmanPercent, LastRefreshLogId)
     VALUES (
         @SnapshotKey, @GeneratedAt, @PeriodYear, @PeriodMonth, @TotalTeamOmzet, @TotalPiutang,
-        @ActiveSalesmanCount, @BelowTargetCount, @NoTargetCount, @HighOverdueExposureCount,
+        @ActiveSalesmanCount, @BelowTargetCount, @MissingTargetSetupCount, @HighOverdueExposureCount,
         @HighPiutangExposureCount, @CustomerConcentrationCount, @DormantPortfolioCount,
         @TopOmzetSalesmanPercent, @TopPiutangSalesmanPercent, @LastRefreshLogId);";
 
@@ -240,7 +298,7 @@ WHEN NOT MATCHED THEN
                 result.TotalPiutang,
                 result.ActiveSalesmanCount,
                 result.BelowTargetCount,
-                result.NoTargetCount,
+                result.MissingTargetSetupCount,
                 result.HighOverdueExposureCount,
                 result.HighPiutangExposureCount,
                 result.CustomerConcentrationCount,
@@ -253,10 +311,10 @@ WHEN NOT MATCHED THEN
             const string insertTopOmzetSql = @"
 INSERT INTO BTRPD_SalesmanTopOmzet (
     SalesmanTopOmzetId, SnapshotKey, Rank, SalesPersonId, SalesPersonCode, SalesPersonName,
-    CompletedOmzet, PercentOfTotal)
+    CompletedOmzet, PercentOfTotal, IsActive)
 VALUES (
     @SalesmanTopOmzetId, @SnapshotKey, @Rank, @SalesPersonId, @SalesPersonCode, @SalesPersonName,
-    @CompletedOmzet, @PercentOfTotal)";
+    @CompletedOmzet, @PercentOfTotal, @IsActive)";
 
             foreach (var row in result.TopOmzet ?? new List<DashboardSalesmanTopOmzetRow>())
             {
@@ -269,17 +327,18 @@ VALUES (
                     SalesPersonCode = row.SalesPersonCode ?? string.Empty,
                     SalesPersonName = row.SalesPersonName ?? string.Empty,
                     row.CompletedOmzet,
-                    row.PercentOfTotal
+                    row.PercentOfTotal,
+                    row.IsActive
                 }, transaction);
             }
 
             const string insertTopAchievementSql = @"
 INSERT INTO BTRPD_SalesmanTopAchievement (
     SalesmanTopAchievementId, SnapshotKey, Rank, SalesPersonId, SalesPersonCode, SalesPersonName,
-    TargetAmount, CompletedOmzet, AchievementPercent, PercentOfTotal)
+    TargetAmount, CompletedOmzet, AchievementPercent, PercentOfTotal, IsActive)
 VALUES (
     @SalesmanTopAchievementId, @SnapshotKey, @Rank, @SalesPersonId, @SalesPersonCode, @SalesPersonName,
-    @TargetAmount, @CompletedOmzet, @AchievementPercent, @PercentOfTotal)";
+    @TargetAmount, @CompletedOmzet, @AchievementPercent, @PercentOfTotal, @IsActive)";
 
             foreach (var row in result.TopAchievement ?? new List<DashboardSalesmanTopAchievementRow>())
             {
@@ -294,17 +353,18 @@ VALUES (
                     row.TargetAmount,
                     row.CompletedOmzet,
                     row.AchievementPercent,
-                    row.PercentOfTotal
+                    row.PercentOfTotal,
+                    row.IsActive
                 }, transaction);
             }
 
             const string insertTopPiutangSql = @"
 INSERT INTO BTRPD_SalesmanTopPiutang (
     SalesmanTopPiutangId, SnapshotKey, Rank, SalesPersonId, SalesPersonCode, SalesPersonName,
-    OutstandingBalance, PercentOfTotal)
+    OutstandingBalance, PercentOfTotal, IsActive)
 VALUES (
     @SalesmanTopPiutangId, @SnapshotKey, @Rank, @SalesPersonId, @SalesPersonCode, @SalesPersonName,
-    @OutstandingBalance, @PercentOfTotal)";
+    @OutstandingBalance, @PercentOfTotal, @IsActive)";
 
             foreach (var row in result.TopPiutang ?? new List<DashboardSalesmanTopPiutangRow>())
             {
@@ -317,17 +377,18 @@ VALUES (
                     SalesPersonCode = row.SalesPersonCode ?? string.Empty,
                     SalesPersonName = row.SalesPersonName ?? string.Empty,
                     row.OutstandingBalance,
-                    row.PercentOfTotal
+                    row.PercentOfTotal,
+                    row.IsActive
                 }, transaction);
             }
 
             const string insertAttentionSql = @"
 INSERT INTO BTRPD_SalesmanAttention (
     SalesmanAttentionId, SnapshotKey, SalesPersonId, SalesPersonCode, SalesPersonName, SignalKey,
-    SignalLabel, ValueAmount, ValueText, WilayahName, SortOrder)
+    SignalLabel, ValueAmount, ValueText, WilayahName, SortOrder, IsActive)
 VALUES (
     @SalesmanAttentionId, @SnapshotKey, @SalesPersonId, @SalesPersonCode, @SalesPersonName, @SignalKey,
-    @SignalLabel, @ValueAmount, @ValueText, @WilayahName, @SortOrder)";
+    @SignalLabel, @ValueAmount, @ValueText, @WilayahName, @SortOrder, @IsActive)";
 
             foreach (var row in result.AttentionList ?? new List<DashboardSalesmanAttentionRow>())
             {
@@ -343,7 +404,8 @@ VALUES (
                     row.ValueAmount,
                     ValueText = row.ValueText ?? string.Empty,
                     WilayahName = row.WilayahName ?? string.Empty,
-                    row.SortOrder
+                    row.SortOrder,
+                    row.IsActive
                 }, transaction);
             }
 
@@ -370,19 +432,94 @@ VALUES (
                     row.SortOrder
                 }, transaction);
             }
+
+            const string insertPrincipalSql = @"
+INSERT INTO BTRPD_SalesmanPrincipalAchievement (
+    SalesmanPrincipalAchievementId, SnapshotKey, SalesPersonId, SalesPersonCode, SalesPersonName,
+    SupplierId, SupplierName, TargetAmount, CompletedOmzet, AchievementPercent, SortOrder)
+VALUES (
+    @SalesmanPrincipalAchievementId, @SnapshotKey, @SalesPersonId, @SalesPersonCode, @SalesPersonName,
+    @SupplierId, @SupplierName, @TargetAmount, @CompletedOmzet, @AchievementPercent, @SortOrder)";
+
+            foreach (var row in result.PrincipalAchievement ?? new List<DashboardSalesmanPrincipalAchievementRow>())
+            {
+                conn.Execute(insertPrincipalSql, new
+                {
+                    SalesmanPrincipalAchievementId = Ulid.NewUlid().ToString(),
+                    SnapshotKey,
+                    SalesPersonId = row.SalesPersonId ?? string.Empty,
+                    SalesPersonCode = row.SalesPersonCode ?? string.Empty,
+                    SalesPersonName = row.SalesPersonName ?? string.Empty,
+                    SupplierId = row.SupplierId ?? string.Empty,
+                    SupplierName = row.SupplierName ?? string.Empty,
+                    row.TargetAmount,
+                    row.CompletedOmzet,
+                    row.AchievementPercent,
+                    row.SortOrder
+                }, transaction);
+            }
+
+            const string mergeHistorySql = @"
+MERGE BTRPD_SalesmanRepHistory AS target
+USING (SELECT @PeriodYear AS PeriodYear, @PeriodMonth AS PeriodMonth, @SalesPersonId AS SalesPersonId) AS source
+ON target.PeriodYear = source.PeriodYear
+   AND target.PeriodMonth = source.PeriodMonth
+   AND target.SalesPersonId = source.SalesPersonId
+WHEN MATCHED THEN
+    UPDATE SET
+        SalesPersonCode = @SalesPersonCode,
+        SalesPersonName = @SalesPersonName,
+        TargetAmount = @TargetAmount,
+        CompletedOmzet = @CompletedOmzet,
+        AchievementPercent = @AchievementPercent,
+        AchievementBand = @AchievementBand,
+        OpenBalance = @OpenBalance,
+        IsActive = @IsActive,
+        LastRefreshLogId = @LastRefreshLogId,
+        UpdatedAt = @UpdatedAt
+WHEN NOT MATCHED THEN
+    INSERT (
+        SalesmanRepHistoryId, PeriodYear, PeriodMonth, SalesPersonId, SalesPersonCode, SalesPersonName,
+        TargetAmount, CompletedOmzet, AchievementPercent, AchievementBand, OpenBalance, IsActive,
+        LastRefreshLogId, UpdatedAt)
+    VALUES (
+        @SalesmanRepHistoryId, @PeriodYear, @PeriodMonth, @SalesPersonId, @SalesPersonCode, @SalesPersonName,
+        @TargetAmount, @CompletedOmzet, @AchievementPercent, @AchievementBand, @OpenBalance, @IsActive,
+        @LastRefreshLogId, @UpdatedAt);";
+
+            foreach (var row in result.RepHistory ?? new List<DashboardSalesmanRepHistoryRow>())
+            {
+                conn.Execute(mergeHistorySql, new
+                {
+                    SalesmanRepHistoryId = Ulid.NewUlid().ToString(),
+                    row.PeriodYear,
+                    row.PeriodMonth,
+                    SalesPersonId = row.SalesPersonId ?? string.Empty,
+                    SalesPersonCode = row.SalesPersonCode ?? string.Empty,
+                    SalesPersonName = row.SalesPersonName ?? string.Empty,
+                    row.TargetAmount,
+                    row.CompletedOmzet,
+                    row.AchievementPercent,
+                    AchievementBand = row.AchievementBand ?? string.Empty,
+                    row.OpenBalance,
+                    row.IsActive,
+                    LastRefreshLogId = refreshLogId ?? string.Empty,
+                    UpdatedAt = result.GeneratedAt
+                }, transaction);
+            }
         }
 
         private sealed class KpiRow
         {
             public string SnapshotKey { get; set; }
-            public System.DateTime GeneratedAt { get; set; }
+            public DateTime GeneratedAt { get; set; }
             public int PeriodYear { get; set; }
             public int PeriodMonth { get; set; }
             public decimal TotalTeamOmzet { get; set; }
             public decimal TotalPiutang { get; set; }
             public int ActiveSalesmanCount { get; set; }
             public int BelowTargetCount { get; set; }
-            public int NoTargetCount { get; set; }
+            public int MissingTargetSetupCount { get; set; }
             public int HighOverdueExposureCount { get; set; }
             public int HighPiutangExposureCount { get; set; }
             public int CustomerConcentrationCount { get; set; }
@@ -400,6 +537,7 @@ VALUES (
             public string SalesPersonName { get; set; }
             public decimal CompletedOmzet { get; set; }
             public decimal? PercentOfTotal { get; set; }
+            public bool IsActive { get; set; }
         }
 
         private sealed class TopAchievementRow
@@ -412,6 +550,7 @@ VALUES (
             public decimal CompletedOmzet { get; set; }
             public decimal? AchievementPercent { get; set; }
             public decimal? PercentOfTotal { get; set; }
+            public bool IsActive { get; set; }
         }
 
         private sealed class TopPiutangRow
@@ -422,6 +561,7 @@ VALUES (
             public string SalesPersonName { get; set; }
             public decimal OutstandingBalance { get; set; }
             public decimal? PercentOfTotal { get; set; }
+            public bool IsActive { get; set; }
         }
 
         private sealed class AttentionRow
@@ -435,6 +575,7 @@ VALUES (
             public string ValueText { get; set; }
             public string WilayahName { get; set; }
             public int SortOrder { get; set; }
+            public bool IsActive { get; set; }
         }
 
         private sealed class SegmentationRow

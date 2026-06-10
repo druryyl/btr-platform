@@ -18,6 +18,8 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg
 
         public int SalesmanIntervalMinutes { get; set; } = 30;
 
+        public decimal SalesmanExposureTopPercent { get; set; } = 20;
+
         public int CollectionIntervalMinutes { get; set; } = 30;
 
         public int LocationIntervalMinutes { get; set; } = 60;

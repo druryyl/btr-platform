@@ -8,6 +8,7 @@ CREATE TABLE BTRPD_SalesmanTopPiutang
     SalesPersonName      VARCHAR(50)   NOT NULL CONSTRAINT DF_BTRPD_SalesmanTopPiutang_SalesPersonName DEFAULT(''),
     OutstandingBalance   DECIMAL(18,2) NOT NULL CONSTRAINT DF_BTRPD_SalesmanTopPiutang_OutstandingBalance DEFAULT(0),
     PercentOfTotal       DECIMAL(9,4)  NULL,
+    IsActive             BIT           NOT NULL CONSTRAINT DF_BTRPD_SalesmanTopPiutang_IsActive DEFAULT(0),
 
     CONSTRAINT PK_BTRPD_SalesmanTopPiutang PRIMARY KEY CLUSTERED (SalesmanTopPiutangId),
     CONSTRAINT UX_BTRPD_SalesmanTopPiutang_SnapshotKey_Rank UNIQUE (SnapshotKey, Rank)

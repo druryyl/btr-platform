@@ -9,6 +9,7 @@ INSERT INTO BTR_Menu (MenuId, GroupOrder, FormType, MenuName, Caption) VALUES
 ('SM3', 11, 'MASTR','SM3WilayahMenu', 'SM3-Wilayah'),
 ('SM4', 11, 'MASTR','SM4RuteMenu', 'SM4-Rute'),
 ('SM5', 11, 'MASTR','SM5SalesPersonPrincipalMenu', 'SM5-Principal Assignment'),
+('SM7', 11, 'MASTR','SM7JadwalKunjunganMenu', 'SM7-Jadwal Kunjungan'),
 ('SF1', 12, 'INFO', 'SF1FakturInfoMenu', 'SF1-Info Faktur ...'),
 ('SF2', 12, 'INFO', 'SF2FakturBrgInfoMenu', 'SF2-Info Faktur Barang ...'),
 ('SF3', 12, 'INFO', 'SF3FakturPerSupplierInfoMenu', 'SF3-Info Faktur Per Supplier ...'),

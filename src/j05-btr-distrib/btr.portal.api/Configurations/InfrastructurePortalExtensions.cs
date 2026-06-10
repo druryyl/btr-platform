@@ -39,6 +39,7 @@ using btr.infrastructure.ReportingContext.InventoryReportAgg;
 using btr.infrastructure.ReportingContext.PiutangReportAgg;
 using btr.infrastructure.ReportingContext.PurchasingReportAgg;
 using btr.infrastructure.ReportingContext.SalesReportAgg;
+using btr.infrastructure.SalesContext.FakturInfo;
 using btr.infrastructure.SalesContext.FakturInfoAgg;
 using btr.infrastructure.SalesContext.SalesOmzetAgg;
 using btr.infrastructure.SalesContext.SalesPersonPrincipalTargetAgg;
@@ -63,6 +64,7 @@ namespace btr.portal.api.Configurations
             services.AddScoped<INunaCounterDal, ParamNoDal>();
 
             services.AddScoped<ISalesOmzetSourceDal, SalesOmzetSourceDal>();
+            services.AddScoped<IFakturPrincipalOmzetDal, FakturPrincipalOmzetDal>();
             services.AddScoped<ISalesPersonPrincipalTargetDal, SalesPersonPrincipalTargetDal>();
             services.AddScoped<ISalesOmzetTargetDal, SalesOmzetTargetDal>();
             services.AddScoped<ISalesOmzetHealthMetricsDal, SalesOmzetHealthMetricsDal>();

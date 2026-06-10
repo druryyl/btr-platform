@@ -138,6 +138,8 @@
     <Build Include="Tables\SalesContext\BTR_FakturDiscountKlaim.sql" />
     <Build Include="Tables\SalesContext\BTR_SalesRute.sql" />
     <Build Include="Tables\SalesContext\BTR_SalesRuteItem.sql" />
+    <Build Include="Tables\SalesContext\BTR_VisitPlan.sql" />
+    <Build Include="Tables\SalesContext\BTR_VisitPlanException.sql" />
     <Build Include="Tables\SalesContext\BTR_HariRute.sql" />
     <Build Include="Tables\PurchaseContext\BTR_ReturBeli.sql" />
     <Build Include="Tables\PurchaseContext\BTR_ReturBeliItem.sql" />
@@ -201,6 +203,8 @@
     <Build Include="Tables\ReportingContext\BTRPD_SalesmanTopPiutang.sql" />
     <Build Include="Tables\ReportingContext\BTRPD_SalesmanAttention.sql" />
     <Build Include="Tables\ReportingContext\BTRPD_SalesmanSegmentation.sql" />
+    <Build Include="Tables\ReportingContext\BTRPD_SalesmanPrincipalAchievement.sql" />
+    <Build Include="Tables\ReportingContext\BTRPD_SalesmanRepHistory.sql" />
     <Build Include="Tables\ReportingContext\IX_BTR_Piutang_OpenBalance.sql" />
   </ItemGroup>
   <ItemGroup>
@@ -209,10 +213,13 @@
     <None Include="DataSeeds\BTR_Role.dataseed.sql" />
     <None Include="DataSeeds\BTR_ParamNo_SalesOmzet.sql" />
     <None Include="DataSeeds\BTR_ParamNo_SalesOmzetHealthWeekly.sql" />
+    <None Include="DataSeeds\BTR_ParamSistem_VisitPlan.sql" />
+    <None Include="DataSeeds\BTR_RoleMenu_VisitPlan.sql" />
     <None Include="Scripts\Upgrade_PortalDashboard_GeneratedIds_ToUlid.sql" />
     <None Include="Scripts\Rename_PortalDashboard_Tables_To_BTRPD.sql" />
     <None Include="Scripts\Create_BTRPD_PortalDashboard_Tables.sql" />
     <None Include="Scripts\Upgrade_M14_PiutangDashboard_V2.sql" />
+    <None Include="Scripts\Upgrade_M18_SalesmenPerformance_V2.sql" />
     <None Include="Scripts\Create_BTR_SalesPersonSupplier.sql" />
     <None Include="Scripts\Create_BTR_SalesPersonPrincipalTarget.sql" />
   </ItemGroup>

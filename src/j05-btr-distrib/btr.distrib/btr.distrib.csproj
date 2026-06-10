@@ -875,6 +875,12 @@
     <Compile Include="SalesContext\SalesPersonPrincipalTargetAgg\SalesPersonPrincipalTargetForm.Designer.cs">
       <DependentUpon>SalesPersonPrincipalTargetForm.cs</DependentUpon>
     </Compile>
+    <Compile Include="SalesContext\VisitPlanAgg\JadwalKunjunganForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="SalesContext\VisitPlanAgg\JadwalKunjunganForm.Designer.cs">
+      <DependentUpon>JadwalKunjunganForm.cs</DependentUpon>
+    </Compile>
     <Compile Include="SalesContext\WilayahAgg\WilayahForm.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -1212,6 +1218,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="SalesContext\SalesPersonPrincipalTargetAgg\SalesPersonPrincipalTargetForm.resx">
       <DependentUpon>SalesPersonPrincipalTargetForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="SalesContext\VisitPlanAgg\JadwalKunjunganForm.resx">
+      <DependentUpon>JadwalKunjunganForm.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="SharedForm\ParamSistemForm.resx">
       <DependentUpon>ParamSistemForm.cs</DependentUpon>

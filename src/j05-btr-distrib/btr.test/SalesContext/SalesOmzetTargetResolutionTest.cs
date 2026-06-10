@@ -90,6 +90,9 @@ namespace btr.test.SalesContext
                 string salesPersonId, int year, int month)
                 => Enumerable.Empty<SalesPersonPrincipalTargetModel>();
 
+            public IEnumerable<SalesPersonPrincipalTargetModel> ListByPeriod(int year, int month)
+                => Enumerable.Empty<SalesPersonPrincipalTargetModel>();
+
             public void Upsert(IEnumerable<SalesPersonPrincipalTargetModel> rows) { }
 
             public decimal SumBySalesPersonPeriod(string salesPersonId, int year, int month)

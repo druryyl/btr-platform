@@ -8,6 +8,7 @@ using btr.application.ReportingContext.DashboardSnapshotAgg.Services;
 using btr.application.SalesContext.FakturInfo;
 using btr.application.SalesContext.SalesOmzetAgg.Contracts;
 using btr.application.SalesContext.SalesPersonAgg.Contracts;
+using btr.application.SalesContext.SalesPersonPrincipalTargetAgg.Contracts;
 using btr.application.SupportContext.TglJamAgg;
 using btr.nuna.Application;
 using btr.nuna.Domain;
@@ -29,10 +30,13 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.UseCases
         private readonly IPiutangOpenBalanceWithSalesmanDal _openBalanceDal;
         private readonly ISalesPersonDal _salesPersonDal;
         private readonly ISalesOmzetTargetDal _targetDal;
+        private readonly ISalesPersonPrincipalTargetDal _principalTargetDal;
+        private readonly IFakturPrincipalOmzetDal _principalOmzetDal;
         private readonly DashboardSalesmanAggregator _aggregator;
         private readonly IDashboardSalesmanSnapshotDal _snapshotDal;
         private readonly IDashboardSnapshotRefreshLogDal _refreshLogDal;
         private readonly ITglJamDal _tglJamDal;
+        private readonly DashboardSnapshotOptions _options;
 
         public RefreshDashboardSalesmanSnapshotWorker(
             IFakturViewDal fakturViewDal,
@@ -40,20 +44,26 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.UseCases
             IPiutangOpenBalanceWithSalesmanDal openBalanceDal,
             ISalesPersonDal salesPersonDal,
             ISalesOmzetTargetDal targetDal,
+            ISalesPersonPrincipalTargetDal principalTargetDal,
+            IFakturPrincipalOmzetDal principalOmzetDal,
             DashboardSalesmanAggregator aggregator,
             IDashboardSalesmanSnapshotDal snapshotDal,
             IDashboardSnapshotRefreshLogDal refreshLogDal,
-            ITglJamDal tglJamDal)
+            ITglJamDal tglJamDal,
+            DashboardSnapshotOptions options)
         {
             _fakturViewDal = fakturViewDal;
             _lastFakturDal = lastFakturDal;
             _openBalanceDal = openBalanceDal;
             _salesPersonDal = salesPersonDal;
             _targetDal = targetDal;
+            _principalTargetDal = principalTargetDal;
+            _principalOmzetDal = principalOmzetDal;
             _aggregator = aggregator;
             _snapshotDal = snapshotDal;
             _refreshLogDal = refreshLogDal;
             _tglJamDal = tglJamDal;
+            _options = options ?? new DashboardSnapshotOptions();
         }
 
         public void Execute(RefreshDashboardSalesmanSnapshotRequest request)
@@ -81,7 +91,7 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.UseCases
                 var today = _tglJamDal.Now.Date;
                 var periode = CurrentMonthPeriode(today);
                 var generatedAt = _tglJamDal.Now;
-                const int loadSteps = 5;
+                const int loadSteps = 7;
 
                 WorkerProgressScope.Current.StepStarted($"{Domain}:Load", "Load source data");
                 WorkerProgressScope.Current.ReportPhaseProgress($"{Domain}: Load faktur", 1, loadSteps);
@@ -103,9 +113,17 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.UseCases
                 WorkerProgressScope.Current.ReportPhaseProgress($"{Domain}: Load targets", 5, loadSteps);
                 var targets = _targetDal.ListTargetsForMonth(periode.Tgl1.Year, periode.Tgl1.Month);
                 var targetCount = targets == null ? 0 : System.Linq.Enumerable.Count(targets);
+
+                WorkerProgressScope.Current.ReportPhaseProgress($"{Domain}: Load principal targets", 6, loadSteps);
+                var principalTargets = _principalTargetDal.ListByPeriod(periode.Tgl1.Year, periode.Tgl1.Month)?.ToList()
+                    ?? new System.Collections.Generic.List<btr.domain.SalesContext.SalesPersonPrincipalTargetAgg.SalesPersonPrincipalTargetModel>();
+
+                WorkerProgressScope.Current.ReportPhaseProgress($"{Domain}: Load principal omzet", 7, loadSteps);
+                var principalOmzet = _principalOmzetDal.ListOmzetBySalesPersonPrincipal(periode);
+
                 WorkerProgressScope.Current.StepCompleted($"{Domain}:Load", new WorkerProgressStepInfo
                 {
-                    RecordCount = fakturRows.Count + lastFakturRows.Count + piutangRows.Count + salespeople.Count + targetCount
+                    RecordCount = fakturRows.Count + lastFakturRows.Count + piutangRows.Count + salespeople.Count + targetCount + principalTargets.Count + principalOmzet.Count
                 });
 
                 WorkerProgressScope.Current.StepStarted($"{Domain}:Aggregate", "Aggregate metrics");
@@ -117,7 +135,10 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.UseCases
                     targets,
                     periode,
                     today,
-                    generatedAt);
+                    generatedAt,
+                    _options.SalesmanExposureTopPercent,
+                    principalTargets,
+                    principalOmzet);
                 WorkerProgressScope.Current.StepCompleted($"{Domain}:Aggregate");
 
                 WorkerProgressScope.Current.StepStarted($"{Domain}:Save", "Save snapshot");

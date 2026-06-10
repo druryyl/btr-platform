@@ -10,6 +10,7 @@ CREATE TABLE BTRPD_SalesmanTopAchievement
     CompletedOmzet           DECIMAL(18,2) NOT NULL CONSTRAINT DF_BTRPD_SalesmanTopAchievement_CompletedOmzet DEFAULT(0),
     AchievementPercent       DECIMAL(9,4)  NULL,
     PercentOfTotal           DECIMAL(9,4)  NULL,
+    IsActive                 BIT           NOT NULL CONSTRAINT DF_BTRPD_SalesmanTopAchievement_IsActive DEFAULT(0),
 
     CONSTRAINT PK_BTRPD_SalesmanTopAchievement PRIMARY KEY CLUSTERED (SalesmanTopAchievementId),
     CONSTRAINT UX_BTRPD_SalesmanTopAchievement_SnapshotKey_Rank UNIQUE (SnapshotKey, Rank)

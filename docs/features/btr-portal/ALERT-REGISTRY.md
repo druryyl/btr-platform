@@ -51,7 +51,7 @@
 | `SalesAchievementWarning` | Achievement Warning | M16 / M11 | Company | Alerts | Yes — when band = Warning | `/dashboard/sales` | — | — | — | Achievement bands only severity exception |
 | `SalesAchievementCritical` | Achievement Critical | M16 / M11 | Company | Alerts | Yes — when band = Critical | `/dashboard/sales` | — | — | — | Company headline |
 | `BelowTarget` | Below Target | M18 | Salesman | Alerts | Yes — Top 20 Sales | `/dashboard/salesmen` | `/reports/sales` | `currentMonth` | Sales Omzet Chart (RO2) | Achievement band on rep |
-| `NoTarget` | No Target | M18 | Salesman | Alerts | Yes — Top 20 Sales | `/dashboard/salesmen` | `/reports/sales` | `currentMonth` | — | |
+| `MissingTargetSetup` | Missing Target Setup | M18 | Salesman | Alerts | Yes — Top 20 Sales | `/dashboard/salesmen` | `/reports/sales` | `currentMonth` | — | |
 | `CustomerConcentration` | Customer Concentration | M18 | Salesman | Concentrations | Yes — informational | `/dashboard/salesmen` | `/reports/sales` | `currentMonth` | Sales Omzet Chart (RO2) | Not default Alerts feed |
 
 ### Customer

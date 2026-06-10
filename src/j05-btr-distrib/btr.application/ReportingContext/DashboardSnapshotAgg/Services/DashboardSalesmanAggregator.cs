@@ -7,6 +7,7 @@ using btr.application.ReportingContext.DashboardSnapshotAgg.Models;
 using btr.application.SalesContext.FakturInfo;
 using btr.application.SalesContext.SalesOmzetAgg.Policies;
 using btr.domain.SalesContext.SalesPersonAgg;
+using btr.domain.SalesContext.SalesPersonPrincipalTargetAgg;
 using btr.nuna.Domain;
 
 namespace btr.application.ReportingContext.DashboardSnapshotAgg.Services
@@ -15,9 +16,10 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.Services
     {
         public const int TopSalesmanCount = 10;
         public const int DormantDaysThreshold = 90;
+        public const decimal DefaultExposureTopPercent = 20m;
 
         public const string SignalBelowTarget = "BelowTarget";
-        public const string SignalNoTarget = "NoTarget";
+        public const string SignalMissingTargetSetup = "MissingTargetSetup";
         public const string SignalHighOverdueExposure = "HighOverdueExposure";
         public const string SignalHighPiutangExposure = "HighPiutangExposure";
         public const string SignalCustomerConcentration = "CustomerConcentration";
@@ -37,7 +39,10 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.Services
             IReadOnlyDictionary<string, decimal?> targetsByRep,
             Periode periode,
             DateTime today,
-            DateTime generatedAt)
+            DateTime generatedAt,
+            decimal exposureTopPercent = DefaultExposureTopPercent,
+            IEnumerable<SalesPersonPrincipalTargetModel> principalTargets = null,
+            IEnumerable<FakturPrincipalOmzetDto> principalOmzet = null)
         {
             if (periode is null)
                 throw new ArgumentNullException(nameof(periode));
@@ -78,18 +83,41 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.Services
                 ? topPiutang[0].OutstandingBalance / totalPiutang * 100m
                 : (decimal?)null;
 
-            var attentionList = BuildAttentionList(repStates.Values, totalPiutang);
+            var highPiutangSet = ResolveTopPercentByMetric(
+                repStates.Values,
+                r => r.OpenBalance,
+                exposureTopPercent);
+            var highOverdueSet = ResolveTopPercentByMetric(
+                repStates.Values,
+                r => r.OverdueBalance,
+                exposureTopPercent);
+
+            var attentionList = BuildAttentionList(
+                repStates.Values,
+                totalPiutang,
+                highPiutangSet,
+                highOverdueSet);
             var segmentation = BuildSegmentation(salesPersonList, activeSet);
 
             var belowTargetCount = repStates.Values.Count(r =>
                 r.HasTarget && IsBelowTargetBand(r.AchievementBand));
-            var noTargetCount = repStates.Values.Count(r =>
+            var missingTargetSetupCount = repStates.Values.Count(r =>
                 r.HasMonthActivity && !r.HasTarget);
-            var highOverdueCount = repStates.Values.Count(r => r.OverdueCustomerCount > 0);
-            var highPiutangCount = repStates.Values.Count(r => r.OpenBalance > 0);
+            var highOverdueCount = highOverdueSet.Count;
+            var highPiutangCount = highPiutangSet.Count;
             var concentrationCount = repStates.Values.Count(r =>
                 r.OmzetAmount > 0 && r.TopCustomerPercent.HasValue);
             var dormantPortfolioCount = repStates.Values.Count(r => r.DormantCustomerCount > 0);
+
+            var principalAchievement = BuildPrincipalAchievement(
+                repStates,
+                principalTargets,
+                principalOmzet);
+
+            var repHistory = BuildRepHistory(
+                repStates.Values,
+                periodStart.Year,
+                periodStart.Month);
 
             return new DashboardSalesmanAggregateResult
             {
@@ -99,7 +127,7 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.Services
                 TotalPiutang = totalPiutang,
                 ActiveSalesmanCount = activeSet.Count,
                 BelowTargetCount = belowTargetCount,
-                NoTargetCount = noTargetCount,
+                MissingTargetSetupCount = missingTargetSetupCount,
                 HighOverdueExposureCount = highOverdueCount,
                 HighPiutangExposureCount = highPiutangCount,
                 CustomerConcentrationCount = concentrationCount,
@@ -111,8 +139,140 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.Services
                 TopAchievement = topAchievement,
                 TopPiutang = topPiutang,
                 AttentionList = attentionList,
-                Segmentation = segmentation
+                Segmentation = segmentation,
+                PrincipalAchievement = principalAchievement,
+                RepHistory = repHistory
             };
+        }
+
+        private static HashSet<string> ResolveTopPercentByMetric(
+            IEnumerable<RepState> reps,
+            Func<RepState, decimal> metricSelector,
+            decimal topPercent)
+        {
+            var eligible = reps
+                .Select(r => new { r.SalesPersonId, Value = metricSelector(r) })
+                .Where(x => x.Value > 0)
+                .OrderByDescending(x => x.Value)
+                .ThenBy(x => x.SalesPersonId, StringComparer.OrdinalIgnoreCase)
+                .ToList();
+
+            if (eligible.Count == 0)
+                return new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+            var take = Math.Max(1, (int)Math.Ceiling(eligible.Count * topPercent / 100m));
+            return eligible.Take(take).Select(x => x.SalesPersonId)
+                .ToHashSet(StringComparer.OrdinalIgnoreCase);
+        }
+
+        private static List<DashboardSalesmanPrincipalAchievementRow> BuildPrincipalAchievement(
+            Dictionary<string, RepState> repStates,
+            IEnumerable<SalesPersonPrincipalTargetModel> principalTargets,
+            IEnumerable<FakturPrincipalOmzetDto> principalOmzet)
+        {
+            var targetMap = new Dictionary<string, (string SalesPersonId, string SupplierId, decimal Target, string SupplierName)>(
+                StringComparer.OrdinalIgnoreCase);
+
+            foreach (var row in principalTargets ?? Enumerable.Empty<SalesPersonPrincipalTargetModel>())
+            {
+                if (string.IsNullOrWhiteSpace(row.SalesPersonId) || string.IsNullOrWhiteSpace(row.SupplierId))
+                    continue;
+
+                var salesPersonId = row.SalesPersonId.Trim();
+                var supplierId = row.SupplierId.Trim();
+                targetMap[PrincipalKey(salesPersonId, supplierId)] =
+                    (salesPersonId, supplierId, row.TargetAmount, row.SupplierName?.Trim() ?? string.Empty);
+            }
+
+            var omzetMap = new Dictionary<string, (string SalesPersonId, string SupplierId, decimal Omzet, string SupplierName)>(
+                StringComparer.OrdinalIgnoreCase);
+
+            foreach (var row in principalOmzet ?? Enumerable.Empty<FakturPrincipalOmzetDto>())
+            {
+                if (string.IsNullOrWhiteSpace(row.SalesPersonId) || string.IsNullOrWhiteSpace(row.SupplierId))
+                    continue;
+
+                var salesPersonId = row.SalesPersonId.Trim();
+                var supplierId = row.SupplierId.Trim();
+                omzetMap[PrincipalKey(salesPersonId, supplierId)] =
+                    (salesPersonId, supplierId, row.CompletedOmzet, row.SupplierName?.Trim() ?? string.Empty);
+            }
+
+            var keys = targetMap.Keys
+                .Union(omzetMap.Keys, StringComparer.OrdinalIgnoreCase)
+                .ToList();
+
+            var rows = new List<DashboardSalesmanPrincipalAchievementRow>();
+
+            foreach (var key in keys)
+            {
+                targetMap.TryGetValue(key, out var targetEntry);
+                omzetMap.TryGetValue(key, out var omzetEntry);
+
+                var salesPersonId = targetEntry.SalesPersonId ?? omzetEntry.SalesPersonId;
+                var supplierId = targetEntry.SupplierId ?? omzetEntry.SupplierId;
+                var targetAmount = targetEntry.Target > 0 ? (decimal?)targetEntry.Target : null;
+                var completedOmzet = omzetEntry.Omzet;
+
+                if (!targetAmount.HasValue && completedOmzet <= 0)
+                    continue;
+
+                repStates.TryGetValue(salesPersonId, out var rep);
+
+                var supplierName = !string.IsNullOrWhiteSpace(omzetEntry.SupplierName)
+                    ? omzetEntry.SupplierName
+                    : targetEntry.SupplierName;
+
+                var achievementPercent = SalesOmzetChartAchievementPolicy.ComputePercent(
+                    completedOmzet,
+                    targetAmount);
+
+                rows.Add(new DashboardSalesmanPrincipalAchievementRow
+                {
+                    SalesPersonId = salesPersonId,
+                    SalesPersonCode = rep?.SalesPersonCode ?? string.Empty,
+                    SalesPersonName = rep?.SalesPersonName ?? string.Empty,
+                    SupplierId = supplierId,
+                    SupplierName = supplierName ?? string.Empty,
+                    TargetAmount = targetAmount,
+                    CompletedOmzet = completedOmzet,
+                    AchievementPercent = achievementPercent
+                });
+            }
+
+            return rows
+                .OrderByDescending(r => r.AchievementPercent ?? -1m)
+                .ThenByDescending(r => r.CompletedOmzet)
+                .ThenBy(r => r.SupplierName, StringComparer.OrdinalIgnoreCase)
+                .Select((r, index) =>
+                {
+                    r.SortOrder = index + 1;
+                    return r;
+                })
+                .ToList();
+        }
+
+        private static List<DashboardSalesmanRepHistoryRow> BuildRepHistory(
+            IEnumerable<RepState> reps,
+            int periodYear,
+            int periodMonth)
+        {
+            return reps
+                .Select(r => new DashboardSalesmanRepHistoryRow
+                {
+                    PeriodYear = periodYear,
+                    PeriodMonth = periodMonth,
+                    SalesPersonId = r.SalesPersonId,
+                    SalesPersonCode = r.SalesPersonCode,
+                    SalesPersonName = r.SalesPersonName,
+                    TargetAmount = r.TargetAmount,
+                    CompletedOmzet = r.OmzetAmount,
+                    AchievementPercent = r.AchievementPercent,
+                    AchievementBand = r.AchievementBand,
+                    OpenBalance = r.OpenBalance,
+                    IsActive = r.IsActive
+                })
+                .ToList();
         }
 
         private static Dictionary<string, RepState> BuildRepStates(
@@ -332,7 +492,8 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.Services
                     CompletedOmzet = r.OmzetAmount,
                     PercentOfTotal = totalTeamOmzet > 0
                         ? r.OmzetAmount / totalTeamOmzet * 100m
-                        : (decimal?)null
+                        : (decimal?)null,
+                    IsActive = r.IsActive
                 })
                 .ToList();
         }
@@ -358,7 +519,8 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.Services
                     AchievementPercent = r.AchievementPercent,
                     PercentOfTotal = totalTeamOmzet > 0
                         ? r.OmzetAmount / totalTeamOmzet * 100m
-                        : (decimal?)null
+                        : (decimal?)null,
+                    IsActive = r.IsActive
                 })
                 .ToList();
         }
@@ -381,14 +543,17 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.Services
                     OutstandingBalance = r.OpenBalance,
                     PercentOfTotal = totalPiutang > 0
                         ? r.OpenBalance / totalPiutang * 100m
-                        : (decimal?)null
+                        : (decimal?)null,
+                    IsActive = r.IsActive
                 })
                 .ToList();
         }
 
         private static List<DashboardSalesmanAttentionRow> BuildAttentionList(
             IEnumerable<RepState> reps,
-            decimal totalPiutang)
+            decimal totalPiutang,
+            HashSet<string> highPiutangSet,
+            HashSet<string> highOverdueSet)
         {
             var rows = new List<(int Priority, string Name, DashboardSalesmanAttentionRow Row)>();
 
@@ -406,15 +571,15 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.Services
 
                 if (rep.HasMonthActivity && !rep.HasTarget)
                 {
-                    rows.Add((SignalPriority(SignalNoTarget), rep.SalesPersonName, CreateAttentionRow(
+                    rows.Add((SignalPriority(SignalMissingTargetSetup), rep.SalesPersonName, CreateAttentionRow(
                         rep,
-                        SignalNoTarget,
-                        "No Target",
+                        SignalMissingTargetSetup,
+                        "Missing Target Setup",
                         rep.OmzetAmount,
                         "No target configured")));
                 }
 
-                if (rep.OverdueCustomerCount > 0)
+                if (highOverdueSet.Contains(rep.SalesPersonId))
                 {
                     rows.Add((SignalPriority(SignalHighOverdueExposure), rep.SalesPersonName, CreateAttentionRow(
                         rep,
@@ -424,7 +589,7 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.Services
                         $"{rep.OverdueCustomerCount} overdue customers, Rp {rep.OverdueBalance:N0} overdue")));
                 }
 
-                if (rep.OpenBalance > 0)
+                if (highPiutangSet.Contains(rep.SalesPersonId))
                 {
                     var share = totalPiutang > 0 ? rep.OpenBalance / totalPiutang * 100m : 0m;
                     rows.Add((SignalPriority(SignalHighPiutangExposure), rep.SalesPersonName, CreateAttentionRow(
@@ -483,7 +648,8 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.Services
                 SignalLabel = signalLabel,
                 ValueAmount = valueAmount,
                 ValueText = valueText,
-                WilayahName = rep.WilayahName
+                WilayahName = rep.WilayahName,
+                IsActive = rep.IsActive
             };
         }
 
@@ -597,7 +763,7 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.Services
             {
                 case SignalBelowTarget:
                     return 0;
-                case SignalNoTarget:
+                case SignalMissingTargetSetup:
                     return 1;
                 case SignalHighOverdueExposure:
                     return 2;
@@ -610,6 +776,11 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.Services
                 default:
                     return 99;
             }
+        }
+
+        private static string PrincipalKey(string salesPersonId, string supplierId)
+        {
+            return $"{salesPersonId}|{supplierId}";
         }
 
         private static string ResolveAgingBucketKey(DateTime jatuhTempo, DateTime today)

@@ -153,9 +153,9 @@ Click a customer row (attention list or rankings) → Sales or Piutang Report wi
 | Signal | Rule |
 | ------ | ---- |
 | Below Target | Target configured AND achievement % in Warning (80–99%) or Critical (<80%) band |
-| No Target | Month activity (omzet or customers) but no target configured |
-| High Overdue Exposure | Any overdue balance on rep's invoiced open Faktur |
-| High Piutang Exposure | Open piutang balance > 0 for rep |
+| Missing Target Setup | Month activity (omzet or customers) but no target configured |
+| High Overdue Exposure | Rep in top N% by overdue balance (default 20%) among reps with overdue > 0 |
+| High Piutang Exposure | Rep in top N% by open balance (default 20%) among reps with balance > 0 |
 | Customer Concentration | Top-customer % of rep omzet (informational — no automatic threshold) |
 | Dormant Customer Portfolio | ≥1 dormant customer (90-day rule) attributed via last invoicing salesman |
 
@@ -169,11 +169,13 @@ Same M16 thresholds as executive Sales card: ≥100% Healthy · 80–99% Warning
 
 ### Drill-down
 
-Click a salesman row (attention list or rankings) → Sales or Piutang Report with salesman name pre-filter (`?q=`).
+Click salesman name or ranking row → detail drawer (Principal Achievement + achievement trend). **Investigate** button → Sales or Piutang Report with salesman name pre-filter (`?q=`).
+
+Default view shows **active salesmen only**; enable **Show Inactive Salesmen** to include reps without current-month Faktur.
 
 | Signal type | Report |
 | ----------- | ------ |
-| Below Target, No Target, Customer Concentration, Dormant Portfolio | Sales Report |
+| Below Target, Missing Target Setup, Customer Concentration, Dormant Portfolio | Sales Report |
 | High Overdue Exposure, High Piutang Exposure | Piutang Report |
 | Top Omzet, Top Achievement % | Sales Report |
 | Top Piutang | Piutang Report |

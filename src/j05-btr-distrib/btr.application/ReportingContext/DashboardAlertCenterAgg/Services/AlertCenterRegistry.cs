@@ -75,7 +75,7 @@ namespace btr.application.ReportingContext.DashboardAlertCenterAgg.Services
             new AlertCenterRegistryEntry(SignalSalesAchievementWarning, "Achievement Warning", CategorySales, AlertCenterSection.Alerts, "/dashboard/sales", 1),
             new AlertCenterRegistryEntry(SignalSalesAchievementCritical, "Achievement Critical", CategorySales, AlertCenterSection.Alerts, "/dashboard/sales", 0),
             new AlertCenterRegistryEntry(DashboardSnapshotAgg.Services.DashboardSalesmanAggregator.SignalBelowTarget, "Below Target", CategorySales, AlertCenterSection.Alerts, "/dashboard/salesmen", 2),
-            new AlertCenterRegistryEntry(DashboardSnapshotAgg.Services.DashboardSalesmanAggregator.SignalNoTarget, "No Target", CategorySales, AlertCenterSection.Alerts, "/dashboard/salesmen", 3),
+            new AlertCenterRegistryEntry(DashboardSnapshotAgg.Services.DashboardSalesmanAggregator.SignalMissingTargetSetup, "Missing Target Setup", CategorySales, AlertCenterSection.Alerts, "/dashboard/salesmen", 3),
             new AlertCenterRegistryEntry(DashboardSnapshotAgg.Services.DashboardSalesmanAggregator.SignalHighOverdueExposure, "High Overdue Exposure", CategorySales, AlertCenterSection.Alerts, "/dashboard/salesmen", 4),
             new AlertCenterRegistryEntry(DashboardSnapshotAgg.Services.DashboardSalesmanAggregator.SignalDormantCustomerPortfolio, "Dormant Customer Portfolio", CategorySales, AlertCenterSection.Alerts, "/dashboard/salesmen", 5),
             new AlertCenterRegistryEntry(DashboardSnapshotAgg.Services.DashboardSalesmanAggregator.SignalCustomerConcentration, "Customer Concentration", CategorySales, AlertCenterSection.Concentrations, "/dashboard/salesmen", 20),

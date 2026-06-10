@@ -55,6 +55,37 @@ namespace btr.infrastructure.SalesContext.SalesPersonPrincipalTargetAgg
             }
         }
 
+        public IEnumerable<SalesPersonPrincipalTargetModel> ListByPeriod(int year, int month)
+        {
+            const string sql = @"
+                SELECT
+                    aa.SalesPersonId,
+                    aa.SupplierId,
+                    aa.TargetYear,
+                    aa.TargetMonth,
+                    aa.TargetAmount,
+                    aa.UpdatedDate,
+                    ISNULL(bb.SupplierCode, '') SupplierCode,
+                    ISNULL(bb.SupplierName, '') SupplierName
+                FROM
+                    BTR_SalesPersonPrincipalTarget aa
+                    LEFT JOIN BTR_Supplier bb ON aa.SupplierId = bb.SupplierId
+                WHERE
+                    aa.TargetYear = @TargetYear
+                    AND aa.TargetMonth = @TargetMonth
+                ORDER BY
+                    aa.SalesPersonId, bb.SupplierName";
+
+            var dp = new DynamicParameters();
+            dp.AddParam("@TargetYear", year, SqlDbType.Int);
+            dp.AddParam("@TargetMonth", month, SqlDbType.Int);
+
+            using (var conn = new SqlConnection(ConnStringHelper.Get(_opt)))
+            {
+                return conn.Read<SalesPersonPrincipalTargetModel>(sql, dp);
+            }
+        }
+
         public void Upsert(IEnumerable<SalesPersonPrincipalTargetModel> rows)
         {
             const string sql = @"

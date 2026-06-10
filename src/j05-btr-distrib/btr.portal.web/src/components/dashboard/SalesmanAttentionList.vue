@@ -24,6 +24,10 @@ const props = defineProps<{
   loading: boolean
 }>()
 
+const emit = defineEmits<{
+  salesmanClick: [item: DashboardSalesmanAttentionItem]
+}>()
+
 const signalFilter = defineModel<string>('signalFilter', { default: SALESMAN_ATTENTION_SIGNAL_ALL })
 
 const router = useRouter()
@@ -135,7 +139,17 @@ function investigate(item: DashboardSalesmanAttentionItem): void {
             </template>
 
             <Column field="SalesPersonCode" header="Code" />
-            <Column field="SalesPersonName" header="Salesman" />
+            <Column header="Salesman">
+              <template #body="{ data }">
+                <button
+                  type="button"
+                  class="salesman-attention-list__name-link"
+                  @click="emit('salesmanClick', data)"
+                >
+                  {{ data.SalesPersonName }}
+                </button>
+              </template>
+            </Column>
             <Column field="SignalLabel" header="Signal" />
             <Column header="Detail">
               <template #body="{ data }">
@@ -209,5 +223,20 @@ function investigate(item: DashboardSalesmanAttentionItem): void {
   padding: 1.5rem 0;
   text-align: center;
   color: var(--p-text-muted-color);
+}
+
+.salesman-attention-list__name-link {
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--p-primary-color);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: left;
+}
+
+.salesman-attention-list__name-link:hover {
+  text-decoration: underline;
 }
 </style>

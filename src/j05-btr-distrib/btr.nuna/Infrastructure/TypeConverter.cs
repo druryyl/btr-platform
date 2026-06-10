@@ -44,6 +44,10 @@ namespace btr.nuna.Infrastructure
             _DbTypeList.Add(dbTypeMapEntry);
 
             dbTypeMapEntry
+            = new DbTypeMapEntry(typeof(DateTime), DbType.Date, SqlDbType.Date);
+            _DbTypeList.Add(dbTypeMapEntry);
+
+            dbTypeMapEntry
             = new DbTypeMapEntry(typeof(Decimal), DbType.Decimal, SqlDbType.Decimal);
             _DbTypeList.Add(dbTypeMapEntry);
 

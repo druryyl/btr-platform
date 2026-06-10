@@ -14,7 +14,7 @@ namespace btr.test.ReportingContext
         [InlineData(DashboardCustomerAggregator.SignalPlafondBreach)]
         [InlineData(DashboardCustomerAggregator.SignalSuspendedWithSales)]
         [InlineData(DashboardSalesmanAggregator.SignalBelowTarget)]
-        [InlineData(DashboardSalesmanAggregator.SignalNoTarget)]
+        [InlineData(DashboardSalesmanAggregator.SignalMissingTargetSetup)]
         [InlineData(DashboardSalesmanAggregator.SignalHighOverdueExposure)]
         [InlineData(DashboardSalesmanAggregator.SignalHighPiutangExposure)]
         [InlineData(DashboardSalesmanAggregator.SignalCustomerConcentration)]

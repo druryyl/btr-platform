@@ -47,6 +47,7 @@ using btr.distrib.SalesContext.OrderFeature;
 using btr.distrib.SalesContext.SalesPersonAgg;
 using btr.distrib.SalesContext.SalesPersonSupplierAgg;
 using btr.distrib.SalesContext.SalesPersonPrincipalTargetAgg;
+using btr.distrib.SalesContext.VisitPlanAgg;
 using btr.distrib.SalesContext.SalesReplacementFeat;
 using btr.distrib.SalesContext.WilayahAgg;
 using btr.domain.SupportContext.RoleFeature;
@@ -229,6 +230,15 @@ namespace btr.distrib.SharedForm
             if (BringMdiChildToFrontIfLoaded<SalesPersonPrincipalTargetForm>())
                 return;
             var form = ThisServicesProvider.GetRequiredService<SalesPersonPrincipalTargetForm>();
+            form.StartPosition = FormStartPosition.CenterScreen;
+            form.MdiParent = this;
+            form.Show();
+        }
+        private void SM7JadwalKunjunganButton_Click(object sender, EventArgs e)
+        {
+            if (BringMdiChildToFrontIfLoaded<JadwalKunjunganForm>())
+                return;
+            var form = ThisServicesProvider.GetRequiredService<JadwalKunjunganForm>();
             form.StartPosition = FormStartPosition.CenterScreen;
             form.MdiParent = this;
             form.Show();

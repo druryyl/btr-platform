@@ -205,11 +205,13 @@ Reads **source DALs** at refresh (Faktur with `SalesPersonId`, piutang open bala
 
 | KPI | Definition |
 | --- | ---------- |
-| **Attention cards** | Below Target count, No Target count, High Overdue count, High Piutang count, Dormant Portfolio count, concentration % |
-| **Attention list** | Per salesman × signal: BelowTarget, NoTarget, HighOverdueExposure, HighPiutangExposure, CustomerConcentration, DormantCustomerPortfolio |
-| **Top 10 Omzet** | Current-month `SUM(GrandTotal)` per `SalesPersonId` with `SalesPersonCode` |
-| **Top 10 Achievement** | Achievement % per rep (omzet ÷ target); reps with no target excluded from ranking |
-| **Top 10 Piutang** | All-time open `SUM(KurangBayar)` per invoicing salesman with `SalesPersonCode` |
+| **Attention cards** | Below Target count, Missing Target Setup count, High Overdue count (top N%), High Piutang count (top N%), Dormant Portfolio count, concentration % |
+| **Attention list** | Per salesman × signal: BelowTarget, MissingTargetSetup, HighOverdueExposure, HighPiutangExposure, CustomerConcentration, DormantCustomerPortfolio — includes `IsActive` |
+| **Top 10 Omzet** | Current-month `SUM(GrandTotal)` per `SalesPersonId` with `SalesPersonCode`, `IsActive` |
+| **Top 10 Achievement** | Achievement % per rep (omzet ÷ target); reps with no target excluded from ranking; `IsActive` |
+| **Top 10 Piutang** | All-time open `SUM(KurangBayar)` per invoicing salesman with `SalesPersonCode`, `IsActive` |
+| **Principal achievement** | Per `(SalesPersonId, SupplierId)` — SM6 target, `FakturItem.Total` omzet, achievement % |
+| **Rep history** | Per `(PeriodYear, PeriodMonth, SalesPersonId)` — monthly target, omzet, achievement %, band, open balance, `IsActive` |
 | **Segmentation** | Counts by Wilayah, Segment, Active vs Inactive (current-month Faktur) |
 
 **Salesman key:** `SalesPersonId` primary; `SalesPersonName` display; `SalesPersonCode` on ranking rows. Piutang rows without `SalesPersonId` resolved via name fallback map.
@@ -218,7 +220,11 @@ Reads **source DALs** at refresh (Faktur with `SalesPersonId`, piutang open bala
 
 **Achievement bands:** M16 thresholds — ≥100% Healthy · 80–99% Warning · <80% Critical · no target Unknown.
 
-**Snapshot tables:** `BTRPD_SalesmanKpi`, `BTRPD_SalesmanTopOmzet`, `BTRPD_SalesmanTopAchievement`, `BTRPD_SalesmanTopPiutang`, `BTRPD_SalesmanAttention`, `BTRPD_SalesmanSegmentation`.
+**Exposure threshold:** High Overdue and High Piutang signals use configurable top-percent rank (default 20%) among reps with respective balance > 0.
+
+**Snapshot tables (CURRENT replace):** `BTRPD_SalesmanKpi`, `BTRPD_SalesmanTopOmzet`, `BTRPD_SalesmanTopAchievement`, `BTRPD_SalesmanTopPiutang`, `BTRPD_SalesmanAttention`, `BTRPD_SalesmanSegmentation`, `BTRPD_SalesmanPrincipalAchievement`.
+
+**History retention (exception):** `BTRPD_SalesmanRepHistory` uses period-keyed **upsert** — current month rows updated each refresh; prior months retained indefinitely for trend display (not delete-and-replace like other `CURRENT` tables).
 
 **Protected modules unchanged:** `DashboardSalesFakturAggregator`, `BTRPD_SalesTopSalesman`, `DashboardExecutiveComposer`.
 

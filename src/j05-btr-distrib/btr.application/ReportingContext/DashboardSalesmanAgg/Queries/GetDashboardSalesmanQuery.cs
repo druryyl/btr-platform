@@ -36,13 +36,22 @@ namespace btr.application.ReportingContext.DashboardSalesmanAgg.Queries
         public DashboardSalesmanSegmentationSummary Segmentation { get; set; }
 
         public DashboardSalesmanNavigationLinks Navigation { get; set; }
+
+        public DashboardSalesmanFilterDefaults Filters { get; set; }
+    }
+
+    public class DashboardSalesmanFilterDefaults
+    {
+        public bool DefaultActiveOnly { get; set; } = true;
+
+        public decimal ExposureTopPercent { get; set; }
     }
 
     public class DashboardSalesmanAttentionCards
     {
         public int BelowTargetCount { get; set; }
 
-        public int NoTargetCount { get; set; }
+        public int MissingTargetSetupCount { get; set; }
 
         public int HighOverdueExposureCount { get; set; }
 
@@ -85,6 +94,8 @@ namespace btr.application.ReportingContext.DashboardSalesmanAgg.Queries
 
         public bool RequiresAttention { get; set; }
 
+        public bool IsActive { get; set; }
+
         public InvestigationMetadata Investigation { get; set; }
     }
 
@@ -107,6 +118,8 @@ namespace btr.application.ReportingContext.DashboardSalesmanAgg.Queries
         public decimal? TargetAmount { get; set; }
 
         public string ReportRoute { get; set; }
+
+        public bool IsActive { get; set; }
 
         public InvestigationMetadata Investigation { get; set; }
     }

@@ -11,6 +11,7 @@ CREATE TABLE BTRPD_SalesmanAttention
     ValueText           VARCHAR(100)  NULL,
     WilayahName         VARCHAR(30)   NOT NULL CONSTRAINT DF_BTRPD_SalesmanAttention_WilayahName DEFAULT(''),
     SortOrder           INT           NOT NULL CONSTRAINT DF_BTRPD_SalesmanAttention_SortOrder DEFAULT(0),
+    IsActive            BIT           NOT NULL CONSTRAINT DF_BTRPD_SalesmanAttention_IsActive DEFAULT(0),
 
     CONSTRAINT PK_BTRPD_SalesmanAttention PRIMARY KEY CLUSTERED (SalesmanAttentionId)
 )

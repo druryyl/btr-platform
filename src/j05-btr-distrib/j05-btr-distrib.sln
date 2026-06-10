@@ -25,6 +25,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "btr.portal.api", "btr.porta
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "btr.portal.worker", "btr.portal.worker\btr.portal.worker.csproj", "{D4E5F6A7-B8C9-4D0E-1F2A-3B4C5D6E7F8A}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "btr.visitplan.worker", "btr.visitplan.worker\btr.visitplan.worker.csproj", "{F1A2B3C4-D5E6-4F78-9ABC-DEF012345678}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -69,6 +71,10 @@ Global
 		{D4E5F6A7-B8C9-4D0E-1F2A-3B4C5D6E7F8A}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{D4E5F6A7-B8C9-4D0E-1F2A-3B4C5D6E7F8A}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{D4E5F6A7-B8C9-4D0E-1F2A-3B4C5D6E7F8A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F1A2B3C4-D5E6-4F78-9ABC-DEF012345678}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F1A2B3C4-D5E6-4F78-9ABC-DEF012345678}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F1A2B3C4-D5E6-4F78-9ABC-DEF012345678}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F1A2B3C4-D5E6-4F78-9ABC-DEF012345678}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -82,6 +88,7 @@ Global
 		{BC8848A7-BAD3-4294-BCE7-3D9D7DFB6CEE} = {A20FC3BA-048B-4F92-9158-4AB7E05EEF32}
 		{C8F3E2A1-4B5D-6E7F-8A9B-0C1D2E3F4A5B} = {329BED80-7A24-471B-B39D-32CD97802804}
 		{D4E5F6A7-B8C9-4D0E-1F2A-3B4C5D6E7F8A} = {329BED80-7A24-471B-B39D-32CD97802804}
+		{F1A2B3C4-D5E6-4F78-9ABC-DEF012345678} = {329BED80-7A24-471B-B39D-32CD97802804}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {84D759D9-0CD1-4518-B32E-D5C72AAEE015}

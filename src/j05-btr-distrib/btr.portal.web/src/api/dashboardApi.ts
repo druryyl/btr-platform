@@ -6,6 +6,8 @@ import type {
   DashboardLocationResponse,
   DashboardCustomerResponse,
   DashboardSalesmanResponse,
+  SalesmanAchievementTrendResponse,
+  SalesmanPrincipalAchievementResponse,
   DashboardExecutiveResponse,
   DashboardInventoryResponse,
   DashboardInventoryRiskResponse,
@@ -100,6 +102,36 @@ export async function fetchDashboardSalesman(): Promise<DashboardSalesmanRespons
 
   if (!isApiSuccess(data) || !data.Data) {
     throw new Error(data.Message ?? 'Failed to load salesman performance dashboard.')
+  }
+
+  return data.Data
+}
+
+export async function fetchSalesmanPrincipals(
+  salesPersonId: string,
+): Promise<SalesmanPrincipalAchievementResponse> {
+  const { data } = await httpClient.get<ApiResponse<SalesmanPrincipalAchievementResponse>>(
+    `/api/dashboard/salesmen/${encodeURIComponent(salesPersonId)}/principals`,
+  )
+
+  if (!isApiSuccess(data) || !data.Data) {
+    throw new Error(data.Message ?? 'Failed to load salesman principal achievement.')
+  }
+
+  return data.Data
+}
+
+export async function fetchSalesmanTrend(
+  salesPersonId: string,
+  months = 12,
+): Promise<SalesmanAchievementTrendResponse> {
+  const { data } = await httpClient.get<ApiResponse<SalesmanAchievementTrendResponse>>(
+    `/api/dashboard/salesmen/${encodeURIComponent(salesPersonId)}/trend`,
+    { params: { months } },
+  )
+
+  if (!isApiSuccess(data) || !data.Data) {
+    throw new Error(data.Message ?? 'Failed to load salesman achievement trend.')
   }
 
   return data.Data
