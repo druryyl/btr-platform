@@ -1,5 +1,7 @@
 # BTR Portal — Domain Knowledge
 
+> **Table naming:** Portal snapshot tables use the `BTRPD_*` prefix (formerly `BTR_PortalDashboard*`).
+
 **Audience:** Product Owner, Business Owner, Developers, Future Agents  
 **Purpose:** Define what BTR Portal is, why it exists, and the business meaning of its dashboards, reports, and KPIs.
 
@@ -167,7 +169,7 @@ Horizontal **investigation and navigation framework** unifying drill-down from K
 
 **Background refresh:** Scheduled by `btr.portal.worker` via Windows Task Scheduler (per-domain jobs). Authenticated users may trigger an on-demand rebuild via `POST /api/admin/dashboard/refresh` with optional body `{ "domain": "All|Piutang|Inventory|InventoryRisk|Sales|Purchasing|Customer|Salesman" }` (default `All`; domain values are case-insensitive). For full rebuilds or long-running refreshes, prefer the worker CLI — the API runs synchronously and is subject to IIS request timeouts (~110 s default). Operations may also use: `btr.portal.worker.exe --domain All --triggered-by Manual`.
 
-**Observability:** `GET /api/health/dashboard-snapshots` (no auth) returns the latest refresh attempt per domain from `BTR_PortalDashboardRefreshLog`, including status, duration, and configured interval minutes. Overall health is `unknown` when no domain has a refresh log yet; otherwise `ok`, `refreshing` (any domain `Running`), or `degraded` (any domain `Failed`).
+**Observability:** `GET /api/health/dashboard-snapshots` (no auth) returns the latest refresh attempt per domain from `BTRPD_RefreshLog`, including status, duration, and configured interval minutes. Overall health is `unknown` when no domain has a refresh log yet; otherwise `ok`, `refreshing` (any domain `Running`), or `degraded` (any domain `Failed`).
 
 ### Sales Dashboard (`/dashboard/sales`)
 
@@ -214,7 +216,7 @@ Horizontal **investigation and navigation framework** unifying drill-down from K
 | Segmentation | By Klasifikasi, By Wilayah, Active vs Dormant |
 | Navigation | Links to Sales/Piutang dashboards and reports |
 
-**Data source:** Dedicated `BTR_PortalDashboardCustomer*` snapshot domain — refreshed from source DALs (Faktur, piutang open balance, customer master, last Faktur per customer), **not** composed from Sales/Piutang snapshot tables.
+**Data source:** Dedicated `BTRPD_Customer*` snapshot domain — refreshed from source DALs (Faktur, piutang open balance, customer master, last Faktur per customer), **not** composed from Sales/Piutang snapshot tables.
 
 **Attention Indicator:** Generic M16 presentation on cards when `*RequiresAttention` is true. Concentration percentages have **no** automatic warning thresholds.
 
@@ -237,7 +239,7 @@ Horizontal **investigation and navigation framework** unifying drill-down from K
 | Segmentation | By Wilayah, Active vs Inactive, By Segment (when configured) |
 | Navigation | Links to Sales/Piutang dashboards and reports |
 
-**Data source:** Dedicated `BTR_PortalDashboardSalesman*` snapshot domain — refreshed from source DALs (Faktur, piutang with invoicing salesman, salesman master, targets, last Faktur per customer with salesman), **not** composed from Sales/Piutang/Customer snapshot tables.
+**Data source:** Dedicated `BTRPD_Salesman*` snapshot domain — refreshed from source DALs (Faktur, piutang with invoicing salesman, salesman master, targets, last Faktur per customer with salesman), **not** composed from Sales/Piutang/Customer snapshot tables.
 
 **Salesman key:** `SalesPersonId` internal; `SalesPersonName` display; `SalesPersonCode` on ranking rows.
 
@@ -301,7 +303,7 @@ Horizontal **investigation and navigation framework** unifying drill-down from K
 | Rankings | Top 10 Dead Stock by Value \| Top 10 Slow Moving by Value |
 | Navigation | Links to Inventory Dashboard and Inventory Report |
 
-**Data source:** Dedicated `BTR_PortalDashboardInventoryRisk*` snapshot domain — refreshed from `IStokBalanceViewDal` + `IBrgLastFakturDal` (full FakturItem history aggregate), **not** composed from M15 Inventory snapshot tables.
+**Data source:** Dedicated `BTRPD_InventoryRisk*` snapshot domain — refreshed from `IStokBalanceViewDal` + `IBrgLastFakturDal` (full FakturItem history aggregate), **not** composed from M15 Inventory snapshot tables.
 
 **Classification rules (authoritative):**
 
@@ -346,7 +348,7 @@ Horizontal **investigation and navigation framework** unifying drill-down from K
 
 **Stakeholder note:** Grand Total Purchase and Total Invoice must match the Purchasing Report footer totals (sourced from V1 purchasing snapshot unchanged).
 
-**Snapshot domain:** `BTR_PortalDashboardPurchasingManagement*` (separate from V1 `BTR_PortalDashboardPurchasing*`).
+**Snapshot domain:** `BTRPD_PurchasingManagement*` (separate from V1 `BTRPD_Purchasing*`).
 
 ---
 
@@ -460,7 +462,7 @@ All monetary values are in Indonesian Rupiah (IDR). Dashboard and report totals 
 
 ### Customer Analytics KPIs (M17)
 
-Dedicated snapshot domain — `BTR_PortalDashboardCustomer*`. Refreshed from source DALs (not composed from Sales/Piutang snapshots).
+Dedicated snapshot domain — `BTRPD_Customer*`. Refreshed from source DALs (not composed from Sales/Piutang snapshots).
 
 | KPI | Period / scope | Formula | Business meaning |
 | --- | -------------- | ------- | ---------------- |
@@ -480,7 +482,7 @@ Dedicated snapshot domain — `BTR_PortalDashboardCustomer*`. Refreshed from sou
 
 ### Salesman Performance KPIs (M18)
 
-Dedicated snapshot domain — `BTR_PortalDashboardSalesman*`. Refreshed from source DALs (not composed from Sales/Piutang/Customer snapshots).
+Dedicated snapshot domain — `BTRPD_Salesman*`. Refreshed from source DALs (not composed from Sales/Piutang/Customer snapshots).
 
 | KPI | Period / scope | Formula | Business meaning |
 | --- | -------------- | ------- | ---------------- |
@@ -503,7 +505,7 @@ Dedicated snapshot domain — `BTR_PortalDashboardSalesman*`. Refreshed from sou
 
 ### Collection Dashboard KPIs (M20)
 
-Dedicated snapshot domain — `BTR_PortalDashboardCollection*`. Refreshed from source DALs (not Piutang/Customer/Salesman snapshots).
+Dedicated snapshot domain — `BTRPD_Collection*`. Refreshed from source DALs (not Piutang/Customer/Salesman snapshots).
 
 | KPI | Period / scope | Formula | Business meaning |
 | --- | -------------- | ------- | ---------------- |
@@ -520,7 +522,7 @@ Dedicated snapshot domain — `BTR_PortalDashboardCollection*`. Refreshed from s
 
 ### Location Dashboard KPIs (M22)
 
-Dedicated snapshot domain — `BTR_PortalDashboardLocation*`. Composes stok/faktur/invoice at refresh; denominators from Inventory, InventoryRisk, Sales, Purchasing snapshots.
+Dedicated snapshot domain — `BTRPD_Location*`. Composes stok/faktur/invoice at refresh; denominators from Inventory, InventoryRisk, Sales, Purchasing snapshots.
 
 | KPI | Period / scope | Formula | Business meaning |
 | --- | -------------- | ------- | ---------------- |
@@ -546,7 +548,7 @@ Dedicated snapshot domain — `BTR_PortalDashboardLocation*`. Composes stok/fakt
 
 ### Inventory Risk KPIs (M19)
 
-Dedicated snapshot domain — `BTR_PortalDashboardInventoryRisk*`. Refreshed from `IStokBalanceViewDal` + `IBrgLastFakturDal` (not M15 Inventory snapshot).
+Dedicated snapshot domain — `BTRPD_InventoryRisk*`. Refreshed from `IStokBalanceViewDal` + `IBrgLastFakturDal` (not M15 Inventory snapshot).
 
 | KPI | Definition | Business meaning |
 | --- | ---------- | ---------------- |
@@ -582,7 +584,7 @@ Dedicated snapshot domain — `BTR_PortalDashboardInventoryRisk*`. Refreshed fro
 
 ### Purchasing Management KPIs (M21)
 
-Management KPIs are materialized in `BTR_PortalDashboardPurchasingManagement*` — dashboard-only unless noted.
+Management KPIs are materialized in `BTRPD_PurchasingManagement*` — dashboard-only unless noted.
 
 | KPI | Definition | Business Meaning |
 | --- | ---------- | ---------------- |
@@ -652,7 +654,7 @@ Approved rules governing portal calculations and filters:
 | Fixed periods V1 | All reports | No date-range or search parameters; fixed defaults per report |
 | Dashboard traceability | Piutang, Inventory & Purchasing | Report footer totals must match dashboard KPIs |
 | DAL reuse | All | Business rules enforced in existing Desktop DALs; portal does not reimplement SQL |
-| Snapshot materialization | Dashboards | KPIs and charts served from `BTR_PortalDashboard*` tables; refreshed by worker |
+| Snapshot materialization | Dashboards | KPIs and charts served from `BTRPD_*` tables; refreshed by worker |
 | Live queries | Reports | Report endpoints query Desktop DALs directly — not snapshotted |
 | Sales omzet source | Sales dashboard | Faktur `GrandTotal` for current month — not `BTR_SalesOmzet` pipeline omzet |
 

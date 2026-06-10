@@ -1,5 +1,7 @@
 # Materialized Dashboard Data — Architecture
 
+> **Table naming:** Portal snapshot tables use the `BTRPD_*` prefix (formerly `BTR_PortalDashboard*`).
+
 **Audience:** Developers, Architects, Future Agents  
 **Purpose:** Describe how BTR Portal dashboard analytics are pre-computed, stored, and served.
 
@@ -28,7 +30,7 @@ Dashboard{Domain}Aggregator  (shared aggregation rules)
         ↓
 Dashboard{Domain}SnapshotDal.ReplaceCurrent()
         ↓
-BTR_PortalDashboard* tables  (SnapshotKey = 'CURRENT')
+BTRPD_* tables  (SnapshotKey = 'CURRENT')
 
 Browser → GET /api/dashboard/overview              (home — Layer A KPI only)
 Browser → GET /api/dashboard/{sales|piutang|inventory|purchasing}  (detail — Layer A + B)
@@ -37,7 +39,7 @@ Browser → GET /api/dashboard/{sales|piutang|inventory|purchasing}  (detail —
 
 **Worker host:** `btr.portal.worker` (.NET Framework 4.8 console). Not hosted in IIS — app pool recycle would kill in-process timers.
 
-**Database:** Same SQL Server as BTR Desktop. Tables prefixed `BTR_PortalDashboard*`.
+**Database:** Same SQL Server as BTR Desktop. Tables prefixed `BTRPD_*`.
 
 ---
 
@@ -45,9 +47,9 @@ Browser → GET /api/dashboard/{sales|piutang|inventory|purchasing}  (detail —
 
 | Layer | Tables | Consumed by |
 | ----- | ------ | ----------- |
-| **A — KPI** | `BTR_PortalDashboard{Sales,Piutang,Inventory,Purchasing}Kpi` | Overview home + detail KPI rows |
+| **A — KPI** | `BTRPD_{Sales,Piutang,Inventory,Purchasing}Kpi` | Overview home + detail KPI rows |
 | **B — Dimensional** | Aging, TopCustomer, Breakdown, WeekTrend, TopSalesman, PostingStatus, TopPrincipal | Detail dashboards only |
-| **Metadata** | `BTR_PortalDashboardRefreshLog` | Health endpoint, ops monitoring |
+| **Metadata** | `BTRPD_RefreshLog` | Health endpoint, ops monitoring |
 
 **Active snapshot pattern:** One row per domain with `SnapshotKey = 'CURRENT'`. Each refresh deletes child rows and upserts KPI within a transaction. No historical snapshot retention.
 
@@ -139,33 +141,33 @@ btr.portal.worker/          Program.cs, WorkerDependencyConfig, appsettings.json
 
 | Table | Key columns |
 | ----- | ----------- |
-| `BTR_PortalDashboardPiutangKpi` | `TotalPiutang`, `TotalCustomer`, `OverdueCustomer`, `GeneratedAt` |
-| `BTR_PortalDashboardInventoryKpi` | `TotalInventoryValue`, `TotalItem`, `GeneratedAt` |
-| `BTR_PortalDashboardSalesKpi` | `PeriodYear`, `PeriodMonth`, omzet/faktur/customer/target/achievement fields, `PipelineOmzet` (= 0) |
-| `BTR_PortalDashboardPurchasingKpi` | `GrandTotalPurchase`, `TotalInvoice`, `PendingPostingInvoiceCount`, `PeriodYear`, `PeriodMonth` |
+| `BTRPD_PiutangKpi` | `TotalPiutang`, `TotalCustomer`, `OverdueCustomer`, `GeneratedAt` |
+| `BTRPD_InventoryKpi` | `TotalInventoryValue`, `TotalItem`, `GeneratedAt` |
+| `BTRPD_SalesKpi` | `PeriodYear`, `PeriodMonth`, omzet/faktur/customer/target/achievement fields, `PipelineOmzet` (= 0) |
+| `BTRPD_PurchasingKpi` | `GrandTotalPurchase`, `TotalInvoice`, `PendingPostingInvoiceCount`, `PeriodYear`, `PeriodMonth` |
 
 ### Dimensional tables (Layer B)
 
 | Table | Content |
 | ----- | ------- |
-| `BTR_PortalDashboardPiutangAging` | 5 aging buckets |
-| `BTR_PortalDashboardPiutangTopCustomer` | Top 10 customers |
-| `BTR_PortalDashboardInventoryBreakdown` | Category/supplier rows with `IsTop10` flag |
-| `BTR_PortalDashboardSalesWeekTrend` | Weekly Faktur totals |
-| `BTR_PortalDashboardSalesTopSalesman` | Top 10 salespeople |
-| `BTR_PortalDashboardPurchasingWeekTrend` | Weekly purchase totals |
-| `BTR_PortalDashboardPurchasingPostingStatus` | `SUDAH` / `BELUM` purchase value buckets |
-| `BTR_PortalDashboardPurchasingTopPrincipal` | Top 10 principals by purchase amount |
+| `BTRPD_PiutangAging` | 5 aging buckets |
+| `BTRPD_PiutangTopCustomer` | Top 10 customers |
+| `BTRPD_InventoryBreakdown` | Category/supplier rows with `IsTop10` flag |
+| `BTRPD_SalesWeekTrend` | Weekly Faktur totals |
+| `BTRPD_SalesTopSalesman` | Top 10 salespeople |
+| `BTRPD_PurchasingWeekTrend` | Weekly purchase totals |
+| `BTRPD_PurchasingPostingStatus` | `SUDAH` / `BELUM` purchase value buckets |
+| `BTRPD_PurchasingTopPrincipal` | Top 10 principals by purchase amount |
 
 ### Customer tables (M17 — dedicated cross-domain domain)
 
 | Table | Content |
 | ----- | ------- |
-| `BTR_PortalDashboardCustomerKpi` | Attention card counts, concentration %, period metadata |
-| `BTR_PortalDashboardCustomerTopOmzet` | Top 10 customers by current-month omzet |
-| `BTR_PortalDashboardCustomerTopPiutang` | Top 10 customers by all-time open balance |
-| `BTR_PortalDashboardCustomerAttention` | Attention list rows (customer × signal) |
-| `BTR_PortalDashboardCustomerSegmentation` | Klasifikasi, Wilayah, Active/Dormant counts |
+| `BTRPD_CustomerKpi` | Attention card counts, concentration %, period metadata |
+| `BTRPD_CustomerTopOmzet` | Top 10 customers by current-month omzet |
+| `BTRPD_CustomerTopPiutang` | Top 10 customers by all-time open balance |
+| `BTRPD_CustomerAttention` | Attention list rows (customer × signal) |
+| `BTRPD_CustomerSegmentation` | Klasifikasi, Wilayah, Active/Dormant counts |
 
 Customer worker reads **source DALs** at refresh — not Sales/Piutang snapshot tables.
 
@@ -173,12 +175,12 @@ Customer worker reads **source DALs** at refresh — not Sales/Piutang snapshot 
 
 | Table | Content |
 | ----- | ------- |
-| `BTR_PortalDashboardSalesmanKpi` | Headline KPIs, attention card counts, concentration %, period metadata |
-| `BTR_PortalDashboardSalesmanTopOmzet` | Top 10 salesmen by current-month omzet |
-| `BTR_PortalDashboardSalesmanTopAchievement` | Top 10 salesmen by achievement % |
-| `BTR_PortalDashboardSalesmanTopPiutang` | Top 10 salesmen by all-time open balance |
-| `BTR_PortalDashboardSalesmanAttention` | Attention list rows (salesman × signal) |
-| `BTR_PortalDashboardSalesmanSegmentation` | Wilayah, Segment, Active/Inactive counts |
+| `BTRPD_SalesmanKpi` | Headline KPIs, attention card counts, concentration %, period metadata |
+| `BTRPD_SalesmanTopOmzet` | Top 10 salesmen by current-month omzet |
+| `BTRPD_SalesmanTopAchievement` | Top 10 salesmen by achievement % |
+| `BTRPD_SalesmanTopPiutang` | Top 10 salesmen by all-time open balance |
+| `BTRPD_SalesmanAttention` | Attention list rows (salesman × signal) |
+| `BTRPD_SalesmanSegmentation` | Wilayah, Segment, Active/Inactive counts |
 
 Salesman worker reads **source DALs** at refresh — not Sales/Piutang/Customer snapshot tables. Child row ID prefix: **PDS**.
 
@@ -186,12 +188,12 @@ Salesman worker reads **source DALs** at refresh — not Sales/Piutang/Customer 
 
 | Table | Content |
 | ----- | ------- |
-| `BTR_PortalDashboardInventoryRiskKpi` | Headline KPIs, at-risk %, `RequiresAttention` |
-| `BTR_PortalDashboardInventoryRiskAging` | Four aging buckets (Active, Slow, Dead, Never Sold) |
-| `BTR_PortalDashboardInventoryRiskAttention` | Attention list rows (item × signal) |
-| `BTR_PortalDashboardInventoryRiskTopDead` | Top 10 dead stock by value |
-| `BTR_PortalDashboardInventoryRiskTopSlow` | Top 10 slow moving by value |
-| `BTR_PortalDashboardInventoryRiskBreakdown` | Category/Supplier at-risk exposure (Top 10 each) |
+| `BTRPD_InventoryRiskKpi` | Headline KPIs, at-risk %, `RequiresAttention` |
+| `BTRPD_InventoryRiskAging` | Four aging buckets (Active, Slow, Dead, Never Sold) |
+| `BTRPD_InventoryRiskAttention` | Attention list rows (item × signal) |
+| `BTRPD_InventoryRiskTopDead` | Top 10 dead stock by value |
+| `BTRPD_InventoryRiskTopSlow` | Top 10 slow moving by value |
+| `BTRPD_InventoryRiskBreakdown` | Category/Supplier at-risk exposure (Top 10 each) |
 
 Inventory Risk worker reads **source DALs** at refresh — not M15 Inventory snapshot tables. Child row ID prefix: **PDIR**.
 
@@ -199,21 +201,21 @@ Inventory Risk worker reads **source DALs** at refresh — not M15 Inventory sna
 
 | Table | Content |
 | ----- | ------- |
-| `BTR_PortalDashboardPurchasingManagementKpi` | Qualified backlog, concentration %, compound counts, inactivity flag |
-| `BTR_PortalDashboardPurchasingManagementAttention` | Attention list rows (principal × signal) |
-| `BTR_PortalDashboardPurchasingManagementTopPrincipal` | Top 10 MTD purchase with % and cross-domain inventory/at-risk columns |
+| `BTRPD_PurchasingManagementKpi` | Qualified backlog, concentration %, compound counts, inactivity flag |
+| `BTRPD_PurchasingManagementAttention` | Attention list rows (principal × signal) |
+| `BTRPD_PurchasingManagementTopPrincipal` | Top 10 MTD purchase with % and cross-domain inventory/at-risk columns |
 
-Purchasing Management worker reads extended `IInvoiceViewDal` plus V1 purchasing, M15 inventory, and M19 inventory-risk snapshots at refresh — does not duplicate inventory aggregation SQL. V1 `BTR_PortalDashboardPurchasing*` tables remain unchanged.
+Purchasing Management worker reads extended `IInvoiceViewDal` plus V1 purchasing, M15 inventory, and M19 inventory-risk snapshots at refresh — does not duplicate inventory aggregation SQL. V1 `BTRPD_Purchasing*` tables remain unchanged.
 
 ### Supporting objects
 
 | Object | Purpose |
 | ------ | ------- |
-| `BTR_PortalDashboardRefreshLog` | Per-attempt audit (domain, status, duration, error, trigger) |
+| `BTRPD_RefreshLog` | Per-attempt audit (domain, status, duration, error, trigger) |
 | `IX_BTR_Piutang_OpenBalance` | Filtered index `WHERE Sisa > 1` — accelerates Piutang refresh |
 | `BTR_ParamNo_PortalDashboard.sql` | ID prefixes: `PDR`, `PDA`, `PDT`, `PDB`, `PDW`, `PDS`, `PDP`, `PDG` (Purchasing week trend, posting status) |
 
-SQL definitions: `btr.sql/Tables/ReportingContext/BTR_PortalDashboard*.sql`
+SQL definitions: `btr.sql/Tables/ReportingContext/BTRPD_*.sql`
 
 ---
 
@@ -230,7 +232,7 @@ SQL definitions: `btr.sql/Tables/ReportingContext/BTR_PortalDashboard*.sql`
 | `GET /api/dashboard/salesmen` | JWT | Salesman snapshot (6 tables) | Salesman Performance (M18) |
 | `GET /api/dashboard/inventory-risk` | JWT | Inventory Risk snapshot (6 tables) | Slow Moving & Dead Stock (M19) |
 | `POST /api/admin/dashboard/refresh` | JWT | Triggers workers synchronously | IIS timeout risk for `--domain All` |
-| `GET /api/health/dashboard-snapshots` | None | `BTR_PortalDashboardRefreshLog` | `unknown` / `ok` / `refreshing` / `degraded` |
+| `GET /api/health/dashboard-snapshots` | None | `BTRPD_RefreshLog` | `unknown` / `ok` / `refreshing` / `degraded` |
 
 **Empty snapshot behavior:**
 
@@ -335,10 +337,10 @@ Portal API and worker both require `Database` section (JSON only — no registry
 | 6 | Preserve dashboard–report traceability (see domain doc) |
 | 7 | `SnapshotKey = 'CURRENT'` only — no historical snapshot tables unless product adds date-range analytics |
 | 8 | Customer and Salesman workers read source DALs — do not compose from domain snapshot tables |
-| 9 | Do not modify `DashboardSalesFakturAggregator` or `BTR_PortalDashboardSalesTopSalesman` for salesman performance |
+| 9 | Do not modify `DashboardSalesFakturAggregator` or `BTRPD_SalesTopSalesman` for salesman performance |
 | 10 | Inventory Risk worker reads source DALs — do not derive risk metrics from M15 Inventory snapshot |
 | 11 | M15 and M19 share `DashboardInventoryItemGroupBuilder` — prevent denominator drift |
-| 12 | Do not modify `DashboardInventoryAggregator` or `BTR_PortalDashboardInventory*` for inventory risk |
+| 12 | Do not modify `DashboardInventoryAggregator` or `BTRPD_Inventory*` for inventory risk |
 
 ---
 

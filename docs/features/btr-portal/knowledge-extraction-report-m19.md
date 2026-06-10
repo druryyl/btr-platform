@@ -23,7 +23,7 @@ Completed work on **M19 Slow Moving & Dead Stock** has been distilled into perma
 
 - New route `/dashboard/inventory-risk` — **Slow Moving & Dead Stock Dashboard** — answers *Which inventory requires management attention and why?*
 - **Supplements** Inventory Dashboard (`/dashboard/inventory`); does not replace composition analytics
-- Dedicated `BTR_PortalDashboardInventoryRisk*` snapshot — not live composition from M15 Inventory snapshot tables
+- Dedicated `BTRPD_InventoryRisk*` snapshot — not live composition from M15 Inventory snapshot tables
 - Authoritative movement signal: `MAX(FakturDate)` per `BrgId` from gross non-void Faktur only
 - Classification: **Never Sold** (no Faktur history) · **Slow Moving** (90–179 days idle) · **Dead Stock** (≥180 days) · **Active** (≤89 days, excluded from at-risk KPIs)
 - Mutually exclusive KPI counts; Never Sold excluded from Slow/Dead Top 10
@@ -43,7 +43,7 @@ Completed work on **M19 Slow Moving & Dead Stock** has been distilled into perma
 - API: `GET /api/dashboard/inventory-risk`
 - Refresh cadence: 60 minutes (`InventoryRiskIntervalMinutes`); runs after Inventory in `--domain All`
 - Empty snapshot: `IsAvailable = false` (graceful) — like Customer/Salesman
-- Protected unchanged: `DashboardInventoryAggregator`, `BTR_PortalDashboardInventory*`, `GET /api/dashboard/inventory`, `DashboardExecutiveComposer` (until Phase 2)
+- Protected unchanged: `DashboardInventoryAggregator`, `BTRPD_Inventory*`, `GET /api/dashboard/inventory`, `DashboardExecutiveComposer` (until Phase 2)
 - Frontend: `InventoryRiskDashboardView`, `InventoryRiskAttentionList`, `InventoryRiskNavigationSection`; extended `AgingPieChart` for inventory buckets; `loadInventoryRisk()`; Inventory Report reads `?q=` on mount
 
 ### M19 — Operational (HOW — end user)
@@ -58,7 +58,7 @@ Completed work on **M19 Slow Moving & Dead Stock** has been distilled into perma
 - Seventh Task Scheduler job: `BTR-Portal-Dashboard-InventoryRisk` (60 min)
 - Admin refresh and worker CLI accept `--domain InventoryRisk`
 - Health endpoint lists InventoryRisk domain with `InventoryRiskIntervalMinutes`
-- SQL deploy: six `BTR_PortalDashboardInventoryRisk*` tables before first refresh
+- SQL deploy: six `BTRPD_InventoryRisk*` tables before first refresh
 - Initial backfill: include InventoryRisk in `--domain All` verification
 - Refresh order in `All`: Piutang → Inventory → **InventoryRisk** → Sales → Purchasing → Customer → Salesman
 

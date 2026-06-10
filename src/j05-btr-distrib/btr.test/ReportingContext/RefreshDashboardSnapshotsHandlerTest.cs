@@ -8,6 +8,7 @@ namespace btr.test.ReportingContext
 {
     public class RefreshDashboardSnapshotsHandlerTest
     {
+        private const string StubRefreshLogId = "01ARZ3NDEKTSV4RRFFQ69G5FAV";
         [Fact]
         public void Handle_AllDomain_UsesOrchestratorWithManualTrigger()
         {
@@ -39,7 +40,7 @@ namespace btr.test.ReportingContext
             piutangWorker.LastTriggeredBy.Should().Be("Manual");
             response.Domain.Should().Be("Piutang");
             response.Domains.Should().ContainSingle()
-                .Which.RefreshLogId.Should().Be("PDR0001");
+                .Which.RefreshLogId.Should().Be(StubRefreshLogId);
         }
 
         [Fact]
@@ -83,7 +84,7 @@ namespace btr.test.ReportingContext
             purchasingWorker.LastTriggeredBy.Should().Be("Manual");
             response.Domain.Should().Be("Purchasing");
             response.Domains.Should().ContainSingle()
-                .Which.RefreshLogId.Should().Be("PDR0001");
+                .Which.RefreshLogId.Should().Be(StubRefreshLogId);
         }
 
         [Fact]
@@ -100,7 +101,7 @@ namespace btr.test.ReportingContext
             purchasingManagementWorker.LastTriggeredBy.Should().Be("Manual");
             response.Domain.Should().Be("PurchasingManagement");
             response.Domains.Should().ContainSingle()
-                .Which.RefreshLogId.Should().Be("PDPM001");
+                .Which.RefreshLogId.Should().Be(StubRefreshLogId);
         }
 
         [Fact]
@@ -117,7 +118,7 @@ namespace btr.test.ReportingContext
             customerWorker.LastTriggeredBy.Should().Be("Manual");
             response.Domain.Should().Be("Customer");
             response.Domains.Should().ContainSingle()
-                .Which.RefreshLogId.Should().Be("PDC0001");
+                .Which.RefreshLogId.Should().Be(StubRefreshLogId);
         }
 
         private static RefreshDashboardSnapshotsHandler CreateHandler(
@@ -180,7 +181,7 @@ namespace btr.test.ReportingContext
                 LastTriggeredBy = request.TriggeredBy;
                 request.Result = new RefreshDashboardPiutangSnapshotResult
                 {
-                    RefreshLogId = "PDR0001",
+                    RefreshLogId = StubRefreshLogId,
                     DurationMs = 120
                 };
             }
@@ -219,7 +220,7 @@ namespace btr.test.ReportingContext
                 LastTriggeredBy = request.TriggeredBy;
                 request.Result = new RefreshDashboardPurchasingSnapshotResult
                 {
-                    RefreshLogId = "PDR0001",
+                    RefreshLogId = StubRefreshLogId,
                     DurationMs = 90
                 };
             }
@@ -237,7 +238,7 @@ namespace btr.test.ReportingContext
                 LastTriggeredBy = request.TriggeredBy;
                 request.Result = new RefreshDashboardPurchasingManagementSnapshotResult
                 {
-                    RefreshLogId = "PDPM001",
+                    RefreshLogId = StubRefreshLogId,
                     DurationMs = 95
                 };
             }
@@ -255,7 +256,7 @@ namespace btr.test.ReportingContext
                 LastTriggeredBy = request.TriggeredBy;
                 request.Result = new RefreshDashboardCustomerSnapshotResult
                 {
-                    RefreshLogId = "PDC0001",
+                    RefreshLogId = StubRefreshLogId,
                     DurationMs = 95
                 };
             }

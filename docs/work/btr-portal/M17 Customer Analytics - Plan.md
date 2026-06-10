@@ -23,7 +23,7 @@ Deliver **Customer Analytics** at `/dashboard/customers` — a dedicated custome
 **Primary outcomes:**
 
 - New route `/dashboard/customers` with page title **Customer Analytics** for all authenticated users (no role-based routing).
-- **Dedicated Customer snapshot domain** (`BTR_PortalDashboardCustomer*`) with its own refresh worker — materialized KPIs, not live composition.
+- **Dedicated Customer snapshot domain** (`BTRPD_Customer*`) with its own refresh worker — materialized KPIs, not live composition.
 - **Proposal A layout** (fixed section order): Attention Cards → Attention List → Top Customer Rankings → Segmentation Summary → Navigation.
 - Mandatory **Top 10 by Omzet** (current month Faktur) and **Top 10 by Piutang** (all-time open balance), each with `CustomerCode`.
 - **Attention List** with approved signals: Overdue · Dormant (90-day rule) · Plafond breach · Suspended with active sales.
@@ -59,7 +59,7 @@ Source: analysis Section 11. Do not re-decide these rules during implementation.
 | Decision | Value |
 | --- | --- |
 | Domains | **Sales + Piutang only** |
-| Materialization | Dedicated `BTR_PortalDashboardCustomer*` tables + refresh worker |
+| Materialization | Dedicated `BTRPD_Customer*` tables + refresh worker |
 | Dashboard only | No new Customer Report |
 
 ### 2.3 Attention rules
@@ -115,7 +115,7 @@ Source DALs (read at refresh time — NOT from other snapshot tables)
     ↓
 RefreshDashboardCustomerSnapshotWorker
     ↓ DashboardCustomerAggregator
-BTR_PortalDashboardCustomer* tables
+BTRPD_Customer* tables
     ↓
 Browser → GET /api/dashboard/customers
     ↓ MediatR
@@ -158,7 +158,7 @@ Existing unchanged:
 | RefreshAll order | Piutang → Inventory → Sales → Purchasing → **Customer** | Customer last; independent of other snapshots but runs in same scheduler pass |
 | Read API | **`GET /api/dashboard/customers`** | Mirrors domain dashboard pattern |
 | Composition layer | **None** — direct snapshot read | Unlike M16 executive; all derivations happen in aggregator at refresh |
-| Existing piutang top table | **Do not alter** | Executive and Piutang dashboard continue using `BTR_PortalDashboardPiutangTopCustomer` |
+| Existing piutang top table | **Do not alter** | Executive and Piutang dashboard continue using `BTRPD_PiutangTopCustomer` |
 | Attention list rows | **One row per customer × signal** | Customer with two signals appears twice; simplifies counts and report routing |
 | Pre-filter mechanism | **Route query `?q=`** → report store `freeText` | Reuses `useReportFreeTextFilter`; no report API changes |
 | Staleness banner | Customer `GeneratedAt` vs `CustomerIntervalMinutes` | Same copy as M16: **"⚠ Dashboard Data Not Fresh"** |
@@ -171,7 +171,7 @@ Existing unchanged:
 
 | Layer | Module | Change type |
 | --- | --- | --- |
-| SQL | `btr.sql/Tables/ReportingContext/BTR_PortalDashboardCustomer*.sql` (5 tables) | **New** |
+| SQL | `btr.sql/Tables/ReportingContext/BTRPD_Customer*.sql` (5 tables) | **New** |
 | SQL | `btr.sql.sqlproj` | Include new tables |
 | Application | `DashboardSnapshotAgg/Services/DashboardCustomerAggregator.cs` | **New** |
 | Application | `DashboardSnapshotAgg/Services/DashboardCustomerKeyResolver.cs` | **New** |
@@ -239,7 +239,7 @@ Existing unchanged:
 
 Deploy all tables with `SnapshotKey = 'CURRENT'` delete-and-replace pattern (consistent with existing dashboard snapshots).
 
-### 5.1 `BTR_PortalDashboardCustomerKpi`
+### 5.1 `BTRPD_CustomerKpi`
 
 Single row per refresh — headline metrics for attention cards.
 
@@ -261,7 +261,7 @@ Single row per refresh — headline metrics for attention cards.
 | TopPiutangCustomerPercent | DECIMAL(9,4) NULL | Top-1 balance / TotalPiutang |
 | LastRefreshLogId | VARCHAR(13) | FK to refresh log |
 
-### 5.2 `BTR_PortalDashboardCustomerTopOmzet`
+### 5.2 `BTRPD_CustomerTopOmzet`
 
 | Column | Type | Description |
 | --- | --- | --- |
@@ -275,7 +275,7 @@ Single row per refresh — headline metrics for attention cards.
 
 Unique: `(SnapshotKey, Rank)`
 
-### 5.3 `BTR_PortalDashboardCustomerTopPiutang`
+### 5.3 `BTRPD_CustomerTopPiutang`
 
 | Column | Type | Description |
 | --- | --- | --- |
@@ -289,7 +289,7 @@ Unique: `(SnapshotKey, Rank)`
 
 Unique: `(SnapshotKey, Rank)`
 
-### 5.4 `BTR_PortalDashboardCustomerAttention`
+### 5.4 `BTRPD_CustomerAttention`
 
 | Column | Type | Description |
 | --- | --- | --- |
@@ -306,7 +306,7 @@ Unique: `(SnapshotKey, Rank)`
 
 Index: `(SnapshotKey, SortOrder)`
 
-### 5.5 `BTR_PortalDashboardCustomerSegmentation`
+### 5.5 `BTRPD_CustomerSegmentation`
 
 | Column | Type | Description |
 | --- | --- | --- |
@@ -801,7 +801,7 @@ Execute in order. Each phase should compile before proceeding.
 
 ### Phase 1 — Database
 
-1. Create five `BTR_PortalDashboardCustomer*.sql` table scripts.
+1. Create five `BTRPD_Customer*.sql` table scripts.
 2. Add to `btr.sql.sqlproj`; deploy to dev database.
 
 ### Phase 2 — Backend core
@@ -845,7 +845,7 @@ M17 is complete when:
 
 1. `/dashboard/customers` displays **Customer Analytics** (Proposal A layout) for all authenticated users.
 2. Sidebar shows **Dashboard → Customers** at `/dashboard/customers`.
-3. Dedicated `BTR_PortalDashboardCustomer*` tables exist and are populated by `RefreshDashboardCustomerSnapshotWorker`.
+3. Dedicated `BTRPD_Customer*` tables exist and are populated by `RefreshDashboardCustomerSnapshotWorker`.
 4. `GET /api/dashboard/customers` returns attention cards, attention list, Top 10 Omzet, Top 10 Piutang, and segmentation per Section 11.10 of analysis.
 5. All customer rows include **CustomerCode**; rankings show **% of domain total**.
 6. Attention list includes only approved signals: Overdue · Dormant (90-day) · Plafond breach · Suspended with active sales.
@@ -866,7 +866,7 @@ M17 is complete when:
 - **Section 2 is authoritative** — do not add Retur, Effective Call, GPS, collection effectiveness, trend charts, or executive changes.
 - **Read source DALs in Customer worker** — do not compose from Sales/Piutang snapshot tables (CustomerCode gap, dormant/plafond logic).
 - **Reuse aging bucket definitions** from `DashboardPiutangAggregator` — import or duplicate constants; verify `DaysOver90` key matches exactly.
-- **Do not modify** `BTR_PortalDashboardPiutangTopCustomer` or `DashboardPiutangAggregator` for M17.
+- **Do not modify** `BTRPD_PiutangTopCustomer` or `DashboardPiutangAggregator` for M17.
 - **Plafond breach:** `Plafond > 0 AND openBalance > Plafond` — do not flag when Plafond is zero unless PO revises.
 - **Dormant:** `(today - LastFakturDate).Days >= 90` AND customer appears in `ICustomerLastFakturDal` results (implies history). Customers active this month are **not** dormant.
 - **Attention list sorting suggestion:** Overdue → PlafondBreach → SuspendedWithSales → Dormant; then by CustomerName.

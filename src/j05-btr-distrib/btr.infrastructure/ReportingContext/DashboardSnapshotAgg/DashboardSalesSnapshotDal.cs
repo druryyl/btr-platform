@@ -6,10 +6,10 @@ using btr.application.ReportingContext.Shared;
 using btr.application.ReportingContext.DashboardSnapshotAgg.Contracts;
 using btr.application.ReportingContext.DashboardSnapshotAgg.Models;
 using btr.infrastructure.Helpers;
-using btr.nuna.Application;
 using btr.nuna.Domain;
 using Dapper;
 using Microsoft.Extensions.Options;
+using System;
 
 namespace btr.infrastructure.ReportingContext.DashboardSnapshotAgg
 {
@@ -18,14 +18,10 @@ namespace btr.infrastructure.ReportingContext.DashboardSnapshotAgg
         private const string SnapshotKey = "CURRENT";
 
         private readonly DatabaseOptions _opt;
-        private readonly INunaCounterBL _counter;
 
-        public DashboardSalesSnapshotDal(
-            IOptions<DatabaseOptions> opt,
-            INunaCounterBL counter)
+        public DashboardSalesSnapshotDal(IOptions<DatabaseOptions> opt)
         {
             _opt = opt.Value;
-            _counter = counter;
         }
 
         public DashboardSalesAggregateResult GetCurrent()
@@ -34,18 +30,18 @@ namespace btr.infrastructure.ReportingContext.DashboardSnapshotAgg
 SELECT SnapshotKey, GeneratedAt, PeriodYear, PeriodMonth,
        TotalOmzet, TotalFaktur, TotalCustomer, TotalTarget, TotalAchievement,
        AchievementPercent, CompletedOmzet, PipelineOmzet, LastRefreshLogId
-FROM BTR_PortalDashboardSalesKpi
+FROM BTRPD_SalesKpi
 WHERE SnapshotKey = @SnapshotKey";
 
             const string weekTrendSql = @"
 SELECT WeekStart, WeekEnd, WeekLabel, RecognizedAmount
-FROM BTR_PortalDashboardSalesWeekTrend
+FROM BTRPD_SalesWeekTrend
 WHERE SnapshotKey = @SnapshotKey
 ORDER BY WeekStart";
 
             const string topSalesmanSql = @"
 SELECT Rank, SalesPersonName, CompletedOmzet
-FROM BTR_PortalDashboardSalesTopSalesman
+FROM BTRPD_SalesTopSalesman
 WHERE SnapshotKey = @SnapshotKey
 ORDER BY Rank";
 
@@ -98,15 +94,15 @@ ORDER BY Rank";
                 conn.Open();
 
                 conn.Execute(
-                    "DELETE FROM BTR_PortalDashboardSalesWeekTrend WHERE SnapshotKey = @SnapshotKey",
+                    "DELETE FROM BTRPD_SalesWeekTrend WHERE SnapshotKey = @SnapshotKey",
                     new { SnapshotKey });
 
                 conn.Execute(
-                    "DELETE FROM BTR_PortalDashboardSalesTopSalesman WHERE SnapshotKey = @SnapshotKey",
+                    "DELETE FROM BTRPD_SalesTopSalesman WHERE SnapshotKey = @SnapshotKey",
                     new { SnapshotKey });
 
                 const string mergeKpiSql = @"
-MERGE BTR_PortalDashboardSalesKpi AS target
+MERGE BTRPD_SalesKpi AS target
 USING (SELECT @SnapshotKey AS SnapshotKey) AS source
 ON target.SnapshotKey = source.SnapshotKey
 WHEN MATCHED THEN
@@ -151,7 +147,7 @@ WHEN NOT MATCHED THEN
                 });
 
                 const string insertWeekTrendSql = @"
-INSERT INTO BTR_PortalDashboardSalesWeekTrend (
+INSERT INTO BTRPD_SalesWeekTrend (
     SalesWeekTrendId, SnapshotKey, WeekStart, WeekEnd, WeekLabel, RecognizedAmount)
 VALUES (
     @SalesWeekTrendId, @SnapshotKey, @WeekStart, @WeekEnd, @WeekLabel, @RecognizedAmount)";
@@ -160,7 +156,7 @@ VALUES (
                 {
                     conn.Execute(insertWeekTrendSql, new
                     {
-                        SalesWeekTrendId = _counter.Generate("PDW", IDFormatEnum.PFnnn),
+                        SalesWeekTrendId = Ulid.NewUlid().ToString(),
                         SnapshotKey,
                         row.WeekStart,
                         row.WeekEnd,
@@ -170,7 +166,7 @@ VALUES (
                 }
 
                 const string insertTopSalesmanSql = @"
-INSERT INTO BTR_PortalDashboardSalesTopSalesman (
+INSERT INTO BTRPD_SalesTopSalesman (
     SalesTopSalesmanId, SnapshotKey, Rank, SalesPersonName, CompletedOmzet)
 VALUES (
     @SalesTopSalesmanId, @SnapshotKey, @Rank, @SalesPersonName, @CompletedOmzet)";
@@ -179,7 +175,7 @@ VALUES (
                 {
                     conn.Execute(insertTopSalesmanSql, new
                     {
-                        SalesTopSalesmanId = _counter.Generate("PDS", IDFormatEnum.PFnnn),
+                        SalesTopSalesmanId = Ulid.NewUlid().ToString(),
                         SnapshotKey,
                         row.Rank,
                         SalesPersonName = row.SalesPersonName ?? string.Empty,

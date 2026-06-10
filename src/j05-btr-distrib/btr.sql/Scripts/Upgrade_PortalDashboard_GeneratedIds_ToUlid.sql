@@ -1,0 +1,101 @@
+-- Upgrade portal dashboard generated IDs from VARCHAR(13) to VARCHAR(26) for ULID support.
+-- Run before deploying application code that writes ULID values.
+SET NOCOUNT ON;
+GO
+
+ALTER TABLE BTRPD_RefreshLog ALTER COLUMN RefreshLogId VARCHAR(26) NOT NULL;
+GO
+ALTER TABLE BTRPD_PiutangKpi ALTER COLUMN LastRefreshLogId VARCHAR(26) NOT NULL;
+GO
+ALTER TABLE BTRPD_PiutangAging ALTER COLUMN PiutangAgingId VARCHAR(26) NOT NULL;
+GO
+ALTER TABLE BTRPD_PiutangTopCustomer ALTER COLUMN PiutangTopCustomerId VARCHAR(26) NOT NULL;
+GO
+ALTER TABLE BTRPD_InventoryKpi ALTER COLUMN LastRefreshLogId VARCHAR(26) NOT NULL;
+GO
+ALTER TABLE BTRPD_InventoryBreakdown ALTER COLUMN InventoryBreakdownId VARCHAR(26) NOT NULL;
+GO
+ALTER TABLE BTRPD_InventoryRiskKpi ALTER COLUMN LastRefreshLogId VARCHAR(26) NOT NULL;
+GO
+ALTER TABLE BTRPD_InventoryRiskAging ALTER COLUMN InventoryRiskAgingId VARCHAR(26) NOT NULL;
+GO
+ALTER TABLE BTRPD_InventoryRiskAttention ALTER COLUMN InventoryRiskAttentionId VARCHAR(26) NOT NULL;
+GO
+ALTER TABLE BTRPD_InventoryRiskTopDead ALTER COLUMN InventoryRiskTopDeadId VARCHAR(26) NOT NULL;
+GO
+ALTER TABLE BTRPD_InventoryRiskTopSlow ALTER COLUMN InventoryRiskTopSlowId VARCHAR(26) NOT NULL;
+GO
+ALTER TABLE BTRPD_InventoryRiskBreakdown ALTER COLUMN InventoryRiskBreakdownId VARCHAR(26) NOT NULL;
+GO
+ALTER TABLE BTRPD_SalesKpi ALTER COLUMN LastRefreshLogId VARCHAR(26) NOT NULL;
+GO
+ALTER TABLE BTRPD_SalesWeekTrend ALTER COLUMN SalesWeekTrendId VARCHAR(26) NOT NULL;
+GO
+ALTER TABLE BTRPD_SalesTopSalesman ALTER COLUMN SalesTopSalesmanId VARCHAR(26) NOT NULL;
+GO
+ALTER TABLE BTRPD_PurchasingKpi ALTER COLUMN LastRefreshLogId VARCHAR(26) NOT NULL;
+GO
+ALTER TABLE BTRPD_PurchasingWeekTrend ALTER COLUMN PurchasingWeekTrendId VARCHAR(26) NOT NULL;
+GO
+ALTER TABLE BTRPD_PurchasingPostingStatus ALTER COLUMN PurchasingPostingStatusId VARCHAR(26) NOT NULL;
+GO
+ALTER TABLE BTRPD_PurchasingTopPrincipal ALTER COLUMN PurchasingTopPrincipalId VARCHAR(26) NOT NULL;
+GO
+ALTER TABLE BTRPD_PurchasingManagementKpi ALTER COLUMN LastRefreshLogId VARCHAR(26) NOT NULL;
+GO
+ALTER TABLE BTRPD_PurchasingManagementAttention ALTER COLUMN PurchasingManagementAttentionId VARCHAR(26) NOT NULL;
+GO
+ALTER TABLE BTRPD_PurchasingManagementTopPrincipal ALTER COLUMN PurchasingManagementTopPrincipalId VARCHAR(26) NOT NULL;
+GO
+ALTER TABLE BTRPD_CustomerKpi ALTER COLUMN LastRefreshLogId VARCHAR(26) NOT NULL;
+GO
+ALTER TABLE BTRPD_CustomerTopOmzet ALTER COLUMN CustomerTopOmzetId VARCHAR(26) NOT NULL;
+GO
+ALTER TABLE BTRPD_CustomerTopPiutang ALTER COLUMN CustomerTopPiutangId VARCHAR(26) NOT NULL;
+GO
+ALTER TABLE BTRPD_CustomerAttention ALTER COLUMN CustomerAttentionId VARCHAR(26) NOT NULL;
+GO
+ALTER TABLE BTRPD_CustomerSegmentation ALTER COLUMN CustomerSegmentationId VARCHAR(26) NOT NULL;
+GO
+ALTER TABLE BTRPD_SalesmanKpi ALTER COLUMN LastRefreshLogId VARCHAR(26) NOT NULL;
+GO
+ALTER TABLE BTRPD_SalesmanTopOmzet ALTER COLUMN SalesmanTopOmzetId VARCHAR(26) NOT NULL;
+GO
+ALTER TABLE BTRPD_SalesmanTopAchievement ALTER COLUMN SalesmanTopAchievementId VARCHAR(26) NOT NULL;
+GO
+ALTER TABLE BTRPD_SalesmanTopPiutang ALTER COLUMN SalesmanTopPiutangId VARCHAR(26) NOT NULL;
+GO
+ALTER TABLE BTRPD_SalesmanAttention ALTER COLUMN SalesmanAttentionId VARCHAR(26) NOT NULL;
+GO
+ALTER TABLE BTRPD_SalesmanSegmentation ALTER COLUMN SalesmanSegmentationId VARCHAR(26) NOT NULL;
+GO
+ALTER TABLE BTRPD_CollectionKpi ALTER COLUMN LastRefreshLogId VARCHAR(26) NOT NULL;
+GO
+ALTER TABLE BTRPD_CollectionAging ALTER COLUMN CollectionAgingId VARCHAR(26) NOT NULL;
+GO
+ALTER TABLE BTRPD_CollectionAttention ALTER COLUMN CollectionAttentionId VARCHAR(26) NOT NULL;
+GO
+ALTER TABLE BTRPD_CollectionTopOverdueCustomer ALTER COLUMN CollectionTopOverdueCustomerId VARCHAR(26) NOT NULL;
+GO
+ALTER TABLE BTRPD_CollectionTopOverdueSalesman ALTER COLUMN CollectionTopOverdueSalesmanId VARCHAR(26) NOT NULL;
+GO
+ALTER TABLE BTRPD_CollectionTopOverdueWilayah ALTER COLUMN CollectionTopOverdueWilayahId VARCHAR(26) NOT NULL;
+GO
+ALTER TABLE BTRPD_LocationKpi ALTER COLUMN LastRefreshLogId VARCHAR(26) NOT NULL;
+GO
+ALTER TABLE BTRPD_LocationTopWarehouseInventory ALTER COLUMN LocationTopWarehouseInventoryId VARCHAR(26) NOT NULL;
+GO
+ALTER TABLE BTRPD_LocationTopWarehouseAtRisk ALTER COLUMN LocationTopWarehouseAtRiskId VARCHAR(26) NOT NULL;
+GO
+ALTER TABLE BTRPD_LocationTopWarehouseSales ALTER COLUMN LocationTopWarehouseSalesId VARCHAR(26) NOT NULL;
+GO
+ALTER TABLE BTRPD_LocationTopWarehousePurchasing ALTER COLUMN LocationTopWarehousePurchasingId VARCHAR(26) NOT NULL;
+GO
+ALTER TABLE BTRPD_LocationTopWilayahSales ALTER COLUMN LocationTopWilayahSalesId VARCHAR(26) NOT NULL;
+GO
+ALTER TABLE BTRPD_LocationAttention ALTER COLUMN LocationAttentionId VARCHAR(26) NOT NULL;
+GO
+
+-- Remove obsolete portal dashboard ParamNo prefixes (optional cleanup).
+DELETE FROM BTR_ParamNo WHERE Prefix LIKE 'PD%';
+GO

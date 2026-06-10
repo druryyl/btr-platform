@@ -11,7 +11,7 @@
 
 - `docs/work/materialize-dashboard-data/implementation-plan.md` (Phase 2 scope)
 - `docs/work/materialize-dashboard-data/implementation-summary-phase-2.md`
-- SQL: `BTR_PortalDashboardInventoryKpi`, `BTR_PortalDashboardInventoryBreakdown`, `BTR_ParamNo_PortalDashboard.sql` (`PDB` prefix)
+- SQL: `BTRPD_InventoryKpi`, `BTRPD_InventoryBreakdown`, `BTR_ParamNo_PortalDashboard.sql` (`PDB` prefix)
 - Application: `DashboardInventoryAggregator`, `RefreshDashboardInventorySnapshotWorker`, contracts/models
 - Infrastructure: `DashboardInventorySnapshotDal`, `DashboardInventoryDal` (facade), `DashboardInventoryLiveDal`
 - Portal: `InfrastructurePortalExtensions.cs`, `ApplicationPortalExtensions.cs`
@@ -39,7 +39,7 @@
 
 | Step | Requirement | Evidence | Status |
 | --- | --- | --- | --- |
-| 2.1 | SQL tables: Inventory KPI, Breakdown | `BTR_PortalDashboardInventoryKpi.sql`, `BTR_PortalDashboardInventoryBreakdown.sql`; registered in `btr.sql.sqlproj`; `PDB` ParamNo seed | **PASS** |
+| 2.1 | SQL tables: Inventory KPI, Breakdown | `BTRPD_InventoryKpi.sql`, `BTRPD_InventoryBreakdown.sql`; registered in `btr.sql.sqlproj`; `PDB` ParamNo seed | **PASS** |
 | 2.2 | `DashboardInventoryAggregator` (extract from existing DAL) | Logic matches pre-refactor `GetSummary` at `8bc5494`: BrgId-first, In-Transit exclusion, Qty > 0, Unknown dimensions, HPP×Qty, Top 10 | **PASS** |
 | 2.3 | `RefreshDashboardInventorySnapshotWorker` | Follows plan template: refresh log → aggregate → transactional replace → success/fail; uses `IStokBalanceViewDal` | **PASS** |
 | 2.4 | Shadow-run vs live `DashboardInventoryDal` | `DashboardInventorySnapshotVerificationTest` compares aggregator vs `DashboardInventoryLiveDal` on fixture rows; parity with committed baseline confirmed | **PASS** |

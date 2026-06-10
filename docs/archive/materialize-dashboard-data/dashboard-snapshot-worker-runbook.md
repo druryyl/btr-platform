@@ -1,5 +1,7 @@
 # Deploy Runbook: BTR Portal Dashboard Snapshot Worker
 
+> **Table naming:** Portal snapshot tables use the `BTRPD_*` prefix (formerly `BTR_PortalDashboard*`).
+
 Operations guide for scheduling materialized dashboard snapshot refresh jobs on the BTR Portal server.
 
 **Related:** [implementation-plan.md](./implementation-plan.md) Phase 4
@@ -8,7 +10,7 @@ Operations guide for scheduling materialized dashboard snapshot refresh jobs on 
 
 ## Prerequisites
 
-1. Deploy `btr.sql` schema including all `BTR_PortalDashboard*` tables and `IX_BTR_Piutang_OpenBalance`.
+1. Deploy `btr.sql` schema including all `BTRPD_*` tables and `IX_BTR_Piutang_OpenBalance`.
 2. Deploy `btr.portal.api` and `btr.portal.worker` to the server.
 3. Configure `appsettings.json` (or `appsettings.{MachineName}.json`) in **both** the portal API folder and the worker folder with correct `Database` connection settings.
 4. Run an initial full refresh before disabling live fallback:
@@ -18,7 +20,7 @@ cd C:\path\to\btr.portal.worker\bin\Release
 .\btr.portal.worker.exe --domain All --triggered-by Manual
 ```
 
-5. Verify `BTR_PortalDashboardRefreshLog` shows `Success` for Piutang, Inventory, Sales, and Purchasing.
+5. Verify `BTRPD_RefreshLog` shows `Success` for Piutang, Inventory, Sales, and Purchasing.
 
 ---
 
@@ -92,7 +94,7 @@ Content-Type: application/json
 { "domain": "All" }
 ```
 
-`domain` accepts `All` (default), `Piutang`, `Inventory`, `Sales`, or `Purchasing` (case-insensitive). Refresh attempts are logged with `TriggeredBy = Manual` in `BTR_PortalDashboardRefreshLog`.
+`domain` accepts `All` (default), `Piutang`, `Inventory`, `Sales`, or `Purchasing` (case-insensitive). Refresh attempts are logged with `TriggeredBy = Manual` in `BTRPD_RefreshLog`.
 
 The worker CLI remains available for ops and service accounts:
 
@@ -109,7 +111,7 @@ The portal API runs snapshot refresh **synchronously** on the HTTP request threa
 | `POST /api/admin/dashboard/refresh` | Bound by IIS / reverse-proxy request timeout (~110 s default) | Single-domain ad-hoc refresh from the portal |
 | `btr.portal.worker.exe` | No HTTP timeout; Task Scheduler allows up to 30 minutes (see task checklist) | Initial backfill, `--domain All`, scheduled production refresh |
 
-If an API-triggered refresh times out, check `BTR_PortalDashboardRefreshLog` — the refresh may still be `Running` or may have failed mid-run. Prefer the worker CLI for full rebuilds and re-run a single domain via API only when duration is known to be short.
+If an API-triggered refresh times out, check `BTRPD_RefreshLog` — the refresh may still be `Running` or may have failed mid-run. Prefer the worker CLI for full rebuilds and re-run a single domain via API only when duration is known to be short.
 
 ---
 
@@ -118,11 +120,11 @@ If an API-triggered refresh times out, check `BTR_PortalDashboardRefreshLog` —
 | Check | How |
 | --- | --- |
 | Last refresh per domain (API) | `GET /api/health/dashboard-snapshots` — overall `status`: `unknown` (no refresh logged), `ok`, `refreshing`, or `degraded` |
-| Last refresh per domain (SQL) | `SELECT TOP 1 * FROM BTR_PortalDashboardRefreshLog WHERE Domain = 'Piutang' ORDER BY CompletedAt DESC` |
+| Last refresh per domain (SQL) | `SELECT TOP 1 * FROM BTRPD_RefreshLog WHERE Domain = 'Piutang' ORDER BY CompletedAt DESC` |
 | Worker log | `{worker-folder}/logs/btr-portal-worker-{date}.log` |
 | Task Scheduler history | Task Scheduler → task → History tab |
 | Portal overview staleness | Dashboard home cards show per-domain `GeneratedAt` |
-| Snapshot populated | `SELECT GeneratedAt FROM BTR_PortalDashboardPiutangKpi WHERE SnapshotKey = 'CURRENT'` |
+| Snapshot populated | `SELECT GeneratedAt FROM BTRPD_PiutangKpi WHERE SnapshotKey = 'CURRENT'` |
 
 ---
 
@@ -131,7 +133,7 @@ If an API-triggered refresh times out, check `BTR_PortalDashboardRefreshLog` —
 If snapshot data is stale or incorrect:
 
 1. Re-run manual refresh: `btr.portal.worker.exe --domain All --triggered-by Manual`
-2. Investigate `BTR_PortalDashboardRefreshLog.ErrorMessage` for failed runs
+2. Investigate `BTRPD_RefreshLog.ErrorMessage` for failed runs
 3. Detail pages return HTTP 503 when snapshot is empty — ensure worker jobs are running
 
 ---

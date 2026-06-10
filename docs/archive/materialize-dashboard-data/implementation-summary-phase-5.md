@@ -52,7 +52,7 @@ Domain values are **case-insensitive** (`piutang`, `ALL`, etc.). Prefer the work
 
 **Response:** `RefreshDashboardSnapshotsResponse` with per-domain `RefreshLogId` and `DurationMs`.
 
-**Errors:** Invalid domain → HTTP 400; worker failure → HTTP 500 (logged in `BTR_PortalDashboardRefreshLog`).
+**Errors:** Invalid domain → HTTP 400; worker failure → HTTP 500 (logged in `BTRPD_RefreshLog`).
 
 ### Dashboard snapshot health (public)
 

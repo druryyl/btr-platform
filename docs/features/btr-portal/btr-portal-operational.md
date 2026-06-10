@@ -1,5 +1,7 @@
 # BTR Portal — Operational Guide
 
+> **Table naming:** Portal snapshot tables use the `BTRPD_*` prefix (formerly `BTR_PortalDashboard*`).
+
 **Audience:** End Users, Trainers, Support Team  
 **Purpose:** Explain how to use BTR Portal day to day.
 
@@ -806,7 +808,7 @@ Operational steps for deploying and maintaining BTR Portal on a Windows server. 
 
 ### Prerequisites
 
-1. Deploy `btr.sql` schema (includes `BTR_PortalDashboard*` tables).
+1. Deploy `btr.sql` schema (includes `BTRPD_*` tables).
 2. Deploy `btr.portal.api`, `btr.portal.web`, and `btr.portal.worker`.
 3. Configure database, JWT, and CORS on each server (see below).
 4. Run an initial snapshot backfill before users access dashboards.
@@ -863,7 +865,7 @@ cd C:\path\to\btr.portal.worker
 .\btr.portal.worker.exe --domain All --triggered-by Manual
 ```
 
-Verify `BTR_PortalDashboardRefreshLog` shows `Success` for Piutang, Inventory, InventoryRisk, Sales, Purchasing, PurchasingManagement, Customer, Salesman, and Collection.
+Verify `BTRPD_RefreshLog` shows `Success` for Piutang, Inventory, InventoryRisk, Sales, Purchasing, PurchasingManagement, Customer, Salesman, and Collection.
 
 **Scheduled tasks** — create separate Windows Task Scheduler jobs (including M21 PurchasingManagement):
 
@@ -911,7 +913,7 @@ Content-Type: application/json
 | ----- | --- |
 | API health | `GET /api/health` → 200 |
 | Snapshot health | `GET /api/health/dashboard-snapshots` — status: `unknown`, `ok`, `refreshing`, or `degraded`; each domain (Piutang, Inventory, InventoryRisk, Sales, Purchasing, Customer, Salesman) shows `LastRefresh.Status` |
-| Last refresh (SQL) | `SELECT TOP 1 * FROM BTR_PortalDashboardRefreshLog WHERE Domain = 'Purchasing' ORDER BY CompletedAt DESC` |
+| Last refresh (SQL) | `SELECT TOP 1 * FROM BTRPD_RefreshLog WHERE Domain = 'Purchasing' ORDER BY CompletedAt DESC` |
 | Worker log | `{worker-folder}/logs/btr-portal-worker-{date}.log` |
 | Task Scheduler | History tab on each scheduled task |
 

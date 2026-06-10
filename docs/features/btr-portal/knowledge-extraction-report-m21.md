@@ -52,7 +52,7 @@ Completed work on **M21 Purchasing Management Dashboard** has been distilled int
 
 ### M21 — Architecture (WHAT)
 
-- Dedicated snapshot domain: `BTR_PortalDashboardPurchasingManagement*` (3 tables) — separate from V1 `BTR_PortalDashboardPurchasing*`
+- Dedicated snapshot domain: `BTRPD_PurchasingManagement*` (3 tables) — separate from V1 `BTRPD_Purchasing*`
 - `DashboardPurchasingManagementAggregator` + `RefreshDashboardPurchasingManagementSnapshotWorker`; domain value `PurchasingManagement`
 - Refresh reads: extended `IInvoiceViewDal`, V1 purchasing snapshot, M15 inventory snapshot, M19 inventory-risk snapshot — **no duplicate inventory SQL**
 - `GET /api/dashboard/purchasing` merges V1 + management in single response; `GeneratedAt` = min(V1, Management)

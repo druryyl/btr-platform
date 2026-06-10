@@ -25,7 +25,7 @@ Refresh path (background):
     → DashboardPiutangAggregator
     → RefreshDashboardPiutangSnapshotWorker
     → DashboardPiutangSnapshotDal.ReplaceCurrent()
-    → BTR_PortalDashboard* tables
+    → BTRPD_* tables
 
 Read path (HTTP):
   GET /api/dashboard/piutang
@@ -45,10 +45,10 @@ Snapshot pattern: single active row per domain via `SnapshotKey = 'CURRENT'`. Ch
 
 | Table | Purpose |
 | --- | --- |
-| `BTR_PortalDashboardRefreshLog` | Per-refresh audit (domain, status, duration, error) |
-| `BTR_PortalDashboardPiutangKpi` | Layer A headline KPIs (`TotalPiutang`, `TotalCustomer`, `OverdueCustomer`, `GeneratedAt`) |
-| `BTR_PortalDashboardPiutangAging` | Layer B aging bucket amounts (5 buckets) |
-| `BTR_PortalDashboardPiutangTopCustomer` | Layer B Top 10 customers by outstanding balance |
+| `BTRPD_RefreshLog` | Per-refresh audit (domain, status, duration, error) |
+| `BTRPD_PiutangKpi` | Layer A headline KPIs (`TotalPiutang`, `TotalCustomer`, `OverdueCustomer`, `GeneratedAt`) |
+| `BTRPD_PiutangAging` | Layer B aging bucket amounts (5 buckets) |
+| `BTRPD_PiutangTopCustomer` | Layer B Top 10 customers by outstanding balance |
 
 ### Index
 
@@ -109,10 +109,10 @@ All objects registered in `btr.sql.sqlproj`.
 
 | File | Purpose |
 | --- | --- |
-| `Tables/ReportingContext/BTR_PortalDashboardRefreshLog.sql` | Refresh log table |
-| `Tables/ReportingContext/BTR_PortalDashboardPiutangKpi.sql` | Piutang KPI table |
-| `Tables/ReportingContext/BTR_PortalDashboardPiutangAging.sql` | Aging bucket table |
-| `Tables/ReportingContext/BTR_PortalDashboardPiutangTopCustomer.sql` | Top customer table |
+| `Tables/ReportingContext/BTRPD_RefreshLog.sql` | Refresh log table |
+| `Tables/ReportingContext/BTRPD_PiutangKpi.sql` | Piutang KPI table |
+| `Tables/ReportingContext/BTRPD_PiutangAging.sql` | Aging bucket table |
+| `Tables/ReportingContext/BTRPD_PiutangTopCustomer.sql` | Top customer table |
 | `Tables/ReportingContext/IX_BTR_Piutang_OpenBalance.sql` | Filtered index |
 | `DataSeeds/BTR_ParamNo_PortalDashboard.sql` | ID prefix seed |
 
@@ -249,4 +249,4 @@ Existing `PiutangReportDalTest` and `DashboardInventoryDalTest` unaffected.
 
 1. **Phase 2:** Inventory snapshot (tables, aggregator, worker, read-path swap).
 2. **Phase 4 (before production cutover):** Deploy worker host; schedule Piutang refresh every 15 minutes; run shadow period; disable `AllowLiveFallback`.
-3. **Ops:** After schema deploy, execute one refresh to populate `BTR_PortalDashboardPiutang*` before disabling fallback.
+3. **Ops:** After schema deploy, execute one refresh to populate `BTRPD_Piutang*` before disabling fallback.

@@ -55,7 +55,7 @@ Deliver **Purchasing Management Dashboard** at `/dashboard/purchasing` (page tit
 6. Cross-links to Inventory Dashboard and Inventory Risk Dashboard  
 7. Purchasing Report validation (M17 drill-down pattern)
 
-**Dedicated snapshot domain:** `BTR_PortalDashboardPurchasingManagement*` — separate from existing `BTR_PortalDashboardPurchasing*` (V1 statistics). Extend read path with `CreateTime`/`LastUpdate` for age-qualified `BELUM` analysis.
+**Dedicated snapshot domain:** `BTRPD_PurchasingManagement*` — separate from existing `BTRPD_Purchasing*` (V1 statistics). Extend read path with `CreateTime`/`LastUpdate` for age-qualified `BELUM` analysis.
 
 **Approved attention signals:** `QualifiedBacklog`, `PrincipalSpendConcentration`, `PrincipalInventoryConcentration`, `PrincipalAtRiskExposure`, `CompoundDependency`, `PurchasingInactivity`, `UnknownPrincipal`. Plus principal-level **High Inventory Exposure + Zero MTD Purchase** (Q13).
 
@@ -108,7 +108,7 @@ This section identifies purchasing-related situations that typically require man
 | ----------------------------- | ---------------- | ------------------- | ------------ |
 | **Unusually high monthly purchasing spend** | Cash outflow spike; possible over-ordering | `Grand Total Purchase`; weekly trend chart | **Portal today** — visual; no anomaly flag |
 | **Unusually low purchasing activity** | Replenishment gap; possible stockout risk ahead | `Total Invoice = 0` or low; weekly trend flat | **Partial** — detectable; no "inactivity" signal |
-| **Weekly purchasing spike** | Mid-month bulk ordering | `BTR_PortalDashboardPurchasingWeekTrend` | **Portal today** — visual only |
+| **Weekly purchasing spike** | Mid-month bulk ordering | `BTRPD_PurchasingWeekTrend` | **Portal today** — visual only |
 | **Purchasing deceleration late in month** | Pace may miss replenishment needs | Week trend comparison | **Derivable** — requires week-over-week comparison logic (new) |
 | **Purchasing vs sales pace mismatch** | Buying faster/slower than billing | `Grand Total Purchase` vs Sales `Total Omzet` | **Derivable** — not computed; no causal rule |
 
@@ -706,7 +706,7 @@ Subtitle: Current Month Purchasing — Management Attention View
 | # | Decision |
 | - | -------- |
 | Q6 | **Extend** existing Purchasing Dashboard. Do **not** replace V1 sections. |
-| Q7 | **Dedicated snapshot domain:** `BTR_PortalDashboardPurchasingManagement*`. |
+| Q7 | **Dedicated snapshot domain:** `BTRPD_PurchasingManagement*`. |
 | Q8 | Page title: **Purchasing Management Dashboard**. |
 | Q9 | **Include cross-domain panels** — primary source of M21 management value. |
 | Q10 | **Promote selected signals** to Executive Dashboard **after M21 stabilizes**. |
@@ -857,7 +857,7 @@ Maximize reuse — avoid new business calculations when equivalent logic exists.
 | ----- | ----------- | ------------- |
 | `DashboardPurchasingInvoiceAggregator` | Application service | V1 traceability; management aggregator is **separate** |
 | `RefreshDashboardPurchasingSnapshotWorker` | Worker | V1 refresh retained; **new** management refresh worker |
-| `BTR_PortalDashboardPurchasing*` tables | SQL | V1 unchanged; **new** `BTR_PortalDashboardPurchasingManagement*` |
+| `BTRPD_Purchasing*` tables | SQL | V1 unchanged; **new** `BTRPD_PurchasingManagement*` |
 | `DashboardExecutiveComposer.ComposePurchasing` | Executive | Align attention semantics |
 | `IInvoiceViewDal` / `InvoiceView` | Purchase read path | Primary purchasing source — **extend** with `CreateTime`/`LastUpdate` (Q29) |
 | `PurchasingReportDal` | Report | Traceability authority |
@@ -906,7 +906,7 @@ Product Owner decisions recorded — ready for implementation planning.
 
 - [x] M21 scope: management attention; extend V1; not statistics-only or operations-only
 - [x] Page title: Purchasing Management Dashboard; route `/dashboard/purchasing`
-- [x] Dedicated `BTR_PortalDashboardPurchasingManagement*` snapshot domain
+- [x] Dedicated `BTRPD_PurchasingManagement*` snapshot domain
 - [x] `BELUM` qualification by age — architect proposes threshold; not all `BELUM` = attention
 - [x] Revise executive purchasing `RequiresAttention` for qualified backlog
 - [x] Attention list: Principal × Signal; drill-down to Purchasing Report (`?q=`)

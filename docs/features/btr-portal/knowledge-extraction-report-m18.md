@@ -19,7 +19,7 @@ Completed work on **M18 Salesman Performance** has been distilled into permanent
 - New route `/dashboard/salesmen` — **Salesman Performance** — answers *Which salesman requires management attention and why?*
 - Cross-domain lens: **Sales + Piutang only** (not Inventory/Purchasing)
 - **Supplements** Sales Dashboard Top 10 Salesman ranking; does not replace Management Attention Center or executive dashboard
-- Dedicated `BTR_PortalDashboardSalesman*` snapshot — not live composition from Sales/Piutang/Customer snapshot tables
+- Dedicated `BTRPD_Salesman*` snapshot — not live composition from Sales/Piutang/Customer snapshot tables
 - Six approved attention signals: Below Target · No Target · High Overdue Exposure · High Piutang Exposure · Customer Concentration · Dormant Customer Portfolio
 - Mandatory rankings: Top 10 Omzet (current month) + Top 10 Achievement % + Top 10 Piutang (all open) with `SalesPersonCode` and % of total
 - Segmentation: Wilayah, Segment, Active vs Inactive (current-month Faktur)
@@ -37,7 +37,7 @@ Completed work on **M18 Salesman Performance** has been distilled into permanent
 - API: `GET /api/dashboard/salesmen`
 - Refresh cadence: 30 minutes; runs **last** in `--domain All` sequence (after Customer)
 - Empty snapshot: `IsAvailable = false` (graceful) — unlike Sales/Piutang/Inventory/Purchasing that return HTTP 503
-- Protected modules unchanged: `DashboardSalesFakturAggregator`, `BTR_PortalDashboardSalesTopSalesman`, `DashboardExecutiveComposer`
+- Protected modules unchanged: `DashboardSalesFakturAggregator`, `BTRPD_SalesTopSalesman`, `DashboardExecutiveComposer`
 - Frontend: `SalesmanDashboardView`, section components (`SalesmanAttentionCardGroup`, `SalesmanAttentionList`, `SalesmanSegmentationSection`, `SalesmanNavigationSection`), extended `dashboardStore.loadSalesman()`, `navigateToReport` with `?q=` pre-filter
 - Counter prefix for child rows: **PDS**
 
@@ -55,7 +55,7 @@ Completed work on **M18 Salesman Performance** has been distilled into permanent
 - Admin refresh and worker CLI accept `--domain Salesman`
 - Health endpoint lists Salesman domain with `SalesmanIntervalMinutes`
 - Initial backfill must populate six Salesman tables before dashboard is available
-- SQL deploy required before first refresh (`BTR_PortalDashboardSalesman*` tables in `btr.sql`)
+- SQL deploy required before first refresh (`BTRPD_Salesman*` tables in `btr.sql`)
 - Refresh order in `All`: Piutang → Inventory → Sales → Purchasing → Customer → **Salesman**
 
 ### Roadmap (from M18 analysis)

@@ -6,10 +6,10 @@ using btr.application.ReportingContext.Shared;
 using btr.application.ReportingContext.DashboardSnapshotAgg.Contracts;
 using btr.application.ReportingContext.DashboardSnapshotAgg.Models;
 using btr.infrastructure.Helpers;
-using btr.nuna.Application;
 using btr.nuna.Domain;
 using Dapper;
 using Microsoft.Extensions.Options;
+using System;
 
 namespace btr.infrastructure.ReportingContext.DashboardSnapshotAgg
 {
@@ -18,14 +18,10 @@ namespace btr.infrastructure.ReportingContext.DashboardSnapshotAgg
         private const string SnapshotKey = "CURRENT";
 
         private readonly DatabaseOptions _opt;
-        private readonly INunaCounterBL _counter;
 
-        public DashboardPurchasingSnapshotDal(
-            IOptions<DatabaseOptions> opt,
-            INunaCounterBL counter)
+        public DashboardPurchasingSnapshotDal(IOptions<DatabaseOptions> opt)
         {
             _opt = opt.Value;
-            _counter = counter;
         }
 
         public DashboardPurchasingAggregateResult GetCurrent()
@@ -33,24 +29,24 @@ namespace btr.infrastructure.ReportingContext.DashboardSnapshotAgg
             const string kpiSql = @"
 SELECT SnapshotKey, GeneratedAt, PeriodYear, PeriodMonth,
        GrandTotalPurchase, TotalInvoice, PendingPostingInvoiceCount, LastRefreshLogId
-FROM BTR_PortalDashboardPurchasingKpi
+FROM BTRPD_PurchasingKpi
 WHERE SnapshotKey = @SnapshotKey";
 
             const string weekTrendSql = @"
 SELECT WeekStart, WeekEnd, WeekLabel, PurchaseAmount
-FROM BTR_PortalDashboardPurchasingWeekTrend
+FROM BTRPD_PurchasingWeekTrend
 WHERE SnapshotKey = @SnapshotKey
 ORDER BY WeekStart";
 
             const string postingStatusSql = @"
 SELECT StatusKey, StatusLabel, SortOrder, PurchaseAmount
-FROM BTR_PortalDashboardPurchasingPostingStatus
+FROM BTRPD_PurchasingPostingStatus
 WHERE SnapshotKey = @SnapshotKey
 ORDER BY SortOrder";
 
             const string topPrincipalSql = @"
 SELECT Rank, PrincipalName, PurchaseAmount
-FROM BTR_PortalDashboardPurchasingTopPrincipal
+FROM BTRPD_PurchasingTopPrincipal
 WHERE SnapshotKey = @SnapshotKey
 ORDER BY Rank";
 
@@ -106,19 +102,19 @@ ORDER BY Rank";
                 conn.Open();
 
                 conn.Execute(
-                    "DELETE FROM BTR_PortalDashboardPurchasingWeekTrend WHERE SnapshotKey = @SnapshotKey",
+                    "DELETE FROM BTRPD_PurchasingWeekTrend WHERE SnapshotKey = @SnapshotKey",
                     new { SnapshotKey });
 
                 conn.Execute(
-                    "DELETE FROM BTR_PortalDashboardPurchasingPostingStatus WHERE SnapshotKey = @SnapshotKey",
+                    "DELETE FROM BTRPD_PurchasingPostingStatus WHERE SnapshotKey = @SnapshotKey",
                     new { SnapshotKey });
 
                 conn.Execute(
-                    "DELETE FROM BTR_PortalDashboardPurchasingTopPrincipal WHERE SnapshotKey = @SnapshotKey",
+                    "DELETE FROM BTRPD_PurchasingTopPrincipal WHERE SnapshotKey = @SnapshotKey",
                     new { SnapshotKey });
 
                 const string mergeKpiSql = @"
-MERGE BTR_PortalDashboardPurchasingKpi AS target
+MERGE BTRPD_PurchasingKpi AS target
 USING (SELECT @SnapshotKey AS SnapshotKey) AS source
 ON target.SnapshotKey = source.SnapshotKey
 WHEN MATCHED THEN
@@ -151,7 +147,7 @@ WHEN NOT MATCHED THEN
                 });
 
                 const string insertWeekTrendSql = @"
-INSERT INTO BTR_PortalDashboardPurchasingWeekTrend (
+INSERT INTO BTRPD_PurchasingWeekTrend (
     PurchasingWeekTrendId, SnapshotKey, WeekStart, WeekEnd, WeekLabel, PurchaseAmount)
 VALUES (
     @PurchasingWeekTrendId, @SnapshotKey, @WeekStart, @WeekEnd, @WeekLabel, @PurchaseAmount)";
@@ -160,7 +156,7 @@ VALUES (
                 {
                     conn.Execute(insertWeekTrendSql, new
                     {
-                        PurchasingWeekTrendId = _counter.Generate("PDP", IDFormatEnum.PFnnn),
+                        PurchasingWeekTrendId = Ulid.NewUlid().ToString(),
                         SnapshotKey,
                         row.WeekStart,
                         row.WeekEnd,
@@ -170,7 +166,7 @@ VALUES (
                 }
 
                 const string insertPostingStatusSql = @"
-INSERT INTO BTR_PortalDashboardPurchasingPostingStatus (
+INSERT INTO BTRPD_PurchasingPostingStatus (
     PurchasingPostingStatusId, SnapshotKey, StatusKey, StatusLabel, SortOrder, PurchaseAmount)
 VALUES (
     @PurchasingPostingStatusId, @SnapshotKey, @StatusKey, @StatusLabel, @SortOrder, @PurchaseAmount)";
@@ -179,7 +175,7 @@ VALUES (
                 {
                     conn.Execute(insertPostingStatusSql, new
                     {
-                        PurchasingPostingStatusId = _counter.Generate("PDG", IDFormatEnum.PFnnn),
+                        PurchasingPostingStatusId = Ulid.NewUlid().ToString(),
                         SnapshotKey,
                         StatusKey = row.StatusKey ?? string.Empty,
                         StatusLabel = row.StatusLabel ?? string.Empty,
@@ -189,7 +185,7 @@ VALUES (
                 }
 
                 const string insertTopPrincipalSql = @"
-INSERT INTO BTR_PortalDashboardPurchasingTopPrincipal (
+INSERT INTO BTRPD_PurchasingTopPrincipal (
     PurchasingTopPrincipalId, SnapshotKey, Rank, PrincipalName, PurchaseAmount)
 VALUES (
     @PurchasingTopPrincipalId, @SnapshotKey, @Rank, @PrincipalName, @PurchaseAmount)";
@@ -198,7 +194,7 @@ VALUES (
                 {
                     conn.Execute(insertTopPrincipalSql, new
                     {
-                        PurchasingTopPrincipalId = _counter.Generate("PDT", IDFormatEnum.PFnnn),
+                        PurchasingTopPrincipalId = Ulid.NewUlid().ToString(),
                         SnapshotKey,
                         row.Rank,
                         PrincipalName = row.PrincipalName ?? string.Empty,

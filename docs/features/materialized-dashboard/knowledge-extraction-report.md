@@ -16,7 +16,7 @@ Completed work on **Materialized Dashboard Data** (Phases 1–5) has been distil
 
 ### Architecture (WHAT)
 
-- Background snapshot topology: `btr.portal.worker` → aggregators → `BTR_PortalDashboard*` tables
+- Background snapshot topology: `btr.portal.worker` → aggregators → `BTRPD_*` tables
 - Snapshot layers A (KPI) and B (dimensional); `SnapshotKey = 'CURRENT'` pattern
 - Per-domain refresh workers and orchestrator; CLI arguments and exit codes
 - Read path: snapshot-only (no live fallback); overview fast path via Layer A

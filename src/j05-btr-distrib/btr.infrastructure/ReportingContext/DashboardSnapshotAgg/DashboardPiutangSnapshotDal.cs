@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Data.SqlClient;
 using System.Linq;
@@ -5,7 +6,6 @@ using btr.application.ReportingContext.DashboardPiutangAgg.Queries;
 using btr.application.ReportingContext.DashboardSnapshotAgg.Contracts;
 using btr.application.ReportingContext.DashboardSnapshotAgg.Models;
 using btr.infrastructure.Helpers;
-using btr.nuna.Application;
 using btr.nuna.Domain;
 using Dapper;
 using Microsoft.Extensions.Options;
@@ -17,32 +17,28 @@ namespace btr.infrastructure.ReportingContext.DashboardSnapshotAgg
         private const string SnapshotKey = "CURRENT";
 
         private readonly DatabaseOptions _opt;
-        private readonly INunaCounterBL _counter;
 
-        public DashboardPiutangSnapshotDal(
-            IOptions<DatabaseOptions> opt,
-            INunaCounterBL counter)
+        public DashboardPiutangSnapshotDal(IOptions<DatabaseOptions> opt)
         {
             _opt = opt.Value;
-            _counter = counter;
         }
 
         public DashboardPiutangAggregateResult GetCurrent()
         {
             const string kpiSql = @"
 SELECT SnapshotKey, GeneratedAt, TotalPiutang, TotalCustomer, OverdueCustomer, LastRefreshLogId
-FROM BTR_PortalDashboardPiutangKpi
+FROM BTRPD_PiutangKpi
 WHERE SnapshotKey = @SnapshotKey";
 
             const string agingSql = @"
 SELECT BucketKey, BucketLabel, SortOrder, Amount
-FROM BTR_PortalDashboardPiutangAging
+FROM BTRPD_PiutangAging
 WHERE SnapshotKey = @SnapshotKey
 ORDER BY SortOrder";
 
             const string topCustomerSql = @"
 SELECT Rank, CustomerName, OutstandingBalance
-FROM BTR_PortalDashboardPiutangTopCustomer
+FROM BTRPD_PiutangTopCustomer
 WHERE SnapshotKey = @SnapshotKey
 ORDER BY Rank";
 
@@ -88,15 +84,15 @@ ORDER BY Rank";
                 conn.Open();
 
                 conn.Execute(
-                    "DELETE FROM BTR_PortalDashboardPiutangAging WHERE SnapshotKey = @SnapshotKey",
+                    "DELETE FROM BTRPD_PiutangAging WHERE SnapshotKey = @SnapshotKey",
                     new { SnapshotKey });
 
                 conn.Execute(
-                    "DELETE FROM BTR_PortalDashboardPiutangTopCustomer WHERE SnapshotKey = @SnapshotKey",
+                    "DELETE FROM BTRPD_PiutangTopCustomer WHERE SnapshotKey = @SnapshotKey",
                     new { SnapshotKey });
 
                 const string mergeKpiSql = @"
-MERGE BTR_PortalDashboardPiutangKpi AS target
+MERGE BTRPD_PiutangKpi AS target
 USING (SELECT @SnapshotKey AS SnapshotKey) AS source
 ON target.SnapshotKey = source.SnapshotKey
 WHEN MATCHED THEN
@@ -121,7 +117,7 @@ WHEN NOT MATCHED THEN
                 });
 
                 const string insertAgingSql = @"
-INSERT INTO BTR_PortalDashboardPiutangAging (
+INSERT INTO BTRPD_PiutangAging (
     PiutangAgingId, SnapshotKey, BucketKey, BucketLabel, SortOrder, Amount)
 VALUES (
     @PiutangAgingId, @SnapshotKey, @BucketKey, @BucketLabel, @SortOrder, @Amount)";
@@ -130,7 +126,7 @@ VALUES (
                 {
                     conn.Execute(insertAgingSql, new
                     {
-                        PiutangAgingId = _counter.Generate("PDA", IDFormatEnum.PFnnn),
+                        PiutangAgingId = Ulid.NewUlid().ToString(),
                         SnapshotKey,
                         bucket.BucketKey,
                         bucket.BucketLabel,
@@ -140,7 +136,7 @@ VALUES (
                 }
 
                 const string insertTopSql = @"
-INSERT INTO BTR_PortalDashboardPiutangTopCustomer (
+INSERT INTO BTRPD_PiutangTopCustomer (
     PiutangTopCustomerId, SnapshotKey, Rank, CustomerName, OutstandingBalance)
 VALUES (
     @PiutangTopCustomerId, @SnapshotKey, @Rank, @CustomerName, @OutstandingBalance)";
@@ -149,7 +145,7 @@ VALUES (
                 {
                     conn.Execute(insertTopSql, new
                     {
-                        PiutangTopCustomerId = _counter.Generate("PDT", IDFormatEnum.PFnnn),
+                        PiutangTopCustomerId = Ulid.NewUlid().ToString(),
                         SnapshotKey,
                         customer.Rank,
                         CustomerName = customer.CustomerName ?? string.Empty,

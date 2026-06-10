@@ -20,7 +20,7 @@ M18 delivers a dedicated **Salesman Performance** dashboard at `/dashboard/sales
 | --- | --- |
 | Route `/dashboard/salesmen` with Proposal A layout | Done |
 | Sidebar **Dashboard → Salesmen** (after Customers, before Inventory) | Done |
-| Dedicated `BTR_PortalDashboardSalesman*` snapshot domain (6 tables) | Done |
+| Dedicated `BTRPD_Salesman*` snapshot domain (6 tables) | Done |
 | `GET /api/dashboard/salesmen` read API | Done |
 | Attention cards, list, Top 10 Omzet/Achievement/Piutang, segmentation | Done |
 | Six approved attention signals | Done |
@@ -46,7 +46,7 @@ Source DALs (refresh time)
     ↓
 RefreshDashboardSalesmanSnapshotWorker
     ↓ DashboardSalesmanAggregator
-BTR_PortalDashboardSalesman* (6 tables)
+BTRPD_Salesman* (6 tables)
     ↓
 GET /api/dashboard/salesmen
     ↓ DashboardSalesmanDal
@@ -63,12 +63,12 @@ Six new tables under `src/j05-btr-distrib/btr.sql/Tables/ReportingContext/`:
 
 | Table | Purpose |
 | --- | --- |
-| `BTR_PortalDashboardSalesmanKpi` | Headline KPIs + attention card counts |
-| `BTR_PortalDashboardSalesmanTopOmzet` | Top 10 omzet ranking |
-| `BTR_PortalDashboardSalesmanTopAchievement` | Top 10 achievement % ranking |
-| `BTR_PortalDashboardSalesmanTopPiutang` | Top 10 piutang ranking |
-| `BTR_PortalDashboardSalesmanAttention` | Attention list rows |
-| `BTR_PortalDashboardSalesmanSegmentation` | Wilayah / Segment / Activity segmentation |
+| `BTRPD_SalesmanKpi` | Headline KPIs + attention card counts |
+| `BTRPD_SalesmanTopOmzet` | Top 10 omzet ranking |
+| `BTRPD_SalesmanTopAchievement` | Top 10 achievement % ranking |
+| `BTRPD_SalesmanTopPiutang` | Top 10 piutang ranking |
+| `BTRPD_SalesmanAttention` | Attention list rows |
+| `BTRPD_SalesmanSegmentation` | Wilayah / Segment / Activity segmentation |
 
 All use `SnapshotKey = 'CURRENT'` delete-and-replace pattern. Registered in `btr.sql.sqlproj`.
 
@@ -161,7 +161,7 @@ Stub `ISalesOmzetTargetDal` implementations updated in existing tests for `ListT
 
 ## 7. Operational Steps (post-deploy)
 
-1. Deploy six `BTR_PortalDashboardSalesman*` tables to the target database.
+1. Deploy six `BTRPD_Salesman*` tables to the target database.
 2. Run initial refresh:
    - Worker: `btr.portal.worker --domain Salesman --triggered-by Manual`
    - Or API: `POST /api/admin/dashboard/refresh` with `{ "Domain": "Salesman" }`
@@ -174,7 +174,7 @@ Stub `ISalesOmzetTargetDal` implementations updated in existing tests for `ListT
 ## 8. Explicitly Not Changed (per plan)
 
 - `DashboardExecutiveComposer` / executive dashboard
-- `DashboardSalesFakturAggregator` / `BTR_PortalDashboardSalesTopSalesman`
+- `DashboardSalesFakturAggregator` / `BTRPD_SalesTopSalesman`
 - Existing Sales/Piutang/Customer snapshot workers and read APIs
 - Report DALs and API contracts
 - BTR Desktop

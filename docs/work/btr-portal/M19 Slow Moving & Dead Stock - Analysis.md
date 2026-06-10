@@ -56,7 +56,7 @@ Answer: *Which inventory requires management attention and why?*
 
 **Mandatory headline KPIs:** Dead Stock Item Count, Dead Stock Value, Slow Moving Item Count, Slow Moving Value, **At-Risk Inventory %**.
 
-**Data architecture:** Dedicated snapshot domain `BTR_PortalDashboardInventoryRisk*`; snapshot-only dashboard; 60-minute refresh; new item-level Last Faktur DAL (`CustomerLastFakturDal` pattern); full `FakturItem` history scan on refresh acceptable.
+**Data architecture:** Dedicated snapshot domain `BTRPD_InventoryRisk*`; snapshot-only dashboard; 60-minute refresh; new item-level Last Faktur DAL (`CustomerLastFakturDal` pattern); full `FakturItem` history scan on refresh acceptable.
 
 **Executive Dashboard (post-M19):** Promote **Dead Stock Value**, **At-Risk Inventory %**, and **Inventory Risk Attention Indicator** — extends executive view from composition to health while preserving existing concentration metrics.
 
@@ -137,7 +137,7 @@ From `docs/foundation/WORKFLOW.md` and portal operational workflows:
 | Metric | Source | Movement/obsolescence oriented? | Reuse for M19 |
 | ------ | ------ | ------------------------------- | ------------- |
 | Total Inventory Value | Inventory snapshot via `DashboardExecutiveComposer` | No — capital total | Denominator for "at risk" % KPIs |
-| Top Category % | Composed from `BTR_PortalDashboardInventoryBreakdown` | Partial — concentration, not movement | Context card; avoid duplicating as primary M19 story |
+| Top Category % | Composed from `BTRPD_InventoryBreakdown` | Partial — concentration, not movement | Context card; avoid duplicating as primary M19 story |
 | Top Supplier % | Same breakdown | Partial — concentration | Same |
 | `RequiresAttention` on inventory card | Set when concentration % is computable | **Weak** — not tied to slow/dead logic | M19 may warrant **new executive signals** — PO decision (Section 12) |
 
@@ -154,7 +154,7 @@ From `docs/foundation/WORKFLOW.md` and portal operational workflows:
 | Top 10 Categories | Concentration ranking | None | `Top10RankingTable.vue` pattern for **Top 10 Dead Stock by Value** etc. |
 | Top 10 Suppliers | Concentration ranking | None | Same |
 
-**Key gap:** Inventory snapshot (`BTR_PortalDashboardInventoryKpi`, `BTR_PortalDashboardInventoryBreakdown`) stores **composition only** — no movement, last-sale, or aging fields.
+**Key gap:** Inventory snapshot (`BTRPD_InventoryKpi`, `BTRPD_InventoryBreakdown`) stores **composition only** — no movement, last-sale, or aging fields.
 
 ### 3.3 Customer Analytics Dashboard (M17) — pattern reuse
 
@@ -164,7 +164,7 @@ From `docs/foundation/WORKFLOW.md` and portal operational workflows:
 | Attention List (entity × signal) | **Item × signal** or **Category/Supplier × signal** list — e.g., Dead Stock, Slow Moving, Zero Movement |
 | `DormantDaysThreshold = 90` | Candidate item idle threshold — **PO must confirm** |
 | `ExecutiveAttentionCard.vue`, `CustomerAttentionList.vue` | Proven attention UX — adapt labels and severity |
-| Dedicated snapshot domain (`BTR_PortalDashboardCustomer*`) | Template for **`BTR_PortalDashboardInventoryRisk*`** or extend inventory snapshot — PO/architect decision |
+| Dedicated snapshot domain (`BTRPD_Customer*`) | Template for **`BTRPD_InventoryRisk*`** or extend inventory snapshot — PO/architect decision |
 | Segmentation sections | **By Category**, **By Supplier**, **By Movement Band** (if defined) |
 
 ### 3.4 Piutang Dashboard (M14) — pattern reuse (not data)
@@ -357,8 +357,8 @@ BTR uses **multiple movement semantics** depending on context. None is labeled "
 
 | Table | Content |
 | ----- | ------- |
-| `BTR_PortalDashboardInventoryKpi` | TotalInventoryValue, TotalItem, GeneratedAt |
-| `BTR_PortalDashboardInventoryBreakdown` | Category/Supplier Top 10 rows |
+| `BTRPD_InventoryKpi` | TotalInventoryValue, TotalItem, GeneratedAt |
+| `BTRPD_InventoryBreakdown` | Category/Supplier Top 10 rows |
 
 **No tables today** for movement, last-sale, dead stock, or aging.
 
@@ -620,7 +620,7 @@ PO decision Q1/Q3: **dedicated route** `/dashboard/inventory-risk` that **supple
 | Inventory turnover / DSO-equivalent | Not implemented |
 | Warehouse-level dashboard breakdown | Deferred |
 | Item-level portal report route | No `/reports/faktur-brg` equivalent |
-| Snapshot tables for movement/aging | **`BTR_PortalDashboardInventoryRisk*` approved** — not yet built |
+| Snapshot tables for movement/aging | **`BTRPD_InventoryRisk*` approved** — not yet built |
 | Item-level Last Faktur DAL | **`IBrgLastFakturDal` approved** — not yet built |
 | Executive inventory health signals | **Approved post-M19** — Dead Stock Value, At-Risk %, attention indicator |
 | Stok Harian analytics | Form is empty stub |
@@ -695,7 +695,7 @@ PO decision Q1/Q3: **dedicated route** `/dashboard/inventory-risk` that **supple
 
 | # | Decision |
 | - | -------- |
-| Q25 | Dedicated snapshot domain: **`BTR_PortalDashboardInventoryRisk*`** |
+| Q25 | Dedicated snapshot domain: **`BTRPD_InventoryRisk*`** |
 | Q26 | Refresh cadence: **60 minutes** |
 | Q27 | Dashboard uses **snapshot-only** architecture |
 | Q28 | Approve new item-level **Last Faktur DAL** following `CustomerLastFakturDal` pattern |

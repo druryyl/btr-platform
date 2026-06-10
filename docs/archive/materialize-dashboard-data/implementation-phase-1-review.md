@@ -11,7 +11,7 @@
 
 - `docs/work/materialize-dashboard-data/implementation-plan.md` (Phase 1 scope)
 - `docs/work/materialize-dashboard-data/implementation-phase-1-summary.md`
-- SQL: `BTR_PortalDashboardRefreshLog`, `BTR_PortalDashboardPiutangKpi`, `BTR_PortalDashboardPiutangAging`, `BTR_PortalDashboardPiutangTopCustomer`, `IX_BTR_Piutang_OpenBalance`, `BTR_ParamNo_PortalDashboard.sql`
+- SQL: `BTRPD_RefreshLog`, `BTRPD_PiutangKpi`, `BTRPD_PiutangAging`, `BTRPD_PiutangTopCustomer`, `IX_BTR_Piutang_OpenBalance`, `BTR_ParamNo_PortalDashboard.sql`
 - Application: `DashboardSnapshotAgg/` (aggregator, worker, contracts, models, options)
 - Infrastructure: `PiutangOpenBalanceDal`, `DashboardPiutangSnapshotDal`, `DashboardSnapshotRefreshLogDal`, `DashboardPiutangDal` (facade), `DashboardPiutangLiveDal`
 - Portal: `InfrastructurePortalExtensions.cs`, `ApplicationPortalExtensions.cs`, `appsettings.json`, `GlobalExceptionFilter.cs`

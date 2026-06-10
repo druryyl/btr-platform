@@ -45,7 +45,7 @@ Completed work on **M16 Management Attention Center** and **M17 Customer Analyti
 - New route `/dashboard/customers` — **Customer Analytics** — answers *Which customers require management attention?*
 - Cross-domain lens: **Sales + Piutang only** (not Inventory/Purchasing)
 - **Supplements** executive Top 5 Customers; does not replace executive dashboard
-- Dedicated `BTR_PortalDashboardCustomer*` snapshot — not live composition from domain snapshots
+- Dedicated `BTRPD_Customer*` snapshot — not live composition from domain snapshots
 - Approved attention signals: Overdue · Dormant (90-day) · Plafond breach · Suspended + Sales
 - Mandatory rankings: Top 10 Omzet (current month) + Top 10 Piutang (all open) with `CustomerCode` and % of total
 - Segmentation: Klasifikasi, Wilayah, Active vs Dormant
@@ -61,7 +61,7 @@ Completed work on **M16 Management Attention Center** and **M17 Customer Analyti
 - API: `GET /api/dashboard/customers`
 - Refresh cadence: 30 minutes; runs **last** in `--domain All` sequence
 - Empty snapshot: `IsAvailable = false` (graceful) — unlike other domains that return HTTP 503
-- Protected modules unchanged: `DashboardPiutangAggregator`, `BTR_PortalDashboardPiutangTopCustomer`, `DashboardExecutiveComposer`
+- Protected modules unchanged: `DashboardPiutangAggregator`, `BTRPD_PiutangTopCustomer`, `DashboardExecutiveComposer`
 - Frontend: `CustomerDashboardView`, section components, extended `Top10RankingTable`, `navigateToReport.ts`, report `?q=` pre-filter
 
 ### M17 — Operational / Deployment (HOW)

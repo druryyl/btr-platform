@@ -23,13 +23,13 @@ Deliver **Salesman Performance** at `/dashboard/salesmen` — a dedicated salesm
 **Primary outcomes:**
 
 - New route `/dashboard/salesmen` with page title **Salesman Performance** for all authenticated users (no role-based routing).
-- **Dedicated Salesman snapshot domain** (`BTR_PortalDashboardSalesman*`) with its own refresh worker — materialized KPIs, not live composition.
+- **Dedicated Salesman snapshot domain** (`BTRPD_Salesman*`) with its own refresh worker — materialized KPIs, not live composition.
 - **Proposal A layout** (fixed section order): Attention Cards → Attention List → Performance Rankings → Exposure Rankings → Segmentation Summary → Navigation.
 - Mandatory rankings: **Top 10 Omzet**, **Top 10 Achievement %**, **Top 10 Piutang** — each with `SalesPersonCode`; exclude reps where ranking value = 0.
 - **Attention List** with approved signals: Below Target · No Target · High Overdue Exposure · High Piutang Exposure · Customer Concentration · Dormant Customer Portfolio.
 - Salesman row click → Sales or Piutang Report with **salesman name pre-filter** (`?q=`).
 - Navigation path: **Salesman Performance → Domain Dashboard → Report** (M16/M17 pattern).
-- **Supplements** Sales Dashboard Top 10 Salesman — does **not** replace, modify executive dashboard, or alter `BTR_PortalDashboardSalesTopSalesman`.
+- **Supplements** Sales Dashboard Top 10 Salesman — does **not** replace, modify executive dashboard, or alter `BTRPD_SalesTopSalesman`.
 
 **Explicitly out of scope (PO confirmed):**
 
@@ -64,7 +64,7 @@ Source: analysis Section 12. Do not re-decide these rules during implementation.
 | Domains | **Sales + Piutang only** (Q6) |
 | Sales source | **Faktur-only** — current calendar month `GrandTotal` (Q7, Q16) |
 | Piutang source | **All-time open balance** — `KurangBayar > 1` via FF1 invoicing-salesman join (Q15, Q17) |
-| Materialization | Dedicated `BTR_PortalDashboardSalesman*` tables + refresh worker (Q36–Q37) |
+| Materialization | Dedicated `BTRPD_Salesman*` tables + refresh worker (Q36–Q37) |
 | Dashboard only | No new Salesman Report (Q13) |
 | Period | **Current month snapshot only** — no historical retention (Q39) |
 
@@ -147,7 +147,7 @@ Source DALs (read at refresh time — NOT from other snapshot tables)
     ↓
 RefreshDashboardSalesmanSnapshotWorker
     ↓ DashboardSalesmanAggregator
-BTR_PortalDashboardSalesman* tables (6)
+BTRPD_Salesman* tables (6)
     ↓
 Browser → GET /api/dashboard/salesmen
     ↓ MediatR
@@ -158,7 +158,7 @@ DashboardSalesmanDal → DashboardSalesmanResponse
 Existing unchanged:
   GET /api/dashboard/executive
   GET /api/dashboard/sales | piutang | customers
-  BTR_PortalDashboardSalesTopSalesman (Sales Dashboard only)
+  BTRPD_SalesTopSalesman (Sales Dashboard only)
   GET /api/reports/sales | piutang
 ```
 
@@ -207,7 +207,7 @@ Existing unchanged:
 
 | Layer | Module | Change type |
 | --- | --- | --- |
-| SQL | `btr.sql/Tables/ReportingContext/BTR_PortalDashboardSalesman*.sql` (6 tables) | **New** |
+| SQL | `btr.sql/Tables/ReportingContext/BTRPD_Salesman*.sql` (6 tables) | **New** |
 | SQL | `btr.sql.sqlproj` | Include new tables |
 | Application | `DashboardSnapshotAgg/Services/DashboardSalesmanAggregator.cs` | **New** |
 | Application | `DashboardSnapshotAgg/Services/DashboardSalesmanKeyResolver.cs` | **New** |
@@ -246,7 +246,7 @@ Existing unchanged:
 | Module | Reason |
 | --- | --- |
 | `DashboardExecutiveComposer`, `GET /api/dashboard/executive` | PO Q35 — no executive changes |
-| `DashboardSalesFakturAggregator`, `BTR_PortalDashboardSalesTopSalesman` | Protected Sales snapshot — M18 is separate domain |
+| `DashboardSalesFakturAggregator`, `BTRPD_SalesTopSalesman` | Protected Sales snapshot — M18 is separate domain |
 | Existing Sales/Piutang/Customer snapshot workers and read APIs | Additive Salesman domain only |
 | Domain dashboard views (Sales, Piutang, Customer) | Detail layer unchanged |
 | Report DALs and API contracts | No column additions |
@@ -284,7 +284,7 @@ Existing unchanged:
 
 Deploy all tables with `SnapshotKey = 'CURRENT'` delete-and-replace pattern (consistent with existing dashboard snapshots).
 
-### 5.1 `BTR_PortalDashboardSalesmanKpi`
+### 5.1 `BTRPD_SalesmanKpi`
 
 Single row per refresh — headline metrics for attention cards and concentration denominators.
 
@@ -307,7 +307,7 @@ Single row per refresh — headline metrics for attention cards and concentratio
 | TopPiutangSalesmanPercent | DECIMAL(9,4) NULL | Top-1 rep balance / TotalPiutang |
 | LastRefreshLogId | VARCHAR(13) | FK to refresh log |
 
-### 5.2 `BTR_PortalDashboardSalesmanTopOmzet`
+### 5.2 `BTRPD_SalesmanTopOmzet`
 
 | Column | Type | Description |
 | --- | --- | --- |
@@ -322,7 +322,7 @@ Single row per refresh — headline metrics for attention cards and concentratio
 
 Unique: `(SnapshotKey, Rank)`
 
-### 5.3 `BTR_PortalDashboardSalesmanTopAchievement`
+### 5.3 `BTRPD_SalesmanTopAchievement`
 
 | Column | Type | Description |
 | --- | --- | --- |
@@ -341,7 +341,7 @@ Unique: `(SnapshotKey, Rank)`
 
 Rank by `AchievementPercent` desc, then `CompletedOmzet` desc, then name asc. Exclude rows where `AchievementPercent` is null or `CompletedOmzet = 0`.
 
-### 5.4 `BTR_PortalDashboardSalesmanTopPiutang`
+### 5.4 `BTRPD_SalesmanTopPiutang`
 
 | Column | Type | Description |
 | --- | --- | --- |
@@ -356,7 +356,7 @@ Rank by `AchievementPercent` desc, then `CompletedOmzet` desc, then name asc. Ex
 
 Unique: `(SnapshotKey, Rank)`
 
-### 5.5 `BTR_PortalDashboardSalesmanAttention`
+### 5.5 `BTRPD_SalesmanAttention`
 
 | Column | Type | Description |
 | --- | --- | --- |
@@ -374,7 +374,7 @@ Unique: `(SnapshotKey, Rank)`
 
 Index: `(SnapshotKey, SortOrder)`
 
-### 5.6 `BTR_PortalDashboardSalesmanSegmentation`
+### 5.6 `BTRPD_SalesmanSegmentation`
 
 | Column | Type | Description |
 | --- | --- | --- |
@@ -977,7 +977,7 @@ Execute in order. Each phase should compile before proceeding.
 
 ### Phase 1 — Database
 
-1. Create six `BTR_PortalDashboardSalesman*.sql` table scripts.
+1. Create six `BTRPD_Salesman*.sql` table scripts.
 2. Add to `btr.sql.sqlproj`; deploy to dev database.
 
 ### Phase 2 — Source DAL extensions
@@ -1027,7 +1027,7 @@ M18 is complete when:
 
 1. `/dashboard/salesmen` displays **Salesman Performance** (Proposal A layout) for all authenticated users.
 2. Sidebar shows **Dashboard → Salesmen** at `/dashboard/salesmen`.
-3. Dedicated `BTR_PortalDashboardSalesman*` tables exist and are populated by `RefreshDashboardSalesmanSnapshotWorker`.
+3. Dedicated `BTRPD_Salesman*` tables exist and are populated by `RefreshDashboardSalesmanSnapshotWorker`.
 4. `GET /api/dashboard/salesmen` returns attention cards, attention list, Top 10 Omzet, Top 10 Achievement %, Top 10 Piutang, and segmentation per Section 12.10 of analysis.
 5. All ranking rows include **SalesPersonCode** and **% of domain total** where applicable.
 6. Attention list includes only approved signals: Below Target · No Target · High Overdue Exposure · High Piutang Exposure · Customer Concentration · Dormant Customer Portfolio.
@@ -1048,7 +1048,7 @@ M18 is complete when:
 
 - **Section 2 is authoritative** — do not add Effective Call, route compliance, retur, pipeline omzet, collection effectiveness, trend charts, Bottom 10, or executive changes.
 - **Read source DALs in Salesman worker** — do not compose from Sales/Piutang/Customer snapshot tables.
-- **Do not modify** `DashboardSalesFakturAggregator`, `BTR_PortalDashboardSalesTopSalesman`, or `DashboardExecutiveComposer`.
+- **Do not modify** `DashboardSalesFakturAggregator`, `BTRPD_SalesTopSalesman`, or `DashboardExecutiveComposer`.
 - **Reuse** `SalesOmzetChartAchievementPolicy`, `ExecutiveSalesAchievementBandResolver`, and aging bucket definitions from `DashboardPiutangAggregator` — verify `DaysOver90` and `Current` bucket keys match exactly.
 - **Piutang semantics:** all-time open balance (`KurangBayar > 1`) — same filter as `PiutangOpenBalanceDal`, with FF1 salesman join added.
 - **No Target:** month activity means `OmzetAmount > 0` OR `CustomerCount > 0` for the rep — not merely existing in master.

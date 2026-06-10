@@ -27,7 +27,7 @@ btr.portal.worker.exe --domain {Piutang|Sales|Inventory}
     ↓
 RefreshDashboard*SnapshotWorker
     ↓
-BTR_PortalDashboard* tables
+BTRPD_* tables
 
 Browser → GET /api/dashboard/overview     (home — Layer A KPI only)
 Browser → GET /api/dashboard/{domain}     (detail — Layer A + B)
@@ -134,7 +134,7 @@ Live DAL classes (`Dashboard*LiveDal`) remain for shadow verification tests only
 2. Run initial backfill: `btr.portal.worker.exe --domain All --triggered-by Manual`
 3. Register three Task Scheduler jobs per [runbook](./dashboard-snapshot-worker-runbook.md).
 4. Verify overview home shows KPIs with per-domain `GeneratedAt`.
-5. Monitor `BTR_PortalDashboardRefreshLog` for `Success` status.
+5. Monitor `BTRPD_RefreshLog` for `Success` status.
 
 ---
 

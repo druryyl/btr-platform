@@ -48,7 +48,7 @@ This section identifies operational situations that typically require management
 | Situation requiring attention | Business meaning | Existing capability | Availability |
 | ----------------------------- | ---------------- | ------------------- | ------------ |
 | **Sales under monthly target** | Company invoiced omzet is below plan; cash and margin targets at risk | `Achievement %`, `Total Target`, `Total Achievement` on Sales Dashboard; `SalesOmzetChartAchievementPolicy` | **Portal today** |
-| **Weekly sales deceleration** | Billing pace slowing mid-month; may miss target if trend continues | Weekly Invoiced Sales Trend (`BTR_PortalDashboardSalesWeekTrend`) | **Portal today** — trend visible; no automated "deceleration" flag |
+| **Weekly sales deceleration** | Billing pace slowing mid-month; may miss target if trend continues | Weekly Invoiced Sales Trend (`BTRPD_SalesWeekTrend`) | **Portal today** — trend visible; no automated "deceleration" flag |
 | **Salesperson underperformance vs peers** | Territory or rep needs coaching or reassignment | Top 10 Salesman ranking (by omzet); no bottom-10 or per-rep target comparison on portal | **Partial** — ranking only; per-rep target achievement exists in Desktop (`SalesOmzetChartForm`) |
 | **Large customer revenue concentration** | Dependency on few accounts | Not on portal dashboard; dimension available on `FakturView` (`CustomerCode`, `CustomerName`) | **Not available** in portal — data exists at source |
 | **Unsigned / not-returned Faktur backlog** | Goods delivered but signed Faktur not returned (`Faktur Kembali` workflow incomplete) | Sales Report `Status = Kembali`; Desktop `FakturControlForm` filters Kembali / Belum Kembali | **Partial** — row-level in report via search; no aggregate KPI |
@@ -61,7 +61,7 @@ This section identifies operational situations that typically require management
 | ----------------------------- | ---------------- | ------------------- | ------------ |
 | **Large total outstanding receivables** | Working capital tied up in customer debt | `Total Piutang` (dashboard + report footer when unfiltered) | **Portal today** |
 | **Customers with overdue balances** | Collection action required | `Overdue Customer` KPI; aging buckets exclude Current | **Portal today** |
-| **Severely aged receivables (> 90 days)** | High bad-debt or collection failure risk | Aging bucket `> 90 Days` amount in `BTR_PortalDashboardPiutangAging` | **Portal today** |
+| **Severely aged receivables (> 90 days)** | High bad-debt or collection failure risk | Aging bucket `> 90 Days` amount in `BTRPD_PiutangAging` | **Portal today** |
 | **Customer concentration in receivables** | Single customer default would materially impact cash | Top 10 Outstanding Customers | **Portal today** |
 | **Large individual overdue invoices** | Specific collection follow-up | Piutang Report — sort by `Jatuh Tempo`; filter by period on DueDate | **Portal today** (report drill-down) |
 | **Collection effectiveness / DSO** | Are collections improving over time? | Deferred in product roadmap ("collection effectiveness KPIs") | **Not available** |
@@ -404,19 +404,19 @@ Maximize reuse — avoid new business calculations when equivalent logic exists.
 
 | Table | Content |
 | ----- | ------- |
-| `BTR_PortalDashboardSalesKpi` | TotalOmzet, TotalFaktur, TotalCustomer, TotalTarget, TotalAchievement, AchievementPercent |
-| `BTR_PortalDashboardSalesWeekTrend` | Weekly invoiced amounts |
-| `BTR_PortalDashboardSalesTopSalesman` | Top 10 ranking |
-| `BTR_PortalDashboardPiutangKpi` | TotalPiutang, TotalCustomer, OverdueCustomer |
-| `BTR_PortalDashboardPiutangAging` | Five bucket amounts |
-| `BTR_PortalDashboardPiutangTopCustomer` | Top 10 customers |
-| `BTR_PortalDashboardInventoryKpi` | TotalInventoryValue, TotalItem |
-| `BTR_PortalDashboardInventoryBreakdown` | Category + supplier rollups |
-| `BTR_PortalDashboardPurchasingKpi` | GrandTotalPurchase, TotalInvoice, PendingPostingInvoiceCount |
-| `BTR_PortalDashboardPurchasingWeekTrend` | Weekly purchase amounts |
-| `BTR_PortalDashboardPurchasingPostingStatus` | SUDAH / BELUM amounts |
-| `BTR_PortalDashboardPurchasingTopPrincipal` | Top 10 principals |
-| `BTR_PortalDashboardRefreshLog` | Per-domain refresh status |
+| `BTRPD_SalesKpi` | TotalOmzet, TotalFaktur, TotalCustomer, TotalTarget, TotalAchievement, AchievementPercent |
+| `BTRPD_SalesWeekTrend` | Weekly invoiced amounts |
+| `BTRPD_SalesTopSalesman` | Top 10 ranking |
+| `BTRPD_PiutangKpi` | TotalPiutang, TotalCustomer, OverdueCustomer |
+| `BTRPD_PiutangAging` | Five bucket amounts |
+| `BTRPD_PiutangTopCustomer` | Top 10 customers |
+| `BTRPD_InventoryKpi` | TotalInventoryValue, TotalItem |
+| `BTRPD_InventoryBreakdown` | Category + supplier rollups |
+| `BTRPD_PurchasingKpi` | GrandTotalPurchase, TotalInvoice, PendingPostingInvoiceCount |
+| `BTRPD_PurchasingWeekTrend` | Weekly purchase amounts |
+| `BTRPD_PurchasingPostingStatus` | SUDAH / BELUM amounts |
+| `BTRPD_PurchasingTopPrincipal` | Top 10 principals |
+| `BTRPD_RefreshLog` | Per-domain refresh status |
 
 **Implication:** An Executive Dashboard can be served primarily by **reading existing snapshot tables** (possibly via a new composer/orchestrator) without new SQL against transactional tables.
 

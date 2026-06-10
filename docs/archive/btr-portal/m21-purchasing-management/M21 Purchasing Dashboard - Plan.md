@@ -25,7 +25,7 @@ Evolve the existing **Purchasing Dashboard** at `/dashboard/purchasing` into a *
 
 - Same route `/dashboard/purchasing`; page title **Purchasing Management Dashboard**.
 - **Extend** V1 sections (Grand Total Purchase, Total Invoice, weekly trend, posting breakdown) — do not remove traceability KPIs.
-- **Dedicated management snapshot domain** (`BTR_PortalDashboardPurchasingManagement*`) with its own refresh worker — materialized attention KPIs, not read-time composition.
+- **Dedicated management snapshot domain** (`BTRPD_PurchasingManagement*`) with its own refresh worker — materialized attention KPIs, not read-time composition.
 - **Attention-First layout** (Proposal A — fixed section order per analysis Section 11.1).
 - **Qualified `BELUM` backlog** — age-based posting attention; not all unposted invoices are alerts.
 - **Cross-domain panels** composing M15 inventory supplier concentration and M19 at-risk supplier exposure — no duplicate inventory SQL.
@@ -43,7 +43,7 @@ Evolve the existing **Purchasing Dashboard** at `/dashboard/purchasing` into a *
 - Automated weekly spike/deceleration attention flags (visual-only trend retained).
 - "Buying into slow/dead stock" calculation (M19 owns inventory risk).
 - Purchasing Line Report route, PO/budget workflows, portal write path.
-- Changes to V1 `BTR_PortalDashboardPurchasing*` table schemas or V1 aggregator formulas for traceability KPIs.
+- Changes to V1 `BTRPD_Purchasing*` table schemas or V1 aggregator formulas for traceability KPIs.
 - Event-driven snapshot refresh after invoice save/post.
 
 ---
@@ -194,8 +194,8 @@ One row per principal with qualified backlog (not per invoice — Q5).
 
 | Decision | Value |
 | --- | --- |
-| V1 snapshot domain | `BTR_PortalDashboardPurchasing*` — **unchanged** |
-| Management snapshot domain | `BTR_PortalDashboardPurchasingManagement*` |
+| V1 snapshot domain | `BTRPD_Purchasing*` — **unchanged** |
+| Management snapshot domain | `BTRPD_PurchasingManagement*` |
 | Refresh cadence | **30 minutes** (`PurchasingManagementIntervalMinutes`) |
 | Refresh pattern | `SnapshotKey = 'CURRENT'` delete-and-replace |
 | Read API | Extend **`GET /api/dashboard/purchasing`** — single response merging V1 + management |
@@ -216,7 +216,7 @@ Source DALs (read at refresh time)
     ↓
 RefreshDashboardPurchasingManagementSnapshotWorker
     ↓ DashboardPurchasingManagementAggregator
-BTR_PortalDashboardPurchasingManagement* tables (3)
+BTRPD_PurchasingManagement* tables (3)
     ↓
 Browser → GET /api/dashboard/purchasing
     ↓ MediatR GetDashboardPurchasingHandler
@@ -226,7 +226,7 @@ Browser → GET /api/dashboard/purchasing
     ↓ DashboardPurchasingResponse (extended)
 
 Parallel unchanged V1 path:
-  RefreshDashboardPurchasingSnapshotWorker → BTR_PortalDashboardPurchasing* (4 tables)
+  RefreshDashboardPurchasingSnapshotWorker → BTRPD_Purchasing* (4 tables)
 
 Executive (revised in M21):
   DashboardExecutiveDal reads V1 purchasing + management KPI
@@ -235,7 +235,7 @@ Executive (revised in M21):
 
 **Why separate management domain from V1:**
 
-- PO Q7 — dedicated `BTR_PortalDashboardPurchasingManagement*`.
+- PO Q7 — dedicated `BTRPD_PurchasingManagement*`.
 - V1 traceability KPIs and tables must remain unchanged (Section 16.1 analysis).
 - Management worker depends on Inventory/InventoryRisk snapshots — separate refresh order and failure isolation.
 
@@ -281,9 +281,9 @@ Executive (revised in M21):
 
 | Layer | Module | Change type |
 | --- | --- | --- |
-| SQL | `BTR_PortalDashboardPurchasingManagementKpi.sql` | **New** |
-| SQL | `BTR_PortalDashboardPurchasingManagementAttention.sql` | **New** |
-| SQL | `BTR_PortalDashboardPurchasingManagementTopPrincipal.sql` | **New** |
+| SQL | `BTRPD_PurchasingManagementKpi.sql` | **New** |
+| SQL | `BTRPD_PurchasingManagementAttention.sql` | **New** |
+| SQL | `BTRPD_PurchasingManagementTopPrincipal.sql` | **New** |
 | SQL | `btr.sql.sqlproj` | Include new tables |
 | Application | `InvoiceView.cs`, `IInvoiceViewDal` | Add `CreateTime`, `LastUpdate` |
 | Application | `DashboardSnapshotAgg/Services/DashboardPurchasingManagementAggregator.cs` | **New** |
@@ -315,7 +315,7 @@ Executive (revised in M21):
 | Module | Reason |
 | --- | --- |
 | V1 `DashboardPurchasingInvoiceAggregator` formulas | Traceability unchanged |
-| V1 `BTR_PortalDashboardPurchasing*` tables | PO Q7 — separate domain |
+| V1 `BTRPD_Purchasing*` tables | PO Q7 — separate domain |
 | `RefreshDashboardPurchasingSnapshotWorker` | Retained for V1 statistics |
 | Purchasing Report DAL/API | Drill-down uses existing `?q=` |
 | BTR Desktop PT1/PT2/PF1 | No write-path changes |
@@ -351,7 +351,7 @@ Executive (revised in M21):
 
 Deploy all tables with `SnapshotKey = 'CURRENT'` delete-and-replace pattern.
 
-### 5.1 `BTR_PortalDashboardPurchasingManagementKpi`
+### 5.1 `BTRPD_PurchasingManagementKpi`
 
 Single row per refresh — attention cards + summary extensions.
 
@@ -375,7 +375,7 @@ Single row per refresh — attention cards + summary extensions.
 | QualifiedBacklogPrincipalCount | INT | Distinct principals with qualified backlog |
 | LastRefreshLogId | VARCHAR(13) | FK to refresh log |
 
-### 5.2 `BTR_PortalDashboardPurchasingManagementAttention`
+### 5.2 `BTRPD_PurchasingManagementAttention`
 
 Principal × Signal list (plus one Company row for inactivity).
 
@@ -394,7 +394,7 @@ Principal × Signal list (plus one Company row for inactivity).
 
 Index: `(SnapshotKey, SortOrder)`
 
-### 5.3 `BTR_PortalDashboardPurchasingManagementTopPrincipal`
+### 5.3 `BTRPD_PurchasingManagementTopPrincipal`
 
 Top 10 MTD purchase with % and cross-domain comparison panel.
 
@@ -787,7 +787,7 @@ Execute in order. Each phase should compile before proceeding.
 
 ### Phase 1 — Database
 
-1. Create three `BTR_PortalDashboardPurchasingManagement*.sql` table scripts.
+1. Create three `BTRPD_PurchasingManagement*.sql` table scripts.
 2. Add to `btr.sql.sqlproj`; deploy to dev database.
 
 ### Phase 2 — Source DAL extension

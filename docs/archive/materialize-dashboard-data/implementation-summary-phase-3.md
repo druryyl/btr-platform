@@ -27,7 +27,7 @@ Refresh path (background):
     → DashboardSalesFakturAggregator
     → RefreshDashboardSalesSnapshotWorker
     → DashboardSalesSnapshotDal.ReplaceCurrent()
-    → BTR_PortalDashboardSales* tables
+    → BTRPD_Sales* tables
 
 Read path (HTTP):
   GET /api/dashboard/sales
@@ -47,9 +47,9 @@ Snapshot pattern: single active row per domain via `SnapshotKey = 'CURRENT'`. `P
 
 | Table | Purpose |
 | --- | --- |
-| `BTR_PortalDashboardSalesKpi` | Layer A headline KPIs including period, target, achievement, pipeline (= 0) |
-| `BTR_PortalDashboardSalesWeekTrend` | Layer B weekly `GrandTotal` buckets |
-| `BTR_PortalDashboardSalesTopSalesman` | Layer B Top 10 salesman ranking |
+| `BTRPD_SalesKpi` | Layer A headline KPIs including period, target, achievement, pipeline (= 0) |
+| `BTRPD_SalesWeekTrend` | Layer B weekly `GrandTotal` buckets |
+| `BTRPD_SalesTopSalesman` | Layer B Top 10 salesman ranking |
 
 ### ParamNo seed
 
@@ -95,9 +95,9 @@ All objects registered in `btr.sql.sqlproj`.
 
 | File | Purpose |
 | --- | --- |
-| `Tables/ReportingContext/BTR_PortalDashboardSalesKpi.sql` | Sales KPI table |
-| `Tables/ReportingContext/BTR_PortalDashboardSalesWeekTrend.sql` | Week trend table + index |
-| `Tables/ReportingContext/BTR_PortalDashboardSalesTopSalesman.sql` | Top salesman table + unique rank |
+| `Tables/ReportingContext/BTRPD_SalesKpi.sql` | Sales KPI table |
+| `Tables/ReportingContext/BTRPD_SalesWeekTrend.sql` | Week trend table + index |
+| `Tables/ReportingContext/BTRPD_SalesTopSalesman.sql` | Top salesman table + unique rank |
 
 ---
 
@@ -214,5 +214,5 @@ All objects registered in `btr.sql.sqlproj`.
 ## Next Steps
 
 1. **Phase 4:** Deploy worker host; schedule per-domain refresh (15/30/60 min); implement overview endpoint; run shadow period; disable `AllowLiveFallback`.
-2. **Ops:** After schema deploy, execute Sales refresh to populate `BTR_PortalDashboardSales*` before disabling fallback.
+2. **Ops:** After schema deploy, execute Sales refresh to populate `BTRPD_Sales*` before disabling fallback.
 3. **Stakeholders:** Communicate Sales semantic shift — dashboard now matches Sales Report Faktur totals; pipeline omzet no longer shown.

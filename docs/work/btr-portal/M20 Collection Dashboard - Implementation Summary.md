@@ -20,7 +20,7 @@
 | --- | --- |
 | Route `/dashboard/collection` with Attention-First + Recovery Summary layout | Done |
 | Sidebar **Dashboard → Collection** (after Salesmen, before Inventory) | Done |
-| Dedicated `BTR_PortalDashboardCollection*` snapshot domain (6 tables) | Done |
+| Dedicated `BTRPD_Collection*` snapshot domain (6 tables) | Done |
 | `GET /api/dashboard/collection` read API | Done |
 | Recovery KPIs: Cash Collected MTD, Recovery vs Billing %, Payment Mix | Done |
 | Overdue-only aging (4 buckets), Top 10 overdue rankings (customer/salesman/wilayah) | Done |
@@ -46,7 +46,7 @@ Source DALs (refresh time)
     ↓
 RefreshDashboardCollectionSnapshotWorker
     ↓ DashboardCollectionAggregator
-BTR_PortalDashboardCollection* (6 tables)
+BTRPD_Collection* (6 tables)
     ↓
 GET /api/dashboard/collection
     ↓ DashboardCollectionDal
@@ -63,12 +63,12 @@ Six new tables under `src/j05-btr-distrib/btr.sql/Tables/ReportingContext/`:
 
 | Table | Purpose |
 | --- | --- |
-| `BTR_PortalDashboardCollectionKpi` | Exposure, recovery, portfolio counts |
-| `BTR_PortalDashboardCollectionAging` | Overdue-only 4-bucket aging |
-| `BTR_PortalDashboardCollectionAttention` | Entity × signal attention list |
-| `BTR_PortalDashboardCollectionTopOverdueCustomer` | Top 10 overdue customers |
-| `BTR_PortalDashboardCollectionTopOverdueSalesman` | Top 10 overdue salesmen |
-| `BTR_PortalDashboardCollectionTopOverdueWilayah` | Top 10 overdue wilayah |
+| `BTRPD_CollectionKpi` | Exposure, recovery, portfolio counts |
+| `BTRPD_CollectionAging` | Overdue-only 4-bucket aging |
+| `BTRPD_CollectionAttention` | Entity × signal attention list |
+| `BTRPD_CollectionTopOverdueCustomer` | Top 10 overdue customers |
+| `BTRPD_CollectionTopOverdueSalesman` | Top 10 overdue salesmen |
+| `BTRPD_CollectionTopOverdueWilayah` | Top 10 overdue wilayah |
 
 All use `SnapshotKey = 'CURRENT'` delete-and-replace pattern. Registered in `btr.sql.sqlproj`.
 

@@ -95,7 +95,7 @@ cd src/j05-btr-distrib/btr.portal.web && npm run build
 
 **Environment:** Local JUDE7 — `btr.portal.api` IIS Express `:5050`, `npm run dev` `:5173/portal`, user DIMAS. SQL: `JUDE7/btr`.
 
-**Prerequisite gap:** `BTR_PortalDashboardCollectionKpi` (and related M20/M21/M22 tables) not present on JUDE7 — `GET /api/dashboard/alerts` returns HTTP 500 until snapshot worker refresh populates M17–M22 tables. Customer/Sales/Piutang/Inventory/InventoryRisk domain APIs return 200.
+**Prerequisite gap:** `BTRPD_CollectionKpi` (and related M20/M21/M22 tables) not present on JUDE7 — `GET /api/dashboard/alerts` returns HTTP 500 until snapshot worker refresh populates M17–M22 tables. Customer/Sales/Piutang/Inventory/InventoryRisk domain APIs return 200.
 
 | # | Check | Status | Notes |
 | --- | --- | --- | --- |

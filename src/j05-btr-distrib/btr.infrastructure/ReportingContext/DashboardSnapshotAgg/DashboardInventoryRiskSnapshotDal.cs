@@ -5,7 +5,6 @@ using System.Linq;
 using btr.application.ReportingContext.DashboardSnapshotAgg.Contracts;
 using btr.application.ReportingContext.DashboardSnapshotAgg.Models;
 using btr.infrastructure.Helpers;
-using btr.nuna.Application;
 using btr.nuna.Domain;
 using Dapper;
 using Microsoft.Extensions.Options;
@@ -17,14 +16,10 @@ namespace btr.infrastructure.ReportingContext.DashboardSnapshotAgg
         private const string SnapshotKey = "CURRENT";
 
         private readonly DatabaseOptions _opt;
-        private readonly INunaCounterBL _counter;
 
-        public DashboardInventoryRiskSnapshotDal(
-            IOptions<DatabaseOptions> opt,
-            INunaCounterBL counter)
+        public DashboardInventoryRiskSnapshotDal(IOptions<DatabaseOptions> opt)
         {
             _opt = opt.Value;
-            _counter = counter;
         }
 
         public DashboardInventoryRiskAggregateResult GetCurrent()
@@ -34,39 +29,39 @@ SELECT SnapshotKey, GeneratedAt, TotalInventoryValue, TotalItem,
        DeadStockItemCount, DeadStockValue, SlowMovingItemCount, SlowMovingValue,
        NeverSoldItemCount, NeverSoldValue, AtRiskInventoryValue, AtRiskInventoryPercent,
        RequiresAttention, LastRefreshLogId
-FROM BTR_PortalDashboardInventoryRiskKpi
+FROM BTRPD_InventoryRiskKpi
 WHERE SnapshotKey = @SnapshotKey";
 
             const string agingSql = @"
 SELECT BucketKey, BucketLabel, InventoryValue, ItemCount, SortOrder
-FROM BTR_PortalDashboardInventoryRiskAging
+FROM BTRPD_InventoryRiskAging
 WHERE SnapshotKey = @SnapshotKey
 ORDER BY SortOrder";
 
             const string attentionSql = @"
 SELECT BrgId, BrgCode, BrgName, KategoriName, SupplierName, Qty, InventoryValue,
        DaysSinceLastFaktur, SignalKey, SignalLabel, SortOrder
-FROM BTR_PortalDashboardInventoryRiskAttention
+FROM BTRPD_InventoryRiskAttention
 WHERE SnapshotKey = @SnapshotKey
 ORDER BY SortOrder";
 
             const string topDeadSql = @"
 SELECT Rank, BrgId, BrgCode, BrgName, KategoriName, SupplierName, Qty, InventoryValue,
        DaysSinceLastFaktur, PercentOfAtRisk
-FROM BTR_PortalDashboardInventoryRiskTopDead
+FROM BTRPD_InventoryRiskTopDead
 WHERE SnapshotKey = @SnapshotKey
 ORDER BY Rank";
 
             const string topSlowSql = @"
 SELECT Rank, BrgId, BrgCode, BrgName, KategoriName, SupplierName, Qty, InventoryValue,
        DaysSinceLastFaktur, PercentOfAtRisk
-FROM BTR_PortalDashboardInventoryRiskTopSlow
+FROM BTRPD_InventoryRiskTopSlow
 WHERE SnapshotKey = @SnapshotKey
 ORDER BY Rank";
 
             const string breakdownSql = @"
 SELECT DimensionType, Name, AtRiskValue, ItemCount, Rank, PercentOfAtRisk
-FROM BTR_PortalDashboardInventoryRiskBreakdown
+FROM BTRPD_InventoryRiskBreakdown
 WHERE SnapshotKey = @SnapshotKey
 ORDER BY DimensionType, Rank";
 
@@ -136,28 +131,28 @@ ORDER BY DimensionType, Rank";
             string refreshLogId)
         {
             conn.Execute(
-                "DELETE FROM BTR_PortalDashboardInventoryRiskAging WHERE SnapshotKey = @SnapshotKey",
+                "DELETE FROM BTRPD_InventoryRiskAging WHERE SnapshotKey = @SnapshotKey",
                 new { SnapshotKey },
                 transaction);
             conn.Execute(
-                "DELETE FROM BTR_PortalDashboardInventoryRiskAttention WHERE SnapshotKey = @SnapshotKey",
+                "DELETE FROM BTRPD_InventoryRiskAttention WHERE SnapshotKey = @SnapshotKey",
                 new { SnapshotKey },
                 transaction);
             conn.Execute(
-                "DELETE FROM BTR_PortalDashboardInventoryRiskTopDead WHERE SnapshotKey = @SnapshotKey",
+                "DELETE FROM BTRPD_InventoryRiskTopDead WHERE SnapshotKey = @SnapshotKey",
                 new { SnapshotKey },
                 transaction);
             conn.Execute(
-                "DELETE FROM BTR_PortalDashboardInventoryRiskTopSlow WHERE SnapshotKey = @SnapshotKey",
+                "DELETE FROM BTRPD_InventoryRiskTopSlow WHERE SnapshotKey = @SnapshotKey",
                 new { SnapshotKey },
                 transaction);
             conn.Execute(
-                "DELETE FROM BTR_PortalDashboardInventoryRiskBreakdown WHERE SnapshotKey = @SnapshotKey",
+                "DELETE FROM BTRPD_InventoryRiskBreakdown WHERE SnapshotKey = @SnapshotKey",
                 new { SnapshotKey },
                 transaction);
 
             const string mergeKpiSql = @"
-MERGE BTR_PortalDashboardInventoryRiskKpi AS target
+MERGE BTRPD_InventoryRiskKpi AS target
 USING (SELECT @SnapshotKey AS SnapshotKey) AS source
 ON target.SnapshotKey = source.SnapshotKey
 WHEN MATCHED THEN
@@ -206,7 +201,7 @@ WHEN NOT MATCHED THEN
             }, transaction);
 
             const string insertAgingSql = @"
-INSERT INTO BTR_PortalDashboardInventoryRiskAging (
+INSERT INTO BTRPD_InventoryRiskAging (
     InventoryRiskAgingId, SnapshotKey, BucketKey, BucketLabel, InventoryValue, ItemCount, SortOrder)
 VALUES (
     @InventoryRiskAgingId, @SnapshotKey, @BucketKey, @BucketLabel, @InventoryValue, @ItemCount, @SortOrder)";
@@ -215,7 +210,7 @@ VALUES (
             {
                 conn.Execute(insertAgingSql, new
                 {
-                    InventoryRiskAgingId = _counter.Generate("PDIR", IDFormatEnum.PFnnn),
+                    InventoryRiskAgingId = Ulid.NewUlid().ToString(),
                     SnapshotKey,
                     BucketKey = row.BucketKey ?? string.Empty,
                     BucketLabel = row.BucketLabel ?? string.Empty,
@@ -226,7 +221,7 @@ VALUES (
             }
 
             const string insertAttentionSql = @"
-INSERT INTO BTR_PortalDashboardInventoryRiskAttention (
+INSERT INTO BTRPD_InventoryRiskAttention (
     InventoryRiskAttentionId, SnapshotKey, BrgId, BrgCode, BrgName, KategoriName, SupplierName,
     Qty, InventoryValue, DaysSinceLastFaktur, SignalKey, SignalLabel, SortOrder)
 VALUES (
@@ -237,7 +232,7 @@ VALUES (
             {
                 conn.Execute(insertAttentionSql, new
                 {
-                    InventoryRiskAttentionId = _counter.Generate("PDIR", IDFormatEnum.PFnnn),
+                    InventoryRiskAttentionId = Ulid.NewUlid().ToString(),
                     SnapshotKey,
                     BrgId = row.BrgId ?? string.Empty,
                     BrgCode = row.BrgCode ?? string.Empty,
@@ -254,7 +249,7 @@ VALUES (
             }
 
             const string insertTopDeadSql = @"
-INSERT INTO BTR_PortalDashboardInventoryRiskTopDead (
+INSERT INTO BTRPD_InventoryRiskTopDead (
     InventoryRiskTopDeadId, SnapshotKey, Rank, BrgId, BrgCode, BrgName, KategoriName, SupplierName,
     Qty, InventoryValue, DaysSinceLastFaktur, PercentOfAtRisk)
 VALUES (
@@ -265,7 +260,7 @@ VALUES (
             {
                 conn.Execute(insertTopDeadSql, new
                 {
-                    InventoryRiskTopDeadId = _counter.Generate("PDIR", IDFormatEnum.PFnnn),
+                    InventoryRiskTopDeadId = Ulid.NewUlid().ToString(),
                     SnapshotKey,
                     row.Rank,
                     BrgId = row.BrgId ?? string.Empty,
@@ -281,7 +276,7 @@ VALUES (
             }
 
             const string insertTopSlowSql = @"
-INSERT INTO BTR_PortalDashboardInventoryRiskTopSlow (
+INSERT INTO BTRPD_InventoryRiskTopSlow (
     InventoryRiskTopSlowId, SnapshotKey, Rank, BrgId, BrgCode, BrgName, KategoriName, SupplierName,
     Qty, InventoryValue, DaysSinceLastFaktur, PercentOfAtRisk)
 VALUES (
@@ -292,7 +287,7 @@ VALUES (
             {
                 conn.Execute(insertTopSlowSql, new
                 {
-                    InventoryRiskTopSlowId = _counter.Generate("PDIR", IDFormatEnum.PFnnn),
+                    InventoryRiskTopSlowId = Ulid.NewUlid().ToString(),
                     SnapshotKey,
                     row.Rank,
                     BrgId = row.BrgId ?? string.Empty,
@@ -308,7 +303,7 @@ VALUES (
             }
 
             const string insertBreakdownSql = @"
-INSERT INTO BTR_PortalDashboardInventoryRiskBreakdown (
+INSERT INTO BTRPD_InventoryRiskBreakdown (
     InventoryRiskBreakdownId, SnapshotKey, DimensionType, Name, AtRiskValue, ItemCount, Rank, PercentOfAtRisk)
 VALUES (
     @InventoryRiskBreakdownId, @SnapshotKey, @DimensionType, @Name, @AtRiskValue, @ItemCount, @Rank, @PercentOfAtRisk)";
@@ -317,7 +312,7 @@ VALUES (
             {
                 conn.Execute(insertBreakdownSql, new
                 {
-                    InventoryRiskBreakdownId = _counter.Generate("PDIR", IDFormatEnum.PFnnn),
+                    InventoryRiskBreakdownId = Ulid.NewUlid().ToString(),
                     SnapshotKey,
                     DimensionType = row.DimensionType ?? string.Empty,
                     Name = row.Name ?? string.Empty,

@@ -69,7 +69,7 @@ Answer:
 7. Location Attention List (Warehouse × Signal only)  
 8. Navigation (mandatory cross-links per Q30)
 
-**Dedicated snapshot domain:** `BTR_PortalDashboardLocation*` (e.g. warehouse rankings, attention rows) — **60-minute refresh** (Q25, Q26). **Dashboard-only** — no Sales Report or Piutang Report API changes (Q27).
+**Dedicated snapshot domain:** `BTRPD_Location*` (e.g. warehouse rankings, attention rows) — **60-minute refresh** (Q25, Q26). **Dashboard-only** — no Sales Report or Piutang Report API changes (Q27).
 
 **Concentration display:** Top Warehouse % and Top 3 Warehouse % — **informational only**; no `WarehouseHotspot` auto-threshold in V1 (Q17).
 
@@ -102,7 +102,7 @@ This section identifies location-related situations that typically require manag
 | **Sales omzet concentrated in one billing warehouse** | Revenue dependency on one distribution point | `FakturView.WarehouseName` on every Faktur; Sales Dashboard aggregates **company-wide** | **Derivable** — `SUM(GrandTotal)` grouped by warehouse, current month |
 | **Warehouse with sales but minimal inventory** | Billing location not aligned with stock position — fulfillment risk | Join Faktur warehouse × StokBalance warehouse | **Derivable** — not computed |
 | **Warehouse with inventory but no MTD sales** | Stock site without billing activity — possible dead branch | Faktur month filter + StokBalance by warehouse | **Derivable** |
-| **Warehouse sales deceleration vs peers** | Location losing billing pace mid-month | Weekly trend exists **company-wide** only (`BTR_PortalDashboardSalesWeekTrend`) | **Not available** per warehouse |
+| **Warehouse sales deceleration vs peers** | Location losing billing pace mid-month | Weekly trend exists **company-wide** only (`BTRPD_SalesWeekTrend`) | **Not available** per warehouse |
 | **Single warehouse dominates Faktur volume** | Operational bottleneck at one site | Count Faktur by `WarehouseId` | **Derivable** |
 
 ### 2.3 Warehouse — purchasing and intake
@@ -650,7 +650,7 @@ Maximize reuse — avoid new business calculations when equivalent logic exists.
 
 ### 11.5 Snapshot pattern reference
 
-**Best reference implementation for wilayah materialization:** M20 `DashboardCollectionAggregator` + `PiutangOpenBalanceWithWilayahDal` + `BTR_PortalDashboardCollectionTopOverdueWilayah`.
+**Best reference implementation for wilayah materialization:** M20 `DashboardCollectionAggregator` + `PiutangOpenBalanceWithWilayahDal` + `BTRPD_CollectionTopOverdueWilayah`.
 
 **Best reference for new warehouse dimension:** M15 `DashboardInventoryAggregator` breakdown pattern — but with `DimensionType = Warehouse` (does not exist today).
 
@@ -966,7 +966,7 @@ Branch / Warehouse Performance Dashboard                 [/dashboard/locations]
 
 | # | Decision |
 | - | -------- |
-| Q25 | **Dedicated snapshot domain:** e.g. `BTR_PortalDashboardLocationWarehouse`, `BTR_PortalDashboardLocationAttention`. Avoid expensive live composition. |
+| Q25 | **Dedicated snapshot domain:** e.g. `BTRPD_LocationWarehouse`, `BTRPD_LocationAttention`. Avoid expensive live composition. |
 | Q26 | Refresh cadence: **60 minutes** (align with M15/M19 — inventory-dominant). |
 | Q27 | **Dashboard-only** — do **not** modify Sales Report or Piutang Report APIs in M22. |
 

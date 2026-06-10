@@ -1,10 +1,10 @@
+using System;
 using System.Collections.Generic;
 using System.Data.SqlClient;
 using System.Linq;
 using btr.application.ReportingContext.DashboardSnapshotAgg.Contracts;
 using btr.application.ReportingContext.DashboardSnapshotAgg.Models;
 using btr.infrastructure.Helpers;
-using btr.nuna.Application;
 using btr.nuna.Domain;
 using Dapper;
 using Microsoft.Extensions.Options;
@@ -16,14 +16,10 @@ namespace btr.infrastructure.ReportingContext.DashboardSnapshotAgg
         private const string SnapshotKey = "CURRENT";
 
         private readonly DatabaseOptions _opt;
-        private readonly INunaCounterBL _counter;
 
-        public DashboardPurchasingManagementSnapshotDal(
-            IOptions<DatabaseOptions> opt,
-            INunaCounterBL counter)
+        public DashboardPurchasingManagementSnapshotDal(IOptions<DatabaseOptions> opt)
         {
             _opt = opt.Value;
-            _counter = counter;
         }
 
         public DashboardPurchasingManagementAggregateResult GetCurrent()
@@ -35,19 +31,19 @@ SELECT SnapshotKey, GeneratedAt, PeriodYear, PeriodMonth,
        CompoundDependencyCount, PrincipalInventoryNoPurchaseCount, UnknownPrincipalCount,
        PurchasingInactivityFlag, QualifiedBacklogPrincipalCount, PrincipalAtRiskExposureCount,
        LastRefreshLogId
-FROM BTR_PortalDashboardPurchasingManagementKpi
+FROM BTRPD_PurchasingManagementKpi
 WHERE SnapshotKey = @SnapshotKey";
 
             const string attentionSql = @"
 SELECT EntityType, EntityName, SignalKey, SignalLabel, ValueAmount, ValueText, ReportRoute, SortOrder
-FROM BTR_PortalDashboardPurchasingManagementAttention
+FROM BTRPD_PurchasingManagementAttention
 WHERE SnapshotKey = @SnapshotKey
 ORDER BY SortOrder";
 
             const string topPrincipalSql = @"
 SELECT Rank, PrincipalName, MtdPurchaseAmount, PercentOfPurchase, InventoryValue, PercentOfInventory,
        AtRiskValue, PercentOfAtRisk, IsCompoundDependency, IsInventoryNoPurchase, ReportRoute
-FROM BTR_PortalDashboardPurchasingManagementTopPrincipal
+FROM BTRPD_PurchasingManagementTopPrincipal
 WHERE SnapshotKey = @SnapshotKey
 ORDER BY Rank";
 
@@ -137,16 +133,16 @@ ORDER BY Rank";
             string refreshLogId)
         {
             conn.Execute(
-                "DELETE FROM BTR_PortalDashboardPurchasingManagementAttention WHERE SnapshotKey = @SnapshotKey",
+                "DELETE FROM BTRPD_PurchasingManagementAttention WHERE SnapshotKey = @SnapshotKey",
                 new { SnapshotKey },
                 transaction);
             conn.Execute(
-                "DELETE FROM BTR_PortalDashboardPurchasingManagementTopPrincipal WHERE SnapshotKey = @SnapshotKey",
+                "DELETE FROM BTRPD_PurchasingManagementTopPrincipal WHERE SnapshotKey = @SnapshotKey",
                 new { SnapshotKey },
                 transaction);
 
             const string mergeKpiSql = @"
-MERGE BTR_PortalDashboardPurchasingManagementKpi AS target
+MERGE BTRPD_PurchasingManagementKpi AS target
 USING (SELECT @SnapshotKey AS SnapshotKey) AS source
 ON target.SnapshotKey = source.SnapshotKey
 WHEN MATCHED THEN
@@ -207,7 +203,7 @@ WHEN NOT MATCHED THEN
             }, transaction);
 
             const string insertAttentionSql = @"
-INSERT INTO BTR_PortalDashboardPurchasingManagementAttention (
+INSERT INTO BTRPD_PurchasingManagementAttention (
     PurchasingManagementAttentionId, SnapshotKey, EntityType, EntityName,
     SignalKey, SignalLabel, ValueAmount, ValueText, ReportRoute, SortOrder)
 VALUES (
@@ -218,7 +214,7 @@ VALUES (
             {
                 conn.Execute(insertAttentionSql, new
                 {
-                    PurchasingManagementAttentionId = _counter.Generate("PDP", IDFormatEnum.PFnnn),
+                    PurchasingManagementAttentionId = Ulid.NewUlid().ToString(),
                     SnapshotKey,
                     EntityType = row.EntityType ?? string.Empty,
                     EntityName = row.EntityName ?? string.Empty,
@@ -232,7 +228,7 @@ VALUES (
             }
 
             const string insertTopPrincipalSql = @"
-INSERT INTO BTR_PortalDashboardPurchasingManagementTopPrincipal (
+INSERT INTO BTRPD_PurchasingManagementTopPrincipal (
     PurchasingManagementTopPrincipalId, SnapshotKey, Rank, PrincipalName, MtdPurchaseAmount,
     PercentOfPurchase, InventoryValue, PercentOfInventory, AtRiskValue, PercentOfAtRisk,
     IsCompoundDependency, IsInventoryNoPurchase, ReportRoute)
@@ -245,7 +241,7 @@ VALUES (
             {
                 conn.Execute(insertTopPrincipalSql, new
                 {
-                    PurchasingManagementTopPrincipalId = _counter.Generate("PDP", IDFormatEnum.PFnnn),
+                    PurchasingManagementTopPrincipalId = Ulid.NewUlid().ToString(),
                     SnapshotKey,
                     row.Rank,
                     PrincipalName = row.PrincipalName ?? string.Empty,

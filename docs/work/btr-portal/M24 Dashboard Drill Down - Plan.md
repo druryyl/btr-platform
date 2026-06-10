@@ -295,7 +295,7 @@ Report views (Sales, Piutang, Inventory, Purchasing)
 User continues in BTR Desktop (documentation only)
 ```
 
-**No new API endpoints.** **No new snapshot domains or workers.** **No DDL required** except optional additive `CustomerCode` on `BTR_PortalDashboardPiutangTopCustomer` (recommended for executive drill-down stability).
+**No new API endpoints.** **No new snapshot domains or workers.** **No DDL required** except optional additive `CustomerCode` on `BTRPD_PiutangTopCustomer` (recommended for executive drill-down stability).
 
 ### 3.2 Design principles
 
@@ -484,7 +484,7 @@ Add method using same SELECT as `PiutangSalesWilayahDal` but `WHERE aa.Sisa > 1`
 ### 6.5 Optional snapshot DDL
 
 ```sql
-ALTER TABLE BTR_PortalDashboardPiutangTopCustomer
+ALTER TABLE BTRPD_PiutangTopCustomer
   ADD CustomerCode NVARCHAR(50) NULL;
 ```
 

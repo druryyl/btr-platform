@@ -33,7 +33,7 @@ M23 should answer that question by **consuming** attention rows and headline fla
 
 | Finding | Implication |
 | ------- | ----------- |
-| **~35 distinct attention signal types** already materialized in `BTR_PortalDashboard*Attention` tables and executive compose logic | M23 has a rich catalog of reusable alerts without new SQL against transactional tables |
+| **~35 distinct attention signal types** already materialized in `BTRPD_*Attention` tables and executive compose logic | M23 has a rich catalog of reusable alerts without new SQL against transactional tables |
 | **Signal ownership is already bounded** by milestone aggregators (`Dashboard*Aggregator.cs`) | M23 must respect producer/consumer boundaries to avoid duplicate business logic |
 | **M16 Executive Dashboard** composes **company-level** domain cards and Top 5 exposure lists — not a unified cross-domain attention feed | M16 and M23 serve different aggregation grains; relationship must be clarified (Section 15) |
 | **Severity is intentionally minimal** — only Sales Achievement % uses Healthy/Warning/Critical bands; all other signals use binary Attention Indicator | M23 should not invent a generic severity engine without PO approval |
@@ -169,7 +169,7 @@ This section identifies business situations requiring management attention, mapp
 
 ### 3.2 Authoritative signal catalog (materialized)
 
-Signal keys are defined in application aggregators and persisted in `BTR_PortalDashboard*Attention` snapshot tables (where applicable).
+Signal keys are defined in application aggregators and persisted in `BTRPD_*Attention` snapshot tables (where applicable).
 
 #### Customer signals (M17 — `DashboardCustomerAggregator`)
 
@@ -251,19 +251,19 @@ Signal keys are defined in application aggregators and persisted in `BTR_PortalD
 
 | Signal / Alert candidate | Producer milestone | Snapshot table / API source | Owning aggregator | Validating drill-down |
 | ------------------------ | ------------------ | --------------------------- | ----------------- | --------------------- |
-| Below Target (company) | M16 | `BTR_PortalDashboardSalesKpi` | `DashboardSalesFakturAggregator` + `DashboardExecutiveComposer` | Sales Dashboard → Sales Report |
-| Below Target (rep) | M18 | `BTR_PortalDashboardSalesmanAttention` | `DashboardSalesmanAggregator` | Salesman Dashboard → Sales Report `?q=` |
-| Customer Overdue | M17 | `BTR_PortalDashboardCustomerAttention` | `DashboardCustomerAggregator` | Customer Dashboard → Piutang Report `?q=` |
+| Below Target (company) | M16 | `BTRPD_SalesKpi` | `DashboardSalesFakturAggregator` + `DashboardExecutiveComposer` | Sales Dashboard → Sales Report |
+| Below Target (rep) | M18 | `BTRPD_SalesmanAttention` | `DashboardSalesmanAggregator` | Salesman Dashboard → Sales Report `?q=` |
+| Customer Overdue | M17 | `BTRPD_CustomerAttention` | `DashboardCustomerAggregator` | Customer Dashboard → Piutang Report `?q=` |
 | Customer Dormant | M17 | Same | Same | Customer Dashboard → Sales Report `?q=` |
-| Chronic Overdue | M20 | `BTR_PortalDashboardCollectionAttention` | `DashboardCollectionAggregator` | Collection Dashboard → Piutang Report |
+| Chronic Overdue | M20 | `BTRPD_CollectionAttention` | `DashboardCollectionAggregator` | Collection Dashboard → Piutang Report |
 | Legacy Debt | M20 | Same | Same (uses M17 dormant rule) | Collection Dashboard → Piutang Report |
 | Wilayah Hotspot | M20 | Same | Same | Collection Dashboard (not M22) |
-| Dead Stock (item) | M19 | `BTR_PortalDashboardInventoryRiskAttention` | `DashboardInventoryRiskAggregator` | Inventory Risk → Inventory Report `?q=` |
-| Qualified Backlog | M21 | `BTR_PortalDashboardPurchasingManagementAttention` | `DashboardPurchasingManagementAggregator` | Purchasing Dashboard → Purchasing Report (filter BELUM) |
+| Dead Stock (item) | M19 | `BTRPD_InventoryRiskAttention` | `DashboardInventoryRiskAggregator` | Inventory Risk → Inventory Report `?q=` |
+| Qualified Backlog | M21 | `BTRPD_PurchasingManagementAttention` | `DashboardPurchasingManagementAggregator` | Purchasing Dashboard → Purchasing Report (filter BELUM) |
 | Compound Dependency | M21 | Same | Same (reads M15/M19 snapshots) | Purchasing Dashboard → Inventory / Inventory Risk |
-| Warehouse Inactive With Stock | M22 | `BTR_PortalDashboardLocationAttention` | `DashboardLocationAggregator` | Location Dashboard → Inventory Report |
+| Warehouse Inactive With Stock | M22 | `BTRPD_LocationAttention` | `DashboardLocationAggregator` | Location Dashboard → Inventory Report |
 | Snapshot stale | M16 | Health endpoint + `GeneratedAt` | `DashboardExecutiveComposer` | Admin refresh / worker health |
-| Top 5 Customer exposure | M16 | `BTR_PortalDashboardPiutangTopCustomer` | `DashboardPiutangAggregator` (presentation truncate) | Executive → Piutang Dashboard → Piutang Report |
+| Top 5 Customer exposure | M16 | `BTRPD_PiutangTopCustomer` | `DashboardPiutangAggregator` (presentation truncate) | Executive → Piutang Dashboard → Piutang Report |
 
 **Implication for M23:** Every row in this matrix is a **read-and-route** candidate. M23 should store **references** to producer signal identity (domain, entity, SignalKey, snapshot row id or composite key) rather than duplicate inclusion logic.
 
@@ -414,15 +414,15 @@ Signals important enough for **Alert Center headline** or **top-of-feed** placem
 
 | Asset | Tables / endpoints | M23 reuse |
 | ----- | ------------------ | --------- |
-| Customer attention rows | `BTR_PortalDashboardCustomerAttention` | Direct feed |
-| Salesman attention rows | `BTR_PortalDashboardSalesmanAttention` | Direct feed |
-| Inventory risk attention rows | `BTR_PortalDashboardInventoryRiskAttention` | **Summary only** in M23 — KPI counts from snapshot; not row feed |
-| Collection attention rows | `BTR_PortalDashboardCollectionAttention` | Direct feed |
-| Purchasing management attention rows | `BTR_PortalDashboardPurchasingManagementAttention` | Direct feed |
-| Location attention rows | `BTR_PortalDashboardLocationAttention` | Direct feed |
+| Customer attention rows | `BTRPD_CustomerAttention` | Direct feed |
+| Salesman attention rows | `BTRPD_SalesmanAttention` | Direct feed |
+| Inventory risk attention rows | `BTRPD_InventoryRiskAttention` | **Summary only** in M23 — KPI counts from snapshot; not row feed |
+| Collection attention rows | `BTRPD_CollectionAttention` | Direct feed |
+| Purchasing management attention rows | `BTRPD_PurchasingManagementAttention` | Direct feed |
+| Location attention rows | `BTRPD_LocationAttention` | Direct feed |
 | Executive compose input | Sales/Piutang/Inventory/Purchasing snapshots + M21 management KPI | Headline alerts |
-| Refresh log | `BTR_PortalDashboardRefreshLog` | Platform alerts |
-| Domain KPI snapshots | All `BTR_PortalDashboard*Kpi` | Alert context values (amounts, counts) |
+| Refresh log | `BTRPD_RefreshLog` | Platform alerts |
+| Domain KPI snapshots | All `BTRPD_*Kpi` | Alert context values (amounts, counts) |
 
 ### 8.2 Reusable UI components (presentation patterns)
 
@@ -794,7 +794,7 @@ BTR already maintains a **de facto alert catalog** through:
 
 - `SignalKey` string constants in each `Dashboard*Aggregator`  
 - Parallel `SignalLabel` display strings  
-- Snapshot persistence in `BTR_PortalDashboard*Attention` tables  
+- Snapshot persistence in `BTRPD_*Attention` tables  
 - Sort/priority maps per aggregator  
 
 There is **no central registry document or table** mapping SignalKey → owning milestone → category → severity → drill-down route.
@@ -1029,16 +1029,16 @@ The registry catalogs **alert types** — not every alert instance. Instance row
 
 | Table | Producer |
 | ----- | -------- |
-| `BTR_PortalDashboardCustomerAttention` | M17 |
-| `BTR_PortalDashboardSalesmanAttention` | M18 |
-| `BTR_PortalDashboardInventoryRiskAttention` | M19 |
-| `BTR_PortalDashboardCollectionAttention` | M20 |
-| `BTR_PortalDashboardPurchasingManagementAttention` | M21 |
-| `BTR_PortalDashboardLocationAttention` | M22 |
-| `BTR_PortalDashboardSalesKpi` (+ executive compose) | M11/M16 |
-| `BTR_PortalDashboardPiutangKpi` (+ aging, top customer) | M14/M16 |
-| `BTR_PortalDashboardPurchasingManagementKpi` | M21/M16 purchasing card |
-| `BTR_PortalDashboardRefreshLog` | Platform |
+| `BTRPD_CustomerAttention` | M17 |
+| `BTRPD_SalesmanAttention` | M18 |
+| `BTRPD_InventoryRiskAttention` | M19 |
+| `BTRPD_CollectionAttention` | M20 |
+| `BTRPD_PurchasingManagementAttention` | M21 |
+| `BTRPD_LocationAttention` | M22 |
+| `BTRPD_SalesKpi` (+ executive compose) | M11/M16 |
+| `BTRPD_PiutangKpi` (+ aging, top customer) | M14/M16 |
+| `BTRPD_PurchasingManagementKpi` | M21/M16 purchasing card |
+| `BTRPD_RefreshLog` | Platform |
 
 ---
 

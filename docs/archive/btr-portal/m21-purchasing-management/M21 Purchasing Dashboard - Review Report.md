@@ -14,9 +14,9 @@
 
 ### Database
 
-- `src/j05-btr-distrib/btr.sql/Tables/ReportingContext/BTR_PortalDashboardPurchasingManagementKpi.sql`
-- `src/j05-btr-distrib/btr.sql/Tables/ReportingContext/BTR_PortalDashboardPurchasingManagementAttention.sql`
-- `src/j05-btr-distrib/btr.sql/Tables/ReportingContext/BTR_PortalDashboardPurchasingManagementTopPrincipal.sql`
+- `src/j05-btr-distrib/btr.sql/Tables/ReportingContext/BTRPD_PurchasingManagementKpi.sql`
+- `src/j05-btr-distrib/btr.sql/Tables/ReportingContext/BTRPD_PurchasingManagementAttention.sql`
+- `src/j05-btr-distrib/btr.sql/Tables/ReportingContext/BTRPD_PurchasingManagementTopPrincipal.sql`
 - `src/j05-btr-distrib/btr.sql/btr.sql.sqlproj`
 
 ### Application / infrastructure

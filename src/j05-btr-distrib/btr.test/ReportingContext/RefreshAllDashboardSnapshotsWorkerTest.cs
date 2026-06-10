@@ -8,6 +8,7 @@ namespace btr.test.ReportingContext
 {
     public class RefreshAllDashboardSnapshotsWorkerTest
     {
+        private const string StubRefreshLogId = "01ARZ3NDEKTSV4RRFFQ69G5FAV";
         [Fact]
         public void Execute_RunsDomainsInOrder_AndReturnsResults()
         {
@@ -108,7 +109,7 @@ namespace btr.test.ReportingContext
                 CallOrder = ++_callSequence;
                 request.Result = new RefreshDashboardPiutangSnapshotResult
                 {
-                    RefreshLogId = "PDR0001",
+                    RefreshLogId = StubRefreshLogId,
                     DurationMs = 100
                 };
             }
@@ -132,7 +133,7 @@ namespace btr.test.ReportingContext
 
                 request.Result = new RefreshDashboardInventorySnapshotResult
                 {
-                    RefreshLogId = "PDI0001",
+                    RefreshLogId = StubRefreshLogId,
                     DurationMs = 200
                 };
             }
@@ -150,7 +151,7 @@ namespace btr.test.ReportingContext
                 CallOrder = ++_callSequence;
                 request.Result = new RefreshDashboardInventoryRiskSnapshotResult
                 {
-                    RefreshLogId = "PDIR001",
+                    RefreshLogId = StubRefreshLogId,
                     DurationMs = 250
                 };
             }
@@ -168,7 +169,7 @@ namespace btr.test.ReportingContext
                 CallOrder = ++_callSequence;
                 request.Result = new RefreshDashboardSalesSnapshotResult
                 {
-                    RefreshLogId = "PDS0001",
+                    RefreshLogId = StubRefreshLogId,
                     DurationMs = 300
                 };
             }
@@ -186,7 +187,7 @@ namespace btr.test.ReportingContext
                 CallOrder = ++_callSequence;
                 request.Result = new RefreshDashboardPurchasingSnapshotResult
                 {
-                    RefreshLogId = "PDP0001",
+                    RefreshLogId = StubRefreshLogId,
                     DurationMs = 400
                 };
             }
@@ -204,7 +205,7 @@ namespace btr.test.ReportingContext
                 CallOrder = ++_callSequence;
                 request.Result = new RefreshDashboardPurchasingManagementSnapshotResult
                 {
-                    RefreshLogId = "PDPM001",
+                    RefreshLogId = StubRefreshLogId,
                     DurationMs = 425
                 };
             }
@@ -222,7 +223,7 @@ namespace btr.test.ReportingContext
                 CallOrder = ++_callSequence;
                 request.Result = new RefreshDashboardCustomerSnapshotResult
                 {
-                    RefreshLogId = "PDC0001",
+                    RefreshLogId = StubRefreshLogId,
                     DurationMs = 500
                 };
             }
@@ -240,7 +241,7 @@ namespace btr.test.ReportingContext
                 CallOrder = ++_callSequence;
                 request.Result = new RefreshDashboardSalesmanSnapshotResult
                 {
-                    RefreshLogId = "PDM0001",
+                    RefreshLogId = StubRefreshLogId,
                     DurationMs = 600
                 };
             }
@@ -258,7 +259,7 @@ namespace btr.test.ReportingContext
                 CallOrder = ++_callSequence;
                 request.Result = new RefreshDashboardCollectionSnapshotResult
                 {
-                    RefreshLogId = "PDCL001",
+                    RefreshLogId = StubRefreshLogId,
                     DurationMs = 700
                 };
             }
@@ -276,7 +277,7 @@ namespace btr.test.ReportingContext
                 CallOrder = ++_callSequence;
                 request.Result = new RefreshDashboardLocationSnapshotResult
                 {
-                    RefreshLogId = "PDLO001",
+                    RefreshLogId = StubRefreshLogId,
                     DurationMs = 750
                 };
             }

@@ -1,5 +1,7 @@
 # BTR Portal — Architecture
 
+> **Table naming:** Portal snapshot tables use the `BTRPD_*` prefix (formerly `BTR_PortalDashboard*`).
+
 **Audience:** Developers, Architects, Future Agents  
 **Purpose:** Describe how BTR Portal is built and the conventions to follow when extending it.
 
@@ -128,7 +130,7 @@ Portal DALs are **wrappers**, not reimplementations:
 
 ### Materialized Snapshot Strategy
 
-Dashboard KPIs and charts are **pre-computed** by `btr.portal.worker` and stored in `BTR_PortalDashboard*` tables. Portal API read endpoints SELECT from snapshot tables — live aggregation on the HTTP request path has been removed.
+Dashboard KPIs and charts are **pre-computed** by `btr.portal.worker` and stored in `BTRPD_*` tables. Portal API read endpoints SELECT from snapshot tables — live aggregation on the HTTP request path has been removed.
 
 ```text
 Windows Task Scheduler (per-domain jobs)
@@ -139,7 +141,7 @@ RefreshDashboard{Domain}SnapshotWorker
         ↓
 Dashboard{Domain}Aggregator  (shared aggregation rules)
         ↓
-SnapshotWriter → BTR_PortalDashboard* tables
+SnapshotWriter → BTRPD_* tables
 
 Browser → GET /api/dashboard/executive       (home — composed attention view, M16)
 Browser → GET /api/dashboard/overview          (legacy Layer A KPI — retained)
@@ -151,12 +153,12 @@ Browser → GET /api/dashboard/{sales|piutang|inventory|purchasing}  (detail —
 
 | Layer | Tables | Used by |
 | ----- | ------ | ------- |
-| **A — KPI** | `BTR_PortalDashboard{Sales,Piutang,Inventory,Purchasing}Kpi` | Overview home + detail KPI rows |
+| **A — KPI** | `BTRPD_{Sales,Piutang,Inventory,Purchasing}Kpi` | Overview home + detail KPI rows |
 | **B — Dimensional** | Week trend, aging, breakdown, Top-N tables | Detail dashboards only |
-| **Customer (dedicated)** | `BTR_PortalDashboardCustomer*` (5 tables) | Customer Analytics only — not composed from domain snapshots |
-| **Salesman (dedicated)** | `BTR_PortalDashboardSalesman*` (6 tables) | Salesman Performance only — not composed from domain snapshots |
-| **Inventory Risk (dedicated)** | `BTR_PortalDashboardInventoryRisk*` (6 tables) | Slow Moving & Dead Stock only — not composed from M15 Inventory snapshot |
-| **Purchasing Management (dedicated)** | `BTR_PortalDashboardPurchasingManagement*` (3 tables) | Management attention layers on `/dashboard/purchasing` — not composed at read time |
+| **Customer (dedicated)** | `BTRPD_Customer*` (5 tables) | Customer Analytics only — not composed from domain snapshots |
+| **Salesman (dedicated)** | `BTRPD_Salesman*` (6 tables) | Salesman Performance only — not composed from domain snapshots |
+| **Inventory Risk (dedicated)** | `BTRPD_InventoryRisk*` (6 tables) | Slow Moving & Dead Stock only — not composed from M15 Inventory snapshot |
+| **Purchasing Management (dedicated)** | `BTRPD_PurchasingManagement*` (3 tables) | Management attention layers on `/dashboard/purchasing` — not composed at read time |
 
 All snapshots use `SnapshotKey = 'CURRENT'`. `GeneratedAt` on every dashboard response reflects the last successful background refresh, not request execution time.
 
@@ -175,7 +177,7 @@ All snapshots use `SnapshotKey = 'CURRENT'`. `GeneratedAt` on every dashboard re
 
 **Refresh order (`--domain All`):** Piutang → Inventory → **InventoryRisk** → Sales → Purchasing → **PurchasingManagement** → Customer → **Salesman** (last).
 
-**Operational metadata:** `BTR_PortalDashboardRefreshLog` records each refresh attempt (domain, status, duration, error, trigger source).
+**Operational metadata:** `BTRPD_RefreshLog` records each refresh attempt (domain, status, duration, error, trigger source).
 
 Reports (`/api/reports/*`) remain **live queries** — unaffected by snapshot materialization.
 
@@ -227,7 +229,7 @@ RefreshDashboardSalesmanSnapshotWorker
 
 **Why separate domain:** Per-rep target, achievement %, piutang with invoicing salesman, dormant attribution via last-invoicing salesman, and six cross-domain attention signals require source-level aggregation keyed by `SalesPersonId` — Sales Top 10 snapshot stores name-only omzet and omits piutang/target signals.
 
-**Protected modules unchanged:** `DashboardSalesFakturAggregator`, `BTR_PortalDashboardSalesTopSalesman`, `DashboardExecutiveComposer`.
+**Protected modules unchanged:** `DashboardSalesFakturAggregator`, `BTRPD_SalesTopSalesman`, `DashboardExecutiveComposer`.
 
 ### Inventory Risk Snapshot Domain (M19)
 
@@ -246,7 +248,7 @@ RefreshDashboardInventoryRiskSnapshotWorker
 
 **Item last Faktur DAL:** `IBrgLastFakturDal` / `BrgLastFakturDal` — `MAX(FakturDate)` per `BrgId` from gross non-void Faktur (mirrors `CustomerLastFakturDal` at item grain).
 
-**Protected modules unchanged:** `DashboardInventoryAggregator`, `BTR_PortalDashboardInventory*`, `GET /api/dashboard/inventory`, `DashboardExecutiveComposer` (Phase 2 executive promotion is separate).
+**Protected modules unchanged:** `DashboardInventoryAggregator`, `BTRPD_Inventory*`, `GET /api/dashboard/inventory`, `DashboardExecutiveComposer` (Phase 2 executive promotion is separate).
 
 ### Purchasing Management Architecture (M21)
 
@@ -261,7 +263,7 @@ Refresh time inputs:
         ↓
 RefreshDashboardPurchasingManagementSnapshotWorker
         ↓ DashboardPurchasingManagementAggregator
-BTR_PortalDashboardPurchasingManagement* (Kpi, Attention, TopPrincipal)
+BTRPD_PurchasingManagement* (Kpi, Attention, TopPrincipal)
         ↓
 GET /api/dashboard/purchasing
         ↓ DashboardPurchasingDal merges V1 + management snapshots
@@ -269,7 +271,7 @@ GET /api/dashboard/purchasing
 
 **Why separate domain from V1 Purchasing:** V1 traceability tables and `DashboardPurchasingInvoiceAggregator` formulas must remain unchanged. Management worker depends on Inventory/InventoryRisk snapshots and runs after V1 Purchasing in refresh order.
 
-**Protected modules unchanged:** `DashboardPurchasingInvoiceAggregator`, `BTR_PortalDashboardPurchasing*` (4 tables), `RefreshDashboardPurchasingSnapshotWorker`.
+**Protected modules unchanged:** `DashboardPurchasingInvoiceAggregator`, `BTRPD_Purchasing*` (4 tables), `RefreshDashboardPurchasingSnapshotWorker`.
 
 **Executive revision (Phase 1):** `DashboardExecutiveComposer.ComposePurchasing` — `RequiresAttention` when `QualifiedBacklogCount > 0` only. Phase 2 promotes additional M21 KPIs to executive card UI.
 
@@ -292,7 +294,7 @@ GET /api/dashboard/purchasing
 | `GET /api/dashboard/locations` | `LocationDashboardController` | Dedicated Location snapshot (`DashboardLocationAgg`) | Branch / Warehouse Performance (M22) |
 | `GET /api/dashboard/inventory-risk` | `InventoryRiskDashboardController` | Dedicated Inventory Risk snapshot (`DashboardInventoryRiskAgg`) | Slow Moving & Dead Stock (M19) |
 | `POST /api/admin/dashboard/refresh` | `AdminDashboardRefreshController` | Triggers snapshot rebuild | On-demand refresh (sync; IIS timeout risk) |
-| `GET /api/health/dashboard-snapshots` | `HealthController` | `BTR_PortalDashboardRefreshLog` | Monitoring — no auth |
+| `GET /api/health/dashboard-snapshots` | `HealthController` | `BTRPD_RefreshLog` | Monitoring — no auth |
 
 Domain detail endpoints were extended additively across M8 and M13–M15; response DTOs unchanged in shape. All dashboard data endpoints require JWT except health.
 
@@ -821,12 +823,12 @@ Rules that must be preserved when extending the portal:
 | 18 | Portal SQL config via JSON only — never registry under IIS app pool identity |
 | 19 | Executive dashboard composes existing snapshots — no new snapshot tables for M16 |
 | 20 | Customer worker reads source DALs — do not compose Customer snapshot from Sales/Piutang snapshots |
-| 21 | Do not modify `DashboardPiutangAggregator` or `BTR_PortalDashboardPiutangTopCustomer` for customer analytics |
+| 21 | Do not modify `DashboardPiutangAggregator` or `BTRPD_PiutangTopCustomer` for customer analytics |
 | 22 | Salesman worker reads source DALs — do not compose Salesman snapshot from Sales/Piutang/Customer snapshots |
-| 23 | Do not modify `DashboardSalesFakturAggregator`, `BTR_PortalDashboardSalesTopSalesman`, or `DashboardExecutiveComposer` for salesman performance |
+| 23 | Do not modify `DashboardSalesFakturAggregator`, `BTRPD_SalesTopSalesman`, or `DashboardExecutiveComposer` for salesman performance |
 | 24 | Inventory Risk worker reads source DALs — do not compose risk metrics from M15 Inventory snapshot tables |
 | 25 | Use shared `DashboardInventoryItemGroupBuilder` for M15 and M19 — prevent denominator drift |
-| 26 | Do not modify `DashboardInventoryAggregator` or `BTR_PortalDashboardInventory*` for inventory risk |
+| 26 | Do not modify `DashboardInventoryAggregator` or `BTRPD_Inventory*` for inventory risk |
 | 27 | Last Faktur classification lives in `DashboardInventoryRiskAggregator` — not Kartu Stok `MovingStok` |
 
 ### Dashboard–Report Traceability Matrix

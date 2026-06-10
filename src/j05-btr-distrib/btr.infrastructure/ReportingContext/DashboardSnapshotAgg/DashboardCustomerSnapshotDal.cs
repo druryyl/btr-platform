@@ -1,10 +1,10 @@
+using System;
 using System.Collections.Generic;
 using System.Data.SqlClient;
 using System.Linq;
 using btr.application.ReportingContext.DashboardSnapshotAgg.Contracts;
 using btr.application.ReportingContext.DashboardSnapshotAgg.Models;
 using btr.infrastructure.Helpers;
-using btr.nuna.Application;
 using btr.nuna.Domain;
 using Dapper;
 using Microsoft.Extensions.Options;
@@ -16,14 +16,10 @@ namespace btr.infrastructure.ReportingContext.DashboardSnapshotAgg
         private const string SnapshotKey = "CURRENT";
 
         private readonly DatabaseOptions _opt;
-        private readonly INunaCounterBL _counter;
 
-        public DashboardCustomerSnapshotDal(
-            IOptions<DatabaseOptions> opt,
-            INunaCounterBL counter)
+        public DashboardCustomerSnapshotDal(IOptions<DatabaseOptions> opt)
         {
             _opt = opt.Value;
-            _counter = counter;
         }
 
         public DashboardCustomerAggregateResult GetCurrent()
@@ -33,30 +29,30 @@ SELECT SnapshotKey, GeneratedAt, PeriodYear, PeriodMonth, TotalOmzet, TotalPiuta
        ActiveCustomerCount, DormantCustomerCount, OverdueCustomerCount, PlafondBreachCount,
        SuspendedWithSalesCount, AgingOver90Amount, TopOmzetCustomerPercent, TopPiutangCustomerPercent,
        LastRefreshLogId
-FROM BTR_PortalDashboardCustomerKpi
+FROM BTRPD_CustomerKpi
 WHERE SnapshotKey = @SnapshotKey";
 
             const string topOmzetSql = @"
 SELECT Rank, CustomerCode, CustomerName, OmzetAmount, PercentOfTotal
-FROM BTR_PortalDashboardCustomerTopOmzet
+FROM BTRPD_CustomerTopOmzet
 WHERE SnapshotKey = @SnapshotKey
 ORDER BY Rank";
 
             const string topPiutangSql = @"
 SELECT Rank, CustomerCode, CustomerName, OutstandingBalance, PercentOfTotal
-FROM BTR_PortalDashboardCustomerTopPiutang
+FROM BTRPD_CustomerTopPiutang
 WHERE SnapshotKey = @SnapshotKey
 ORDER BY Rank";
 
             const string attentionSql = @"
 SELECT CustomerCode, CustomerName, SignalKey, SignalLabel, ValueAmount, ValueText, WilayahName, SortOrder
-FROM BTR_PortalDashboardCustomerAttention
+FROM BTRPD_CustomerAttention
 WHERE SnapshotKey = @SnapshotKey
 ORDER BY SortOrder";
 
             const string segmentationSql = @"
 SELECT SegmentType, SegmentKey, SegmentLabel, CustomerCount, ActiveCount, DormantCount, SortOrder
-FROM BTR_PortalDashboardCustomerSegmentation
+FROM BTRPD_CustomerSegmentation
 WHERE SnapshotKey = @SnapshotKey
 ORDER BY SegmentType, SortOrder";
 
@@ -158,24 +154,24 @@ ORDER BY SegmentType, SortOrder";
             string refreshLogId)
         {
                 conn.Execute(
-                    "DELETE FROM BTR_PortalDashboardCustomerTopOmzet WHERE SnapshotKey = @SnapshotKey",
+                    "DELETE FROM BTRPD_CustomerTopOmzet WHERE SnapshotKey = @SnapshotKey",
                     new { SnapshotKey },
                     transaction);
                 conn.Execute(
-                    "DELETE FROM BTR_PortalDashboardCustomerTopPiutang WHERE SnapshotKey = @SnapshotKey",
+                    "DELETE FROM BTRPD_CustomerTopPiutang WHERE SnapshotKey = @SnapshotKey",
                     new { SnapshotKey },
                     transaction);
                 conn.Execute(
-                    "DELETE FROM BTR_PortalDashboardCustomerAttention WHERE SnapshotKey = @SnapshotKey",
+                    "DELETE FROM BTRPD_CustomerAttention WHERE SnapshotKey = @SnapshotKey",
                     new { SnapshotKey },
                     transaction);
                 conn.Execute(
-                    "DELETE FROM BTR_PortalDashboardCustomerSegmentation WHERE SnapshotKey = @SnapshotKey",
+                    "DELETE FROM BTRPD_CustomerSegmentation WHERE SnapshotKey = @SnapshotKey",
                     new { SnapshotKey },
                     transaction);
 
                 const string mergeKpiSql = @"
-MERGE BTR_PortalDashboardCustomerKpi AS target
+MERGE BTRPD_CustomerKpi AS target
 USING (SELECT @SnapshotKey AS SnapshotKey) AS source
 ON target.SnapshotKey = source.SnapshotKey
 WHEN MATCHED THEN
@@ -226,7 +222,7 @@ WHEN NOT MATCHED THEN
                 }, transaction);
 
                 const string insertTopOmzetSql = @"
-INSERT INTO BTR_PortalDashboardCustomerTopOmzet (
+INSERT INTO BTRPD_CustomerTopOmzet (
     CustomerTopOmzetId, SnapshotKey, Rank, CustomerCode, CustomerName, OmzetAmount, PercentOfTotal)
 VALUES (
     @CustomerTopOmzetId, @SnapshotKey, @Rank, @CustomerCode, @CustomerName, @OmzetAmount, @PercentOfTotal)";
@@ -235,7 +231,7 @@ VALUES (
                 {
                     conn.Execute(insertTopOmzetSql, new
                     {
-                        CustomerTopOmzetId = _counter.Generate("PDC", IDFormatEnum.PFnnn),
+                        CustomerTopOmzetId = Ulid.NewUlid().ToString(),
                         SnapshotKey,
                         row.Rank,
                         CustomerCode = row.CustomerCode ?? string.Empty,
@@ -246,7 +242,7 @@ VALUES (
                 }
 
                 const string insertTopPiutangSql = @"
-INSERT INTO BTR_PortalDashboardCustomerTopPiutang (
+INSERT INTO BTRPD_CustomerTopPiutang (
     CustomerTopPiutangId, SnapshotKey, Rank, CustomerCode, CustomerName, OutstandingBalance, PercentOfTotal)
 VALUES (
     @CustomerTopPiutangId, @SnapshotKey, @Rank, @CustomerCode, @CustomerName, @OutstandingBalance, @PercentOfTotal)";
@@ -255,7 +251,7 @@ VALUES (
                 {
                     conn.Execute(insertTopPiutangSql, new
                     {
-                        CustomerTopPiutangId = _counter.Generate("PDC", IDFormatEnum.PFnnn),
+                        CustomerTopPiutangId = Ulid.NewUlid().ToString(),
                         SnapshotKey,
                         row.Rank,
                         CustomerCode = row.CustomerCode ?? string.Empty,
@@ -266,7 +262,7 @@ VALUES (
                 }
 
                 const string insertAttentionSql = @"
-INSERT INTO BTR_PortalDashboardCustomerAttention (
+INSERT INTO BTRPD_CustomerAttention (
     CustomerAttentionId, SnapshotKey, CustomerCode, CustomerName, SignalKey, SignalLabel,
     ValueAmount, ValueText, WilayahName, SortOrder)
 VALUES (
@@ -277,7 +273,7 @@ VALUES (
                 {
                     conn.Execute(insertAttentionSql, new
                     {
-                        CustomerAttentionId = _counter.Generate("PDC", IDFormatEnum.PFnnn),
+                        CustomerAttentionId = Ulid.NewUlid().ToString(),
                         SnapshotKey,
                         CustomerCode = row.CustomerCode ?? string.Empty,
                         CustomerName = row.CustomerName ?? string.Empty,
@@ -291,7 +287,7 @@ VALUES (
                 }
 
                 const string insertSegmentationSql = @"
-INSERT INTO BTR_PortalDashboardCustomerSegmentation (
+INSERT INTO BTRPD_CustomerSegmentation (
     CustomerSegmentationId, SnapshotKey, SegmentType, SegmentKey, SegmentLabel,
     CustomerCount, ActiveCount, DormantCount, SortOrder)
 VALUES (
@@ -302,7 +298,7 @@ VALUES (
                 {
                     conn.Execute(insertSegmentationSql, new
                     {
-                        CustomerSegmentationId = _counter.Generate("PDC", IDFormatEnum.PFnnn),
+                        CustomerSegmentationId = Ulid.NewUlid().ToString(),
                         SnapshotKey,
                         row.SegmentType,
                         SegmentKey = row.SegmentKey ?? string.Empty,

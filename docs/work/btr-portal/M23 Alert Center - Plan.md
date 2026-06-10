@@ -237,7 +237,7 @@ Do **not** read `AttentionList` from M19 snapshot for M23 feed.
 
 | Decision | Value |
 | --- | --- |
-| Snapshot tables | **None new** — read existing `BTR_PortalDashboard*Attention` and KPI tables |
+| Snapshot tables | **None new** — read existing `BTRPD_*Attention` and KPI tables |
 | Refresh workers | **None new** — M23 is read-time only |
 | Composition | `DashboardAlertCenterComposer` at API read — mirrors executive pattern |
 | Read API | `GET /api/dashboard/alerts` |
@@ -252,14 +252,14 @@ Do **not** read `AttentionList` from M19 snapshot for M23 feed.
 
 ```text
 Existing snapshot tables (unchanged producers)
-  BTR_PortalDashboardCustomerAttention      (M17)
-  BTR_PortalDashboardSalesmanAttention      (M18)
-  BTR_PortalDashboardInventoryRisk*         (M19 — KPI only for M23)
-  BTR_PortalDashboardCollectionAttention    (M20)
-  BTR_PortalDashboardPurchasingManagementAttention (M21)
-  BTR_PortalDashboardLocationAttention      (M22)
-  BTR_PortalDashboardSalesKpi / PiutangKpi / … (M11–M16 headlines)
-  BTR_PortalDashboardRefreshLog             (platform health)
+  BTRPD_CustomerAttention      (M17)
+  BTRPD_SalesmanAttention      (M18)
+  BTRPD_InventoryRisk*         (M19 — KPI only for M23)
+  BTRPD_CollectionAttention    (M20)
+  BTRPD_PurchasingManagementAttention (M21)
+  BTRPD_LocationAttention      (M22)
+  BTRPD_SalesKpi / PiutangKpi / … (M11–M16 headlines)
+  BTRPD_RefreshLog             (platform health)
     ↓
 Existing snapshot DALs (read only — no writes)
     ↓
@@ -347,7 +347,7 @@ Parallel unchanged paths:
 | Module | Reason |
 | --- | --- |
 | All M17–M22 snapshot workers and aggregators | M23 consumes output only (Q30) |
-| All `BTR_PortalDashboard*` table DDL | No schema changes |
+| All `BTRPD_*` table DDL | No schema changes |
 | M16 executive API response | No layout/composer changes (Q16) — optional internal health extract only |
 | Domain dashboard views and APIs | Unchanged |
 | BTR Desktop | No portal Desktop links (Q21) |

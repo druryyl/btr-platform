@@ -12,7 +12,7 @@
 | --- | --- |
 | Update `btr-portal-operational.md` | Done — Purchasing dashboard section, menu/routes, workflow, admin Task Scheduler |
 | Update `btr-portal-architecture.md` | Done — endpoint, routing, aggregation, traceability |
-| Deploy SQL to target database | Done — 4 `BTR_PortalDashboardPurchasing*` tables + ParamNo seed on `JUDE7/btr` |
+| Deploy SQL to target database | Done — 4 `BTRPD_Purchasing*` tables + ParamNo seed on `JUDE7/btr` |
 | Manual worker refresh | Done — `btr.portal.worker.exe --domain Purchasing --triggered-by Manual` → exit 0 |
 | Health endpoint Purchasing Success | Done — after fix to `GetLatestPerDomain` SQL (see below) |
 | Task Scheduler (30 min) | Done — `BTR-Portal-Dashboard-Purchasing` registered on dev machine |
@@ -30,10 +30,10 @@
 **SQL tables (JUDE7):**
 
 ```text
-BTR_PortalDashboardPurchasingKpi
-BTR_PortalDashboardPurchasingPostingStatus
-BTR_PortalDashboardPurchasingTopPrincipal
-BTR_PortalDashboardPurchasingWeekTrend
+BTRPD_PurchasingKpi
+BTRPD_PurchasingPostingStatus
+BTRPD_PurchasingTopPrincipal
+BTRPD_PurchasingWeekTrend
 ```
 
 **Refresh log:**

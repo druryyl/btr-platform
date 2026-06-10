@@ -1,5 +1,7 @@
 # Materialized Dashboard Data — Operational Guide
 
+> **Table naming:** Portal snapshot tables use the `BTRPD_*` prefix (formerly `BTR_PortalDashboard*`).
+
 **Audience:** End Users, Administrators, Support Team  
 **Purpose:** How to use materialized dashboards day to day and how to operate the snapshot worker.
 
@@ -64,7 +66,7 @@ Sales analytics show **invoiced sales (Faktur)** for the current month — not p
 
 ### Prerequisites (New Deploy)
 
-1. Deploy `btr.sql` schema (all `BTR_PortalDashboard*` tables + `IX_BTR_Piutang_OpenBalance`).
+1. Deploy `btr.sql` schema (all `BTRPD_*` tables + `IX_BTR_Piutang_OpenBalance`).
 2. Run `DataSeeds/BTR_ParamNo_PortalDashboard.sql` if ID prefixes missing.
 3. Deploy `btr.portal.api`, `btr.portal.web`, and `btr.portal.worker`.
 4. Configure `appsettings.{MACHINE_NAME}.json` in **both** API and worker folders (same `Database` settings).
@@ -81,7 +83,7 @@ Verify success:
 
 ```sql
 SELECT Domain, Status, CompletedAt, DurationMs
-FROM BTR_PortalDashboardRefreshLog
+FROM BTRPD_RefreshLog
 ORDER BY CompletedAt DESC;
 ```
 
@@ -90,21 +92,21 @@ All domains (Piutang, Inventory, InventoryRisk, Sales, Purchasing, PurchasingMan
 Confirm KPI rows exist:
 
 ```sql
-SELECT 'Piutang' AS Domain, GeneratedAt FROM BTR_PortalDashboardPiutangKpi WHERE SnapshotKey = 'CURRENT'
+SELECT 'Piutang' AS Domain, GeneratedAt FROM BTRPD_PiutangKpi WHERE SnapshotKey = 'CURRENT'
 UNION ALL
-SELECT 'Inventory', GeneratedAt FROM BTR_PortalDashboardInventoryKpi WHERE SnapshotKey = 'CURRENT'
+SELECT 'Inventory', GeneratedAt FROM BTRPD_InventoryKpi WHERE SnapshotKey = 'CURRENT'
 UNION ALL
-SELECT 'Sales', GeneratedAt FROM BTR_PortalDashboardSalesKpi WHERE SnapshotKey = 'CURRENT'
+SELECT 'Sales', GeneratedAt FROM BTRPD_SalesKpi WHERE SnapshotKey = 'CURRENT'
 UNION ALL
-SELECT 'Purchasing', GeneratedAt FROM BTR_PortalDashboardPurchasingKpi WHERE SnapshotKey = 'CURRENT'
+SELECT 'Purchasing', GeneratedAt FROM BTRPD_PurchasingKpi WHERE SnapshotKey = 'CURRENT'
 UNION ALL
-SELECT 'Customer', GeneratedAt FROM BTR_PortalDashboardCustomerKpi WHERE SnapshotKey = 'CURRENT'
+SELECT 'Customer', GeneratedAt FROM BTRPD_CustomerKpi WHERE SnapshotKey = 'CURRENT'
 UNION ALL
-SELECT 'Salesman', GeneratedAt FROM BTR_PortalDashboardSalesmanKpi WHERE SnapshotKey = 'CURRENT'
+SELECT 'Salesman', GeneratedAt FROM BTRPD_SalesmanKpi WHERE SnapshotKey = 'CURRENT'
 UNION ALL
-SELECT 'InventoryRisk', GeneratedAt FROM BTR_PortalDashboardInventoryRiskKpi WHERE SnapshotKey = 'CURRENT'
+SELECT 'InventoryRisk', GeneratedAt FROM BTRPD_InventoryRiskKpi WHERE SnapshotKey = 'CURRENT'
 UNION ALL
-SELECT 'PurchasingManagement', GeneratedAt FROM BTR_PortalDashboardPurchasingManagementKpi WHERE SnapshotKey = 'CURRENT';
+SELECT 'PurchasingManagement', GeneratedAt FROM BTRPD_PurchasingManagementKpi WHERE SnapshotKey = 'CURRENT';
 ```
 
 ### Scheduled Tasks
@@ -182,7 +184,7 @@ Domain values are case-insensitive. Logged as `TriggeredBy = Manual` in refresh 
 | ----- | --- |
 | Snapshot health (API) | `GET /api/health/dashboard-snapshots` |
 | Overall status | `unknown` (no history), `ok`, `refreshing`, or `degraded` |
-| Last refresh (SQL) | `SELECT TOP 1 * FROM BTR_PortalDashboardRefreshLog WHERE Domain = 'Piutang' ORDER BY CompletedAt DESC` |
+| Last refresh (SQL) | `SELECT TOP 1 * FROM BTRPD_RefreshLog WHERE Domain = 'Piutang' ORDER BY CompletedAt DESC` |
 | Worker log | `{worker-folder}/logs/btr-portal-worker-{date}.log` |
 | Task Scheduler | History tab on each task |
 | User-visible staleness | Dashboard home cards — per-domain generated-at |
@@ -210,7 +212,7 @@ Returns latest refresh per domain plus configured interval minutes. No authentic
 ### Rollback / Recovery
 
 1. Re-run manual refresh: `btr.portal.worker.exe --domain All --triggered-by Manual`
-2. Investigate `BTR_PortalDashboardRefreshLog.ErrorMessage`
+2. Investigate `BTRPD_RefreshLog.ErrorMessage`
 3. Fix Task Scheduler if jobs stopped
 4. Detail pages return 503 until snapshots repopulated — no live fallback in production
 

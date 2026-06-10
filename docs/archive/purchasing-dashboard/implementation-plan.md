@@ -52,7 +52,7 @@ DashboardPurchasingInvoiceAggregator
     ↓ (IInvoiceViewDal.ListData(current month))
 DashboardPurchasingSnapshotDal.ReplaceCurrent()
     ↓
-BTR_PortalDashboardPurchasing* tables
+BTRPD_Purchasing* tables
 
 Browser → GET /api/dashboard/purchasing        (detail — Layer A + B)
 Browser → GET /api/dashboard/overview            (home — Layer A only, 4 domains)
@@ -61,7 +61,7 @@ GetDashboardPurchasingHandler / GetDashboardOverviewHandler
     ↓ IDashboardPurchasingDal / IDashboardOverviewDal
 Snapshot read DALs
     ↓
-BTR_PortalDashboardPurchasing* tables
+BTRPD_Purchasing* tables
 
 Purchasing Report (unchanged — live query)
     ↓
@@ -85,7 +85,7 @@ PurchasingReportDal → IInvoiceViewDal.ListData(same period)
 | Data source | `IInvoiceViewDal.ListData(periode)` | Same as Purchasing Report; void/posting rules already enforced in `InvoiceViewDal` SQL |
 | Aggregation location | `DashboardPurchasingInvoiceAggregator` in `DashboardSnapshotAgg/Services` | Consistent with Sales/Piutang/Inventory; shared by refresh worker and verification tests |
 | Week bucketing | Reuse `SalesOmzetChartWeekGrouper` | Calendar-week buckets within current month already proven for Sales weekly trend |
-| Posting breakdown storage | Dedicated `BTR_PortalDashboardPurchasingPostingStatus` table | Mirrors `BTR_PortalDashboardPiutangAging` bucket pattern |
+| Posting breakdown storage | Dedicated `BTRPD_PurchasingPostingStatus` table | Mirrors `BTRPD_PiutangAging` bucket pattern |
 | Top 10 dimension key | Group by trimmed `SupplierName`; blank → `"Unknown"` | Product decision A6; Inventory precedent |
 | Pending posting KPI | Count of invoices where `PostingStok = 'BELUM'` | Dashboard-only KPI; not in report footer |
 | Overview availability flag | Extend `HasUnavailableDomain` to include Purchasing KPI null | Keeps existing home-page warning behavior |
@@ -135,11 +135,11 @@ PurchasingReportDal → IInvoiceViewDal.ListData(same period)
 
 ## 4. Database Design
 
-Prefix: `BTR_PortalDashboard` — portal-owned read-only analytics artifacts.
+Prefix: `BTRPD_` — portal-owned read-only analytics artifacts.
 
 Register all scripts in `btr.sql/btr.sql.sqlproj` under `Tables/ReportingContext/`.
 
-### 4.1 Layer A — `BTR_PortalDashboardPurchasingKpi`
+### 4.1 Layer A — `BTRPD_PurchasingKpi`
 
 One active row per domain (`SnapshotKey = 'CURRENT'`).
 
@@ -154,9 +154,9 @@ One active row per domain (`SnapshotKey = 'CURRENT'`).
 | `PendingPostingInvoiceCount` | `INT` | Count where PostingStok = `'BELUM'` |
 | `LastRefreshLogId` | `VARCHAR(13)` | FK to refresh log |
 
-Follow default-constraint pattern from `BTR_PortalDashboardSalesKpi.sql`.
+Follow default-constraint pattern from `BTRPD_SalesKpi.sql`.
 
-### 4.2 Layer B — `BTR_PortalDashboardPurchasingWeekTrend`
+### 4.2 Layer B — `BTRPD_PurchasingWeekTrend`
 
 | Column | Type | Purpose |
 | --- | --- | --- |
@@ -167,11 +167,11 @@ Follow default-constraint pattern from `BTR_PortalDashboardSalesKpi.sql`.
 | `WeekLabel` | `VARCHAR(30)` | Display label |
 | `PurchaseAmount` | `DECIMAL(18,2)` | Sum(GrandTotal) for week |
 
-Index: `IX_BTR_PortalDashboardPurchasingWeekTrend_SnapshotKey_WeekStart`.
+Index: `IX_BTRPD_PurchasingWeekTrend_SnapshotKey_WeekStart`.
 
-### 4.3 Layer B — `BTR_PortalDashboardPurchasingPostingStatus`
+### 4.3 Layer B — `BTRPD_PurchasingPostingStatus`
 
-Mirror `BTR_PortalDashboardPiutangAging` structure.
+Mirror `BTRPD_PiutangAging` structure.
 
 | Column | Type | Purpose |
 | --- | --- | --- |
@@ -186,7 +186,7 @@ Unique: `(SnapshotKey, StatusKey)`.
 
 Always persist **both** buckets even when amount is zero (consistent pie chart rendering).
 
-### 4.4 Layer B — `BTR_PortalDashboardPurchasingTopPrincipal`
+### 4.4 Layer B — `BTRPD_PurchasingTopPrincipal`
 
 | Column | Type | Purpose |
 | --- | --- | --- |
@@ -196,11 +196,11 @@ Always persist **both** buckets even when amount is zero (consistent pie chart r
 | `PrincipalName` | `VARCHAR(100)` | Trimmed supplier name or `"Unknown"` |
 | `PurchaseAmount` | `DECIMAL(18,2)` | Sum(GrandTotal) for principal |
 
-Index: `IX_BTR_PortalDashboardPurchasingTopPrincipal_SnapshotKey_Rank`.
+Index: `IX_BTRPD_PurchasingTopPrincipal_SnapshotKey_Rank`.
 
 ### 4.5 Refresh log domain value
 
-`BTR_PortalDashboardRefreshLog.Domain` accepts new value **`Purchasing`**. No schema change required (column is `VARCHAR(20)`).
+`BTRPD_RefreshLog.Domain` accepts new value **`Purchasing`**. No schema change required (column is `VARCHAR(20)`).
 
 ---
 
@@ -319,7 +319,7 @@ Optional **`DashboardPurchasingLiveDal`** (infrastructure, test-only helper) for
 | `RefreshAllDashboardSnapshotsWorker` | Inject and run Purchasing after Sales |
 | `RefreshDashboardSnapshotsCommand` handler | Add `case "Purchasing"`; update validation message |
 | `Program.cs` (worker) | Add `Purchasing` to `ValidDomains` and switch |
-| `DashboardOverviewDal.GetOverview()` | Query `BTR_PortalDashboardPurchasingKpi`; map `DashboardOverviewPurchasingSection` |
+| `DashboardOverviewDal.GetOverview()` | Query `BTRPD_PurchasingKpi`; map `DashboardOverviewPurchasingSection` |
 | `GetDashboardOverviewQuery.cs` | Add `Purchasing` section; include in `HasUnavailableDomain` |
 | `DashboardSnapshotOptions` | `PurchasingIntervalMinutes = 30` |
 | `HealthController.BuildDomainStatuses` | Add `"Purchasing"` domain; `GetIntervalMinutes` case |

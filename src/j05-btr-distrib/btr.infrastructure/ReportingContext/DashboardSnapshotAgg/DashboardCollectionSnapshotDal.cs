@@ -1,10 +1,10 @@
+using System;
 using System.Collections.Generic;
 using System.Data.SqlClient;
 using System.Linq;
 using btr.application.ReportingContext.DashboardSnapshotAgg.Contracts;
 using btr.application.ReportingContext.DashboardSnapshotAgg.Models;
 using btr.infrastructure.Helpers;
-using btr.nuna.Application;
 using btr.nuna.Domain;
 using Dapper;
 using Microsoft.Extensions.Options;
@@ -16,14 +16,10 @@ namespace btr.infrastructure.ReportingContext.DashboardSnapshotAgg
         private const string SnapshotKey = "CURRENT";
 
         private readonly DatabaseOptions _opt;
-        private readonly INunaCounterBL _counter;
 
-        public DashboardCollectionSnapshotDal(
-            IOptions<DatabaseOptions> opt,
-            INunaCounterBL counter)
+        public DashboardCollectionSnapshotDal(IOptions<DatabaseOptions> opt)
         {
             _opt = opt.Value;
-            _counter = counter;
         }
 
         public DashboardCollectionAggregateResult GetCurrent()
@@ -34,37 +30,37 @@ SELECT SnapshotKey, GeneratedAt, PeriodYear, PeriodMonth, OverdueExposure, Aging
        RecoveryVsBillingPercent, PaymentMixCashAmount, PaymentMixGiroAmount, PaymentMixAdjustmentAmount,
        PaymentMixCashPercent, PaymentMixGiroPercent, PaymentMixAdjustmentPercent,
        LegacyDebtCount, ChronicOverdueCount, WilayahHotspotCount, LowRecoveryVsBillingCount, LastRefreshLogId
-FROM BTR_PortalDashboardCollectionKpi
+FROM BTRPD_CollectionKpi
 WHERE SnapshotKey = @SnapshotKey";
 
             const string agingSql = @"
 SELECT BucketKey, BucketLabel, Amount, SortOrder
-FROM BTR_PortalDashboardCollectionAging
+FROM BTRPD_CollectionAging
 WHERE SnapshotKey = @SnapshotKey
 ORDER BY SortOrder";
 
             const string attentionSql = @"
 SELECT EntityType, EntityId, EntityCode, EntityName, SignalKey, SignalLabel,
        ValueAmount, ValueText, WilayahName, ReportRoute, SortOrder
-FROM BTR_PortalDashboardCollectionAttention
+FROM BTRPD_CollectionAttention
 WHERE SnapshotKey = @SnapshotKey
 ORDER BY SortOrder";
 
             const string topCustomerSql = @"
 SELECT Rank, CustomerCode, CustomerName, OverdueBalance, PercentOfTotal
-FROM BTR_PortalDashboardCollectionTopOverdueCustomer
+FROM BTRPD_CollectionTopOverdueCustomer
 WHERE SnapshotKey = @SnapshotKey
 ORDER BY Rank";
 
             const string topSalesmanSql = @"
 SELECT Rank, SalesPersonId, SalesPersonCode, SalesPersonName, OverdueBalance, PercentOfTotal
-FROM BTR_PortalDashboardCollectionTopOverdueSalesman
+FROM BTRPD_CollectionTopOverdueSalesman
 WHERE SnapshotKey = @SnapshotKey
 ORDER BY Rank";
 
             const string topWilayahSql = @"
 SELECT Rank, WilayahId, WilayahName, OverdueBalance, PercentOfTotal
-FROM BTR_PortalDashboardCollectionTopOverdueWilayah
+FROM BTRPD_CollectionTopOverdueWilayah
 WHERE SnapshotKey = @SnapshotKey
 ORDER BY Rank";
 
@@ -182,28 +178,28 @@ ORDER BY Rank";
             string refreshLogId)
         {
             conn.Execute(
-                "DELETE FROM BTR_PortalDashboardCollectionAging WHERE SnapshotKey = @SnapshotKey",
+                "DELETE FROM BTRPD_CollectionAging WHERE SnapshotKey = @SnapshotKey",
                 new { SnapshotKey },
                 transaction);
             conn.Execute(
-                "DELETE FROM BTR_PortalDashboardCollectionAttention WHERE SnapshotKey = @SnapshotKey",
+                "DELETE FROM BTRPD_CollectionAttention WHERE SnapshotKey = @SnapshotKey",
                 new { SnapshotKey },
                 transaction);
             conn.Execute(
-                "DELETE FROM BTR_PortalDashboardCollectionTopOverdueCustomer WHERE SnapshotKey = @SnapshotKey",
+                "DELETE FROM BTRPD_CollectionTopOverdueCustomer WHERE SnapshotKey = @SnapshotKey",
                 new { SnapshotKey },
                 transaction);
             conn.Execute(
-                "DELETE FROM BTR_PortalDashboardCollectionTopOverdueSalesman WHERE SnapshotKey = @SnapshotKey",
+                "DELETE FROM BTRPD_CollectionTopOverdueSalesman WHERE SnapshotKey = @SnapshotKey",
                 new { SnapshotKey },
                 transaction);
             conn.Execute(
-                "DELETE FROM BTR_PortalDashboardCollectionTopOverdueWilayah WHERE SnapshotKey = @SnapshotKey",
+                "DELETE FROM BTRPD_CollectionTopOverdueWilayah WHERE SnapshotKey = @SnapshotKey",
                 new { SnapshotKey },
                 transaction);
 
             const string mergeKpiSql = @"
-MERGE BTR_PortalDashboardCollectionKpi AS target
+MERGE BTRPD_CollectionKpi AS target
 USING (SELECT @SnapshotKey AS SnapshotKey) AS source
 ON target.SnapshotKey = source.SnapshotKey
 WHEN MATCHED THEN
@@ -270,7 +266,7 @@ WHEN NOT MATCHED THEN
             }, transaction);
 
             const string insertAgingSql = @"
-INSERT INTO BTR_PortalDashboardCollectionAging (
+INSERT INTO BTRPD_CollectionAging (
     CollectionAgingId, SnapshotKey, BucketKey, BucketLabel, Amount, SortOrder)
 VALUES (
     @CollectionAgingId, @SnapshotKey, @BucketKey, @BucketLabel, @Amount, @SortOrder)";
@@ -279,7 +275,7 @@ VALUES (
             {
                 conn.Execute(insertAgingSql, new
                 {
-                    CollectionAgingId = _counter.Generate("PDC", IDFormatEnum.PFnnn),
+                    CollectionAgingId = Ulid.NewUlid().ToString(),
                     SnapshotKey,
                     row.BucketKey,
                     BucketLabel = row.BucketLabel ?? string.Empty,
@@ -289,7 +285,7 @@ VALUES (
             }
 
             const string insertAttentionSql = @"
-INSERT INTO BTR_PortalDashboardCollectionAttention (
+INSERT INTO BTRPD_CollectionAttention (
     CollectionAttentionId, SnapshotKey, EntityType, EntityId, EntityCode, EntityName,
     SignalKey, SignalLabel, ValueAmount, ValueText, WilayahName, ReportRoute, SortOrder)
 VALUES (
@@ -300,7 +296,7 @@ VALUES (
             {
                 conn.Execute(insertAttentionSql, new
                 {
-                    CollectionAttentionId = _counter.Generate("PDC", IDFormatEnum.PFnnn),
+                    CollectionAttentionId = Ulid.NewUlid().ToString(),
                     SnapshotKey,
                     EntityType = row.EntityType ?? string.Empty,
                     EntityId = row.EntityId ?? string.Empty,
@@ -317,7 +313,7 @@ VALUES (
             }
 
             const string insertTopCustomerSql = @"
-INSERT INTO BTR_PortalDashboardCollectionTopOverdueCustomer (
+INSERT INTO BTRPD_CollectionTopOverdueCustomer (
     CollectionTopOverdueCustomerId, SnapshotKey, Rank, CustomerCode, CustomerName, OverdueBalance, PercentOfTotal)
 VALUES (
     @CollectionTopOverdueCustomerId, @SnapshotKey, @Rank, @CustomerCode, @CustomerName, @OverdueBalance, @PercentOfTotal)";
@@ -326,7 +322,7 @@ VALUES (
             {
                 conn.Execute(insertTopCustomerSql, new
                 {
-                    CollectionTopOverdueCustomerId = _counter.Generate("PDC", IDFormatEnum.PFnnn),
+                    CollectionTopOverdueCustomerId = Ulid.NewUlid().ToString(),
                     SnapshotKey,
                     row.Rank,
                     CustomerCode = row.CustomerCode ?? string.Empty,
@@ -337,7 +333,7 @@ VALUES (
             }
 
             const string insertTopSalesmanSql = @"
-INSERT INTO BTR_PortalDashboardCollectionTopOverdueSalesman (
+INSERT INTO BTRPD_CollectionTopOverdueSalesman (
     CollectionTopOverdueSalesmanId, SnapshotKey, Rank, SalesPersonId, SalesPersonCode, SalesPersonName, OverdueBalance, PercentOfTotal)
 VALUES (
     @CollectionTopOverdueSalesmanId, @SnapshotKey, @Rank, @SalesPersonId, @SalesPersonCode, @SalesPersonName, @OverdueBalance, @PercentOfTotal)";
@@ -346,7 +342,7 @@ VALUES (
             {
                 conn.Execute(insertTopSalesmanSql, new
                 {
-                    CollectionTopOverdueSalesmanId = _counter.Generate("PDC", IDFormatEnum.PFnnn),
+                    CollectionTopOverdueSalesmanId = Ulid.NewUlid().ToString(),
                     SnapshotKey,
                     row.Rank,
                     SalesPersonId = row.SalesPersonId ?? string.Empty,
@@ -358,7 +354,7 @@ VALUES (
             }
 
             const string insertTopWilayahSql = @"
-INSERT INTO BTR_PortalDashboardCollectionTopOverdueWilayah (
+INSERT INTO BTRPD_CollectionTopOverdueWilayah (
     CollectionTopOverdueWilayahId, SnapshotKey, Rank, WilayahId, WilayahName, OverdueBalance, PercentOfTotal)
 VALUES (
     @CollectionTopOverdueWilayahId, @SnapshotKey, @Rank, @WilayahId, @WilayahName, @OverdueBalance, @PercentOfTotal)";
@@ -367,7 +363,7 @@ VALUES (
             {
                 conn.Execute(insertTopWilayahSql, new
                 {
-                    CollectionTopOverdueWilayahId = _counter.Generate("PDC", IDFormatEnum.PFnnn),
+                    CollectionTopOverdueWilayahId = Ulid.NewUlid().ToString(),
                     SnapshotKey,
                     row.Rank,
                     WilayahId = row.WilayahId ?? string.Empty,

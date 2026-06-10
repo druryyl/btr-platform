@@ -106,7 +106,7 @@ Source: analysis Section 10. Do not re-decide these rules during implementation.
 ```text
 Existing snapshot workers (unchanged)
     ↓
-BTR_PortalDashboard* tables (unchanged)
+BTRPD_* tables (unchanged)
     ↓
 Browser → GET /api/dashboard/executive          (NEW — composition read)
     ↓ MediatR
@@ -174,7 +174,7 @@ Reports → GET /api/reports/*                    (unchanged)
 
 | Module | Reason |
 | --- | --- |
-| Snapshot workers, aggregators, all `BTR_PortalDashboard*` tables | Read-only composition |
+| Snapshot workers, aggregators, all `BTRPD_*` tables | Read-only composition |
 | Domain dashboard APIs and views | Detail layer unchanged |
 | Report APIs, DALs, views | Unchanged |
 | `DashboardOverviewDal`, `GET /api/dashboard/overview` | Retained; home no longer calls it |
@@ -570,7 +570,7 @@ M16 is complete when:
 ## 13. Handoff Notes for Implementer
 
 - **Section 2 is authoritative** — do not add generic severity, weekly trends, report links on executive, or mixed risk tables.
-- **Do not modify** snapshot workers, aggregators, or `BTR_PortalDashboard*` tables.
+- **Do not modify** snapshot workers, aggregators, or `BTRPD_*` tables.
 - **Do not remove** `GET /api/dashboard/overview` — home stops calling it.
 - Reuse piutang aging bucket constant from `DashboardPiutangAggregator` — verify exact `BucketKey` in code before matching.
 - Server-side Top 5 truncation keeps UI and API consistent.

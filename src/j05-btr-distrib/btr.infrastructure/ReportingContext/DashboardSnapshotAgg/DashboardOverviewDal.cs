@@ -22,22 +22,22 @@ namespace btr.infrastructure.ReportingContext.DashboardSnapshotAgg
         {
             const string salesSql = @"
 SELECT TotalOmzet, TotalFaktur, TotalCustomer, GeneratedAt
-FROM BTR_PortalDashboardSalesKpi
+FROM BTRPD_SalesKpi
 WHERE SnapshotKey = @SnapshotKey";
 
             const string piutangSql = @"
 SELECT TotalPiutang, TotalCustomer, GeneratedAt
-FROM BTR_PortalDashboardPiutangKpi
+FROM BTRPD_PiutangKpi
 WHERE SnapshotKey = @SnapshotKey";
 
             const string inventorySql = @"
 SELECT TotalInventoryValue, TotalItem, GeneratedAt
-FROM BTR_PortalDashboardInventoryKpi
+FROM BTRPD_InventoryKpi
 WHERE SnapshotKey = @SnapshotKey";
 
             const string purchasingSql = @"
 SELECT GrandTotalPurchase, TotalInvoice, GeneratedAt
-FROM BTR_PortalDashboardPurchasingKpi
+FROM BTRPD_PurchasingKpi
 WHERE SnapshotKey = @SnapshotKey";
 
             using (var conn = new SqlConnection(ConnStringHelper.Get(_opt)))

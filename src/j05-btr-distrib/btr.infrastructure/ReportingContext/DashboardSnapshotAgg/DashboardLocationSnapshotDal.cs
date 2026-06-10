@@ -5,7 +5,6 @@ using System.Linq;
 using btr.application.ReportingContext.DashboardSnapshotAgg.Contracts;
 using btr.application.ReportingContext.DashboardSnapshotAgg.Models;
 using btr.infrastructure.Helpers;
-using btr.nuna.Application;
 using btr.nuna.Domain;
 using Dapper;
 using Microsoft.Extensions.Options;
@@ -17,14 +16,10 @@ namespace btr.infrastructure.ReportingContext.DashboardSnapshotAgg
         private const string SnapshotKey = "CURRENT";
 
         private readonly DatabaseOptions _opt;
-        private readonly INunaCounterBL _counter;
 
-        public DashboardLocationSnapshotDal(
-            IOptions<DatabaseOptions> opt,
-            INunaCounterBL counter)
+        public DashboardLocationSnapshotDal(IOptions<DatabaseOptions> opt)
         {
             _opt = opt.Value;
-            _counter = counter;
         }
 
         public DashboardLocationAggregateResult GetCurrent()
@@ -35,43 +30,43 @@ SELECT SnapshotKey, GeneratedAt, PeriodYear, PeriodMonth,
        Top1WarehouseSalesPercent, Top1WilayahSalesPercent,
        InactiveWarehouseWithStockCount, WarehouseNoSalesWithInventoryCount,
        TotalInventoryValue, TotalAtRiskValue, TotalOmzet, TotalPurchase, LastRefreshLogId
-FROM BTR_PortalDashboardLocationKpi
+FROM BTRPD_LocationKpi
 WHERE SnapshotKey = @SnapshotKey";
 
             const string topInventorySql = @"
 SELECT Rank, WarehouseId, WarehouseName, InventoryValue, PercentOfTotal, ReportRoute
-FROM BTR_PortalDashboardLocationTopWarehouseInventory
+FROM BTRPD_LocationTopWarehouseInventory
 WHERE SnapshotKey = @SnapshotKey
 ORDER BY Rank";
 
             const string topAtRiskSql = @"
 SELECT Rank, WarehouseId, WarehouseName, AtRiskValue, PercentOfTotal, ReportRoute
-FROM BTR_PortalDashboardLocationTopWarehouseAtRisk
+FROM BTRPD_LocationTopWarehouseAtRisk
 WHERE SnapshotKey = @SnapshotKey
 ORDER BY Rank";
 
             const string topSalesSql = @"
 SELECT Rank, WarehouseId, WarehouseName, MtdOmzet, PercentOfTotal, ReportRoute
-FROM BTR_PortalDashboardLocationTopWarehouseSales
+FROM BTRPD_LocationTopWarehouseSales
 WHERE SnapshotKey = @SnapshotKey
 ORDER BY Rank";
 
             const string topPurchasingSql = @"
 SELECT Rank, WarehouseId, WarehouseName, MtdPurchaseAmount, PercentOfTotal, ReportRoute
-FROM BTR_PortalDashboardLocationTopWarehousePurchasing
+FROM BTRPD_LocationTopWarehousePurchasing
 WHERE SnapshotKey = @SnapshotKey
 ORDER BY Rank";
 
             const string topWilayahSql = @"
 SELECT Rank, WilayahId, WilayahName, MtdOmzet, PercentOfTotal, DashboardRoute
-FROM BTR_PortalDashboardLocationTopWilayahSales
+FROM BTRPD_LocationTopWilayahSales
 WHERE SnapshotKey = @SnapshotKey
 ORDER BY Rank";
 
             const string attentionSql = @"
 SELECT EntityType, EntityCode, EntityName, SignalKey, SignalLabel,
        ValueAmount, ValueText, ReportRoute, SortOrder
-FROM BTR_PortalDashboardLocationAttention
+FROM BTRPD_LocationAttention
 WHERE SnapshotKey = @SnapshotKey
 ORDER BY SortOrder";
 
@@ -195,32 +190,32 @@ ORDER BY SortOrder";
             string refreshLogId)
         {
             conn.Execute(
-                "DELETE FROM BTR_PortalDashboardLocationAttention WHERE SnapshotKey = @SnapshotKey",
+                "DELETE FROM BTRPD_LocationAttention WHERE SnapshotKey = @SnapshotKey",
                 new { SnapshotKey },
                 transaction);
             conn.Execute(
-                "DELETE FROM BTR_PortalDashboardLocationTopWarehouseInventory WHERE SnapshotKey = @SnapshotKey",
+                "DELETE FROM BTRPD_LocationTopWarehouseInventory WHERE SnapshotKey = @SnapshotKey",
                 new { SnapshotKey },
                 transaction);
             conn.Execute(
-                "DELETE FROM BTR_PortalDashboardLocationTopWarehouseAtRisk WHERE SnapshotKey = @SnapshotKey",
+                "DELETE FROM BTRPD_LocationTopWarehouseAtRisk WHERE SnapshotKey = @SnapshotKey",
                 new { SnapshotKey },
                 transaction);
             conn.Execute(
-                "DELETE FROM BTR_PortalDashboardLocationTopWarehouseSales WHERE SnapshotKey = @SnapshotKey",
+                "DELETE FROM BTRPD_LocationTopWarehouseSales WHERE SnapshotKey = @SnapshotKey",
                 new { SnapshotKey },
                 transaction);
             conn.Execute(
-                "DELETE FROM BTR_PortalDashboardLocationTopWarehousePurchasing WHERE SnapshotKey = @SnapshotKey",
+                "DELETE FROM BTRPD_LocationTopWarehousePurchasing WHERE SnapshotKey = @SnapshotKey",
                 new { SnapshotKey },
                 transaction);
             conn.Execute(
-                "DELETE FROM BTR_PortalDashboardLocationTopWilayahSales WHERE SnapshotKey = @SnapshotKey",
+                "DELETE FROM BTRPD_LocationTopWilayahSales WHERE SnapshotKey = @SnapshotKey",
                 new { SnapshotKey },
                 transaction);
 
             const string mergeKpiSql = @"
-MERGE BTR_PortalDashboardLocationKpi AS target
+MERGE BTRPD_LocationKpi AS target
 USING (SELECT @SnapshotKey AS SnapshotKey) AS source
 ON target.SnapshotKey = source.SnapshotKey
 WHEN MATCHED THEN
@@ -288,7 +283,7 @@ WHEN NOT MATCHED THEN
             IEnumerable<DashboardLocationTopWarehouseInventoryRow> rows)
         {
             const string sql = @"
-INSERT INTO BTR_PortalDashboardLocationTopWarehouseInventory (
+INSERT INTO BTRPD_LocationTopWarehouseInventory (
     LocationTopWarehouseInventoryId, SnapshotKey, Rank, WarehouseId, WarehouseName,
     InventoryValue, PercentOfTotal, ReportRoute)
 VALUES (
@@ -299,7 +294,7 @@ VALUES (
             {
                 conn.Execute(sql, new
                 {
-                    LocationTopWarehouseInventoryId = _counter.Generate("PDL", IDFormatEnum.PFnnn),
+                    LocationTopWarehouseInventoryId = Ulid.NewUlid().ToString(),
                     SnapshotKey,
                     row.Rank,
                     WarehouseId = row.WarehouseId ?? string.Empty,
@@ -317,7 +312,7 @@ VALUES (
             IEnumerable<DashboardLocationTopWarehouseAtRiskRow> rows)
         {
             const string sql = @"
-INSERT INTO BTR_PortalDashboardLocationTopWarehouseAtRisk (
+INSERT INTO BTRPD_LocationTopWarehouseAtRisk (
     LocationTopWarehouseAtRiskId, SnapshotKey, Rank, WarehouseId, WarehouseName,
     AtRiskValue, PercentOfTotal, ReportRoute)
 VALUES (
@@ -328,7 +323,7 @@ VALUES (
             {
                 conn.Execute(sql, new
                 {
-                    LocationTopWarehouseAtRiskId = _counter.Generate("PDL", IDFormatEnum.PFnnn),
+                    LocationTopWarehouseAtRiskId = Ulid.NewUlid().ToString(),
                     SnapshotKey,
                     row.Rank,
                     WarehouseId = row.WarehouseId ?? string.Empty,
@@ -346,7 +341,7 @@ VALUES (
             IEnumerable<DashboardLocationTopWarehouseSalesRow> rows)
         {
             const string sql = @"
-INSERT INTO BTR_PortalDashboardLocationTopWarehouseSales (
+INSERT INTO BTRPD_LocationTopWarehouseSales (
     LocationTopWarehouseSalesId, SnapshotKey, Rank, WarehouseId, WarehouseName,
     MtdOmzet, PercentOfTotal, ReportRoute)
 VALUES (
@@ -357,7 +352,7 @@ VALUES (
             {
                 conn.Execute(sql, new
                 {
-                    LocationTopWarehouseSalesId = _counter.Generate("PDL", IDFormatEnum.PFnnn),
+                    LocationTopWarehouseSalesId = Ulid.NewUlid().ToString(),
                     SnapshotKey,
                     row.Rank,
                     WarehouseId = row.WarehouseId ?? string.Empty,
@@ -375,7 +370,7 @@ VALUES (
             IEnumerable<DashboardLocationTopWarehousePurchasingRow> rows)
         {
             const string sql = @"
-INSERT INTO BTR_PortalDashboardLocationTopWarehousePurchasing (
+INSERT INTO BTRPD_LocationTopWarehousePurchasing (
     LocationTopWarehousePurchasingId, SnapshotKey, Rank, WarehouseId, WarehouseName,
     MtdPurchaseAmount, PercentOfTotal, ReportRoute)
 VALUES (
@@ -386,7 +381,7 @@ VALUES (
             {
                 conn.Execute(sql, new
                 {
-                    LocationTopWarehousePurchasingId = _counter.Generate("PDL", IDFormatEnum.PFnnn),
+                    LocationTopWarehousePurchasingId = Ulid.NewUlid().ToString(),
                     SnapshotKey,
                     row.Rank,
                     WarehouseId = row.WarehouseId ?? string.Empty,
@@ -404,7 +399,7 @@ VALUES (
             IEnumerable<DashboardLocationTopWilayahSalesRow> rows)
         {
             const string sql = @"
-INSERT INTO BTR_PortalDashboardLocationTopWilayahSales (
+INSERT INTO BTRPD_LocationTopWilayahSales (
     LocationTopWilayahSalesId, SnapshotKey, Rank, WilayahId, WilayahName,
     MtdOmzet, PercentOfTotal, DashboardRoute)
 VALUES (
@@ -415,7 +410,7 @@ VALUES (
             {
                 conn.Execute(sql, new
                 {
-                    LocationTopWilayahSalesId = _counter.Generate("PDL", IDFormatEnum.PFnnn),
+                    LocationTopWilayahSalesId = Ulid.NewUlid().ToString(),
                     SnapshotKey,
                     row.Rank,
                     WilayahId = row.WilayahId,
@@ -433,7 +428,7 @@ VALUES (
             IEnumerable<DashboardLocationAttentionRow> rows)
         {
             const string sql = @"
-INSERT INTO BTR_PortalDashboardLocationAttention (
+INSERT INTO BTRPD_LocationAttention (
     LocationAttentionId, SnapshotKey, EntityType, EntityCode, EntityName,
     SignalKey, SignalLabel, ValueAmount, ValueText, ReportRoute, SortOrder)
 VALUES (
@@ -444,7 +439,7 @@ VALUES (
             {
                 conn.Execute(sql, new
                 {
-                    LocationAttentionId = _counter.Generate("PDL", IDFormatEnum.PFnnn),
+                    LocationAttentionId = Ulid.NewUlid().ToString(),
                     SnapshotKey,
                     EntityType = row.EntityType ?? string.Empty,
                     EntityCode = row.EntityCode,

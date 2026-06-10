@@ -26,7 +26,7 @@ Refresh path (background):
     → DashboardInventoryAggregator
     → RefreshDashboardInventorySnapshotWorker
     → DashboardInventorySnapshotDal.ReplaceCurrent()
-    → BTR_PortalDashboardInventory* tables
+    → BTRPD_Inventory* tables
 
 Read path (HTTP):
   GET /api/dashboard/inventory
@@ -46,8 +46,8 @@ Snapshot pattern: single active row per domain via `SnapshotKey = 'CURRENT'`. Fu
 
 | Table | Purpose |
 | --- | --- |
-| `BTR_PortalDashboardInventoryKpi` | Layer A headline KPIs (`TotalInventoryValue`, `TotalItem`, `GeneratedAt`) |
-| `BTR_PortalDashboardInventoryBreakdown` | Layer B full category/supplier breakdown with Top 10 flags |
+| `BTRPD_InventoryKpi` | Layer A headline KPIs (`TotalInventoryValue`, `TotalItem`, `GeneratedAt`) |
+| `BTRPD_InventoryBreakdown` | Layer B full category/supplier breakdown with Top 10 flags |
 
 ### ParamNo seed
 
@@ -92,8 +92,8 @@ All objects registered in `btr.sql.sqlproj`.
 
 | File | Purpose |
 | --- | --- |
-| `Tables/ReportingContext/BTR_PortalDashboardInventoryKpi.sql` | Inventory KPI table |
-| `Tables/ReportingContext/BTR_PortalDashboardInventoryBreakdown.sql` | Breakdown table + index |
+| `Tables/ReportingContext/BTRPD_InventoryKpi.sql` | Inventory KPI table |
+| `Tables/ReportingContext/BTRPD_InventoryBreakdown.sql` | Breakdown table + index |
 
 ---
 
@@ -211,4 +211,4 @@ Logic in `DashboardInventoryAggregator` matches the former live `DashboardInvent
 
 1. **Phase 3:** Sales snapshot (Faktur source, tables, aggregator, worker, read-path swap, frontend labels).
 2. **Phase 4 (before production cutover):** Deploy worker host; schedule per-domain refresh (15/30/60 min); run shadow period; disable `AllowLiveFallback`.
-3. **Ops:** After schema deploy, execute Inventory refresh to populate `BTR_PortalDashboardInventory*` before disabling fallback.
+3. **Ops:** After schema deploy, execute Inventory refresh to populate `BTRPD_Inventory*` before disabling fallback.

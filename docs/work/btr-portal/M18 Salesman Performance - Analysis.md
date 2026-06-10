@@ -23,7 +23,7 @@ M18 answers: *Which salesman requires management attention and why?*
 
 | Finding | Implication |
 | ------- | ----------- |
-| **Top 10 Salesman ranking exists** in Sales snapshot (`BTR_PortalDashboardSalesTopSalesman`) — omzet only, no target % | Ranking shows performers; **underperformers and attention signals are invisible** |
+| **Top 10 Salesman ranking exists** in Sales snapshot (`BTRPD_SalesTopSalesman`) — omzet only, no target % | Ranking shows performers; **underperformers and attention signals are invisible** |
 | **Per-salesman monthly targets exist** in `BTR_SalesOmzetTarget` and Desktop RO2 (`SalesOmzetChartForm`) | Per-rep achievement % is **computable today** — not exposed in portal |
 | **Sales attribution on Faktur** (`BTR_Faktur.SalesPersonId`) is authoritative for invoiced sales and piutang linkage | Sales omzet, customer reach, and open balances can be grouped by salesman from existing DALs |
 | **Customer master has no SalesPersonId** — ownership is transactional (Faktur) and operational (route) | **Approved:** Last Invoicing Salesman for dormant/coverage attribution; route reserved for M25 |
@@ -35,7 +35,7 @@ M18 answers: *Which salesman requires management attention and why?*
 
 ### Approved product outcome
 
-Deliver **Salesman Performance** at `/dashboard/salesmen` using **Proposal A (Attention First)** layout. Materialize salesman KPIs in a **dedicated `BTR_PortalDashboardSalesman*` snapshot domain** (Sales + Piutang sources, Faktur-only, current month). Mandatory rankings: **Top 10 Omzet**, **Top 10 Achievement %**, **Top 10 Piutang** — each with `SalesPersonCode`. Include **Attention List** with Below Target, No Target, High Overdue Exposure, High Piutang Exposure, Customer Concentration, and Dormant Customer Portfolio signals. Combined cross-domain signals encouraged. Contextual drill-down: sales signals → Sales Report; piutang signals → Piutang Report (`?q=` salesman name). Navigation: Salesman Dashboard → Domain Dashboard → Report. No new Salesman Report. No executive dashboard changes. **Not** a sales activity dashboard — activity metrics reserved for M25.
+Deliver **Salesman Performance** at `/dashboard/salesmen` using **Proposal A (Attention First)** layout. Materialize salesman KPIs in a **dedicated `BTRPD_Salesman*` snapshot domain** (Sales + Piutang sources, Faktur-only, current month). Mandatory rankings: **Top 10 Omzet**, **Top 10 Achievement %**, **Top 10 Piutang** — each with `SalesPersonCode`. Include **Attention List** with Below Target, No Target, High Overdue Exposure, High Piutang Exposure, Customer Concentration, and Dormant Customer Portfolio signals. Combined cross-domain signals encouraged. Contextual drill-down: sales signals → Sales Report; piutang signals → Piutang Report (`?q=` salesman name). Navigation: Salesman Dashboard → Domain Dashboard → Report. No new Salesman Report. No executive dashboard changes. **Not** a sales activity dashboard — activity metrics reserved for M25.
 
 ---
 
@@ -210,7 +210,7 @@ From `docs/foundation/WORKFLOW.md` and portal operational workflows:
 
 | Salesman KPI candidate | Primary data source | Validating report | Reconciliation rule | Match type |
 | ---------------------- | ------------------- | ----------------- | --------------------- | ---------- |
-| Top Salesman by omzet (month) | `BTR_PortalDashboardSalesTopSalesman` / `DashboardSalesFakturAggregator` | Sales Report | Group by `SalesName`, sum `FakturTotal` in month | **Exact** |
+| Top Salesman by omzet (month) | `BTRPD_SalesTopSalesman` / `DashboardSalesFakturAggregator` | Sales Report | Group by `SalesName`, sum `FakturTotal` in month | **Exact** |
 | Per-salesman achievement % | `BTR_SalesOmzetTarget` + `FakturView` grouped by salesman | Sales Report + target master (Desktop RO2) | `SUM(GrandTotal) / TargetAmount × 100` | **Derivable** |
 | Company achievement % (baseline) | Sales snapshot KPI | Sales Report | Total omzet / `SumTargetAmountForMonth` | **Exact** (existing) |
 | Per-salesman customer reach | `FakturView` distinct `CustomerCode` per `SalesPersonName` | Sales Report | Distinct customers per `SalesName` in period | **Derivable** |
@@ -352,11 +352,11 @@ Objective: maximize reuse and avoid new business calculations when equivalent lo
 
 | Asset | Path / table | Reusable for M18 |
 | ----- | ------------ | ---------------- |
-| Sales Top 10 snapshot | `BTR_PortalDashboardSalesTopSalesman` | Seed omzet ranking — extend with `SalesPersonId`, target, achievement % |
-| Sales KPI snapshot | `BTR_PortalDashboardSalesKpi` | Company target/achievement reference |
-| Sales week trend | `BTR_PortalDashboardSalesWeekTrend` | Pattern for per-rep weekly rows |
-| Piutang KPI / aging / top customer | `BTR_PortalDashboardPiutang*` | Aging bucket definitions in `DashboardPiutangAggregator` |
-| Customer attention snapshot | `BTR_PortalDashboardCustomer*` | Attention list composition pattern (M17) |
+| Sales Top 10 snapshot | `BTRPD_SalesTopSalesman` | Seed omzet ranking — extend with `SalesPersonId`, target, achievement % |
+| Sales KPI snapshot | `BTRPD_SalesKpi` | Company target/achievement reference |
+| Sales week trend | `BTRPD_SalesWeekTrend` | Pattern for per-rep weekly rows |
+| Piutang KPI / aging / top customer | `BTRPD_Piutang*` | Aging bucket definitions in `DashboardPiutangAggregator` |
+| Customer attention snapshot | `BTRPD_Customer*` | Attention list composition pattern (M17) |
 | `DashboardSalesFakturAggregator` | `ReportingContext/DashboardSnapshotAgg/Services` | `BuildTopSalesman`, `BuildWeekTrend`, `TotalCustomer` logic |
 | `DashboardPiutangAggregator` | Same | Overdue count, aging buckets, top-N pattern |
 | `DashboardCustomerAggregator` | Same | Dormant, plafond, suspended signal patterns — adapt to salesman rollup |
@@ -409,7 +409,7 @@ Objective: maximize reuse and avoid new business calculations when equivalent lo
 | ----- | ---- |
 | `DashboardSalesFakturAggregator` | Protected sales snapshot logic — extend via new salesman domain, do not alter company KPI semantics |
 | `DashboardExecutiveComposer` | **No M18 changes** — executive page unchanged (Q35) |
-| `BTR_PortalDashboardSalesTopSalesman` | Existing table serves Sales Dashboard — M18 adds **separate** `BTR_PortalDashboardSalesman*` tables (Q36) |
+| `BTRPD_SalesTopSalesman` | Existing table serves Sales Dashboard — M18 adds **separate** `BTRPD_Salesman*` tables (Q36) |
 
 ---
 
@@ -652,7 +652,7 @@ Salesman row click:
 
 | Information | Source | M18 use |
 | ----------- | ------ | ------- |
-| Top 10 salesman by omzet (month) | `BTR_PortalDashboardSalesTopSalesman` | Ranking section seed |
+| Top 10 salesman by omzet (month) | `BTRPD_SalesTopSalesman` | Ranking section seed |
 | Company target and achievement % | Sales snapshot KPI | Team context baseline |
 | Per-salesman monthly target | `BTR_SalesOmzetTarget` | Per-rep achievement denominator |
 | Achievement % formula | `SalesOmzetChartAchievementPolicy` | Per-rep achievement |
@@ -782,7 +782,7 @@ Salesman row click:
 
 | # | Decision |
 | - | -------- |
-| Q36 | **Dedicated `BTR_PortalDashboardSalesman*` snapshot tables** |
+| Q36 | **Dedicated `BTRPD_Salesman*` snapshot tables** |
 | Q37 | **Do not compose at read time** — follow M17 materialization pattern |
 | Q38 | **Refresh cadence:** 30 minutes |
 | Q39 | **Current month snapshot only** — historical trend deferred |

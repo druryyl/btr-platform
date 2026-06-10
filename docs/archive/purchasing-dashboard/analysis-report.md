@@ -80,7 +80,7 @@ From `docs/features/btr-portal/btr-portal-domain.md`:
 | **btr.portal.api** | `GET /api/reports/purchasing` only | New dashboard endpoint(s); likely overview extension |
 | **btr.portal.worker** | Refreshes Sales/Piutang/Inventory snapshots only | Likely new Purchasing domain refresh job |
 | **btr.portal.web** | `PurchasingReportView.vue` under Reports menu | New dashboard route, store, overview card, sidebar entry |
-| **btr.sql** | No `BTR_PortalDashboardPurchasing*` tables | New snapshot tables (materialized — approved) |
+| **btr.sql** | No `BTRPD_Purchasing*` tables | New snapshot tables (materialized — approved) |
 
 ### 4.2 Current state in `btr.portal.web`
 
@@ -413,7 +413,7 @@ The Architect should decide:
 | ---- | --------- |
 | Report data path | `PurchasingReportDal`, `PurchasingReportView.vue`, `GET /api/reports/purchasing` |
 | Dashboard detail UX | `SalesDashboardView.vue` (weekly trend, Top 10), `PiutangDashboardView.vue` (status pie), `InventoryDashboardView.vue` (supplier breakdown) |
-| Snapshot infrastructure | `RefreshDashboardSalesSnapshotWorker`, `DashboardOverviewDal`, `BTR_PortalDashboard*Kpi` SQL tables |
+| Snapshot infrastructure | `RefreshDashboardSalesSnapshotWorker`, `DashboardOverviewDal`, `BTRPD_*Kpi` SQL tables |
 | Product rules | `docs/features/btr-portal/btr-portal-domain.md` — Purchasing section and KPI Definitions |
 | Prior purchasing report plan | `docs/work/btr-portal-api-scaffolding/implementation-plan-m12-purchasing-report-v1.md` |
 | Future dimension hints | `docs/work/materialize-dashboard-data/analysis-report.md` § 6.5 Purchasing dimensions |
@@ -423,6 +423,6 @@ The Architect should decide:
 ## 13. Architect Deliverables (next step)
 
 1. `docs/work/purchasing-dashboard/implementation-plan.md` — technical plan using Section 6 as authoritative scope
-2. SQL scripts for `BTR_PortalDashboardPurchasing*` snapshot tables
+2. SQL scripts for `BTRPD_Purchasing*` snapshot tables
 3. API contract and Vue route/store specification aligned with existing dashboard milestones
 4. Worker Task Scheduler job for Purchasing domain (30 min interval)

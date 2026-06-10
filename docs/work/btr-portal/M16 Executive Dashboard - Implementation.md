@@ -110,7 +110,7 @@ M16 replaces the operational dashboard home (`/dashboard`) with a **Management A
 
 ## Unchanged (Per Plan)
 
-- Snapshot workers, aggregators, `BTR_PortalDashboard*` tables
+- Snapshot workers, aggregators, `BTRPD_*` tables
 - `GET /api/dashboard/overview` (retained; home no longer calls it)
 - Domain dashboard APIs and views (M13–M15)
 - Report APIs, DALs, and views

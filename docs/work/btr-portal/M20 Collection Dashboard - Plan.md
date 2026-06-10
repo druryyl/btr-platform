@@ -24,7 +24,7 @@ Deliver **Collection Dashboard** at `/dashboard/collection` — a dedicated coll
 
 - New route `/dashboard/collection` with page title **Collection Dashboard** for all authenticated users (no role-based routing).
 - Sidebar label **Collection** (after Salesmen, before Inventory).
-- **Dedicated Collection snapshot domain** (`BTR_PortalDashboardCollection*`) with its own refresh worker — materialized KPIs, not live composition.
+- **Dedicated Collection snapshot domain** (`BTRPD_Collection*`) with its own refresh worker — materialized KPIs, not live composition.
 - **Attention-First layout with Recovery Summary** (fixed section order per analysis Section 11.2).
 - Mandatory recovery KPIs at **company level only**: Cash Collected MTD · Recovery vs Billing % · Payment Mix (Cash / Giro / Adjustment).
 - **Overdue-only** rankings: Top 10 Overdue Customers · Top 10 Overdue Salesmen · Top 10 Overdue Wilayah (rank by overdue balance, not total balance).
@@ -166,7 +166,7 @@ Analysis Section 13.2 left adjustment handling to the architect. This plan resol
 
 | Decision | Value |
 | --- | --- |
-| Snapshot domain | `BTR_PortalDashboardCollection*` |
+| Snapshot domain | `BTRPD_Collection*` |
 | Refresh cadence | **30 minutes** (`CollectionIntervalMinutes`) |
 | Refresh pattern | `SnapshotKey = 'CURRENT'` delete-and-replace |
 | Read API | `GET /api/dashboard/collection` |
@@ -191,7 +191,7 @@ Source DALs (read at refresh time — NOT from other snapshot tables)
     ↓
 RefreshDashboardCollectionSnapshotWorker
     ↓ DashboardCollectionAggregator
-BTR_PortalDashboardCollection* tables (6)
+BTRPD_Collection* tables (6)
     ↓
 Browser → GET /api/dashboard/collection
     ↓ MediatR
@@ -201,7 +201,7 @@ DashboardCollectionDal → DashboardCollectionResponse
 
 Existing unchanged:
   GET /api/dashboard/executive | piutang | customers | salesmen
-  BTR_PortalDashboardPiutang* / Customer* / Salesman*
+  BTRPD_Piutang* / Customer* / Salesman*
   GET /api/reports/piutang
   BTR Desktop FF1/FF2/FF4
 ```
@@ -252,7 +252,7 @@ Existing unchanged:
 
 | Layer | Module | Change type |
 | --- | --- | --- |
-| SQL | `btr.sql/Tables/ReportingContext/BTR_PortalDashboardCollection*.sql` (6 tables) | **New** |
+| SQL | `btr.sql/Tables/ReportingContext/BTRPD_Collection*.sql` (6 tables) | **New** |
 | SQL | `btr.sql.sqlproj` | Include new tables |
 | Application | `DashboardSnapshotAgg/Services/DashboardCollectionAggregator.cs` | **New** |
 | Application | `DashboardSnapshotAgg/Services/DashboardCollectionKeyResolver.cs` | **New** |
@@ -324,7 +324,7 @@ Existing unchanged:
 
 Deploy all tables with `SnapshotKey = 'CURRENT'` delete-and-replace pattern.
 
-### 5.1 `BTR_PortalDashboardCollectionKpi`
+### 5.1 `BTRPD_CollectionKpi`
 
 Single row per refresh — attention cards + recovery summary source fields.
 
@@ -353,7 +353,7 @@ Single row per refresh — attention cards + recovery summary source fields.
 | LowRecoveryVsBillingCount | INT | Salesmen failing rep recovery rule |
 | LastRefreshLogId | VARCHAR(13) | FK to refresh log |
 
-### 5.2 `BTR_PortalDashboardCollectionAging`
+### 5.2 `BTRPD_CollectionAging`
 
 Overdue-only aging distribution (four rows per refresh).
 
@@ -368,7 +368,7 @@ Overdue-only aging distribution (four rows per refresh).
 
 Unique: `(SnapshotKey, BucketKey)`
 
-### 5.3 `BTR_PortalDashboardCollectionAttention`
+### 5.3 `BTRPD_CollectionAttention`
 
 | Column | Type | Description |
 | --- | --- | --- |
@@ -388,7 +388,7 @@ Unique: `(SnapshotKey, BucketKey)`
 
 Index: `(SnapshotKey, SortOrder)`
 
-### 5.4 `BTR_PortalDashboardCollectionTopOverdueCustomer`
+### 5.4 `BTRPD_CollectionTopOverdueCustomer`
 
 | Column | Type | Description |
 | --- | --- | --- |
@@ -402,7 +402,7 @@ Index: `(SnapshotKey, SortOrder)`
 
 Unique: `(SnapshotKey, Rank)`
 
-### 5.5 `BTR_PortalDashboardCollectionTopOverdueSalesman`
+### 5.5 `BTRPD_CollectionTopOverdueSalesman`
 
 | Column | Type | Description |
 | --- | --- | --- |
@@ -417,7 +417,7 @@ Unique: `(SnapshotKey, Rank)`
 
 Unique: `(SnapshotKey, Rank)`
 
-### 5.6 `BTR_PortalDashboardCollectionTopOverdueWilayah`
+### 5.6 `BTRPD_CollectionTopOverdueWilayah`
 
 | Column | Type | Description |
 | --- | --- | --- |
@@ -716,9 +716,9 @@ Execute **after** M20 Collection dashboard is shipped and validated. Separate PR
 
 | Executive field | Collection snapshot source |
 | --- | --- |
-| Cash Collected MTD | `BTR_PortalDashboardCollectionKpi.CashCollectedMtd` |
-| Recovery vs Billing % | `BTR_PortalDashboardCollectionKpi.RecoveryVsBillingPercent` |
-| Overdue Concentration % | `BTR_PortalDashboardCollectionKpi.OverdueConcentrationPercent` |
+| Cash Collected MTD | `BTRPD_CollectionKpi.CashCollectedMtd` |
+| Recovery vs Billing % | `BTRPD_CollectionKpi.RecoveryVsBillingPercent` |
+| Overdue Concentration % | `BTRPD_CollectionKpi.OverdueConcentrationPercent` |
 
 **Implementation sketch:**
 
@@ -816,7 +816,7 @@ Execute in order. Each phase should compile before proceeding.
 
 ### Phase 1 — Database
 
-1. Create six `BTR_PortalDashboardCollection*.sql` table scripts.
+1. Create six `BTRPD_Collection*.sql` table scripts.
 2. Add to `btr.sql.sqlproj`; deploy to dev database.
 
 ### Phase 2 — Source DAL extensions

@@ -33,7 +33,7 @@ IStokBalanceViewDal + IBrgLastFakturDal
     ↓ RefreshDashboardInventoryRiskSnapshotWorker
 DashboardInventoryRiskAggregator (shared BuildItemGroups via DashboardInventoryItemGroupBuilder)
     ↓ ReplaceCurrent (transactional)
-BTR_PortalDashboardInventoryRisk* (6 tables)
+BTRPD_InventoryRisk* (6 tables)
     ↓ GET /api/dashboard/inventory-risk
 DashboardInventoryRiskDal → InventoryRiskDashboardView.vue
 ```
@@ -59,14 +59,14 @@ DashboardInventoryRiskDal → InventoryRiskDashboardView.vue
 
 | Table | Purpose |
 | --- | --- |
-| `BTR_PortalDashboardInventoryRiskKpi` | Headline KPIs + RequiresAttention |
-| `BTR_PortalDashboardInventoryRiskAging` | Four aging buckets (Active, Slow, Dead, Never Sold) |
-| `BTR_PortalDashboardInventoryRiskAttention` | Item × signal attention list |
-| `BTR_PortalDashboardInventoryRiskTopDead` | Top 10 dead stock by value |
-| `BTR_PortalDashboardInventoryRiskTopSlow` | Top 10 slow moving by value |
-| `BTR_PortalDashboardInventoryRiskBreakdown` | Category/Supplier at-risk exposure (top 10 each) |
+| `BTRPD_InventoryRiskKpi` | Headline KPIs + RequiresAttention |
+| `BTRPD_InventoryRiskAging` | Four aging buckets (Active, Slow, Dead, Never Sold) |
+| `BTRPD_InventoryRiskAttention` | Item × signal attention list |
+| `BTRPD_InventoryRiskTopDead` | Top 10 dead stock by value |
+| `BTRPD_InventoryRiskTopSlow` | Top 10 slow moving by value |
+| `BTRPD_InventoryRiskBreakdown` | Category/Supplier at-risk exposure (top 10 each) |
 
-Scripts: `src/j05-btr-distrib/btr.sql/Tables/ReportingContext/BTR_PortalDashboardInventoryRisk*.sql`
+Scripts: `src/j05-btr-distrib/btr.sql/Tables/ReportingContext/BTRPD_InventoryRisk*.sql`
 
 ### Backend — Application
 
@@ -155,7 +155,7 @@ Key fields: `IsAvailable`, `IsDataFresh`, `GeneratedAt`, `AttentionCards`, `Agin
 
 ## 6. Deployment Checklist
 
-1. Deploy six `BTR_PortalDashboardInventoryRisk*` tables to target database
+1. Deploy six `BTRPD_InventoryRisk*` tables to target database
 2. Run initial refresh: `btr.portal.worker --domain InventoryRisk --triggered-by Manual`
 3. Verify `GET /api/health/dashboard-snapshots` lists InventoryRisk domain
 4. Navigate to `/dashboard/inventory-risk` and confirm all sections render
@@ -168,7 +168,7 @@ Key fields: `IsAvailable`, `IsDataFresh`, `GeneratedAt`, `AttentionCards`, `Agin
 ## 7. Out of Scope (Confirmed Unchanged)
 
 - Executive Dashboard inventory section (Phase 2)
-- Existing `BTR_PortalDashboardInventory*` tables and `GET /api/dashboard/inventory`
+- Existing `BTRPD_Inventory*` tables and `GET /api/dashboard/inventory`
 - Salesman dimension, ABC, warehouse breakdown, export, Kartu Stok drill-down
 - Retur-adjusted demand, mutasi-based movement classification
 

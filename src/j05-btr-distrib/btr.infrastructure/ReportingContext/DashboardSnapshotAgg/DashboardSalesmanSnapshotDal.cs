@@ -1,10 +1,10 @@
+using System;
 using System.Collections.Generic;
 using System.Data.SqlClient;
 using System.Linq;
 using btr.application.ReportingContext.DashboardSnapshotAgg.Contracts;
 using btr.application.ReportingContext.DashboardSnapshotAgg.Models;
 using btr.infrastructure.Helpers;
-using btr.nuna.Application;
 using btr.nuna.Domain;
 using Dapper;
 using Microsoft.Extensions.Options;
@@ -16,14 +16,10 @@ namespace btr.infrastructure.ReportingContext.DashboardSnapshotAgg
         private const string SnapshotKey = "CURRENT";
 
         private readonly DatabaseOptions _opt;
-        private readonly INunaCounterBL _counter;
 
-        public DashboardSalesmanSnapshotDal(
-            IOptions<DatabaseOptions> opt,
-            INunaCounterBL counter)
+        public DashboardSalesmanSnapshotDal(IOptions<DatabaseOptions> opt)
         {
             _opt = opt.Value;
-            _counter = counter;
         }
 
         public DashboardSalesmanAggregateResult GetCurrent()
@@ -33,38 +29,38 @@ SELECT SnapshotKey, GeneratedAt, PeriodYear, PeriodMonth, TotalTeamOmzet, TotalP
        ActiveSalesmanCount, BelowTargetCount, NoTargetCount, HighOverdueExposureCount,
        HighPiutangExposureCount, CustomerConcentrationCount, DormantPortfolioCount,
        TopOmzetSalesmanPercent, TopPiutangSalesmanPercent, LastRefreshLogId
-FROM BTR_PortalDashboardSalesmanKpi
+FROM BTRPD_SalesmanKpi
 WHERE SnapshotKey = @SnapshotKey";
 
             const string topOmzetSql = @"
 SELECT Rank, SalesPersonId, SalesPersonCode, SalesPersonName, CompletedOmzet, PercentOfTotal
-FROM BTR_PortalDashboardSalesmanTopOmzet
+FROM BTRPD_SalesmanTopOmzet
 WHERE SnapshotKey = @SnapshotKey
 ORDER BY Rank";
 
             const string topAchievementSql = @"
 SELECT Rank, SalesPersonId, SalesPersonCode, SalesPersonName, TargetAmount, CompletedOmzet,
        AchievementPercent, PercentOfTotal
-FROM BTR_PortalDashboardSalesmanTopAchievement
+FROM BTRPD_SalesmanTopAchievement
 WHERE SnapshotKey = @SnapshotKey
 ORDER BY Rank";
 
             const string topPiutangSql = @"
 SELECT Rank, SalesPersonId, SalesPersonCode, SalesPersonName, OutstandingBalance, PercentOfTotal
-FROM BTR_PortalDashboardSalesmanTopPiutang
+FROM BTRPD_SalesmanTopPiutang
 WHERE SnapshotKey = @SnapshotKey
 ORDER BY Rank";
 
             const string attentionSql = @"
 SELECT SalesPersonId, SalesPersonCode, SalesPersonName, SignalKey, SignalLabel, ValueAmount,
        ValueText, WilayahName, SortOrder
-FROM BTR_PortalDashboardSalesmanAttention
+FROM BTRPD_SalesmanAttention
 WHERE SnapshotKey = @SnapshotKey
 ORDER BY SortOrder";
 
             const string segmentationSql = @"
 SELECT SegmentType, SegmentKey, SegmentLabel, SalesmanCount, ActiveCount, InactiveCount, SortOrder
-FROM BTR_PortalDashboardSalesmanSegmentation
+FROM BTRPD_SalesmanSegmentation
 WHERE SnapshotKey = @SnapshotKey
 ORDER BY SegmentType, SortOrder";
 
@@ -181,28 +177,28 @@ ORDER BY SegmentType, SortOrder";
             string refreshLogId)
         {
             conn.Execute(
-                "DELETE FROM BTR_PortalDashboardSalesmanTopOmzet WHERE SnapshotKey = @SnapshotKey",
+                "DELETE FROM BTRPD_SalesmanTopOmzet WHERE SnapshotKey = @SnapshotKey",
                 new { SnapshotKey },
                 transaction);
             conn.Execute(
-                "DELETE FROM BTR_PortalDashboardSalesmanTopAchievement WHERE SnapshotKey = @SnapshotKey",
+                "DELETE FROM BTRPD_SalesmanTopAchievement WHERE SnapshotKey = @SnapshotKey",
                 new { SnapshotKey },
                 transaction);
             conn.Execute(
-                "DELETE FROM BTR_PortalDashboardSalesmanTopPiutang WHERE SnapshotKey = @SnapshotKey",
+                "DELETE FROM BTRPD_SalesmanTopPiutang WHERE SnapshotKey = @SnapshotKey",
                 new { SnapshotKey },
                 transaction);
             conn.Execute(
-                "DELETE FROM BTR_PortalDashboardSalesmanAttention WHERE SnapshotKey = @SnapshotKey",
+                "DELETE FROM BTRPD_SalesmanAttention WHERE SnapshotKey = @SnapshotKey",
                 new { SnapshotKey },
                 transaction);
             conn.Execute(
-                "DELETE FROM BTR_PortalDashboardSalesmanSegmentation WHERE SnapshotKey = @SnapshotKey",
+                "DELETE FROM BTRPD_SalesmanSegmentation WHERE SnapshotKey = @SnapshotKey",
                 new { SnapshotKey },
                 transaction);
 
             const string mergeKpiSql = @"
-MERGE BTR_PortalDashboardSalesmanKpi AS target
+MERGE BTRPD_SalesmanKpi AS target
 USING (SELECT @SnapshotKey AS SnapshotKey) AS source
 ON target.SnapshotKey = source.SnapshotKey
 WHEN MATCHED THEN
@@ -255,7 +251,7 @@ WHEN NOT MATCHED THEN
             }, transaction);
 
             const string insertTopOmzetSql = @"
-INSERT INTO BTR_PortalDashboardSalesmanTopOmzet (
+INSERT INTO BTRPD_SalesmanTopOmzet (
     SalesmanTopOmzetId, SnapshotKey, Rank, SalesPersonId, SalesPersonCode, SalesPersonName,
     CompletedOmzet, PercentOfTotal)
 VALUES (
@@ -266,7 +262,7 @@ VALUES (
             {
                 conn.Execute(insertTopOmzetSql, new
                 {
-                    SalesmanTopOmzetId = _counter.Generate("PDS", IDFormatEnum.PFnnn),
+                    SalesmanTopOmzetId = Ulid.NewUlid().ToString(),
                     SnapshotKey,
                     row.Rank,
                     SalesPersonId = row.SalesPersonId ?? string.Empty,
@@ -278,7 +274,7 @@ VALUES (
             }
 
             const string insertTopAchievementSql = @"
-INSERT INTO BTR_PortalDashboardSalesmanTopAchievement (
+INSERT INTO BTRPD_SalesmanTopAchievement (
     SalesmanTopAchievementId, SnapshotKey, Rank, SalesPersonId, SalesPersonCode, SalesPersonName,
     TargetAmount, CompletedOmzet, AchievementPercent, PercentOfTotal)
 VALUES (
@@ -289,7 +285,7 @@ VALUES (
             {
                 conn.Execute(insertTopAchievementSql, new
                 {
-                    SalesmanTopAchievementId = _counter.Generate("PDS", IDFormatEnum.PFnnn),
+                    SalesmanTopAchievementId = Ulid.NewUlid().ToString(),
                     SnapshotKey,
                     row.Rank,
                     SalesPersonId = row.SalesPersonId ?? string.Empty,
@@ -303,7 +299,7 @@ VALUES (
             }
 
             const string insertTopPiutangSql = @"
-INSERT INTO BTR_PortalDashboardSalesmanTopPiutang (
+INSERT INTO BTRPD_SalesmanTopPiutang (
     SalesmanTopPiutangId, SnapshotKey, Rank, SalesPersonId, SalesPersonCode, SalesPersonName,
     OutstandingBalance, PercentOfTotal)
 VALUES (
@@ -314,7 +310,7 @@ VALUES (
             {
                 conn.Execute(insertTopPiutangSql, new
                 {
-                    SalesmanTopPiutangId = _counter.Generate("PDS", IDFormatEnum.PFnnn),
+                    SalesmanTopPiutangId = Ulid.NewUlid().ToString(),
                     SnapshotKey,
                     row.Rank,
                     SalesPersonId = row.SalesPersonId ?? string.Empty,
@@ -326,7 +322,7 @@ VALUES (
             }
 
             const string insertAttentionSql = @"
-INSERT INTO BTR_PortalDashboardSalesmanAttention (
+INSERT INTO BTRPD_SalesmanAttention (
     SalesmanAttentionId, SnapshotKey, SalesPersonId, SalesPersonCode, SalesPersonName, SignalKey,
     SignalLabel, ValueAmount, ValueText, WilayahName, SortOrder)
 VALUES (
@@ -337,7 +333,7 @@ VALUES (
             {
                 conn.Execute(insertAttentionSql, new
                 {
-                    SalesmanAttentionId = _counter.Generate("PDS", IDFormatEnum.PFnnn),
+                    SalesmanAttentionId = Ulid.NewUlid().ToString(),
                     SnapshotKey,
                     SalesPersonId = row.SalesPersonId ?? string.Empty,
                     SalesPersonCode = row.SalesPersonCode ?? string.Empty,
@@ -352,7 +348,7 @@ VALUES (
             }
 
             const string insertSegmentationSql = @"
-INSERT INTO BTR_PortalDashboardSalesmanSegmentation (
+INSERT INTO BTRPD_SalesmanSegmentation (
     SalesmanSegmentationId, SnapshotKey, SegmentType, SegmentKey, SegmentLabel,
     SalesmanCount, ActiveCount, InactiveCount, SortOrder)
 VALUES (
@@ -363,7 +359,7 @@ VALUES (
             {
                 conn.Execute(insertSegmentationSql, new
                 {
-                    SalesmanSegmentationId = _counter.Generate("PDS", IDFormatEnum.PFnnn),
+                    SalesmanSegmentationId = Ulid.NewUlid().ToString(),
                     SnapshotKey,
                     row.SegmentType,
                     SegmentKey = row.SegmentKey ?? string.Empty,

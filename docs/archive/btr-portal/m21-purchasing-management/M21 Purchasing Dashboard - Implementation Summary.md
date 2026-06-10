@@ -36,7 +36,7 @@ Addressed required actions from the M21 review report:
 | --- | --- |
 | Route `/dashboard/purchasing` with Attention-First layout + V1 charts retained | Done |
 | Page title **Purchasing Management Dashboard** | Done |
-| Dedicated `BTR_PortalDashboardPurchasingManagement*` snapshot domain (3 tables) | Done |
+| Dedicated `BTRPD_PurchasingManagement*` snapshot domain (3 tables) | Done |
 | Extended `GET /api/dashboard/purchasing` — V1 + management sections | Done |
 | Qualified backlog (age-based `BELUM`, default 3 days on `LastUpdate`) | Done |
 | Eight approved attention signals with sort priority | Done |
@@ -61,7 +61,7 @@ Source DALs (refresh time)
     ↓
 RefreshDashboardPurchasingManagementSnapshotWorker
     ↓ DashboardPurchasingManagementAggregator
-BTR_PortalDashboardPurchasingManagement* (3 tables)
+BTRPD_PurchasingManagement* (3 tables)
     ↓
 GET /api/dashboard/purchasing
     ↓ DashboardPurchasingDal (V1 + management merge)
@@ -81,9 +81,9 @@ Three new tables under `src/j05-btr-distrib/btr.sql/Tables/ReportingContext/`:
 
 | Table | Purpose |
 | --- | --- |
-| `BTR_PortalDashboardPurchasingManagementKpi` | Qualified backlog, concentration %, compound counts, inactivity flag |
-| `BTR_PortalDashboardPurchasingManagementAttention` | Principal × Signal attention list |
-| `BTR_PortalDashboardPurchasingManagementTopPrincipal` | Top 10 MTD purchase with cross-domain columns |
+| `BTRPD_PurchasingManagementKpi` | Qualified backlog, concentration %, compound counts, inactivity flag |
+| `BTRPD_PurchasingManagementAttention` | Principal × Signal attention list |
+| `BTRPD_PurchasingManagementTopPrincipal` | Top 10 MTD purchase with cross-domain columns |
 
 All use `SnapshotKey = 'CURRENT'` delete-and-replace pattern. Registered in `btr.sql.sqlproj`.
 
@@ -180,7 +180,7 @@ dotnet vstest btr.test/bin/Debug/btr.test.dll --TestCaseFilter:"FullyQualifiedNa
 
 ## 8. Explicitly Preserved (unchanged)
 
-- V1 `BTR_PortalDashboardPurchasing*` table schemas
+- V1 `BTRPD_Purchasing*` table schemas
 - `DashboardPurchasingInvoiceAggregator` formulas
 - `RefreshDashboardPurchasingSnapshotWorker`
 - Desktop PT1/PT2 write paths

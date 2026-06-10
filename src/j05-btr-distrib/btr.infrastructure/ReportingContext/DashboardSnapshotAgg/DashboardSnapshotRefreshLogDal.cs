@@ -22,7 +22,7 @@ namespace btr.infrastructure.ReportingContext.DashboardSnapshotAgg
         public void InsertRunning(DashboardSnapshotRefreshLogModel model)
         {
             const string sql = @"
-INSERT INTO BTR_PortalDashboardRefreshLog (
+INSERT INTO BTRPD_RefreshLog (
     RefreshLogId, Domain, StartedAt, CompletedAt, Status, DurationMs, ErrorMessage, TriggeredBy)
 VALUES (
     @RefreshLogId, @Domain, @StartedAt, NULL, @Status, 0, '', @TriggeredBy)";
@@ -36,7 +36,7 @@ VALUES (
         public void MarkSuccess(string refreshLogId, int durationMs)
         {
             const string sql = @"
-UPDATE BTR_PortalDashboardRefreshLog
+UPDATE BTRPD_RefreshLog
 SET CompletedAt = @CompletedAt,
     Status = 'Success',
     DurationMs = @DurationMs,
@@ -57,7 +57,7 @@ WHERE RefreshLogId = @RefreshLogId";
         public void MarkFailed(string refreshLogId, int durationMs, string errorMessage)
         {
             const string sql = @"
-UPDATE BTR_PortalDashboardRefreshLog
+UPDATE BTRPD_RefreshLog
 SET CompletedAt = @CompletedAt,
     Status = 'Failed',
     DurationMs = @DurationMs,
@@ -101,7 +101,7 @@ FROM (
         ROW_NUMBER() OVER (
             PARTITION BY Domain
             ORDER BY COALESCE(CompletedAt, StartedAt) DESC, StartedAt DESC) AS RowNum
-    FROM BTR_PortalDashboardRefreshLog
+    FROM BTRPD_RefreshLog
     WHERE Domain IN ('Piutang', 'Inventory', 'InventoryRisk', 'Sales', 'Purchasing', 'Customer', 'Salesman', 'Collection')
 ) ranked
 WHERE RowNum = 1

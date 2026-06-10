@@ -30,7 +30,7 @@ M17 answers: *Which customers require management attention?*
 | **Retur, Effective Call, GPS, Faktur Kembali** | **Out of M17 scope** — deferred to other milestones or excluded |
 | **Collection effectiveness / DSO** | Deferred to **M20 Collection Dashboard** |
 | **Executive dashboard Top 5 Customers** | **Supplemented, not replaced** — M17 adds cross-domain customer lens at `/dashboard/customers` |
-| **Dedicated Customer snapshot domain approved** | New `BTR_PortalDashboardCustomer*` tables and refresh worker — not live composition |
+| **Dedicated Customer snapshot domain approved** | New `BTRPD_Customer*` tables and refresh worker — not live composition |
 
 ### Approved product outcome
 
@@ -58,7 +58,7 @@ This section identifies customer-related situations that typically require manag
 
 | Situation requiring attention | Business meaning | Existing capability | Availability |
 | ----------------------------- | ---------------- | ------------------- | ------------ |
-| **Customer with large outstanding balance** | Collection priority; cash tied up | Top 10 Outstanding Customers (`BTR_PortalDashboardPiutangTopCustomer`) | **Portal today** |
+| **Customer with large outstanding balance** | Collection priority; cash tied up | Top 10 Outstanding Customers (`BTRPD_PiutangTopCustomer`) | **Portal today** |
 | **Customer with overdue balances** | Past-due debt requires collection action | `OverdueCustomer` KPI; aging buckets per customer derivable from `PiutangOpenBalanceDto` | **Portal today** (count); per-customer overdue flag derivable |
 | **Chronic overdue customer** | Repeated or severely aged debt (> 90 days) | Aging bucket `> 90 Days`; executive `AgingOver90Percent` | **Portal today** — company-level; per-customer derivable from FF1/piutang rows |
 | **Receivable concentration in one customer** | Single default would materially impact cash | Executive `TopCustomerPercent`; Top 10 table | **Portal today** |
@@ -126,7 +126,7 @@ From `docs/foundation/WORKFLOW.md` and portal operational workflows:
 | Overdue Customer (count) | Piutang snapshot via `DashboardExecutiveComposer` | Yes — aggregate count | Headline attention card candidate |
 | Top Customer % | `#1 TopCustomer.OutstandingBalance / TotalPiutang` | Yes — concentration ratio | Receivable concentration signal |
 | Aging > 90 Day amount/% | Piutang aging buckets | Partial — company-level, not per customer | Context for collection crisis |
-| Critical Exposures — Top 5 Customers | Truncated from `BTR_PortalDashboardPiutangTopCustomer` | Yes — ranking by balance | Direct reuse; extend to dedicated page |
+| Critical Exposures — Top 5 Customers | Truncated from `BTRPD_PiutangTopCustomer` | Yes — ranking by balance | Direct reuse; extend to dedicated page |
 | Sales Achievement % | Sales snapshot | No — company sales, not customer | Not customer analytics |
 | Total Customer (overview legacy) | Sales + Piutang overview cards | Partial — breadth counts only | Supporting metric, not attention signal |
 
@@ -136,7 +136,7 @@ From `docs/foundation/WORKFLOW.md` and portal operational workflows:
 
 | KPI / section | Customer relevance | Hidden customer data | Reuse rationale |
 | ------------- | ------------------ | -------------------- | --------------- |
-| Total Customer | **Yes** — distinct invoiced customers in month | Computed in `DashboardSalesFakturAggregator` but **not shown on detail page UI** | Reach metric; available in snapshot (`BTR_PortalDashboardSalesKpi.TotalCustomer`) |
+| Total Customer | **Yes** — distinct invoiced customers in month | Computed in `DashboardSalesFakturAggregator` but **not shown on detail page UI** | Reach metric; available in snapshot (`BTRPD_SalesKpi.TotalCustomer`) |
 | Top 10 Salesman | No — salesman dimension | `FakturView` rows contain `CustomerCode`, `CustomerName`, `WilayahName`, `KlasifikasiName` per Faktur | Same aggregator pattern can produce Top 10 Customer by omzet |
 | Weekly trend | No — company total | Per-customer weekly omzet derivable from same `FakturView` rows | Week grouper (`SalesOmzetChartWeekGrouper`) reusable |
 | Achievement % | No | — | Not customer analytics |
@@ -205,7 +205,7 @@ Purchasing analytics are invoice × supplier × warehouse. **No customer metrics
 | Total Customer (sales reach) | Sales snapshot / `DashboardSalesFakturAggregator` | Sales Report | Distinct `Customer` values in period | **Derivable** from report rows |
 | Total Customer (open piutang) | Piutang snapshot / `DashboardPiutangAggregator` | Piutang Report (unfiltered all-open) | Distinct customers with `KurangBayar > 1` | **Exact** when report scope = all open |
 | Overdue Customer | Piutang snapshot | Piutang Report | Count distinct customers with `JatuhTempo < today` | **Derivable** |
-| Top Customer outstanding balance | `BTR_PortalDashboardPiutangTopCustomer` | Piutang Report | Group by customer, sum balances | **Derivable** |
+| Top Customer outstanding balance | `BTRPD_PiutangTopCustomer` | Piutang Report | Group by customer, sum balances | **Derivable** |
 | Top Customer % of Total Piutang | Executive composer | Piutang Report | Top 1 customer sum / footer Total Piutang | **Derivable** |
 | Aging > 90 Days (company) | Piutang aging snapshot | Piutang Report | Sum balances where overdue > 90 days | **Derivable** |
 | Top Customer by omzet | **Not computed** — `IFakturViewDal` | Sales Report | Group by customer, sum `GrandTotal` | **Derivable** (no dashboard KPI yet) |
@@ -363,12 +363,12 @@ Objective: maximize reuse and avoid new business calculations when equivalent lo
 
 | Table | Customer fields | M17 reuse |
 | ----- | --------------- | --------- |
-| `BTR_PortalDashboardSalesKpi` | `TotalCustomer` | Monthly reach |
-| `BTR_PortalDashboardPiutangKpi` | `TotalCustomer`, `OverdueCustomer` | Debt breadth and urgency |
-| `BTR_PortalDashboardPiutangTopCustomer` | `Rank`, `CustomerName`, `OutstandingBalance` | Top N receivable ranking |
-| `BTR_PortalDashboardPiutangAging` | Bucket amounts (company-level) | Company aging context |
+| `BTRPD_SalesKpi` | `TotalCustomer` | Monthly reach |
+| `BTRPD_PiutangKpi` | `TotalCustomer`, `OverdueCustomer` | Debt breadth and urgency |
+| `BTRPD_PiutangTopCustomer` | `Rank`, `CustomerName`, `OutstandingBalance` | Top N receivable ranking |
+| `BTRPD_PiutangAging` | Bucket amounts (company-level) | Company aging context |
 
-**Gap:** No `BTR_PortalDashboardSalesTopCustomer` table. Materialized-dashboard analysis listed **Month × Customer** as priority future aggregate. M17 may require new snapshot table **or** live query from `IFakturViewDal` at refresh time.
+**Gap:** No `BTRPD_SalesTopCustomer` table. Materialized-dashboard analysis listed **Month × Customer** as priority future aggregate. M17 may require new snapshot table **or** live query from `IFakturViewDal` at refresh time.
 
 **Gap:** Top customer snapshot stores `CustomerName` only — **no `CustomerCode`**. Drill-down to reports may require name search until code is persisted.
 
@@ -598,7 +598,7 @@ Executive Dashboard Top 5 Customers section **unchanged** — M17 supplements, d
 | ----------- | ------ | ------- |
 | Total Customer with open piutang | Piutang snapshot KPI | Attention card / segmentation |
 | Overdue Customer count | Piutang snapshot KPI | Attention card |
-| Top 10 customers by outstanding balance | `BTR_PortalDashboardPiutangTopCustomer` | Seed ranking logic — extend with CustomerCode |
+| Top 10 customers by outstanding balance | `BTRPD_PiutangTopCustomer` | Seed ranking logic — extend with CustomerCode |
 | Five aging bucket amounts (company-level) | Piutang aging snapshot | >90d exposure card |
 | Top 1 customer % of Total Piutang | Executive composer pattern | Concentration card (piutang) |
 | Total Customer invoiced (current month) | Sales snapshot KPI | Active customer count |
@@ -742,7 +742,7 @@ Executive Dashboard Top 5 Customers section **unchanged** — M17 supplements, d
 
 | # | Decision |
 | - | -------- |
-| Q39 | Customer KPIs **materialized** in snapshot tables (`BTR_PortalDashboardCustomer*`) |
+| Q39 | Customer KPIs **materialized** in snapshot tables (`BTRPD_Customer*`) |
 | Q40 | **Dedicated Customer snapshot domain** with its own refresh process/worker |
 | Q41 | **Historical trend analysis:** No |
 
@@ -838,7 +838,7 @@ Based on approved scope, the Customer snapshot domain should materialize at mini
 | Piutang aggregator | `btr.application/ReportingContext/DashboardSnapshotAgg/Services/DashboardPiutangAggregator.cs` |
 | Sales aggregator | `btr.application/ReportingContext/DashboardSnapshotAgg/Services/DashboardSalesFakturAggregator.cs` |
 | Executive composer | `btr.application/ReportingContext/DashboardExecutiveAgg/Services/DashboardExecutiveComposer.cs` |
-| Piutang top customer table | `btr.sql/Tables/ReportingContext/BTR_PortalDashboardPiutangTopCustomer.sql` |
+| Piutang top customer table | `btr.sql/Tables/ReportingContext/BTRPD_PiutangTopCustomer.sql` |
 | Customer master | `btr.domain/SalesContext/CustomerAgg/CustomerModel.cs` |
 | Faktur view (sales) | `btr.application/SalesContext/FakturInfo/FakturView.cs` |
 | Piutang sales wilayah DTO | `btr.application/FinanceContext/PiutangAgg/Contracts/IPiutangSalesWilayahDal.cs` |
@@ -861,7 +861,7 @@ Based on approved scope, the Customer snapshot domain should materialize at mini
 
 The Architect should:
 
-1. **Create dedicated Customer snapshot domain** — new `BTR_PortalDashboardCustomer*` tables, aggregator, DAL, refresh worker, and `GET /api/dashboard/customers` endpoint per Q39–Q40.
+1. **Create dedicated Customer snapshot domain** — new `BTRPD_Customer*` tables, aggregator, DAL, refresh worker, and `GET /api/dashboard/customers` endpoint per Q39–Q40.
 2. **Reuse authoritative business rules** from `DashboardPiutangAggregator` and `DashboardSalesFakturAggregator` — customer key (`CustomerCode` first), aging buckets, `KurangBayar > 1`, void exclusion, sales current-month period, piutang all-time open semantics.
 3. **Implement new snapshot computations:** Top 10 by Omzet, Top 10 by Piutang (with CustomerCode), dormant detection (90-day rule + prior history), plafond breach, suspended-with-sales, Klasifikasi/Wilayah segmentation counts, attention list rows.
 4. **Add route** `/dashboard/customers` and sidebar item **Customers** under Dashboard; page title **Customer Analytics**.

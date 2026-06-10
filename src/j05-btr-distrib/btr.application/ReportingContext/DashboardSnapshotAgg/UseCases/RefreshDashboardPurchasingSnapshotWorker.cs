@@ -26,22 +26,19 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.UseCases
         private readonly IDashboardPurchasingSnapshotDal _snapshotDal;
         private readonly IDashboardSnapshotRefreshLogDal _refreshLogDal;
         private readonly ITglJamDal _tglJamDal;
-        private readonly INunaCounterBL _counter;
 
         public RefreshDashboardPurchasingSnapshotWorker(
             IInvoiceViewDal invoiceViewDal,
             DashboardPurchasingInvoiceAggregator aggregator,
             IDashboardPurchasingSnapshotDal snapshotDal,
             IDashboardSnapshotRefreshLogDal refreshLogDal,
-            ITglJamDal tglJamDal,
-            INunaCounterBL counter)
+            ITglJamDal tglJamDal)
         {
             _invoiceViewDal = invoiceViewDal;
             _aggregator = aggregator;
             _snapshotDal = snapshotDal;
             _refreshLogDal = refreshLogDal;
             _tglJamDal = tglJamDal;
-            _counter = counter;
         }
 
         public void Execute(RefreshDashboardPurchasingSnapshotRequest request)
@@ -50,7 +47,7 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.UseCases
                 throw new ArgumentNullException(nameof(request));
 
             var sw = Stopwatch.StartNew();
-            var refreshLogId = _counter.Generate("PDR", IDFormatEnum.PFnnnn);
+            var refreshLogId = Ulid.NewUlid().ToString();
             var startedAt = _tglJamDal.Now;
 
             _refreshLogDal.InsertRunning(new DashboardSnapshotRefreshLogModel

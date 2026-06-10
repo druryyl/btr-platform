@@ -52,7 +52,7 @@ RefreshAllDashboardSnapshotsWorker
     ↓
 Dashboard*Aggregator (shared aggregation logic)
     ↓
-Dashboard*SnapshotWriter → BTR_PortalDashboard* tables
+Dashboard*SnapshotWriter → BTRPD_* tables
 
 Browser → GET /api/dashboard/{sales|piutang|inventory}   (detail pages — Layer A + B)
 Browser → GET /api/dashboard/overview                     (home — Layer A only)
@@ -128,9 +128,9 @@ Snapshot tables (fast SELECT)
 
 ### 4.1 Table naming convention
 
-Prefix: `BTR_PortalDashboard` — clearly portal-owned, read-only analytics artifacts.
+Prefix: `BTRPD_` — clearly portal-owned, read-only analytics artifacts.
 
-### 4.2 Operational metadata — `BTR_PortalDashboardRefreshLog`
+### 4.2 Operational metadata — `BTRPD_RefreshLog`
 
 One row per refresh attempt (all domains or single domain).
 
@@ -145,13 +145,13 @@ One row per refresh attempt (all domains or single domain).
 | `ErrorMessage` | `VARCHAR(500)` | Truncated error on failure |
 | `TriggeredBy` | `VARCHAR(20)` | `Scheduler`, `Manual` |
 
-Index: `IX_BTR_PortalDashboardRefreshLog_Domain_CompletedAt` on `(Domain, CompletedAt DESC)`.
+Index: `IX_BTRPD_RefreshLog_Domain_CompletedAt` on `(Domain, CompletedAt DESC)`.
 
 ### 4.3 Layer A — headline KPI tables (one active row per domain)
 
 Use **`SnapshotKey = 'CURRENT'`** upsert pattern — only the latest snapshot is retained per domain. **No historical snapshot retention** (confirmed — do not store prior refresh versions).
 
-#### `BTR_PortalDashboardPiutangKpi`
+#### `BTRPD_PiutangKpi`
 
 | Column | Type |
 | --- | --- |
@@ -162,7 +162,7 @@ Use **`SnapshotKey = 'CURRENT'`** upsert pattern — only the latest snapshot is
 | `OverdueCustomer` | `INT` |
 | `LastRefreshLogId` | `VARCHAR(13)` FK |
 
-#### `BTR_PortalDashboardInventoryKpi`
+#### `BTRPD_InventoryKpi`
 
 | Column | Type |
 | --- | --- |
@@ -172,7 +172,7 @@ Use **`SnapshotKey = 'CURRENT'`** upsert pattern — only the latest snapshot is
 | `TotalItem` | `INT` |
 | `LastRefreshLogId` | `VARCHAR(13)` |
 
-#### `BTR_PortalDashboardSalesKpi`
+#### `BTRPD_SalesKpi`
 
 | Column | Type |
 | --- | --- |
@@ -196,7 +196,7 @@ Use **`SnapshotKey = 'CURRENT'`** upsert pattern — only the latest snapshot is
 
 Child rows reference `SnapshotKey = 'CURRENT'` via domain FK. On refresh: **delete all child rows for domain, then insert** within the same transaction as KPI upsert.
 
-#### `BTR_PortalDashboardPiutangAging`
+#### `BTRPD_PiutangAging`
 
 | Column | Type |
 | --- | --- |
@@ -209,7 +209,7 @@ Child rows reference `SnapshotKey = 'CURRENT'` via domain FK. On refresh: **dele
 
 Unique: `(SnapshotKey, BucketKey)`.
 
-#### `BTR_PortalDashboardPiutangTopCustomer`
+#### `BTRPD_PiutangTopCustomer`
 
 | Column | Type |
 | --- | --- |
@@ -221,7 +221,7 @@ Unique: `(SnapshotKey, BucketKey)`.
 
 Unique: `(SnapshotKey, Rank)`.
 
-#### `BTR_PortalDashboardInventoryBreakdown`
+#### `BTRPD_InventoryBreakdown`
 
 | Column | Type |
 | --- | --- |
@@ -235,7 +235,7 @@ Unique: `(SnapshotKey, Rank)`.
 
 Store **full** breakdown for chart bars; flag Top 10 rows for table component. Alternative: store only Top 10 for tables and full breakdown separately — implementer may choose one table with `IsTop10` flag (recommended, fewer tables).
 
-#### `BTR_PortalDashboardSalesWeekTrend`
+#### `BTRPD_SalesWeekTrend`
 
 | Column | Type |
 | --- | --- |
@@ -246,7 +246,7 @@ Store **full** breakdown for chart bars; flag Top 10 rows for table component. A
 | `WeekLabel` | `VARCHAR(30)` |
 | `RecognizedAmount` | `DECIMAL(18,2)` — Faktur `GrandTotal` sum |
 
-#### `BTR_PortalDashboardSalesTopSalesman`
+#### `BTRPD_SalesTopSalesman`
 
 | Column | Type |
 | --- | --- |
@@ -258,7 +258,7 @@ Store **full** breakdown for chart bars; flag Top 10 rows for table component. A
 
 ### 4.5 Layer C — Piutang open fact (deferred)
 
-**Not required for initial delivery.** The refresh worker can aggregate in memory from an efficient open-balance query (expected row count: open fakturs only). Add `BTR_PortalDashboardPiutangOpenFact` only if shadow reconciliation requires persisted row-level compare or refresh memory becomes prohibitive.
+**Not required for initial delivery.** The refresh worker can aggregate in memory from an efficient open-balance query (expected row count: open fakturs only). Add `BTRPD_PiutangOpenFact` only if shadow reconciliation requires persisted row-level compare or refresh memory becomes prohibitive.
 
 ### 4.6 Source table index
 
@@ -277,15 +277,15 @@ Deploy index in Phase 1 before worker cutover.
 
 Add under `btr.sql/Tables/ReportingContext/`:
 
-- `BTR_PortalDashboardRefreshLog.sql`
-- `BTR_PortalDashboardPiutangKpi.sql`
-- `BTR_PortalDashboardPiutangAging.sql`
-- `BTR_PortalDashboardPiutangTopCustomer.sql`
-- `BTR_PortalDashboardInventoryKpi.sql`
-- `BTR_PortalDashboardInventoryBreakdown.sql`
-- `BTR_PortalDashboardSalesKpi.sql`
-- `BTR_PortalDashboardSalesWeekTrend.sql`
-- `BTR_PortalDashboardSalesTopSalesman.sql`
+- `BTRPD_RefreshLog.sql`
+- `BTRPD_PiutangKpi.sql`
+- `BTRPD_PiutangAging.sql`
+- `BTRPD_PiutangTopCustomer.sql`
+- `BTRPD_InventoryKpi.sql`
+- `BTRPD_InventoryBreakdown.sql`
+- `BTRPD_SalesKpi.sql`
+- `BTRPD_SalesWeekTrend.sql`
+- `BTRPD_SalesTopSalesman.sql`
 
 Register all in `btr.sql.sqlproj`.
 
@@ -466,20 +466,20 @@ Serves Dashboard Home (`/dashboard`) without loading Layer B dimensional data.
 
 | Field | Source |
 | --- | --- |
-| `Sales.TotalOmzet` | `BTR_PortalDashboardSalesKpi` |
-| `Sales.TotalFaktur` | `BTR_PortalDashboardSalesKpi` |
-| `Sales.TotalCustomer` | `BTR_PortalDashboardSalesKpi` |
-| `Sales.GeneratedAt` | `BTR_PortalDashboardSalesKpi.GeneratedAt` |
-| `Piutang.TotalPiutang` | `BTR_PortalDashboardPiutangKpi` |
-| `Piutang.TotalCustomer` | `BTR_PortalDashboardPiutangKpi` |
-| `Piutang.GeneratedAt` | `BTR_PortalDashboardPiutangKpi.GeneratedAt` |
-| `Inventory.TotalInventoryValue` | `BTR_PortalDashboardInventoryKpi` |
-| `Inventory.TotalItem` | `BTR_PortalDashboardInventoryKpi` |
-| `Inventory.GeneratedAt` | `BTR_PortalDashboardInventoryKpi.GeneratedAt` |
+| `Sales.TotalOmzet` | `BTRPD_SalesKpi` |
+| `Sales.TotalFaktur` | `BTRPD_SalesKpi` |
+| `Sales.TotalCustomer` | `BTRPD_SalesKpi` |
+| `Sales.GeneratedAt` | `BTRPD_SalesKpi.GeneratedAt` |
+| `Piutang.TotalPiutang` | `BTRPD_PiutangKpi` |
+| `Piutang.TotalCustomer` | `BTRPD_PiutangKpi` |
+| `Piutang.GeneratedAt` | `BTRPD_PiutangKpi.GeneratedAt` |
+| `Inventory.TotalInventoryValue` | `BTRPD_InventoryKpi` |
+| `Inventory.TotalItem` | `BTRPD_InventoryKpi` |
+| `Inventory.GeneratedAt` | `BTRPD_InventoryKpi.GeneratedAt` |
 
 Implementation: `DashboardOverviewDal` performs three indexed reads against KPI tables. No joins to Layer B tables. JWT required (same as other dashboard routes).
 
-Optional: extend `HealthController` to expose last refresh status per domain from `BTR_PortalDashboardRefreshLog`.
+Optional: extend `HealthController` to expose last refresh status per domain from `BTRPD_RefreshLog`.
 
 ### 6.2 Frontend (`btr.portal.web`)
 
@@ -719,7 +719,7 @@ Piutang refreshes most frequently because balances change intraday with pelunasa
 
 | Decision | Choice | Rationale |
 | --- | --- | --- |
-| Snapshot storage | Same SQL Server DB, `BTR_PortalDashboard*` tables | Consistent with `BTR_StokBalanceWarehouse` / `BTR_SalesOmzet` pattern |
+| Snapshot storage | Same SQL Server DB, `BTRPD_*` tables | Consistent with `BTR_StokBalanceWarehouse` / `BTR_SalesOmzet` pattern |
 | Active snapshot pattern | Single `CURRENT` row per domain | Simplest read path; no history management |
 | Worker host | `btr.portal.worker` + Task Scheduler | No IIS timer fragility; no distrib coupling |
 | Piutang source | New `PiutangOpenBalanceDal` with `Sisa > 1` | Eliminates 25-year date scan; business-equivalent |
