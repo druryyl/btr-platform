@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import Message from 'primevue/message'
 import DashboardDetailLayout from '@/components/dashboard/DashboardDetailLayout.vue'
@@ -11,6 +11,7 @@ import InventoryRiskAttentionList from '@/components/dashboard/InventoryRiskAtte
 import InventoryRiskNavigationSection from '@/components/dashboard/InventoryRiskNavigationSection.vue'
 import Top10RankingTable from '@/components/dashboard/Top10RankingTable.vue'
 import { formatCurrency, formatNumber, formatPercent } from '@/services/formatters'
+import { INVENTORY_RISK_ATTENTION_SIGNAL_ALL } from '@/services/inventoryRiskAttentionSignals'
 import { resolveInvestigationSourceLabel } from '@/services/investigationSourceLabels'
 import { navigateToInvestigation } from '@/services/navigateToInvestigation'
 import { useDashboardStore } from '@/stores/dashboardStore'
@@ -19,6 +20,7 @@ import type { DashboardInventoryBreakdownItem, DashboardInventoryRiskRankingRow 
 const dashboard = useDashboardStore()
 const router = useRouter()
 const sourceLabel = resolveInvestigationSourceLabel('/dashboard/inventory-risk')
+const attentionSignalFilter = ref(INVENTORY_RISK_ATTENTION_SIGNAL_ALL)
 
 const cards = computed(() => dashboard.inventoryRisk?.AttentionCards)
 const unavailable = computed(() => dashboard.inventoryRisk != null && !dashboard.inventoryRisk.IsAvailable)
@@ -72,10 +74,31 @@ const slowColumns = [
   { field: 'PercentOfAtRisk', header: '% of Slow Moving' },
 ]
 
+const sectionNavItems = [
+  { id: 'inventory-risk-attention-cards', label: 'Attention Cards' },
+  { id: 'inventory-risk-charts', label: 'Risk Exposure' },
+  { id: 'inventory-risk-attention-list', label: 'Attention List' },
+  { id: 'inventory-risk-rankings', label: 'Rankings' },
+]
+
 function onRankingRowClick(row: Record<string, unknown>): void {
   const item = row as unknown as DashboardInventoryRiskRankingRow
   if (!item.Investigation) return
   navigateToInvestigation(router, item.Investigation, sourceLabel)
+}
+
+function setAttentionSignalFilter(signalKey: string): void {
+  attentionSignalFilter.value = signalKey
+}
+
+function navigateToAttentionList(signalKey: string): void {
+  setAttentionSignalFilter(signalKey)
+  document.getElementById('inventory-risk-attention-list')?.scrollIntoView({ behavior: 'smooth' })
+}
+
+function onRefresh(): void {
+  attentionSignalFilter.value = INVENTORY_RISK_ATTENTION_SIGNAL_ALL
+  void dashboard.loadInventoryRisk()
 }
 
 onMounted(() => {
@@ -90,7 +113,7 @@ onMounted(() => {
     :loading="dashboard.loading"
     :error="dashboard.error"
     :generated-at="dashboard.inventoryRisk?.GeneratedAt"
-    @refresh="dashboard.loadInventoryRisk()"
+    @refresh="onRefresh"
   >
     <Message
       v-if="dashboard.inventoryRisk && !dashboard.inventoryRisk.IsDataFresh"
@@ -110,13 +133,34 @@ onMounted(() => {
       Inventory risk data is not yet available. Run the snapshot refresh worker for the InventoryRisk domain.
     </Message>
 
-    <section v-if="!unavailable" class="inventory-risk-dashboard__section">
+    <nav
+      v-if="!unavailable"
+      class="inventory-risk-dashboard__section-nav"
+      aria-label="Dashboard sections"
+    >
+      <a
+        v-for="item in sectionNavItems"
+        :key="item.id"
+        :href="`#${item.id}`"
+        class="inventory-risk-dashboard__section-nav-link"
+      >
+        {{ item.label }}
+      </a>
+    </nav>
+
+    <section
+      v-if="!unavailable"
+      id="inventory-risk-attention-cards"
+      class="inventory-risk-dashboard__section"
+    >
       <h2 class="inventory-risk-dashboard__section-title">Inventory Attention Cards</h2>
       <div class="inventory-risk-dashboard__kpi-row">
         <KpiCard
           title="Dead Stock Item Count"
           icon="pi pi-box"
           :loading="dashboard.loading"
+          class="inventory-risk-dashboard__kpi-card--clickable"
+          @click="navigateToAttentionList('DeadStock')"
         >
           <span class="metric__value">
             {{ cards ? formatNumber(cards.DeadStockItemCount) : '—' }}
@@ -126,6 +170,8 @@ onMounted(() => {
           title="Dead Stock Value"
           icon="pi pi-wallet"
           :loading="dashboard.loading"
+          class="inventory-risk-dashboard__kpi-card--clickable"
+          @click="navigateToAttentionList('DeadStock')"
         >
           <span class="metric__value">
             {{ cards ? formatCurrency(cards.DeadStockValue) : '—' }}
@@ -135,6 +181,8 @@ onMounted(() => {
           title="Slow Moving Item Count"
           icon="pi pi-clock"
           :loading="dashboard.loading"
+          class="inventory-risk-dashboard__kpi-card--clickable"
+          @click="navigateToAttentionList('SlowMoving')"
         >
           <span class="metric__value">
             {{ cards ? formatNumber(cards.SlowMovingItemCount) : '—' }}
@@ -144,6 +192,8 @@ onMounted(() => {
           title="Slow Moving Value"
           icon="pi pi-chart-line"
           :loading="dashboard.loading"
+          class="inventory-risk-dashboard__kpi-card--clickable"
+          @click="navigateToAttentionList('SlowMoving')"
         >
           <span class="metric__value">
             {{ cards ? formatCurrency(cards.SlowMovingValue) : '—' }}
@@ -179,16 +229,18 @@ onMounted(() => {
       </ExecutiveAttentionCard>
     </section>
 
-    <div v-if="!unavailable" class="inventory-risk-dashboard__charts-row">
+    <div
+      v-if="!unavailable"
+      id="inventory-risk-charts"
+      class="inventory-risk-dashboard__charts-row inventory-risk-dashboard__section"
+    >
       <AgingPieChart
-        class="inventory-risk-dashboard__section"
         title="Inventory Aging Distribution"
         empty-message="No inventory aging data."
         :buckets="agingBuckets"
         :loading="dashboard.loading"
       />
       <InventoryHorizontalBarChart
-        class="inventory-risk-dashboard__section"
         title="Category Risk Exposure"
         :items="categoryRiskItems"
         :loading="dashboard.loading"
@@ -203,15 +255,23 @@ onMounted(() => {
       :loading="dashboard.loading"
     />
 
-    <InventoryRiskAttentionList
+    <section
       v-if="!unavailable"
       id="inventory-risk-attention-list"
       class="inventory-risk-dashboard__section"
-      :items="dashboard.inventoryRisk?.AttentionList ?? []"
-      :loading="dashboard.loading"
-    />
+    >
+      <InventoryRiskAttentionList
+        v-model:signal-filter="attentionSignalFilter"
+        :items="dashboard.inventoryRisk?.AttentionList ?? []"
+        :loading="dashboard.loading"
+      />
+    </section>
 
-    <section v-if="!unavailable" class="inventory-risk-dashboard__section">
+    <section
+      v-if="!unavailable"
+      id="inventory-risk-rankings"
+      class="inventory-risk-dashboard__section"
+    >
       <h2 class="inventory-risk-dashboard__section-title">Top 10 Rankings</h2>
       <div class="inventory-risk-dashboard__rankings">
         <Top10RankingTable
@@ -251,8 +311,33 @@ onMounted(() => {
   margin-bottom: 1rem;
 }
 
+.inventory-risk-dashboard__section-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  margin-bottom: 1.5rem;
+  padding: 0.75rem 0;
+  background: var(--p-content-background);
+  border-bottom: 1px solid var(--p-content-border-color);
+}
+
+.inventory-risk-dashboard__section-nav-link {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--p-primary-color);
+  text-decoration: none;
+}
+
+.inventory-risk-dashboard__section-nav-link:hover {
+  text-decoration: underline;
+}
+
 .inventory-risk-dashboard__section {
   margin-bottom: 1.5rem;
+  scroll-margin-top: 3.5rem;
 }
 
 .inventory-risk-dashboard__section-title {
@@ -265,6 +350,10 @@ onMounted(() => {
   grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
   gap: 1rem;
   margin-bottom: 1rem;
+}
+
+.inventory-risk-dashboard__kpi-card--clickable {
+  cursor: pointer;
 }
 
 .inventory-risk-dashboard__attention-card {
