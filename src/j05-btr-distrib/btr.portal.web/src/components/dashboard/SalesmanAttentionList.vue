@@ -1,22 +1,68 @@
 <script setup lang="ts">
+import { computed, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import Card from 'primevue/card'
 import Column from 'primevue/column'
 import DataTable from 'primevue/datatable'
 import Button from 'primevue/button'
 import ProgressSpinner from 'primevue/progressspinner'
+import SelectButton from 'primevue/selectbutton'
 import type { DashboardSalesmanAttentionItem } from '@/models/dashboard'
 import { formatCurrency } from '@/services/formatters'
+import {
+  countSalesmanAttentionBySignal,
+  filterSalesmanAttentionItems,
+  SALESMAN_ATTENTION_SIGNAL_ALL,
+  SALESMAN_ATTENTION_SIGNAL_KEYS,
+  SALESMAN_ATTENTION_SIGNAL_LABELS,
+} from '@/services/salesmanAttentionSignals'
 import { resolveInvestigationSourceLabel } from '@/services/investigationSourceLabels'
 import { navigateToInvestigation } from '@/services/navigateToInvestigation'
 
-defineProps<{
+const props = defineProps<{
   items: DashboardSalesmanAttentionItem[]
   loading: boolean
 }>()
 
+const signalFilter = defineModel<string>('signalFilter', { default: SALESMAN_ATTENTION_SIGNAL_ALL })
+
 const router = useRouter()
 const route = useRoute()
+const first = ref(0)
+const rows = ref(25)
+
+const signalCounts = computed(() => countSalesmanAttentionBySignal(props.items))
+
+const filterOptions = computed(() => [
+  { label: `All (${props.items.length})`, value: SALESMAN_ATTENTION_SIGNAL_ALL },
+  ...SALESMAN_ATTENTION_SIGNAL_KEYS.map((key) => ({
+    label: `${SALESMAN_ATTENTION_SIGNAL_LABELS[key]} (${signalCounts.value[key]})`,
+    value: key,
+  })),
+])
+
+const filteredItems = computed(() =>
+  filterSalesmanAttentionItems(props.items, signalFilter.value),
+)
+
+const emptyMessage = computed(() => {
+  if (props.items.length === 0) {
+    return 'No salesmen require attention.'
+  }
+
+  return 'No salesmen match this signal.'
+})
+
+watch(signalFilter, () => {
+  first.value = 0
+})
+
+watch(
+  () => props.items,
+  () => {
+    first.value = 0
+  },
+)
 
 function formatValue(item: DashboardSalesmanAttentionItem): string {
   if (item.ValueText) {
@@ -44,8 +90,13 @@ function investigate(item: DashboardSalesmanAttentionItem): void {
   <Card class="salesman-attention-list">
     <template #title>
       <div class="salesman-attention-list__title">
-        <i class="pi pi-exclamation-triangle" aria-hidden="true" />
-        <span>Salesman Attention List</span>
+        <div class="salesman-attention-list__title-row">
+          <i class="pi pi-exclamation-triangle" aria-hidden="true" />
+          <span>Salesman Attention List</span>
+        </div>
+        <span v-if="!loading" class="salesman-attention-list__count">
+          {{ items.length }} attention {{ items.length === 1 ? 'item' : 'items' }}
+        </span>
       </div>
     </template>
 
@@ -54,37 +105,58 @@ function investigate(item: DashboardSalesmanAttentionItem): void {
         <ProgressSpinner style="width: 2.5rem; height: 2.5rem" stroke-width="4" />
       </div>
 
-      <DataTable
-        v-else
-        :value="items"
-        striped-rows
-        class="salesman-attention-list__table"
-      >
-        <template #empty>
-          <p class="salesman-attention-list__empty">No salesmen require attention.</p>
-        </template>
+      <template v-else>
+        <div class="salesman-attention-list__filters">
+          <SelectButton
+            v-model="signalFilter"
+            :options="filterOptions"
+            option-label="label"
+            option-value="value"
+            :allow-empty="false"
+            aria-label="Filter by attention signal"
+          />
+          <p class="salesman-attention-list__hint">
+            Cards count salesmen; this list counts salesman × signal rows.
+          </p>
+        </div>
 
-        <Column field="SalesPersonCode" header="Code" />
-        <Column field="SalesPersonName" header="Salesman" />
-        <Column field="SignalLabel" header="Signal" />
-        <Column header="Detail">
-          <template #body="{ data }">
-            {{ formatValue(data) }}
-          </template>
-        </Column>
-        <Column field="WilayahName" header="Wilayah" />
-        <Column header="">
-          <template #body="{ data }">
-            <Button
-              v-if="data.Investigation"
-              label="Investigate"
-              text
-              size="small"
-              @click="investigate(data)"
-            />
-          </template>
-        </Column>
-      </DataTable>
+        <div class="salesman-attention-list__table-panel">
+          <DataTable
+            v-model:first="first"
+            :value="filteredItems"
+            paginator
+            :rows="rows"
+            :rows-per-page-options="[10, 25, 50]"
+            striped-rows
+            class="salesman-attention-list__table"
+          >
+            <template #empty>
+              <p class="salesman-attention-list__empty">{{ emptyMessage }}</p>
+            </template>
+
+            <Column field="SalesPersonCode" header="Code" />
+            <Column field="SalesPersonName" header="Salesman" />
+            <Column field="SignalLabel" header="Signal" />
+            <Column header="Detail">
+              <template #body="{ data }">
+                {{ formatValue(data) }}
+              </template>
+            </Column>
+            <Column field="WilayahName" header="Wilayah" />
+            <Column header="">
+              <template #body="{ data }">
+                <Button
+                  v-if="data.Investigation"
+                  label="Investigate"
+                  text
+                  size="small"
+                  @click="investigate(data)"
+                />
+              </template>
+            </Column>
+          </DataTable>
+        </div>
+      </template>
     </template>
   </Card>
 </template>
@@ -92,8 +164,38 @@ function investigate(item: DashboardSalesmanAttentionItem): void {
 <style scoped>
 .salesman-attention-list__title {
   display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  width: 100%;
+}
+
+.salesman-attention-list__title-row {
+  display: flex;
   align-items: center;
   gap: 0.5rem;
+}
+
+.salesman-attention-list__count {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--p-text-muted-color);
+}
+
+.salesman-attention-list__filters {
+  margin-bottom: 1rem;
+}
+
+.salesman-attention-list__hint {
+  margin: 0.5rem 0 0;
+  font-size: 0.8125rem;
+  color: var(--p-text-muted-color);
+}
+
+.salesman-attention-list__table-panel {
+  max-height: 28rem;
+  overflow: auto;
 }
 
 .salesman-attention-list__loading {

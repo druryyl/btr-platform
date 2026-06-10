@@ -11,6 +11,10 @@ defineProps<{
   to?: string
   href?: string
 }>()
+
+const emit = defineEmits<{
+  anchorNavigate: []
+}>()
 </script>
 
 <template>
@@ -36,6 +40,7 @@ defineProps<{
     v-else-if="href && !unavailable"
     :href="href"
     class="salesman-attention-card__wrapper salesman-attention-card__wrapper--link"
+    @click="emit('anchorNavigate')"
   >
     <KpiCard
       :title="title"

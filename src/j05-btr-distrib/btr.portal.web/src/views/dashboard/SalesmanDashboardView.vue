@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import Message from 'primevue/message'
 import DashboardDetailLayout from '@/components/dashboard/DashboardDetailLayout.vue'
@@ -10,6 +10,7 @@ import SalesmanNavigationSection from '@/components/dashboard/SalesmanNavigation
 import Top10RankingTable from '@/components/dashboard/Top10RankingTable.vue'
 import type { DashboardSalesmanRankingRow } from '@/models/dashboard'
 import { formatNumber, formatPercent } from '@/services/formatters'
+import { SALESMAN_ATTENTION_SIGNAL_ALL } from '@/services/salesmanAttentionSignals'
 import { resolveInvestigationSourceLabel } from '@/services/investigationSourceLabels'
 import { navigateToInvestigation } from '@/services/navigateToInvestigation'
 import { useDashboardStore } from '@/stores/dashboardStore'
@@ -17,6 +18,7 @@ import { useDashboardStore } from '@/stores/dashboardStore'
 const dashboard = useDashboardStore()
 const router = useRouter()
 const sourceLabel = resolveInvestigationSourceLabel('/dashboard/salesmen')
+const attentionSignalFilter = ref(SALESMAN_ATTENTION_SIGNAL_ALL)
 
 const cards = computed(() => dashboard.salesman?.AttentionCards)
 const unavailable = computed(() => dashboard.salesman != null && !dashboard.salesman.IsAvailable)
@@ -57,10 +59,27 @@ const piutangColumns = [
   { field: 'PercentOfTotal', header: '% of Total' },
 ]
 
+const sectionNavItems = [
+  { id: 'salesman-attention-cards', label: 'Attention Cards' },
+  { id: 'salesman-attention-list', label: 'Attention List' },
+  { id: 'salesman-performance-rankings', label: 'Performance Rankings' },
+  { id: 'salesman-exposure-rankings', label: 'Exposure Rankings' },
+  { id: 'salesman-segmentation', label: 'Segmentation' },
+]
+
 function onRankingRowClick(row: Record<string, unknown>): void {
   const item = row as unknown as DashboardSalesmanRankingRow
   if (!item.Investigation) return
   navigateToInvestigation(router, item.Investigation, sourceLabel)
+}
+
+function setAttentionSignalFilter(signalKey: string): void {
+  attentionSignalFilter.value = signalKey
+}
+
+function onRefresh(): void {
+  attentionSignalFilter.value = SALESMAN_ATTENTION_SIGNAL_ALL
+  void dashboard.loadSalesman()
 }
 
 onMounted(() => {
@@ -75,7 +94,7 @@ onMounted(() => {
     :loading="dashboard.loading"
     :error="dashboard.error"
     :generated-at="dashboard.salesman?.GeneratedAt"
-    @refresh="dashboard.loadSalesman()"
+    @refresh="onRefresh"
   >
     <Message
       v-if="dashboard.salesman && !dashboard.salesman.IsDataFresh"
@@ -86,7 +105,18 @@ onMounted(() => {
       ⚠ Dashboard Data Not Fresh
     </Message>
 
-    <section class="salesman-dashboard__section">
+    <nav class="salesman-dashboard__section-nav" aria-label="Dashboard sections">
+      <a
+        v-for="item in sectionNavItems"
+        :key="item.id"
+        :href="`#${item.id}`"
+        class="salesman-dashboard__section-nav-link"
+      >
+        {{ item.label }}
+      </a>
+    </nav>
+
+    <section id="salesman-attention-cards" class="salesman-dashboard__section">
       <h2 class="salesman-dashboard__section-title">Attention Cards</h2>
       <div class="salesman-dashboard__cards">
         <SalesmanAttentionCardGroup
@@ -140,6 +170,7 @@ onMounted(() => {
           :loading="dashboard.loading"
           :requires-attention="cards?.PortfolioRequiresAttention"
           :unavailable="unavailable"
+          @anchor-navigate="setAttentionSignalFilter('DormantCustomerPortfolio')"
         >
           <div class="metric">
             <span class="metric__label">Dormant Portfolio</span>
@@ -163,14 +194,15 @@ onMounted(() => {
       </div>
     </section>
 
-    <SalesmanAttentionList
-      id="salesman-attention-list"
-      class="salesman-dashboard__section"
-      :items="dashboard.salesman?.AttentionList ?? []"
-      :loading="dashboard.loading"
-    />
+    <section id="salesman-attention-list" class="salesman-dashboard__section">
+      <SalesmanAttentionList
+        v-model:signal-filter="attentionSignalFilter"
+        :items="dashboard.salesman?.AttentionList ?? []"
+        :loading="dashboard.loading"
+      />
+    </section>
 
-    <section class="salesman-dashboard__section">
+    <section id="salesman-performance-rankings" class="salesman-dashboard__section">
       <h2 class="salesman-dashboard__section-title">Performance Rankings</h2>
       <div class="salesman-dashboard__rankings">
         <Top10RankingTable
@@ -197,7 +229,7 @@ onMounted(() => {
       </div>
     </section>
 
-    <section class="salesman-dashboard__section">
+    <section id="salesman-exposure-rankings" class="salesman-dashboard__section">
       <h2 class="salesman-dashboard__section-title">Exposure Rankings</h2>
       <Top10RankingTable
         title="Top 10 Piutang (all open)"
@@ -213,6 +245,7 @@ onMounted(() => {
     </section>
 
     <SalesmanSegmentationSection
+      id="salesman-segmentation"
       class="salesman-dashboard__section"
       :by-wilayah="dashboard.salesman?.Segmentation?.ByWilayah ?? []"
       :by-segment="dashboard.salesman?.Segmentation?.BySegment ?? []"
@@ -233,8 +266,33 @@ onMounted(() => {
   margin-bottom: 1rem;
 }
 
+.salesman-dashboard__section-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  margin-bottom: 1.5rem;
+  padding: 0.75rem 0;
+  background: var(--p-content-background);
+  border-bottom: 1px solid var(--p-content-border-color);
+}
+
+.salesman-dashboard__section-nav-link {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--p-primary-color);
+  text-decoration: none;
+}
+
+.salesman-dashboard__section-nav-link:hover {
+  text-decoration: underline;
+}
+
 .salesman-dashboard__section {
   margin-bottom: 1.5rem;
+  scroll-margin-top: 3.5rem;
 }
 
 .salesman-dashboard__section-title {
