@@ -263,6 +263,15 @@
     <Compile Include="ReportingContext\DashboardInventoryRiskAgg\Queries\GetDashboardInventoryRiskQuery.cs" />
     <Compile Include="ReportingContext\DashboardCustomerAgg\Contracts\IDashboardCustomerDal.cs" />
     <Compile Include="ReportingContext\DashboardCustomerAgg\Queries\GetDashboardCustomerQuery.cs" />
+    <Compile Include="ReportingContext\DashboardFieldActivityAgg\Contracts\IFieldActivityCheckInDal.cs" />
+    <Compile Include="ReportingContext\DashboardFieldActivityAgg\Contracts\IFieldActivityOrderDal.cs" />
+    <Compile Include="ReportingContext\DashboardFieldActivityAgg\Contracts\ICustomerCoordinateDal.cs" />
+    <Compile Include="ReportingContext\DashboardFieldActivityAgg\Models\FieldActivityModels.cs" />
+    <Compile Include="ReportingContext\DashboardFieldActivityAgg\Queries\GetFieldActivityQuery.cs" />
+    <Compile Include="ReportingContext\DashboardFieldActivityAgg\Queries\ListFieldActivitySalesmenQuery.cs" />
+    <Compile Include="ReportingContext\DashboardFieldActivityAgg\Services\FieldActivityComposer.cs" />
+    <Compile Include="ReportingContext\DashboardFieldActivityAgg\Services\FieldActivityOptions.cs" />
+    <Compile Include="ReportingContext\DashboardFieldActivityAgg\Services\GpsValidationClassifier.cs" />
     <Compile Include="ReportingContext\DashboardSalesmanAgg\Contracts\IDashboardSalesmanDal.cs" />
     <Compile Include="ReportingContext\DashboardSalesmanAgg\Queries\GetDashboardSalesmanQuery.cs" />
     <Compile Include="ReportingContext\DashboardSalesmanAgg\Queries\GetSalesmanPrincipalAchievementQuery.cs" />

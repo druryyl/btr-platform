@@ -231,6 +231,24 @@ RefreshDashboardSalesmanSnapshotWorker
 
 **Protected modules unchanged:** `DashboardSalesFakturAggregator`, `BTRPD_SalesTopSalesman`, `DashboardExecutiveComposer`.
 
+### Field Activity Live Query (M18.5)
+
+Field Activity is a **parameterized live-query dashboard** — no `BTRPD_*` tables, no worker refresh. User selects `(salesPersonId, visitDate)` and the API composes the response on demand:
+
+```text
+GET /api/dashboard/field-activity?salesPersonId=&visitDate=
+        ↓ GetFieldActivityQueryHandler
+        ↓ FieldActivityComposer
+        ↓ IEffectiveVisitPlanDal (Desktop resolver)
+        ↓ IFieldActivityCheckInDal / IFieldActivityOrderDal / ICustomerCoordinateDal
+        ↓ GpsValidationClassifier (RO1 bands)
+FieldActivityResponse (KPIs, stops, GeoJSON routes, meta)
+```
+
+**Why live query:** Intraday freshness for Today; visit-level coordinates and salesman-day scope do not fit the `CURRENT` snapshot replace model. Team trends and Alert Center integration deferred to Release 2 snapshot domain.
+
+**Config:** `FieldActivity:VisitPlanGoLiveDate` in portal API appsettings — dates before go-live return empty planned set with `PlanDataAvailable = false`.
+
 ### Inventory Risk Snapshot Domain (M19)
 
 Slow Moving & Dead Stock uses a **dedicated** snapshot domain — worker reads **source DALs**, not M15 Inventory snapshot tables:
@@ -290,6 +308,8 @@ GET /api/dashboard/purchasing
 | `GET /api/dashboard/purchasing` | `PurchasingDashboardController` | V1 Layer A + B + PurchasingManagement snapshot | Purchasing Management Dashboard (M21 extends response) |
 | `GET /api/dashboard/customers` | `CustomerDashboardController` | Dedicated Customer snapshot (`DashboardCustomerAgg`) | Customer Analytics (M17) |
 | `GET /api/dashboard/salesmen` | `SalesmanDashboardController` | Dedicated Salesman snapshot (`DashboardSalesmanAgg`) | Salesman Performance (M18) |
+| `GET /api/dashboard/field-activity` | `FieldActivityDashboardController` | Live query via `FieldActivityComposer` (`DashboardFieldActivityAgg`) | Field Activity Control Tower (M18.5) |
+| `GET /api/dashboard/field-activity/salesmen` | `FieldActivityDashboardController` | `ISalesPersonDal` | Salesman selector for Field Activity |
 | `GET /api/dashboard/collection` | `CollectionDashboardController` | Dedicated Collection snapshot (`DashboardCollectionAgg`) | Collection Dashboard (M20) |
 | `GET /api/dashboard/locations` | `LocationDashboardController` | Dedicated Location snapshot (`DashboardLocationAgg`) | Branch / Warehouse Performance (M22) |
 | `GET /api/dashboard/inventory-risk` | `InventoryRiskDashboardController` | Dedicated Inventory Risk snapshot (`DashboardInventoryRiskAgg`) | Slow Moving & Dead Stock (M19) |
@@ -312,6 +332,7 @@ Domain detail endpoints were extended additively across M8 and M13–M15; respon
 | `/dashboard/purchasing` | `PurchasingDashboardView` | `GET /api/dashboard/purchasing` |
 | `/dashboard/customers` | `CustomerDashboardView` | `GET /api/dashboard/customers` |
 | `/dashboard/salesmen` | `SalesmanDashboardView` | `GET /api/dashboard/salesmen` |
+| `/dashboard/field-activity` | `FieldActivityDashboardView` | `GET /api/dashboard/field-activity` (parameterized live query) |
 | `/dashboard/collection` | `CollectionDashboardView` | `GET /api/dashboard/collection` |
 | `/dashboard/locations` | `LocationDashboardView` | `GET /api/dashboard/locations` |
 | `/dashboard/inventory-risk` | `InventoryRiskDashboardView` | `GET /api/dashboard/inventory-risk` |

@@ -57,6 +57,25 @@ Publish the full `btr.sql` project. All portal snapshot objects are registered i
 
 **ID generation:** snapshot workers generate row IDs with `Ulid.NewUlid()`. No `BTR_ParamNo` seed is required for portal dashboards.
 
+### Field Activity demo seed (M18.5 — dev/staging only)
+
+For environments with sparse check-in data, optionally run:
+
+```powershell
+# Edit script first: set @EnableFieldActivityDemoSeed = 1
+sqlcmd -S "OFFICE-SQL01\SQLEXPRESS" -d btr -i "src\j05-btr-distrib\btr.sql\Scripts\Seed_FieldActivity_Demo.sql"
+```
+
+**Never run in production.** The script seeds `FA_DEMO_*` customers, visit plan rows, check-ins, and orders for yesterday against the first salesperson with a configured `Email`.
+
+Optional performance index for check-in lookups:
+
+```powershell
+sqlcmd -S "OFFICE-SQL01\SQLEXPRESS" -d btr -i "src\j05-btr-distrib\btr.sql\Scripts\Upgrade_M18_5_FieldActivity_Index.sql"
+```
+
+Portal API config: `FieldActivity:VisitPlanGoLiveDate` (default `2026-03-01`) controls planned-visit availability for dates before visit-plan materialization go-live.
+
 ### Publish steps
 
 1. Open `j05-btr-distrib.sln` in Visual Studio 2022.
@@ -279,6 +298,8 @@ GET  /api/dashboard/sales                → 200 with token
 GET  /api/dashboard/purchasing           → 200 with token
 GET  /api/dashboard/customers            → 200 with token
 GET  /api/dashboard/salesmen             → 200 with token
+GET  /api/dashboard/field-activity/salesmen → 200 with token
+GET  /api/dashboard/field-activity?salesPersonId=&visitDate= → 200 with token
 GET  /api/dashboard/collection           → 200 with token
 GET  /api/dashboard/location             → 200 with token
 GET  /api/dashboard/inventory-risk       → 200 with token

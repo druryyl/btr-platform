@@ -40,7 +40,7 @@ The portal complements BTR Desktop; it does not replace operational transaction 
 | Area | Capabilities |
 | ---- | ------------ |
 | Authentication | Sign in with existing BTR user credentials |
-| Dashboards | Executive home (Management Attention Center), Sales, Piutang, Customer Analytics, Salesman Performance, Inventory, Inventory Risk (Slow Moving & Dead Stock), Purchasing Management — detail analytics per domain |
+| Dashboards | Executive home (Management Attention Center), Sales, Piutang, Customer Analytics, Salesman Performance, Field Activity, Inventory, Inventory Risk (Slow Moving & Dead Stock), Purchasing Management — detail analytics per domain |
 | Reports | Sales, Piutang, Inventory, Purchasing — tabular transaction/detail views |
 | Analytics | KPI cards, charts, Top 10 rankings, footer summary totals |
 | Investigation / drill-down (M24) | Signal → report evidence navigation with traceability metadata across dashboards, Alert Center, and rankings |
@@ -278,6 +278,41 @@ Horizontal **investigation and navigation framework** unifying drill-down from K
 **Principal achievement:** Materialized from SM6 principal targets + `FakturItem.Total` grouped by `SalesPersonId` + `SupplierId` — no live query on drill-down.
 
 **Explicitly out of scope:** Pipeline omzet, Effective Call, route coverage, visit compliance (M18.5), GPS, retur, Faktur Kembali aggregates, collection effectiveness / DSO (M20), field activity metrics (M25), Bottom 10 rankings, team-level trend on dashboard home, unified salesman score, new Salesman Report route, executive dashboard changes, changes to Sales Dashboard Top 10 Salesman table.
+
+### Field Activity Dashboard (`/dashboard/field-activity`)
+
+**Period:** Single **salesman-day** — user selects salesman and date (Today · Yesterday · Custom). No automatic load on page open.
+
+**Purpose:** Field execution lens — answers *Did the field team execute the planned route, and where did they go?* **Separate navigation item** from Salesman Performance (M18 outcome KPIs). Complements M18; does not duplicate achievement or piutang exposure metrics.
+
+| Section | Content |
+| ------- | ------- |
+| Toolbar | Salesman selector · date quick-picks · **Load** button |
+| KPI strip | Planned · Actual · Effective Call · Missed · Unplanned · Visit Execution % · Effective Call Rate |
+| Map (center) | Planned vs actual polylines · visited / missed / unplanned pins · GPS validation accents · layer toggles |
+| Missed list | Planned customers with no check-in; **No Coordinates** badge when master lat/lng zero |
+| Timeline + replay | Check-ins ordered by time · GPS badges · effective-call indicator · animated replay with speed slider |
+| Cross-link | Link to M18 Salesmen dashboard |
+
+**Data source:** **Live query** on API request — `FieldActivityComposer` reads operational tables (`BTR_VisitPlan`, `BTR_VisitPlanException` via effective plan resolver, `BTR_CheckIn`, `BTR_Order`, `BTR_Customer`, `BTR_SalesPerson`). **No** `BTRPD_*` snapshot tables or worker refresh in Release 1.
+
+**Visit rules (daily grain):**
+
+| KPI / rule | Definition |
+| ---------- | ---------- |
+| Planned visits | Distinct customers on effective visit plan |
+| Actual visits | Distinct customers with check-in (earliest per customer same day) |
+| Effective call | Check-in customer with ≥1 `BTR_Order` same date + `UserEmail` |
+| Missed | Planned − actual (set difference) |
+| Unplanned | Check-in not on plan |
+| Visit Execution % | Actual ÷ Planned × 100; **N/A** when Planned = 0 |
+| Effective Call Rate | Effective ÷ Actual × 100; **N/A** when Actual = 0 |
+| GPS bands (RO1) | Valid ≤50 m · Warning 50–100 m · Suspicious >100 m |
+| Plan history | Dates before visit-plan go-live (`FieldActivity:VisitPlanGoLiveDate`) return empty planned set |
+
+**Relationships:** M18 = outcome lens (omzet, achievement, exposure). M18.5 = execution lens (route, GPS, visits). M25 (future) consumes Visit Execution %, Effective Call Rate, Unplanned Rate, GPS Suspicious % for coaching scores.
+
+**Explicitly out of scope (Release 1):** Team-level map, 7/30-day trends, Alert Center signals, M18 visit KPI cards, snapshot worker, visit-plan editing, continuous GPS tracking.
 
 ### Inventory Dashboard (`/dashboard/inventory`)
 

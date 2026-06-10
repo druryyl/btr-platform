@@ -28,6 +28,7 @@ const navSections: NavSection[] = [
       { label: 'Piutang', icon: 'pi pi-wallet', routeName: 'piutang-dashboard' },
       { label: 'Customers', icon: 'pi pi-users', routeName: 'customers-dashboard' },
       { label: 'Salesmen', icon: 'pi pi-id-card', routeName: 'salesmen-dashboard' },
+      { label: 'Field Activity', icon: 'pi pi-map', routeName: 'field-activity-dashboard' },
       { label: 'Collection', icon: 'pi pi-money-bill', routeName: 'collection-dashboard' },
       { label: 'Inventory', icon: 'pi pi-box', routeName: 'inventory-dashboard' },
       { label: 'Inventory Risk', icon: 'pi pi-exclamation-triangle', routeName: 'inventory-risk-dashboard' },

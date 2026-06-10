@@ -14,6 +14,7 @@ function createTestRouter(base = '/') {
             children: [
               { path: '', name: 'dashboard', component: { template: '<div />' } },
               { path: 'sales', name: 'sales-dashboard', component: { template: '<div />' } },
+              { path: 'field-activity', name: 'field-activity-dashboard', component: { template: '<div />' } },
             ],
           },
           { path: 'alerts', name: 'alert-center', component: { template: '<div />' } },
@@ -35,6 +36,12 @@ describe('dashboard route matching', () => {
     const router = createTestRouter()
     const resolved = router.resolve('/dashboard')
     expect(resolved.name).toBe('dashboard')
+  })
+
+  it('resolves /dashboard/field-activity to field-activity-dashboard', () => {
+    const router = createTestRouter()
+    const resolved = router.resolve('/dashboard/field-activity')
+    expect(resolved.name).toBe('field-activity-dashboard')
   })
 
   it('with /portal/ base, push /dashboard/sales stays under portal', async () => {

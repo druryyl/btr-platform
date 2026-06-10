@@ -48,6 +48,11 @@ const router = createRouter({
               component: () => import('@/views/dashboard/SalesmanDashboardView.vue'),
             },
             {
+              path: 'field-activity',
+              name: 'field-activity-dashboard',
+              component: () => import('@/views/dashboard/FieldActivityDashboardView.vue'),
+            },
+            {
               path: 'collection',
               name: 'collection-dashboard',
               component: () => import('@/views/dashboard/CollectionDashboardView.vue'),

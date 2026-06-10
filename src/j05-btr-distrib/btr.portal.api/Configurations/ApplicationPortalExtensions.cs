@@ -1,5 +1,6 @@
 using System.Reflection;
 using btr.application;
+using btr.application.ReportingContext.DashboardFieldActivityAgg.Services;
 using btr.application.ReportingContext.DashboardSnapshotAgg;
 using btr.application.ReportingContext.DashboardSnapshotAgg.Services;
 using btr.application.SalesContext.SalesOmzetAgg.Contracts;
@@ -33,6 +34,8 @@ namespace btr.portal.api.Configurations
             services.AddScoped<ITglJamDal, TglJamDal>();
             services.Configure<DashboardSnapshotOptions>(
                 configuration.GetSection(DashboardSnapshotOptions.SECTION_NAME));
+            services.Configure<FieldActivityOptions>(
+                configuration.GetSection(FieldActivityOptions.SECTION_NAME));
             services.AddScoped(sp =>
                 sp.GetRequiredService<IOptions<DashboardSnapshotOptions>>().Value);
 
