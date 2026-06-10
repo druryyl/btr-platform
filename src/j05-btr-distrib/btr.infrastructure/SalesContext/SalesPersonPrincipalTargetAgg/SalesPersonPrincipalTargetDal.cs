@@ -137,7 +137,8 @@ namespace btr.infrastructure.SalesContext.SalesPersonPrincipalTargetAgg
 
             using (var conn = new SqlConnection(ConnStringHelper.Get(_opt)))
             {
-                var rows = conn.Read<SumRow>(sql, dp).ToList();
+                var rows = conn.Read<SumRow>(sql, dp)?.ToList()
+                    ?? new List<SumRow>();
                 var dict = new Dictionary<string, decimal>(StringComparer.OrdinalIgnoreCase);
 
                 foreach (var row in rows)

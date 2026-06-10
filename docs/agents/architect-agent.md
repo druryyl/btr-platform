@@ -96,6 +96,19 @@ Document mitigation strategies when necessary.
 
 ---
 
+## Root Cause Validation
+
+For bug investigations:
+
+- validate investigation findings
+- verify root cause against source code
+- identify alternative causes
+- reject investigation if evidence is insufficient
+
+The Architect is responsible for confirming the technical cause before designing a fix.
+
+---
+
 ## Implementation Planning
 
 Produce a step-by-step implementation plan.

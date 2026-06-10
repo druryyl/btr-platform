@@ -80,6 +80,28 @@ Request clarification when necessary.
 
 ---
 
+## Investigation Analysis
+
+For bug reports:
+
+Determine:
+
+- expected behavior
+- actual behavior
+- reproduction steps
+- affected workflow
+- affected business process
+- root cause hypothesis
+- severity
+
+The Analyst should gather evidence before proposing a fix.
+
+Output:
+
+docs/investigations/<bug>/investigation.md
+
+---
+
 ## Feature Specification
 
 Produce a clear feature specification that can be handed to the Architect.

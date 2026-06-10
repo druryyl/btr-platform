@@ -24,11 +24,61 @@ namespace btr.test.SalesContext
                 }
             };
 
-            var sut = new SalesOmzetTargetDal(
-                Options.Create(new DatabaseOptions { ServerName = "JUDE7", DbName = "devTest", IsTest = true }),
-                principalDal);
+            var sut = CreateSut(principalDal);
 
             sut.GetTargetAmount("SP1", 2026, 1).Should().Be(800_000_000m);
+        }
+
+        [Fact]
+        public void SumTargetAmountForMonth_PrincipalOnly_NoLegacyRows_DoesNotThrow()
+        {
+            var principalDal = new StubPrincipalTargetDal
+            {
+                SalesPersonSums = new Dictionary<string, decimal>
+                {
+                    ["SP1"] = 700_000m,
+                    ["SP2"] = 750_000m
+                }
+            };
+
+            var sut = CreateSutWithLegacyTable(principalDal);
+
+            sut.SumTargetAmountForMonth(2099, 12).Should().Be(1_450_000m);
+        }
+
+        [Fact]
+        public void ListTargetsForMonth_PrincipalOnly_NoLegacyRows_DoesNotThrow()
+        {
+            var principalDal = new StubPrincipalTargetDal
+            {
+                SalesPersonSums = new Dictionary<string, decimal>
+                {
+                    ["SP1"] = 700_000m,
+                    ["SP2"] = 750_000m
+                }
+            };
+
+            var sut = CreateSutWithLegacyTable(principalDal);
+
+            var targets = sut.ListTargetsForMonth(2099, 12);
+
+            targets.Should().HaveCount(2);
+            targets["SP1"].Should().Be(700_000m);
+            targets["SP2"].Should().Be(750_000m);
+        }
+
+        private static SalesOmzetTargetDal CreateSut(
+            StubPrincipalTargetDal principalDal,
+            string dbName = "devTest")
+        {
+            return new SalesOmzetTargetDal(
+                Options.Create(new DatabaseOptions { ServerName = "JUDE7", DbName = dbName, IsTest = true }),
+                principalDal);
+        }
+
+        private static SalesOmzetTargetDal CreateSutWithLegacyTable(StubPrincipalTargetDal principalDal)
+        {
+            return CreateSut(principalDal, "btr");
         }
 
         private sealed class StubPrincipalTargetDal : ISalesPersonPrincipalTargetDal

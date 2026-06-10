@@ -112,7 +112,7 @@ namespace btr.infrastructure.SalesContext.SalesOmzetAgg
 
             using (var conn = new SqlConnection(ConnStringHelper.Get(_opt)))
             {
-                var row = conn.Read<TargetRow>(sql, dp).FirstOrDefault();
+                var row = conn.Read<TargetRow>(sql, dp)?.FirstOrDefault();
                 return row?.TargetAmount;
             }
         }
@@ -131,7 +131,8 @@ namespace btr.infrastructure.SalesContext.SalesOmzetAgg
 
             using (var conn = new SqlConnection(ConnStringHelper.Get(_opt)))
             {
-                var rows = conn.Read<TargetRowWithId>(sql, dp).ToList();
+                var rows = conn.Read<TargetRowWithId>(sql, dp)?.ToList()
+                    ?? new List<TargetRowWithId>();
                 var dict = new Dictionary<string, decimal>(StringComparer.OrdinalIgnoreCase);
 
                 foreach (var row in rows)

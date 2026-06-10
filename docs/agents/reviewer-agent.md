@@ -105,6 +105,21 @@ Document findings clearly.
 
 ---
 
+## Regression Validation
+
+For bug fixes:
+
+Verify:
+
+- original defect resolved
+- affected workflow remains functional
+- adjacent workflows remain functional
+- no obvious side effects introduced
+
+Review must include regression risk assessment.
+
+---
+
 # Inputs
 
 The Reviewer may receive:
