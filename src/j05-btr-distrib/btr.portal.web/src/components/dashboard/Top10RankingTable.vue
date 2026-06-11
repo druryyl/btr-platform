@@ -8,7 +8,7 @@ import { formatCurrency, formatPercent } from '@/services/formatters'
 const props = defineProps<{
   title: string
   columns: { field: string; header: string }[]
-  rows: Record<string, unknown>[]
+  rows: object[]
   loading: boolean
   valueField: string
   percentField?: string
@@ -20,9 +20,9 @@ const emit = defineEmits<{
   rowClick: [row: Record<string, unknown>]
 }>()
 
-function onRowClick(event: { data: Record<string, unknown> }): void {
+function onRowClick(event: { data: object }): void {
   if (!props.clickable) return
-  emit('rowClick', event.data)
+  emit('rowClick', event.data as Record<string, unknown>)
 }
 
 function formatCell(field: string, value: unknown, valueField: string, percentField?: string): string {
@@ -71,7 +71,7 @@ function formatCell(field: string, value: unknown, valueField: string, percentFi
           :header="col.header"
         >
           <template #body="{ data }">
-            {{ formatCell(col.field, data[col.field], valueField, percentField) }}
+            {{ formatCell(col.field, (data as Record<string, unknown>)[col.field], valueField, percentField) }}
           </template>
         </Column>
       </DataTable>

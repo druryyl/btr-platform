@@ -82,7 +82,7 @@ function bandSeverity(band: string | null | undefined): 'success' | 'warn' | 'da
     <p v-if="error" class="salesman-detail-drawer__error">{{ error }}</p>
 
     <TabView v-else>
-      <TabPanel header="Principal Achievement">
+      <TabPanel value="principals" header="Principal Achievement">
         <div v-if="loadingPrincipals" class="salesman-detail-drawer__loading">
           <ProgressSpinner style="width: 2.5rem; height: 2.5rem" stroke-width="4" />
         </div>
@@ -130,7 +130,7 @@ function bandSeverity(band: string | null | undefined): 'success' | 'warn' | 'da
         </template>
       </TabPanel>
 
-      <TabPanel header="Trend">
+      <TabPanel value="trend" header="Trend">
         <SalesmanAchievementTrend
           :points="trend?.Points ?? []"
           :loading="loadingTrend"

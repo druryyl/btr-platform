@@ -46,23 +46,23 @@ const filteredAttentionList = computed(() =>
 
 const omzetRankingRows = computed(() =>
   filterActiveSalesmen(
-    (dashboard.salesman?.PerformanceRankings?.TopOmzet ?? []) as DashboardSalesmanRankingRow[],
+    dashboard.salesman?.PerformanceRankings?.TopOmzet ?? [],
     showInactiveSalesmen.value,
-  ) as Record<string, unknown>[],
+  ),
 )
 
 const achievementRankingRows = computed(() =>
   filterActiveSalesmen(
-    (dashboard.salesman?.PerformanceRankings?.TopAchievement ?? []) as DashboardSalesmanRankingRow[],
+    dashboard.salesman?.PerformanceRankings?.TopAchievement ?? [],
     showInactiveSalesmen.value,
-  ) as Record<string, unknown>[],
+  ),
 )
 
 const piutangRankingRows = computed(() =>
   filterActiveSalesmen(
-    (dashboard.salesman?.ExposureRankings?.TopPiutang ?? []) as DashboardSalesmanRankingRow[],
+    dashboard.salesman?.ExposureRankings?.TopPiutang ?? [],
     showInactiveSalesmen.value,
-  ) as Record<string, unknown>[],
+  ),
 )
 
 const omzetColumns = [

@@ -17,6 +17,7 @@ const emit = defineEmits<{
 
 const mapContainer = ref<HTMLDivElement | null>(null)
 const mapInstance = ref<MapLibreMap | null>(null)
+const mapReady = ref(false)
 
 const showPlannedRoute = ref(true)
 const showActualRoute = ref(true)
@@ -46,6 +47,14 @@ const osmStyle = {
   ],
 }
 
+type PinStop = {
+  Latitude: number
+  Longitude: number
+  kind: string
+  index?: number
+  gps?: string
+}
+
 function gpsColor(level: string): string {
   switch (level) {
     case 'Valid':
@@ -59,37 +68,71 @@ function gpsColor(level: string): string {
   }
 }
 
-function buildPointFeatures(
-  stops: Array<{ Latitude: number; Longitude: number; label: string; color: string; kind: string; index?: number }>,
-) {
+function hasValidCoordinates(latitude: unknown, longitude: unknown): boolean {
+  const lat = Number(latitude)
+  const lng = Number(longitude)
+  return Number.isFinite(lat) && Number.isFinite(lng) && !(lat === 0 && lng === 0)
+}
+
+function normalizeLineCoordinates(coords: unknown): [number, number][] {
+  if (!Array.isArray(coords)) return []
+
+  const result: [number, number][] = []
+  for (const item of coords) {
+    if (!Array.isArray(item) || item.length < 2) continue
+    const lng = Number(item[0])
+    const lat = Number(item[1])
+    if (Number.isFinite(lng) && Number.isFinite(lat)) {
+      result.push([lng, lat])
+    }
+  }
+  return result
+}
+
+function buildPointFeatures(stops: PinStop[]) {
   return {
     type: 'FeatureCollection' as const,
     features: stops.map((stop) => ({
       type: 'Feature' as const,
       geometry: {
         type: 'Point' as const,
-        coordinates: [stop.Longitude, stop.Latitude],
+        coordinates: [stop.Longitude, stop.Latitude] as [number, number],
       },
       properties: {
-        label: stop.label,
-        color: stop.color,
         kind: stop.kind,
+        gps: stop.gps ?? '',
         index: stop.index ?? -1,
       },
     })),
   }
 }
 
+function setSourceData(sourceId: string, data: object): void {
+  const map = mapInstance.value
+  if (!map || !mapReady.value) return
+
+  const source = map.getSource(sourceId) as GeoJSONSource | undefined
+  if (!source) return
+
+  source.setData(data as never)
+}
+
+function safeSetLayoutProperty(layerId: string, property: string, value: unknown): void {
+  const map = mapInstance.value
+  if (!map || !map.getLayer(layerId)) return
+  map.setLayoutProperty(layerId, property, value)
+}
+
 function updateMapData(): void {
   const map = mapInstance.value
   const data = props.data
-  if (!map || !data) return
+  if (!map || !data || !mapReady.value) return
 
   const plannedLine = {
     type: 'Feature' as const,
     geometry: {
       type: 'LineString' as const,
-      coordinates: data.RouteGeometry.Planned.Coordinates ?? [],
+      coordinates: normalizeLineCoordinates(data.RouteGeometry?.Planned?.Coordinates),
     },
     properties: {},
   }
@@ -98,54 +141,52 @@ function updateMapData(): void {
     type: 'Feature' as const,
     geometry: {
       type: 'LineString' as const,
-      coordinates: data.RouteGeometry.Actual.Coordinates ?? [],
+      coordinates: normalizeLineCoordinates(data.RouteGeometry?.Actual?.Coordinates),
     },
     properties: {},
   }
 
-  const plannedPinStops = data.PlannedStops.filter(
-    (stop) => stop.HasCoordinates && stop.VisitStatus === 'Visited',
+  const plannedPinStops: PinStop[] = data.PlannedStops.filter(
+    (stop) => hasValidCoordinates(stop.Latitude, stop.Longitude) && stop.VisitStatus === 'Visited',
   ).map((stop) => ({
-    Latitude: stop.Latitude,
-    Longitude: stop.Longitude,
-    label: String(stop.NoUrut),
-    color: '#0d9488',
+    Latitude: Number(stop.Latitude),
+    Longitude: Number(stop.Longitude),
     kind: 'planned',
   }))
 
-  const missedPinStops = data.PlannedStops.filter(
-    (stop) => stop.HasCoordinates && stop.VisitStatus === 'Missed',
+  const missedPinStops: PinStop[] = data.PlannedStops.filter(
+    (stop) => hasValidCoordinates(stop.Latitude, stop.Longitude) && stop.VisitStatus === 'Missed',
   ).map((stop) => ({
-    Latitude: stop.Latitude,
-    Longitude: stop.Longitude,
-    label: String(stop.NoUrut),
-    color: '#ef4444',
+    Latitude: Number(stop.Latitude),
+    Longitude: Number(stop.Longitude),
     kind: 'missed',
   }))
 
-  const actualPinStops = data.ActualStops.filter((stop) => stop.HasCoordinates).map((stop, index) => ({
-    Latitude: stop.Latitude,
-    Longitude: stop.Longitude,
-    label: String(stop.Sequence),
-    color: stop.VisitStatus === 'Unplanned' ? '#3b82f6' : gpsColor(stop.GpsValidation),
-    kind: stop.VisitStatus === 'Unplanned' ? 'unplanned' : 'actual',
+  const actualPinStops: PinStop[] = data.ActualStops.filter(
+    (stop) => hasValidCoordinates(stop.Latitude, stop.Longitude) && stop.VisitStatus !== 'Unplanned',
+  ).map((stop, index) => ({
+    Latitude: Number(stop.Latitude),
+    Longitude: Number(stop.Longitude),
+    kind: 'actual',
+    gps: stop.GpsValidation,
     index,
   }))
 
-  ;(map.getSource('planned-route') as GeoJSONSource | undefined)?.setData(plannedLine)
-  ;(map.getSource('actual-route') as GeoJSONSource | undefined)?.setData(actualLine)
-  ;(map.getSource('planned-pins') as GeoJSONSource | undefined)?.setData(
-    buildPointFeatures(plannedPinStops),
-  )
-  ;(map.getSource('missed-pins') as GeoJSONSource | undefined)?.setData(
-    buildPointFeatures(missedPinStops),
-  )
-  ;(map.getSource('actual-pins') as GeoJSONSource | undefined)?.setData(
-    buildPointFeatures(actualPinStops),
-  )
-  ;(map.getSource('unplanned-pins') as GeoJSONSource | undefined)?.setData(
-    buildPointFeatures(actualPinStops.filter((stop) => stop.kind === 'unplanned')),
-  )
+  const unplannedPinStops: PinStop[] = data.ActualStops.filter(
+    (stop) => hasValidCoordinates(stop.Latitude, stop.Longitude) && stop.VisitStatus === 'Unplanned',
+  ).map((stop, index) => ({
+    Latitude: Number(stop.Latitude),
+    Longitude: Number(stop.Longitude),
+    kind: 'unplanned',
+    index,
+  }))
+
+  setSourceData('planned-route', plannedLine)
+  setSourceData('actual-route', actualLine)
+  setSourceData('planned-pins', buildPointFeatures(plannedPinStops))
+  setSourceData('missed-pins', buildPointFeatures(missedPinStops))
+  setSourceData('actual-pins', buildPointFeatures(actualPinStops))
+  setSourceData('unplanned-pins', buildPointFeatures(unplannedPinStops))
 
   fitMapBounds(data)
   updateReplayMarker()
@@ -158,14 +199,18 @@ function fitMapBounds(data: FieldActivityResponse): void {
   const coords: [number, number][] = []
 
   for (const stop of data.PlannedStops) {
-    if (stop.HasCoordinates) coords.push([stop.Longitude, stop.Latitude])
+    if (hasValidCoordinates(stop.Latitude, stop.Longitude)) {
+      coords.push([Number(stop.Longitude), Number(stop.Latitude)])
+    }
   }
   for (const stop of data.ActualStops) {
-    if (stop.HasCoordinates) coords.push([stop.Longitude, stop.Latitude])
+    if (hasValidCoordinates(stop.Latitude, stop.Longitude)) {
+      coords.push([Number(stop.Longitude), Number(stop.Latitude)])
+    }
   }
 
   if (coords.length === 0) {
-    map.setCenter([106.8, -6.2])
+    map.setCenter([110.37, -7.8])
     map.setZoom(11)
     return
   }
@@ -181,15 +226,15 @@ function fitMapBounds(data: FieldActivityResponse): void {
 function updateReplayMarker(): void {
   const map = mapInstance.value
   const data = props.data
-  if (!map || !data) return
+  if (!map || !data || !mapReady.value) return
 
   const stop = props.selectedIndex >= 0 ? data.ActualStops[props.selectedIndex] : null
-  const feature = stop?.HasCoordinates
+  const feature = stop && hasValidCoordinates(stop.Latitude, stop.Longitude)
     ? {
         type: 'Feature' as const,
         geometry: {
           type: 'Point' as const,
-          coordinates: [stop.Longitude, stop.Latitude],
+          coordinates: [Number(stop.Longitude), Number(stop.Latitude)] as [number, number],
         },
         properties: {},
       }
@@ -197,36 +242,62 @@ function updateReplayMarker(): void {
         type: 'Feature' as const,
         geometry: {
           type: 'Point' as const,
-          coordinates: [0, 0],
+          coordinates: [0, 0] as [number, number],
         },
         properties: {},
       }
 
-  ;(map.getSource('replay-marker') as GeoJSONSource | undefined)?.setData(feature)
-  map.setLayoutProperty(
+  setSourceData('replay-marker', feature)
+  safeSetLayoutProperty(
     'replay-marker-circle',
     'visibility',
-    stop?.HasCoordinates ? 'visible' : 'none',
+    stop && hasValidCoordinates(stop.Latitude, stop.Longitude) ? 'visible' : 'none',
   )
 }
 
 function setLayerVisibility(layerId: string, visible: boolean): void {
-  const map = mapInstance.value
-  if (!map || !map.getLayer(layerId)) return
-  map.setLayoutProperty(layerId, 'visibility', visible ? 'visible' : 'none')
+  safeSetLayoutProperty(layerId, 'visibility', visible ? 'visible' : 'none')
 }
 
 function applyLayerToggles(): void {
   setLayerVisibility('planned-route-line', showPlannedRoute.value)
   setLayerVisibility('actual-route-line', showActualRoute.value)
   setLayerVisibility('planned-pins-circle', showPlannedPins.value)
-  setLayerVisibility('planned-pins-label', showPlannedPins.value)
   setLayerVisibility('actual-pins-circle', showActualPins.value)
-  setLayerVisibility('actual-pins-label', showActualPins.value)
   setLayerVisibility('missed-pins-circle', showMissedPins.value)
-  setLayerVisibility('missed-pins-label', showMissedPins.value)
   setLayerVisibility('unplanned-pins-circle', showUnplannedPins.value)
-  setLayerVisibility('unplanned-pins-label', showUnplannedPins.value)
+}
+
+function parseFeatureIndex(rawIndex: unknown): number | null {
+  const index = typeof rawIndex === 'number' ? rawIndex : Number(rawIndex)
+  return Number.isFinite(index) && index >= 0 ? index : null
+}
+
+function onPinClick(event: maplibregl.MapMouseEvent & { features?: maplibregl.MapGeoJSONFeature[] }): void {
+  const index = parseFeatureIndex(event.features?.[0]?.properties?.index)
+  if (index != null) {
+    emit('stop-selected', index)
+  }
+}
+
+function addCirclePinLayer(
+  map: MapLibreMap,
+  sourceId: string,
+  layerId: string,
+  color: string | maplibregl.ExpressionSpecification,
+  outlineOnly = false,
+): void {
+  map.addLayer({
+    id: layerId,
+    type: 'circle',
+    source: sourceId,
+    paint: {
+      'circle-radius': 10,
+      'circle-color': outlineOnly ? 'rgba(0,0,0,0)' : color,
+      'circle-stroke-width': outlineOnly ? 3 : 2,
+      'circle-stroke-color': typeof color === 'string' ? color : '#64748b',
+    },
+  })
 }
 
 function initializeMap(): void {
@@ -235,11 +306,16 @@ function initializeMap(): void {
   const map = new maplibregl.Map({
     container: mapContainer.value,
     style: osmStyle,
-    center: [106.8, -6.2],
+    center: [110.37, -7.8],
     zoom: 11,
   })
 
   map.addControl(new maplibregl.NavigationControl(), 'top-right')
+
+  map.on('error', (mapErrorEvent) => {
+    const underlying = mapErrorEvent.error ?? mapErrorEvent
+    console.error('Field Activity map error:', underlying)
+  })
 
   map.on('load', () => {
     map.addSource('planned-route', {
@@ -280,10 +356,20 @@ function initializeMap(): void {
       },
     })
 
-    addPinLayer(map, 'planned-pins', 'planned-pins-circle', 'planned-pins-label', '#0d9488', false)
-    addPinLayer(map, 'missed-pins', 'missed-pins-circle', 'missed-pins-label', '#ef4444', true)
-    addPinLayer(map, 'actual-pins', 'actual-pins-circle', 'actual-pins-label', ['get', 'color'], false)
-    addPinLayer(map, 'unplanned-pins', 'unplanned-pins-circle', 'unplanned-pins-label', '#3b82f6', false)
+    addCirclePinLayer(map, 'planned-pins', 'planned-pins-circle', '#0d9488')
+    addCirclePinLayer(map, 'missed-pins', 'missed-pins-circle', '#ef4444', true)
+    addCirclePinLayer(map, 'actual-pins', 'actual-pins-circle', [
+      'match',
+      ['get', 'gps'],
+      'Valid',
+      gpsColor('Valid'),
+      'Warning',
+      gpsColor('Warning'),
+      'Suspicious',
+      gpsColor('Suspicious'),
+      gpsColor('Invalid'),
+    ])
+    addCirclePinLayer(map, 'unplanned-pins', 'unplanned-pins-circle', '#3b82f6')
 
     map.addLayer({
       id: 'replay-marker-circle',
@@ -297,53 +383,15 @@ function initializeMap(): void {
       },
     })
 
-    map.on('click', 'actual-pins-circle', (event) => {
-      const index = event.features?.[0]?.properties?.index
-      if (typeof index === 'number' && index >= 0) {
-        emit('stop-selected', index)
-      }
-    })
+    map.on('click', 'actual-pins-circle', onPinClick)
+    map.on('click', 'unplanned-pins-circle', onPinClick)
 
+    mapReady.value = true
     applyLayerToggles()
     updateMapData()
   })
 
   mapInstance.value = map
-}
-
-function addPinLayer(
-  map: MapLibreMap,
-  sourceId: string,
-  circleLayerId: string,
-  labelLayerId: string,
-  color: string | ['get', string],
-  outlineOnly: boolean,
-): void {
-  map.addLayer({
-    id: circleLayerId,
-    type: 'circle',
-    source: sourceId,
-    paint: {
-      'circle-radius': 14,
-      'circle-color': outlineOnly ? 'rgba(0,0,0,0)' : color,
-      'circle-stroke-width': outlineOnly ? 3 : 2,
-      'circle-stroke-color': typeof color === 'string' ? color : '#64748b',
-    },
-  })
-
-  map.addLayer({
-    id: labelLayerId,
-    type: 'symbol',
-    source: sourceId,
-    layout: {
-      'text-field': ['get', 'label'],
-      'text-size': 11,
-      'text-font': ['Open Sans Bold', 'Arial Unicode MS Bold'],
-    },
-    paint: {
-      'text-color': '#ffffff',
-    },
-  })
 }
 
 watch(
@@ -370,6 +418,7 @@ onMounted(() => {
 })
 
 onBeforeUnmount(() => {
+  mapReady.value = false
   mapInstance.value?.remove()
   mapInstance.value = null
 })

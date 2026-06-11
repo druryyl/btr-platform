@@ -51,7 +51,8 @@ ORDER BY CheckInTime ASC, CustomerId ASC";
 
             using (var conn = new SqlConnection(ConnStringHelper.Get(_opt)))
             {
-                return conn.Read<FieldActivityCheckInRow>(sql, dp).ToList();
+                var rows = conn.Read<FieldActivityCheckInRow>(sql, dp);
+                return (rows ?? Enumerable.Empty<FieldActivityCheckInRow>()).ToList();
             }
         }
     }
