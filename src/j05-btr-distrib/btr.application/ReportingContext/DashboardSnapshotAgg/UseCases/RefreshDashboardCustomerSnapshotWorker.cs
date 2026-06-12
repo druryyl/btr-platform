@@ -7,6 +7,7 @@ using btr.application.ReportingContext.DashboardSnapshotAgg.Progress;
 using btr.application.ReportingContext.DashboardSnapshotAgg.Services;
 using btr.application.SalesContext.CustomerAgg.Contracts;
 using btr.application.SalesContext.FakturInfo;
+using btr.application.Portal;
 using btr.application.SupportContext.TglJamAgg;
 using btr.nuna.Application;
 using btr.nuna.Domain;
@@ -31,6 +32,7 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.UseCases
         private readonly IDashboardCustomerSnapshotDal _snapshotDal;
         private readonly IDashboardSnapshotRefreshLogDal _refreshLogDal;
         private readonly ITglJamDal _tglJamDal;
+        private readonly IBusinessDateProvider _businessDateProvider;
 
         public RefreshDashboardCustomerSnapshotWorker(
             IFakturViewDal fakturViewDal,
@@ -40,7 +42,8 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.UseCases
             DashboardCustomerAggregator aggregator,
             IDashboardCustomerSnapshotDal snapshotDal,
             IDashboardSnapshotRefreshLogDal refreshLogDal,
-            ITglJamDal tglJamDal)
+            ITglJamDal tglJamDal,
+            IBusinessDateProvider businessDateProvider)
         {
             _fakturViewDal = fakturViewDal;
             _lastFakturDal = lastFakturDal;
@@ -50,6 +53,7 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.UseCases
             _snapshotDal = snapshotDal;
             _refreshLogDal = refreshLogDal;
             _tglJamDal = tglJamDal;
+            _businessDateProvider = businessDateProvider;
         }
 
         public void Execute(RefreshDashboardCustomerSnapshotRequest request)
@@ -74,7 +78,7 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.UseCases
 
             try
             {
-                var today = _tglJamDal.Now.Date;
+                var today = _businessDateProvider.Today;
                 var periode = CurrentMonthPeriode(today);
                 var generatedAt = _tglJamDal.Now;
                 const int loadSteps = 4;

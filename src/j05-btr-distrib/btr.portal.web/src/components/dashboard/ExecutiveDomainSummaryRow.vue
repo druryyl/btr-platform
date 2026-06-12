@@ -1,12 +1,28 @@
 <script setup lang="ts">
+import { computed } from 'vue'
 import { RouterLink } from 'vue-router'
+import { usePresentationStore } from '@/stores/presentationStore'
 
-defineProps<{
+const props = defineProps<{
   domain: string
   summaryText: string
   route: string
   available: boolean
 }>()
+
+const presentation = usePresentationStore()
+
+const displayText = computed(() => {
+  if (props.available || presentation.hidePlatformDiagnostics) {
+    return props.summaryText
+  }
+
+  return `${props.domain} data unavailable`
+})
+
+const showDetailsLink = computed(
+  () => props.available || presentation.hidePlatformDiagnostics,
+)
 </script>
 
 <template>
@@ -14,10 +30,10 @@ defineProps<{
     <div class="executive-domain-summary-row__content">
       <span class="executive-domain-summary-row__domain">{{ domain }}</span>
       <span class="executive-domain-summary-row__text">
-        {{ available ? summaryText : `${domain} data unavailable` }}
+        {{ displayText }}
       </span>
     </div>
-    <RouterLink v-if="available" :to="route" class="executive-domain-summary-row__link">
+    <RouterLink v-if="showDetailsLink" :to="route" class="executive-domain-summary-row__link">
       Details →
     </RouterLink>
   </div>

@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using btr.application.ReportingContext.DashboardSnapshotAgg.Models;
+using btr.application.Portal;
 using btr.application.ReportingContext.DashboardSnapshotAgg.Services;
 using btr.application.SalesContext.FakturInfo;
 using btr.infrastructure.ReportingContext.DashboardSalesAgg;
@@ -56,6 +57,7 @@ namespace btr.test.ReportingContext
                 new StubFakturViewDal(rows),
                 new StubTargetDal(5_000_000m),
                 new StubTglJamDal(FixedGeneratedAt),
+                new StubBusinessDateProvider(FixedGeneratedAt),
                 aggregator);
 
             var live = liveDal.GetSummary();
@@ -139,6 +141,18 @@ namespace btr.test.ReportingContext
             }
 
             public DateTime Now { get; }
+        }
+
+        private sealed class StubBusinessDateProvider : IBusinessDateProvider
+        {
+            public StubBusinessDateProvider(DateTime today)
+            {
+                Today = today.Date;
+            }
+
+            public DateTime Today { get; }
+
+            public bool IsPresentationActive => false;
         }
     }
 }

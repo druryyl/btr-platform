@@ -7,6 +7,7 @@ using btr.application.ReportingContext.DashboardSnapshotAgg.Models;
 using btr.application.ReportingContext.DashboardSnapshotAgg.Progress;
 using btr.application.ReportingContext.DashboardSnapshotAgg.Services;
 using btr.application.SalesContext.FakturInfo;
+using btr.application.Portal;
 using btr.application.SupportContext.TglJamAgg;
 using btr.nuna.Application;
 using btr.nuna.Domain;
@@ -29,6 +30,7 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.UseCases
         private readonly IDashboardInventoryRiskSnapshotDal _snapshotDal;
         private readonly IDashboardSnapshotRefreshLogDal _refreshLogDal;
         private readonly ITglJamDal _tglJamDal;
+        private readonly IBusinessDateProvider _businessDateProvider;
 
         public RefreshDashboardInventoryRiskSnapshotWorker(
             IStokBalanceViewDal stokBalanceViewDal,
@@ -36,7 +38,8 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.UseCases
             DashboardInventoryRiskAggregator aggregator,
             IDashboardInventoryRiskSnapshotDal snapshotDal,
             IDashboardSnapshotRefreshLogDal refreshLogDal,
-            ITglJamDal tglJamDal)
+            ITglJamDal tglJamDal,
+            IBusinessDateProvider businessDateProvider)
         {
             _stokBalanceViewDal = stokBalanceViewDal;
             _brgLastFakturDal = brgLastFakturDal;
@@ -44,6 +47,7 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.UseCases
             _snapshotDal = snapshotDal;
             _refreshLogDal = refreshLogDal;
             _tglJamDal = tglJamDal;
+            _businessDateProvider = businessDateProvider;
         }
 
         public void Execute(RefreshDashboardInventoryRiskSnapshotRequest request)
@@ -69,7 +73,7 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.UseCases
             try
             {
                 var generatedAt = _tglJamDal.Now;
-                var today = generatedAt.Date;
+                var today = _businessDateProvider.Today;
                 const int loadSteps = 2;
 
                 WorkerProgressScope.Current.StepStarted($"{Domain}:Load", "Load source data");

@@ -7,6 +7,7 @@ using btr.application.ReportingContext.DashboardSnapshotAgg.Models;
 using btr.application.ReportingContext.DashboardSnapshotAgg.Services;
 using btr.application.SalesContext.FakturInfo;
 using btr.application.SalesContext.SalesOmzetAgg.Contracts;
+using btr.application.Portal;
 using btr.application.SupportContext.TglJamAgg;
 using btr.nuna.Domain;
 
@@ -17,23 +18,26 @@ namespace btr.infrastructure.ReportingContext.DashboardSalesAgg
         private readonly IFakturViewDal _fakturViewDal;
         private readonly ISalesOmzetTargetDal _targetDal;
         private readonly ITglJamDal _tglJamDal;
+        private readonly IBusinessDateProvider _businessDateProvider;
         private readonly DashboardSalesFakturAggregator _aggregator;
 
         public DashboardSalesLiveDal(
             IFakturViewDal fakturViewDal,
             ISalesOmzetTargetDal targetDal,
             ITglJamDal tglJamDal,
+            IBusinessDateProvider businessDateProvider,
             DashboardSalesFakturAggregator aggregator)
         {
             _fakturViewDal = fakturViewDal;
             _targetDal = targetDal;
             _tglJamDal = tglJamDal;
+            _businessDateProvider = businessDateProvider;
             _aggregator = aggregator;
         }
 
         public DashboardSalesResponse GetSummary()
         {
-            var today = _tglJamDal.Now.Date;
+            var today = _businessDateProvider.Today;
             var periode = CurrentMonthPeriode(today);
             var rows = _fakturViewDal.ListData(periode)?.ToList()
                        ?? new List<FakturView>();

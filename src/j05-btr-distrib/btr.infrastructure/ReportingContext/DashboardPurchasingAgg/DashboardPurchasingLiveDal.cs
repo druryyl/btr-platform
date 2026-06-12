@@ -5,6 +5,7 @@ using btr.application.PurchaseContext.InvoiceInfo;
 using btr.application.ReportingContext.DashboardPurchasingAgg.Queries;
 using btr.application.ReportingContext.DashboardSnapshotAgg.Models;
 using btr.application.ReportingContext.DashboardSnapshotAgg.Services;
+using btr.application.Portal;
 using btr.application.SupportContext.TglJamAgg;
 using btr.infrastructure.ReportingContext.DashboardSnapshotAgg;
 using btr.nuna.Domain;
@@ -15,21 +16,24 @@ namespace btr.infrastructure.ReportingContext.DashboardPurchasingAgg
     {
         private readonly IInvoiceViewDal _invoiceViewDal;
         private readonly ITglJamDal _tglJamDal;
+        private readonly IBusinessDateProvider _businessDateProvider;
         private readonly DashboardPurchasingInvoiceAggregator _aggregator;
 
         public DashboardPurchasingLiveDal(
             IInvoiceViewDal invoiceViewDal,
             ITglJamDal tglJamDal,
+            IBusinessDateProvider businessDateProvider,
             DashboardPurchasingInvoiceAggregator aggregator)
         {
             _invoiceViewDal = invoiceViewDal;
             _tglJamDal = tglJamDal;
+            _businessDateProvider = businessDateProvider;
             _aggregator = aggregator;
         }
 
         public DashboardPurchasingResponse GetSummary()
         {
-            var today = _tglJamDal.Now.Date;
+            var today = _businessDateProvider.Today;
             var periode = CurrentMonthPeriode(today);
             var rows = _invoiceViewDal.ListData(periode)?.ToList()
                        ?? new List<InvoiceView>();

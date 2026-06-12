@@ -6,6 +6,7 @@ using btr.application.ReportingContext.DashboardSnapshotAgg.Contracts;
 using btr.application.ReportingContext.DashboardSnapshotAgg.Models;
 using btr.application.ReportingContext.DashboardSnapshotAgg.Progress;
 using btr.application.ReportingContext.DashboardSnapshotAgg.Services;
+using btr.application.Portal;
 using btr.application.SupportContext.TglJamAgg;
 using btr.nuna.Application;
 using btr.nuna.Domain;
@@ -27,19 +28,22 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.UseCases
         private readonly IDashboardPurchasingSnapshotDal _snapshotDal;
         private readonly IDashboardSnapshotRefreshLogDal _refreshLogDal;
         private readonly ITglJamDal _tglJamDal;
+        private readonly IBusinessDateProvider _businessDateProvider;
 
         public RefreshDashboardPurchasingSnapshotWorker(
             IInvoiceViewDal invoiceViewDal,
             DashboardPurchasingInvoiceAggregator aggregator,
             IDashboardPurchasingSnapshotDal snapshotDal,
             IDashboardSnapshotRefreshLogDal refreshLogDal,
-            ITglJamDal tglJamDal)
+            ITglJamDal tglJamDal,
+            IBusinessDateProvider businessDateProvider)
         {
             _invoiceViewDal = invoiceViewDal;
             _aggregator = aggregator;
             _snapshotDal = snapshotDal;
             _refreshLogDal = refreshLogDal;
             _tglJamDal = tglJamDal;
+            _businessDateProvider = businessDateProvider;
         }
 
         public void Execute(RefreshDashboardPurchasingSnapshotRequest request)
@@ -64,7 +68,7 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.UseCases
 
             try
             {
-                var today = _tglJamDal.Now.Date;
+                var today = _businessDateProvider.Today;
                 var periode = CurrentMonthPeriode(today);
                 var generatedAt = _tglJamDal.Now;
 

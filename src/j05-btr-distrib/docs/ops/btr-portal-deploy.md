@@ -174,10 +174,15 @@ Portal does **not** use the BTR Desktop registry. Create `appsettings.{MACHINE_N
   },
   "Cors": {
     "AllowedOrigins": [ "https://your-server/btr-portal" ]
+  },
+  "Presentation": {
+    "Enabled": false,
+    "BusinessDate": "2026-06-05"
   }
 }
 ```
 
+- **Presentation mode:** Set `"Presentation": { "Enabled": true, "BusinessDate": "<snapshot-date>" }` on the API (and worker `appsettings.json` if separate) before demos. `BusinessDate` is required when enabled (ISO `yyyy-MM-dd`). Re-run `btr.portal.worker.exe --domain All` after enabling so materialized snapshots use the business date. Revert `Enabled` to `false` afterward and re-run the worker. Hides platform freshness/worker UI warnings; business calculations use `BusinessDate`. See `docs/features/btr-portal/presentation-mode/feature.md`.
 - IIS app pool identity must reach SQL Server (embedded `btrLogin` credentials in `ConnectionStringFactory`).
 - Ensure `logs/` under the API folder is writable.
 - Worker only needs the `Database` section (JWT/CORS are API-only).

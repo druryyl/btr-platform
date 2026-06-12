@@ -1,9 +1,12 @@
 <script setup lang="ts">
+import { computed } from 'vue'
 import Button from 'primevue/button'
 import Message from 'primevue/message'
 import { formatDateTime } from '@/services/formatters'
+import { shouldShowInfrastructureError } from '@/services/platformDiagnostics'
+import { usePresentationStore } from '@/stores/presentationStore'
 
-defineProps<{
+const props = defineProps<{
   title: string
   subtitle?: string
   loading?: boolean
@@ -14,6 +17,18 @@ defineProps<{
 const emit = defineEmits<{
   refresh: []
 }>()
+
+const presentation = usePresentationStore()
+
+const showGeneratedAt = computed(
+  () => !presentation.hidePlatformDiagnostics && props.generatedAt,
+)
+
+const showError = computed(() =>
+  shouldShowInfrastructureError(props.error, presentation.hidePlatformDiagnostics),
+)
+
+const visibleError = computed(() => (showError.value ? props.error : null))
 </script>
 
 <template>
@@ -22,8 +37,8 @@ const emit = defineEmits<{
       <div>
         <h1>{{ title }}</h1>
         <p v-if="subtitle">{{ subtitle }}</p>
-        <p v-if="generatedAt" class="dashboard-detail__meta">
-          Data as of {{ formatDateTime(generatedAt) }}
+        <p v-if="showGeneratedAt" class="dashboard-detail__meta">
+          Data as of {{ formatDateTime(generatedAt!) }}
         </p>
       </div>
       <Button
@@ -35,8 +50,8 @@ const emit = defineEmits<{
       />
     </div>
 
-    <Message v-if="error" severity="error" :closable="false">
-      {{ error }}
+    <Message v-if="visibleError" severity="error" :closable="false">
+      {{ visibleError }}
     </Message>
 
     <slot />

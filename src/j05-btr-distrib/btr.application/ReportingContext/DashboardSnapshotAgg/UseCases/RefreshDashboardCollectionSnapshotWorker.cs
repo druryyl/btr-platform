@@ -9,6 +9,7 @@ using btr.application.ReportingContext.DashboardSnapshotAgg.Services;
 using btr.application.SalesContext.CustomerAgg.Contracts;
 using btr.application.SalesContext.FakturInfo;
 using btr.application.SalesContext.SalesPersonAgg.Contracts;
+using btr.application.Portal;
 using btr.application.SupportContext.TglJamAgg;
 using btr.nuna.Application;
 using btr.nuna.Domain;
@@ -37,6 +38,7 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.UseCases
         private readonly IDashboardCollectionSnapshotDal _snapshotDal;
         private readonly IDashboardSnapshotRefreshLogDal _refreshLogDal;
         private readonly ITglJamDal _tglJamDal;
+        private readonly IBusinessDateProvider _businessDateProvider;
 
         public RefreshDashboardCollectionSnapshotWorker(
             IPiutangOpenBalanceDal openBalanceDal,
@@ -50,7 +52,8 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.UseCases
             DashboardCollectionAggregator aggregator,
             IDashboardCollectionSnapshotDal snapshotDal,
             IDashboardSnapshotRefreshLogDal refreshLogDal,
-            ITglJamDal tglJamDal)
+            ITglJamDal tglJamDal,
+            IBusinessDateProvider businessDateProvider)
         {
             _openBalanceDal = openBalanceDal;
             _openBalanceWithSalesmanDal = openBalanceWithSalesmanDal;
@@ -64,6 +67,7 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.UseCases
             _snapshotDal = snapshotDal;
             _refreshLogDal = refreshLogDal;
             _tglJamDal = tglJamDal;
+            _businessDateProvider = businessDateProvider;
         }
 
         public void Execute(RefreshDashboardCollectionSnapshotRequest request)
@@ -88,7 +92,7 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.UseCases
 
             try
             {
-                var today = _tglJamDal.Now.Date;
+                var today = _businessDateProvider.Today;
                 var periode = CurrentMonthPeriode(today);
                 var generatedAt = _tglJamDal.Now;
                 const int loadSteps = 8;

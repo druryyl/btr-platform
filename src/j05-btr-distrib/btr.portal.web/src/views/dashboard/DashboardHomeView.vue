@@ -1,16 +1,26 @@
 <script setup lang="ts">
-import { onMounted } from 'vue'
+import { computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import Button from 'primevue/button'
 import Message from 'primevue/message'
+import PlatformSnapshotHealthBanners from '@/components/platform/PlatformSnapshotHealthBanners.vue'
 import ExecutiveAttentionCard from '@/components/dashboard/ExecutiveAttentionCard.vue'
 import ExecutiveDomainSummaryRow from '@/components/dashboard/ExecutiveDomainSummaryRow.vue'
 import ExecutiveExposureSection from '@/components/dashboard/ExecutiveExposureSection.vue'
 import { formatCurrency, formatDateTime, formatPercent } from '@/services/formatters'
+import { shouldShowInfrastructureError } from '@/services/platformDiagnostics'
 import { useDashboardStore } from '@/stores/dashboardStore'
+import { usePresentationStore } from '@/stores/presentationStore'
 
 const dashboard = useDashboardStore()
+const presentation = usePresentationStore()
 const router = useRouter()
+
+const visibleError = computed(() =>
+  shouldShowInfrastructureError(dashboard.error, presentation.hidePlatformDiagnostics)
+    ? dashboard.error
+    : null,
+)
 
 onMounted(() => {
   void dashboard.loadExecutive()
@@ -23,7 +33,10 @@ onMounted(() => {
       <div>
         <h1>Management Attention Center</h1>
         <p>What requires management attention today?</p>
-        <p v-if="dashboard.executive?.LastRefreshed" class="dashboard-home__refreshed">
+        <p
+          v-if="dashboard.executive?.LastRefreshed && !presentation.hidePlatformDiagnostics"
+          class="dashboard-home__refreshed"
+        >
           Last Refreshed: {{ formatDateTime(dashboard.executive.LastRefreshed) }}
         </p>
       </div>
@@ -43,35 +56,14 @@ onMounted(() => {
       </div>
     </div>
 
-    <Message
-      v-if="dashboard.executive && !dashboard.executive.IsDataFresh"
-      severity="warn"
-      :closable="false"
-      class="dashboard-home__banner"
-    >
-      ⚠ Dashboard Data Not Fresh
-    </Message>
+    <PlatformSnapshotHealthBanners
+      v-if="dashboard.executive"
+      :is-data-fresh="dashboard.executive.IsDataFresh"
+      :overall-health-status="dashboard.executive.OverallHealthStatus"
+    />
 
-    <Message
-      v-if="dashboard.executive && dashboard.executive.OverallHealthStatus === 'degraded'"
-      severity="error"
-      :closable="false"
-      class="dashboard-home__banner"
-    >
-      Dashboard snapshot refresh is degraded. Some analytics may be outdated.
-    </Message>
-
-    <Message
-      v-if="dashboard.executive && dashboard.executive.OverallHealthStatus === 'refreshing'"
-      severity="info"
-      :closable="false"
-      class="dashboard-home__banner"
-    >
-      Dashboard snapshots are currently refreshing.
-    </Message>
-
-    <Message v-if="dashboard.error" severity="error" :closable="false">
-      {{ dashboard.error }}
+    <Message v-if="visibleError" severity="error" :closable="false">
+      {{ visibleError }}
     </Message>
 
     <section class="dashboard-home__section">

@@ -170,6 +170,7 @@
     <Compile Include="WorkerRunCoordinator.cs" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="app.config" />
     <None Include="appsettings.JUDE7.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>

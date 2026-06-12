@@ -4,6 +4,7 @@ import { fetchPiutangReport } from '@/api/reportsApi'
 import { getApiErrorMessage } from '@/api/httpClient'
 import type { PiutangReportResponse } from '@/models/reports'
 import { currentMonthRange, type PiutangDateField } from '@/services/reportFilterDefaults'
+import { usePresentationStore } from '@/stores/presentationStore'
 
 export const usePiutangReportStore = defineStore('piutangReport', () => {
   const report = ref<PiutangReportResponse | null>(null)
@@ -14,8 +15,24 @@ export const usePiutangReportStore = defineStore('piutangReport', () => {
   const dateField = ref<PiutangDateField>('DueDate')
   const freeText = ref('')
   const allOpenBalances = ref(false)
+  let defaultPeriodApplied = false
+
+  function syncDefaultPeriod(): void {
+    const presentation = usePresentationStore()
+    const defaults = currentMonthRange(presentation.businessReferenceDate)
+    from.value = defaults.from
+    to.value = defaults.to
+    defaultPeriodApplied = true
+  }
+
+  function ensureDefaultPeriod(): void {
+    if (!defaultPeriodApplied) {
+      syncDefaultPeriod()
+    }
+  }
 
   async function loadReport(options?: { allOpenBalances?: boolean }): Promise<void> {
+    ensureDefaultPeriod()
     loading.value = true
     error.value = null
 
@@ -41,9 +58,7 @@ export const usePiutangReportStore = defineStore('piutangReport', () => {
     report.value = null
     loading.value = false
     error.value = null
-    const defaults = currentMonthRange()
-    from.value = defaults.from
-    to.value = defaults.to
+    syncDefaultPeriod()
     dateField.value = 'DueDate'
     freeText.value = ''
     allOpenBalances.value = false

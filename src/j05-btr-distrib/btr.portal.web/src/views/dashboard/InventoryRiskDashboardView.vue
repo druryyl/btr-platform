@@ -3,6 +3,8 @@ import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import Message from 'primevue/message'
 import DashboardDetailLayout from '@/components/dashboard/DashboardDetailLayout.vue'
+import PlatformSnapshotHealthBanners from '@/components/platform/PlatformSnapshotHealthBanners.vue'
+import { usePresentationStore } from '@/stores/presentationStore'
 import ExecutiveAttentionCard from '@/components/dashboard/ExecutiveAttentionCard.vue'
 import KpiCard from '@/components/KpiCard.vue'
 import AgingPieChart from '@/components/dashboard/AgingPieChart.vue'
@@ -18,6 +20,7 @@ import { useDashboardStore } from '@/stores/dashboardStore'
 import type { DashboardInventoryBreakdownItem, DashboardInventoryRiskRankingRow } from '@/models/dashboard'
 
 const dashboard = useDashboardStore()
+const presentation = usePresentationStore()
 const router = useRouter()
 const sourceLabel = resolveInvestigationSourceLabel('/dashboard/inventory-risk')
 const attentionSignalFilter = ref(INVENTORY_RISK_ATTENTION_SIGNAL_ALL)
@@ -115,17 +118,13 @@ onMounted(() => {
     :generated-at="dashboard.inventoryRisk?.GeneratedAt"
     @refresh="onRefresh"
   >
-    <Message
-      v-if="dashboard.inventoryRisk && !dashboard.inventoryRisk.IsDataFresh"
-      severity="warn"
-      :closable="false"
-      class="inventory-risk-dashboard__banner"
-    >
-      ⚠ Dashboard Data Not Fresh
-    </Message>
+    <PlatformSnapshotHealthBanners
+      v-if="dashboard.inventoryRisk"
+      :is-data-fresh="dashboard.inventoryRisk.IsDataFresh"
+    />
 
     <Message
-      v-if="unavailable"
+      v-if="unavailable && !presentation.hidePlatformDiagnostics"
       severity="info"
       :closable="false"
       class="inventory-risk-dashboard__banner"

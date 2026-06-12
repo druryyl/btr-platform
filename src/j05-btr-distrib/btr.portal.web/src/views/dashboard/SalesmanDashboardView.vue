@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
-import Message from 'primevue/message'
 import InputSwitch from 'primevue/inputswitch'
 import DashboardDetailLayout from '@/components/dashboard/DashboardDetailLayout.vue'
+import PlatformSnapshotHealthBanners from '@/components/platform/PlatformSnapshotHealthBanners.vue'
 import SalesmanAttentionCardGroup from '@/components/dashboard/SalesmanAttentionCardGroup.vue'
 import SalesmanAttentionList from '@/components/dashboard/SalesmanAttentionList.vue'
 import SalesmanSegmentationSection from '@/components/dashboard/SalesmanSegmentationSection.vue'
@@ -136,14 +136,10 @@ onMounted(() => {
     :generated-at="dashboard.salesman?.GeneratedAt"
     @refresh="onRefresh"
   >
-    <Message
-      v-if="dashboard.salesman && !dashboard.salesman.IsDataFresh"
-      severity="warn"
-      :closable="false"
-      class="salesman-dashboard__banner"
-    >
-      ⚠ Dashboard Data Not Fresh
-    </Message>
+    <PlatformSnapshotHealthBanners
+      v-if="dashboard.salesman"
+      :is-data-fresh="dashboard.salesman.IsDataFresh"
+    />
 
     <nav class="salesman-dashboard__section-nav" aria-label="Dashboard sections">
       <a

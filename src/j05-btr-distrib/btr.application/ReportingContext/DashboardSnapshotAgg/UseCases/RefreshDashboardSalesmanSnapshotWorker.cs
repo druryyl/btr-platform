@@ -9,6 +9,7 @@ using btr.application.SalesContext.FakturInfo;
 using btr.application.SalesContext.SalesOmzetAgg.Contracts;
 using btr.application.SalesContext.SalesPersonAgg.Contracts;
 using btr.application.SalesContext.SalesPersonPrincipalTargetAgg.Contracts;
+using btr.application.Portal;
 using btr.application.SupportContext.TglJamAgg;
 using btr.nuna.Application;
 using btr.nuna.Domain;
@@ -36,6 +37,7 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.UseCases
         private readonly IDashboardSalesmanSnapshotDal _snapshotDal;
         private readonly IDashboardSnapshotRefreshLogDal _refreshLogDal;
         private readonly ITglJamDal _tglJamDal;
+        private readonly IBusinessDateProvider _businessDateProvider;
         private readonly DashboardSnapshotOptions _options;
 
         public RefreshDashboardSalesmanSnapshotWorker(
@@ -50,6 +52,7 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.UseCases
             IDashboardSalesmanSnapshotDal snapshotDal,
             IDashboardSnapshotRefreshLogDal refreshLogDal,
             ITglJamDal tglJamDal,
+            IBusinessDateProvider businessDateProvider,
             DashboardSnapshotOptions options)
         {
             _fakturViewDal = fakturViewDal;
@@ -63,6 +66,7 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.UseCases
             _snapshotDal = snapshotDal;
             _refreshLogDal = refreshLogDal;
             _tglJamDal = tglJamDal;
+            _businessDateProvider = businessDateProvider;
             _options = options ?? new DashboardSnapshotOptions();
         }
 
@@ -88,7 +92,7 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.UseCases
 
             try
             {
-                var today = _tglJamDal.Now.Date;
+                var today = _businessDateProvider.Today;
                 var periode = CurrentMonthPeriode(today);
                 var generatedAt = _tglJamDal.Now;
                 const int loadSteps = 7;

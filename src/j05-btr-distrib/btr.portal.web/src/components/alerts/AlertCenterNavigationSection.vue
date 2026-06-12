@@ -9,7 +9,7 @@ defineProps<{
 </script>
 
 <template>
-  <section class="alert-center-navigation">
+  <section class="alert-center-navigation alert-center-navigation-section">
     <h2 class="alert-center-navigation__heading">Domain Dashboards</h2>
     <Card>
       <template #content>

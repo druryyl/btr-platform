@@ -4,7 +4,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using btr.application.ReportingContext.PiutangReportAgg.Contracts;
 using btr.application.ReportingContext.Shared;
-using btr.application.SupportContext.TglJamAgg;
+using btr.application.Portal;
 using MediatR;
 
 namespace btr.application.ReportingContext.PiutangReportAgg.Queries
@@ -67,12 +67,12 @@ namespace btr.application.ReportingContext.PiutangReportAgg.Queries
         : IRequestHandler<GetPiutangReportQuery, PiutangReportResponse>
     {
         private readonly IPiutangReportDal _dal;
-        private readonly ITglJamDal _tglJamDal;
+        private readonly IBusinessDateProvider _businessDateProvider;
 
-        public GetPiutangReportHandler(IPiutangReportDal dal, ITglJamDal tglJamDal)
+        public GetPiutangReportHandler(IPiutangReportDal dal, IBusinessDateProvider businessDateProvider)
         {
             _dal = dal;
-            _tglJamDal = tglJamDal;
+            _businessDateProvider = businessDateProvider;
         }
 
         public Task<PiutangReportResponse> Handle(
@@ -88,7 +88,7 @@ namespace btr.application.ReportingContext.PiutangReportAgg.Queries
 
             var periode = ReportPeriodValidator.ResolveAndValidate(
                 new ReportPeriodRequest { From = request.From, To = request.To },
-                _tglJamDal.Now);
+                _businessDateProvider.Today);
 
             return Task.FromResult(_dal.GetReport(periode, dateField));
         }

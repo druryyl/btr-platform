@@ -183,6 +183,8 @@
     <Compile Include="SalesContext\SalesPersonPrincipalTargetWriterTest.cs" />
     <Compile Include="SalesContext\SalesOmzetTargetResolutionTest.cs" />
     <Compile Include="SalesContext\SegmentDalTest.cs" />
+    <Compile Include="Portal\BusinessDateProviderTest.cs" />
+    <Compile Include="Portal\PresentationModeServiceTest.cs" />
     <Compile Include="Tests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

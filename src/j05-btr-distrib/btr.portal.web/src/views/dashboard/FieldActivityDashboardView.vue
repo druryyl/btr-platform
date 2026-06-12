@@ -18,9 +18,11 @@ import type {
   FieldActivitySalesmanItem,
 } from '@/models/fieldActivity'
 import { formatPercent } from '@/services/formatters'
+import { usePresentationStore } from '@/stores/presentationStore'
 
 type DatePreset = 'today' | 'yesterday' | 'custom'
 
+const presentation = usePresentationStore()
 const salesmen = ref<FieldActivitySalesmanItem[]>([])
 const selectedSalesPersonId = ref<string | null>(null)
 const selectedDate = ref<Date>(startOfDay(new Date()))
@@ -31,6 +33,10 @@ const loadingData = ref(false)
 const loadError = ref<string | null>(null)
 const hasLoadedOnce = ref(false)
 const fieldActivity = ref<FieldActivityResponse | null>(null)
+
+function businessToday(): Date {
+  return startOfDay(presentation.businessReferenceDate)
+}
 
 const actualStops = computed(() => fieldActivity.value?.ActualStops ?? [])
 const replay = useFieldActivityReplay(actualStops)
@@ -72,7 +78,7 @@ function formatVisitDate(date: Date): string {
 
 function applyDatePreset(preset: DatePreset): void {
   datePreset.value = preset
-  const today = startOfDay(new Date())
+  const today = businessToday()
 
   if (preset === 'today') {
     selectedDate.value = today
@@ -140,6 +146,8 @@ function onMapStopSelected(index: number): void {
 }
 
 onMounted(async () => {
+  await presentation.load()
+  customDate.value = businessToday()
   applyDatePreset('today')
   await loadSalesmen()
 })
@@ -203,7 +211,12 @@ onMounted(async () => {
       />
     </section>
 
-    <p v-if="dataHealthText" class="field-activity-dashboard__health">{{ dataHealthText }}</p>
+    <p
+      v-if="dataHealthText && !presentation.hidePlatformDiagnostics"
+      class="field-activity-dashboard__health"
+    >
+      {{ dataHealthText }}
+    </p>
 
     <Message v-if="loadError" severity="error" :closable="false">
       {{ loadError }}

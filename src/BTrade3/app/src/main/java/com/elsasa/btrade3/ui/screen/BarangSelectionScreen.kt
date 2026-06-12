@@ -8,13 +8,13 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -171,7 +171,9 @@ fun BarangSelectionScreen(
         bottomBar = {
             if (bulkModeEnabled && selectedCount > 0) {
                 Card(
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .navigationBarsPadding(),
                     elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
                     shape = MaterialTheme.shapes.extraSmall
                 ) {
@@ -315,7 +317,7 @@ fun BarangSelectionScreen(
                     Text("No items found")
                 }
             } else if (searchText.isEmpty() && !isSearchFocused.value) {
-                LazyColumn(contentPadding = PaddingValues(bottom = if (bulkModeEnabled && selectedCount > 0) 16.dp else 0.dp)) {
+                LazyColumn {
                     items(filteredBarangs, key = { it.brgId }) { barang ->
                         BarangItem(
                             barang = barang,
@@ -327,7 +329,7 @@ fun BarangSelectionScreen(
                     }
                 }
             } else if (!isSearchFocused.value || searchText.isNotEmpty()) {
-                LazyColumn(contentPadding = PaddingValues(bottom = if (bulkModeEnabled && selectedCount > 0) 16.dp else 0.dp)) {
+                LazyColumn {
                     items(filteredBarangs, key = { it.brgId }) { barang ->
                         BarangItem(
                             barang = barang,

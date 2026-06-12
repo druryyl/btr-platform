@@ -4,6 +4,7 @@ using System.Linq;
 using btr.application.FinanceContext.PiutangAgg.Contracts;
 using btr.application.ReportingContext.DashboardPiutangAgg.Queries;
 using btr.application.ReportingContext.DashboardSnapshotAgg.Services;
+using btr.application.Portal;
 using btr.application.SupportContext.TglJamAgg;
 using btr.nuna.Domain;
 
@@ -17,13 +18,16 @@ namespace btr.infrastructure.ReportingContext.DashboardPiutangAgg
     {
         private readonly IPiutangSalesWilayahDal _piutangSalesWilayahDal;
         private readonly ITglJamDal _tglJamDal;
+        private readonly IBusinessDateProvider _businessDateProvider;
 
         public DashboardPiutangLiveDal(
             IPiutangSalesWilayahDal piutangSalesWilayahDal,
-            ITglJamDal tglJamDal)
+            ITglJamDal tglJamDal,
+            IBusinessDateProvider businessDateProvider)
         {
             _piutangSalesWilayahDal = piutangSalesWilayahDal;
             _tglJamDal = tglJamDal;
+            _businessDateProvider = businessDateProvider;
         }
 
         public DashboardPiutangResponse GetSummary()
@@ -33,7 +37,7 @@ namespace btr.infrastructure.ReportingContext.DashboardPiutangAgg
                        ?? new List<PiutangSalesWilayahDto>();
 
             var outstanding = rows.Where(r => r.KurangBayar > 1).ToList();
-            var today = _tglJamDal.Now.Date;
+            var today = _businessDateProvider.Today;
             var generatedAt = _tglJamDal.Now;
 
             var totalPiutang = outstanding.Sum(r => r.KurangBayar);
@@ -104,7 +108,7 @@ namespace btr.infrastructure.ReportingContext.DashboardPiutangAgg
 
         private Periode OpenReceivablesPeriode()
         {
-            var today = _tglJamDal.Now.Date;
+            var today = _businessDateProvider.Today;
             return new Periode(new DateTime(2000, 1, 1), today);
         }
 

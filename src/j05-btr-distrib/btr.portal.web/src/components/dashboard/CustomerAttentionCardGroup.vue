@@ -1,8 +1,10 @@
 <script setup lang="ts">
+import { computed } from 'vue'
 import { RouterLink } from 'vue-router'
 import KpiCard from '@/components/KpiCard.vue'
+import { usePresentationStore } from '@/stores/presentationStore'
 
-defineProps<{
+const props = defineProps<{
   title: string
   icon: string
   loading?: boolean
@@ -17,11 +19,21 @@ defineProps<{
 const emit = defineEmits<{
   anchorNavigate: []
 }>()
+
+const presentation = usePresentationStore()
+
+const showUnavailableLabel = computed(
+  () => Boolean(props.unavailable) && !presentation.hidePlatformDiagnostics,
+)
+
+const canNavigate = computed(
+  () => !props.unavailable || presentation.hidePlatformDiagnostics,
+)
 </script>
 
 <template>
   <RouterLink
-    v-if="to && !unavailable"
+    v-if="to && canNavigate"
     :to="to"
     class="customer-attention-card__wrapper customer-attention-card__wrapper--link"
   >
@@ -32,14 +44,14 @@ const emit = defineEmits<{
       class="customer-attention-card"
       :class="{
         'customer-attention-card--attention': requiresAttention,
-        'customer-attention-card--unavailable': unavailable,
+        'customer-attention-card--unavailable': showUnavailableLabel,
       }"
     >
       <slot />
     </KpiCard>
   </RouterLink>
   <a
-    v-else-if="href && !unavailable"
+    v-else-if="href && canNavigate"
     :href="href"
     class="customer-attention-card__wrapper customer-attention-card__wrapper--link"
     @click="emit('anchorNavigate')"
@@ -51,7 +63,7 @@ const emit = defineEmits<{
       class="customer-attention-card"
       :class="{
         'customer-attention-card--attention': requiresAttention,
-        'customer-attention-card--unavailable': unavailable,
+        'customer-attention-card--unavailable': showUnavailableLabel,
       }"
     >
       <slot />
@@ -65,13 +77,13 @@ const emit = defineEmits<{
       class="customer-attention-card"
       :class="{
         'customer-attention-card--attention': requiresAttention,
-        'customer-attention-card--unavailable': unavailable,
+        'customer-attention-card--unavailable': showUnavailableLabel,
       }"
     >
-      <div v-if="unavailable" class="customer-attention-card__unavailable">
+      <div v-if="showUnavailableLabel" class="customer-attention-card__unavailable">
         Data unavailable
       </div>
-      <slot v-else />
+      <slot v-else-if="canNavigate" />
     </KpiCard>
   </div>
 </template>

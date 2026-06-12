@@ -4,7 +4,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using btr.application.ReportingContext.PurchasingReportAgg.Contracts;
 using btr.application.ReportingContext.Shared;
-using btr.application.SupportContext.TglJamAgg;
+using btr.application.Portal;
 using MediatR;
 
 namespace btr.application.ReportingContext.PurchasingReportAgg.Queries
@@ -61,12 +61,12 @@ namespace btr.application.ReportingContext.PurchasingReportAgg.Queries
         : IRequestHandler<GetPurchasingReportQuery, PurchasingReportResponse>
     {
         private readonly IPurchasingReportDal _dal;
-        private readonly ITglJamDal _tglJamDal;
+        private readonly IBusinessDateProvider _businessDateProvider;
 
-        public GetPurchasingReportHandler(IPurchasingReportDal dal, ITglJamDal tglJamDal)
+        public GetPurchasingReportHandler(IPurchasingReportDal dal, IBusinessDateProvider businessDateProvider)
         {
             _dal = dal;
-            _tglJamDal = tglJamDal;
+            _businessDateProvider = businessDateProvider;
         }
 
         public Task<PurchasingReportResponse> Handle(
@@ -75,7 +75,7 @@ namespace btr.application.ReportingContext.PurchasingReportAgg.Queries
         {
             var periode = ReportPeriodValidator.ResolveAndValidate(
                 new ReportPeriodRequest { From = request.From, To = request.To },
-                _tglJamDal.Now);
+                _businessDateProvider.Today);
 
             return Task.FromResult(_dal.GetReport(periode));
         }

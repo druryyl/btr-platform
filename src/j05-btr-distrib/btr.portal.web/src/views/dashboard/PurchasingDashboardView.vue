@@ -3,6 +3,8 @@ import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import Message from 'primevue/message'
 import DashboardDetailLayout from '@/components/dashboard/DashboardDetailLayout.vue'
+import PlatformSnapshotHealthBanners from '@/components/platform/PlatformSnapshotHealthBanners.vue'
+import { usePresentationStore } from '@/stores/presentationStore'
 import PurchasingAttentionCards from '@/components/dashboard/PurchasingAttentionCards.vue'
 import PurchasingSummaryRow from '@/components/dashboard/PurchasingSummaryRow.vue'
 import PurchasingAttentionList from '@/components/dashboard/PurchasingAttentionList.vue'
@@ -18,6 +20,7 @@ import { navigateToInvestigation } from '@/services/navigateToInvestigation'
 import { useDashboardStore } from '@/stores/dashboardStore'
 
 const dashboard = useDashboardStore()
+const presentation = usePresentationStore()
 const router = useRouter()
 const sourceLabel = resolveInvestigationSourceLabel('/dashboard/purchasing')
 const attentionSignalFilter = ref(PURCHASING_ATTENTION_SIGNAL_ALL)
@@ -83,17 +86,13 @@ onMounted(() => {
     :generated-at="dashboard.purchasing?.GeneratedAt ?? null"
     @refresh="onRefresh"
   >
-    <Message
-      v-if="dashboard.purchasing && !dashboard.purchasing.IsDataFresh"
-      severity="warn"
-      :closable="false"
-      class="purchasing-dashboard__banner"
-    >
-      ⚠ Dashboard Data Not Fresh
-    </Message>
+    <PlatformSnapshotHealthBanners
+      v-if="dashboard.purchasing"
+      :is-data-fresh="dashboard.purchasing.IsDataFresh"
+    />
 
     <Message
-      v-if="managementUnavailable"
+      v-if="managementUnavailable && !presentation.hidePlatformDiagnostics"
       severity="info"
       :closable="false"
       class="purchasing-dashboard__banner"

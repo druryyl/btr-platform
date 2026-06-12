@@ -25,6 +25,21 @@ For business definitions and KPI formulas, see [btr-portal-domain.md](./btr-port
 
 ---
 
+## Presentation Mode (Demonstrations)
+
+For management demos, proposal screenshots, or executive reviews, an administrator can enable **Presentation Mode** in API configuration. When enabled:
+
+- Platform diagnostics (freshness banners, worker warnings, Last Refreshed timestamps, Platform Alerts) are hidden.
+- Business KPIs and alerts remain visible.
+- Optional **Business Date** aligns dashboard aging, MTD metrics, and report defaults with a restored snapshot date (no OS clock change).
+- A header badge shows `Presentation Mode` and the active business date.
+
+**Demo checklist:** Set `Presentation.Enabled = true` and `Presentation.BusinessDate` to the snapshot date → recycle API app pool → re-run the portal snapshot worker → verify the header badge and executive dashboard → revert after the session.
+
+See [presentation-mode/feature.md](./presentation-mode/feature.md).
+
+---
+
 ## Management Attention Center (Executive Dashboard)
 
 The Dashboard has two levels:

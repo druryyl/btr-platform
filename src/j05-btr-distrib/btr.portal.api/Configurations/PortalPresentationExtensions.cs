@@ -16,6 +16,7 @@ namespace btr.portal.api.Configurations
             services.AddScoped<IUserDal, UserDal>();
             services.AddSingleton<IJwtTokenService, JwtTokenService>();
             services.AddTransient<Controllers.AuthController>();
+            services.AddTransient<Controllers.PresentationConfigController>();
             services.AddTransient<Controllers.HealthController>();
             services.AddTransient<Controllers.Admin.AdminDashboardRefreshController>();
             services.AddTransient<Controllers.Dashboard.OverviewDashboardController>();

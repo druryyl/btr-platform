@@ -1,9 +1,16 @@
 <script setup lang="ts">
+import { onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import Button from 'primevue/button'
 import { useAuthStore } from '@/stores/authStore'
+import { usePresentationStore } from '@/stores/presentationStore'
 
 const auth = useAuthStore()
+const presentation = usePresentationStore()
+
+onMounted(() => {
+  void presentation.load()
+})
 const router = useRouter()
 const route = useRoute()
 
@@ -68,6 +75,18 @@ function logout(): void {
         </div>
       </div>
 
+      <div
+        v-if="presentation.isPresentationActive"
+        class="layout__presentation"
+        role="status"
+        aria-live="polite"
+      >
+        <div class="layout__presentation-title">Presentation Mode</div>
+        <div class="layout__presentation-date">
+          Business Date: {{ presentation.formattedBusinessDate }}
+        </div>
+      </div>
+
       <div class="layout__user">
         <div class="layout__user-info">
           <span class="layout__user-name">{{ auth.user?.UserName ?? auth.user?.UserId }}</span>
@@ -109,7 +128,7 @@ function logout(): void {
       </aside>
 
       <main class="layout__content">
-        <RouterView />
+        <RouterView v-if="presentation.loaded" />
       </main>
     </div>
   </div>
@@ -151,6 +170,28 @@ function logout(): void {
 }
 
 .layout__brand-subtitle {
+  font-size: 0.85rem;
+  color: var(--p-text-muted-color);
+}
+
+.layout__presentation {
+  margin-left: auto;
+  padding: 0.375rem 0.75rem;
+  border: 1px solid var(--p-primary-200);
+  border-radius: var(--p-content-border-radius);
+  background: var(--p-surface-100);
+  text-align: right;
+}
+
+.layout__presentation-title {
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: var(--p-primary-700);
+}
+
+.layout__presentation-date {
   font-size: 0.85rem;
   color: var(--p-text-muted-color);
 }

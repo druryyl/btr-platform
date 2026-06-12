@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
-import Message from 'primevue/message'
 import DashboardDetailLayout from '@/components/dashboard/DashboardDetailLayout.vue'
+import PlatformSnapshotHealthBanners from '@/components/platform/PlatformSnapshotHealthBanners.vue'
 import CollectionAttentionCardGroup from '@/components/dashboard/CollectionAttentionCardGroup.vue'
 import CollectionRecoverySummary from '@/components/dashboard/CollectionRecoverySummary.vue'
 import CollectionAgingRiskSummary from '@/components/dashboard/CollectionAgingRiskSummary.vue'
@@ -87,14 +87,10 @@ onMounted(() => {
     :generated-at="dashboard.collection?.GeneratedAt"
     @refresh="onRefresh"
   >
-    <Message
-      v-if="dashboard.collection && !dashboard.collection.IsDataFresh"
-      severity="warn"
-      :closable="false"
-      class="collection-dashboard__banner"
-    >
-      ⚠ Dashboard Data Not Fresh
-    </Message>
+    <PlatformSnapshotHealthBanners
+      v-if="dashboard.collection"
+      :is-data-fresh="dashboard.collection.IsDataFresh"
+    />
 
     <nav class="collection-dashboard__section-nav" aria-label="Dashboard sections">
       <a

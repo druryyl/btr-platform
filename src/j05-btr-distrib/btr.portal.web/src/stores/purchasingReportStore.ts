@@ -4,6 +4,7 @@ import { fetchPurchasingReport } from '@/api/reportsApi'
 import { getApiErrorMessage } from '@/api/httpClient'
 import type { PurchasingReportResponse } from '@/models/reports'
 import { currentMonthRange } from '@/services/reportFilterDefaults'
+import { usePresentationStore } from '@/stores/presentationStore'
 
 export const usePurchasingReportStore = defineStore('purchasingReport', () => {
   const report = ref<PurchasingReportResponse | null>(null)
@@ -12,8 +13,24 @@ export const usePurchasingReportStore = defineStore('purchasingReport', () => {
   const from = ref(currentMonthRange().from)
   const to = ref(currentMonthRange().to)
   const freeText = ref('')
+  let defaultPeriodApplied = false
+
+  function syncDefaultPeriod(): void {
+    const presentation = usePresentationStore()
+    const defaults = currentMonthRange(presentation.businessReferenceDate)
+    from.value = defaults.from
+    to.value = defaults.to
+    defaultPeriodApplied = true
+  }
+
+  function ensureDefaultPeriod(): void {
+    if (!defaultPeriodApplied) {
+      syncDefaultPeriod()
+    }
+  }
 
   async function loadReport(): Promise<void> {
+    ensureDefaultPeriod()
     loading.value = true
     error.value = null
 
@@ -30,9 +47,7 @@ export const usePurchasingReportStore = defineStore('purchasingReport', () => {
     report.value = null
     loading.value = false
     error.value = null
-    const defaults = currentMonthRange()
-    from.value = defaults.from
-    to.value = defaults.to
+    syncDefaultPeriod()
     freeText.value = ''
   }
 

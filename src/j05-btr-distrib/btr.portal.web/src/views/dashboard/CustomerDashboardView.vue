@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
-import Message from 'primevue/message'
 import DashboardDetailLayout from '@/components/dashboard/DashboardDetailLayout.vue'
+import PlatformSnapshotHealthBanners from '@/components/platform/PlatformSnapshotHealthBanners.vue'
 import CustomerAttentionCardGroup from '@/components/dashboard/CustomerAttentionCardGroup.vue'
 import CustomerAttentionList from '@/components/dashboard/CustomerAttentionList.vue'
 import CustomerSegmentationSection from '@/components/dashboard/CustomerSegmentationSection.vue'
@@ -83,14 +83,10 @@ onMounted(() => {
     :generated-at="dashboard.customer?.GeneratedAt"
     @refresh="onRefresh"
   >
-    <Message
-      v-if="dashboard.customer && !dashboard.customer.IsDataFresh"
-      severity="warn"
-      :closable="false"
-      class="customer-dashboard__banner"
-    >
-      ⚠ Dashboard Data Not Fresh
-    </Message>
+    <PlatformSnapshotHealthBanners
+      v-if="dashboard.customer"
+      :is-data-fresh="dashboard.customer.IsDataFresh"
+    />
 
     <nav class="customer-dashboard__section-nav" aria-label="Dashboard sections">
       <a

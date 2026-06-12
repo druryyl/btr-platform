@@ -4,9 +4,8 @@ import { computed, onMounted } from 'vue'
 
 import { useRouter } from 'vue-router'
 
-import Message from 'primevue/message'
-
 import DashboardDetailLayout from '@/components/dashboard/DashboardDetailLayout.vue'
+import PlatformSnapshotHealthBanners from '@/components/platform/PlatformSnapshotHealthBanners.vue'
 
 import LocationAttentionCardGroup from '@/components/dashboard/LocationAttentionCardGroup.vue'
 
@@ -154,23 +153,10 @@ onMounted(() => {
 
   >
 
-    <Message
-
-      v-if="dashboard.location && !dashboard.location.IsDataFresh"
-
-      severity="warn"
-
-      :closable="false"
-
-      class="location-dashboard__banner"
-
-    >
-
-      ⚠ Dashboard Data Not Fresh
-
-    </Message>
-
-
+    <PlatformSnapshotHealthBanners
+      v-if="dashboard.location"
+      :is-data-fresh="dashboard.location.IsDataFresh"
+    />
 
     <section class="location-dashboard__section">
 

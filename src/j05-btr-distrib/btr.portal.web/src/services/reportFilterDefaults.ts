@@ -19,6 +19,10 @@ export function parseDateParam(value: string): Date {
   return new Date(year, month - 1, day)
 }
 
+export function businessDateFromIso(iso: string): Date {
+  return parseDateParam(iso)
+}
+
 export function currentMonthRange(referenceDate = new Date()): ReportDateRange {
   const year = referenceDate.getFullYear()
   const month = referenceDate.getMonth()

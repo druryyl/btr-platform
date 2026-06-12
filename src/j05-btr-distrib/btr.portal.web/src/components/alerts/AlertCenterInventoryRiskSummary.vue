@@ -1,16 +1,24 @@
 <script setup lang="ts">
+import { computed } from 'vue'
 import { RouterLink } from 'vue-router'
 import Card from 'primevue/card'
 import type { DashboardAlertCenterInventoryRiskSummary } from '@/models/dashboard'
 import { formatCurrency, formatPercent } from '@/services/formatters'
+import { usePresentationStore } from '@/stores/presentationStore'
 
-defineProps<{
+const props = defineProps<{
   summary: DashboardAlertCenterInventoryRiskSummary | null
 }>()
+
+const presentation = usePresentationStore()
+
+const showUnavailableMessage = computed(
+  () => props.summary != null && !props.summary.IsAvailable && !presentation.hidePlatformDiagnostics,
+)
 </script>
 
 <template>
-  <section class="alert-center-inventory-risk">
+  <section id="alert-inventory" class="alert-center-inventory-risk">
     <h2 class="alert-center-inventory-risk__heading">Inventory Risk Summary</h2>
     <Card>
       <template #content>
@@ -40,7 +48,7 @@ defineProps<{
             </span>
           </div>
         </div>
-        <p v-else class="alert-center-inventory-risk__unavailable">
+        <p v-else-if="showUnavailableMessage" class="alert-center-inventory-risk__unavailable">
           Inventory risk snapshot unavailable.
         </p>
         <RouterLink

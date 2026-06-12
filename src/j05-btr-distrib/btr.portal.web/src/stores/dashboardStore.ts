@@ -15,6 +15,8 @@ import {
   fetchDashboardSales,
 } from '@/api/dashboardApi'
 import { getApiErrorMessage } from '@/api/httpClient'
+import { isInfrastructureStoreError } from '@/services/platformDiagnostics'
+import { usePresentationStore } from '@/stores/presentationStore'
 import type {
   DashboardAlertCenterResponse,
   DashboardCollectionResponse,
@@ -46,6 +48,15 @@ export const useDashboardStore = defineStore('dashboard', () => {
   const loading = ref(false)
   const error = ref<string | null>(null)
 
+  function setInfrastructureError(message: string): void {
+    const presentation = usePresentationStore()
+    if (presentation.hidePlatformDiagnostics && isInfrastructureStoreError(message)) {
+      return
+    }
+
+    error.value = message
+  }
+
   async function loadExecutive(): Promise<void> {
     loading.value = true
     error.value = null
@@ -54,7 +65,9 @@ export const useDashboardStore = defineStore('dashboard', () => {
       executive.value = await fetchDashboardExecutive()
 
       if (executive.value.HasUnavailableDomain) {
-        error.value = 'Some dashboard data is not yet available. Run the snapshot refresh worker.'
+        setInfrastructureError(
+          'Some dashboard data is not yet available. Run the snapshot refresh worker.',
+        )
       }
     } catch (err) {
       error.value = getApiErrorMessage(err, 'Failed to load executive dashboard.')
@@ -71,7 +84,9 @@ export const useDashboardStore = defineStore('dashboard', () => {
       alerts.value = await fetchDashboardAlerts()
 
       if (alerts.value.HasUnavailableDomain) {
-        error.value = 'Some dashboard data is not yet available. Run the snapshot refresh worker.'
+        setInfrastructureError(
+          'Some dashboard data is not yet available. Run the snapshot refresh worker.',
+        )
       }
     } catch (err) {
       error.value = getApiErrorMessage(err, 'Failed to load alert center.')
@@ -88,7 +103,9 @@ export const useDashboardStore = defineStore('dashboard', () => {
       overview.value = await fetchDashboardOverview()
 
       if (overview.value.HasUnavailableDomain) {
-        error.value = 'Some dashboard data is not yet available. Run the snapshot refresh worker.'
+        setInfrastructureError(
+          'Some dashboard data is not yet available. Run the snapshot refresh worker.',
+        )
       }
     } catch (err) {
       error.value = getApiErrorMessage(err, 'Failed to load dashboard data.')
@@ -144,7 +161,9 @@ export const useDashboardStore = defineStore('dashboard', () => {
       inventoryRisk.value = await fetchDashboardInventoryRisk()
 
       if (!inventoryRisk.value.IsAvailable) {
-        error.value = 'Inventory risk data is not yet available. Run the snapshot refresh worker.'
+        setInfrastructureError(
+          'Inventory risk data is not yet available. Run the snapshot refresh worker.',
+        )
       }
     } catch (err) {
       error.value = getApiErrorMessage(err, 'Failed to load inventory risk dashboard.')
@@ -174,7 +193,9 @@ export const useDashboardStore = defineStore('dashboard', () => {
       customer.value = await fetchDashboardCustomer()
 
       if (!customer.value.IsAvailable) {
-        error.value = 'Customer analytics data is not yet available. Run the snapshot refresh worker.'
+        setInfrastructureError(
+          'Customer analytics data is not yet available. Run the snapshot refresh worker.',
+        )
       }
     } catch (err) {
       error.value = getApiErrorMessage(err, 'Failed to load customer analytics dashboard.')
@@ -191,7 +212,9 @@ export const useDashboardStore = defineStore('dashboard', () => {
       collection.value = await fetchDashboardCollection()
 
       if (!collection.value.IsAvailable) {
-        error.value = 'Collection dashboard data is not yet available. Run the snapshot refresh worker.'
+        setInfrastructureError(
+          'Collection dashboard data is not yet available. Run the snapshot refresh worker.',
+        )
       }
     } catch (err) {
       error.value = getApiErrorMessage(err, 'Failed to load collection dashboard.')
@@ -208,7 +231,9 @@ export const useDashboardStore = defineStore('dashboard', () => {
       location.value = await fetchDashboardLocation()
 
       if (!location.value.IsAvailable) {
-        error.value = 'Location dashboard data is not yet available. Run the snapshot refresh worker.'
+        setInfrastructureError(
+          'Location dashboard data is not yet available. Run the snapshot refresh worker.',
+        )
       }
     } catch (err) {
       error.value = getApiErrorMessage(err, 'Failed to load location dashboard.')
@@ -225,7 +250,9 @@ export const useDashboardStore = defineStore('dashboard', () => {
       salesman.value = await fetchDashboardSalesman()
 
       if (!salesman.value.IsAvailable) {
-        error.value = 'Salesman performance data is not yet available. Run the snapshot refresh worker.'
+        setInfrastructureError(
+          'Salesman performance data is not yet available. Run the snapshot refresh worker.',
+        )
       }
     } catch (err) {
       error.value = getApiErrorMessage(err, 'Failed to load salesman performance dashboard.')

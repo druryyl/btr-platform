@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using btr.application.PurchaseContext.InvoiceInfo;
+using btr.application.Portal;
 using btr.application.ReportingContext.DashboardSnapshotAgg.Services;
 using btr.application.SupportContext.TglJamAgg;
 using btr.infrastructure.ReportingContext.DashboardPurchasingAgg;
@@ -26,7 +27,11 @@ namespace btr.test.ReportingContext
             var stubDal = new StubInvoiceViewDal(rows);
             var stubTglJam = new StubTglJamDal(FixedToday);
             var aggregator = new DashboardPurchasingInvoiceAggregator();
-            var liveDal = new DashboardPurchasingLiveDal(stubDal, stubTglJam, aggregator);
+            var liveDal = new DashboardPurchasingLiveDal(
+                stubDal,
+                stubTglJam,
+                new StubBusinessDateProvider(FixedToday),
+                aggregator);
 
             var live = liveDal.GetSummary();
             var aggregate = aggregator.Aggregate(
@@ -80,6 +85,18 @@ namespace btr.test.ReportingContext
             }
 
             public DateTime Now { get; }
+        }
+
+        private sealed class StubBusinessDateProvider : IBusinessDateProvider
+        {
+            public StubBusinessDateProvider(DateTime today)
+            {
+                Today = today.Date;
+            }
+
+            public DateTime Today { get; }
+
+            public bool IsPresentationActive => false;
         }
     }
 }

@@ -3,6 +3,7 @@ import { computed } from 'vue'
 import { RouterLink } from 'vue-router'
 import KpiCard from '@/components/KpiCard.vue'
 import type { AchievementBand } from '@/models/dashboard'
+import { usePresentationStore } from '@/stores/presentationStore'
 
 const props = defineProps<{
   title: string
@@ -13,6 +14,16 @@ const props = defineProps<{
   achievementBand?: AchievementBand | null
   unavailable?: boolean
 }>()
+
+const presentation = usePresentationStore()
+
+const showUnavailableLabel = computed(
+  () => Boolean(props.unavailable) && !presentation.hidePlatformDiagnostics,
+)
+
+const showContent = computed(
+  () => !props.unavailable || presentation.hidePlatformDiagnostics,
+)
 
 const bandClass = computed(() => {
   if (!props.achievementBand) return null
@@ -39,13 +50,13 @@ const bandClass = computed(() => {
       class="executive-attention-card"
       :class="{
         'executive-attention-card--attention': requiresAttention && !achievementBand,
-        'executive-attention-card--unavailable': unavailable,
+        'executive-attention-card--unavailable': showUnavailableLabel,
       }"
     >
-      <div v-if="unavailable" class="executive-attention-card__unavailable">
+      <div v-if="showUnavailableLabel" class="executive-attention-card__unavailable">
         Data unavailable
       </div>
-      <template v-else>
+      <template v-else-if="showContent">
         <div v-if="achievementBand" class="executive-attention-card__band-row">
           <span class="executive-attention-card__band" :class="bandClass">
             {{ achievementBand }}
