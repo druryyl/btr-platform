@@ -223,7 +223,7 @@ fun CustomerSelectionScreen(
                             },
                             onOpenInMaps = { customer ->
                                 // Open customer location in Google Maps
-                                if (customer.latitude != 0.0 && customer.longitude != 0.0) {
+                                if (customer.hasCoordinates()) {
                                     MapUtils.openInGoogleMaps(
                                         context = context,
                                         latitude = customer.latitude,
@@ -279,7 +279,7 @@ fun CustomerSelectionScreen(
                             },
                             onOpenInMaps = { customer ->
                                 // Open customer location in Google Maps
-                                if (customer.latitude != 0.0 && customer.longitude != 0.0) {
+                                if (customer.hasCoordinates()) {
                                     MapUtils.openInGoogleMaps(
                                         context = context,
                                         latitude = customer.latitude,
@@ -304,7 +304,7 @@ fun CustomerItem(
     onOpenInMaps: (Customer) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val hasLocation = customer.latitude != 0.0 && customer.longitude != 0.0
+    val hasLocation = customer.hasCoordinates()
 
     Card(
         modifier = modifier
@@ -398,30 +398,19 @@ fun CustomerItem(
                 horizontalArrangement = Arrangement.End,
                 modifier = Modifier.fillMaxWidth(),
             ) {
-                IconButton(
-                    onClick = { onManageLocationClick(customer) },
-                    modifier = Modifier
-                        .size(28.dp)
-                        .padding(end = 8.dp) //
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.EditLocationAlt,
-                        contentDescription = "Manage Location",
-                        tint = MaterialTheme.colorScheme.primary
-                    )
-                }
-
-                if (hasLocation) {
-//                    IconButton(
-//                        onClick = { onOpenInMaps(customer) },
-//                        modifier = Modifier.size(28.dp)
-//                    ) {
-//                        Icon(
-//                            imageVector = Icons.Default.Map,
-//                            contentDescription = "Open Map",
-//                            tint = MaterialTheme.colorScheme.primary
-//                        )
-//                    }
+                if (!hasLocation) {
+                    IconButton(
+                        onClick = { onManageLocationClick(customer) },
+                        modifier = Modifier
+                            .size(28.dp)
+                            .padding(end = 8.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.EditLocationAlt,
+                            contentDescription = "Register Location",
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+                    }
                 }
             }
         }

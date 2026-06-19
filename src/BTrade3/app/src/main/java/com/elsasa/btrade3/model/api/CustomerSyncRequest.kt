@@ -26,5 +26,10 @@ data class CheckInRequest(
     val customerLatitude: Double,
     val customerLongitude: Double,
     val statusSync: String,
-    val serverId: String
+    val serverId: String,
+    val checkOutTime: String = "",
+    val checkOutLatitude: Double = 0.0,
+    val checkOutLongitude: Double = 0.0,
+    val checkOutAccuracy: Float = 0f,
+    val checkOutMode: String = ""
 )

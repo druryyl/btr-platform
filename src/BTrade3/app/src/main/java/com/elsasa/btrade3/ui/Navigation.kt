@@ -107,8 +107,14 @@ fun AppNavigation(
         }
 
         composable("faktur_list") {
+            val userEmail = getUserEmail(context) ?: ""
             val viewModel: OrderListViewModel = viewModel(
-                factory = OrderListViewModelFactory(orderRepository, orderSyncRepository)
+                factory = OrderListViewModelFactory(
+                    orderRepository,
+                    orderSyncRepository,
+                    checkInRepository,
+                    userEmail
+                )
             )
             OrderListScreen(navController, viewModel)
         }
@@ -230,14 +236,14 @@ fun AppNavigation(
             val context = LocalContext.current
             val userEmail = getUserEmail(context) ?: ""
             val viewModel: CheckInViewModel = viewModel(
-                factory = CheckInViewModelFactory(context, checkInRepository, customerRepository)
+                factory = CheckInViewModelFactory(context, checkInRepository, customerRepository, checkInSyncRepository)
             )
             CheckInScreen(navController, userEmail, viewModel)
         }
         // Add this to your NavHost
         composable("check_in_history") {
             val viewModel: CheckInHistoryViewModel = viewModel(
-                factory = CheckInHistoryViewModelFactory(checkInRepository)
+                factory = CheckInHistoryViewModelFactory(checkInRepository, checkInSyncRepository)
             )
             CheckInHistoryScreen(navController, viewModel)
         }

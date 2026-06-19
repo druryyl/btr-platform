@@ -45,6 +45,9 @@ class LocationCaptureViewModel(
     private val _originalLocation = MutableStateFlow<Location?>(null)
     val originalLocation: StateFlow<Location?> = _originalLocation.asStateFlow()
 
+    private val _canRegisterLocation = MutableStateFlow(true)
+    val canRegisterLocation: StateFlow<Boolean> = _canRegisterLocation.asStateFlow()
+
     private val _nearbyCustomers = MutableStateFlow<List<Customer>>(emptyList())
     val nearbyCustomers: StateFlow<List<Customer>> = _nearbyCustomers.asStateFlow()
 
@@ -53,6 +56,11 @@ class LocationCaptureViewModel(
     private var _selectedCustomerId: String = "" // Store selected customer ID to exclude from results
     private val locationHelper = LocationHelper(context)
     private val reverseGeocodingHelper = ReverseGeocodingHelper(context)
+
+    override fun onCleared() {
+        locationHelper.stopLocationUpdates()
+        super.onCleared()
+    }
 
     fun checkLocationPermission(): Boolean {
         return ActivityCompat.checkSelfPermission(
@@ -69,9 +77,9 @@ class LocationCaptureViewModel(
             try {
                 customerRepository.getCustomerById(customerId)?.let { customer ->
                     _selectedCustomerWilayah = customer.wilayah
+                    _canRegisterLocation.value = !customer.hasCoordinates()
 
-                    if (customer.latitude != 0.0 && customer.longitude != 0.0 &&
-                        !customer.latitude.isNaN() && !customer.longitude.isNaN()) {
+                    if (customer.hasCoordinates()) {
                         val originalLocation = Location("stored").apply {
                             latitude = customer.latitude
                             longitude = customer.longitude
@@ -90,6 +98,9 @@ class LocationCaptureViewModel(
                             _address.value = null
                         }
                     } else {
+                        _originalLocation.value = null
+                        _location.value = null
+                        _accuracy.value = 0f
                         _locationStatus.value = LocationStatus.NO_SIGNAL
                         _address.value = null
                     }
@@ -116,6 +127,8 @@ class LocationCaptureViewModel(
 
     // Start GPS location capture
     fun startLocationCapture() {
+        if (!_canRegisterLocation.value) return
+
         if (!checkLocationPermission()) {
             _locationStatus.value = LocationStatus.NO_PERMISSION
             return
@@ -125,38 +138,42 @@ class LocationCaptureViewModel(
         _locationStatus.value = LocationStatus.ACQUIRING
         _address.value = null
 
-        locationHelper.getCurrentLocation(
-            onLocationResult = { locationResult ->
-                locationResult.lastLocation?.let { loc ->
-                    // Validate the new location before using it
-                    if (loc.latitude.isNaN() || loc.longitude.isNaN()) {
+        locationHelper.acquireHighAccuracyLocation(
+            onLocationUpdate = { loc ->
+                if (loc.latitude.isNaN() || loc.longitude.isNaN()) return@acquireHighAccuracyLocation
+
+                _location.value = loc
+                _accuracy.value = loc.accuracy
+                _locationStatus.value = LocationStatus.LOCKED
+                updateNearbyCustomers()
+            },
+            onComplete = { loc ->
+                _isLoading.value = false
+                loc?.let { location ->
+                    if (location.latitude.isNaN() || location.longitude.isNaN()) {
                         _locationStatus.value = LocationStatus.NO_SIGNAL
-                        _isLoading.value = false
                         return@let
                     }
 
-                    _location.value = loc
-                    _accuracy.value = loc.accuracy
+                    _location.value = location
+                    _accuracy.value = location.accuracy
                     _locationStatus.value = LocationStatus.LOCKED
 
-                    // Get address for the new location
                     viewModelScope.launch {
                         try {
-                            val address = reverseGeocodingHelper.getAddressFromLocation(loc)
-                            _address.value = address
+                            _address.value = reverseGeocodingHelper.getAddressFromLocation(location)
                         } catch (e: Exception) {
                             _address.value = null
                         }
                     }
-
-                    // Update nearby customers based on new location
                     updateNearbyCustomers()
                 } ?: run {
-                    _locationStatus.value = LocationStatus.NO_SIGNAL
+                    if (_location.value == null) {
+                        _locationStatus.value = LocationStatus.NO_SIGNAL
+                    }
                 }
-                _isLoading.value = false
             },
-            onError = { exception ->
+            onError = {
                 _locationStatus.value = LocationStatus.NO_SIGNAL
                 _isLoading.value = false
             }
@@ -220,6 +237,8 @@ class LocationCaptureViewModel(
 
     // Save location and sync to cloud
     fun saveLocationForCustomer(customerId: String, userEmail: String) {
+        if (!_canRegisterLocation.value) return
+
         val currentLocation = _location.value
         if (currentLocation != null) {
             viewModelScope.launch {
@@ -258,6 +277,8 @@ class LocationCaptureViewModel(
     }
 
     fun clearLocation(customerId: String) {
+        if (!_canRegisterLocation.value) return
+
         viewModelScope.launch {
             customerRepository.updateCustomerLocation(
                 customerId = customerId,

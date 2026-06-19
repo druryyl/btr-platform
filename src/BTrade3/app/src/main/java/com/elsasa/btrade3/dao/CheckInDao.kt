@@ -24,6 +24,20 @@ interface CheckInDao {
     @Query("DELETE FROM checkin_table WHERE checkInId = :checkInId")
     suspend fun deleteCheckInById(checkInId: String)
 
+    @Query("""
+        SELECT * FROM checkin_table
+        WHERE userEmail = :userEmail AND checkOutTime = '' AND isExplicitlyOpen = 1
+        ORDER BY checkInDate DESC, checkInTime DESC LIMIT 1
+    """)
+    suspend fun getOpenCheckInForUser(userEmail: String): CheckIn?
+
+    @Query("""
+        SELECT * FROM checkin_table
+        WHERE userEmail = :userEmail AND checkOutTime = '' AND isExplicitlyOpen = 1
+        ORDER BY checkInDate DESC, checkInTime DESC LIMIT 1
+    """)
+    fun observeOpenCheckInForUser(userEmail: String): Flow<CheckIn?>
+
     @Query("SELECT * FROM checkin_table WHERE statusSync = 'DRAFT' ORDER BY checkInDate DESC, checkInTime DESC")
     fun getDraftCheckIns(): Flow<List<CheckIn>>
 }

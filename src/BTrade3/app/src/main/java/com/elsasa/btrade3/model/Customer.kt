@@ -21,4 +21,8 @@ data class Customer(
     val accuracy: Float = 0.0f,      // GPS accuracy in meters
     val locationTimestamp: Long = 0L, // When location was set
     val isUpdated: Boolean = false
-): Parcelable
+): Parcelable {
+    fun hasCoordinates(): Boolean =
+        latitude != 0.0 && longitude != 0.0 &&
+        !latitude.isNaN() && !longitude.isNaN()
+}

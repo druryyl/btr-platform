@@ -74,6 +74,7 @@ fun LocationCaptureScreen(
     val isLoading by viewModel.isLoading.collectAsState()
     val address by viewModel.address.collectAsState()
     val originalLocation by viewModel.originalLocation.collectAsState()
+    val canRegisterLocation by viewModel.canRegisterLocation.collectAsState()
     val nearbyCustomers by viewModel.nearbyCustomers.collectAsState()
 
     LaunchedEffect(Unit) {
@@ -83,7 +84,9 @@ fun LocationCaptureScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Set Customer Location") },
+                title = {
+                    Text(if (canRegisterLocation) "Set Customer Location" else "Customer Location")
+                },
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
@@ -105,6 +108,7 @@ fun LocationCaptureScreen(
                     locationStatus = locationStatus,
                     accuracy = accuracy,
                     isLoading = isLoading,
+                    canRegisterLocation = canRegisterLocation,
                     hasOriginalLocation = originalLocation != null
                 )
             }
@@ -118,7 +122,7 @@ fun LocationCaptureScreen(
                     location = location,
                     accuracy = accuracy,
                     address = address,
-                    hasOriginalLocation = originalLocation != null,
+                    canRegisterLocation = canRegisterLocation,
                     onCaptureClick = { viewModel.startLocationCapture() },
                     canCapture = viewModel.checkLocationPermission(),
                 )
@@ -126,26 +130,35 @@ fun LocationCaptureScreen(
 
             // Action Buttons (Cancel / Save)
             item {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
+                if (canRegisterLocation) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        OutlinedButton(
+                            onClick = { navController.popBackStack() },
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Text("Cancel")
+                        }
+
+                        Button(
+                            onClick = {
+                                viewModel.saveLocationForCustomer(customerId, userEmail)
+                                navController.popBackStack()
+                            },
+                            modifier = Modifier.weight(1f),
+                            enabled = location != null
+                        ) {
+                            Text("Save Location")
+                        }
+                    }
+                } else {
                     OutlinedButton(
                         onClick = { navController.popBackStack() },
-                        modifier = Modifier.weight(1f)
+                        modifier = Modifier.fillMaxWidth()
                     ) {
-                        Text("Cancel")
-                    }
-
-                    Button(
-                        onClick = {
-                            viewModel.saveLocationForCustomer(customerId, userEmail)
-                            navController.popBackStack()
-                        },
-                        modifier = Modifier.weight(1f),
-                        enabled = location != null
-                    ) {
-                        Text("Save Location")
+                        Text("Close")
                     }
                 }
             }
@@ -314,6 +327,7 @@ fun StatusCard(
     locationStatus: LocationStatus,
     accuracy: Float,
     isLoading: Boolean,
+    canRegisterLocation: Boolean,
     hasOriginalLocation: Boolean
 ) {
     Card(
@@ -342,9 +356,13 @@ fun StatusCard(
                 Text(
                     text = when (locationStatus) {
                         LocationStatus.NO_PERMISSION -> "Permission Required"
-                        LocationStatus.NO_SIGNAL -> if (hasOriginalLocation) "No New GPS Signal" else "No Location Set"
+                        LocationStatus.NO_SIGNAL -> when {
+                            !canRegisterLocation -> "Registered Location"
+                            hasOriginalLocation -> "No New GPS Signal"
+                            else -> "No Location Set"
+                        }
                         LocationStatus.ACQUIRING -> "Acquiring Location..."
-                        LocationStatus.LOCKED -> "Location Acquired"
+                        LocationStatus.LOCKED -> if (canRegisterLocation) "Location Acquired" else "Registered Location"
                     },
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
@@ -375,7 +393,13 @@ fun StatusCard(
                     )
                 }
                 LocationStatus.NO_SIGNAL -> {
-                    if (hasOriginalLocation) {
+                    if (!canRegisterLocation) {
+                        Text(
+                            text = "Location already registered and cannot be changed.",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    } else if (hasOriginalLocation) {
                         Text(
                             text = "No new GPS signal available. Using saved location.",
                             style = MaterialTheme.typography.bodyMedium,
@@ -398,7 +422,11 @@ fun StatusCard(
                 }
                 LocationStatus.LOCKED -> {
                     Text(
-                        text = "Current location is displayed",
+                        text = if (canRegisterLocation) {
+                            "Current location is displayed"
+                        } else {
+                            "Location already registered and cannot be changed."
+                        },
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.primary
                     )
@@ -416,7 +444,7 @@ fun LocationPreviewCard(
     location: android.location.Location?,
     accuracy: Float,
     address: String?,
-    hasOriginalLocation: Boolean,
+    canRegisterLocation: Boolean,
     onCaptureClick: () -> Unit,
     canCapture: Boolean,
     context: Context = LocalContext.current
@@ -506,28 +534,30 @@ fun LocationPreviewCard(
                 }
             } else {
                 Text(
-                    text = "No location set. Capture new location or save without location.",
+                    text = "No location set. Capture new location to register coordinates.",
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
-            HorizontalDivider(
-                modifier = Modifier.padding(vertical = 8.dp),
-                thickness = DividerDefaults.Thickness,
-                color = DividerDefaults.color
-            )
-            Button(
-                onClick = onCaptureClick,
-                modifier = Modifier.fillMaxWidth(),
-                enabled = canCapture
-            ) {
-                Icon(
-                    imageVector = Icons.Default.LocationSearching,
-                    contentDescription = "GPS",
-                    modifier = Modifier.size(18.dp)
+            if (canRegisterLocation) {
+                HorizontalDivider(
+                    modifier = Modifier.padding(vertical = 8.dp),
+                    thickness = DividerDefaults.Thickness,
+                    color = DividerDefaults.color
                 )
-                Spacer(modifier = Modifier.width(8.dp))
-                Text("Capture New Location")
+                Button(
+                    onClick = onCaptureClick,
+                    modifier = Modifier.fillMaxWidth(),
+                    enabled = canCapture
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.LocationSearching,
+                        contentDescription = "GPS",
+                        modifier = Modifier.size(18.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("Capture New Location")
+                }
             }
         }
     }

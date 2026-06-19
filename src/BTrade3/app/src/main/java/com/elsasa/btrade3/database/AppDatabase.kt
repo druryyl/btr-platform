@@ -21,7 +21,7 @@ import com.elsasa.btrade3.model.SalesPerson
 
 @Database(
     entities = [Order::class, OrderItem::class, Barang::class, Customer::class, SalesPerson::class, CheckIn::class],
-    version = 24,
+    version = 27,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -46,7 +46,8 @@ abstract class AppDatabase : RoomDatabase() {
                 .fallbackToDestructiveMigration(false) // Add this for development
                 .addMigrations(MIGRATION_15_16, MIGRATION_16_17, MIGRATION_17_18,
                     MIGRATION_18_19, MIGRATION_19_20, MIGRATION_20_21, MIGRATION_21_22,
-                    MIGRATION_22_23, MIGRATION_23_24)
+                    MIGRATION_22_23, MIGRATION_23_24, MIGRATION_24_25, MIGRATION_25_26,
+                    MIGRATION_26_27)
                 .build()
                 INSTANCE = instance
                 instance
@@ -174,6 +175,29 @@ abstract class AppDatabase : RoomDatabase() {
                     UPDATE order_table SET statusSync = 'READY_TO_SYNC'
                     WHERE statusSync = 'DRAFT'
                 """.trimIndent())
+            }
+        }
+
+        val MIGRATION_24_25 = object : Migration(24, 25) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE checkin_table ADD COLUMN checkOutTime TEXT NOT NULL DEFAULT ''")
+                db.execSQL("ALTER TABLE checkin_table ADD COLUMN checkOutLatitude REAL NOT NULL DEFAULT 0.0")
+                db.execSQL("ALTER TABLE checkin_table ADD COLUMN checkOutLongitude REAL NOT NULL DEFAULT 0.0")
+                db.execSQL("ALTER TABLE checkin_table ADD COLUMN checkOutAccuracy REAL NOT NULL DEFAULT 0.0")
+            }
+        }
+
+        val MIGRATION_25_26 = object : Migration(25, 26) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE checkin_table ADD COLUMN checkOutMode TEXT NOT NULL DEFAULT ''")
+            }
+        }
+
+        val MIGRATION_26_27 = object : Migration(26, 27) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
+                    "ALTER TABLE checkin_table ADD COLUMN isExplicitlyOpen INTEGER NOT NULL DEFAULT 0"
+                )
             }
         }
 

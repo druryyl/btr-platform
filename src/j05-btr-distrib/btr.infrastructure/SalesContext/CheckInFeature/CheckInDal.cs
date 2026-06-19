@@ -27,12 +27,14 @@ namespace btr.infrastructure.SalesContext.CheckInFeature
                 CheckInId, CheckInDate, CheckInTime, UserEmail, 
                 CheckInLatitude, CheckInLongitude, Accuracy,
                 CustomerId, CustomerCode, CustomerName, CustomerAddress,
-                CustomerLatitude, CustomerLongitude, StatusSync)
+                CustomerLatitude, CustomerLongitude, StatusSync,
+                CheckOutTime, CheckOutLatitude, CheckOutLongitude, CheckOutAccuracy, CheckOutMode)
             VALUES (
                 @CheckInId, @CheckInDate, @CheckInTime, @UserEmail, 
                 @CheckInLatitude, @CheckInLongitude, @Accuracy,
                 @CustomerId, @CustomerCode, @CustomerName, @CustomerAddress,
-                @CustomerLatitude, @CustomerLongitude, @StatusSync)";
+                @CustomerLatitude, @CustomerLongitude, @StatusSync,
+                @CheckOutTime, @CheckOutLatitude, @CheckOutLongitude, @CheckOutAccuracy, @CheckOutMode)";
 
             var dp = new DynamicParameters();
             dp.AddParam("@CheckInId", model.CheckInId, SqlDbType.VarChar);
@@ -49,6 +51,11 @@ namespace btr.infrastructure.SalesContext.CheckInFeature
             dp.AddParam("@CustomerLatitude", model.CustomerLatitude, SqlDbType.Float);
             dp.AddParam("@CustomerLongitude", model.CustomerLongitude, SqlDbType.Float);
             dp.AddParam("@StatusSync", model.StatusSync, SqlDbType.VarChar);
+            dp.AddParam("@CheckOutTime", model.CheckOutTime, SqlDbType.VarChar);
+            dp.AddParam("@CheckOutLatitude", model.CheckOutLatitude, SqlDbType.Float);
+            dp.AddParam("@CheckOutLongitude", model.CheckOutLongitude, SqlDbType.Float);
+            dp.AddParam("@CheckOutAccuracy", model.CheckOutAccuracy, SqlDbType.Float);
+            dp.AddParam("@CheckOutMode", model.CheckOutMode, SqlDbType.VarChar);
 
             using (var conn = new SqlConnection(ConnStringHelper.Get(_opt)))
             {
@@ -74,7 +81,12 @@ namespace btr.infrastructure.SalesContext.CheckInFeature
                 CustomerAddress = @CustomerAddress,
                 CustomerLatitude = @CustomerLatitude,
                 CustomerLongitude = @CustomerLongitude,
-                StatusSync = @StatusSync
+                StatusSync = @StatusSync,
+                CheckOutTime = @CheckOutTime,
+                CheckOutLatitude = @CheckOutLatitude,
+                CheckOutLongitude = @CheckOutLongitude,
+                CheckOutAccuracy = @CheckOutAccuracy,
+                CheckOutMode = @CheckOutMode
             WHERE
                 CheckInId = @CheckInId";
 
@@ -93,6 +105,11 @@ namespace btr.infrastructure.SalesContext.CheckInFeature
             dp.AddParam("@CustomerLatitude", model.CustomerLatitude, SqlDbType.Float);
             dp.AddParam("@CustomerLongitude", model.CustomerLongitude, SqlDbType.Float);
             dp.AddParam("@StatusSync", model.StatusSync, SqlDbType.VarChar);
+            dp.AddParam("@CheckOutTime", model.CheckOutTime, SqlDbType.VarChar);
+            dp.AddParam("@CheckOutLatitude", model.CheckOutLatitude, SqlDbType.Float);
+            dp.AddParam("@CheckOutLongitude", model.CheckOutLongitude, SqlDbType.Float);
+            dp.AddParam("@CheckOutAccuracy", model.CheckOutAccuracy, SqlDbType.Float);
+            dp.AddParam("@CheckOutMode", model.CheckOutMode, SqlDbType.VarChar);
 
             using (var conn = new SqlConnection(ConnStringHelper.Get(_opt)))
             {
@@ -137,7 +154,8 @@ namespace btr.infrastructure.SalesContext.CheckInFeature
                 ISNULL(bb.SalesPersonName, '-') AS SalesName,
                 aa.CheckInLatitude, aa.CheckInLongitude, aa.Accuracy,
                 aa.CustomerId, aa.CustomerCode, aa.CustomerName, aa.CustomerAddress,
-                aa.CustomerLatitude, aa.CustomerLongitude, aa.StatusSync
+                aa.CustomerLatitude, aa.CustomerLongitude, aa.StatusSync,
+                aa.CheckOutTime, aa.CheckOutLatitude, aa.CheckOutLongitude, aa.CheckOutAccuracy, aa.CheckOutMode
             FROM
                 BTR_CheckIn aa
                 LEFT JOIN BTR_SalesPerson bb ON aa.UserEmail = bb.Email
@@ -161,7 +179,8 @@ namespace btr.infrastructure.SalesContext.CheckInFeature
                 ISNULL(bb.SalesPersonName, '-') AS SalesName,
                 aa.CheckInLatitude, aa.CheckInLongitude, aa.Accuracy,
                 aa.CustomerId, aa.CustomerCode, aa.CustomerName, aa.CustomerAddress,
-                aa.CustomerLatitude, aa.CustomerLongitude, aa.StatusSync
+                aa.CustomerLatitude, aa.CustomerLongitude, aa.StatusSync,
+                aa.CheckOutTime, aa.CheckOutLatitude, aa.CheckOutLongitude, aa.CheckOutAccuracy, aa.CheckOutMode
             FROM
                 BTR_CheckIn aa
                 LEFT JOIN BTR_SalesPerson bb ON aa.UserEmail = bb.Email

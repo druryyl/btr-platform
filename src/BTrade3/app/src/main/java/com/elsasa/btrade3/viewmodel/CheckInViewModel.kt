@@ -1,7 +1,5 @@
 package com.elsasa.btrade3.viewmodel
 
-import com.elsasa.btrade3.model.Customer
-
 import android.Manifest
 import android.content.Context
 import android.content.pm.PackageManager
@@ -10,7 +8,9 @@ import androidx.core.app.ActivityCompat
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.elsasa.btrade3.model.CheckIn
+import com.elsasa.btrade3.model.Customer
 import com.elsasa.btrade3.repository.CheckInRepository
+import com.elsasa.btrade3.repository.CheckInSyncRepository
 import com.elsasa.btrade3.repository.CustomerRepository
 import com.elsasa.btrade3.util.LocationHelper
 import com.elsasa.btrade3.util.LocationStatus
@@ -20,14 +20,17 @@ import com.elsasa.btrade3.util.UlidHelper
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
-import java.util.*
-import kotlinx.coroutines.flow.first
+import java.util.Date
+import java.util.Locale
+
 class CheckInViewModel(
     private val context: Context,
     private val checkInRepository: CheckInRepository,
-    private val customerRepository: CustomerRepository
+    private val customerRepository: CustomerRepository,
+    private val checkInSyncRepository: CheckInSyncRepository
 ) : ViewModel() {
 
     private val _locationStatus = MutableStateFlow(LocationStatus.NO_SIGNAL)
@@ -59,6 +62,11 @@ class CheckInViewModel(
     private val locationHelper = LocationHelper(context)
     private val reverseGeocodingHelper = ReverseGeocodingHelper(context)
 
+    override fun onCleared() {
+        locationHelper.stopLocationUpdates()
+        super.onCleared()
+    }
+
     fun checkLocationPermission(): Boolean {
         return ActivityCompat.checkSelfPermission(
             context,
@@ -81,35 +89,38 @@ class CheckInViewModel(
 
         _isLoading.value = true
         _locationStatus.value = LocationStatus.ACQUIRING
-        _currentAddress.value = null // Clear previous address
+        _currentAddress.value = null
 
-        locationHelper.getCurrentLocation(
-            onLocationResult = { locationResult ->
-                locationResult.lastLocation?.let { loc ->
+        locationHelper.acquireHighAccuracyLocation(
+            onLocationUpdate = { location ->
+                _currentLocation.value = location
+                _accuracy.value = location.accuracy
+                _locationStatus.value = LocationStatus.LOCKED
+                updateNearbyCustomers()
+            },
+            onComplete = { location ->
+                _isLoading.value = false
+                location?.let { loc ->
                     _currentLocation.value = loc
                     _accuracy.value = loc.accuracy
                     _locationStatus.value = LocationStatus.LOCKED
-
-                    // Get address for the new location
                     viewModelScope.launch {
-                        val address = reverseGeocodingHelper.getAddressFromLocation(loc)
-                        _currentAddress.value = address
+                        _currentAddress.value = reverseGeocodingHelper.getAddressFromLocation(loc)
                     }
-
                     updateNearbyCustomers()
                 } ?: run {
-                    _locationStatus.value = LocationStatus.NO_SIGNAL
+                    if (_currentLocation.value == null) {
+                        _locationStatus.value = LocationStatus.NO_SIGNAL
+                    }
                 }
-                _isLoading.value = false
             },
-            onError = { exception ->
+            onError = {
                 _locationStatus.value = LocationStatus.NO_SIGNAL
                 _isLoading.value = false
             }
         )
     }
 
-    // Update nearby customers based on current location
     private fun updateNearbyCustomers() {
         try {
             val currentLocation = _currentLocation.value
@@ -120,13 +131,11 @@ class CheckInViewModel(
                     return
                 }
 
-                // Process in background to avoid blocking UI
                 viewModelScope.launch {
-                    // Filter customers by wilayah and exclude the selected customer
                     val customersToProcess = if (_selectedCustomerWilayah.value.isNotEmpty()) {
                         _allCustomers.value.filter { customer ->
                             customer.wilayah == _selectedCustomerWilayah.value &&
-                                    customer.customerId != _selectedCustomerId.value
+                                customer.customerId != _selectedCustomerId.value
                         }
                     } else {
                         _allCustomers.value.filter { customer ->
@@ -134,15 +143,12 @@ class CheckInViewModel(
                         }
                     }
 
-                    val nearby = LocationUtils.getCustomersWithinRadius(
+                    _nearbyCustomers.value = LocationUtils.getCustomersWithinRadius(
                         currentLocation.latitude,
                         currentLocation.longitude,
                         customersToProcess,
-                        100f // 100 meters radius
+                        100f
                     )
-
-                    // Update UI on main thread
-                    _nearbyCustomers.value = nearby
                 }
             } else {
                 _nearbyCustomers.value = emptyList()
@@ -156,7 +162,6 @@ class CheckInViewModel(
         _selectedCustomerId.value = customer.customerId
         _selectedCustomerWilayah.value = customer.wilayah
         _selectedCustomer.value = customer
-        // Update nearby customers to exclude the selected one
         updateNearbyCustomers()
     }
 
@@ -173,13 +178,22 @@ class CheckInViewModel(
 
         if (currentLoc != null && selectedCust != null) {
             viewModelScope.launch {
+                val checkInDate = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
+                val checkInTime = SimpleDateFormat("HH:mm:ss", Locale.getDefault()).format(Date())
+
+                val autoClosed = checkInRepository.autoCloseOpenVisit(
+                    userEmail = userEmail,
+                    checkOutTime = checkInTime,
+                    checkOutLatitude = currentLoc.latitude,
+                    checkOutLongitude = currentLoc.longitude,
+                    checkOutAccuracy = currentLoc.accuracy
+                )
+                autoClosed?.let { checkInSyncRepository.uploadCheckIn(it.checkInId, context) }
+
                 val checkIn = CheckIn(
                     checkInId = UlidHelper.generate(),
-                    checkInDate = SimpleDateFormat(
-                        "yyyy-MM-dd",
-                        Locale.getDefault()
-                    ).format(Date()),
-                    checkInTime = SimpleDateFormat("HH:mm:ss", Locale.getDefault()).format(Date()),
+                    checkInDate = checkInDate,
+                    checkInTime = checkInTime,
                     userEmail = userEmail,
                     checkInLatitude = currentLoc.latitude,
                     checkInLongitude = currentLoc.longitude,
@@ -191,10 +205,11 @@ class CheckInViewModel(
                     customerLatitude = selectedCust.latitude,
                     customerLongitude = selectedCust.longitude,
                     statusSync = "DRAFT",
+                    isExplicitlyOpen = true
                 )
 
                 checkInRepository.insertCheckIn(checkIn)
-                // Reset selection after successful check-in
+                checkInSyncRepository.uploadCheckIn(checkIn.checkInId, context)
                 _selectedCustomer.value = null
             }
         }
@@ -204,13 +219,13 @@ class CheckInViewModel(
         val currentLoc = _currentLocation.value
         if (currentLoc != null) {
             viewModelScope.launch {
-                val address = reverseGeocodingHelper.getAddressFromLocation(currentLoc)
-                _currentAddress.value = address
+                _currentAddress.value = reverseGeocodingHelper.getAddressFromLocation(currentLoc)
             }
         }
     }
 
     fun resetLocation() {
+        locationHelper.stopLocationUpdates()
         _currentLocation.value = null
         _accuracy.value = 0f
         _currentAddress.value = null

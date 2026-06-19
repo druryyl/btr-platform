@@ -27,7 +27,12 @@ namespace btr.domain.SalesContext.CheckInFeature
             string customerAddress,
             double customerLatitude,
             double customerLongitude,
-            string statusSync = "DRAFT")
+            string statusSync = "DRAFT",
+            string checkOutTime = "",
+            double checkOutLatitude = 0,
+            double checkOutLongitude = 0,
+            float checkOutAccuracy = 0,
+            string checkOutMode = "")
         {
             CheckInId = checkInId;
             CheckInDate = checkInDate;
@@ -44,6 +49,11 @@ namespace btr.domain.SalesContext.CheckInFeature
             CustomerLatitude = customerLatitude;
             CustomerLongitude = customerLongitude;
             StatusSync = statusSync;
+            CheckOutTime = checkOutTime;
+            CheckOutLatitude = checkOutLatitude;
+            CheckOutLongitude = checkOutLongitude;
+            CheckOutAccuracy = checkOutAccuracy;
+            CheckOutMode = checkOutMode;
         }
 
         public string CheckInId { get; set; }
@@ -61,6 +71,11 @@ namespace btr.domain.SalesContext.CheckInFeature
         public double CustomerLatitude { get; set; }
         public double CustomerLongitude { get; set; }
         public string StatusSync { get; set; }
+        public string CheckOutTime { get; set; }
+        public double CheckOutLatitude { get; set; }
+        public double CheckOutLongitude { get; set; }
+        public float CheckOutAccuracy { get; set; }
+        public string CheckOutMode { get; set; }
 
         public static ICheckInKey Key(string checkInId)
         {

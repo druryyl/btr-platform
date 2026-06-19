@@ -29,12 +29,14 @@ namespace btrade.infrastructure.LocationFeature
                     CheckInId, CheckInDate, CheckInTime, UserEmail, 
                     CheckInLatitude, CheckInLongitude, Accuracy,
                     CustomerId, CustomerCode, CustomerName, CustomerAddress,
-                    CustomerLatitude, CustomerLongitude, StatusSync, ServerId)
+                    CustomerLatitude, CustomerLongitude, StatusSync, ServerId,
+                    CheckOutTime, CheckOutLatitude, CheckOutLongitude, CheckOutAccuracy, CheckOutMode)
                 VALUES (
                     @CheckInId, @CheckInDate, @CheckInTime, @UserEmail, 
                     @CheckInLatitude, @CheckInLongitude, @Accuracy,
                     @CustomerId, @CustomerCode, @CustomerName, @CustomerAddress,
-                    @CustomerLatitude, @CustomerLongitude, @StatusSync, @ServerId)";
+                    @CustomerLatitude, @CustomerLongitude, @StatusSync, @ServerId,
+                    @CheckOutTime, @CheckOutLatitude, @CheckOutLongitude, @CheckOutAccuracy, @CheckOutMode)";
 
             var dp = new DynamicParameters();
             dp.AddParam("@CheckInId", model.CheckInId, SqlDbType.VarChar);
@@ -52,6 +54,11 @@ namespace btrade.infrastructure.LocationFeature
             dp.AddParam("@CustomerLongitude", model.CustomerLongitude, SqlDbType.Float);
             dp.AddParam("@StatusSync", model.StatusSync, SqlDbType.VarChar);
             dp.AddParam("@ServerId", model.ServerId, SqlDbType.VarChar);
+            dp.AddParam("@CheckOutTime", model.CheckOutTime, SqlDbType.VarChar);
+            dp.AddParam("@CheckOutLatitude", model.CheckOutLatitude, SqlDbType.Float);
+            dp.AddParam("@CheckOutLongitude", model.CheckOutLongitude, SqlDbType.Float);
+            dp.AddParam("@CheckOutAccuracy", model.CheckOutAccuracy, SqlDbType.Float);
+            dp.AddParam("@CheckOutMode", model.CheckOutMode, SqlDbType.VarChar);
 
             using var conn = new SqlConnection(ConnStringHelper.Get(_opt));
             conn.Execute(sql, dp);
@@ -76,7 +83,12 @@ namespace btrade.infrastructure.LocationFeature
                 CustomerLatitude = @CustomerLatitude,
                 CustomerLongitude = @CustomerLongitude,
                 StatusSync = @StatusSync,
-                ServerId = @ServerId    
+                ServerId = @ServerId,
+                CheckOutTime = @CheckOutTime,
+                CheckOutLatitude = @CheckOutLatitude,
+                CheckOutLongitude = @CheckOutLongitude,
+                CheckOutAccuracy = @CheckOutAccuracy,
+                CheckOutMode = @CheckOutMode
             WHERE
                 CheckInId = @CheckInId";
 
@@ -96,6 +108,11 @@ namespace btrade.infrastructure.LocationFeature
             dp.AddParam("@CustomerLongitude", model.CustomerLongitude, SqlDbType.Float);
             dp.AddParam("@StatusSync", model.StatusSync, SqlDbType.VarChar);
             dp.AddParam("@ServerId", model.ServerId, SqlDbType.VarChar);
+            dp.AddParam("@CheckOutTime", model.CheckOutTime, SqlDbType.VarChar);
+            dp.AddParam("@CheckOutLatitude", model.CheckOutLatitude, SqlDbType.Float);
+            dp.AddParam("@CheckOutLongitude", model.CheckOutLongitude, SqlDbType.Float);
+            dp.AddParam("@CheckOutAccuracy", model.CheckOutAccuracy, SqlDbType.Float);
+            dp.AddParam("@CheckOutMode", model.CheckOutMode, SqlDbType.VarChar);
 
             using var conn = new SqlConnection(ConnStringHelper.Get(_opt));
             conn.Execute(sql, dp);
@@ -123,7 +140,8 @@ namespace btrade.infrastructure.LocationFeature
                 CheckInId, CheckInDate, CheckInTime, UserEmail, 
                 CheckInLatitude, CheckInLongitude, Accuracy,
                 CustomerId, CustomerCode, CustomerName, CustomerAddress,
-                CustomerLatitude, CustomerLongitude, StatusSync, ServerId
+                CustomerLatitude, CustomerLongitude, StatusSync, ServerId,
+                CheckOutTime, CheckOutLatitude, CheckOutLongitude, CheckOutAccuracy, CheckOutMode
             FROM
                 BTRADE_CheckIn
             WHERE
@@ -143,7 +161,8 @@ namespace btrade.infrastructure.LocationFeature
                 CheckInId, CheckInDate, CheckInTime, UserEmail, 
                 CheckInLatitude, CheckInLongitude, Accuracy,
                 CustomerId, CustomerCode, CustomerName, CustomerAddress,
-                CustomerLatitude, CustomerLongitude, StatusSync, ServerId
+                CustomerLatitude, CustomerLongitude, StatusSync, ServerId,
+                CheckOutTime, CheckOutLatitude, CheckOutLongitude, CheckOutAccuracy, CheckOutMode
             FROM
                 BTRADE_CheckIn
             WHERE

@@ -71,6 +71,7 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.elsasa.btrade3.model.Order
+import com.elsasa.btrade3.ui.component.ActiveCheckInStatusRow
 import com.elsasa.btrade3.ui.component.SelectableModernOrderCard
 import com.elsasa.btrade3.ui.logoutUser
 import com.elsasa.btrade3.util.MapUtils
@@ -89,6 +90,7 @@ fun OrderListScreen(
     context: Context = LocalContext.current
 ) {
     val orders by viewModel.orders.collectAsState()
+    val activeVisit by viewModel.activeVisit.collectAsState()
     val syncState by viewModel.syncState.collectAsState()
     var orderToDelete by remember { mutableStateOf<Order?>(null) }
     var orderToSync by remember { mutableStateOf<Order?>(null) }
@@ -332,6 +334,12 @@ fun OrderListScreen(
                                         fontWeight = FontWeight.Medium
                                     )
                                 }
+                            }
+                            activeVisit?.let { visit ->
+                                ActiveCheckInStatusRow(
+                                    checkIn = visit,
+                                    onClick = { navController.navigate("check_in_history") }
+                                )
                             }
                         }
                     },

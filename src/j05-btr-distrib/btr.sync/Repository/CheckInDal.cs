@@ -21,12 +21,14 @@ namespace j07_btrade_sync.Repository
                 CheckInId, CheckInDate, CheckInTime, UserEmail, 
                 CheckInLatitude, CheckInLongitude, Accuracy,
                 CustomerId, CustomerCode, CustomerName, CustomerAddress,
-                CustomerLatitude, CustomerLongitude, StatusSync)
+                CustomerLatitude, CustomerLongitude, StatusSync,
+                CheckOutTime, CheckOutLatitude, CheckOutLongitude, CheckOutAccuracy, CheckOutMode)
             VALUES (
                 @CheckInId, @CheckInDate, @CheckInTime, @UserEmail, 
                 @CheckInLatitude, @CheckInLongitude, @Accuracy,
                 @CustomerId, @CustomerCode, @CustomerName, @CustomerAddress,
-                @CustomerLatitude, @CustomerLongitude, @StatusSync)";
+                @CustomerLatitude, @CustomerLongitude, @StatusSync,
+                @CheckOutTime, @CheckOutLatitude, @CheckOutLongitude, @CheckOutAccuracy, @CheckOutMode)";
 
             var dp = new DynamicParameters();
             dp.AddParam("@CheckInId", model.CheckInId, SqlDbType.VarChar);
@@ -43,6 +45,11 @@ namespace j07_btrade_sync.Repository
             dp.AddParam("@CustomerLatitude", model.CustomerLatitude, SqlDbType.Float);
             dp.AddParam("@CustomerLongitude", model.CustomerLongitude, SqlDbType.Float);
             dp.AddParam("@StatusSync", model.StatusSync, SqlDbType.VarChar);
+            dp.AddParam("@CheckOutTime", model.CheckOutTime, SqlDbType.VarChar);
+            dp.AddParam("@CheckOutLatitude", model.CheckOutLatitude, SqlDbType.Float);
+            dp.AddParam("@CheckOutLongitude", model.CheckOutLongitude, SqlDbType.Float);
+            dp.AddParam("@CheckOutAccuracy", model.CheckOutAccuracy, SqlDbType.Float);
+            dp.AddParam("@CheckOutMode", model.CheckOutMode, SqlDbType.VarChar);
 
             using (var conn = new SqlConnection(ConnStringHelper.Get()))
             {
@@ -68,7 +75,12 @@ namespace j07_btrade_sync.Repository
                 CustomerAddress = @CustomerAddress,
                 CustomerLatitude = @CustomerLatitude,
                 CustomerLongitude = @CustomerLongitude,
-                StatusSync = @StatusSync
+                StatusSync = @StatusSync,
+                CheckOutTime = @CheckOutTime,
+                CheckOutLatitude = @CheckOutLatitude,
+                CheckOutLongitude = @CheckOutLongitude,
+                CheckOutAccuracy = @CheckOutAccuracy,
+                CheckOutMode = @CheckOutMode
             WHERE
                 CheckInId = @CheckInId";
 
@@ -87,6 +99,11 @@ namespace j07_btrade_sync.Repository
             dp.AddParam("@CustomerLatitude", model.CustomerLatitude, SqlDbType.Float);
             dp.AddParam("@CustomerLongitude", model.CustomerLongitude, SqlDbType.Float);
             dp.AddParam("@StatusSync", model.StatusSync, SqlDbType.VarChar);
+            dp.AddParam("@CheckOutTime", model.CheckOutTime, SqlDbType.VarChar);
+            dp.AddParam("@CheckOutLatitude", model.CheckOutLatitude, SqlDbType.Float);
+            dp.AddParam("@CheckOutLongitude", model.CheckOutLongitude, SqlDbType.Float);
+            dp.AddParam("@CheckOutAccuracy", model.CheckOutAccuracy, SqlDbType.Float);
+            dp.AddParam("@CheckOutMode", model.CheckOutMode, SqlDbType.VarChar);
 
             using (var conn = new SqlConnection(ConnStringHelper.Get()))
             {
@@ -130,7 +147,8 @@ namespace j07_btrade_sync.Repository
                 CheckInId, CheckInDate, CheckInTime, UserEmail, 
                 CheckInLatitude, CheckInLongitude, Accuracy,
                 CustomerId, CustomerCode, CustomerName, CustomerAddress,
-                CustomerLatitude, CustomerLongitude, StatusSync
+                CustomerLatitude, CustomerLongitude, StatusSync,
+                CheckOutTime, CheckOutLatitude, CheckOutLongitude, CheckOutAccuracy, CheckOutMode
             FROM
                 BTR_CheckIn
             WHERE
@@ -152,7 +170,8 @@ namespace j07_btrade_sync.Repository
                 CheckInId, CheckInDate, CheckInTime, UserEmail, 
                 CheckInLatitude, CheckInLongitude, Accuracy,
                 CustomerId, CustomerCode, CustomerName, CustomerAddress,
-                CustomerLatitude, CustomerLongitude, StatusSync
+                CustomerLatitude, CustomerLongitude, StatusSync,
+                CheckOutTime, CheckOutLatitude, CheckOutLongitude, CheckOutAccuracy, CheckOutMode
             FROM
                 BTR_CheckIn";
 
@@ -169,7 +188,8 @@ namespace j07_btrade_sync.Repository
                 CheckInId, CheckInDate, CheckInTime, UserEmail, 
                 CheckInLatitude, CheckInLongitude, Accuracy,
                 CustomerId, CustomerCode, CustomerName, CustomerAddress,
-                CustomerLatitude, CustomerLongitude, StatusSync
+                CustomerLatitude, CustomerLongitude, StatusSync,
+                CheckOutTime, CheckOutLatitude, CheckOutLongitude, CheckOutAccuracy, CheckOutMode
             FROM
                 BTR_CheckIn
             WHERE 
@@ -192,7 +212,8 @@ namespace j07_btrade_sync.Repository
                 CheckInId, CheckInDate, CheckInTime, UserEmail, 
                 CheckInLatitude, CheckInLongitude, Accuracy,
                 CustomerId, CustomerCode, CustomerName, CustomerAddress,
-                CustomerLatitude, CustomerLongitude, StatusSync
+                CustomerLatitude, CustomerLongitude, StatusSync,
+                CheckOutTime, CheckOutLatitude, CheckOutLongitude, CheckOutAccuracy, CheckOutMode
             FROM
                 BTR_CheckIn
             WHERE
@@ -216,7 +237,8 @@ namespace j07_btrade_sync.Repository
                 CheckInId, CheckInDate, CheckInTime, UserEmail, 
                 CheckInLatitude, CheckInLongitude, Accuracy,
                 CustomerId, CustomerCode, CustomerName, CustomerAddress,
-                CustomerLatitude, CustomerLongitude, StatusSync
+                CustomerLatitude, CustomerLongitude, StatusSync,
+                CheckOutTime, CheckOutLatitude, CheckOutLongitude, CheckOutAccuracy, CheckOutMode
             FROM
                 BTR_CheckIn
             WHERE

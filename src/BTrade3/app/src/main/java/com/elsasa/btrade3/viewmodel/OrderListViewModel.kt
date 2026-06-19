@@ -3,7 +3,9 @@ package com.elsasa.btrade3.viewmodel
 import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.elsasa.btrade3.model.CheckIn
 import com.elsasa.btrade3.model.Order
+import com.elsasa.btrade3.repository.CheckInRepository
 import com.elsasa.btrade3.repository.OrderRepository
 import com.elsasa.btrade3.repository.OrderSyncRepository
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -22,13 +24,23 @@ sealed class SingleOrderSyncState {
 
 class OrderListViewModel(
     private val repository: OrderRepository,
-    private val orderSyncRepository: OrderSyncRepository
+    private val orderSyncRepository: OrderSyncRepository,
+    private val checkInRepository: CheckInRepository,
+    private val userEmail: String
 ) : ViewModel() {
     val orders: StateFlow<List<Order>> = repository.getAllOrders()
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5000),
             initialValue = emptyList()
+        )
+
+    val activeVisit: StateFlow<CheckIn?> = checkInRepository
+        .observeOpenCheckInForUser(userEmail)
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = null
         )
 
     private val _syncState = MutableStateFlow<SingleOrderSyncState>(SingleOrderSyncState.Idle)

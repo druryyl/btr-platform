@@ -85,6 +85,7 @@ dependencies {
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
+    androidTestImplementation("androidx.room:room-testing:2.7.2")
 
     // Firebase
     implementation("com.google.android.gms:play-services-auth:20.7.0")

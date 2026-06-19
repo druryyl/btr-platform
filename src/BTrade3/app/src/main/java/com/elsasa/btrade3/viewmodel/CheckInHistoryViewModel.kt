@@ -1,22 +1,21 @@
 package com.elsasa.btrade3.viewmodel
 
 
+import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.elsasa.btrade3.model.CheckIn
 import com.elsasa.btrade3.repository.CheckInRepository
+import com.elsasa.btrade3.repository.CheckInSyncRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.drop
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.*
 class CheckInHistoryViewModel(
-    private val checkInRepository: CheckInRepository
+    private val checkInRepository: CheckInRepository,
+    private val checkInSyncRepository: CheckInSyncRepository
 ) : ViewModel() {
 
     private val _checkIns = MutableStateFlow<List<CheckIn>>(emptyList())
@@ -33,6 +32,9 @@ class CheckInHistoryViewModel(
 
     private val _checkInCounts = MutableStateFlow<Map<String, Int>>(emptyMap())
     val checkInCounts: StateFlow<Map<String, Int>> = _checkInCounts.asStateFlow()
+
+    private val _isCheckingOut = MutableStateFlow(false)
+    val isCheckingOut: StateFlow<Boolean> = _isCheckingOut.asStateFlow()
 
     fun loadCheckIns() {
         viewModelScope.launch {
@@ -131,6 +133,19 @@ class CheckInHistoryViewModel(
                 checkInRepository.deleteCheckIn(checkIn)
             } catch (e: Exception) {
                 e.printStackTrace()
+            }
+        }
+    }
+
+    fun checkOut(checkIn: CheckIn, context: Context, onComplete: () -> Unit) {
+        viewModelScope.launch {
+            _isCheckingOut.value = true
+            try {
+                val updated = checkInRepository.manualCheckOut(checkIn)
+                checkInSyncRepository.uploadCheckIn(updated.checkInId, context)
+                onComplete()
+            } finally {
+                _isCheckingOut.value = false
             }
         }
     }

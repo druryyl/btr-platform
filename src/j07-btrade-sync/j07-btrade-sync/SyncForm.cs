@@ -228,10 +228,15 @@ namespace j07_btrade_sync
                         {
                             var checkInDb = _checkInDal.GetData(checkIn);
                             if (checkInDb != null)
-                                continue;
-
-                            _checkInDal.Insert(checkIn);
-                            LogMessage($"Download check-in {checkIn.UserEmail} - {checkIn.CustomerName} ...", Color.Blue);
+                            {
+                                _checkInDal.Update(checkIn);
+                                LogMessage($"Updated check-in {checkIn.UserEmail} - {checkIn.CustomerName} ...", Color.Blue);
+                            }
+                            else
+                            {
+                                _checkInDal.Insert(checkIn);
+                                LogMessage($"Download check-in {checkIn.UserEmail} - {checkIn.CustomerName} ...", Color.Blue);
+                            }
                         }
                         LogMessage($"Check-in download done");
                     }

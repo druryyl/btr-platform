@@ -71,6 +71,8 @@ namespace btr.distrib.SalesContext.LocationFeature
                 ws.Cell("J1").Value = "Customer Address";
                 ws.Cell("K1").Value = "Customer Location";
                 ws.Cell("L1").Value = "Distance (m)";
+                ws.Cell("M1").Value = "Check-Out Time";
+                ws.Cell("N1").Value = "Check-Out Mode";
 
                 // Fill data rows
                 for (var i = 0; i < listToExcel.Count; i++)
@@ -90,10 +92,12 @@ namespace btr.distrib.SalesContext.LocationFeature
                     ws.Cell($"J{row}").Value = checkIn.CustomerAddress;
                     ws.Cell($"K{row}").Value = checkIn.CustomerLoc;
                     ws.Cell($"L{row}").Value = Math.Round(checkIn.Distance, 2);
+                    ws.Cell($"M{row}").Value = checkIn.CheckOutTime;
+                    ws.Cell($"N{row}").Value = checkIn.CheckOutMode;
                 }
 
                 // Apply styling to the entire data range
-                var dataRange = ws.Range(ws.Cell($"A1"), ws.Cell($"L{listToExcel.Count + 1}"));
+                var dataRange = ws.Range(ws.Cell($"A1"), ws.Cell($"N{listToExcel.Count + 1}"));
                 dataRange.Style
                     .Border.SetOutsideBorder(XLBorderStyleValues.Medium)
                     .Border.SetInsideBorder(XLBorderStyleValues.Hair)
@@ -101,7 +105,7 @@ namespace btr.distrib.SalesContext.LocationFeature
                     .Font.SetFontSize(9);
 
                 // Format header row
-                var headerRange = ws.Range(ws.Cell($"A1"), ws.Cell($"L1"));
+                var headerRange = ws.Range(ws.Cell($"A1"), ws.Cell($"N1"));
                 headerRange.Style
                     .Font.Bold = true;
 
@@ -215,7 +219,8 @@ namespace btr.distrib.SalesContext.LocationFeature
             var desiredOrder = new List<string>
             {
                 "CheckInId", "CheckInDate", "CheckInTime", "UserEmail", "SalesName", "CheckInLoc",
-                "CustomerCode", "CustomerName", "CustomerAddress", "CustomerLoc", "Distance"
+                "CustomerCode", "CustomerName", "CustomerAddress", "CustomerLoc", "Distance",
+                "CheckOutTime", "CheckOutMode"
             };
 
             // Reorder columns according to desired order
@@ -246,6 +251,8 @@ namespace btr.distrib.SalesContext.LocationFeature
             // Set specific column text alignment
             InfoGrid.TableDescriptor.Columns["CheckInDate"].Appearance.AnyRecordFieldCell.HorizontalAlignment = GridHorizontalAlignment.Center;
             InfoGrid.TableDescriptor.Columns["CheckInTime"].Appearance.AnyRecordFieldCell.HorizontalAlignment = GridHorizontalAlignment.Center;
+            InfoGrid.TableDescriptor.Columns["CheckOutTime"].Appearance.AnyRecordFieldCell.HorizontalAlignment = GridHorizontalAlignment.Center;
+            InfoGrid.TableDescriptor.Columns["CheckOutMode"].Appearance.AnyRecordFieldCell.HorizontalAlignment = GridHorizontalAlignment.Center;
             InfoGrid.TableDescriptor.Columns["CustomerCode"].Appearance.AnyRecordFieldCell.HorizontalAlignment = GridHorizontalAlignment.Center;
 
             InfoGrid.QueryCellStyleInfo += InfoGrid_QueryCellStyleInfo;
@@ -321,6 +328,8 @@ namespace btr.distrib.SalesContext.LocationFeature
             CustomerAddress = model.CustomerAddress;
             CustomerLatitude = model.CustomerLatitude;
             CustomerLongitude = model.CustomerLongitude;
+            CheckOutTime = model.CheckOutTime;
+            CheckOutMode = model.CheckOutMode;
         }
         public string CheckInId { get; set; }
         public string CheckInDate { get; set; }        // yyyy-MM-dd
@@ -338,6 +347,8 @@ namespace btr.distrib.SalesContext.LocationFeature
         public double CustomerLatitude { get; set; }
         public double CustomerLongitude { get; set; }
         public string CustomerLoc => $"{CustomerLatitude},{CustomerLongitude}";
+        public string CheckOutTime { get; set; }
+        public string CheckOutMode { get; set; }
         public double Distance => CalculateDistance();
         
         private double CalculateDistance()

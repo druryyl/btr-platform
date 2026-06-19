@@ -14,6 +14,11 @@
     CustomerLatitude FLOAT NOT NULL CONSTRAINT DF_BTR_CheckIn_CustomerLatitude DEFAULT(0),
     CustomerLongitude FLOAT NOT NULL CONSTRAINT DF_BTR_CheckIn_CustomerLongitude DEFAULT(0),
     StatusSync VARCHAR(20) NOT NULL CONSTRAINT DF_BTR_CheckIn_StatusSync DEFAULT(''),
+    CheckOutTime VARCHAR(8) NOT NULL CONSTRAINT DF_BTR_CheckIn_CheckOutTime DEFAULT(''),
+    CheckOutLatitude FLOAT NOT NULL CONSTRAINT DF_BTR_CheckIn_CheckOutLatitude DEFAULT(0),
+    CheckOutLongitude FLOAT NOT NULL CONSTRAINT DF_BTR_CheckIn_CheckOutLongitude DEFAULT(0),
+    CheckOutAccuracy FLOAT NOT NULL CONSTRAINT DF_BTR_CheckIn_CheckOutAccuracy DEFAULT(0),
+    CheckOutMode VARCHAR(10) NOT NULL CONSTRAINT DF_BTR_CheckIn_CheckOutMode DEFAULT(''),
 
     CONSTRAINT PK_BTR_CheckIn PRIMARY KEY CLUSTERED (CheckInId ASC)
 )

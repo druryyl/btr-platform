@@ -34,6 +34,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.elsasa.btrade3.model.CheckIn
+import com.elsasa.btrade3.ui.component.CheckOutConfirmDialog
 import com.elsasa.btrade3.viewmodel.CheckInHistoryViewModel
 import java.util.*
 import kotlin.math.roundToInt
@@ -51,14 +52,29 @@ fun CheckInHistoryScreen(
     val filteredCheckIns by viewModel.filteredCheckIns.collectAsState()
     val selectedDate by viewModel.selectedDate.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
+    val isCheckingOut by viewModel.isCheckingOut.collectAsState()
     val checkInCounts by viewModel.checkInCounts.collectAsState()
     val context = LocalContext.current
+    var visitToCheckOut by remember { mutableStateOf<CheckIn?>(null) }
 
     LaunchedEffect(Unit) {
         // Set default to today
         val today = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
         viewModel.setSelectedDate(today)
         viewModel.loadCheckIns()
+    }
+
+    visitToCheckOut?.let { visit ->
+        CheckOutConfirmDialog(
+            customerName = visit.customerName,
+            onConfirm = {
+                viewModel.checkOut(visit, context) {
+                    visitToCheckOut = null
+                }
+            },
+            onDismiss = { visitToCheckOut = null },
+            isCheckingOut = isCheckingOut
+        )
     }
 
     Scaffold(
@@ -186,6 +202,9 @@ fun CheckInHistoryScreen(
                             },
                             onDelete = { checkIn ->
                                 viewModel.deleteCheckIn(checkIn.checkInId)
+                            },
+                            onCheckOut = { visit ->
+                                visitToCheckOut = visit
                             }
                         )
                     }
@@ -382,7 +401,8 @@ fun ModernCheckInHistoryCard(
     checkIn: CheckIn,
     sequentialNumber: Int,
     onOpenInMap: (CheckIn) -> Unit,
-    onDelete: (CheckIn) -> Unit
+    onDelete: (CheckIn) -> Unit,
+    onCheckOut: ((CheckIn) -> Unit)? = null
 ) {
     val context = LocalContext.current
     var showDeleteDialog by remember { mutableStateOf(false) }
@@ -547,7 +567,7 @@ fun ModernCheckInHistoryCard(
                     }
                 ) {
                     Text(
-                        text = checkIn.statusSync,
+                        text = if (checkIn.isOpenVisit()) checkIn.statusSync else checkIn.checkOutMode.ifEmpty { "CLOSED" },
                         style = MaterialTheme.typography.bodySmall,
                         fontWeight = FontWeight.Medium,
                         color = if (checkIn.statusSync == "DRAFT") {
@@ -558,6 +578,23 @@ fun ModernCheckInHistoryCard(
                         modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp)
                     )
                 }
+            }
+
+            if (checkIn.isOpenVisit() && onCheckOut != null) {
+                Spacer(modifier = Modifier.height(12.dp))
+                OutlinedButton(
+                    onClick = { onCheckOut(checkIn) },
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text("Check Out")
+                }
+            } else if (!checkIn.isOpenVisit()) {
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = "Checked out: ${checkIn.checkOutTime} (${checkIn.checkOutMode.ifEmpty { "—" }})",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
             }
 
             // Additional details shown when expanded
@@ -590,6 +627,14 @@ fun ModernCheckInHistoryCard(
                                 else -> MaterialTheme.colorScheme.error
                             }
                         )
+                        if (!checkIn.isOpenVisit()) {
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Text(
+                                text = "Check-out accuracy: ±${checkIn.checkOutAccuracy.roundToInt()}m",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
                     }
 
                     Column(horizontalAlignment = Alignment.End) {

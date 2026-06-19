@@ -21,7 +21,12 @@ namespace btrade.domain.CheckInFeature
         double CustomerLatitude,
         double CustomerLongitude,
         string StatusSync,
-        string ServerId
+        string ServerId,
+        string CheckOutTime = "",
+        double CheckOutLatitude = 0,
+        double CheckOutLongitude = 0,
+        double CheckOutAccuracy = 0,
+        string CheckOutMode = ""
     ) : ICheckInKey;
 
     public interface ICheckInKey

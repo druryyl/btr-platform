@@ -51,16 +51,7 @@ object LocationUtils {
             }
 
             // Filter out customers without valid location data first
-            val customersWithValidLocation = allCustomers.filter { customer ->
-                val hasValidLocation = customer.latitude != 0.0 &&
-                        customer.longitude != 0.0 &&
-                        !customer.latitude.isNaN() &&
-                        !customer.longitude.isNaN()
-
-                if (!hasValidLocation) {
-                }
-                hasValidLocation
-            }
+            val customersWithValidLocation = allCustomers.filter { it.hasCoordinates() }
 
             // Filter customers within radius and handle calculation errors
             val customersWithinRadius = customersWithValidLocation.filter { customer ->

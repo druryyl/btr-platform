@@ -21,7 +21,12 @@ namespace btrade.application.UseCase
         double CustomerLatitude,
         double CustomerLongitude,
         string StatusSync,
-        string ServerId) : IRequest;
+        string ServerId,
+        string CheckOutTime = "",
+        float CheckOutLatitude = 0,
+        float CheckOutLongitude = 0,
+        float CheckOutAccuracy = 0,
+        string CheckOutMode = "") : IRequest;
 
     public class CheckInUploadCommandHandler : IRequestHandler<CheckInUploadCommand>
     {
@@ -49,7 +54,12 @@ namespace btrade.application.UseCase
                 request.CustomerLatitude,
                 request.CustomerLongitude,
                 "TERKIRIM",
-                request.ServerId);
+                request.ServerId,
+                request.CheckOutTime ?? "",
+                request.CheckOutLatitude,
+                request.CheckOutLongitude,
+                request.CheckOutAccuracy,
+                request.CheckOutMode ?? "");
 
             using var trans = TransHelper.NewScope();
 
