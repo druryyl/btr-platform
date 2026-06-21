@@ -17,19 +17,6 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.Services
         private const string ReportRoute = "/reports/inventory";
         private const int MaxRows = 10;
 
-        public sealed class ForecastItemContext
-        {
-            public DashboardInventoryItemGroup Item { get; set; }
-
-            public InventoryForecastCalculation Calculation { get; set; }
-
-            public string MovementSignalKey { get; set; }
-
-            public int? DaysSinceLastFaktur { get; set; }
-
-            public bool IsForecastEligible { get; set; }
-        }
-
         private sealed class RiskCandidate
         {
             public int RulePriority { get; set; }

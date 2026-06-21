@@ -15,13 +15,15 @@ BTR Portal is a web-based **read-only management analytics application** for BTR
 
 BTR Desktop remains the **source of truth** for all transactional data. The portal observes and analyzes that data; it does not create, edit, or delete business transactions.
 
-BTR Portal has evolved through three product layers:
+BTR Portal has evolved through five business maturity levels:
 
-| Layer | Question answered | Maturity |
+| Level | Question answered | Maturity |
 | ----- | ----------------- | -------- |
 | **Reporting** | What happened? What are the underlying records? | Established (Sales, Piutang, Inventory, Purchasing reports) |
 | **Analytics** | How is the business performing? Where is value concentrated? | Established (domain dashboards, KPIs, charts, rankings) |
 | **Decision Support** | What requires management attention? Why? What evidence supports action? | Established and expanding (Executive Dashboard, Alert Center, attention signals, investigation workflow) |
+| **Forecasting** | What will probably happen? | Established (Sales Forecast, Cash Flow Forecast, Inventory Forecast) |
+| **Optimization** | Given the forecast, what should management do? | Established (Inventory Optimization — purchase, delay, transfer, clearance recommendations) |
 
 ---
 
@@ -76,7 +78,7 @@ BTR Portal covers the following management business areas. Each area has one or 
 | **Customer Analytics** | Which customers require attention across sales and receivables? | Customer Analytics Dashboard |
 | **Salesman Performance** | Which salespeople require attention and why? | Salesman Performance Dashboard |
 | **Field Activity** | Did the field team execute the planned route? Where did they go? | Field Activity Dashboard |
-| **Inventory** | How much capital is in stock? How is it distributed? | Inventory Dashboard, Inventory Report |
+| **Inventory** | How much capital is in stock? How is it distributed? Will active SKUs run out? What actions should we take? | Inventory Dashboard, Inventory Forecast Dashboard, Inventory Optimization Dashboard, Inventory Report |
 | **Inventory Risk** | Which stock is not moving? Where is obsolescence risk? | Slow Moving & Dead Stock Dashboard |
 | **Purchasing** | How much did we purchase? What is unposted? Who do we depend on? | Purchasing Dashboard, Purchasing Management Dashboard, Purchasing Report |
 | **Location** | Are we too dependent on one warehouse or territory? | Branch / Warehouse Performance Dashboard |
@@ -477,6 +479,8 @@ Each dashboard answers a specific management question. Dashboards are **read-onl
 | **Salesman Performance** | Which salespeople require attention and why? | Sales management |
 | **Field Activity** | Did the field team execute the planned route? | Field supervisors, area managers |
 | **Inventory Dashboard** | How is inventory capital distributed? | Inventory and purchasing management |
+| **Inventory Forecast Dashboard** | Which active SKUs may run out within the horizon, and when should purchasing review replenishment? | Inventory and purchasing management |
+| **Inventory Optimization Dashboard** | Given forecast, risk, and purchasing constraints, what are the highest-priority actions today? | Inventory and purchasing management |
 | **Slow Moving & Dead Stock** | Which inventory requires attention and why? | Inventory management |
 | **Purchasing Dashboard** | What are monthly purchasing statistics? | Purchasing management |
 | **Purchasing Management** | Which suppliers and purchasing activities require attention? | Purchasing and executive management |
@@ -490,6 +494,8 @@ Each dashboard answers a specific management question. Dashboards are **read-onl
 | **Cross-domain dashboards supplement entity dashboards** | Customer and Salesman lenses combine sales + piutang; they do not replace domain views |
 | **Piutang vs Collection** | Piutang = exposure (how much owed); Collection = recovery (is cash coming in) |
 | **Inventory vs Inventory Risk** | Inventory = composition (where capital sits); Inventory Risk = health (what is not moving) |
+| **Inventory Forecast vs Inventory Optimization** | Forecast = projected depletion and reorder timing; Optimization = ranked actions (purchase, delay, transfer, clearance) with explainable rules |
+| **Inventory Forecast vs Inventory Risk** | Forecast = forward-looking for active SKUs; Inventory Risk = backward-looking obsolescence |
 | **Purchasing V1 vs Purchasing Management** | V1 = monthly statistics; Management = attention signals and cross-domain supplier risk |
 | **Sales vs Sales Forecast** | Sales = current achievement; Forecast = projected month-end at current pace |
 | **Collection vs Cash Flow Forecast** | Collection = recovery performance today; Cash Flow Forecast = projected month-end liquidity and required pace |
@@ -801,6 +807,7 @@ M25  Sales Force Effectiveness                             → Future Accepted
 M26  Sales Forecast Dashboard                              ✓ Current
 M27  Cash Flow Forecast Dashboard                          ✓ Current
 M28  Inventory Forecast Dashboard                          ✓ Current
+M28.5 Inventory Optimization Dashboard                    ✓ Current
 M16 Phase 2 / M19 Phase 2 / M21 Phase 2                 → Future Accepted (Executive promotions)
 Filtering Phase (date range, search)                    → Future Accepted
 ```

@@ -715,6 +715,249 @@ CREATE INDEX IX_BTRPD_InventoryForecastRecommendation_SnapshotKey_SortOrder
     ON BTRPD_InventoryForecastRecommendation (SnapshotKey, SortOrder)
 GO
 
+-- BTRPD_InventoryOptimizationKpi
+IF OBJECT_ID(N'dbo.BTRPD_InventoryOptimizationKpi', N'U') IS NULL
+BEGIN
+CREATE TABLE BTRPD_InventoryOptimizationKpi
+(
+    SnapshotKey                     VARCHAR(10)    NOT NULL CONSTRAINT DF_BTRPD_InventoryOptimizationKpi_SnapshotKey DEFAULT('CURRENT'),
+    GeneratedAt                       DATETIME       NOT NULL CONSTRAINT DF_BTRPD_InventoryOptimizationKpi_GeneratedAt DEFAULT('3000-01-01'),
+    BusinessDate                      DATETIME       NOT NULL CONSTRAINT DF_BTRPD_InventoryOptimizationKpi_BusinessDate DEFAULT('3000-01-01'),
+    PlanningHorizonDays               INT            NOT NULL CONSTRAINT DF_BTRPD_InventoryOptimizationKpi_PlanningHorizonDays DEFAULT(0),
+    BudgetCapIdr                      DECIMAL(18,2)  NULL,
+    InventoryHealthScore              INT            NOT NULL CONSTRAINT DF_BTRPD_InventoryOptimizationKpi_InventoryHealthScore DEFAULT(0),
+    CriticalActionCount               INT            NOT NULL CONSTRAINT DF_BTRPD_InventoryOptimizationKpi_CriticalActionCount DEFAULT(0),
+    HighActionCount                   INT            NOT NULL CONSTRAINT DF_BTRPD_InventoryOptimizationKpi_HighActionCount DEFAULT(0),
+    MediumActionCount                 INT            NOT NULL CONSTRAINT DF_BTRPD_InventoryOptimizationKpi_MediumActionCount DEFAULT(0),
+    LowActionCount                    INT            NOT NULL CONSTRAINT DF_BTRPD_InventoryOptimizationKpi_LowActionCount DEFAULT(0),
+    PurchaseNowCount                  INT            NOT NULL CONSTRAINT DF_BTRPD_InventoryOptimizationKpi_PurchaseNowCount DEFAULT(0),
+    DelayCount                        INT            NOT NULL CONSTRAINT DF_BTRPD_InventoryOptimizationKpi_DelayCount DEFAULT(0),
+    TransferCount                     INT            NOT NULL CONSTRAINT DF_BTRPD_InventoryOptimizationKpi_TransferCount DEFAULT(0),
+    ClearanceCount                    INT            NOT NULL CONSTRAINT DF_BTRPD_InventoryOptimizationKpi_ClearanceCount DEFAULT(0),
+    PostFirstCount                    INT            NOT NULL CONSTRAINT DF_BTRPD_InventoryOptimizationKpi_PostFirstCount DEFAULT(0),
+    DeferCount                        INT            NOT NULL CONSTRAINT DF_BTRPD_InventoryOptimizationKpi_DeferCount DEFAULT(0),
+    RequiredPurchaseBudgetIdr         DECIMAL(18,2)  NOT NULL CONSTRAINT DF_BTRPD_InventoryOptimizationKpi_RequiredPurchaseBudgetIdr DEFAULT(0),
+    RecommendedPurchaseBudgetIdr      DECIMAL(18,2)  NOT NULL CONSTRAINT DF_BTRPD_InventoryOptimizationKpi_RecommendedPurchaseBudgetIdr DEFAULT(0),
+    DeferrableSpendIdr                DECIMAL(18,2)  NOT NULL CONSTRAINT DF_BTRPD_InventoryOptimizationKpi_DeferrableSpendIdr DEFAULT(0),
+    RecoverableCapitalIdr             DECIMAL(18,2)  NOT NULL CONSTRAINT DF_BTRPD_InventoryOptimizationKpi_RecoverableCapitalIdr DEFAULT(0),
+    LastRefreshLogId                  VARCHAR(26)    NOT NULL CONSTRAINT DF_BTRPD_InventoryOptimizationKpi_LastRefreshLogId DEFAULT(''),
+
+    CONSTRAINT PK_BTRPD_InventoryOptimizationKpi PRIMARY KEY CLUSTERED (SnapshotKey)
+)
+END
+GO
+
+-- BTRPD_InventoryOptimizationAction
+IF OBJECT_ID(N'dbo.BTRPD_InventoryOptimizationAction', N'U') IS NULL
+BEGIN
+CREATE TABLE BTRPD_InventoryOptimizationAction
+(
+    InventoryOptimizationActionId VARCHAR(26)    NOT NULL CONSTRAINT DF_BTRPD_InventoryOptimizationAction_Id DEFAULT(''),
+    SnapshotKey                   VARCHAR(10)    NOT NULL CONSTRAINT DF_BTRPD_InventoryOptimizationAction_SnapshotKey DEFAULT('CURRENT'),
+    SortOrder                     INT            NOT NULL CONSTRAINT DF_BTRPD_InventoryOptimizationAction_SortOrder DEFAULT(0),
+    PriorityScore                 INT            NOT NULL CONSTRAINT DF_BTRPD_InventoryOptimizationAction_PriorityScore DEFAULT(0),
+    Category                      VARCHAR(20)    NOT NULL CONSTRAINT DF_BTRPD_InventoryOptimizationAction_Category DEFAULT(''),
+    ActionType                    VARCHAR(40)    NOT NULL CONSTRAINT DF_BTRPD_InventoryOptimizationAction_ActionType DEFAULT(''),
+    ActionLabel                   VARCHAR(80)    NOT NULL CONSTRAINT DF_BTRPD_InventoryOptimizationAction_ActionLabel DEFAULT(''),
+    BrgId                         VARCHAR(26)    NOT NULL CONSTRAINT DF_BTRPD_InventoryOptimizationAction_BrgId DEFAULT(''),
+    BrgName                       VARCHAR(200)   NOT NULL CONSTRAINT DF_BTRPD_InventoryOptimizationAction_BrgName DEFAULT(''),
+    SupplierName                  VARCHAR(200)   NOT NULL CONSTRAINT DF_BTRPD_InventoryOptimizationAction_SupplierName DEFAULT(''),
+    WarehouseFromId               VARCHAR(5)     NULL,
+    WarehouseFromName             VARCHAR(50)    NULL,
+    WarehouseToId                 VARCHAR(5)     NULL,
+    WarehouseToName               VARCHAR(50)    NULL,
+    Quantity                      DECIMAL(18,4)  NULL,
+    ImpactValueIdr                DECIMAL(18,2)  NOT NULL CONSTRAINT DF_BTRPD_InventoryOptimizationAction_ImpactValueIdr DEFAULT(0),
+    DaysOfSupply                  DECIMAL(18,2)  NULL,
+    ReasonText                    VARCHAR(500)   NOT NULL CONSTRAINT DF_BTRPD_InventoryOptimizationAction_ReasonText DEFAULT(''),
+    RuleId                        VARCHAR(20)    NOT NULL CONSTRAINT DF_BTRPD_InventoryOptimizationAction_RuleId DEFAULT(''),
+    ReportRoute                   VARCHAR(200)   NOT NULL CONSTRAINT DF_BTRPD_InventoryOptimizationAction_ReportRoute DEFAULT(''),
+    DrillDownRoute                  VARCHAR(200)   NOT NULL CONSTRAINT DF_BTRPD_InventoryOptimizationAction_DrillDownRoute DEFAULT(''),
+
+    CONSTRAINT PK_BTRPD_InventoryOptimizationAction PRIMARY KEY CLUSTERED (InventoryOptimizationActionId)
+)
+END
+GO
+
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_BTRPD_InventoryOptimizationAction_SnapshotKey_SortOrder' AND object_id = OBJECT_ID(N'dbo.BTRPD_InventoryOptimizationAction'))
+CREATE INDEX IX_BTRPD_InventoryOptimizationAction_SnapshotKey_SortOrder
+    ON BTRPD_InventoryOptimizationAction (SnapshotKey, SortOrder)
+GO
+
+-- BTRPD_InventoryOptimizationReorder
+IF OBJECT_ID(N'dbo.BTRPD_InventoryOptimizationReorder', N'U') IS NULL
+BEGIN
+CREATE TABLE BTRPD_InventoryOptimizationReorder
+(
+    InventoryOptimizationReorderId VARCHAR(26)    NOT NULL CONSTRAINT DF_BTRPD_InventoryOptimizationReorder_Id DEFAULT(''),
+    SnapshotKey                    VARCHAR(10)    NOT NULL CONSTRAINT DF_BTRPD_InventoryOptimizationReorder_SnapshotKey DEFAULT('CURRENT'),
+    SortOrder                      INT            NOT NULL CONSTRAINT DF_BTRPD_InventoryOptimizationReorder_SortOrder DEFAULT(0),
+    PriorityScore                  INT            NOT NULL CONSTRAINT DF_BTRPD_InventoryOptimizationReorder_PriorityScore DEFAULT(0),
+    Category                       VARCHAR(20)    NOT NULL CONSTRAINT DF_BTRPD_InventoryOptimizationReorder_Category DEFAULT(''),
+    BrgId                          VARCHAR(26)    NOT NULL CONSTRAINT DF_BTRPD_InventoryOptimizationReorder_BrgId DEFAULT(''),
+    BrgCode                        VARCHAR(50)    NOT NULL CONSTRAINT DF_BTRPD_InventoryOptimizationReorder_BrgCode DEFAULT(''),
+    BrgName                        VARCHAR(200)   NOT NULL CONSTRAINT DF_BTRPD_InventoryOptimizationReorder_BrgName DEFAULT(''),
+    SupplierName                   VARCHAR(200)   NOT NULL CONSTRAINT DF_BTRPD_InventoryOptimizationReorder_SupplierName DEFAULT(''),
+    RecommendedPurchaseQty         DECIMAL(18,4)  NOT NULL CONSTRAINT DF_BTRPD_InventoryOptimizationReorder_RecommendedPurchaseQty DEFAULT(0),
+    EstimatedCostIdr               DECIMAL(18,2)  NOT NULL CONSTRAINT DF_BTRPD_InventoryOptimizationReorder_EstimatedCostIdr DEFAULT(0),
+    DaysOfSupply                   DECIMAL(18,2)  NULL,
+    ReorderDate                    DATETIME       NULL,
+    AverageDailyConsumption        DECIMAL(18,4)  NOT NULL CONSTRAINT DF_BTRPD_InventoryOptimizationReorder_AverageDailyConsumption DEFAULT(0),
+    CurrentQty                     DECIMAL(18,4)  NOT NULL CONSTRAINT DF_BTRPD_InventoryOptimizationReorder_CurrentQty DEFAULT(0),
+    ReasonText                     VARCHAR(500)   NOT NULL CONSTRAINT DF_BTRPD_InventoryOptimizationReorder_ReasonText DEFAULT(''),
+    RuleId                         VARCHAR(20)    NOT NULL CONSTRAINT DF_BTRPD_InventoryOptimizationReorder_RuleId DEFAULT(''),
+    ReportRoute                    VARCHAR(200)   NOT NULL CONSTRAINT DF_BTRPD_InventoryOptimizationReorder_ReportRoute DEFAULT(''),
+    DrillDownRoute                 VARCHAR(200)   NOT NULL CONSTRAINT DF_BTRPD_InventoryOptimizationReorder_DrillDownRoute DEFAULT(''),
+
+    CONSTRAINT PK_BTRPD_InventoryOptimizationReorder PRIMARY KEY CLUSTERED (InventoryOptimizationReorderId)
+)
+END
+GO
+
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_BTRPD_InventoryOptimizationReorder_SnapshotKey_SortOrder' AND object_id = OBJECT_ID(N'dbo.BTRPD_InventoryOptimizationReorder'))
+CREATE INDEX IX_BTRPD_InventoryOptimizationReorder_SnapshotKey_SortOrder
+    ON BTRPD_InventoryOptimizationReorder (SnapshotKey, SortOrder)
+GO
+
+-- BTRPD_InventoryOptimizationTransfer
+IF OBJECT_ID(N'dbo.BTRPD_InventoryOptimizationTransfer', N'U') IS NULL
+BEGIN
+CREATE TABLE BTRPD_InventoryOptimizationTransfer
+(
+    InventoryOptimizationTransferId VARCHAR(26)    NOT NULL CONSTRAINT DF_BTRPD_InventoryOptimizationTransfer_Id DEFAULT(''),
+    SnapshotKey                     VARCHAR(10)    NOT NULL CONSTRAINT DF_BTRPD_InventoryOptimizationTransfer_SnapshotKey DEFAULT('CURRENT'),
+    SortOrder                       INT            NOT NULL CONSTRAINT DF_BTRPD_InventoryOptimizationTransfer_SortOrder DEFAULT(0),
+    PriorityScore                   INT            NOT NULL CONSTRAINT DF_BTRPD_InventoryOptimizationTransfer_PriorityScore DEFAULT(0),
+    Category                        VARCHAR(20)    NOT NULL CONSTRAINT DF_BTRPD_InventoryOptimizationTransfer_Category DEFAULT(''),
+    BrgId                           VARCHAR(26)    NOT NULL CONSTRAINT DF_BTRPD_InventoryOptimizationTransfer_BrgId DEFAULT(''),
+    BrgName                         VARCHAR(200)   NOT NULL CONSTRAINT DF_BTRPD_InventoryOptimizationTransfer_BrgName DEFAULT(''),
+    WarehouseFromId                 VARCHAR(5)     NOT NULL CONSTRAINT DF_BTRPD_InventoryOptimizationTransfer_WarehouseFromId DEFAULT(''),
+    WarehouseFromName               VARCHAR(50)    NOT NULL CONSTRAINT DF_BTRPD_InventoryOptimizationTransfer_WarehouseFromName DEFAULT(''),
+    WarehouseToId                   VARCHAR(5)     NOT NULL CONSTRAINT DF_BTRPD_InventoryOptimizationTransfer_WarehouseToId DEFAULT(''),
+    WarehouseToName                 VARCHAR(50)    NOT NULL CONSTRAINT DF_BTRPD_InventoryOptimizationTransfer_WarehouseToName DEFAULT(''),
+    TransferQty                     DECIMAL(18,4)  NOT NULL CONSTRAINT DF_BTRPD_InventoryOptimizationTransfer_TransferQty DEFAULT(0),
+    DestDaysOfSupply                DECIMAL(18,2)  NULL,
+    ReasonText                      VARCHAR(500)   NOT NULL CONSTRAINT DF_BTRPD_InventoryOptimizationTransfer_ReasonText DEFAULT(''),
+    RuleId                          VARCHAR(20)    NOT NULL CONSTRAINT DF_BTRPD_InventoryOptimizationTransfer_RuleId DEFAULT(''),
+    ReportRoute                     VARCHAR(200)   NOT NULL CONSTRAINT DF_BTRPD_InventoryOptimizationTransfer_ReportRoute DEFAULT(''),
+    DrillDownRoute                  VARCHAR(200)   NOT NULL CONSTRAINT DF_BTRPD_InventoryOptimizationTransfer_DrillDownRoute DEFAULT(''),
+
+    CONSTRAINT PK_BTRPD_InventoryOptimizationTransfer PRIMARY KEY CLUSTERED (InventoryOptimizationTransferId)
+)
+END
+GO
+
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_BTRPD_InventoryOptimizationTransfer_SnapshotKey_SortOrder' AND object_id = OBJECT_ID(N'dbo.BTRPD_InventoryOptimizationTransfer'))
+CREATE INDEX IX_BTRPD_InventoryOptimizationTransfer_SnapshotKey_SortOrder
+    ON BTRPD_InventoryOptimizationTransfer (SnapshotKey, SortOrder)
+GO
+
+-- BTRPD_InventoryOptimizationDelay
+IF OBJECT_ID(N'dbo.BTRPD_InventoryOptimizationDelay', N'U') IS NULL
+BEGIN
+CREATE TABLE BTRPD_InventoryOptimizationDelay
+(
+    InventoryOptimizationDelayId VARCHAR(26)    NOT NULL CONSTRAINT DF_BTRPD_InventoryOptimizationDelay_Id DEFAULT(''),
+    SnapshotKey                  VARCHAR(10)    NOT NULL CONSTRAINT DF_BTRPD_InventoryOptimizationDelay_SnapshotKey DEFAULT('CURRENT'),
+    SortOrder                    INT            NOT NULL CONSTRAINT DF_BTRPD_InventoryOptimizationDelay_SortOrder DEFAULT(0),
+    PriorityScore                INT            NOT NULL CONSTRAINT DF_BTRPD_InventoryOptimizationDelay_PriorityScore DEFAULT(0),
+    Category                     VARCHAR(20)    NOT NULL CONSTRAINT DF_BTRPD_InventoryOptimizationDelay_Category DEFAULT(''),
+    ActionType                   VARCHAR(40)    NOT NULL CONSTRAINT DF_BTRPD_InventoryOptimizationDelay_ActionType DEFAULT(''),
+    ActionLabel                  VARCHAR(80)    NOT NULL CONSTRAINT DF_BTRPD_InventoryOptimizationDelay_ActionLabel DEFAULT(''),
+    BrgId                        VARCHAR(26)    NOT NULL CONSTRAINT DF_BTRPD_InventoryOptimizationDelay_BrgId DEFAULT(''),
+    BrgName                      VARCHAR(200)   NOT NULL CONSTRAINT DF_BTRPD_InventoryOptimizationDelay_BrgName DEFAULT(''),
+    SupplierName                 VARCHAR(200)   NOT NULL CONSTRAINT DF_BTRPD_InventoryOptimizationDelay_SupplierName DEFAULT(''),
+    DaysOfSupply                 DECIMAL(18,2)  NULL,
+    MovementClass                VARCHAR(30)    NOT NULL CONSTRAINT DF_BTRPD_InventoryOptimizationDelay_MovementClass DEFAULT(''),
+    SuggestedQty                 DECIMAL(18,4)  NULL,
+    ReasonText                   VARCHAR(500)   NOT NULL CONSTRAINT DF_BTRPD_InventoryOptimizationDelay_ReasonText DEFAULT(''),
+    RuleId                       VARCHAR(20)    NOT NULL CONSTRAINT DF_BTRPD_InventoryOptimizationDelay_RuleId DEFAULT(''),
+    ReportRoute                  VARCHAR(200)   NOT NULL CONSTRAINT DF_BTRPD_InventoryOptimizationDelay_ReportRoute DEFAULT(''),
+    DrillDownRoute               VARCHAR(200)   NOT NULL CONSTRAINT DF_BTRPD_InventoryOptimizationDelay_DrillDownRoute DEFAULT(''),
+
+    CONSTRAINT PK_BTRPD_InventoryOptimizationDelay PRIMARY KEY CLUSTERED (InventoryOptimizationDelayId)
+)
+END
+GO
+
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_BTRPD_InventoryOptimizationDelay_SnapshotKey_SortOrder' AND object_id = OBJECT_ID(N'dbo.BTRPD_InventoryOptimizationDelay'))
+CREATE INDEX IX_BTRPD_InventoryOptimizationDelay_SnapshotKey_SortOrder
+    ON BTRPD_InventoryOptimizationDelay (SnapshotKey, SortOrder)
+GO
+
+-- BTRPD_InventoryOptimizationClearance
+IF OBJECT_ID(N'dbo.BTRPD_InventoryOptimizationClearance', N'U') IS NULL
+BEGIN
+CREATE TABLE BTRPD_InventoryOptimizationClearance
+(
+    InventoryOptimizationClearanceId VARCHAR(26)    NOT NULL CONSTRAINT DF_BTRPD_InventoryOptimizationClearance_Id DEFAULT(''),
+    SnapshotKey                      VARCHAR(10)    NOT NULL CONSTRAINT DF_BTRPD_InventoryOptimizationClearance_SnapshotKey DEFAULT('CURRENT'),
+    SortOrder                        INT            NOT NULL CONSTRAINT DF_BTRPD_InventoryOptimizationClearance_SortOrder DEFAULT(0),
+    PriorityScore                    INT            NOT NULL CONSTRAINT DF_BTRPD_InventoryOptimizationClearance_PriorityScore DEFAULT(0),
+    Category                         VARCHAR(20)    NOT NULL CONSTRAINT DF_BTRPD_InventoryOptimizationClearance_Category DEFAULT(''),
+    BrgId                            VARCHAR(26)    NOT NULL CONSTRAINT DF_BTRPD_InventoryOptimizationClearance_BrgId DEFAULT(''),
+    BrgName                          VARCHAR(200)   NOT NULL CONSTRAINT DF_BTRPD_InventoryOptimizationClearance_BrgName DEFAULT(''),
+    InventoryValueIdr                DECIMAL(18,2)  NOT NULL CONSTRAINT DF_BTRPD_InventoryOptimizationClearance_InventoryValueIdr DEFAULT(0),
+    IdleDays                         INT            NULL,
+    RecommendedAction                VARCHAR(80)    NOT NULL CONSTRAINT DF_BTRPD_InventoryOptimizationClearance_RecommendedAction DEFAULT(''),
+    ReasonText                       VARCHAR(500)   NOT NULL CONSTRAINT DF_BTRPD_InventoryOptimizationClearance_ReasonText DEFAULT(''),
+    RuleId                           VARCHAR(20)    NOT NULL CONSTRAINT DF_BTRPD_InventoryOptimizationClearance_RuleId DEFAULT(''),
+    ReportRoute                      VARCHAR(200)   NOT NULL CONSTRAINT DF_BTRPD_InventoryOptimizationClearance_ReportRoute DEFAULT(''),
+    DrillDownRoute                   VARCHAR(200)   NOT NULL CONSTRAINT DF_BTRPD_InventoryOptimizationClearance_DrillDownRoute DEFAULT(''),
+
+    CONSTRAINT PK_BTRPD_InventoryOptimizationClearance PRIMARY KEY CLUSTERED (InventoryOptimizationClearanceId)
+)
+END
+GO
+
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_BTRPD_InventoryOptimizationClearance_SnapshotKey_SortOrder' AND object_id = OBJECT_ID(N'dbo.BTRPD_InventoryOptimizationClearance'))
+CREATE INDEX IX_BTRPD_InventoryOptimizationClearance_SnapshotKey_SortOrder
+    ON BTRPD_InventoryOptimizationClearance (SnapshotKey, SortOrder)
+GO
+
+-- BTRPD_InventoryOptimizationPriorityDist
+IF OBJECT_ID(N'dbo.BTRPD_InventoryOptimizationPriorityDist', N'U') IS NULL
+BEGIN
+CREATE TABLE BTRPD_InventoryOptimizationPriorityDist
+(
+    InventoryOptimizationPriorityDistId VARCHAR(26) NOT NULL CONSTRAINT DF_BTRPD_InventoryOptimizationPriorityDist_Id DEFAULT(''),
+    SnapshotKey                         VARCHAR(10) NOT NULL CONSTRAINT DF_BTRPD_InventoryOptimizationPriorityDist_SnapshotKey DEFAULT('CURRENT'),
+    Category                            VARCHAR(20) NOT NULL CONSTRAINT DF_BTRPD_InventoryOptimizationPriorityDist_Category DEFAULT(''),
+    ActionCount                         INT         NOT NULL CONSTRAINT DF_BTRPD_InventoryOptimizationPriorityDist_ActionCount DEFAULT(0),
+    SortOrder                           INT         NOT NULL CONSTRAINT DF_BTRPD_InventoryOptimizationPriorityDist_SortOrder DEFAULT(0),
+
+    CONSTRAINT PK_BTRPD_InventoryOptimizationPriorityDist PRIMARY KEY CLUSTERED (InventoryOptimizationPriorityDistId)
+)
+END
+GO
+
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_BTRPD_InventoryOptimizationPriorityDist_SnapshotKey_SortOrder' AND object_id = OBJECT_ID(N'dbo.BTRPD_InventoryOptimizationPriorityDist'))
+CREATE INDEX IX_BTRPD_InventoryOptimizationPriorityDist_SnapshotKey_SortOrder
+    ON BTRPD_InventoryOptimizationPriorityDist (SnapshotKey, SortOrder)
+GO
+
+-- BTRPD_InventoryOptimizationActionHeat
+IF OBJECT_ID(N'dbo.BTRPD_InventoryOptimizationActionHeat', N'U') IS NULL
+BEGIN
+CREATE TABLE BTRPD_InventoryOptimizationActionHeat
+(
+    InventoryOptimizationActionHeatId VARCHAR(26) NOT NULL CONSTRAINT DF_BTRPD_InventoryOptimizationActionHeat_Id DEFAULT(''),
+    SnapshotKey                       VARCHAR(10) NOT NULL CONSTRAINT DF_BTRPD_InventoryOptimizationActionHeat_SnapshotKey DEFAULT('CURRENT'),
+    ActionType                        VARCHAR(40) NOT NULL CONSTRAINT DF_BTRPD_InventoryOptimizationActionHeat_ActionType DEFAULT(''),
+    ActionLabel                       VARCHAR(80) NOT NULL CONSTRAINT DF_BTRPD_InventoryOptimizationActionHeat_ActionLabel DEFAULT(''),
+    Category                          VARCHAR(20) NOT NULL CONSTRAINT DF_BTRPD_InventoryOptimizationActionHeat_Category DEFAULT(''),
+    ActionCount                       INT         NOT NULL CONSTRAINT DF_BTRPD_InventoryOptimizationActionHeat_ActionCount DEFAULT(0),
+
+    CONSTRAINT PK_BTRPD_InventoryOptimizationActionHeat PRIMARY KEY CLUSTERED (InventoryOptimizationActionHeatId)
+)
+END
+GO
+
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_BTRPD_InventoryOptimizationActionHeat_SnapshotKey' AND object_id = OBJECT_ID(N'dbo.BTRPD_InventoryOptimizationActionHeat'))
+CREATE INDEX IX_BTRPD_InventoryOptimizationActionHeat_SnapshotKey
+    ON BTRPD_InventoryOptimizationActionHeat (SnapshotKey)
+GO
+
 -- BTRPD_PurchasingKpi
 IF OBJECT_ID(N'dbo.BTRPD_PurchasingKpi', N'U') IS NULL
 BEGIN

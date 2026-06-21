@@ -41,5 +41,19 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg
         public int InventoryForecastMinDosHealthy { get; set; } = 30;
 
         public int InventoryForecastStockOutCriticalDays { get; set; } = 7;
+
+        public decimal? InventoryOptimizationDefaultBudgetCapIdr { get; set; }
+
+        public int InventoryOptimizationWarehouseShortageDosDays { get; set; } = 14;
+
+        public int InventoryOptimizationWarehouseExcessDosDays { get; set; } = 60;
+
+        public int InventoryOptimizationMaxTopActions { get; set; } = 25;
+
+        public int InventoryOptimizationMaxReorderRows { get; set; } = 15;
+
+        public int InventoryOptimizationMaxTransferRows { get; set; } = 10;
+
+        public decimal InventoryOptimizationReduceQtyFactor { get; set; } = 0.5m;
     }
 }

@@ -16,6 +16,7 @@ import {
   fetchDashboardSalesForecast,
   fetchDashboardCashFlowForecast,
   fetchDashboardInventoryForecast,
+  fetchDashboardInventoryOptimization,
 } from '@/api/dashboardApi'
 import { getApiErrorMessage } from '@/api/httpClient'
 import { isInfrastructureStoreError } from '@/services/platformDiagnostics'
@@ -36,6 +37,7 @@ import type {
   DashboardSalesForecastResponse,
   DashboardCashFlowForecastResponse,
   DashboardInventoryForecastResponse,
+  DashboardInventoryOptimizationResponse,
 } from '@/models/dashboard'
 
 export const useDashboardStore = defineStore('dashboard', () => {
@@ -46,6 +48,7 @@ export const useDashboardStore = defineStore('dashboard', () => {
   const salesForecast = ref<DashboardSalesForecastResponse | null>(null)
   const cashFlowForecast = ref<DashboardCashFlowForecastResponse | null>(null)
   const inventoryForecast = ref<DashboardInventoryForecastResponse | null>(null)
+  const inventoryOptimization = ref<DashboardInventoryOptimizationResponse | null>(null)
   const piutang = ref<DashboardPiutangResponse | null>(null)
   const inventory = ref<DashboardInventoryResponse | null>(null)
   const inventoryRisk = ref<DashboardInventoryRiskResponse | null>(null)
@@ -170,6 +173,19 @@ export const useDashboardStore = defineStore('dashboard', () => {
       inventoryForecast.value = await fetchDashboardInventoryForecast()
     } catch (err) {
       error.value = getApiErrorMessage(err, 'Failed to load inventory forecast dashboard.')
+    } finally {
+      loading.value = false
+    }
+  }
+
+  async function loadInventoryOptimization(): Promise<void> {
+    loading.value = true
+    error.value = null
+
+    try {
+      inventoryOptimization.value = await fetchDashboardInventoryOptimization()
+    } catch (err) {
+      error.value = getApiErrorMessage(err, 'Failed to load inventory optimization dashboard.')
     } finally {
       loading.value = false
     }
@@ -317,6 +333,7 @@ export const useDashboardStore = defineStore('dashboard', () => {
     salesForecast.value = null
     cashFlowForecast.value = null
     inventoryForecast.value = null
+    inventoryOptimization.value = null
     piutang.value = null
     inventory.value = null
     inventoryRisk.value = null
@@ -337,6 +354,7 @@ export const useDashboardStore = defineStore('dashboard', () => {
     salesForecast,
     cashFlowForecast,
     inventoryForecast,
+    inventoryOptimization,
     piutang,
     inventory,
     inventoryRisk,
@@ -354,6 +372,7 @@ export const useDashboardStore = defineStore('dashboard', () => {
     loadSalesForecast,
     loadCashFlowForecast,
     loadInventoryForecast,
+    loadInventoryOptimization,
     loadPiutang,
     loadInventory,
     loadInventoryRisk,

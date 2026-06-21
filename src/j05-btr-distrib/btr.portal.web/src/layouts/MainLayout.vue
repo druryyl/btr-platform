@@ -42,6 +42,7 @@ const navSections: NavSection[] = [
       { label: 'Inventory', icon: 'pi pi-box', routeName: 'inventory-dashboard' },
       { label: 'Inventory Risk', icon: 'pi pi-exclamation-triangle', routeName: 'inventory-risk-dashboard' },
       { label: 'Inventory Forecast', icon: 'pi pi-chart-line', routeName: 'inventory-forecast-dashboard' },
+      { label: 'Inventory Optimization', icon: 'pi pi-sliders-h', routeName: 'inventory-optimization-dashboard' },
       { label: 'Purchasing', icon: 'pi pi-shopping-cart', routeName: 'purchasing-dashboard' },
       { label: 'Locations', icon: 'pi pi-map-marker', routeName: 'locations-dashboard' },
     ],

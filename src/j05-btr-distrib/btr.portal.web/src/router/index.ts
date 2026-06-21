@@ -83,6 +83,11 @@ const router = createRouter({
               component: () => import('@/views/dashboard/InventoryForecastDashboardView.vue'),
             },
             {
+              path: 'inventory-optimization',
+              name: 'inventory-optimization-dashboard',
+              component: () => import('@/views/dashboard/InventoryOptimizationDashboardView.vue'),
+            },
+            {
               path: 'purchasing',
               name: 'purchasing-dashboard',
               component: () => import('@/views/dashboard/PurchasingDashboardView.vue'),

@@ -141,6 +141,10 @@
     <Compile Include="ReportingContext\DashboardInventoryForecastAggregatorTest.cs" />
     <Compile Include="ReportingContext\InventoryForecastRiskBuilderTest.cs" />
     <Compile Include="ReportingContext\InventoryForecastExecutiveSummaryBuilderTest.cs" />
+    <Compile Include="ReportingContext\InventoryOptimizationPolicyTest.cs" />
+    <Compile Include="ReportingContext\DashboardInventoryOptimizationAggregatorTest.cs" />
+    <Compile Include="ReportingContext\WarehouseBalanceRecommendationBuilderTest.cs" />
+    <Compile Include="ReportingContext\InventoryOptimizationExecutiveSummaryBuilderTest.cs" />
     <Compile Include="ReportingContext\SalesForecastExecutiveSummaryBuilderTest.cs" />
     <Compile Include="ReportingContext\SalesOmzetChartDayGrouperTest.cs" />
     <Compile Include="ReportingContext\DashboardPurchasingInvoiceAggregatorTest.cs" />

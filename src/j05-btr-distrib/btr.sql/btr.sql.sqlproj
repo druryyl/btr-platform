@@ -182,6 +182,14 @@
     <Build Include="Tables\ReportingContext\BTRPD_InventoryForecastLevel.sql" />
     <Build Include="Tables\ReportingContext\BTRPD_InventoryForecastRisk.sql" />
     <Build Include="Tables\ReportingContext\BTRPD_InventoryForecastRecommendation.sql" />
+    <Build Include="Tables\ReportingContext\BTRPD_InventoryOptimizationKpi.sql" />
+    <Build Include="Tables\ReportingContext\BTRPD_InventoryOptimizationAction.sql" />
+    <Build Include="Tables\ReportingContext\BTRPD_InventoryOptimizationReorder.sql" />
+    <Build Include="Tables\ReportingContext\BTRPD_InventoryOptimizationTransfer.sql" />
+    <Build Include="Tables\ReportingContext\BTRPD_InventoryOptimizationDelay.sql" />
+    <Build Include="Tables\ReportingContext\BTRPD_InventoryOptimizationClearance.sql" />
+    <Build Include="Tables\ReportingContext\BTRPD_InventoryOptimizationPriorityDist.sql" />
+    <Build Include="Tables\ReportingContext\BTRPD_InventoryOptimizationActionHeat.sql" />
     <Build Include="Tables\ReportingContext\BTRPD_SalesTopSalesman.sql" />
     <Build Include="Tables\ReportingContext\BTRPD_PurchasingKpi.sql" />
     <Build Include="Tables\ReportingContext\BTRPD_PurchasingWeekTrend.sql" />

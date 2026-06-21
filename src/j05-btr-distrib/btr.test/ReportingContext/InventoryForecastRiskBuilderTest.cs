@@ -41,7 +41,7 @@ namespace btr.test.ReportingContext
             recommendations.First().Urgency.Should().Be(InventoryForecastPolicy.UrgencyCritical);
         }
 
-        private static InventoryForecastRiskBuilder.ForecastItemContext Context(
+        private static ForecastItemContext Context(
             string brgId,
             string name,
             decimal inventoryValue,
@@ -59,7 +59,7 @@ namespace btr.test.ReportingContext
                 ReorderDate = BusinessDate.AddDays(3)
             };
 
-            return new InventoryForecastRiskBuilder.ForecastItemContext
+            return new ForecastItemContext
             {
                 Item = new DashboardInventoryItemGroup
                 {

@@ -197,7 +197,9 @@
     <Compile Include="ReportingContext\DashboardSalesForecastAgg\DashboardSalesForecastDal.cs" />
     <Compile Include="ReportingContext\DashboardCashFlowForecastAgg\DashboardCashFlowForecastDal.cs" />
     <Compile Include="ReportingContext\DashboardInventoryForecastAgg\DashboardInventoryForecastDal.cs" />
+    <Compile Include="ReportingContext\DashboardInventoryOptimizationAgg\DashboardInventoryOptimizationDal.cs" />
     <Compile Include="SalesContext\FakturInfoAgg\BrgConsumptionDal.cs" />
+    <Compile Include="SalesContext\FakturInfoAgg\BrgWarehouseConsumptionDal.cs" />
     <Compile Include="ReportingContext\InventoryReportAgg\InventoryReportDal.cs" />
     <Compile Include="ReportingContext\PiutangReportAgg\PiutangReportDal.cs" />
     <Compile Include="ReportingContext\PurchasingReportAgg\PurchasingReportDal.cs" />

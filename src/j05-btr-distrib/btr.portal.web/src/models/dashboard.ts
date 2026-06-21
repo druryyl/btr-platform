@@ -340,6 +340,150 @@ export interface DashboardInventoryForecastResponse {
   PurchaseRecommendations: DashboardInventoryForecastRecommendationItem[]
 }
 
+export interface DashboardInventoryOptimizationTraceability {
+  InventoryForecastRoute: string
+  InventoryRiskRoute: string
+  PurchasingManagementRoute: string
+  InventoryReportRoute: string
+  PurchasingReportRoute: string
+  Disclaimer: string
+}
+
+export interface DashboardInventoryOptimizationPriorityDistItem {
+  Category: string
+  ActionCount: number
+  SortOrder: number
+}
+
+export interface DashboardInventoryOptimizationActionHeatItem {
+  ActionType: string
+  ActionLabel: string
+  Category: string
+  ActionCount: number
+}
+
+export interface DashboardInventoryOptimizationActionItem {
+  SortOrder: number
+  PriorityScore: number
+  Category: string
+  ActionType: string
+  ActionLabel: string
+  BrgId: string
+  BrgName: string
+  SupplierName: string
+  WarehouseFromName?: string | null
+  WarehouseToName?: string | null
+  Quantity?: number | null
+  ImpactValueIdr: number
+  DaysOfSupply?: number | null
+  ReasonText: string
+  RuleId: string
+  ReportRoute: string
+  DrillDownRoute: string
+}
+
+export interface DashboardInventoryOptimizationReorderItem {
+  SortOrder: number
+  PriorityScore: number
+  Category: string
+  BrgId: string
+  BrgCode: string
+  BrgName: string
+  SupplierName: string
+  RecommendedPurchaseQty: number
+  EstimatedCostIdr: number
+  DaysOfSupply?: number | null
+  ReorderDate?: string | null
+  ReasonText: string
+  RuleId: string
+  ReportRoute: string
+  DrillDownRoute: string
+}
+
+export interface DashboardInventoryOptimizationTransferItem {
+  SortOrder: number
+  PriorityScore: number
+  Category: string
+  BrgId: string
+  BrgName: string
+  WarehouseFromName: string
+  WarehouseToName: string
+  TransferQty: number
+  DestDaysOfSupply?: number | null
+  ReasonText: string
+  RuleId: string
+  ReportRoute: string
+  DrillDownRoute: string
+}
+
+export interface DashboardInventoryOptimizationDelayItem {
+  SortOrder: number
+  PriorityScore: number
+  Category: string
+  ActionType: string
+  ActionLabel: string
+  BrgId: string
+  BrgName: string
+  SupplierName: string
+  DaysOfSupply?: number | null
+  MovementClass: string
+  SuggestedQty?: number | null
+  ReasonText: string
+  RuleId: string
+  ReportRoute: string
+  DrillDownRoute: string
+}
+
+export interface DashboardInventoryOptimizationClearanceItem {
+  SortOrder: number
+  PriorityScore: number
+  Category: string
+  BrgId: string
+  BrgName: string
+  InventoryValueIdr: number
+  IdleDays?: number | null
+  RecommendedAction: string
+  ReasonText: string
+  RuleId: string
+  ReportRoute: string
+  DrillDownRoute: string
+}
+
+export interface DashboardInventoryOptimizationResponse {
+  IsAvailable: boolean
+  GeneratedAt: string
+  BusinessDate: string
+  PlanningHorizonDays: number
+  BudgetCapIdr?: number | null
+  InventoryHealthScore: number
+  CriticalActionCount: number
+  HighActionCount: number
+  MediumActionCount: number
+  LowActionCount: number
+  PurchaseNowCount: number
+  DelayCount: number
+  TransferCount: number
+  ClearanceCount: number
+  PostFirstCount: number
+  DeferCount: number
+  RequiredPurchaseBudgetIdr: number
+  RecommendedPurchaseBudgetIdr: number
+  DeferrableSpendIdr: number
+  RecoverableCapitalIdr: number
+  PurchaseImpactIdr: number
+  DelayImpactIdr: number
+  TransferSavingsIdr: number
+  ExecutiveSummary: string
+  Traceability: DashboardInventoryOptimizationTraceability
+  PriorityDistribution: DashboardInventoryOptimizationPriorityDistItem[]
+  ActionHeatSummary: DashboardInventoryOptimizationActionHeatItem[]
+  TopActions: DashboardInventoryOptimizationActionItem[]
+  ReorderList: DashboardInventoryOptimizationReorderItem[]
+  TransferList: DashboardInventoryOptimizationTransferItem[]
+  DelayList: DashboardInventoryOptimizationDelayItem[]
+  ClearanceList: DashboardInventoryOptimizationClearanceItem[]
+}
+
 export interface DashboardPiutangAgingBucket {
   BucketKey: string
   BucketLabel: string

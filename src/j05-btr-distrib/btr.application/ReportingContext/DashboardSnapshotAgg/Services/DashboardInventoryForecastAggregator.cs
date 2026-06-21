@@ -47,7 +47,7 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.Services
                 .GroupBy(x => x.FakturDate.Date)
                 .ToDictionary(g => g.Key, g => g.Sum(x => x.UnitsSold));
 
-            var itemContexts = new List<InventoryForecastRiskBuilder.ForecastItemContext>();
+            var itemContexts = new List<ForecastItemContext>();
             decimal totalAdc = 0m;
             decimal totalQtyEligible = 0m;
             decimal totalAdcForDos = 0m;
@@ -126,7 +126,7 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.Services
                     IncrementHeatCell(heat, calc.DaysOfSupply, item.InventoryValue, currentInventoryValue);
                 }
 
-                itemContexts.Add(new InventoryForecastRiskBuilder.ForecastItemContext
+                itemContexts.Add(new ForecastItemContext
                 {
                     Item = item,
                     Calculation = calc,
@@ -234,7 +234,8 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.Services
                 DailyConsumption = dailyConsumption,
                 ProjectedLevel = projectedLevel,
                 TopRisks = topRisks,
-                PurchaseRecommendations = recommendations
+                PurchaseRecommendations = recommendations,
+                ItemContexts = itemContexts
             };
         }
 

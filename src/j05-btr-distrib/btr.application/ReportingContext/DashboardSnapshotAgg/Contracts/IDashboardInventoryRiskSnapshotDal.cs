@@ -12,5 +12,11 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.Contracts
             DashboardInventoryRiskAggregateResult result,
             DashboardInventoryForecastAggregateResult forecast,
             string refreshLogId);
+
+        void ReplaceCurrent(
+            DashboardInventoryRiskAggregateResult result,
+            DashboardInventoryForecastAggregateResult forecast,
+            DashboardInventoryOptimizationAggregateResult optimization,
+            string refreshLogId);
     }
 }

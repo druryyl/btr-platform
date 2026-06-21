@@ -18,6 +18,7 @@ import type {
   DashboardSalesForecastResponse,
   DashboardCashFlowForecastResponse,
   DashboardInventoryForecastResponse,
+  DashboardInventoryOptimizationResponse,
 } from '@/models/dashboard'
 
 export async function fetchDashboardOverview(): Promise<DashboardOverviewResponse> {
@@ -81,6 +82,18 @@ export async function fetchDashboardInventoryForecast(): Promise<DashboardInvent
 
   if (!isApiSuccess(data) || !data.Data) {
     throw new Error(data.Message ?? 'Failed to load inventory forecast dashboard.')
+  }
+
+  return data.Data
+}
+
+export async function fetchDashboardInventoryOptimization(): Promise<DashboardInventoryOptimizationResponse> {
+  const { data } = await httpClient.get<ApiResponse<DashboardInventoryOptimizationResponse>>(
+    '/api/dashboard/inventory-optimization',
+  )
+
+  if (!isApiSuccess(data) || !data.Data) {
+    throw new Error(data.Message ?? 'Failed to load inventory optimization dashboard.')
   }
 
   return data.Data
