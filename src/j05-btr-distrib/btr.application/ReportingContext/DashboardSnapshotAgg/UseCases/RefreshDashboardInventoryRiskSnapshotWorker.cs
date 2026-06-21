@@ -2,6 +2,7 @@ using System;
 using System.Diagnostics;
 using System.Linq;
 using btr.application.InventoryContext.StokBalanceInfo;
+using btr.application.ReportingContext.DashboardSnapshotAgg;
 using btr.application.ReportingContext.DashboardSnapshotAgg.Contracts;
 using btr.application.ReportingContext.DashboardSnapshotAgg.Models;
 using btr.application.ReportingContext.DashboardSnapshotAgg.Progress;
@@ -11,6 +12,7 @@ using btr.application.Portal;
 using btr.application.SupportContext.TglJamAgg;
 using btr.nuna.Application;
 using btr.nuna.Domain;
+using Microsoft.Extensions.Options;
 
 namespace btr.application.ReportingContext.DashboardSnapshotAgg.UseCases
 {
@@ -26,28 +28,37 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.UseCases
 
         private readonly IStokBalanceViewDal _stokBalanceViewDal;
         private readonly IBrgLastFakturDal _brgLastFakturDal;
+        private readonly IBrgConsumptionDal _brgConsumptionDal;
         private readonly DashboardInventoryRiskAggregator _aggregator;
+        private readonly DashboardInventoryForecastAggregator _forecastAggregator;
         private readonly IDashboardInventoryRiskSnapshotDal _snapshotDal;
         private readonly IDashboardSnapshotRefreshLogDal _refreshLogDal;
         private readonly ITglJamDal _tglJamDal;
         private readonly IBusinessDateProvider _businessDateProvider;
+        private readonly DashboardSnapshotOptions _options;
 
         public RefreshDashboardInventoryRiskSnapshotWorker(
             IStokBalanceViewDal stokBalanceViewDal,
             IBrgLastFakturDal brgLastFakturDal,
+            IBrgConsumptionDal brgConsumptionDal,
             DashboardInventoryRiskAggregator aggregator,
+            DashboardInventoryForecastAggregator forecastAggregator,
             IDashboardInventoryRiskSnapshotDal snapshotDal,
             IDashboardSnapshotRefreshLogDal refreshLogDal,
             ITglJamDal tglJamDal,
-            IBusinessDateProvider businessDateProvider)
+            IBusinessDateProvider businessDateProvider,
+            DashboardSnapshotOptions options)
         {
             _stokBalanceViewDal = stokBalanceViewDal;
             _brgLastFakturDal = brgLastFakturDal;
+            _brgConsumptionDal = brgConsumptionDal;
             _aggregator = aggregator;
+            _forecastAggregator = forecastAggregator;
             _snapshotDal = snapshotDal;
             _refreshLogDal = refreshLogDal;
             _tglJamDal = tglJamDal;
             _businessDateProvider = businessDateProvider;
+            _options = options ?? new DashboardSnapshotOptions();
         }
 
         public void Execute(RefreshDashboardInventoryRiskSnapshotRequest request)
@@ -74,7 +85,7 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.UseCases
             {
                 var generatedAt = _tglJamDal.Now;
                 var today = _businessDateProvider.Today;
-                const int loadSteps = 2;
+                const int loadSteps = 4;
 
                 WorkerProgressScope.Current.StepStarted($"{Domain}:Load", "Load source data");
                 WorkerProgressScope.Current.ReportPhaseProgress($"{Domain}: Load stock balances", 1, loadSteps);
@@ -84,19 +95,46 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.UseCases
                 WorkerProgressScope.Current.ReportPhaseProgress($"{Domain}: Load last faktur by item", 2, loadSteps);
                 var lastFakturRows = _brgLastFakturDal.ListLastFakturByBrg()?.ToList()
                     ?? new System.Collections.Generic.List<BrgLastFakturDto>();
+
+                var window30Start = today.Date.AddDays(-(InventoryForecastPolicy.AdcWindow30Days - 1));
+                var window90Start = today.Date.AddDays(-(InventoryForecastPolicy.AdcWindow90Days - 1));
+
+                WorkerProgressScope.Current.ReportPhaseProgress($"{Domain}: Load item consumption", 3, loadSteps);
+                var consumptionRows = _brgConsumptionDal.ListConsumptionByBrg(window30Start, window90Start, today)?.ToList()
+                    ?? new System.Collections.Generic.List<BrgConsumptionDto>();
+
+                WorkerProgressScope.Current.ReportPhaseProgress($"{Domain}: Load daily company consumption", 4, loadSteps);
+                var dailyConsumptionRows = _brgConsumptionDal.ListDailyCompanyConsumption(window30Start, today)?.ToList()
+                    ?? new System.Collections.Generic.List<DailyCompanyConsumptionDto>();
                 WorkerProgressScope.Current.StepCompleted($"{Domain}:Load", new WorkerProgressStepInfo
                 {
-                    RecordCount = rowCount + lastFakturRows.Count
+                    RecordCount = rowCount + lastFakturRows.Count + consumptionRows.Count + dailyConsumptionRows.Count
                 });
 
                 WorkerProgressScope.Current.StepStarted($"{Domain}:Aggregate", "Aggregate metrics");
                 var aggregate = _aggregator.Aggregate(rows, lastFakturRows, today, generatedAt);
                 WorkerProgressScope.Current.StepCompleted($"{Domain}:Aggregate");
 
+                WorkerProgressScope.Current.StepStarted($"{Domain}:AggregateForecast", "Aggregate inventory forecast");
+                var forecast = _forecastAggregator.Aggregate(
+                    rows,
+                    lastFakturRows,
+                    consumptionRows,
+                    dailyConsumptionRows,
+                    aggregate,
+                    today,
+                    generatedAt,
+                    _options.InventoryForecastPlanningHorizonDays,
+                    _options.InventoryForecastDefaultLeadTimeDays,
+                    _options.InventoryForecastCoverageDays,
+                    _options.InventoryForecastOverstockDosDays,
+                    _options.InventoryForecastMinDosHealthy);
+                WorkerProgressScope.Current.StepCompleted($"{Domain}:AggregateForecast");
+
                 WorkerProgressScope.Current.StepStarted($"{Domain}:Save", "Save snapshot");
                 using (var trans = TransHelper.NewScope())
                 {
-                    _snapshotDal.ReplaceCurrent(aggregate, refreshLogId);
+                    _snapshotDal.ReplaceCurrent(aggregate, forecast, refreshLogId);
                     trans.Complete();
                 }
                 WorkerProgressScope.Current.StepCompleted($"{Domain}:Save");

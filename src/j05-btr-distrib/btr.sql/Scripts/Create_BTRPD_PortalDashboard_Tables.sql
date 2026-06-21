@@ -454,6 +454,267 @@ CREATE INDEX IX_BTRPD_SalesDailyPace_SnapshotKey_PaceDate
     ON BTRPD_SalesDailyPace (SnapshotKey, PaceDate)
 GO
 
+-- BTRPD_CashFlowForecastKpi
+IF OBJECT_ID(N'dbo.BTRPD_CashFlowForecastKpi', N'U') IS NULL
+BEGIN
+CREATE TABLE BTRPD_CashFlowForecastKpi
+(
+    SnapshotKey                         VARCHAR(10)    NOT NULL CONSTRAINT DF_BTRPD_CashFlowForecastKpi_SnapshotKey DEFAULT('CURRENT'),
+    GeneratedAt                         DATETIME       NOT NULL CONSTRAINT DF_BTRPD_CashFlowForecastKpi_GeneratedAt DEFAULT('3000-01-01'),
+    PeriodYear                          INT            NOT NULL CONSTRAINT DF_BTRPD_CashFlowForecastKpi_PeriodYear DEFAULT(0),
+    PeriodMonth                         INT            NOT NULL CONSTRAINT DF_BTRPD_CashFlowForecastKpi_PeriodMonth DEFAULT(0),
+    BusinessDate                        DATETIME       NOT NULL CONSTRAINT DF_BTRPD_CashFlowForecastKpi_BusinessDate DEFAULT('3000-01-01'),
+    DaysInMonth                         INT            NOT NULL CONSTRAINT DF_BTRPD_CashFlowForecastKpi_DaysInMonth DEFAULT(0),
+    DaysElapsed                         INT            NOT NULL CONSTRAINT DF_BTRPD_CashFlowForecastKpi_DaysElapsed DEFAULT(0),
+    DaysRemaining                       INT            NOT NULL CONSTRAINT DF_BTRPD_CashFlowForecastKpi_DaysRemaining DEFAULT(0),
+    CashCollectedMtd                    DECIMAL(18,2)  NOT NULL CONSTRAINT DF_BTRPD_CashFlowForecastKpi_CashCollectedMtd DEFAULT(0),
+    MonthCollections                    DECIMAL(18,2)  NOT NULL CONSTRAINT DF_BTRPD_CashFlowForecastKpi_MonthCollections DEFAULT(0),
+    MonthFakturOmzet                    DECIMAL(18,2)  NOT NULL CONSTRAINT DF_BTRPD_CashFlowForecastKpi_MonthFakturOmzet DEFAULT(0),
+    DailyCashCollectionAverage          DECIMAL(18,2)  NOT NULL CONSTRAINT DF_BTRPD_CashFlowForecastKpi_DailyCashCollectionAverage DEFAULT(0),
+    DailyCollectionAverage              DECIMAL(18,2)  NOT NULL CONSTRAINT DF_BTRPD_CashFlowForecastKpi_DailyCollectionAverage DEFAULT(0),
+    ExpectedCashCollection              DECIMAL(18,2)  NOT NULL CONSTRAINT DF_BTRPD_CashFlowForecastKpi_ExpectedCashCollection DEFAULT(0),
+    ProjectedMonthEndTotalCollections   DECIMAL(18,2)  NOT NULL CONSTRAINT DF_BTRPD_CashFlowForecastKpi_ProjectedMonthEndTotalCollections DEFAULT(0),
+    CollectionForecastPercent           DECIMAL(9,4)   NULL,
+    RecoveryVsBillingPercent            DECIMAL(9,4)   NULL,
+    RecoveryVsBillingForecastPercent    DECIMAL(9,4)   NULL,
+    RemainingCollectionTarget           DECIMAL(18,2)  NOT NULL CONSTRAINT DF_BTRPD_CashFlowForecastKpi_RemainingCollectionTarget DEFAULT(0),
+    RequiredDailyCollection             DECIMAL(18,2)  NULL,
+    OutstandingDueRemaining             DECIMAL(18,2)  NOT NULL CONSTRAINT DF_BTRPD_CashFlowForecastKpi_OutstandingDueRemaining DEFAULT(0),
+    OverdueOutstanding                  DECIMAL(18,2)  NOT NULL CONSTRAINT DF_BTRPD_CashFlowForecastKpi_OverdueOutstanding DEFAULT(0),
+    CollectionGap                       DECIMAL(18,2)  NOT NULL CONSTRAINT DF_BTRPD_CashFlowForecastKpi_CollectionGap DEFAULT(0),
+    ForecastVarianceCash                DECIMAL(18,2)  NOT NULL CONSTRAINT DF_BTRPD_CashFlowForecastKpi_ForecastVarianceCash DEFAULT(0),
+    ExpectedCollectionRatePercent       DECIMAL(9,4)   NULL,
+    BestCaseCash                        DECIMAL(18,2)  NOT NULL CONSTRAINT DF_BTRPD_CashFlowForecastKpi_BestCaseCash DEFAULT(0),
+    WorstCaseCash                       DECIMAL(18,2)  NOT NULL CONSTRAINT DF_BTRPD_CashFlowForecastKpi_WorstCaseCash DEFAULT(0),
+    ForecastConfidence                  VARCHAR(10)    NOT NULL CONSTRAINT DF_BTRPD_CashFlowForecastKpi_ForecastConfidence DEFAULT(''),
+    ForecastRiskBand                    VARCHAR(10)    NOT NULL CONSTRAINT DF_BTRPD_CashFlowForecastKpi_ForecastRiskBand DEFAULT(''),
+    LastRefreshLogId                    VARCHAR(26)    NOT NULL CONSTRAINT DF_BTRPD_CashFlowForecastKpi_LastRefreshLogId DEFAULT(''),
+
+    CONSTRAINT PK_BTRPD_CashFlowForecastKpi PRIMARY KEY CLUSTERED (SnapshotKey)
+)
+END
+GO
+
+-- BTRPD_CashFlowDailyPace
+IF OBJECT_ID(N'dbo.BTRPD_CashFlowDailyPace', N'U') IS NULL
+BEGIN
+CREATE TABLE BTRPD_CashFlowDailyPace
+(
+    CashFlowDailyPaceId      VARCHAR(26)   NOT NULL CONSTRAINT DF_BTRPD_CashFlowDailyPace_CashFlowDailyPaceId DEFAULT(''),
+    SnapshotKey              VARCHAR(10)   NOT NULL CONSTRAINT DF_BTRPD_CashFlowDailyPace_SnapshotKey DEFAULT('CURRENT'),
+    PaceDate                 DATETIME      NOT NULL CONSTRAINT DF_BTRPD_CashFlowDailyPace_PaceDate DEFAULT('3000-01-01'),
+    DayOfMonth               INT           NOT NULL CONSTRAINT DF_BTRPD_CashFlowDailyPace_DayOfMonth DEFAULT(0),
+    IsElapsed                BIT           NOT NULL CONSTRAINT DF_BTRPD_CashFlowDailyPace_IsElapsed DEFAULT(0),
+    ActualCashAmount         DECIMAL(18,2) NOT NULL CONSTRAINT DF_BTRPD_CashFlowDailyPace_ActualCashAmount DEFAULT(0),
+    ActualCollectionAmount   DECIMAL(18,2) NOT NULL CONSTRAINT DF_BTRPD_CashFlowDailyPace_ActualCollectionAmount DEFAULT(0),
+    ProjectedDailyCashAmount DECIMAL(18,2) NOT NULL CONSTRAINT DF_BTRPD_CashFlowDailyPace_ProjectedDailyCashAmount DEFAULT(0),
+
+    CONSTRAINT PK_BTRPD_CashFlowDailyPace PRIMARY KEY CLUSTERED (CashFlowDailyPaceId)
+)
+END
+GO
+
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_BTRPD_CashFlowDailyPace_SnapshotKey_PaceDate' AND object_id = OBJECT_ID(N'dbo.BTRPD_CashFlowDailyPace'))
+CREATE INDEX IX_BTRPD_CashFlowDailyPace_SnapshotKey_PaceDate
+    ON BTRPD_CashFlowDailyPace (SnapshotKey, PaceDate)
+GO
+
+-- BTRPD_CashFlowRecoveryTrend
+IF OBJECT_ID(N'dbo.BTRPD_CashFlowRecoveryTrend', N'U') IS NULL
+BEGIN
+CREATE TABLE BTRPD_CashFlowRecoveryTrend
+(
+    CashFlowRecoveryTrendId VARCHAR(26)   NOT NULL CONSTRAINT DF_BTRPD_CashFlowRecoveryTrend_CashFlowRecoveryTrendId DEFAULT(''),
+    SnapshotKey             VARCHAR(10)   NOT NULL CONSTRAINT DF_BTRPD_CashFlowRecoveryTrend_SnapshotKey DEFAULT('CURRENT'),
+    TrendDate               DATETIME      NOT NULL CONSTRAINT DF_BTRPD_CashFlowRecoveryTrend_TrendDate DEFAULT('3000-01-01'),
+    DayOfMonth              INT           NOT NULL CONSTRAINT DF_BTRPD_CashFlowRecoveryTrend_DayOfMonth DEFAULT(0),
+    IsElapsed               BIT           NOT NULL CONSTRAINT DF_BTRPD_CashFlowRecoveryTrend_IsElapsed DEFAULT(0),
+    CumulativeCollections   DECIMAL(18,2) NOT NULL CONSTRAINT DF_BTRPD_CashFlowRecoveryTrend_CumulativeCollections DEFAULT(0),
+    CumulativeBilling       DECIMAL(18,2) NOT NULL CONSTRAINT DF_BTRPD_CashFlowRecoveryTrend_CumulativeBilling DEFAULT(0),
+
+    CONSTRAINT PK_BTRPD_CashFlowRecoveryTrend PRIMARY KEY CLUSTERED (CashFlowRecoveryTrendId)
+)
+END
+GO
+
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_BTRPD_CashFlowRecoveryTrend_SnapshotKey_TrendDate' AND object_id = OBJECT_ID(N'dbo.BTRPD_CashFlowRecoveryTrend'))
+CREATE INDEX IX_BTRPD_CashFlowRecoveryTrend_SnapshotKey_TrendDate
+    ON BTRPD_CashFlowRecoveryTrend (SnapshotKey, TrendDate)
+GO
+
+-- BTRPD_CashFlowCollectionRisk
+IF OBJECT_ID(N'dbo.BTRPD_CashFlowCollectionRisk', N'U') IS NULL
+BEGIN
+CREATE TABLE BTRPD_CashFlowCollectionRisk
+(
+    CashFlowCollectionRiskId VARCHAR(26)    NOT NULL CONSTRAINT DF_BTRPD_CashFlowCollectionRisk_CashFlowCollectionRiskId DEFAULT(''),
+    SnapshotKey              VARCHAR(10)    NOT NULL CONSTRAINT DF_BTRPD_CashFlowCollectionRisk_SnapshotKey DEFAULT('CURRENT'),
+    SortOrder                INT            NOT NULL CONSTRAINT DF_BTRPD_CashFlowCollectionRisk_SortOrder DEFAULT(0),
+    RiskKey                  VARCHAR(30)    NOT NULL CONSTRAINT DF_BTRPD_CashFlowCollectionRisk_RiskKey DEFAULT(''),
+    RiskLabel                VARCHAR(60)    NOT NULL CONSTRAINT DF_BTRPD_CashFlowCollectionRisk_RiskLabel DEFAULT(''),
+    EntityType               VARCHAR(20)    NOT NULL CONSTRAINT DF_BTRPD_CashFlowCollectionRisk_EntityType DEFAULT(''),
+    EntityId                 VARCHAR(13)    NOT NULL CONSTRAINT DF_BTRPD_CashFlowCollectionRisk_EntityId DEFAULT(''),
+    EntityName               VARCHAR(100)   NOT NULL CONSTRAINT DF_BTRPD_CashFlowCollectionRisk_EntityName DEFAULT(''),
+    Amount                   DECIMAL(18,2)  NOT NULL CONSTRAINT DF_BTRPD_CashFlowCollectionRisk_Amount DEFAULT(0),
+    DueOrAgingText           VARCHAR(50)    NOT NULL CONSTRAINT DF_BTRPD_CashFlowCollectionRisk_DueOrAgingText DEFAULT(''),
+    RuleExplanation          VARCHAR(200)   NOT NULL CONSTRAINT DF_BTRPD_CashFlowCollectionRisk_RuleExplanation DEFAULT(''),
+    ReportRoute              VARCHAR(100)   NOT NULL CONSTRAINT DF_BTRPD_CashFlowCollectionRisk_ReportRoute DEFAULT(''),
+
+    CONSTRAINT PK_BTRPD_CashFlowCollectionRisk PRIMARY KEY CLUSTERED (CashFlowCollectionRiskId)
+)
+END
+GO
+
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_BTRPD_CashFlowCollectionRisk_SnapshotKey_SortOrder' AND object_id = OBJECT_ID(N'dbo.BTRPD_CashFlowCollectionRisk'))
+CREATE INDEX IX_BTRPD_CashFlowCollectionRisk_SnapshotKey_SortOrder
+    ON BTRPD_CashFlowCollectionRisk (SnapshotKey, SortOrder)
+GO
+
+-- BTRPD_InventoryForecastKpi
+IF OBJECT_ID(N'dbo.BTRPD_InventoryForecastKpi', N'U') IS NULL
+BEGIN
+CREATE TABLE BTRPD_InventoryForecastKpi
+(
+    SnapshotKey                     VARCHAR(10)    NOT NULL CONSTRAINT DF_BTRPD_InventoryForecastKpi_SnapshotKey DEFAULT('CURRENT'),
+    GeneratedAt                       DATETIME       NOT NULL CONSTRAINT DF_BTRPD_InventoryForecastKpi_GeneratedAt DEFAULT('3000-01-01'),
+    BusinessDate                      DATETIME       NOT NULL CONSTRAINT DF_BTRPD_InventoryForecastKpi_BusinessDate DEFAULT('3000-01-01'),
+    PlanningHorizonDays               INT            NOT NULL CONSTRAINT DF_BTRPD_InventoryForecastKpi_PlanningHorizonDays DEFAULT(0),
+    CurrentInventoryValue             DECIMAL(18,2)  NOT NULL CONSTRAINT DF_BTRPD_InventoryForecastKpi_CurrentInventoryValue DEFAULT(0),
+    ProjectedInventoryValue           DECIMAL(18,2)  NOT NULL CONSTRAINT DF_BTRPD_InventoryForecastKpi_ProjectedInventoryValue DEFAULT(0),
+    BestCaseProjectedValue            DECIMAL(18,2)  NOT NULL CONSTRAINT DF_BTRPD_InventoryForecastKpi_BestCaseProjectedValue DEFAULT(0),
+    WorstCaseProjectedValue           DECIMAL(18,2)  NOT NULL CONSTRAINT DF_BTRPD_InventoryForecastKpi_WorstCaseProjectedValue DEFAULT(0),
+    AverageDailyConsumptionUnits      DECIMAL(18,4)  NOT NULL CONSTRAINT DF_BTRPD_InventoryForecastKpi_AverageDailyConsumptionUnits DEFAULT(0),
+    WeightedAverageDaysOfSupply       DECIMAL(18,2)  NULL,
+    UnderstockValue                   DECIMAL(18,2)  NOT NULL CONSTRAINT DF_BTRPD_InventoryForecastKpi_UnderstockValue DEFAULT(0),
+    OverstockValue                    DECIMAL(18,2)  NOT NULL CONSTRAINT DF_BTRPD_InventoryForecastKpi_OverstockValue DEFAULT(0),
+    StockOutRiskItemCount             INT            NOT NULL CONSTRAINT DF_BTRPD_InventoryForecastKpi_StockOutRiskItemCount DEFAULT(0),
+    InventoryCoveragePercent          DECIMAL(9,4)   NULL,
+    InventoryTurnoverForecast         DECIMAL(9,4)   NULL,
+    InventoryHealthScore              INT            NOT NULL CONSTRAINT DF_BTRPD_InventoryForecastKpi_InventoryHealthScore DEFAULT(0),
+    ForecastConfidence                VARCHAR(10)    NOT NULL CONSTRAINT DF_BTRPD_InventoryForecastKpi_ForecastConfidence DEFAULT(''),
+    AtRiskInventoryPercent            DECIMAL(9,4)   NULL,
+    ForecastConsumptionUnits          DECIMAL(18,4)  NOT NULL CONSTRAINT DF_BTRPD_InventoryForecastKpi_ForecastConsumptionUnits DEFAULT(0),
+    HeatCellLowLow                    INT            NOT NULL CONSTRAINT DF_BTRPD_InventoryForecastKpi_HeatCellLowLow DEFAULT(0),
+    HeatCellLowMed                    INT            NOT NULL CONSTRAINT DF_BTRPD_InventoryForecastKpi_HeatCellLowMed DEFAULT(0),
+    HeatCellLowHigh                   INT            NOT NULL CONSTRAINT DF_BTRPD_InventoryForecastKpi_HeatCellLowHigh DEFAULT(0),
+    HeatCellMedLow                    INT            NOT NULL CONSTRAINT DF_BTRPD_InventoryForecastKpi_HeatCellMedLow DEFAULT(0),
+    HeatCellMedMed                    INT            NOT NULL CONSTRAINT DF_BTRPD_InventoryForecastKpi_HeatCellMedMed DEFAULT(0),
+    HeatCellMedHigh                   INT            NOT NULL CONSTRAINT DF_BTRPD_InventoryForecastKpi_HeatCellMedHigh DEFAULT(0),
+    HeatCellHighLow                   INT            NOT NULL CONSTRAINT DF_BTRPD_InventoryForecastKpi_HeatCellHighLow DEFAULT(0),
+    HeatCellHighMed                   INT            NOT NULL CONSTRAINT DF_BTRPD_InventoryForecastKpi_HeatCellHighMed DEFAULT(0),
+    HeatCellHighHigh                  INT            NOT NULL CONSTRAINT DF_BTRPD_InventoryForecastKpi_HeatCellHighHigh DEFAULT(0),
+    LastRefreshLogId                  VARCHAR(26)    NOT NULL CONSTRAINT DF_BTRPD_InventoryForecastKpi_LastRefreshLogId DEFAULT(''),
+
+    CONSTRAINT PK_BTRPD_InventoryForecastKpi PRIMARY KEY CLUSTERED (SnapshotKey)
+)
+END
+GO
+
+-- BTRPD_InventoryForecastDailyConsumption
+IF OBJECT_ID(N'dbo.BTRPD_InventoryForecastDailyConsumption', N'U') IS NULL
+BEGIN
+CREATE TABLE BTRPD_InventoryForecastDailyConsumption
+(
+    InventoryForecastDailyConsumptionId VARCHAR(26)   NOT NULL CONSTRAINT DF_BTRPD_InventoryForecastDailyConsumption_Id DEFAULT(''),
+    SnapshotKey                         VARCHAR(10)   NOT NULL CONSTRAINT DF_BTRPD_InventoryForecastDailyConsumption_SnapshotKey DEFAULT('CURRENT'),
+    ConsumptionDate                     DATETIME      NOT NULL CONSTRAINT DF_BTRPD_InventoryForecastDailyConsumption_ConsumptionDate DEFAULT('3000-01-01'),
+    DayIndex                            INT           NOT NULL CONSTRAINT DF_BTRPD_InventoryForecastDailyConsumption_DayIndex DEFAULT(0),
+    UnitsSold                           DECIMAL(18,4) NOT NULL CONSTRAINT DF_BTRPD_InventoryForecastDailyConsumption_UnitsSold DEFAULT(0),
+    AdcReference                        DECIMAL(18,4) NOT NULL CONSTRAINT DF_BTRPD_InventoryForecastDailyConsumption_AdcReference DEFAULT(0),
+
+    CONSTRAINT PK_BTRPD_InventoryForecastDailyConsumption PRIMARY KEY CLUSTERED (InventoryForecastDailyConsumptionId)
+)
+END
+GO
+
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_BTRPD_InventoryForecastDailyConsumption_SnapshotKey_Date' AND object_id = OBJECT_ID(N'dbo.BTRPD_InventoryForecastDailyConsumption'))
+CREATE INDEX IX_BTRPD_InventoryForecastDailyConsumption_SnapshotKey_Date
+    ON BTRPD_InventoryForecastDailyConsumption (SnapshotKey, ConsumptionDate)
+GO
+
+-- BTRPD_InventoryForecastLevel
+IF OBJECT_ID(N'dbo.BTRPD_InventoryForecastLevel', N'U') IS NULL
+BEGIN
+CREATE TABLE BTRPD_InventoryForecastLevel
+(
+    InventoryForecastLevelId VARCHAR(26)   NOT NULL CONSTRAINT DF_BTRPD_InventoryForecastLevel_Id DEFAULT(''),
+    SnapshotKey              VARCHAR(10)   NOT NULL CONSTRAINT DF_BTRPD_InventoryForecastLevel_SnapshotKey DEFAULT('CURRENT'),
+    HorizonDay               INT           NOT NULL CONSTRAINT DF_BTRPD_InventoryForecastLevel_HorizonDay DEFAULT(0),
+    ProjectedInventoryValue  DECIMAL(18,2) NOT NULL CONSTRAINT DF_BTRPD_InventoryForecastLevel_ProjectedInventoryValue DEFAULT(0),
+
+    CONSTRAINT PK_BTRPD_InventoryForecastLevel PRIMARY KEY CLUSTERED (InventoryForecastLevelId)
+)
+END
+GO
+
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_BTRPD_InventoryForecastLevel_SnapshotKey_Day' AND object_id = OBJECT_ID(N'dbo.BTRPD_InventoryForecastLevel'))
+CREATE INDEX IX_BTRPD_InventoryForecastLevel_SnapshotKey_Day
+    ON BTRPD_InventoryForecastLevel (SnapshotKey, HorizonDay)
+GO
+
+-- BTRPD_InventoryForecastRisk
+IF OBJECT_ID(N'dbo.BTRPD_InventoryForecastRisk', N'U') IS NULL
+BEGIN
+CREATE TABLE BTRPD_InventoryForecastRisk
+(
+    InventoryForecastRiskId VARCHAR(26)    NOT NULL CONSTRAINT DF_BTRPD_InventoryForecastRisk_Id DEFAULT(''),
+    SnapshotKey             VARCHAR(10)    NOT NULL CONSTRAINT DF_BTRPD_InventoryForecastRisk_SnapshotKey DEFAULT('CURRENT'),
+    SortOrder               INT            NOT NULL CONSTRAINT DF_BTRPD_InventoryForecastRisk_SortOrder DEFAULT(0),
+    SignalKey               VARCHAR(50)    NOT NULL CONSTRAINT DF_BTRPD_InventoryForecastRisk_SignalKey DEFAULT(''),
+    SignalLabel             VARCHAR(100)   NOT NULL CONSTRAINT DF_BTRPD_InventoryForecastRisk_SignalLabel DEFAULT(''),
+    BrgId                   VARCHAR(26)    NOT NULL CONSTRAINT DF_BTRPD_InventoryForecastRisk_BrgId DEFAULT(''),
+    BrgCode                 VARCHAR(50)    NOT NULL CONSTRAINT DF_BTRPD_InventoryForecastRisk_BrgCode DEFAULT(''),
+    BrgName                 VARCHAR(200)   NOT NULL CONSTRAINT DF_BTRPD_InventoryForecastRisk_BrgName DEFAULT(''),
+    SupplierName            VARCHAR(200)   NOT NULL CONSTRAINT DF_BTRPD_InventoryForecastRisk_SupplierName DEFAULT(''),
+    DaysOfSupply            DECIMAL(18,2)  NULL,
+    StockOutDate            DATETIME       NULL,
+    ValueAmount             DECIMAL(18,2)  NOT NULL CONSTRAINT DF_BTRPD_InventoryForecastRisk_ValueAmount DEFAULT(0),
+    Urgency                 VARCHAR(20)    NOT NULL CONSTRAINT DF_BTRPD_InventoryForecastRisk_Urgency DEFAULT(''),
+    RuleExplanation         VARCHAR(500)   NOT NULL CONSTRAINT DF_BTRPD_InventoryForecastRisk_RuleExplanation DEFAULT(''),
+    ReportRoute             VARCHAR(200)   NOT NULL CONSTRAINT DF_BTRPD_InventoryForecastRisk_ReportRoute DEFAULT(''),
+    EntityCode              VARCHAR(200)   NOT NULL CONSTRAINT DF_BTRPD_InventoryForecastRisk_EntityCode DEFAULT(''),
+
+    CONSTRAINT PK_BTRPD_InventoryForecastRisk PRIMARY KEY CLUSTERED (InventoryForecastRiskId)
+)
+END
+GO
+
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_BTRPD_InventoryForecastRisk_SnapshotKey_SortOrder' AND object_id = OBJECT_ID(N'dbo.BTRPD_InventoryForecastRisk'))
+CREATE INDEX IX_BTRPD_InventoryForecastRisk_SnapshotKey_SortOrder
+    ON BTRPD_InventoryForecastRisk (SnapshotKey, SortOrder)
+GO
+
+-- BTRPD_InventoryForecastRecommendation
+IF OBJECT_ID(N'dbo.BTRPD_InventoryForecastRecommendation', N'U') IS NULL
+BEGIN
+CREATE TABLE BTRPD_InventoryForecastRecommendation
+(
+    InventoryForecastRecommendationId VARCHAR(26)    NOT NULL CONSTRAINT DF_BTRPD_InventoryForecastRecommendation_Id DEFAULT(''),
+    SnapshotKey                       VARCHAR(10)    NOT NULL CONSTRAINT DF_BTRPD_InventoryForecastRecommendation_SnapshotKey DEFAULT('CURRENT'),
+    SortOrder                         INT            NOT NULL CONSTRAINT DF_BTRPD_InventoryForecastRecommendation_SortOrder DEFAULT(0),
+    BrgId                             VARCHAR(26)    NOT NULL CONSTRAINT DF_BTRPD_InventoryForecastRecommendation_BrgId DEFAULT(''),
+    BrgCode                           VARCHAR(50)    NOT NULL CONSTRAINT DF_BTRPD_InventoryForecastRecommendation_BrgCode DEFAULT(''),
+    BrgName                           VARCHAR(200)   NOT NULL CONSTRAINT DF_BTRPD_InventoryForecastRecommendation_BrgName DEFAULT(''),
+    SupplierName                      VARCHAR(200)   NOT NULL CONSTRAINT DF_BTRPD_InventoryForecastRecommendation_SupplierName DEFAULT(''),
+    ReorderDate                       DATETIME       NULL,
+    RecommendedPurchaseQty            DECIMAL(18,4)  NOT NULL CONSTRAINT DF_BTRPD_InventoryForecastRecommendation_RecommendedPurchaseQty DEFAULT(0),
+    AverageDailyConsumption           DECIMAL(18,4)  NOT NULL CONSTRAINT DF_BTRPD_InventoryForecastRecommendation_AverageDailyConsumption DEFAULT(0),
+    CurrentQty                        DECIMAL(18,4)  NOT NULL CONSTRAINT DF_BTRPD_InventoryForecastRecommendation_CurrentQty DEFAULT(0),
+    DaysOfSupply                      DECIMAL(18,2)  NULL,
+    Urgency                           VARCHAR(20)    NOT NULL CONSTRAINT DF_BTRPD_InventoryForecastRecommendation_Urgency DEFAULT(''),
+    ReportRoute                       VARCHAR(200)   NOT NULL CONSTRAINT DF_BTRPD_InventoryForecastRecommendation_ReportRoute DEFAULT(''),
+    EntityCode                        VARCHAR(200)   NOT NULL CONSTRAINT DF_BTRPD_InventoryForecastRecommendation_EntityCode DEFAULT(''),
+
+    CONSTRAINT PK_BTRPD_InventoryForecastRecommendation PRIMARY KEY CLUSTERED (InventoryForecastRecommendationId)
+)
+END
+GO
+
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_BTRPD_InventoryForecastRecommendation_SnapshotKey_SortOrder' AND object_id = OBJECT_ID(N'dbo.BTRPD_InventoryForecastRecommendation'))
+CREATE INDEX IX_BTRPD_InventoryForecastRecommendation_SnapshotKey_SortOrder
+    ON BTRPD_InventoryForecastRecommendation (SnapshotKey, SortOrder)
+GO
+
 -- BTRPD_PurchasingKpi
 IF OBJECT_ID(N'dbo.BTRPD_PurchasingKpi', N'U') IS NULL
 BEGIN

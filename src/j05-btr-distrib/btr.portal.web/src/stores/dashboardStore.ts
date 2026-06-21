@@ -14,6 +14,8 @@ import {
   fetchDashboardPurchasing,
   fetchDashboardSales,
   fetchDashboardSalesForecast,
+  fetchDashboardCashFlowForecast,
+  fetchDashboardInventoryForecast,
 } from '@/api/dashboardApi'
 import { getApiErrorMessage } from '@/api/httpClient'
 import { isInfrastructureStoreError } from '@/services/platformDiagnostics'
@@ -32,6 +34,8 @@ import type {
   DashboardPurchasingResponse,
   DashboardSalesResponse,
   DashboardSalesForecastResponse,
+  DashboardCashFlowForecastResponse,
+  DashboardInventoryForecastResponse,
 } from '@/models/dashboard'
 
 export const useDashboardStore = defineStore('dashboard', () => {
@@ -40,6 +44,8 @@ export const useDashboardStore = defineStore('dashboard', () => {
   const alerts = ref<DashboardAlertCenterResponse | null>(null)
   const sales = ref<DashboardSalesResponse | null>(null)
   const salesForecast = ref<DashboardSalesForecastResponse | null>(null)
+  const cashFlowForecast = ref<DashboardCashFlowForecastResponse | null>(null)
+  const inventoryForecast = ref<DashboardInventoryForecastResponse | null>(null)
   const piutang = ref<DashboardPiutangResponse | null>(null)
   const inventory = ref<DashboardInventoryResponse | null>(null)
   const inventoryRisk = ref<DashboardInventoryRiskResponse | null>(null)
@@ -138,6 +144,32 @@ export const useDashboardStore = defineStore('dashboard', () => {
       salesForecast.value = await fetchDashboardSalesForecast()
     } catch (err) {
       error.value = getApiErrorMessage(err, 'Failed to load sales forecast dashboard.')
+    } finally {
+      loading.value = false
+    }
+  }
+
+  async function loadCashFlowForecast(): Promise<void> {
+    loading.value = true
+    error.value = null
+
+    try {
+      cashFlowForecast.value = await fetchDashboardCashFlowForecast()
+    } catch (err) {
+      error.value = getApiErrorMessage(err, 'Failed to load cash flow forecast dashboard.')
+    } finally {
+      loading.value = false
+    }
+  }
+
+  async function loadInventoryForecast(): Promise<void> {
+    loading.value = true
+    error.value = null
+
+    try {
+      inventoryForecast.value = await fetchDashboardInventoryForecast()
+    } catch (err) {
+      error.value = getApiErrorMessage(err, 'Failed to load inventory forecast dashboard.')
     } finally {
       loading.value = false
     }
@@ -283,6 +315,8 @@ export const useDashboardStore = defineStore('dashboard', () => {
     alerts.value = null
     sales.value = null
     salesForecast.value = null
+    cashFlowForecast.value = null
+    inventoryForecast.value = null
     piutang.value = null
     inventory.value = null
     inventoryRisk.value = null
@@ -301,6 +335,8 @@ export const useDashboardStore = defineStore('dashboard', () => {
     alerts,
     sales,
     salesForecast,
+    cashFlowForecast,
+    inventoryForecast,
     piutang,
     inventory,
     inventoryRisk,
@@ -316,6 +352,8 @@ export const useDashboardStore = defineStore('dashboard', () => {
     loadAlerts,
     loadSales,
     loadSalesForecast,
+    loadCashFlowForecast,
+    loadInventoryForecast,
     loadPiutang,
     loadInventory,
     loadInventoryRisk,

@@ -16,6 +16,8 @@ import type {
   DashboardPurchasingResponse,
   DashboardSalesResponse,
   DashboardSalesForecastResponse,
+  DashboardCashFlowForecastResponse,
+  DashboardInventoryForecastResponse,
 } from '@/models/dashboard'
 
 export async function fetchDashboardOverview(): Promise<DashboardOverviewResponse> {
@@ -55,6 +57,30 @@ export async function fetchDashboardSalesForecast(): Promise<DashboardSalesForec
 
   if (!isApiSuccess(data) || !data.Data) {
     throw new Error(data.Message ?? 'Failed to load sales forecast dashboard.')
+  }
+
+  return data.Data
+}
+
+export async function fetchDashboardCashFlowForecast(): Promise<DashboardCashFlowForecastResponse> {
+  const { data } = await httpClient.get<ApiResponse<DashboardCashFlowForecastResponse>>(
+    '/api/dashboard/cash-flow-forecast',
+  )
+
+  if (!isApiSuccess(data) || !data.Data) {
+    throw new Error(data.Message ?? 'Failed to load cash flow forecast dashboard.')
+  }
+
+  return data.Data
+}
+
+export async function fetchDashboardInventoryForecast(): Promise<DashboardInventoryForecastResponse> {
+  const { data } = await httpClient.get<ApiResponse<DashboardInventoryForecastResponse>>(
+    '/api/dashboard/inventory-forecast',
+  )
+
+  if (!isApiSuccess(data) || !data.Data) {
+    throw new Error(data.Message ?? 'Failed to load inventory forecast dashboard.')
   }
 
   return data.Data

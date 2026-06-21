@@ -72,7 +72,7 @@ BTR Portal covers the following management business areas. Each area has one or 
 | ------------- | ------------------- | ------------------------- |
 | **Sales** | How much did we invoice? Are we meeting target? Who are top performers? Will we hit target at month-end? | Sales Dashboard, Sales Forecast Dashboard, Executive summary, Sales Report |
 | **Finance (Piutang)** | How much is owed? How old is the debt? Who owes the most? | Piutang Dashboard, Piutang Report |
-| **Collection** | Is debt being converted to cash? Where is collection risk concentrated? | Collection Dashboard |
+| **Collection** | Is debt being converted to cash? Where is collection risk concentrated? Will we have enough cash by month-end? | Collection Dashboard, Cash Flow Forecast Dashboard |
 | **Customer Analytics** | Which customers require attention across sales and receivables? | Customer Analytics Dashboard |
 | **Salesman Performance** | Which salespeople require attention and why? | Salesman Performance Dashboard |
 | **Field Activity** | Did the field team execute the planned route? Where did they go? | Field Activity Dashboard |
@@ -305,6 +305,7 @@ Analytics surfaces help management understand performance, distribution, and ris
 | Customer Analytics | Current month (sales) | All-time open (piutang) | — |
 | Salesman Performance | Current month (sales) | All-time open (piutang) | — |
 | Collection Dashboard | Current month (recovery) | All-time open (exposure) | — |
+| Cash Flow Forecast Dashboard | Current month (as-of business date) | All-time open (risk context) | — |
 | Inventory Dashboard | — | — | Point-in-time |
 | Inventory Risk | — | — | Point-in-time (movement classification at refresh) |
 | Purchasing | Current month | — | Cross-reads inventory snapshots |
@@ -471,6 +472,7 @@ Each dashboard answers a specific management question. Dashboards are **read-onl
 | **Sales Forecast Dashboard** | Where will invoiced sales likely finish at month-end? | Sales and operations leadership |
 | **Piutang Dashboard** | How much is owed and how old is the debt? | Finance management |
 | **Collection Dashboard** | Are receivables being converted to cash? | Collection management |
+| **Cash Flow Forecast Dashboard** | How much cash will we likely receive by month-end? | Finance and operations leadership |
 | **Customer Analytics** | Which customers require attention? | Sales and finance management |
 | **Salesman Performance** | Which salespeople require attention and why? | Sales management |
 | **Field Activity** | Did the field team execute the planned route? | Field supervisors, area managers |
@@ -490,6 +492,7 @@ Each dashboard answers a specific management question. Dashboards are **read-onl
 | **Inventory vs Inventory Risk** | Inventory = composition (where capital sits); Inventory Risk = health (what is not moving) |
 | **Purchasing V1 vs Purchasing Management** | V1 = monthly statistics; Management = attention signals and cross-domain supplier risk |
 | **Sales vs Sales Forecast** | Sales = current achievement; Forecast = projected month-end at current pace |
+| **Collection vs Cash Flow Forecast** | Collection = recovery performance today; Cash Flow Forecast = projected month-end liquidity and required pace |
 | **Salesman Performance vs Field Activity** | M18 = outcome lens (omzet, achievement, exposure); Field Activity = execution lens (visits, routes, GPS) |
 | **Location vs Collection (Wilayah)** | Collection owns wilayah overdue hotspots; Location owns wilayah sales concentration |
 
@@ -796,6 +799,8 @@ M23  Alert Center                                          ✓ Current
 M24  Dashboard Drill-Down & Investigation                  ✓ Current
 M25  Sales Force Effectiveness                             → Future Accepted
 M26  Sales Forecast Dashboard                              ✓ Current
+M27  Cash Flow Forecast Dashboard                          ✓ Current
+M28  Inventory Forecast Dashboard                          ✓ Current
 M16 Phase 2 / M19 Phase 2 / M21 Phase 2                 → Future Accepted (Executive promotions)
 Filtering Phase (date range, search)                    → Future Accepted
 ```

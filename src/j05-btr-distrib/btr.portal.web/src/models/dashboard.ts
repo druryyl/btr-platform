@@ -184,6 +184,162 @@ export interface DashboardSalesForecastResponse {
   WeeklyTrend: DashboardSalesWeekTrendItem[]
 }
 
+export interface DashboardCashFlowDailyPaceItem {
+  PaceDate: string
+  DayOfMonth: number
+  IsElapsed: boolean
+  ActualCashAmount: number
+  ActualCollectionAmount: number
+  ProjectedDailyCashAmount: number
+}
+
+export interface DashboardCashFlowRecoveryTrendItem {
+  TrendDate: string
+  DayOfMonth: number
+  IsElapsed: boolean
+  CumulativeCollections: number
+  CumulativeBilling: number
+}
+
+export interface DashboardCashFlowCollectionRiskItem {
+  SortOrder: number
+  RiskKey: string
+  RiskLabel: string
+  EntityType: string
+  EntityId: string
+  EntityName: string
+  Amount: number
+  DueOrAgingText: string
+  RuleExplanation: string
+  ReportRoute: string
+}
+
+export interface DashboardCashFlowForecastResponse {
+  IsAvailable: boolean
+  GeneratedAt: string
+  PeriodYear: number
+  PeriodMonth: number
+  BusinessDate: string
+  DaysInMonth: number
+  DaysElapsed: number
+  DaysRemaining: number
+  CashCollectedMtd: number
+  MonthCollections: number
+  MonthFakturOmzet: number
+  DailyCashCollectionAverage: number
+  DailyCollectionAverage: number
+  ExpectedCashCollection: number
+  ProjectedMonthEndTotalCollections: number
+  CollectionForecastPercent: number | null
+  RecoveryVsBillingPercent: number | null
+  RecoveryVsBillingForecastPercent: number | null
+  RemainingCollectionTarget: number
+  RequiredDailyCollection: number | null
+  OutstandingDueRemaining: number
+  OverdueOutstanding: number
+  CollectionGap: number
+  ForecastVarianceCash: number
+  ExpectedCollectionRatePercent: number | null
+  BestCaseCash: number
+  WorstCaseCash: number
+  ForecastConfidence: ForecastConfidence | string
+  ForecastRiskBand: AchievementBand | string
+  RequiredDailySeverity: RequiredDailySeverity | string
+  ExecutiveSummary: string
+  DailyPace: DashboardCashFlowDailyPaceItem[]
+  RecoveryTrend: DashboardCashFlowRecoveryTrendItem[]
+  CollectionRisks: DashboardCashFlowCollectionRiskItem[]
+}
+
+export interface DashboardInventoryForecastDailyConsumptionItem {
+  ConsumptionDate: string
+  DayIndex: number
+  UnitsSold: number
+  AdcReference: number
+}
+
+export interface DashboardInventoryForecastLevelItem {
+  HorizonDay: number
+  ProjectedInventoryValue: number
+}
+
+export interface DashboardInventoryForecastHeatCellItem {
+  DosBand: string
+  ValueBand: string
+  ItemCount: number
+}
+
+export interface DashboardInventoryForecastRiskItem {
+  SortOrder: number
+  SignalKey: string
+  SignalLabel: string
+  BrgId: string
+  BrgCode: string
+  BrgName: string
+  SupplierName: string
+  DaysOfSupply: number | null
+  StockOutDate: string | null
+  ValueAmount: number
+  Urgency: string
+  DosSeverity: string
+  RuleExplanation: string
+  ReportRoute: string
+  EntityCode: string
+}
+
+export interface DashboardInventoryForecastRecommendationItem {
+  SortOrder: number
+  BrgId: string
+  BrgCode: string
+  BrgName: string
+  SupplierName: string
+  ReorderDate: string | null
+  RecommendedPurchaseQty: number
+  AverageDailyConsumption: number
+  CurrentQty: number
+  DaysOfSupply: number | null
+  Urgency: string
+  ReportRoute: string
+  EntityCode: string
+}
+
+export interface DashboardInventoryForecastTraceability {
+  InventoryDashboardRoute: string
+  InventoryRiskDashboardRoute: string
+  InventoryReportRoute: string
+  PurchasingManagementRoute: string
+  Disclaimer: string
+}
+
+export interface DashboardInventoryForecastResponse {
+  IsAvailable: boolean
+  GeneratedAt: string
+  BusinessDate: string
+  PlanningHorizonDays: number
+  CurrentInventoryValue: number
+  ProjectedInventoryValue: number
+  BestCaseProjectedValue: number
+  WorstCaseProjectedValue: number
+  AverageDailyConsumptionUnits: number
+  WeightedAverageDaysOfSupply: number | null
+  UnderstockValue: number
+  OverstockValue: number
+  StockOutRiskItemCount: number
+  InventoryCoveragePercent: number | null
+  InventoryTurnoverForecast: number | null
+  InventoryHealthScore: number
+  ForecastConfidence: ForecastConfidence | string
+  AtRiskInventoryPercent: number | null
+  ForecastConsumptionUnits: number
+  ExecutiveSummary: string
+  Traceability: DashboardInventoryForecastTraceability
+  DailyConsumption: DashboardInventoryForecastDailyConsumptionItem[]
+  ProjectedLevel: DashboardInventoryForecastLevelItem[]
+  HeatSummary: DashboardInventoryForecastHeatCellItem[]
+  TopRisks: DashboardInventoryForecastRiskItem[]
+  PurchaseRecommendations: DashboardInventoryForecastRecommendationItem[]
+}
+
 export interface DashboardPiutangAgingBucket {
   BucketKey: string
   BucketLabel: string

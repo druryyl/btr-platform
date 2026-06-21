@@ -47,7 +47,7 @@ The Dashboard has two levels:
 | Level | Route | What You See |
 | ----- | ----- | ------------ |
 | **Executive (Home)** | `/dashboard` | **Management Attention Center** — attention-oriented KPIs across Sales, Piutang, Inventory, and Purchasing; Top 5 exposure lists; domain summaries. Links go to domain dashboards only. |
-| **Detail** | `/dashboard/sales`, `/dashboard/sales-forecast`, `/dashboard/piutang`, `/dashboard/customers`, `/dashboard/salesmen`, `/dashboard/inventory`, `/dashboard/inventory-risk`, `/dashboard/purchasing` | Full KPI row, charts, and Top 10 tables for that business area (Customer, Salesman, and Inventory Risk use attention-oriented layout). |
+| **Detail** | `/dashboard/sales`, `/dashboard/sales-forecast`, `/dashboard/piutang`, `/dashboard/customers`, `/dashboard/salesmen`, `/dashboard/inventory`, `/dashboard/inventory-risk`, `/dashboard/inventory-forecast`, `/dashboard/purchasing`, `/dashboard/collection`, `/dashboard/cash-flow-forecast` | Full KPI row, charts, and Top 10 tables for that business area (Customer, Salesman, and Inventory Risk use attention-oriented layout). |
 
 **Navigate:** Sidebar → Dashboard → **Executive** (default home). Use **Open Alert Center** on the executive page or Sidebar → **Alert Center** for the company-wide exception feed.
 
@@ -144,6 +144,82 @@ Use **Refresh** on any dashboard page to reload data from the server. Detail pag
 - Finance cross-check before month-end close
 
 **Related:** [Sales Forecast feature doc](../sales-forecast/feature.md)
+
+---
+
+## Cash Flow Forecast Dashboard (M27)
+
+**Navigate:** Sidebar → Dashboard → Cash Flow Forecast.
+
+**Route:** `/dashboard/cash-flow-forecast`
+
+**Question answered:** If current collection pace continues, how much cash will we likely receive by month-end?
+
+### What You See
+
+1. **Executive summary** — plain-language liquidity forecast (server-computed)
+2. **KPI row — Cash Position** — Cash Collected MTD, Expected Cash, Projected Month-End, Collection Forecast %
+3. **KPI row — Pace & Target** — Daily Cash Average, Required Daily Collection, Remaining Target, Days Remaining
+4. **KPI row — Recovery & Scenarios** — Recovery vs Billing (actual/forecast), Best/Exp/Worst cash, Confidence
+5. **KPI row — Receivable Context** — Outstanding Due Remaining, Overdue, Collection Gap, Forecast Variance
+6. **Daily Collection Pace** — Bar chart of daily cash with MTD average reference line
+7. **Cash Forecast vs Billing** — Billing, Cash MTD, Projected Cash comparison
+8. **Recovery Trend** — Cumulative collections vs cumulative billing
+9. **Top Collection Risks** — Priority-ordered forecast risk table (max 10)
+10. **Traceability footer** — links to Collection Dashboard and Piutang Report
+
+### How to Read It
+
+- Uses the **same pelunasan and billing data** as Collection and Sales dashboards.
+- **Expected Cash Collection** = (Cash MTD ÷ days elapsed) × days in month.
+- **Collection Forecast %** = projected total collections ÷ month billing × 100.
+- Distinguishes **cash** (BayarTunai) from **total collections** (cash + giro).
+- Refreshes with the existing **Collection** snapshot worker (~30 minutes).
+
+### Typical Use
+
+- Mid-month liquidity review before cash shortfall
+- Collection management: required daily pace vs actual daily cash average
+- Finance validation of projected recovery vs current-month billing
+
+**Related:** [Cash Flow Forecast feature doc](../cash-flow-forecast/feature.md)
+
+---
+
+## Inventory Forecast Dashboard (M28)
+
+**Navigate:** Sidebar → Dashboard → Inventory Forecast.
+
+**Route:** `/dashboard/inventory-forecast`
+
+**Question answered:** Which active SKUs may run out of stock within 30 days, and when should purchasing review replenishment?
+
+### What You See
+
+1. **Executive summary** — stock-out count, projected inventory value, top risks
+2. **KPI row — Position vs Projection** — Current Value, Projected Value @ H, Avg DOS, Health Score
+3. **KPI row — Risk Exposure** — Stock-Out Risk Items, Overstock/Understock Value, At-Risk %
+4. **KPI row — Scenario Bands** — Best/Expected/Worst projected value + Confidence
+5. **Forecast Inventory Level** — Projected value depletion chart (days 0..H)
+6. **Consumption Trend + Risk Heat** — 30-day daily units with ADC line; DOS × value heat grid
+7. **Top Inventory Risks** — Priority-ordered table (max 10)
+8. **Purchasing Recommendations** — Reorder date and indicative qty (max 10)
+9. **Traceability footer** — links to Inventory, Inventory Risk, Inventory Report, Purchasing
+
+### How to Read It
+
+- Uses **30-day Faktur sales qty** as consumption (gross, not net of retur).
+- **Days of Supply** = current qty ÷ average daily consumption.
+- **Recommended purchase qty** is decision support only — not an approved PO.
+- Refreshes with the existing **InventoryRisk** snapshot worker (~60 minutes).
+
+### Typical Use
+
+- Replenishment planning before stock-outs
+- Working-capital review of projected inventory value
+- Cross-check with Inventory Risk for obsolescence context
+
+**Related:** [Inventory Forecast feature doc](../inventory-forecast/feature.md)
 
 ---
 
@@ -700,6 +776,8 @@ BTR Portal
 | `/dashboard/customers` | Customer Analytics | Yes |
 | `/dashboard/salesmen` | Salesman Performance | Yes |
 | `/dashboard/collection` | Collection Dashboard | Yes |
+| `/dashboard/cash-flow-forecast` | Cash Flow Forecast Dashboard | Yes |
+| `/dashboard/inventory-forecast` | Inventory Forecast Dashboard | Yes |
 | `/dashboard/locations` | Branch / Warehouse Performance Dashboard | Yes |
 | `/dashboard/inventory` | Inventory analytics | Yes |
 | `/dashboard/inventory-risk` | Slow Moving & Dead Stock | Yes |
@@ -718,6 +796,7 @@ Login → Dashboard Home (Management Attention Center)
           ├── Sidebar → Customer Analytics
           ├── Sidebar → Salesman Performance
           ├── Sidebar → Collection
+          ├── Sidebar → Cash Flow Forecast
           ├── Sidebar → Inventory Dashboard
           ├── Sidebar → Inventory Risk
           └── Sidebar → Purchasing Dashboard
@@ -994,6 +1073,8 @@ GET  /api/dashboard/salesmen             → 200 with token (after Salesman work
 GET  /api/dashboard/inventory-risk       → 200 with token (after InventoryRisk worker run)
 GET  /api/dashboard/sales                → 200 with token
 GET  /api/dashboard/sales-forecast       → 200 with token (after Sales worker run)
+GET  /api/dashboard/cash-flow-forecast     → 200 with token (after Collection worker run)
+GET  /api/dashboard/inventory-forecast     → 200 with token (after InventoryRisk worker run)
 GET  /api/dashboard/purchasing           → 200 with token
 GET  /api/reports/sales                  → 200 with token
 GET  /api/reports/purchasing             → 200 with token

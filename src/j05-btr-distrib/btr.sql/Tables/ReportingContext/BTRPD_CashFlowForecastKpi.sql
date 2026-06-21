@@ -1,0 +1,36 @@
+CREATE TABLE BTRPD_CashFlowForecastKpi
+(
+    SnapshotKey                         VARCHAR(10)    NOT NULL CONSTRAINT DF_BTRPD_CashFlowForecastKpi_SnapshotKey DEFAULT('CURRENT'),
+    GeneratedAt                         DATETIME       NOT NULL CONSTRAINT DF_BTRPD_CashFlowForecastKpi_GeneratedAt DEFAULT('3000-01-01'),
+    PeriodYear                          INT            NOT NULL CONSTRAINT DF_BTRPD_CashFlowForecastKpi_PeriodYear DEFAULT(0),
+    PeriodMonth                         INT            NOT NULL CONSTRAINT DF_BTRPD_CashFlowForecastKpi_PeriodMonth DEFAULT(0),
+    BusinessDate                        DATETIME       NOT NULL CONSTRAINT DF_BTRPD_CashFlowForecastKpi_BusinessDate DEFAULT('3000-01-01'),
+    DaysInMonth                         INT            NOT NULL CONSTRAINT DF_BTRPD_CashFlowForecastKpi_DaysInMonth DEFAULT(0),
+    DaysElapsed                         INT            NOT NULL CONSTRAINT DF_BTRPD_CashFlowForecastKpi_DaysElapsed DEFAULT(0),
+    DaysRemaining                       INT            NOT NULL CONSTRAINT DF_BTRPD_CashFlowForecastKpi_DaysRemaining DEFAULT(0),
+    CashCollectedMtd                    DECIMAL(18,2)  NOT NULL CONSTRAINT DF_BTRPD_CashFlowForecastKpi_CashCollectedMtd DEFAULT(0),
+    MonthCollections                    DECIMAL(18,2)  NOT NULL CONSTRAINT DF_BTRPD_CashFlowForecastKpi_MonthCollections DEFAULT(0),
+    MonthFakturOmzet                    DECIMAL(18,2)  NOT NULL CONSTRAINT DF_BTRPD_CashFlowForecastKpi_MonthFakturOmzet DEFAULT(0),
+    DailyCashCollectionAverage          DECIMAL(18,2)  NOT NULL CONSTRAINT DF_BTRPD_CashFlowForecastKpi_DailyCashCollectionAverage DEFAULT(0),
+    DailyCollectionAverage              DECIMAL(18,2)  NOT NULL CONSTRAINT DF_BTRPD_CashFlowForecastKpi_DailyCollectionAverage DEFAULT(0),
+    ExpectedCashCollection              DECIMAL(18,2)  NOT NULL CONSTRAINT DF_BTRPD_CashFlowForecastKpi_ExpectedCashCollection DEFAULT(0),
+    ProjectedMonthEndTotalCollections   DECIMAL(18,2)  NOT NULL CONSTRAINT DF_BTRPD_CashFlowForecastKpi_ProjectedMonthEndTotalCollections DEFAULT(0),
+    CollectionForecastPercent           DECIMAL(9,4)   NULL,
+    RecoveryVsBillingPercent            DECIMAL(9,4)   NULL,
+    RecoveryVsBillingForecastPercent    DECIMAL(9,4)   NULL,
+    RemainingCollectionTarget           DECIMAL(18,2)  NOT NULL CONSTRAINT DF_BTRPD_CashFlowForecastKpi_RemainingCollectionTarget DEFAULT(0),
+    RequiredDailyCollection             DECIMAL(18,2)  NULL,
+    OutstandingDueRemaining             DECIMAL(18,2)  NOT NULL CONSTRAINT DF_BTRPD_CashFlowForecastKpi_OutstandingDueRemaining DEFAULT(0),
+    OverdueOutstanding                  DECIMAL(18,2)  NOT NULL CONSTRAINT DF_BTRPD_CashFlowForecastKpi_OverdueOutstanding DEFAULT(0),
+    CollectionGap                       DECIMAL(18,2)  NOT NULL CONSTRAINT DF_BTRPD_CashFlowForecastKpi_CollectionGap DEFAULT(0),
+    ForecastVarianceCash                DECIMAL(18,2)  NOT NULL CONSTRAINT DF_BTRPD_CashFlowForecastKpi_ForecastVarianceCash DEFAULT(0),
+    ExpectedCollectionRatePercent       DECIMAL(9,4)   NULL,
+    BestCaseCash                        DECIMAL(18,2)  NOT NULL CONSTRAINT DF_BTRPD_CashFlowForecastKpi_BestCaseCash DEFAULT(0),
+    WorstCaseCash                       DECIMAL(18,2)  NOT NULL CONSTRAINT DF_BTRPD_CashFlowForecastKpi_WorstCaseCash DEFAULT(0),
+    ForecastConfidence                  VARCHAR(10)    NOT NULL CONSTRAINT DF_BTRPD_CashFlowForecastKpi_ForecastConfidence DEFAULT(''),
+    ForecastRiskBand                    VARCHAR(10)    NOT NULL CONSTRAINT DF_BTRPD_CashFlowForecastKpi_ForecastRiskBand DEFAULT(''),
+    LastRefreshLogId                    VARCHAR(26)    NOT NULL CONSTRAINT DF_BTRPD_CashFlowForecastKpi_LastRefreshLogId DEFAULT(''),
+
+    CONSTRAINT PK_BTRPD_CashFlowForecastKpi PRIMARY KEY CLUSTERED (SnapshotKey)
+)
+GO

@@ -10,7 +10,9 @@ using btr.application.SalesContext.CustomerAgg.Contracts;
 using btr.application.SalesContext.FakturInfo;
 using btr.application.SalesContext.SalesPersonAgg.Contracts;
 using btr.application.Portal;
+using btr.application.ReportingContext.DashboardSnapshotAgg;
 using btr.application.SupportContext.TglJamAgg;
+using Microsoft.Extensions.Options;
 using btr.nuna.Application;
 using btr.nuna.Domain;
 
@@ -35,10 +37,12 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.UseCases
         private readonly ICustomerDal _customerDal;
         private readonly ISalesPersonDal _salesPersonDal;
         private readonly DashboardCollectionAggregator _aggregator;
+        private readonly DashboardCashFlowForecastAggregator _forecastAggregator;
         private readonly IDashboardCollectionSnapshotDal _snapshotDal;
         private readonly IDashboardSnapshotRefreshLogDal _refreshLogDal;
         private readonly ITglJamDal _tglJamDal;
         private readonly IBusinessDateProvider _businessDateProvider;
+        private readonly DashboardSnapshotOptions _options;
 
         public RefreshDashboardCollectionSnapshotWorker(
             IPiutangOpenBalanceDal openBalanceDal,
@@ -50,10 +54,12 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.UseCases
             ICustomerDal customerDal,
             ISalesPersonDal salesPersonDal,
             DashboardCollectionAggregator aggregator,
+            DashboardCashFlowForecastAggregator forecastAggregator,
             IDashboardCollectionSnapshotDal snapshotDal,
             IDashboardSnapshotRefreshLogDal refreshLogDal,
             ITglJamDal tglJamDal,
-            IBusinessDateProvider businessDateProvider)
+            IBusinessDateProvider businessDateProvider,
+            DashboardSnapshotOptions options)
         {
             _openBalanceDal = openBalanceDal;
             _openBalanceWithSalesmanDal = openBalanceWithSalesmanDal;
@@ -64,10 +70,12 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.UseCases
             _customerDal = customerDal;
             _salesPersonDal = salesPersonDal;
             _aggregator = aggregator;
+            _forecastAggregator = forecastAggregator;
             _snapshotDal = snapshotDal;
             _refreshLogDal = refreshLogDal;
             _tglJamDal = tglJamDal;
             _businessDateProvider = businessDateProvider;
+            _options = options ?? new DashboardSnapshotOptions();
         }
 
         public void Execute(RefreshDashboardCollectionSnapshotRequest request)
@@ -95,7 +103,7 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.UseCases
                 var today = _businessDateProvider.Today;
                 var periode = CurrentMonthPeriode(today);
                 var generatedAt = _tglJamDal.Now;
-                const int loadSteps = 8;
+                const int loadSteps = 9;
 
                 WorkerProgressScope.Current.StepStarted($"{Domain}:Load", "Load source data");
                 WorkerProgressScope.Current.ReportPhaseProgress($"{Domain}: Load open balances", 1, loadSteps);
@@ -129,11 +137,18 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.UseCases
                 WorkerProgressScope.Current.ReportPhaseProgress($"{Domain}: Load salespeople", 8, loadSteps);
                 var salespeople = _salesPersonDal.ListData()?.ToList()
                     ?? new System.Collections.Generic.List<btr.domain.SalesContext.SalesPersonAgg.SalesPersonModel>();
+
+                WorkerProgressScope.Current.ReportPhaseProgress($"{Domain}: Load pelunasan lookback 30 days", 9, loadSteps);
+                var lookbackStart = today.AddDays(-30);
+                var lookbackPeriode = new Periode(lookbackStart, today);
+                var pelunasanLookback30Rows = _pelunasanDal.ListData(lookbackPeriode)?.ToList()
+                    ?? new System.Collections.Generic.List<PenerimaanPelunasanSalesDto>();
                 WorkerProgressScope.Current.StepCompleted($"{Domain}:Load", new WorkerProgressStepInfo
                 {
                     RecordCount = openBalanceRows.Count + openBalanceWithSalesmanRows.Count +
                                   openBalanceWithWilayahRows.Count + pelunasanRows.Count +
-                                  fakturRows.Count + lastFakturRows.Count + customers.Count + salespeople.Count
+                                  fakturRows.Count + lastFakturRows.Count + customers.Count +
+                                  salespeople.Count + pelunasanLookback30Rows.Count
                 });
 
                 WorkerProgressScope.Current.StepStarted($"{Domain}:Aggregate", "Aggregate metrics");
@@ -151,10 +166,25 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.UseCases
                     generatedAt);
                 WorkerProgressScope.Current.StepCompleted($"{Domain}:Aggregate");
 
+                WorkerProgressScope.Current.StepStarted($"{Domain}:AggregateForecast", "Aggregate cash flow forecast");
+                var forecast = _forecastAggregator.Aggregate(
+                    pelunasanRows,
+                    fakturRows,
+                    openBalanceRows,
+                    openBalanceWithSalesmanRows,
+                    openBalanceWithWilayahRows,
+                    aggregate,
+                    periode,
+                    today,
+                    generatedAt,
+                    _options.CashFlowForecastLargeDueSoonFloorAmount,
+                    pelunasanLookback30Rows);
+                WorkerProgressScope.Current.StepCompleted($"{Domain}:AggregateForecast");
+
                 WorkerProgressScope.Current.StepStarted($"{Domain}:Save", "Save snapshot");
                 using (var trans = TransHelper.NewScope())
                 {
-                    _snapshotDal.ReplaceCurrent(aggregate, refreshLogId);
+                    _snapshotDal.ReplaceCurrent(aggregate, forecast, refreshLogId);
                     trans.Complete();
                 }
                 WorkerProgressScope.Current.StepCompleted($"{Domain}:Save");

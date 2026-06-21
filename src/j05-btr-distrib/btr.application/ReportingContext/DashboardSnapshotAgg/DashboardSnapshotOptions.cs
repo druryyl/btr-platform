@@ -27,5 +27,19 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg
         public int PurchasingManagementIntervalMinutes { get; set; } = 30;
 
         public int PurchasingQualifiedBacklogDays { get; set; } = 3;
+
+        public decimal CashFlowForecastLargeDueSoonFloorAmount { get; set; } = 50_000_000m;
+
+        public int InventoryForecastPlanningHorizonDays { get; set; } = 30;
+
+        public int InventoryForecastDefaultLeadTimeDays { get; set; } = 7;
+
+        public int InventoryForecastCoverageDays { get; set; } = 14;
+
+        public int InventoryForecastOverstockDosDays { get; set; } = 90;
+
+        public int InventoryForecastMinDosHealthy { get; set; } = 30;
+
+        public int InventoryForecastStockOutCriticalDays { get; set; } = 7;
     }
 }

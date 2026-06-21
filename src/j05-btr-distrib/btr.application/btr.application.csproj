@@ -145,6 +145,7 @@
     <Compile Include="FinanceContext\FpKeluaragAgg\IFpKeluaranViewDal.cs" />
     <Compile Include="FinanceContext\PiutangAgg\Contracts\IPelunasanInfoDal.cs" />
     <Compile Include="FinanceContext\PiutangAgg\Contracts\IPenerimaanPelunasanSalesDal.cs" />
+    <Compile Include="FinanceContext\PiutangAgg\Services\CollectionDayGrouper.cs" />
     <Compile Include="FinanceContext\PiutangAgg\Contracts\IPiutangDal.cs" />
     <Compile Include="FinanceContext\PiutangAgg\Contracts\IPIutangElementDal.cs" />
     <Compile Include="FinanceContext\PiutangAgg\Contracts\IPiutangLunasDal.cs" />
@@ -361,6 +362,10 @@
     <Compile Include="ReportingContext\DashboardSnapshotAgg\Services\DashboardPiutangAggregator.cs" />
     <Compile Include="ReportingContext\DashboardSnapshotAgg\Services\DashboardSalesFakturAggregator.cs" />
     <Compile Include="ReportingContext\DashboardSnapshotAgg\Services\DashboardSalesForecastAggregator.cs" />
+    <Compile Include="ReportingContext\DashboardSnapshotAgg\Services\CashFlowForecastPolicy.cs" />
+    <Compile Include="ReportingContext\DashboardSnapshotAgg\Services\CashFlowCollectionRiskBuilder.cs" />
+    <Compile Include="ReportingContext\DashboardSnapshotAgg\Services\DashboardCashFlowForecastAggregator.cs" />
+    <Compile Include="ReportingContext\DashboardSnapshotAgg\Models\DashboardCashFlowForecastAggregateResult.cs" />
     <Compile Include="ReportingContext\DashboardSnapshotAgg\Services\SalesForecastPolicy.cs" />
     <Compile Include="ReportingContext\DashboardSnapshotAgg\Services\DashboardPurchasingInvoiceAggregator.cs" />
     <Compile Include="ReportingContext\DashboardSnapshotAgg\Services\DashboardPurchasingManagementAggregator.cs" />
@@ -402,6 +407,16 @@
     <Compile Include="ReportingContext\DashboardSalesAgg\Queries\GetDashboardSalesQuery.cs" />
     <Compile Include="ReportingContext\DashboardSalesForecastAgg\Contracts\IDashboardSalesForecastDal.cs" />
     <Compile Include="ReportingContext\DashboardSalesForecastAgg\Queries\GetDashboardSalesForecastQuery.cs" />
+    <Compile Include="ReportingContext\DashboardCashFlowForecastAgg\Contracts\IDashboardCashFlowForecastDal.cs" />
+    <Compile Include="ReportingContext\DashboardCashFlowForecastAgg\Queries\GetDashboardCashFlowForecastQuery.cs" />
+    <Compile Include="ReportingContext\DashboardInventoryForecastAgg\Contracts\IDashboardInventoryForecastDal.cs" />
+    <Compile Include="ReportingContext\DashboardInventoryForecastAgg\Queries\GetDashboardInventoryForecastQuery.cs" />
+    <Compile Include="ReportingContext\DashboardSnapshotAgg\Models\DashboardInventoryForecastAggregateResult.cs" />
+    <Compile Include="ReportingContext\DashboardSnapshotAgg\Services\InventoryForecastPolicy.cs" />
+    <Compile Include="ReportingContext\DashboardSnapshotAgg\Services\InventoryConsumptionGrouper.cs" />
+    <Compile Include="ReportingContext\DashboardSnapshotAgg\Services\InventoryForecastRiskBuilder.cs" />
+    <Compile Include="ReportingContext\DashboardSnapshotAgg\Services\DashboardInventoryForecastAggregator.cs" />
+    <Compile Include="SalesContext\FakturInfo\IBrgConsumptionDal.cs" />
     <Compile Include="ReportingContext\InventoryReportAgg\Contracts\IInventoryReportDal.cs" />
     <Compile Include="ReportingContext\InventoryReportAgg\Queries\GetInventoryReportQuery.cs" />
     <Compile Include="ReportingContext\PiutangReportAgg\Contracts\IPiutangReportDal.cs" />

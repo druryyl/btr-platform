@@ -63,6 +63,11 @@ const router = createRouter({
               component: () => import('@/views/dashboard/CollectionDashboardView.vue'),
             },
             {
+              path: 'cash-flow-forecast',
+              name: 'cash-flow-forecast-dashboard',
+              component: () => import('@/views/dashboard/CashFlowForecastDashboardView.vue'),
+            },
+            {
               path: 'inventory',
               name: 'inventory-dashboard',
               component: () => import('@/views/dashboard/InventoryDashboardView.vue'),
@@ -71,6 +76,11 @@ const router = createRouter({
               path: 'inventory-risk',
               name: 'inventory-risk-dashboard',
               component: () => import('@/views/dashboard/InventoryRiskDashboardView.vue'),
+            },
+            {
+              path: 'inventory-forecast',
+              name: 'inventory-forecast-dashboard',
+              component: () => import('@/views/dashboard/InventoryForecastDashboardView.vue'),
             },
             {
               path: 'purchasing',

@@ -147,10 +147,15 @@ ORDER BY Rank";
             }
         }
 
-        public void ReplaceCurrent(DashboardCollectionAggregateResult result, string refreshLogId)
+        public void ReplaceCurrent(
+            DashboardCollectionAggregateResult result,
+            DashboardCashFlowForecastAggregateResult forecast,
+            string refreshLogId)
         {
             if (result is null)
                 throw new System.ArgumentNullException(nameof(result));
+            if (forecast is null)
+                throw new System.ArgumentNullException(nameof(forecast));
 
             using (var conn = new SqlConnection(ConnStringHelper.Get(_opt)))
             {
@@ -159,7 +164,7 @@ ORDER BY Rank";
                 {
                     try
                     {
-                        ReplaceCurrentCore(conn, transaction, result, refreshLogId);
+                        ReplaceCurrentCore(conn, transaction, result, forecast, refreshLogId);
                         transaction.Commit();
                     }
                     catch
@@ -175,6 +180,7 @@ ORDER BY Rank";
             SqlConnection conn,
             SqlTransaction transaction,
             DashboardCollectionAggregateResult result,
+            DashboardCashFlowForecastAggregateResult forecast,
             string refreshLogId)
         {
             conn.Execute(
@@ -370,6 +376,180 @@ VALUES (
                     WilayahName = row.WilayahName ?? string.Empty,
                     row.OverdueBalance,
                     row.PercentOfTotal
+                }, transaction);
+            }
+
+            conn.Execute(
+                "DELETE FROM BTRPD_CashFlowDailyPace WHERE SnapshotKey = @SnapshotKey",
+                new { SnapshotKey },
+                transaction);
+            conn.Execute(
+                "DELETE FROM BTRPD_CashFlowRecoveryTrend WHERE SnapshotKey = @SnapshotKey",
+                new { SnapshotKey },
+                transaction);
+            conn.Execute(
+                "DELETE FROM BTRPD_CashFlowCollectionRisk WHERE SnapshotKey = @SnapshotKey",
+                new { SnapshotKey },
+                transaction);
+
+            const string mergeForecastKpiSql = @"
+MERGE BTRPD_CashFlowForecastKpi AS target
+USING (SELECT @SnapshotKey AS SnapshotKey) AS source
+ON target.SnapshotKey = source.SnapshotKey
+WHEN MATCHED THEN
+    UPDATE SET
+        GeneratedAt = @GeneratedAt,
+        PeriodYear = @PeriodYear,
+        PeriodMonth = @PeriodMonth,
+        BusinessDate = @BusinessDate,
+        DaysInMonth = @DaysInMonth,
+        DaysElapsed = @DaysElapsed,
+        DaysRemaining = @DaysRemaining,
+        CashCollectedMtd = @CashCollectedMtd,
+        MonthCollections = @MonthCollections,
+        MonthFakturOmzet = @MonthFakturOmzet,
+        DailyCashCollectionAverage = @DailyCashCollectionAverage,
+        DailyCollectionAverage = @DailyCollectionAverage,
+        ExpectedCashCollection = @ExpectedCashCollection,
+        ProjectedMonthEndTotalCollections = @ProjectedMonthEndTotalCollections,
+        CollectionForecastPercent = @CollectionForecastPercent,
+        RecoveryVsBillingPercent = @RecoveryVsBillingPercent,
+        RecoveryVsBillingForecastPercent = @RecoveryVsBillingForecastPercent,
+        RemainingCollectionTarget = @RemainingCollectionTarget,
+        RequiredDailyCollection = @RequiredDailyCollection,
+        OutstandingDueRemaining = @OutstandingDueRemaining,
+        OverdueOutstanding = @OverdueOutstanding,
+        CollectionGap = @CollectionGap,
+        ForecastVarianceCash = @ForecastVarianceCash,
+        ExpectedCollectionRatePercent = @ExpectedCollectionRatePercent,
+        BestCaseCash = @BestCaseCash,
+        WorstCaseCash = @WorstCaseCash,
+        ForecastConfidence = @ForecastConfidence,
+        ForecastRiskBand = @ForecastRiskBand,
+        LastRefreshLogId = @LastRefreshLogId
+WHEN NOT MATCHED THEN
+    INSERT (
+        SnapshotKey, GeneratedAt, PeriodYear, PeriodMonth, BusinessDate,
+        DaysInMonth, DaysElapsed, DaysRemaining, CashCollectedMtd, MonthCollections,
+        MonthFakturOmzet, DailyCashCollectionAverage, DailyCollectionAverage,
+        ExpectedCashCollection, ProjectedMonthEndTotalCollections, CollectionForecastPercent,
+        RecoveryVsBillingPercent, RecoveryVsBillingForecastPercent, RemainingCollectionTarget,
+        RequiredDailyCollection, OutstandingDueRemaining, OverdueOutstanding, CollectionGap,
+        ForecastVarianceCash, ExpectedCollectionRatePercent, BestCaseCash, WorstCaseCash,
+        ForecastConfidence, ForecastRiskBand, LastRefreshLogId)
+    VALUES (
+        @SnapshotKey, @GeneratedAt, @PeriodYear, @PeriodMonth, @BusinessDate,
+        @DaysInMonth, @DaysElapsed, @DaysRemaining, @CashCollectedMtd, @MonthCollections,
+        @MonthFakturOmzet, @DailyCashCollectionAverage, @DailyCollectionAverage,
+        @ExpectedCashCollection, @ProjectedMonthEndTotalCollections, @CollectionForecastPercent,
+        @RecoveryVsBillingPercent, @RecoveryVsBillingForecastPercent, @RemainingCollectionTarget,
+        @RequiredDailyCollection, @OutstandingDueRemaining, @OverdueOutstanding, @CollectionGap,
+        @ForecastVarianceCash, @ExpectedCollectionRatePercent, @BestCaseCash, @WorstCaseCash,
+        @ForecastConfidence, @ForecastRiskBand, @LastRefreshLogId);";
+
+            conn.Execute(mergeForecastKpiSql, new
+            {
+                SnapshotKey,
+                forecast.GeneratedAt,
+                forecast.PeriodYear,
+                forecast.PeriodMonth,
+                forecast.BusinessDate,
+                forecast.DaysInMonth,
+                forecast.DaysElapsed,
+                forecast.DaysRemaining,
+                forecast.CashCollectedMtd,
+                forecast.MonthCollections,
+                forecast.MonthFakturOmzet,
+                forecast.DailyCashCollectionAverage,
+                forecast.DailyCollectionAverage,
+                forecast.ExpectedCashCollection,
+                forecast.ProjectedMonthEndTotalCollections,
+                forecast.CollectionForecastPercent,
+                forecast.RecoveryVsBillingPercent,
+                forecast.RecoveryVsBillingForecastPercent,
+                forecast.RemainingCollectionTarget,
+                forecast.RequiredDailyCollection,
+                forecast.OutstandingDueRemaining,
+                forecast.OverdueOutstanding,
+                forecast.CollectionGap,
+                forecast.ForecastVarianceCash,
+                forecast.ExpectedCollectionRatePercent,
+                forecast.BestCaseCash,
+                forecast.WorstCaseCash,
+                ForecastConfidence = forecast.ForecastConfidence ?? string.Empty,
+                ForecastRiskBand = forecast.ForecastRiskBand ?? string.Empty,
+                LastRefreshLogId = refreshLogId ?? string.Empty
+            }, transaction);
+
+            const string insertDailyPaceSql = @"
+INSERT INTO BTRPD_CashFlowDailyPace (
+    CashFlowDailyPaceId, SnapshotKey, PaceDate, DayOfMonth, IsElapsed,
+    ActualCashAmount, ActualCollectionAmount, ProjectedDailyCashAmount)
+VALUES (
+    @CashFlowDailyPaceId, @SnapshotKey, @PaceDate, @DayOfMonth, @IsElapsed,
+    @ActualCashAmount, @ActualCollectionAmount, @ProjectedDailyCashAmount)";
+
+            foreach (var row in forecast.DailyPace ?? new List<DashboardCashFlowDailyPaceRow>())
+            {
+                conn.Execute(insertDailyPaceSql, new
+                {
+                    CashFlowDailyPaceId = Ulid.NewUlid().ToString(),
+                    SnapshotKey,
+                    row.PaceDate,
+                    row.DayOfMonth,
+                    IsElapsed = row.IsElapsed ? 1 : 0,
+                    row.ActualCashAmount,
+                    row.ActualCollectionAmount,
+                    row.ProjectedDailyCashAmount
+                }, transaction);
+            }
+
+            const string insertRecoveryTrendSql = @"
+INSERT INTO BTRPD_CashFlowRecoveryTrend (
+    CashFlowRecoveryTrendId, SnapshotKey, TrendDate, DayOfMonth, IsElapsed,
+    CumulativeCollections, CumulativeBilling)
+VALUES (
+    @CashFlowRecoveryTrendId, @SnapshotKey, @TrendDate, @DayOfMonth, @IsElapsed,
+    @CumulativeCollections, @CumulativeBilling)";
+
+            foreach (var row in forecast.RecoveryTrend ?? new List<DashboardCashFlowRecoveryTrendRow>())
+            {
+                conn.Execute(insertRecoveryTrendSql, new
+                {
+                    CashFlowRecoveryTrendId = Ulid.NewUlid().ToString(),
+                    SnapshotKey,
+                    TrendDate = row.TrendDate,
+                    row.DayOfMonth,
+                    IsElapsed = row.IsElapsed ? 1 : 0,
+                    row.CumulativeCollections,
+                    row.CumulativeBilling
+                }, transaction);
+            }
+
+            const string insertCollectionRiskSql = @"
+INSERT INTO BTRPD_CashFlowCollectionRisk (
+    CashFlowCollectionRiskId, SnapshotKey, SortOrder, RiskKey, RiskLabel,
+    EntityType, EntityId, EntityName, Amount, DueOrAgingText, RuleExplanation, ReportRoute)
+VALUES (
+    @CashFlowCollectionRiskId, @SnapshotKey, @SortOrder, @RiskKey, @RiskLabel,
+    @EntityType, @EntityId, @EntityName, @Amount, @DueOrAgingText, @RuleExplanation, @ReportRoute)";
+
+            foreach (var row in forecast.CollectionRisks ?? new List<DashboardCashFlowCollectionRiskRow>())
+            {
+                conn.Execute(insertCollectionRiskSql, new
+                {
+                    CashFlowCollectionRiskId = Ulid.NewUlid().ToString(),
+                    SnapshotKey,
+                    row.SortOrder,
+                    RiskKey = row.RiskKey ?? string.Empty,
+                    RiskLabel = row.RiskLabel ?? string.Empty,
+                    EntityType = row.EntityType ?? string.Empty,
+                    EntityId = row.EntityId ?? string.Empty,
+                    EntityName = row.EntityName ?? string.Empty,
+                    row.Amount,
+                    DueOrAgingText = row.DueOrAgingText ?? string.Empty,
+                    RuleExplanation = row.RuleExplanation ?? string.Empty,
+                    ReportRoute = row.ReportRoute ?? string.Empty
                 }, transaction);
             }
         }

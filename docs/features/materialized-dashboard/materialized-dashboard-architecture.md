@@ -145,6 +145,8 @@ btr.portal.worker/          Program.cs, WorkerDependencyConfig, appsettings.json
 | `BTRPD_InventoryKpi` | `TotalInventoryValue`, `TotalItem`, `GeneratedAt` |
 | `BTRPD_SalesKpi` | `PeriodYear`, `PeriodMonth`, omzet/faktur/customer/target/achievement fields, `PipelineOmzet` (= 0) |
 | `BTRPD_SalesForecastKpi` | Forecast KPIs: projected sales, required daily, confidence, risk band, business date metadata (M26) |
+| `BTRPD_CashFlowForecastKpi` | Cash flow forecast KPIs: expected cash, collection forecast %, required daily, confidence, risk band (M27) |
+| `BTRPD_InventoryForecastKpi` | Inventory forecast KPIs: projected value, DOS, health score, scenario bands, confidence (M28) |
 | `BTRPD_PurchasingKpi` | `GrandTotalPurchase`, `TotalInvoice`, `PendingPostingInvoiceCount`, `PeriodYear`, `PeriodMonth` |
 
 ### Dimensional tables (Layer B)
@@ -156,6 +158,13 @@ btr.portal.worker/          Program.cs, WorkerDependencyConfig, appsettings.json
 | `BTRPD_InventoryBreakdown` | Category/supplier rows with `IsTop10` flag |
 | `BTRPD_SalesWeekTrend` | Weekly Faktur totals |
 | `BTRPD_SalesDailyPace` | Daily Faktur pace buckets for forecast chart (M26) |
+| `BTRPD_CashFlowDailyPace` | Daily cash collection pace for forecast chart (M27) |
+| `BTRPD_CashFlowRecoveryTrend` | Cumulative collections vs billing by day (M27) |
+| `BTRPD_CashFlowCollectionRisk` | Top collection risk rows for forecast dashboard (M27) |
+| `BTRPD_InventoryForecastDailyConsumption` | Daily company consumption + ADC reference (M28) |
+| `BTRPD_InventoryForecastLevel` | Projected inventory value by horizon day (M28) |
+| `BTRPD_InventoryForecastRisk` | Top inventory forecast risk rows (M28) |
+| `BTRPD_InventoryForecastRecommendation` | Top purchase recommendation rows (M28) |
 | `BTRPD_SalesTopSalesman` | Top 10 salespeople |
 | `BTRPD_PurchasingWeekTrend` | Weekly purchase totals |
 | `BTRPD_PurchasingPostingStatus` | `SUDAH` / `BELUM` purchase value buckets |

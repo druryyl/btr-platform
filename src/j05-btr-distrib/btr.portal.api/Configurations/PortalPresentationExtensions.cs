@@ -32,6 +32,8 @@ namespace btr.portal.api.Configurations
             services.AddTransient<Controllers.Dashboard.SalesmanDashboardController>();
             services.AddTransient<Controllers.Dashboard.FieldActivityDashboardController>();
             services.AddTransient<Controllers.Dashboard.CollectionDashboardController>();
+            services.AddTransient<Controllers.Dashboard.CashFlowForecastDashboardController>();
+            services.AddTransient<Controllers.Dashboard.InventoryForecastDashboardController>();
             services.AddTransient<Controllers.Dashboard.LocationDashboardController>();
             services.AddTransient<Controllers.Reports.SalesReportController>();
             services.AddTransient<Controllers.Reports.InventoryReportController>();
