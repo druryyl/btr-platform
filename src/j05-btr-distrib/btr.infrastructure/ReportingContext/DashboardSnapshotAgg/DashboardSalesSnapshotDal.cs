@@ -84,10 +84,15 @@ ORDER BY Rank";
             }
         }
 
-        public void ReplaceCurrent(DashboardSalesAggregateResult result, string refreshLogId)
+        public void ReplaceCurrent(
+            DashboardSalesAggregateResult result,
+            DashboardSalesForecastAggregateResult forecast,
+            string refreshLogId)
         {
             if (result is null)
                 throw new System.ArgumentNullException(nameof(result));
+            if (forecast is null)
+                throw new System.ArgumentNullException(nameof(forecast));
 
             using (var conn = new SqlConnection(ConnStringHelper.Get(_opt)))
             {
@@ -180,6 +185,99 @@ VALUES (
                         row.Rank,
                         SalesPersonName = row.SalesPersonName ?? string.Empty,
                         row.CompletedOmzet
+                    });
+                }
+
+                conn.Execute(
+                    "DELETE FROM BTRPD_SalesDailyPace WHERE SnapshotKey = @SnapshotKey",
+                    new { SnapshotKey });
+
+                const string mergeForecastKpiSql = @"
+MERGE BTRPD_SalesForecastKpi AS target
+USING (SELECT @SnapshotKey AS SnapshotKey) AS source
+ON target.SnapshotKey = source.SnapshotKey
+WHEN MATCHED THEN
+    UPDATE SET
+        GeneratedAt = @GeneratedAt,
+        PeriodYear = @PeriodYear,
+        PeriodMonth = @PeriodMonth,
+        BusinessDate = @BusinessDate,
+        DaysInMonth = @DaysInMonth,
+        DaysElapsed = @DaysElapsed,
+        DaysRemaining = @DaysRemaining,
+        CurrentSales = @CurrentSales,
+        TotalTarget = @TotalTarget,
+        CurrentAchievementPercent = @CurrentAchievementPercent,
+        DailyAverageSales = @DailyAverageSales,
+        ForecastSales = @ForecastSales,
+        ForecastAchievementPercent = @ForecastAchievementPercent,
+        RequiredDailySales = @RequiredDailySales,
+        TargetGap = @TargetGap,
+        ForecastVariance = @ForecastVariance,
+        BestCaseSales = @BestCaseSales,
+        WorstCaseSales = @WorstCaseSales,
+        ForecastConfidence = @ForecastConfidence,
+        ForecastRiskBand = @ForecastRiskBand,
+        LastRefreshLogId = @LastRefreshLogId
+WHEN NOT MATCHED THEN
+    INSERT (
+        SnapshotKey, GeneratedAt, PeriodYear, PeriodMonth, BusinessDate,
+        DaysInMonth, DaysElapsed, DaysRemaining, CurrentSales, TotalTarget,
+        CurrentAchievementPercent, DailyAverageSales, ForecastSales,
+        ForecastAchievementPercent, RequiredDailySales, TargetGap, ForecastVariance,
+        BestCaseSales, WorstCaseSales, ForecastConfidence, ForecastRiskBand, LastRefreshLogId)
+    VALUES (
+        @SnapshotKey, @GeneratedAt, @PeriodYear, @PeriodMonth, @BusinessDate,
+        @DaysInMonth, @DaysElapsed, @DaysRemaining, @CurrentSales, @TotalTarget,
+        @CurrentAchievementPercent, @DailyAverageSales, @ForecastSales,
+        @ForecastAchievementPercent, @RequiredDailySales, @TargetGap, @ForecastVariance,
+        @BestCaseSales, @WorstCaseSales, @ForecastConfidence, @ForecastRiskBand, @LastRefreshLogId);";
+
+                conn.Execute(mergeForecastKpiSql, new
+                {
+                    SnapshotKey,
+                    forecast.GeneratedAt,
+                    forecast.PeriodYear,
+                    forecast.PeriodMonth,
+                    forecast.BusinessDate,
+                    forecast.DaysInMonth,
+                    forecast.DaysElapsed,
+                    forecast.DaysRemaining,
+                    forecast.CurrentSales,
+                    forecast.TotalTarget,
+                    forecast.CurrentAchievementPercent,
+                    forecast.DailyAverageSales,
+                    forecast.ForecastSales,
+                    forecast.ForecastAchievementPercent,
+                    forecast.RequiredDailySales,
+                    forecast.TargetGap,
+                    forecast.ForecastVariance,
+                    forecast.BestCaseSales,
+                    forecast.WorstCaseSales,
+                    ForecastConfidence = forecast.ForecastConfidence ?? string.Empty,
+                    ForecastRiskBand = forecast.ForecastRiskBand ?? string.Empty,
+                    LastRefreshLogId = refreshLogId ?? string.Empty
+                });
+
+                const string insertDailyPaceSql = @"
+INSERT INTO BTRPD_SalesDailyPace (
+    SalesDailyPaceId, SnapshotKey, PaceDate, DayOfMonth, IsElapsed,
+    ActualAmount, ProjectedDailyAmount)
+VALUES (
+    @SalesDailyPaceId, @SnapshotKey, @PaceDate, @DayOfMonth, @IsElapsed,
+    @ActualAmount, @ProjectedDailyAmount)";
+
+                foreach (var row in forecast.DailyPace ?? new List<DashboardSalesDailyPaceRow>())
+                {
+                    conn.Execute(insertDailyPaceSql, new
+                    {
+                        SalesDailyPaceId = Ulid.NewUlid().ToString(),
+                        SnapshotKey,
+                        row.PaceDate,
+                        row.DayOfMonth,
+                        IsElapsed = row.IsElapsed ? 1 : 0,
+                        row.ActualAmount,
+                        row.ProjectedDailyAmount
                     });
                 }
             }

@@ -13,6 +13,7 @@ import {
   fetchDashboardPiutang,
   fetchDashboardPurchasing,
   fetchDashboardSales,
+  fetchDashboardSalesForecast,
 } from '@/api/dashboardApi'
 import { getApiErrorMessage } from '@/api/httpClient'
 import { isInfrastructureStoreError } from '@/services/platformDiagnostics'
@@ -30,6 +31,7 @@ import type {
   DashboardPiutangResponse,
   DashboardPurchasingResponse,
   DashboardSalesResponse,
+  DashboardSalesForecastResponse,
 } from '@/models/dashboard'
 
 export const useDashboardStore = defineStore('dashboard', () => {
@@ -37,6 +39,7 @@ export const useDashboardStore = defineStore('dashboard', () => {
   const executive = ref<DashboardExecutiveResponse | null>(null)
   const alerts = ref<DashboardAlertCenterResponse | null>(null)
   const sales = ref<DashboardSalesResponse | null>(null)
+  const salesForecast = ref<DashboardSalesForecastResponse | null>(null)
   const piutang = ref<DashboardPiutangResponse | null>(null)
   const inventory = ref<DashboardInventoryResponse | null>(null)
   const inventoryRisk = ref<DashboardInventoryRiskResponse | null>(null)
@@ -122,6 +125,19 @@ export const useDashboardStore = defineStore('dashboard', () => {
       sales.value = await fetchDashboardSales()
     } catch (err) {
       error.value = getApiErrorMessage(err, 'Failed to load sales dashboard.')
+    } finally {
+      loading.value = false
+    }
+  }
+
+  async function loadSalesForecast(): Promise<void> {
+    loading.value = true
+    error.value = null
+
+    try {
+      salesForecast.value = await fetchDashboardSalesForecast()
+    } catch (err) {
+      error.value = getApiErrorMessage(err, 'Failed to load sales forecast dashboard.')
     } finally {
       loading.value = false
     }
@@ -266,6 +282,7 @@ export const useDashboardStore = defineStore('dashboard', () => {
     executive.value = null
     alerts.value = null
     sales.value = null
+    salesForecast.value = null
     piutang.value = null
     inventory.value = null
     inventoryRisk.value = null
@@ -283,6 +300,7 @@ export const useDashboardStore = defineStore('dashboard', () => {
     executive,
     alerts,
     sales,
+    salesForecast,
     piutang,
     inventory,
     inventoryRisk,
@@ -297,6 +315,7 @@ export const useDashboardStore = defineStore('dashboard', () => {
     loadExecutive,
     loadAlerts,
     loadSales,
+    loadSalesForecast,
     loadPiutang,
     loadInventory,
     loadInventoryRisk,

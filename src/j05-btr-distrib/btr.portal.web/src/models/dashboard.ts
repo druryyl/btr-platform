@@ -138,6 +138,52 @@ export interface DashboardSalesResponse {
   TopSalesmanRanking: DashboardSalesRankingItem[]
 }
 
+export interface DashboardSalesForecastVsTarget {
+  TargetAmount: number
+  CurrentAmount: number
+  ForecastAmount: number
+}
+
+export interface DashboardSalesDailyPaceItem {
+  PaceDate: string
+  DayOfMonth: number
+  IsElapsed: boolean
+  ActualAmount: number
+  ProjectedDailyAmount: number
+}
+
+export type ForecastConfidence = 'Low' | 'Medium' | 'High'
+
+export type RequiredDailySeverity = 'Normal' | 'Warning' | 'Critical'
+
+export interface DashboardSalesForecastResponse {
+  GeneratedAt: string
+  PeriodYear: number
+  PeriodMonth: number
+  BusinessDate: string
+  DaysInMonth: number
+  DaysElapsed: number
+  DaysRemaining: number
+  CurrentSales: number
+  TotalTarget: number
+  CurrentAchievementPercent: number | null
+  DailyAverageSales: number
+  ForecastSales: number
+  ForecastAchievementPercent: number | null
+  RequiredDailySales: number | null
+  TargetGap: number
+  ForecastVariance: number
+  BestCaseSales: number
+  WorstCaseSales: number
+  ForecastConfidence: ForecastConfidence | string
+  ForecastRiskBand: AchievementBand | string
+  RequiredDailySeverity: RequiredDailySeverity | string
+  ExecutiveSummary: string
+  ForecastVsTarget: DashboardSalesForecastVsTarget
+  DailyPace: DashboardSalesDailyPaceItem[]
+  WeeklyTrend: DashboardSalesWeekTrendItem[]
+}
+
 export interface DashboardPiutangAgingBucket {
   BucketKey: string
   BucketLabel: string

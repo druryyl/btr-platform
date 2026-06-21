@@ -194,6 +194,7 @@
     <Compile Include="ReportingContext\DashboardSnapshotAgg\PiutangOpenBalanceWithSalesmanDal.cs" />
     <Compile Include="ReportingContext\DashboardSnapshotAgg\PiutangOpenBalanceWithWilayahDal.cs" />
     <Compile Include="ReportingContext\DashboardSalesAgg\DashboardSalesDal.cs" />
+    <Compile Include="ReportingContext\DashboardSalesForecastAgg\DashboardSalesForecastDal.cs" />
     <Compile Include="ReportingContext\InventoryReportAgg\InventoryReportDal.cs" />
     <Compile Include="ReportingContext\PiutangReportAgg\PiutangReportDal.cs" />
     <Compile Include="ReportingContext\PurchasingReportAgg\PurchasingReportDal.cs" />

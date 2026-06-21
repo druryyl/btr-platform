@@ -171,6 +171,8 @@
     <Build Include="Tables\ReportingContext\BTRPD_InventoryRiskBreakdown.sql" />
     <Build Include="Tables\ReportingContext\BTRPD_SalesKpi.sql" />
     <Build Include="Tables\ReportingContext\BTRPD_SalesWeekTrend.sql" />
+    <Build Include="Tables\ReportingContext\BTRPD_SalesForecastKpi.sql" />
+    <Build Include="Tables\ReportingContext\BTRPD_SalesDailyPace.sql" />
     <Build Include="Tables\ReportingContext\BTRPD_SalesTopSalesman.sql" />
     <Build Include="Tables\ReportingContext\BTRPD_PurchasingKpi.sql" />
     <Build Include="Tables\ReportingContext\BTRPD_PurchasingWeekTrend.sql" />

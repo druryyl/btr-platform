@@ -6,6 +6,9 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.Contracts
     {
         DashboardSalesAggregateResult GetCurrent();
 
-        void ReplaceCurrent(DashboardSalesAggregateResult result, string refreshLogId);
+        void ReplaceCurrent(
+            DashboardSalesAggregateResult sales,
+            DashboardSalesForecastAggregateResult forecast,
+            string refreshLogId);
     }
 }

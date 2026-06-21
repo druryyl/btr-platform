@@ -398,6 +398,62 @@ CREATE TABLE BTRPD_SalesTopSalesman
 END
 GO
 
+-- BTRPD_SalesForecastKpi
+IF OBJECT_ID(N'dbo.BTRPD_SalesForecastKpi', N'U') IS NULL
+BEGIN
+CREATE TABLE BTRPD_SalesForecastKpi
+(
+    SnapshotKey                 VARCHAR(10)    NOT NULL CONSTRAINT DF_BTRPD_SalesForecastKpi_SnapshotKey DEFAULT('CURRENT'),
+    GeneratedAt                 DATETIME       NOT NULL CONSTRAINT DF_BTRPD_SalesForecastKpi_GeneratedAt DEFAULT('3000-01-01'),
+    PeriodYear                  INT            NOT NULL CONSTRAINT DF_BTRPD_SalesForecastKpi_PeriodYear DEFAULT(0),
+    PeriodMonth                 INT            NOT NULL CONSTRAINT DF_BTRPD_SalesForecastKpi_PeriodMonth DEFAULT(0),
+    BusinessDate                DATETIME       NOT NULL CONSTRAINT DF_BTRPD_SalesForecastKpi_BusinessDate DEFAULT('3000-01-01'),
+    DaysInMonth                 INT            NOT NULL CONSTRAINT DF_BTRPD_SalesForecastKpi_DaysInMonth DEFAULT(0),
+    DaysElapsed                 INT            NOT NULL CONSTRAINT DF_BTRPD_SalesForecastKpi_DaysElapsed DEFAULT(0),
+    DaysRemaining               INT            NOT NULL CONSTRAINT DF_BTRPD_SalesForecastKpi_DaysRemaining DEFAULT(0),
+    CurrentSales                DECIMAL(18,2)  NOT NULL CONSTRAINT DF_BTRPD_SalesForecastKpi_CurrentSales DEFAULT(0),
+    TotalTarget                 DECIMAL(18,2)  NOT NULL CONSTRAINT DF_BTRPD_SalesForecastKpi_TotalTarget DEFAULT(0),
+    CurrentAchievementPercent   DECIMAL(9,4)   NULL,
+    DailyAverageSales           DECIMAL(18,2)  NOT NULL CONSTRAINT DF_BTRPD_SalesForecastKpi_DailyAverageSales DEFAULT(0),
+    ForecastSales               DECIMAL(18,2)  NOT NULL CONSTRAINT DF_BTRPD_SalesForecastKpi_ForecastSales DEFAULT(0),
+    ForecastAchievementPercent  DECIMAL(9,4)   NULL,
+    RequiredDailySales          DECIMAL(18,2)  NULL,
+    TargetGap                   DECIMAL(18,2)  NOT NULL CONSTRAINT DF_BTRPD_SalesForecastKpi_TargetGap DEFAULT(0),
+    ForecastVariance            DECIMAL(18,2)  NOT NULL CONSTRAINT DF_BTRPD_SalesForecastKpi_ForecastVariance DEFAULT(0),
+    BestCaseSales               DECIMAL(18,2)  NOT NULL CONSTRAINT DF_BTRPD_SalesForecastKpi_BestCaseSales DEFAULT(0),
+    WorstCaseSales              DECIMAL(18,2)  NOT NULL CONSTRAINT DF_BTRPD_SalesForecastKpi_WorstCaseSales DEFAULT(0),
+    ForecastConfidence          VARCHAR(10)    NOT NULL CONSTRAINT DF_BTRPD_SalesForecastKpi_ForecastConfidence DEFAULT(''),
+    ForecastRiskBand              VARCHAR(10)    NOT NULL CONSTRAINT DF_BTRPD_SalesForecastKpi_ForecastRiskBand DEFAULT(''),
+    LastRefreshLogId            VARCHAR(26)    NOT NULL CONSTRAINT DF_BTRPD_SalesForecastKpi_LastRefreshLogId DEFAULT(''),
+
+    CONSTRAINT PK_BTRPD_SalesForecastKpi PRIMARY KEY CLUSTERED (SnapshotKey)
+)
+END
+GO
+
+-- BTRPD_SalesDailyPace
+IF OBJECT_ID(N'dbo.BTRPD_SalesDailyPace', N'U') IS NULL
+BEGIN
+CREATE TABLE BTRPD_SalesDailyPace
+(
+    SalesDailyPaceId     VARCHAR(26)   NOT NULL CONSTRAINT DF_BTRPD_SalesDailyPace_SalesDailyPaceId DEFAULT(''),
+    SnapshotKey          VARCHAR(10)   NOT NULL CONSTRAINT DF_BTRPD_SalesDailyPace_SnapshotKey DEFAULT('CURRENT'),
+    PaceDate             DATETIME      NOT NULL CONSTRAINT DF_BTRPD_SalesDailyPace_PaceDate DEFAULT('3000-01-01'),
+    DayOfMonth           INT           NOT NULL CONSTRAINT DF_BTRPD_SalesDailyPace_DayOfMonth DEFAULT(0),
+    IsElapsed            BIT           NOT NULL CONSTRAINT DF_BTRPD_SalesDailyPace_IsElapsed DEFAULT(0),
+    ActualAmount         DECIMAL(18,2) NOT NULL CONSTRAINT DF_BTRPD_SalesDailyPace_ActualAmount DEFAULT(0),
+    ProjectedDailyAmount DECIMAL(18,2) NOT NULL CONSTRAINT DF_BTRPD_SalesDailyPace_ProjectedDailyAmount DEFAULT(0),
+
+    CONSTRAINT PK_BTRPD_SalesDailyPace PRIMARY KEY CLUSTERED (SalesDailyPaceId)
+)
+END
+GO
+
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_BTRPD_SalesDailyPace_SnapshotKey_PaceDate' AND object_id = OBJECT_ID(N'dbo.BTRPD_SalesDailyPace'))
+CREATE INDEX IX_BTRPD_SalesDailyPace_SnapshotKey_PaceDate
+    ON BTRPD_SalesDailyPace (SnapshotKey, PaceDate)
+GO
+
 -- BTRPD_PurchasingKpi
 IF OBJECT_ID(N'dbo.BTRPD_PurchasingKpi', N'U') IS NULL
 BEGIN

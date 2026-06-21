@@ -70,7 +70,7 @@ BTR Portal covers the following management business areas. Each area has one or 
 
 | Business Area | Management Question | Portal Coverage (Current) |
 | ------------- | ------------------- | ------------------------- |
-| **Sales** | How much did we invoice? Are we meeting target? Who are top performers? | Sales Dashboard, Executive summary, Sales Report |
+| **Sales** | How much did we invoice? Are we meeting target? Who are top performers? Will we hit target at month-end? | Sales Dashboard, Sales Forecast Dashboard, Executive summary, Sales Report |
 | **Finance (Piutang)** | How much is owed? How old is the debt? Who owes the most? | Piutang Dashboard, Piutang Report |
 | **Collection** | Is debt being converted to cash? Where is collection risk concentrated? | Collection Dashboard |
 | **Customer Analytics** | Which customers require attention across sales and receivables? | Customer Analytics Dashboard |
@@ -300,6 +300,7 @@ Analytics surfaces help management understand performance, distribution, and ris
 | Analytics Domain | Sales Metrics Period | Receivable Metrics Period | Inventory Period |
 | ------------------ | -------------------- | ------------------------- | ---------------- |
 | Sales Dashboard | Current calendar month | — | — |
+| Sales Forecast Dashboard | Current calendar month (as-of business date) | — | — |
 | Piutang Dashboard | — | All-time open balance snapshot | — |
 | Customer Analytics | Current month (sales) | All-time open (piutang) | — |
 | Salesman Performance | Current month (sales) | All-time open (piutang) | — |
@@ -467,6 +468,7 @@ Each dashboard answers a specific management question. Dashboards are **read-onl
 | **Management Attention Center** | What requires management attention today? | Owner, GM, daily executive review |
 | **Alert Center** | What needs attention right now across the entire business? | Management seeking exception workspace |
 | **Sales Dashboard** | How is company sales performance vs target? | Sales management |
+| **Sales Forecast Dashboard** | Where will invoiced sales likely finish at month-end? | Sales and operations leadership |
 | **Piutang Dashboard** | How much is owed and how old is the debt? | Finance management |
 | **Collection Dashboard** | Are receivables being converted to cash? | Collection management |
 | **Customer Analytics** | Which customers require attention? | Sales and finance management |
@@ -487,6 +489,7 @@ Each dashboard answers a specific management question. Dashboards are **read-onl
 | **Piutang vs Collection** | Piutang = exposure (how much owed); Collection = recovery (is cash coming in) |
 | **Inventory vs Inventory Risk** | Inventory = composition (where capital sits); Inventory Risk = health (what is not moving) |
 | **Purchasing V1 vs Purchasing Management** | V1 = monthly statistics; Management = attention signals and cross-domain supplier risk |
+| **Sales vs Sales Forecast** | Sales = current achievement; Forecast = projected month-end at current pace |
 | **Salesman Performance vs Field Activity** | M18 = outcome lens (omzet, achievement, exposure); Field Activity = execution lens (visits, routes, GPS) |
 | **Location vs Collection (Wilayah)** | Collection owns wilayah overdue hotspots; Location owns wilayah sales concentration |
 
@@ -792,6 +795,7 @@ M22  Branch / Warehouse Performance                        ✓ Current
 M23  Alert Center                                          ✓ Current
 M24  Dashboard Drill-Down & Investigation                  ✓ Current
 M25  Sales Force Effectiveness                             → Future Accepted
+M26  Sales Forecast Dashboard                              ✓ Current
 M16 Phase 2 / M19 Phase 2 / M21 Phase 2                 → Future Accepted (Executive promotions)
 Filtering Phase (date range, search)                    → Future Accepted
 ```

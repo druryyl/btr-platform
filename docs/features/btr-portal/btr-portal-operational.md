@@ -47,7 +47,7 @@ The Dashboard has two levels:
 | Level | Route | What You See |
 | ----- | ----- | ------------ |
 | **Executive (Home)** | `/dashboard` | **Management Attention Center** — attention-oriented KPIs across Sales, Piutang, Inventory, and Purchasing; Top 5 exposure lists; domain summaries. Links go to domain dashboards only. |
-| **Detail** | `/dashboard/sales`, `/dashboard/piutang`, `/dashboard/customers`, `/dashboard/salesmen`, `/dashboard/inventory`, `/dashboard/inventory-risk`, `/dashboard/purchasing` | Full KPI row, charts, and Top 10 tables for that business area (Customer, Salesman, and Inventory Risk use attention-oriented layout). |
+| **Detail** | `/dashboard/sales`, `/dashboard/sales-forecast`, `/dashboard/piutang`, `/dashboard/customers`, `/dashboard/salesmen`, `/dashboard/inventory`, `/dashboard/inventory-risk`, `/dashboard/purchasing` | Full KPI row, charts, and Top 10 tables for that business area (Customer, Salesman, and Inventory Risk use attention-oriented layout). |
 
 **Navigate:** Sidebar → Dashboard → **Executive** (default home). Use **Open Alert Center** on the executive page or Sidebar → **Alert Center** for the company-wide exception feed.
 
@@ -106,6 +106,44 @@ Use **Refresh** on any dashboard page to reload data from the server. Detail pag
 - Morning management review of monthly sales progress
 - Identifying top performers for the current month
 - Checking whether weekly omzet trend is accelerating or slowing
+
+---
+
+## Sales Forecast Dashboard (M26)
+
+**Navigate:** Sidebar → Dashboard → Sales Forecast.
+
+**Route:** `/dashboard/sales-forecast`
+
+**Question answered:** If current billing pace continues, where will invoiced sales finish at month-end?
+
+### What You See
+
+1. **Executive summary** — plain-language forecast sentence (server-computed)
+2. **KPI row — Actual vs Forecast** — Current Sales, Current Achievement, Forecast Sales, Forecast Achievement
+3. **KPI row — Pace & Gap** — Daily Average, Required Daily Sales, Target Gap, Days Remaining
+4. **KPI row — Scenario & Confidence** — Best Case, Expected, Worst Case, Forecast Confidence
+5. **Daily Pace Trend** — Bar chart of daily invoiced omzet with MTD daily-average reference line
+6. **Forecast vs Target** — Three-bar comparison (Target, Current, Forecast)
+7. **Weekly Pace** — Same weekly trend as Sales Dashboard (context for momentum)
+8. **Forecast Risk card** — Healthy / Warning / Critical band on projected achievement
+9. **Traceability footer** — link to Sales Report for Faktur evidence
+
+### How to Read It
+
+- Uses the **same Faktur data and monthly target** as the Sales Dashboard.
+- **Forecast Sales** = (MTD sales ÷ days elapsed) × days in month (calendar-day linear extrapolation).
+- **Required Daily Sales** = average daily billing needed on remaining days to hit target.
+- **Forecast Confidence** is Low early in the month; becomes High after day 21.
+- Refreshes with the existing **Sales** snapshot worker (~30 minutes).
+
+### Typical Use
+
+- Mid-month review: will the team hit target at current pace?
+- Identifying when required daily billing exceeds recent daily average
+- Finance cross-check before month-end close
+
+**Related:** [Sales Forecast feature doc](../sales-forecast/feature.md)
 
 ---
 
@@ -955,6 +993,7 @@ GET  /api/dashboard/customers            → 200 with token (after Customer work
 GET  /api/dashboard/salesmen             → 200 with token (after Salesman worker run)
 GET  /api/dashboard/inventory-risk       → 200 with token (after InventoryRisk worker run)
 GET  /api/dashboard/sales                → 200 with token
+GET  /api/dashboard/sales-forecast       → 200 with token (after Sales worker run)
 GET  /api/dashboard/purchasing           → 200 with token
 GET  /api/reports/sales                  → 200 with token
 GET  /api/reports/purchasing             → 200 with token

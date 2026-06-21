@@ -200,6 +200,7 @@
     <Compile Include="Controllers\Dashboard\CollectionDashboardController.cs" />
     <Compile Include="Controllers\Dashboard\LocationDashboardController.cs" />
     <Compile Include="Controllers\Dashboard\SalesDashboardController.cs" />
+    <Compile Include="Controllers\Dashboard\SalesForecastDashboardController.cs" />
     <Compile Include="Controllers\Dashboard\PurchasingDashboardController.cs" />
     <Compile Include="Controllers\HealthController.cs" />
     <Compile Include="Controllers\PresentationConfigController.cs" />

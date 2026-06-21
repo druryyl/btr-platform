@@ -338,6 +338,7 @@
     <Compile Include="ReportingContext\DashboardSnapshotAgg\Models\DashboardPiutangCustomerAgingRow.cs" />
     <Compile Include="ReportingContext\DashboardSnapshotAgg\Models\DashboardPiutangTopCustomerRiskRow.cs" />
     <Compile Include="ReportingContext\DashboardSnapshotAgg\Models\DashboardSalesAggregateResult.cs" />
+    <Compile Include="ReportingContext\DashboardSnapshotAgg\Models\DashboardSalesForecastAggregateResult.cs" />
     <Compile Include="ReportingContext\DashboardSnapshotAgg\Models\DashboardPurchasingAggregateResult.cs" />
     <Compile Include="ReportingContext\DashboardSnapshotAgg\Models\DashboardPurchasingManagementAggregateResult.cs" />
     <Compile Include="ReportingContext\DashboardSnapshotAgg\Models\DashboardCustomerAggregateResult.cs" />
@@ -359,6 +360,8 @@
     <Compile Include="ReportingContext\DashboardSnapshotAgg\Services\PiutangAgingBucketResolver.cs" />
     <Compile Include="ReportingContext\DashboardSnapshotAgg\Services\DashboardPiutangAggregator.cs" />
     <Compile Include="ReportingContext\DashboardSnapshotAgg\Services\DashboardSalesFakturAggregator.cs" />
+    <Compile Include="ReportingContext\DashboardSnapshotAgg\Services\DashboardSalesForecastAggregator.cs" />
+    <Compile Include="ReportingContext\DashboardSnapshotAgg\Services\SalesForecastPolicy.cs" />
     <Compile Include="ReportingContext\DashboardSnapshotAgg\Services\DashboardPurchasingInvoiceAggregator.cs" />
     <Compile Include="ReportingContext\DashboardSnapshotAgg\Services\DashboardPurchasingManagementAggregator.cs" />
     <Compile Include="ReportingContext\DashboardSnapshotAgg\Services\DashboardPurchasingManagementKeyResolver.cs" />
@@ -397,6 +400,8 @@
     <Compile Include="ReportingContext\DashboardPurchasingAgg\Queries\GetDashboardPurchasingQuery.cs" />
     <Compile Include="ReportingContext\DashboardSalesAgg\Contracts\IDashboardSalesDal.cs" />
     <Compile Include="ReportingContext\DashboardSalesAgg\Queries\GetDashboardSalesQuery.cs" />
+    <Compile Include="ReportingContext\DashboardSalesForecastAgg\Contracts\IDashboardSalesForecastDal.cs" />
+    <Compile Include="ReportingContext\DashboardSalesForecastAgg\Queries\GetDashboardSalesForecastQuery.cs" />
     <Compile Include="ReportingContext\InventoryReportAgg\Contracts\IInventoryReportDal.cs" />
     <Compile Include="ReportingContext\InventoryReportAgg\Queries\GetInventoryReportQuery.cs" />
     <Compile Include="ReportingContext\PiutangReportAgg\Contracts\IPiutangReportDal.cs" />
@@ -512,6 +517,7 @@
     <Compile Include="SalesContext\SalesOmzetAgg\Services\ISalesOmzetChartSummaryBuilder.cs" />
     <Compile Include="SalesContext\SalesOmzetAgg\Services\SalesOmzetChartSummaryBuilder.cs" />
     <Compile Include="SalesContext\SalesOmzetAgg\Services\SalesOmzetChartWeekGrouper.cs" />
+    <Compile Include="SalesContext\SalesOmzetAgg\Services\SalesOmzetChartDayGrouper.cs" />
     <Compile Include="SalesContext\SalesOmzetAgg\Services\ISalesOmzetTargetResolver.cs" />
     <Compile Include="SalesContext\SalesOmzetAgg\Services\SalesOmzetTargetResolver.cs" />
     <Compile Include="SalesContext\SalesOmzetAgg\Services\ISalesOmzetLinker.cs" />

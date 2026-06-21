@@ -144,6 +144,7 @@ btr.portal.worker/          Program.cs, WorkerDependencyConfig, appsettings.json
 | `BTRPD_PiutangKpi` | `TotalPiutang`, `TotalCustomer`, `OverdueCustomer`, `GeneratedAt` |
 | `BTRPD_InventoryKpi` | `TotalInventoryValue`, `TotalItem`, `GeneratedAt` |
 | `BTRPD_SalesKpi` | `PeriodYear`, `PeriodMonth`, omzet/faktur/customer/target/achievement fields, `PipelineOmzet` (= 0) |
+| `BTRPD_SalesForecastKpi` | Forecast KPIs: projected sales, required daily, confidence, risk band, business date metadata (M26) |
 | `BTRPD_PurchasingKpi` | `GrandTotalPurchase`, `TotalInvoice`, `PendingPostingInvoiceCount`, `PeriodYear`, `PeriodMonth` |
 
 ### Dimensional tables (Layer B)
@@ -154,6 +155,7 @@ btr.portal.worker/          Program.cs, WorkerDependencyConfig, appsettings.json
 | `BTRPD_PiutangTopCustomer` | Top 10 customers |
 | `BTRPD_InventoryBreakdown` | Category/supplier rows with `IsTop10` flag |
 | `BTRPD_SalesWeekTrend` | Weekly Faktur totals |
+| `BTRPD_SalesDailyPace` | Daily Faktur pace buckets for forecast chart (M26) |
 | `BTRPD_SalesTopSalesman` | Top 10 salespeople |
 | `BTRPD_PurchasingWeekTrend` | Weekly purchase totals |
 | `BTRPD_PurchasingPostingStatus` | `SUDAH` / `BELUM` purchase value buckets |

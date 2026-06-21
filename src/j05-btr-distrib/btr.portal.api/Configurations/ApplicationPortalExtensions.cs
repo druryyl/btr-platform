@@ -93,6 +93,7 @@ namespace btr.portal.api.Configurations
             services.AddScoped<DashboardInventoryAggregator>();
             services.AddScoped<DashboardInventoryRiskAggregator>();
             services.AddScoped<DashboardSalesFakturAggregator>();
+            services.AddScoped<DashboardSalesForecastAggregator>();
             services.AddScoped<DashboardPurchasingInvoiceAggregator>();
             services.AddScoped<DashboardPurchasingManagementAggregator>();
             services.AddScoped<DashboardCustomerAggregator>();

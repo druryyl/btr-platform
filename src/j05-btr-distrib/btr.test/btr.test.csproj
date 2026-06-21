@@ -130,6 +130,11 @@
     <Compile Include="ReportingContext\DashboardInventoryDalTest.cs" />
     <Compile Include="ReportingContext\DashboardInventorySnapshotVerificationTest.cs" />
     <Compile Include="ReportingContext\DashboardSalesFakturAggregatorTest.cs" />
+    <Compile Include="ReportingContext\DashboardSalesForecastAggregatorTest.cs" />
+    <Compile Include="ReportingContext\DashboardSalesForecastSnapshotVerificationTest.cs" />
+    <Compile Include="ReportingContext\SalesForecastPolicyTest.cs" />
+    <Compile Include="ReportingContext\SalesForecastExecutiveSummaryBuilderTest.cs" />
+    <Compile Include="ReportingContext\SalesOmzetChartDayGrouperTest.cs" />
     <Compile Include="ReportingContext\DashboardPurchasingInvoiceAggregatorTest.cs" />
     <Compile Include="ReportingContext\DashboardPurchasingManagementAggregatorTest.cs" />
     <Compile Include="ReportingContext\DashboardPurchasingReportTraceabilityTest.cs" />
