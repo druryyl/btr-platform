@@ -34,4 +34,4 @@ npm run preview
 
 | Variable | Description |
 | --- | --- |
-| `VITE_API_BASE_URL` | Base URL for `btr.portal.api` (no trailing slash) |
+| `VITE_API_BASE_URL` | Base URL for `btr.portal.api` (no trailing slash). Local dev: API host only (e.g. `http://localhost:5050`). Production IIS: include the API application path (e.g. `http://server:8080/api`). Set before `npm run build` to the hostname clients use, not `localhost` unless users browse via localhost. |

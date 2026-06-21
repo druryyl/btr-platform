@@ -138,8 +138,17 @@ msbuild src\j05-btr-distrib\btr.portal.api\btr.portal.api.csproj `
 ```powershell
 cd src\j05-btr-distrib\btr.portal.web
 npm install
-$env:VITE_API_BASE_URL = "https://your-server/btr-portal-api"   # set before build
+# Use the hostname clients use in the browser, not localhost, unless users browse via localhost.
+# Production IIS: include the API application path (e.g. http://server:8080/api).
+$env:VITE_API_BASE_URL = "http://server:8080/api"
 npm run build
+```
+
+After build, confirm the bundle does not contain `localhost`:
+
+```powershell
+Select-String -Path dist\assets\*.js -Pattern 'localhost' -SimpleMatch
+# Expect no matches
 ```
 
 Copy `dist/` contents to the IIS static site (e.g. `C:\inetpub\btr-portal`).

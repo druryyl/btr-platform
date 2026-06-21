@@ -23,11 +23,6 @@ publish-*.7z
 **/publish-*.7z
 
 # Secrets (not used in legacy repos; guardrail)
-.env
-.env.*
-!.env.example
-**/secrets.json
-**/appsettings.Development.local.json
 
 # --- Android / Gradle (BTrade3) ---
 *.iml
