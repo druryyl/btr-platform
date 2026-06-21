@@ -203,6 +203,19 @@
     <Build Include="Tables\ReportingContext\BTRPD_CustomerTopPiutang.sql" />
     <Build Include="Tables\ReportingContext\BTRPD_CustomerAttention.sql" />
     <Build Include="Tables\ReportingContext\BTRPD_CustomerSegmentation.sql" />
+    <Build Include="Tables\ReportingContext\BTRPD_CustomerRiskForecastKpi.sql" />
+    <Build Include="Tables\ReportingContext\BTRPD_CustomerRiskForecastDist.sql" />
+    <Build Include="Tables\ReportingContext\BTRPD_CustomerRiskForecastWilayah.sql" />
+    <Build Include="Tables\ReportingContext\BTRPD_CustomerRiskForecastSignalMix.sql" />
+    <Build Include="Tables\ReportingContext\BTRPD_CustomerRiskForecastCustomer.sql" />
+    <Build Include="Tables\ReportingContext\BTRPD_CustomerRiskForecastAttention.sql" />
+    <Build Include="Tables\ReportingContext\BTRPD_CustomerRiskForecastRecommendation.sql" />
+    <Build Include="Tables\ReportingContext\BTRPD_CollectionOptimizationKpi.sql" />
+    <Build Include="Tables\ReportingContext\BTRPD_CollectionOptimizationActionDist.sql" />
+    <Build Include="Tables\ReportingContext\BTRPD_CollectionOptimizationWorkload.sql" />
+    <Build Include="Tables\ReportingContext\BTRPD_CollectionOptimizationPriority.sql" />
+    <Build Include="Tables\ReportingContext\BTRPD_CollectionOptimizationQueue.sql" />
+    <Build Include="Tables\ReportingContext\BTRPD_CollectionOptimizationImpact.sql" />
     <Build Include="Tables\ReportingContext\BTRPD_CollectionKpi.sql" />
     <Build Include="Tables\ReportingContext\BTRPD_CollectionAging.sql" />
     <Build Include="Tables\ReportingContext\BTRPD_CollectionAttention.sql" />
@@ -238,6 +251,7 @@
     <None Include="Scripts\Rename_PortalDashboard_Tables_To_BTRPD.sql" />
     <None Include="Scripts\Create_BTRPD_PortalDashboard_Tables.sql" />
     <None Include="Scripts\Upgrade_M14_PiutangDashboard_V2.sql" />
+    <None Include="Scripts\Upgrade_M29_CustomerRiskForecast.sql" />
     <None Include="Scripts\Upgrade_M18_SalesmenPerformance_V2.sql" />
     <None Include="Scripts\Create_BTR_SalesPersonSupplier.sql" />
     <None Include="Scripts\Create_BTR_SalesPersonPrincipalTarget.sql" />

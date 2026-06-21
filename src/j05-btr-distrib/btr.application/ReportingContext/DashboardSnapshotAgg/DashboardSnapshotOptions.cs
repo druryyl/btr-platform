@@ -55,5 +55,35 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg
         public int InventoryOptimizationMaxTransferRows { get; set; } = 10;
 
         public decimal InventoryOptimizationReduceQtyFactor { get; set; } = 0.5m;
+
+        public int CustomerRiskForecastHorizonDays { get; set; } = 30;
+
+        public decimal CustomerRiskForecastPriorMonthOmzetFloorIdr { get; set; } = 1_000_000m;
+
+        public int CustomerRiskForecastNoPaymentRecencyDays { get; set; } = 30;
+
+        public int CustomerRiskForecastPaymentLagLookbackDays { get; set; } = 90;
+
+        public int CustomerRiskForecastMinSettledFaktursForLag { get; set; } = 2;
+
+        public int CustomerRiskForecastMaxTopCustomers { get; set; } = 20;
+
+        public int CustomerRiskForecastMaxAttentionRows { get; set; } = 25;
+
+        public int CustomerRiskForecastMaxRecommendations { get; set; } = 15;
+
+        public decimal CollectionOptimizationSalesRecoveryOverdueFloorIdr { get; set; } = 500_000m;
+
+        public decimal CollectionOptimizationStrategicPriorMonthOmzetFloorIdr { get; set; } = 5_000_000m;
+
+        public decimal CollectionOptimizationLargeDueSoonFloorIdr { get; set; } = 10_000_000m;
+
+        public int CollectionOptimizationMaxPriorityRows { get; set; } = 30;
+
+        public int CollectionOptimizationMaxQueueRows { get; set; } = 15;
+
+        public int CollectionOptimizationMaxImpactRows { get; set; } = 15;
+
+        public int CollectionOptimizationMaxWorkloadRows { get; set; } = 10;
     }
 }

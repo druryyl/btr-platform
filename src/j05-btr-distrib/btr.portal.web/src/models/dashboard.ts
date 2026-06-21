@@ -1133,3 +1133,237 @@ export interface DashboardAlertCenterResponse {
   Concentrations: DashboardAlertCenterConcentrationItem[]
   Navigation: DashboardAlertCenterNavigationLinks
 }
+
+export type CustomerRiskForecastCategory =
+  | 'Healthy'
+  | 'Watch'
+  | 'Attention'
+  | 'HighRisk'
+  | 'Critical'
+
+export interface DashboardCustomerRiskForecastKpi {
+  HorizonDays: number
+  CustomersForecastedAtRisk: number
+  HighRiskCustomerCount: number
+  CriticalCustomerCount: number
+  ElevatedRiskReceivable: number
+  ElevatedRiskReceivablePercent: number | null
+  PortfolioHealthScore: number
+  TotalPiutang: number
+  ForecastConfidence: ForecastConfidence | string
+  PaymentDelaySignalCount: number
+  CreditLimitSignalCount: number
+  InactivitySignalCount: number
+  PurchaseDeclineSignalCount: number
+  CollectionRiskSignalCount: number
+  HealthyCount: number
+  WatchCount: number
+  AttentionCount: number
+  HighRiskCount: number
+  CriticalCount: number
+  ExecutiveSummaryText: string
+}
+
+export interface DashboardCustomerRiskForecastDistItem {
+  Category: string
+  CategoryLabel: string
+  CustomerCount: number
+  SortOrder: number
+}
+
+export interface DashboardCustomerRiskForecastWilayahItem {
+  WilayahName: string
+  ElevatedRiskCustomerCount: number
+  SortOrder: number
+}
+
+export interface DashboardCustomerRiskForecastSignalMixItem {
+  SignalFamilyKey: string
+  SignalFamilyLabel: string
+  CustomerCount: number
+  SortOrder: number
+}
+
+export interface DashboardCustomerRiskForecastCustomerItem {
+  SortOrder: number
+  RiskPriorityScore: number
+  Category: string
+  CategoryLabel: string
+  CustomerCode: string
+  CustomerName: string
+  WilayahName: string
+  SalesPersonName: string
+  OpenBalance: number
+  OverdueBalance: number
+  DueWithinHorizon: number
+  Plafond: number
+  ProjectedOpenBalance: number
+  MtdOmzet: number
+  PriorMonthOmzet: number
+  DeclineRatio: number | null
+  DaysSinceLastFaktur: number | null
+  AvgPaymentLagDays: number | null
+  PrimarySignalKey: string
+  PrimarySignalLabel: string
+  ReasonText: string
+  RecommendationKey: string
+  RecommendationLabel: string
+  ReportRoute: string
+  DrillDownRoute: string
+}
+
+export interface DashboardCustomerRiskForecastAttentionItem {
+  SortOrder: number
+  CustomerCode: string
+  CustomerName: string
+  SignalKey: string
+  SignalLabel: string
+  Severity: string
+  Amount: number | null
+  HorizonText: string
+  RuleId: string
+  Explanation: string
+  ReportRoute: string
+}
+
+export interface DashboardCustomerRiskForecastRecommendationItem {
+  SortOrder: number
+  RecommendationKey: string
+  RecommendationLabel: string
+  CustomerCode: string
+  CustomerName: string
+  Category: string
+  ReasonText: string
+  RuleId: string
+  ReportRoute: string
+  DrillDownRoute: string
+}
+
+export interface DashboardCustomerRiskForecastResponse {
+  IsAvailable: boolean
+  GeneratedAt: string
+  BusinessDate: string
+  Kpi: DashboardCustomerRiskForecastKpi | null
+  CategoryDistribution: DashboardCustomerRiskForecastDistItem[]
+  TopWilayah: DashboardCustomerRiskForecastWilayahItem[]
+  SignalMix: DashboardCustomerRiskForecastSignalMixItem[]
+  TopCustomers: DashboardCustomerRiskForecastCustomerItem[]
+  AttentionList: DashboardCustomerRiskForecastAttentionItem[]
+  Recommendations: DashboardCustomerRiskForecastRecommendationItem[]
+}
+
+export interface DashboardCollectionOptimizationKpi {
+  ActionsTodayCount: number
+  ImmediateCollectionCount: number
+  ProactiveReminderCount: number
+  CreditReviewCount: number
+  SalesRecoveryCount: number
+  EscalateManagementCount: number
+  CollectionImpactTotal: number
+  ImmediateImpactTotal: number
+  OverdueExposure: number
+  DueWithin7Days: number
+  RecoveryVsBillingPercent: number | null
+  DeferNoActionCount: number
+  PlanningConfidence: string
+  ExecutiveSummaryText: string
+}
+
+export interface DashboardCollectionOptimizationActionDistItem {
+  ActionCategoryKey: string
+  ActionCategoryLabel: string
+  CustomerCount: number
+  ImpactTotal: number
+  SortOrder: number
+}
+
+export interface DashboardCollectionOptimizationWorkloadItem {
+  WorkloadType: string
+  EntityKey: string
+  EntityLabel: string
+  ActionCount: number
+  ImmediateCount: number
+  ImpactTotal: number
+  OverdueExposure: number
+  IsHotspot: boolean
+  SortOrder: number
+}
+
+export interface DashboardCollectionOptimizationPriorityItem {
+  SortOrder: number
+  CollectionPriorityScore: number
+  CustomerCode: string
+  CustomerName: string
+  WilayahName: string
+  SalesPersonName: string
+  Klasifikasi: string
+  ActionCategoryKey: string
+  ActionCategoryLabel: string
+  RecommendedActionKey: string
+  RecommendedActionLabel: string
+  ActionOwner: string
+  OpenBalance: number
+  OverdueBalance: number
+  DueWithin7Days: number
+  CollectionImpactAmount: number
+  M29Category: string
+  M29RecommendationKey: string
+  M29PrimarySignalKey: string
+  MinDaysUntilDue: number | null
+  CreditUtilizationPercent: number | null
+  SelectionReasonText: string
+  PriorityReasonText: string
+  ActionReasonText: string
+  TriggeredRuleIds: string
+  ReportRoute: string
+  DrillDownRoute: string
+}
+
+export interface DashboardCollectionOptimizationQueueItem {
+  QueueKey: string
+  SortOrder: number
+  CollectionPriorityScore: number
+  CustomerCode: string
+  CustomerName: string
+  WilayahName: string
+  SalesPersonName: string
+  ActionCategoryKey: string
+  ActionCategoryLabel: string
+  RecommendedActionKey: string
+  RecommendedActionLabel: string
+  ActionOwner: string
+  OverdueBalance: number
+  DueWithin7Days: number
+  CollectionImpactAmount: number
+  M29Category: string
+  QueueReasonText: string
+  ReportRoute: string
+  DrillDownRoute: string
+}
+
+export interface DashboardCollectionOptimizationImpactItem {
+  SortOrder: number
+  CustomerCode: string
+  CustomerName: string
+  WilayahName: string
+  SalesPersonName: string
+  ActionCategoryKey: string
+  ActionCategoryLabel: string
+  CollectionImpactAmount: number
+  OverdueBalance: number
+  DueWithin7Days: number
+  ReportRoute: string
+  DrillDownRoute: string
+}
+
+export interface DashboardCollectionOptimizationResponse {
+  IsAvailable: boolean
+  GeneratedAt: string
+  BusinessDate: string
+  Kpi: DashboardCollectionOptimizationKpi | null
+  ActionDistribution: DashboardCollectionOptimizationActionDistItem[]
+  Workload: DashboardCollectionOptimizationWorkloadItem[]
+  PriorityQueue: DashboardCollectionOptimizationPriorityItem[]
+  SpecializedQueues: DashboardCollectionOptimizationQueueItem[]
+  TopImpactOpportunities: DashboardCollectionOptimizationImpactItem[]
+}

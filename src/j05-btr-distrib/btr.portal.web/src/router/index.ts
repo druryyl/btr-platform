@@ -48,6 +48,16 @@ const router = createRouter({
               component: () => import('@/views/dashboard/CustomerDashboardView.vue'),
             },
             {
+              path: 'customer-risk-forecast',
+              name: 'customer-risk-forecast-dashboard',
+              component: () => import('@/views/dashboard/CustomerRiskForecastDashboardView.vue'),
+            },
+            {
+              path: 'collection-optimization',
+              name: 'collection-optimization-dashboard',
+              component: () => import('@/views/dashboard/CollectionOptimizationDashboardView.vue'),
+            },
+            {
               path: 'salesmen',
               name: 'salesmen-dashboard',
               component: () => import('@/views/dashboard/SalesmanDashboardView.vue'),

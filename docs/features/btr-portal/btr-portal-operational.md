@@ -47,7 +47,7 @@ The Dashboard has two levels:
 | Level | Route | What You See |
 | ----- | ----- | ------------ |
 | **Executive (Home)** | `/dashboard` | **Management Attention Center** — attention-oriented KPIs across Sales, Piutang, Inventory, and Purchasing; Top 5 exposure lists; domain summaries. Links go to domain dashboards only. |
-| **Detail** | `/dashboard/sales`, `/dashboard/sales-forecast`, `/dashboard/piutang`, `/dashboard/customers`, `/dashboard/salesmen`, `/dashboard/inventory`, `/dashboard/inventory-risk`, `/dashboard/inventory-forecast`, `/dashboard/purchasing`, `/dashboard/collection`, `/dashboard/cash-flow-forecast` | Full KPI row, charts, and Top 10 tables for that business area (Customer, Salesman, and Inventory Risk use attention-oriented layout). |
+| **Detail** | `/dashboard/sales`, `/dashboard/sales-forecast`, `/dashboard/piutang`, `/dashboard/customers`, `/dashboard/customer-risk-forecast`, `/dashboard/collection-optimization`, `/dashboard/salesmen`, `/dashboard/inventory`, `/dashboard/inventory-risk`, `/dashboard/inventory-forecast`, `/dashboard/purchasing`, `/dashboard/collection`, `/dashboard/cash-flow-forecast` | Full KPI row, charts, and Top 10 tables for that business area (Customer, Salesman, and Inventory Risk use attention-oriented layout). |
 
 **Navigate:** Sidebar → Dashboard → **Executive** (default home). Use **Open Alert Center** on the executive page or Sidebar → **Alert Center** for the company-wide exception feed.
 
@@ -183,6 +183,84 @@ Use **Refresh** on any dashboard page to reload data from the server. Detail pag
 - Finance validation of projected recovery vs current-month billing
 
 **Related:** [Cash Flow Forecast feature doc](../cash-flow-forecast/feature.md)
+
+---
+
+## Customer Risk Forecast Dashboard (M29)
+
+**Navigate:** Sidebar → Dashboard → Customer Risk Forecast.
+
+**Route:** `/dashboard/customer-risk-forecast`
+
+**Question answered:** Which customers are likely to become collection or relationship risks within the next 30 days?
+
+### What You See
+
+1. **Executive summary** — plain-language portfolio forecast (server-computed)
+2. **KPI row — Portfolio** — Customers at risk, elevated-risk receivable, portfolio health, forecast confidence
+3. **KPI row — Signal mix** — Payment delay, credit limit, inactivity, purchase decline, collection risk counts
+4. **Risk distribution chart** — Healthy / Watch / Attention / High Risk / Critical
+5. **Risk by Wilayah** — Top territories by elevated-risk customer count
+6. **Signal mix chart** — Forecast signal families
+7. **Elevated risk vs total piutang** — Monetary exposure comparison
+8. **Top risk customers** — Top 20 by priority score with category, reason, recommendation
+9. **Forecast attention list** — Top 25 forward-looking signals
+10. **Recommended actions** — Top 15 rule-triggered recommendations
+11. **Traceability footer** — links to Customer Analytics, Piutang, Collection, Cash Flow Forecast, reports; indicative forecast disclaimer
+
+### How to Read It
+
+- Uses **deterministic business rules** — every row includes rule traceability (CRF-*).
+- **Projected plafond** is an indicative upper bound if billing continues at current pace — not an automatic credit hold.
+- Refreshes with the existing **Customer** snapshot worker (~30 minutes) alongside Customer Analytics.
+
+### Typical Use
+
+- Early collection planning before due dates
+- Credit review before projected plafond breach
+- Sales recovery on declining or approaching-dormant accounts
+- Portfolio-level preventive resource allocation
+
+**Related:** [Customer Risk Forecast feature doc](../customer-risk-forecast/feature.md)
+
+---
+
+## Collection Optimization Dashboard (M30)
+
+**Navigate:** Sidebar → Dashboard → Collection Optimization.
+
+**Route:** `/dashboard/collection-optimization`
+
+**Question answered:** Given customer risk forecasts and today's receivables, which customers should Finance and Sales contact first today?
+
+### What You See
+
+1. **Executive summary** — daily collection priorities (server-computed)
+2. **KPI row — Workload** — Actions today, immediate collection, proactive reminders, credit review, sales recovery, collection impact
+3. **KPI row — Context** — Overdue exposure, due within 7 days, recovery vs billing %, planning confidence
+4. **Action category chart** — Donut distribution
+5. **Workload chart** — Wilayah or Salesman action counts
+6. **Impact chart** — Impact by action category
+7. **Priority queue** — Top 30 with expandable explainability (reason, rules, M29 traceability)
+8. **Specialized queues** — Proactive reminders, credit review, sales recovery, management escalation
+9. **Top impact opportunities** — Top 15 by collection impact amount
+10. **Traceability footer** — links to Customer Risk Forecast, Collection, Customer Analytics, Piutang, reports; recommendation disclaimer
+
+### How to Read It
+
+- Consumes **M29 forecast outputs** — does not recalculate forecast rules.
+- **Recovery vs billing %** copied from M20 collection snapshot at refresh (may lag up to ~30 min).
+- **Sales recovery** rows route to Sales when overdue is below configured floor (default Rp 500K).
+- Refreshes with **Customer** snapshot worker (~30 minutes) after M29 forecast step.
+
+### Typical Use
+
+- Morning collection planning — prioritized contact list for Finance
+- Proactive reminders before due date for at-risk payers
+- Credit review queue separated from collection follow-up
+- Sales recovery visits when purchase decline dominates over collection urgency
+
+**Related:** [Collection Optimization feature doc](../collection-optimization/feature.md)
 
 ---
 
@@ -777,6 +855,8 @@ BTR Portal
 | `/dashboard/salesmen` | Salesman Performance | Yes |
 | `/dashboard/collection` | Collection Dashboard | Yes |
 | `/dashboard/cash-flow-forecast` | Cash Flow Forecast Dashboard | Yes |
+| `/dashboard/customer-risk-forecast` | Customer Risk Forecast Dashboard | Yes |
+| `/dashboard/collection-optimization` | Collection Optimization Dashboard | Yes |
 | `/dashboard/inventory-forecast` | Inventory Forecast Dashboard | Yes |
 | `/dashboard/locations` | Branch / Warehouse Performance Dashboard | Yes |
 | `/dashboard/inventory` | Inventory analytics | Yes |
@@ -1074,6 +1154,8 @@ GET  /api/dashboard/inventory-risk       → 200 with token (after InventoryRisk
 GET  /api/dashboard/sales                → 200 with token
 GET  /api/dashboard/sales-forecast       → 200 with token (after Sales worker run)
 GET  /api/dashboard/cash-flow-forecast     → 200 with token (after Collection worker run)
+GET  /api/dashboard/customer-risk-forecast → 200 with token (after Customer worker run)
+GET  /api/dashboard/collection-optimization → 200 with token (after Customer worker run)
 GET  /api/dashboard/inventory-forecast     → 200 with token (after InventoryRisk worker run)
 GET  /api/dashboard/purchasing           → 200 with token
 GET  /api/reports/sales                  → 200 with token

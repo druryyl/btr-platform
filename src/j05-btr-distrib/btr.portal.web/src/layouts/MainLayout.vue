@@ -35,6 +35,16 @@ const navSections: NavSection[] = [
       { label: 'Sales Forecast', icon: 'pi pi-chart-bar', routeName: 'sales-forecast-dashboard' },
       { label: 'Piutang', icon: 'pi pi-wallet', routeName: 'piutang-dashboard' },
       { label: 'Customers', icon: 'pi pi-users', routeName: 'customers-dashboard' },
+      {
+        label: 'Customer Risk Forecast',
+        icon: 'pi pi-shield',
+        routeName: 'customer-risk-forecast-dashboard',
+      },
+      {
+        label: 'Collection Optimization',
+        icon: 'pi pi-sliders-h',
+        routeName: 'collection-optimization-dashboard',
+      },
       { label: 'Salesmen', icon: 'pi pi-id-card', routeName: 'salesmen-dashboard' },
       { label: 'Field Activity', icon: 'pi pi-map', routeName: 'field-activity-dashboard' },
       { label: 'Collection', icon: 'pi pi-money-bill', routeName: 'collection-dashboard' },

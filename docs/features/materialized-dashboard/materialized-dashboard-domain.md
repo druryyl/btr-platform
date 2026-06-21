@@ -199,6 +199,8 @@ Reads **source DALs** at refresh (Faktur, piutang open balance, customer master,
 
 **Snapshot tables:** `BTRPD_CustomerKpi`, `BTRPD_CustomerTopOmzet`, `BTRPD_CustomerTopPiutang`, `BTRPD_CustomerAttention`, `BTRPD_CustomerSegmentation`.
 
+**Customer Risk Forecast extension (M29):** Same Customer worker also materializes `BTRPD_CustomerRiskForecastKpi`, `BTRPD_CustomerRiskForecastDist`, `BTRPD_CustomerRiskForecastWilayah`, `BTRPD_CustomerRiskForecastSignalMix`, `BTRPD_CustomerRiskForecastCustomer`, `BTRPD_CustomerRiskForecastAttention`, `BTRPD_CustomerRiskForecastRecommendation` in the same transaction. Adds pelunasan summary, payment behavior, and omzet history source loads — no separate worker domain.
+
 ### Salesman (cross-domain — M18)
 
 Reads **source DALs** at refresh (Faktur with `SalesPersonId`, piutang open balance with invoicing salesman via FF1 join, salesman master, per-rep targets, last Faktur per customer with salesman) — not Sales/Piutang/Customer snapshot tables.

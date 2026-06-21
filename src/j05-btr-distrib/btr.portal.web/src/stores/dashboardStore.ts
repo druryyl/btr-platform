@@ -17,6 +17,8 @@ import {
   fetchDashboardCashFlowForecast,
   fetchDashboardInventoryForecast,
   fetchDashboardInventoryOptimization,
+  fetchDashboardCustomerRiskForecast,
+  fetchDashboardCollectionOptimization,
 } from '@/api/dashboardApi'
 import { getApiErrorMessage } from '@/api/httpClient'
 import { isInfrastructureStoreError } from '@/services/platformDiagnostics'
@@ -38,6 +40,8 @@ import type {
   DashboardCashFlowForecastResponse,
   DashboardInventoryForecastResponse,
   DashboardInventoryOptimizationResponse,
+  DashboardCustomerRiskForecastResponse,
+  DashboardCollectionOptimizationResponse,
 } from '@/models/dashboard'
 
 export const useDashboardStore = defineStore('dashboard', () => {
@@ -54,6 +58,8 @@ export const useDashboardStore = defineStore('dashboard', () => {
   const inventoryRisk = ref<DashboardInventoryRiskResponse | null>(null)
   const purchasing = ref<DashboardPurchasingResponse | null>(null)
   const customer = ref<DashboardCustomerResponse | null>(null)
+  const customerRiskForecast = ref<DashboardCustomerRiskForecastResponse | null>(null)
+  const collectionOptimization = ref<DashboardCollectionOptimizationResponse | null>(null)
   const collection = ref<DashboardCollectionResponse | null>(null)
   const location = ref<DashboardLocationResponse | null>(null)
   const salesman = ref<DashboardSalesmanResponse | null>(null)
@@ -249,6 +255,44 @@ export const useDashboardStore = defineStore('dashboard', () => {
     }
   }
 
+  async function loadCustomerRiskForecast(): Promise<void> {
+    loading.value = true
+    error.value = null
+
+    try {
+      customerRiskForecast.value = await fetchDashboardCustomerRiskForecast()
+
+      if (!customerRiskForecast.value.IsAvailable) {
+        setInfrastructureError(
+          'Customer risk forecast data is not yet available. Run the snapshot refresh worker.',
+        )
+      }
+    } catch (err) {
+      error.value = getApiErrorMessage(err, 'Failed to load customer risk forecast dashboard.')
+    } finally {
+      loading.value = false
+    }
+  }
+
+  async function loadCollectionOptimization(): Promise<void> {
+    loading.value = true
+    error.value = null
+
+    try {
+      collectionOptimization.value = await fetchDashboardCollectionOptimization()
+
+      if (!collectionOptimization.value.IsAvailable) {
+        setInfrastructureError(
+          'Collection optimization data is not yet available. Run the snapshot refresh worker for the Customer domain.',
+        )
+      }
+    } catch (err) {
+      error.value = getApiErrorMessage(err, 'Failed to load collection optimization dashboard.')
+    } finally {
+      loading.value = false
+    }
+  }
+
   async function loadCustomer(): Promise<void> {
     loading.value = true
     error.value = null
@@ -339,6 +383,8 @@ export const useDashboardStore = defineStore('dashboard', () => {
     inventoryRisk.value = null
     purchasing.value = null
     customer.value = null
+    customerRiskForecast.value = null
+    collectionOptimization.value = null
     collection.value = null
     location.value = null
     salesman.value = null
@@ -360,6 +406,8 @@ export const useDashboardStore = defineStore('dashboard', () => {
     inventoryRisk,
     purchasing,
     customer,
+    customerRiskForecast,
+    collectionOptimization,
     collection,
     location,
     salesman,
@@ -378,6 +426,8 @@ export const useDashboardStore = defineStore('dashboard', () => {
     loadInventoryRisk,
     loadPurchasing,
     loadCustomer,
+    loadCustomerRiskForecast,
+    loadCollectionOptimization,
     loadCollection,
     loadLocation,
     loadSalesman,

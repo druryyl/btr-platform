@@ -66,7 +66,7 @@ Browser → GET /api/dashboard/{sales|piutang|inventory|purchasing}  (detail —
 | `RefreshDashboardSalesSnapshotWorker` | `IFakturViewDal` (current month) + `ISalesOmzetTargetDal` | `DashboardSalesFakturAggregator` |
 | `RefreshDashboardPurchasingSnapshotWorker` | `IInvoiceViewDal` (current month) | `DashboardPurchasingInvoiceAggregator` |
 | `RefreshDashboardPurchasingManagementSnapshotWorker` | `IInvoiceViewDal` (+ `CreateTime`/`LastUpdate`), V1/M15/M19 snapshot DALs | `DashboardPurchasingManagementAggregator` |
-| `RefreshDashboardCustomerSnapshotWorker` | `IFakturViewDal`, `ICustomerLastFakturDal`, `IPiutangOpenBalanceDal`, `ICustomerDal` | `DashboardCustomerAggregator` |
+| `RefreshDashboardCustomerSnapshotWorker` | `IFakturViewDal`, `ICustomerLastFakturDal`, `IPiutangOpenBalanceDal`, `ICustomerDal`, `ICustomerOmzetHistoryDal`, `ICustomerPelunasanSummaryDal`, `ICustomerPaymentBehaviorDal` | `DashboardCustomerAggregator`, `DashboardCustomerRiskForecastAggregator` |
 | `RefreshDashboardSalesmanSnapshotWorker` | `IFakturViewDal`, `IPiutangOpenBalanceWithSalesmanDal`, `ICustomerLastFakturDal.ListLastFakturWithSalesmanByCustomer()`, `ISalesPersonDal`, `ISalesOmzetTargetDal.ListTargetsForMonth()` | `DashboardSalesmanAggregator` |
 | `RefreshDashboardInventoryRiskSnapshotWorker` | `IStokBalanceViewDal`, `IBrgLastFakturDal` | `DashboardInventoryRiskAggregator` (+ `DashboardInventoryItemGroupBuilder`) |
 | `RefreshAllDashboardSnapshotsWorker` | Orchestrator | Piutang → Inventory → InventoryRisk → Sales → Purchasing → PurchasingManagement → Customer → Salesman; per-domain failure isolation |
@@ -179,8 +179,11 @@ btr.portal.worker/          Program.cs, WorkerDependencyConfig, appsettings.json
 | `BTRPD_CustomerTopPiutang` | Top 10 customers by all-time open balance |
 | `BTRPD_CustomerAttention` | Attention list rows (customer × signal) |
 | `BTRPD_CustomerSegmentation` | Klasifikasi, Wilayah, Active/Dormant counts |
+| `BTRPD_CustomerRiskForecastKpi` | Customer risk forecast KPIs: elevated risk receivable, portfolio health, confidence (M29) |
 
 Customer worker reads **source DALs** at refresh — not Sales/Piutang snapshot tables.
+
+**M29 child tables:** `BTRPD_CustomerRiskForecastDist`, `BTRPD_CustomerRiskForecastWilayah`, `BTRPD_CustomerRiskForecastSignalMix`, `BTRPD_CustomerRiskForecastCustomer`, `BTRPD_CustomerRiskForecastAttention`, `BTRPD_CustomerRiskForecastRecommendation`.
 
 ### Salesman tables (M18 — dedicated cross-domain domain)
 

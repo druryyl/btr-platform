@@ -88,6 +88,8 @@
     <Compile Include="FinanceContext\FpKeluaranAgg\FpKeluaranViewDal.cs" />
     <Compile Include="FinanceContext\PiutangAgg\PelunasanInfoDal.cs" />
     <Compile Include="FinanceContext\PiutangAgg\PenerimaanPelunasanSalesDal.cs" />
+    <Compile Include="FinanceContext\PiutangAgg\CustomerPelunasanSummaryDal.cs" />
+    <Compile Include="FinanceContext\PiutangAgg\CustomerPaymentBehaviorDal.cs" />
     <Compile Include="FinanceContext\PiutangAgg\PiutangDal.cs" />
     <Compile Include="FinanceContext\PiutangAgg\PiutangElementDal.cs" />
     <Compile Include="FinanceContext\PiutangAgg\PiutangLunasDal.cs" />
@@ -196,6 +198,8 @@
     <Compile Include="ReportingContext\DashboardSalesAgg\DashboardSalesDal.cs" />
     <Compile Include="ReportingContext\DashboardSalesForecastAgg\DashboardSalesForecastDal.cs" />
     <Compile Include="ReportingContext\DashboardCashFlowForecastAgg\DashboardCashFlowForecastDal.cs" />
+    <Compile Include="ReportingContext\DashboardCollectionOptimizationAgg\DashboardCollectionOptimizationDal.cs" />
+    <Compile Include="ReportingContext\DashboardCustomerRiskForecastAgg\DashboardCustomerRiskForecastDal.cs" />
     <Compile Include="ReportingContext\DashboardInventoryForecastAgg\DashboardInventoryForecastDal.cs" />
     <Compile Include="ReportingContext\DashboardInventoryOptimizationAgg\DashboardInventoryOptimizationDal.cs" />
     <Compile Include="SalesContext\FakturInfoAgg\BrgConsumptionDal.cs" />
@@ -224,6 +228,7 @@
     <Compile Include="SalesContext\FakturControlAgg\FakturControlStatusDal.cs" />
     <Compile Include="SalesContext\FakturInfoAgg\FakturBrgViewDal.cs" />
     <Compile Include="SalesContext\FakturInfoAgg\CustomerLastFakturDal.cs" />
+    <Compile Include="SalesContext\FakturInfoAgg\CustomerOmzetHistoryDal.cs" />
     <Compile Include="SalesContext\FakturInfoAgg\BrgLastFakturDal.cs" />
     <Compile Include="SalesContext\FakturInfoAgg\FakturViewDal.cs" />
     <Compile Include="SalesContext\FakturInfo\FakturPrincipalOmzetDal.cs" />

@@ -7,5 +7,16 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.Contracts
         DashboardCustomerAggregateResult GetCurrent();
 
         void ReplaceCurrent(DashboardCustomerAggregateResult result, string refreshLogId);
+
+        void ReplaceCurrent(
+            DashboardCustomerAggregateResult result,
+            DashboardCustomerRiskForecastAggregateResult forecast,
+            string refreshLogId);
+
+        void ReplaceCurrent(
+            DashboardCustomerAggregateResult result,
+            DashboardCustomerRiskForecastAggregateResult forecast,
+            DashboardCollectionOptimizationAggregateResult optimization,
+            string refreshLogId);
     }
 }

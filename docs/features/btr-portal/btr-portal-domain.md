@@ -808,6 +808,8 @@ M26  Sales Forecast Dashboard                              ✓ Current
 M27  Cash Flow Forecast Dashboard                          ✓ Current
 M28  Inventory Forecast Dashboard                          ✓ Current
 M28.5 Inventory Optimization Dashboard                    ✓ Current
+M29  Customer Risk Forecast Dashboard                     ✓ Current
+M30  Collection Optimization Dashboard                    ✓ Current
 M16 Phase 2 / M19 Phase 2 / M21 Phase 2                 → Future Accepted (Executive promotions)
 Filtering Phase (date range, search)                    → Future Accepted
 ```

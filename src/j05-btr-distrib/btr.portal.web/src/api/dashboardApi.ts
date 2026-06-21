@@ -19,6 +19,8 @@ import type {
   DashboardCashFlowForecastResponse,
   DashboardInventoryForecastResponse,
   DashboardInventoryOptimizationResponse,
+  DashboardCustomerRiskForecastResponse,
+  DashboardCollectionOptimizationResponse,
 } from '@/models/dashboard'
 
 export async function fetchDashboardOverview(): Promise<DashboardOverviewResponse> {
@@ -134,6 +136,30 @@ export async function fetchDashboardPurchasing(): Promise<DashboardPurchasingRes
 
   if (!isApiSuccess(data) || !data.Data) {
     throw new Error(data.Message ?? 'Failed to load purchasing dashboard.')
+  }
+
+  return data.Data
+}
+
+export async function fetchDashboardCustomerRiskForecast(): Promise<DashboardCustomerRiskForecastResponse> {
+  const { data } = await httpClient.get<ApiResponse<DashboardCustomerRiskForecastResponse>>(
+    '/api/dashboard/customer-risk-forecast',
+  )
+
+  if (!isApiSuccess(data) || !data.Data) {
+    throw new Error(data.Message ?? 'Failed to load customer risk forecast dashboard.')
+  }
+
+  return data.Data
+}
+
+export async function fetchDashboardCollectionOptimization(): Promise<DashboardCollectionOptimizationResponse> {
+  const { data } = await httpClient.get<ApiResponse<DashboardCollectionOptimizationResponse>>(
+    '/api/dashboard/collection-optimization',
+  )
+
+  if (!isApiSuccess(data) || !data.Data) {
+    throw new Error(data.Message ?? 'Failed to load collection optimization dashboard.')
   }
 
   return data.Data
