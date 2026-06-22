@@ -58,6 +58,17 @@ namespace btr.application.ReportingContext.Shared
         public const string PiutangReportRoute = "/reports/piutang";
         public const string InventoryReportRoute = "/reports/inventory";
         public const string PurchasingReportRoute = "/reports/purchasing";
+        public const string CustomerReportRoute = "/reports/customers";
+        public const string CustomerPortfolioDashboardRoute = "/dashboard/customer-portfolio";
+
+        public const string PortfolioActionCollect = "PortfolioActionCollect";
+        public const string PortfolioActionGrow = "PortfolioActionGrow";
+        public const string PortfolioActionRetain = "PortfolioActionRetain";
+        public const string PortfolioActionProtect = "PortfolioActionProtect";
+        public const string PortfolioActionReviewCredit = "PortfolioActionReviewCredit";
+        public const string PortfolioActionRecover = "PortfolioActionRecover";
+        public const string PortfolioActionMonitor = "PortfolioActionMonitor";
+        public const string PortfolioActionExitReview = "PortfolioActionExitReview";
 
         public const string SignalExecutiveTopCustomerExposure = "ExecutiveTopCustomerExposure";
         public const string SignalExecutiveTopCategoryExposure = "ExecutiveTopCategoryExposure";
@@ -96,40 +107,15 @@ namespace btr.application.ReportingContext.Shared
         {
             var compoundDependencySteps = new List<InvestigationStep>
             {
-                new InvestigationStep
-                {
-                    Order = 1,
-                    Label = "Purchasing evidence",
-                    ReportRoute = PurchasingReportRoute
-                },
-                new InvestigationStep
-                {
-                    Order = 2,
-                    Label = "Inventory held",
-                    ReportRoute = InventoryReportRoute
-                },
-                new InvestigationStep
-                {
-                    Order = 3,
-                    Label = "At-risk exposure",
-                    DashboardRoute = "/dashboard/inventory-risk"
-                }
+                Step(1, PurchasingReportRoute),
+                Step(2, InventoryReportRoute),
+                Step(3, dashboardRoute: "/dashboard/inventory-risk")
             };
 
             var warehouseAtRiskSteps = new List<InvestigationStep>
             {
-                new InvestigationStep
-                {
-                    Order = 1,
-                    Label = "Inventory risk context",
-                    DashboardRoute = "/dashboard/inventory-risk"
-                },
-                new InvestigationStep
-                {
-                    Order = 2,
-                    Label = "Warehouse stock evidence",
-                    ReportRoute = InventoryReportRoute
-                }
+                Step(1, dashboardRoute: "/dashboard/inventory-risk"),
+                Step(2, InventoryReportRoute)
             };
 
             return new List<InvestigationRegistryEntry>
@@ -251,6 +237,55 @@ namespace btr.application.ReportingContext.Shared
                     "/dashboard/collection", PiutangReportRoute, "Next validation: Piutang Tracker (FT5)", PeriodModeAllOpenBalances),
                 Entry(SignalRankingTopPrincipal, "Top Principal", InvestigationMetadataBuilder.EntityTypePrincipal,
                     "/dashboard/purchasing", PurchasingReportRoute, null, PeriodModeCurrentMonth),
+
+                // Customer portfolio (M31)
+                Entry(PortfolioActionCollect, "Collect", InvestigationMetadataBuilder.EntityTypeCustomer,
+                    CustomerPortfolioDashboardRoute, CustomerReportRoute,
+                    steps: PortfolioActionSteps(PiutangReportRoute)),
+                Entry(PortfolioActionGrow, "Grow", InvestigationMetadataBuilder.EntityTypeCustomer,
+                    CustomerPortfolioDashboardRoute, CustomerReportRoute,
+                    steps: PortfolioActionSteps(SalesReportRoute)),
+                Entry(PortfolioActionRetain, "Retain", InvestigationMetadataBuilder.EntityTypeCustomer,
+                    CustomerPortfolioDashboardRoute, CustomerReportRoute,
+                    steps: PortfolioActionSteps(SalesReportRoute)),
+                Entry(PortfolioActionProtect, "Protect", InvestigationMetadataBuilder.EntityTypeCustomer,
+                    CustomerPortfolioDashboardRoute, CustomerReportRoute,
+                    steps: PortfolioActionSteps(PiutangReportRoute)),
+                Entry(PortfolioActionReviewCredit, "Review Credit", InvestigationMetadataBuilder.EntityTypeCustomer,
+                    CustomerPortfolioDashboardRoute, CustomerReportRoute,
+                    steps: PortfolioActionSteps(PiutangReportRoute)),
+                Entry(PortfolioActionRecover, "Recover", InvestigationMetadataBuilder.EntityTypeCustomer,
+                    CustomerPortfolioDashboardRoute, CustomerReportRoute,
+                    steps: PortfolioActionSteps(SalesReportRoute)),
+                Entry(PortfolioActionMonitor, "Monitor", InvestigationMetadataBuilder.EntityTypeCustomer,
+                    CustomerPortfolioDashboardRoute, CustomerReportRoute,
+                    steps: PortfolioActionSteps(SalesReportRoute)),
+                Entry(PortfolioActionExitReview, "Exit Review", InvestigationMetadataBuilder.EntityTypeCustomer,
+                    CustomerPortfolioDashboardRoute, CustomerReportRoute,
+                    steps: PortfolioActionSteps(SalesReportRoute)),
+            };
+        }
+
+        private static IReadOnlyList<InvestigationStep> PortfolioActionSteps(string transactionReportRoute) =>
+            new List<InvestigationStep>
+            {
+                Step(1, dashboardRoute: CustomerPortfolioDashboardRoute),
+                Step(2, CustomerReportRoute),
+                Step(3, transactionReportRoute)
+            };
+
+        private static InvestigationStep Step(
+            int order,
+            string reportRoute = null,
+            string dashboardRoute = null)
+        {
+            var route = dashboardRoute ?? reportRoute;
+            return new InvestigationStep
+            {
+                Order = order,
+                Label = PortalMenuRegistry.FormatMenuLabel(route),
+                ReportRoute = reportRoute,
+                DashboardRoute = dashboardRoute
             };
         }
 

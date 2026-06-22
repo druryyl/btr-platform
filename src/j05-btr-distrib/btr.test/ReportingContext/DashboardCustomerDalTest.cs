@@ -123,6 +123,15 @@ namespace btr.test.ReportingContext
                 string refreshLogId)
             {
             }
+
+            public void ReplaceCurrent(
+                DashboardCustomerAggregateResult result,
+                DashboardCustomerRiskForecastAggregateResult forecast,
+                DashboardCollectionOptimizationAggregateResult optimization,
+                DashboardCustomerPortfolioAggregateResult portfolio,
+                string refreshLogId)
+            {
+            }
         }
     }
 }

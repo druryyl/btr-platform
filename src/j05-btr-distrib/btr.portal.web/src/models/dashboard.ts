@@ -99,6 +99,7 @@ export interface DashboardExecutiveResponse {
   Piutang: DashboardExecutivePiutangAttention
   Purchasing: DashboardExecutivePurchasingAttention
   Inventory: DashboardExecutiveInventoryAttention
+  Portfolio?: DashboardExecutivePortfolioAttention | null
   CriticalExposures: DashboardExecutiveCriticalExposures
   DomainSummaries: DashboardExecutiveDomainSummary[]
 }
@@ -1107,6 +1108,12 @@ export interface DashboardAlertCenterConcentrationItem {
   SortOrder: number
 }
 
+export interface PortalMenuLinkDto {
+  Code: string
+  Label: string
+  Route: string
+}
+
 export interface DashboardAlertCenterNavigationLinks {
   ExecutiveDashboardRoute: string
   SalesDashboardRoute: string
@@ -1118,6 +1125,7 @@ export interface DashboardAlertCenterNavigationLinks {
   InventoryRiskDashboardRoute: string
   PurchasingDashboardRoute: string
   LocationDashboardRoute: string
+  DomainDashboards: PortalMenuLinkDto[]
 }
 
 export interface DashboardAlertCenterResponse {
@@ -1366,4 +1374,150 @@ export interface DashboardCollectionOptimizationResponse {
   PriorityQueue: DashboardCollectionOptimizationPriorityItem[]
   SpecializedQueues: DashboardCollectionOptimizationQueueItem[]
   TopImpactOpportunities: DashboardCollectionOptimizationImpactItem[]
+}
+
+export interface DashboardExecutivePortfolioAttention {
+  IsAvailable: boolean
+  PortfolioHealthyPercent: number | null
+  CustomersAtRiskCount: number
+  StrategicCustomersAtRiskCount: number
+  DashboardRoute: string
+}
+
+export interface DashboardCustomerPortfolioKpiSnapshot {
+  PortfolioHealthScore: number
+  PortfolioHealthyPercent: number
+  TotalCustomerCount: number
+  AttentionCustomerCount: number
+  StrategicCustomerCount: number
+  StrategicAtRiskCount: number
+  CustomersAtRiskCount: number
+  WorkingCapitalTiedAmount: number
+  TotalMtdOmzet: number
+  TotalOpenBalance: number
+  NeverPurchasedCount: number
+  DormantCount: number
+  DecliningCount: number
+  ExecutiveSummaryText: string
+  ValueDisclaimerText: string
+}
+
+export interface DashboardCustomerPortfolioLifecycleDistItem {
+  LifecycleStage: string
+  LifecycleLabel: string
+  CustomerCount: number
+  SortOrder: number
+}
+
+export interface DashboardCustomerPortfolioTierDistItem {
+  PortfolioTier: string
+  TierLabel: string
+  CustomerCount: number
+  SortOrder: number
+}
+
+export interface DashboardCustomerPortfolioActionDistItem {
+  PrimaryActionKey: string
+  PrimaryActionLabel: string
+  CustomerCount: number
+  SortOrder: number
+}
+
+export interface DashboardCustomerPortfolioPriorityRow {
+  SortOrder: number
+  PortfolioPriorityScore: number
+  CustomerKey: string
+  CustomerCode: string
+  CustomerName: string
+  WilayahName: string
+  Klasifikasi: string
+  LifecycleStage: string
+  LifecycleLabel: string
+  PortfolioTier: string
+  TierLabel: string
+  PrimaryActionKey: string
+  PrimaryActionLabel: string
+  ActionOwner: string
+  ActionReasonText: string
+  TriggeredRuleIds: string
+  MtdOmzet: number
+  OpenBalance: number
+  OverdueBalance: number | null
+  M29Category: string
+  SalesPersonName: string
+  SalesmanAchievementPercent: number | null
+  SalesmanHighPiutangExposure: boolean
+  IsAttention: boolean
+  M30LinkRoute: string
+  CustomerReportRoute: string
+  DrillDownRouteM17: string
+  DrillDownRouteM29: string
+}
+
+export interface DashboardCustomerPortfolioCustomerRow {
+  SortOrder: number
+  CustomerKey: string
+  CustomerCode: string
+  CustomerName: string
+  WilayahName: string
+  Klasifikasi: string
+  LifecycleStage: string
+  LifecycleLabel: string
+  PortfolioTier: string
+  TierLabel: string
+  PrimaryActionKey: string
+  PrimaryActionLabel: string
+  ActionOwner: string
+  ActionReasonText: string
+  TriggeredRuleIds: string
+  MtdOmzet: number
+  OpenBalance: number
+  OverdueBalance: number | null
+  FakturCount6Mo: number
+  IsActiveMtd: boolean
+  LastPurchaseDate: string | null
+  FirstPurchaseDate: string | null
+  M29Category: string
+  M29PrimarySignalKey: string
+  SalesPersonName: string
+  SalesmanAchievementPercent: number | null
+  SalesmanHighPiutangExposure: boolean
+  IsAttention: boolean
+  PortfolioPriorityScore: number
+  M30LinkRoute: string
+  CustomerReportRoute: string
+  DrillDownRouteM17: string
+  DrillDownRouteM29: string
+  ValueDisclaimer: string
+}
+
+export interface DashboardCustomerPortfolioConcentrationRow {
+  SortOrder: number
+  Rank: number
+  CustomerCode: string
+  CustomerName: string
+  Amount: number
+  PercentOfTotal: number | null
+}
+
+export interface DashboardCustomerPortfolioWilayahRow {
+  SortOrder: number
+  WilayahName: string
+  CustomerCount: number
+  AttentionCustomerCount: number
+}
+
+export interface DashboardCustomerPortfolioResponse {
+  IsAvailable: boolean
+  GeneratedAt: string
+  BusinessDate: string
+  Kpi: DashboardCustomerPortfolioKpiSnapshot | null
+  LifecycleDistribution: DashboardCustomerPortfolioLifecycleDistItem[]
+  TierDistribution: DashboardCustomerPortfolioTierDistItem[]
+  ActionDistribution: DashboardCustomerPortfolioActionDistItem[]
+  PriorityQueue: DashboardCustomerPortfolioPriorityRow[]
+  Customers: DashboardCustomerPortfolioCustomerRow[]
+  TopOmzet: DashboardCustomerPortfolioConcentrationRow[]
+  TopPiutang: DashboardCustomerPortfolioConcentrationRow[]
+  WilayahBreakdown: DashboardCustomerPortfolioWilayahRow[]
 }

@@ -1,0 +1,28 @@
+import type { PortalMenuCode } from './portalMenu.types'
+
+export const PortalMenuCodes = {
+  EX01: 'EX01',
+  EX02: 'EX02',
+  SA01: 'SA01',
+  SA02: 'SA02',
+  SA03: 'SA03',
+  CU01: 'CU01',
+  CU02: 'CU02',
+  CU03: 'CU03',
+  CU04: 'CU04',
+  CU05: 'CU05',
+  FI01: 'FI01',
+  FI02: 'FI02',
+  FI03: 'FI03',
+  FI04: 'FI04',
+  SF01: 'SF01',
+  SF02: 'SF02',
+  IN01: 'IN01',
+  IN02: 'IN02',
+  IN03: 'IN03',
+  IN04: 'IN04',
+  IN05: 'IN05',
+  PU01: 'PU01',
+  PU02: 'PU02',
+  OP01: 'OP01',
+} as const satisfies Record<PortalMenuCode, PortalMenuCode>

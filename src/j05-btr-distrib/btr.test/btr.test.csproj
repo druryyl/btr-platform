@@ -138,6 +138,11 @@
     <Compile Include="ReportingContext\CollectionOptimizationPolicyTest.cs" />
     <Compile Include="ReportingContext\CollectionOptimizationActionBuilderTest.cs" />
     <Compile Include="ReportingContext\DashboardCollectionOptimizationAggregatorTest.cs" />
+    <Compile Include="ReportingContext\CustomerPortfolioOptimizationPolicyTest.cs" />
+    <Compile Include="ReportingContext\CustomerPortfolioActionBuilderTest.cs" />
+    <Compile Include="ReportingContext\CustomerPortfolioLifecycleResolverTest.cs" />
+    <Compile Include="ReportingContext\CustomerPortfolioTierResolverTest.cs" />
+    <Compile Include="ReportingContext\DashboardCustomerPortfolioAggregatorTest.cs" />
     <Compile Include="ReportingContext\CustomerRiskSignalBuilderTest.cs" />
     <Compile Include="ReportingContext\CustomerRiskRecommendationBuilderTest.cs" />
     <Compile Include="ReportingContext\DashboardCustomerRiskForecastAggregatorTest.cs" />
@@ -175,6 +180,7 @@
     <Compile Include="ReportingContext\DashboardOverviewDalTest.cs" />
     <Compile Include="ReportingContext\AlertCenterRegistryTest.cs" />
     <Compile Include="ReportingContext\InvestigationRegistryTest.cs" />
+    <Compile Include="ReportingContext\PortalMenuRegistryTest.cs" />
     <Compile Include="ReportingContext\DashboardAlertCenterComposerTest.cs" />
     <Compile Include="ReportingContext\DashboardExecutiveComposerTest.cs" />
     <Compile Include="ReportingContext\FieldActivityComposerTest.cs" />

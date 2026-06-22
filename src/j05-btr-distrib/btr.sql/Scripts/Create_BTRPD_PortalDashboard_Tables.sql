@@ -2155,6 +2155,252 @@ CREATE INDEX IX_BTRPD_CollectionOptimizationImpact_SnapshotKey_SortOrder
     ON BTRPD_CollectionOptimizationImpact (SnapshotKey, SortOrder)
 GO
 
+-- BTRPD_CustomerPortfolioKpi (M31)
+IF OBJECT_ID(N'dbo.BTRPD_CustomerPortfolioKpi', N'U') IS NULL
+BEGIN
+CREATE TABLE BTRPD_CustomerPortfolioKpi
+(
+    SnapshotKey                 VARCHAR(10)    NOT NULL CONSTRAINT DF_BTRPD_CustomerPortfolioKpi_SnapshotKey DEFAULT('CURRENT'),
+    GeneratedAt                   DATETIME       NOT NULL CONSTRAINT DF_BTRPD_CustomerPortfolioKpi_GeneratedAt DEFAULT('3000-01-01'),
+    BusinessDate                  DATETIME       NOT NULL CONSTRAINT DF_BTRPD_CustomerPortfolioKpi_BusinessDate DEFAULT('3000-01-01'),
+    PortfolioHealthScore          DECIMAL(9,4)   NOT NULL CONSTRAINT DF_BTRPD_CustomerPortfolioKpi_PortfolioHealthScore DEFAULT(0),
+    PortfolioHealthyPercent       DECIMAL(9,4)   NOT NULL CONSTRAINT DF_BTRPD_CustomerPortfolioKpi_PortfolioHealthyPercent DEFAULT(0),
+    TotalCustomerCount            INT            NOT NULL CONSTRAINT DF_BTRPD_CustomerPortfolioKpi_TotalCustomerCount DEFAULT(0),
+    AttentionCustomerCount        INT            NOT NULL CONSTRAINT DF_BTRPD_CustomerPortfolioKpi_AttentionCustomerCount DEFAULT(0),
+    StrategicCustomerCount        INT            NOT NULL CONSTRAINT DF_BTRPD_CustomerPortfolioKpi_StrategicCustomerCount DEFAULT(0),
+    StrategicAtRiskCount          INT            NOT NULL CONSTRAINT DF_BTRPD_CustomerPortfolioKpi_StrategicAtRiskCount DEFAULT(0),
+    CustomersAtRiskCount          INT            NOT NULL CONSTRAINT DF_BTRPD_CustomerPortfolioKpi_CustomersAtRiskCount DEFAULT(0),
+    WorkingCapitalTiedAmount      DECIMAL(18,2)  NOT NULL CONSTRAINT DF_BTRPD_CustomerPortfolioKpi_WorkingCapitalTiedAmount DEFAULT(0),
+    TotalMtdOmzet                 DECIMAL(18,2)  NOT NULL CONSTRAINT DF_BTRPD_CustomerPortfolioKpi_TotalMtdOmzet DEFAULT(0),
+    TotalOpenBalance              DECIMAL(18,2)  NOT NULL CONSTRAINT DF_BTRPD_CustomerPortfolioKpi_TotalOpenBalance DEFAULT(0),
+    NeverPurchasedCount           INT            NOT NULL CONSTRAINT DF_BTRPD_CustomerPortfolioKpi_NeverPurchasedCount DEFAULT(0),
+    DormantCount                  INT            NOT NULL CONSTRAINT DF_BTRPD_CustomerPortfolioKpi_DormantCount DEFAULT(0),
+    DecliningCount                INT            NOT NULL CONSTRAINT DF_BTRPD_CustomerPortfolioKpi_DecliningCount DEFAULT(0),
+    ExecutiveSummaryText          VARCHAR(2000)  NOT NULL CONSTRAINT DF_BTRPD_CustomerPortfolioKpi_ExecutiveSummaryText DEFAULT(''),
+    ValueDisclaimerText           VARCHAR(500)   NOT NULL CONSTRAINT DF_BTRPD_CustomerPortfolioKpi_ValueDisclaimerText DEFAULT(''),
+    LastRefreshLogId              VARCHAR(26)    NOT NULL CONSTRAINT DF_BTRPD_CustomerPortfolioKpi_LastRefreshLogId DEFAULT(''),
+
+    CONSTRAINT PK_BTRPD_CustomerPortfolioKpi PRIMARY KEY CLUSTERED (SnapshotKey)
+)
+END
+GO
+
+-- BTRPD_CustomerPortfolioLifecycleDist (M31)
+IF OBJECT_ID(N'dbo.BTRPD_CustomerPortfolioLifecycleDist', N'U') IS NULL
+BEGIN
+CREATE TABLE BTRPD_CustomerPortfolioLifecycleDist
+(
+    CustomerPortfolioLifecycleDistId VARCHAR(26)  NOT NULL CONSTRAINT DF_BTRPD_CustomerPortfolioLifecycleDist_Id DEFAULT(''),
+    SnapshotKey                      VARCHAR(10)  NOT NULL CONSTRAINT DF_BTRPD_CustomerPortfolioLifecycleDist_SnapshotKey DEFAULT('CURRENT'),
+    LifecycleStage                   VARCHAR(30)  NOT NULL CONSTRAINT DF_BTRPD_CustomerPortfolioLifecycleDist_LifecycleStage DEFAULT(''),
+    LifecycleLabel                   VARCHAR(60)  NOT NULL CONSTRAINT DF_BTRPD_CustomerPortfolioLifecycleDist_LifecycleLabel DEFAULT(''),
+    CustomerCount                    INT          NOT NULL CONSTRAINT DF_BTRPD_CustomerPortfolioLifecycleDist_CustomerCount DEFAULT(0),
+    SortOrder                        INT          NOT NULL CONSTRAINT DF_BTRPD_CustomerPortfolioLifecycleDist_SortOrder DEFAULT(0),
+
+    CONSTRAINT PK_BTRPD_CustomerPortfolioLifecycleDist PRIMARY KEY CLUSTERED (CustomerPortfolioLifecycleDistId)
+)
+END
+GO
+
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_BTRPD_CustomerPortfolioLifecycleDist_SnapshotKey' AND object_id = OBJECT_ID(N'dbo.BTRPD_CustomerPortfolioLifecycleDist'))
+CREATE INDEX IX_BTRPD_CustomerPortfolioLifecycleDist_SnapshotKey
+    ON BTRPD_CustomerPortfolioLifecycleDist (SnapshotKey, SortOrder)
+GO
+
+-- BTRPD_CustomerPortfolioTierDist (M31)
+IF OBJECT_ID(N'dbo.BTRPD_CustomerPortfolioTierDist', N'U') IS NULL
+BEGIN
+CREATE TABLE BTRPD_CustomerPortfolioTierDist
+(
+    CustomerPortfolioTierDistId  VARCHAR(26)  NOT NULL CONSTRAINT DF_BTRPD_CustomerPortfolioTierDist_Id DEFAULT(''),
+    SnapshotKey                  VARCHAR(10)  NOT NULL CONSTRAINT DF_BTRPD_CustomerPortfolioTierDist_SnapshotKey DEFAULT('CURRENT'),
+    PortfolioTier                VARCHAR(30)  NOT NULL CONSTRAINT DF_BTRPD_CustomerPortfolioTierDist_PortfolioTier DEFAULT(''),
+    TierLabel                    VARCHAR(60)  NOT NULL CONSTRAINT DF_BTRPD_CustomerPortfolioTierDist_TierLabel DEFAULT(''),
+    CustomerCount                INT          NOT NULL CONSTRAINT DF_BTRPD_CustomerPortfolioTierDist_CustomerCount DEFAULT(0),
+    SortOrder                    INT          NOT NULL CONSTRAINT DF_BTRPD_CustomerPortfolioTierDist_SortOrder DEFAULT(0),
+
+    CONSTRAINT PK_BTRPD_CustomerPortfolioTierDist PRIMARY KEY CLUSTERED (CustomerPortfolioTierDistId)
+)
+END
+GO
+
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_BTRPD_CustomerPortfolioTierDist_SnapshotKey' AND object_id = OBJECT_ID(N'dbo.BTRPD_CustomerPortfolioTierDist'))
+CREATE INDEX IX_BTRPD_CustomerPortfolioTierDist_SnapshotKey
+    ON BTRPD_CustomerPortfolioTierDist (SnapshotKey, SortOrder)
+GO
+
+-- BTRPD_CustomerPortfolioActionDist (M31)
+IF OBJECT_ID(N'dbo.BTRPD_CustomerPortfolioActionDist', N'U') IS NULL
+BEGIN
+CREATE TABLE BTRPD_CustomerPortfolioActionDist
+(
+    CustomerPortfolioActionDistId VARCHAR(26)  NOT NULL CONSTRAINT DF_BTRPD_CustomerPortfolioActionDist_Id DEFAULT(''),
+    SnapshotKey                   VARCHAR(10)  NOT NULL CONSTRAINT DF_BTRPD_CustomerPortfolioActionDist_SnapshotKey DEFAULT('CURRENT'),
+    PrimaryActionKey              VARCHAR(30)  NOT NULL CONSTRAINT DF_BTRPD_CustomerPortfolioActionDist_PrimaryActionKey DEFAULT(''),
+    PrimaryActionLabel            VARCHAR(60)  NOT NULL CONSTRAINT DF_BTRPD_CustomerPortfolioActionDist_PrimaryActionLabel DEFAULT(''),
+    CustomerCount                 INT          NOT NULL CONSTRAINT DF_BTRPD_CustomerPortfolioActionDist_CustomerCount DEFAULT(0),
+    SortOrder                     INT          NOT NULL CONSTRAINT DF_BTRPD_CustomerPortfolioActionDist_SortOrder DEFAULT(0),
+
+    CONSTRAINT PK_BTRPD_CustomerPortfolioActionDist PRIMARY KEY CLUSTERED (CustomerPortfolioActionDistId)
+)
+END
+GO
+
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_BTRPD_CustomerPortfolioActionDist_SnapshotKey' AND object_id = OBJECT_ID(N'dbo.BTRPD_CustomerPortfolioActionDist'))
+CREATE INDEX IX_BTRPD_CustomerPortfolioActionDist_SnapshotKey
+    ON BTRPD_CustomerPortfolioActionDist (SnapshotKey, SortOrder)
+GO
+
+-- BTRPD_CustomerPortfolioPriority (M31)
+IF OBJECT_ID(N'dbo.BTRPD_CustomerPortfolioPriority', N'U') IS NULL
+BEGIN
+CREATE TABLE BTRPD_CustomerPortfolioPriority
+(
+    CustomerPortfolioPriorityId   VARCHAR(26)    NOT NULL CONSTRAINT DF_BTRPD_CustomerPortfolioPriority_Id DEFAULT(''),
+    SnapshotKey                   VARCHAR(10)    NOT NULL CONSTRAINT DF_BTRPD_CustomerPortfolioPriority_SnapshotKey DEFAULT('CURRENT'),
+    SortOrder                     INT            NOT NULL CONSTRAINT DF_BTRPD_CustomerPortfolioPriority_SortOrder DEFAULT(0),
+    PortfolioPriorityScore        INT            NOT NULL CONSTRAINT DF_BTRPD_CustomerPortfolioPriority_PortfolioPriorityScore DEFAULT(0),
+    CustomerKey                   VARCHAR(100)   NOT NULL CONSTRAINT DF_BTRPD_CustomerPortfolioPriority_CustomerKey DEFAULT(''),
+    CustomerCode                  VARCHAR(20)    NOT NULL CONSTRAINT DF_BTRPD_CustomerPortfolioPriority_CustomerCode DEFAULT(''),
+    CustomerName                  VARCHAR(100)   NOT NULL CONSTRAINT DF_BTRPD_CustomerPortfolioPriority_CustomerName DEFAULT(''),
+    WilayahName                   VARCHAR(30)    NOT NULL CONSTRAINT DF_BTRPD_CustomerPortfolioPriority_WilayahName DEFAULT(''),
+    Klasifikasi                   VARCHAR(30)    NOT NULL CONSTRAINT DF_BTRPD_CustomerPortfolioPriority_Klasifikasi DEFAULT(''),
+    LifecycleStage                VARCHAR(30)    NOT NULL CONSTRAINT DF_BTRPD_CustomerPortfolioPriority_LifecycleStage DEFAULT(''),
+    LifecycleLabel                VARCHAR(60)    NOT NULL CONSTRAINT DF_BTRPD_CustomerPortfolioPriority_LifecycleLabel DEFAULT(''),
+    PortfolioTier                 VARCHAR(30)    NOT NULL CONSTRAINT DF_BTRPD_CustomerPortfolioPriority_PortfolioTier DEFAULT(''),
+    TierLabel                     VARCHAR(60)    NOT NULL CONSTRAINT DF_BTRPD_CustomerPortfolioPriority_TierLabel DEFAULT(''),
+    PrimaryActionKey              VARCHAR(30)    NOT NULL CONSTRAINT DF_BTRPD_CustomerPortfolioPriority_PrimaryActionKey DEFAULT(''),
+    PrimaryActionLabel            VARCHAR(60)    NOT NULL CONSTRAINT DF_BTRPD_CustomerPortfolioPriority_PrimaryActionLabel DEFAULT(''),
+    ActionOwner                   VARCHAR(30)    NOT NULL CONSTRAINT DF_BTRPD_CustomerPortfolioPriority_ActionOwner DEFAULT(''),
+    ActionReasonText              VARCHAR(500)   NOT NULL CONSTRAINT DF_BTRPD_CustomerPortfolioPriority_ActionReasonText DEFAULT(''),
+    TriggeredRuleIds              VARCHAR(200)   NOT NULL CONSTRAINT DF_BTRPD_CustomerPortfolioPriority_TriggeredRuleIds DEFAULT(''),
+    MtdOmzet                      DECIMAL(18,2)  NOT NULL CONSTRAINT DF_BTRPD_CustomerPortfolioPriority_MtdOmzet DEFAULT(0),
+    OpenBalance                   DECIMAL(18,2)  NOT NULL CONSTRAINT DF_BTRPD_CustomerPortfolioPriority_OpenBalance DEFAULT(0),
+    OverdueBalance                DECIMAL(18,2)  NULL,
+    M29Category                   VARCHAR(20)    NOT NULL CONSTRAINT DF_BTRPD_CustomerPortfolioPriority_M29Category DEFAULT(''),
+    SalesPersonName               VARCHAR(50)    NOT NULL CONSTRAINT DF_BTRPD_CustomerPortfolioPriority_SalesPersonName DEFAULT(''),
+    SalesmanAchievementPercent    DECIMAL(9,4)   NULL,
+    SalesmanHighPiutangExposure   BIT            NOT NULL CONSTRAINT DF_BTRPD_CustomerPortfolioPriority_SalesmanHighPiutangExposure DEFAULT(0),
+    IsAttention                   BIT            NOT NULL CONSTRAINT DF_BTRPD_CustomerPortfolioPriority_IsAttention DEFAULT(0),
+    M30LinkRoute                  VARCHAR(200)   NOT NULL CONSTRAINT DF_BTRPD_CustomerPortfolioPriority_M30LinkRoute DEFAULT(''),
+    CustomerReportRoute           VARCHAR(100)   NOT NULL CONSTRAINT DF_BTRPD_CustomerPortfolioPriority_CustomerReportRoute DEFAULT(''),
+    DrillDownRouteM17             VARCHAR(100)   NOT NULL CONSTRAINT DF_BTRPD_CustomerPortfolioPriority_DrillDownRouteM17 DEFAULT(''),
+    DrillDownRouteM29             VARCHAR(100)   NOT NULL CONSTRAINT DF_BTRPD_CustomerPortfolioPriority_DrillDownRouteM29 DEFAULT(''),
+
+    CONSTRAINT PK_BTRPD_CustomerPortfolioPriority PRIMARY KEY CLUSTERED (CustomerPortfolioPriorityId)
+)
+END
+GO
+
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_BTRPD_CustomerPortfolioPriority_SnapshotKey_SortOrder' AND object_id = OBJECT_ID(N'dbo.BTRPD_CustomerPortfolioPriority'))
+CREATE INDEX IX_BTRPD_CustomerPortfolioPriority_SnapshotKey_SortOrder
+    ON BTRPD_CustomerPortfolioPriority (SnapshotKey, SortOrder)
+GO
+
+-- BTRPD_CustomerPortfolioCustomer (M31)
+IF OBJECT_ID(N'dbo.BTRPD_CustomerPortfolioCustomer', N'U') IS NULL
+BEGIN
+CREATE TABLE BTRPD_CustomerPortfolioCustomer
+(
+    CustomerPortfolioCustomerId   VARCHAR(26)    NOT NULL CONSTRAINT DF_BTRPD_CustomerPortfolioCustomer_Id DEFAULT(''),
+    SnapshotKey                   VARCHAR(10)    NOT NULL CONSTRAINT DF_BTRPD_CustomerPortfolioCustomer_SnapshotKey DEFAULT('CURRENT'),
+    SortOrder                     INT            NOT NULL CONSTRAINT DF_BTRPD_CustomerPortfolioCustomer_SortOrder DEFAULT(0),
+    CustomerKey                   VARCHAR(100)   NOT NULL CONSTRAINT DF_BTRPD_CustomerPortfolioCustomer_CustomerKey DEFAULT(''),
+    CustomerCode                  VARCHAR(20)    NOT NULL CONSTRAINT DF_BTRPD_CustomerPortfolioCustomer_CustomerCode DEFAULT(''),
+    CustomerName                  VARCHAR(100)   NOT NULL CONSTRAINT DF_BTRPD_CustomerPortfolioCustomer_CustomerName DEFAULT(''),
+    WilayahName                   VARCHAR(30)    NOT NULL CONSTRAINT DF_BTRPD_CustomerPortfolioCustomer_WilayahName DEFAULT(''),
+    Klasifikasi                   VARCHAR(30)    NOT NULL CONSTRAINT DF_BTRPD_CustomerPortfolioCustomer_Klasifikasi DEFAULT(''),
+    LifecycleStage                VARCHAR(30)    NOT NULL CONSTRAINT DF_BTRPD_CustomerPortfolioCustomer_LifecycleStage DEFAULT(''),
+    LifecycleLabel                VARCHAR(60)    NOT NULL CONSTRAINT DF_BTRPD_CustomerPortfolioCustomer_LifecycleLabel DEFAULT(''),
+    PortfolioTier                 VARCHAR(30)    NOT NULL CONSTRAINT DF_BTRPD_CustomerPortfolioCustomer_PortfolioTier DEFAULT(''),
+    TierLabel                     VARCHAR(60)    NOT NULL CONSTRAINT DF_BTRPD_CustomerPortfolioCustomer_TierLabel DEFAULT(''),
+    PrimaryActionKey              VARCHAR(30)    NOT NULL CONSTRAINT DF_BTRPD_CustomerPortfolioCustomer_PrimaryActionKey DEFAULT(''),
+    PrimaryActionLabel            VARCHAR(60)    NOT NULL CONSTRAINT DF_BTRPD_CustomerPortfolioCustomer_PrimaryActionLabel DEFAULT(''),
+    ActionOwner                   VARCHAR(30)    NOT NULL CONSTRAINT DF_BTRPD_CustomerPortfolioCustomer_ActionOwner DEFAULT(''),
+    ActionReasonText              VARCHAR(500)   NOT NULL CONSTRAINT DF_BTRPD_CustomerPortfolioCustomer_ActionReasonText DEFAULT(''),
+    TriggeredRuleIds              VARCHAR(200)   NOT NULL CONSTRAINT DF_BTRPD_CustomerPortfolioCustomer_TriggeredRuleIds DEFAULT(''),
+    MtdOmzet                      DECIMAL(18,2)  NOT NULL CONSTRAINT DF_BTRPD_CustomerPortfolioCustomer_MtdOmzet DEFAULT(0),
+    OpenBalance                   DECIMAL(18,2)  NOT NULL CONSTRAINT DF_BTRPD_CustomerPortfolioCustomer_OpenBalance DEFAULT(0),
+    OverdueBalance                DECIMAL(18,2)  NULL,
+    FakturCount6Mo                INT            NOT NULL CONSTRAINT DF_BTRPD_CustomerPortfolioCustomer_FakturCount6Mo DEFAULT(0),
+    IsActiveMtd                   BIT            NOT NULL CONSTRAINT DF_BTRPD_CustomerPortfolioCustomer_IsActiveMtd DEFAULT(0),
+    LastPurchaseDate              DATETIME       NULL,
+    FirstPurchaseDate             DATETIME       NULL,
+    M29Category                   VARCHAR(20)    NOT NULL CONSTRAINT DF_BTRPD_CustomerPortfolioCustomer_M29Category DEFAULT(''),
+    M29PrimarySignalKey           VARCHAR(30)    NOT NULL CONSTRAINT DF_BTRPD_CustomerPortfolioCustomer_M29PrimarySignalKey DEFAULT(''),
+    SalesPersonName               VARCHAR(50)    NOT NULL CONSTRAINT DF_BTRPD_CustomerPortfolioCustomer_SalesPersonName DEFAULT(''),
+    SalesmanAchievementPercent    DECIMAL(9,4)   NULL,
+    SalesmanHighPiutangExposure   BIT            NOT NULL CONSTRAINT DF_BTRPD_CustomerPortfolioCustomer_SalesmanHighPiutangExposure DEFAULT(0),
+    IsAttention                   BIT            NOT NULL CONSTRAINT DF_BTRPD_CustomerPortfolioCustomer_IsAttention DEFAULT(0),
+    PortfolioPriorityScore        INT            NOT NULL CONSTRAINT DF_BTRPD_CustomerPortfolioCustomer_PortfolioPriorityScore DEFAULT(0),
+    M30LinkRoute                  VARCHAR(200)   NOT NULL CONSTRAINT DF_BTRPD_CustomerPortfolioCustomer_M30LinkRoute DEFAULT(''),
+    CustomerReportRoute           VARCHAR(100)   NOT NULL CONSTRAINT DF_BTRPD_CustomerPortfolioCustomer_CustomerReportRoute DEFAULT(''),
+    DrillDownRouteM17             VARCHAR(100)   NOT NULL CONSTRAINT DF_BTRPD_CustomerPortfolioCustomer_DrillDownRouteM17 DEFAULT(''),
+    DrillDownRouteM29             VARCHAR(100)   NOT NULL CONSTRAINT DF_BTRPD_CustomerPortfolioCustomer_DrillDownRouteM29 DEFAULT(''),
+    ValueDisclaimer               VARCHAR(500)   NOT NULL CONSTRAINT DF_BTRPD_CustomerPortfolioCustomer_ValueDisclaimer DEFAULT(''),
+
+    CONSTRAINT PK_BTRPD_CustomerPortfolioCustomer PRIMARY KEY CLUSTERED (CustomerPortfolioCustomerId)
+)
+END
+GO
+
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_BTRPD_CustomerPortfolioCustomer_SnapshotKey_IsAttention' AND object_id = OBJECT_ID(N'dbo.BTRPD_CustomerPortfolioCustomer'))
+CREATE INDEX IX_BTRPD_CustomerPortfolioCustomer_SnapshotKey_IsAttention
+    ON BTRPD_CustomerPortfolioCustomer (SnapshotKey, IsAttention)
+GO
+
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_BTRPD_CustomerPortfolioCustomer_SnapshotKey_CustomerCode' AND object_id = OBJECT_ID(N'dbo.BTRPD_CustomerPortfolioCustomer'))
+CREATE INDEX IX_BTRPD_CustomerPortfolioCustomer_SnapshotKey_CustomerCode
+    ON BTRPD_CustomerPortfolioCustomer (SnapshotKey, CustomerCode)
+GO
+
+-- BTRPD_CustomerPortfolioConcentration (M31)
+IF OBJECT_ID(N'dbo.BTRPD_CustomerPortfolioConcentration', N'U') IS NULL
+BEGIN
+CREATE TABLE BTRPD_CustomerPortfolioConcentration
+(
+    CustomerPortfolioConcentrationId VARCHAR(26)  NOT NULL CONSTRAINT DF_BTRPD_CustomerPortfolioConcentration_Id DEFAULT(''),
+    SnapshotKey                      VARCHAR(10)  NOT NULL CONSTRAINT DF_BTRPD_CustomerPortfolioConcentration_SnapshotKey DEFAULT('CURRENT'),
+    ConcentrationType                VARCHAR(20)  NOT NULL CONSTRAINT DF_BTRPD_CustomerPortfolioConcentration_ConcentrationType DEFAULT(''),
+    SortOrder                        INT          NOT NULL CONSTRAINT DF_BTRPD_CustomerPortfolioConcentration_SortOrder DEFAULT(0),
+    Rank                             INT          NOT NULL CONSTRAINT DF_BTRPD_CustomerPortfolioConcentration_Rank DEFAULT(0),
+    CustomerCode                     VARCHAR(20)  NOT NULL CONSTRAINT DF_BTRPD_CustomerPortfolioConcentration_CustomerCode DEFAULT(''),
+    CustomerName                     VARCHAR(100) NOT NULL CONSTRAINT DF_BTRPD_CustomerPortfolioConcentration_CustomerName DEFAULT(''),
+    Amount                           DECIMAL(18,2) NOT NULL CONSTRAINT DF_BTRPD_CustomerPortfolioConcentration_Amount DEFAULT(0),
+    PercentOfTotal                   DECIMAL(9,4) NULL,
+
+    CONSTRAINT PK_BTRPD_CustomerPortfolioConcentration PRIMARY KEY CLUSTERED (CustomerPortfolioConcentrationId)
+)
+END
+GO
+
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_BTRPD_CustomerPortfolioConcentration_SnapshotKey_Type' AND object_id = OBJECT_ID(N'dbo.BTRPD_CustomerPortfolioConcentration'))
+CREATE INDEX IX_BTRPD_CustomerPortfolioConcentration_SnapshotKey_Type
+    ON BTRPD_CustomerPortfolioConcentration (SnapshotKey, ConcentrationType, SortOrder)
+GO
+
+-- BTRPD_CustomerPortfolioWilayah (M31)
+IF OBJECT_ID(N'dbo.BTRPD_CustomerPortfolioWilayah', N'U') IS NULL
+BEGIN
+CREATE TABLE BTRPD_CustomerPortfolioWilayah
+(
+    CustomerPortfolioWilayahId VARCHAR(26)  NOT NULL CONSTRAINT DF_BTRPD_CustomerPortfolioWilayah_Id DEFAULT(''),
+    SnapshotKey                VARCHAR(10)  NOT NULL CONSTRAINT DF_BTRPD_CustomerPortfolioWilayah_SnapshotKey DEFAULT('CURRENT'),
+    SortOrder                  INT          NOT NULL CONSTRAINT DF_BTRPD_CustomerPortfolioWilayah_SortOrder DEFAULT(0),
+    WilayahName                VARCHAR(30)  NOT NULL CONSTRAINT DF_BTRPD_CustomerPortfolioWilayah_WilayahName DEFAULT(''),
+    CustomerCount              INT          NOT NULL CONSTRAINT DF_BTRPD_CustomerPortfolioWilayah_CustomerCount DEFAULT(0),
+    AttentionCustomerCount     INT          NOT NULL CONSTRAINT DF_BTRPD_CustomerPortfolioWilayah_AttentionCustomerCount DEFAULT(0),
+
+    CONSTRAINT PK_BTRPD_CustomerPortfolioWilayah PRIMARY KEY CLUSTERED (CustomerPortfolioWilayahId)
+)
+END
+GO
+
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_BTRPD_CustomerPortfolioWilayah_SnapshotKey' AND object_id = OBJECT_ID(N'dbo.BTRPD_CustomerPortfolioWilayah'))
+CREATE INDEX IX_BTRPD_CustomerPortfolioWilayah_SnapshotKey
+    ON BTRPD_CustomerPortfolioWilayah (SnapshotKey, SortOrder)
+GO
+
 -- IX_BTR_Piutang_OpenBalance
 IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_BTR_Piutang_OpenBalance' AND object_id = OBJECT_ID(N'dbo.BTR_Piutang'))
 CREATE INDEX IX_BTR_Piutang_OpenBalance

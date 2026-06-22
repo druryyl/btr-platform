@@ -19,6 +19,7 @@ import {
   fetchDashboardInventoryOptimization,
   fetchDashboardCustomerRiskForecast,
   fetchDashboardCollectionOptimization,
+  fetchDashboardCustomerPortfolio,
 } from '@/api/dashboardApi'
 import { getApiErrorMessage } from '@/api/httpClient'
 import { isInfrastructureStoreError } from '@/services/platformDiagnostics'
@@ -42,6 +43,7 @@ import type {
   DashboardInventoryOptimizationResponse,
   DashboardCustomerRiskForecastResponse,
   DashboardCollectionOptimizationResponse,
+  DashboardCustomerPortfolioResponse,
 } from '@/models/dashboard'
 
 export const useDashboardStore = defineStore('dashboard', () => {
@@ -60,6 +62,7 @@ export const useDashboardStore = defineStore('dashboard', () => {
   const customer = ref<DashboardCustomerResponse | null>(null)
   const customerRiskForecast = ref<DashboardCustomerRiskForecastResponse | null>(null)
   const collectionOptimization = ref<DashboardCollectionOptimizationResponse | null>(null)
+  const customerPortfolio = ref<DashboardCustomerPortfolioResponse | null>(null)
   const collection = ref<DashboardCollectionResponse | null>(null)
   const location = ref<DashboardLocationResponse | null>(null)
   const salesman = ref<DashboardSalesmanResponse | null>(null)
@@ -293,6 +296,25 @@ export const useDashboardStore = defineStore('dashboard', () => {
     }
   }
 
+  async function loadCustomerPortfolio(): Promise<void> {
+    loading.value = true
+    error.value = null
+
+    try {
+      customerPortfolio.value = await fetchDashboardCustomerPortfolio()
+
+      if (!customerPortfolio.value.IsAvailable) {
+        setInfrastructureError(
+          'Customer portfolio data is not yet available. Run the snapshot refresh worker for the Customer domain.',
+        )
+      }
+    } catch (err) {
+      error.value = getApiErrorMessage(err, 'Failed to load customer portfolio dashboard.')
+    } finally {
+      loading.value = false
+    }
+  }
+
   async function loadCustomer(): Promise<void> {
     loading.value = true
     error.value = null
@@ -385,6 +407,7 @@ export const useDashboardStore = defineStore('dashboard', () => {
     customer.value = null
     customerRiskForecast.value = null
     collectionOptimization.value = null
+    customerPortfolio.value = null
     collection.value = null
     location.value = null
     salesman.value = null
@@ -408,6 +431,7 @@ export const useDashboardStore = defineStore('dashboard', () => {
     customer,
     customerRiskForecast,
     collectionOptimization,
+    customerPortfolio,
     collection,
     location,
     salesman,
@@ -428,6 +452,7 @@ export const useDashboardStore = defineStore('dashboard', () => {
     loadCustomer,
     loadCustomerRiskForecast,
     loadCollectionOptimization,
+    loadCustomerPortfolio,
     loadCollection,
     loadLocation,
     loadSalesman,

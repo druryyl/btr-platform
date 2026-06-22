@@ -5,6 +5,7 @@ import Button from 'primevue/button'
 import Message from 'primevue/message'
 import PlatformSnapshotHealthBanners from '@/components/platform/PlatformSnapshotHealthBanners.vue'
 import ExecutiveAttentionCard from '@/components/dashboard/ExecutiveAttentionCard.vue'
+import ExecutivePortfolioSummarySection from '@/components/dashboard/ExecutivePortfolioSummarySection.vue'
 import ExecutiveDomainSummaryRow from '@/components/dashboard/ExecutiveDomainSummaryRow.vue'
 import ExecutiveExposureSection from '@/components/dashboard/ExecutiveExposureSection.vue'
 import { formatCurrency, formatDateTime, formatPercent } from '@/services/formatters'
@@ -197,6 +198,11 @@ onMounted(() => {
         </ExecutiveAttentionCard>
       </div>
     </section>
+
+    <ExecutivePortfolioSummarySection
+      :portfolio="dashboard.executive?.Portfolio"
+      :loading="dashboard.loading"
+    />
 
     <section class="dashboard-home__section">
       <h2 class="dashboard-home__section-title">Critical Exposure Lists</h2>

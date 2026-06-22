@@ -58,6 +58,11 @@ const router = createRouter({
               component: () => import('@/views/dashboard/CollectionOptimizationDashboardView.vue'),
             },
             {
+              path: 'customer-portfolio',
+              name: 'customer-portfolio-dashboard',
+              component: () => import('@/views/dashboard/CustomerPortfolioDashboardView.vue'),
+            },
+            {
               path: 'salesmen',
               name: 'salesmen-dashboard',
               component: () => import('@/views/dashboard/SalesmanDashboardView.vue'),
@@ -133,6 +138,11 @@ const router = createRouter({
           path: 'reports/purchasing',
           name: 'purchasing-report',
           component: () => import('@/views/reports/PurchasingReportView.vue'),
+        },
+        {
+          path: 'reports/customers',
+          name: 'customer-report',
+          component: () => import('@/views/reports/CustomerReportView.vue'),
         },
       ],
     },

@@ -85,5 +85,19 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg
         public int CollectionOptimizationMaxImpactRows { get; set; } = 15;
 
         public int CollectionOptimizationMaxWorkloadRows { get; set; } = 10;
+
+        public int CustomerPortfolioNewCustomerDaysThreshold { get; set; } = 90;
+
+        public int CustomerPortfolioPurchaseFrequencyLookbackMonths { get; set; } = 6;
+
+        public int CustomerPortfolioHighFrequencyFakturCountMin { get; set; } = 4;
+
+        public decimal CustomerPortfolioStrategicOpenBalanceFloorIdr { get; set; } = 10_000_000m;
+
+        public decimal CustomerPortfolioHighValueMtdOmzetFloorIdr { get; set; } = 5_000_000m;
+
+        public int CustomerPortfolioMaxPriorityRows { get; set; } = 50;
+
+        public int CustomerPortfolioMaxWilayahRows { get; set; } = 15;
     }
 }

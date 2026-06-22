@@ -3,7 +3,7 @@
 **Audience:** Product Owner, Business Owner, Analysts, Future Agents  
 **Purpose:** Authoritative business-domain reference for BTR Portal — what it is, what business problems it solves, what metrics and analytics concepts exist, and how management uses the system for decision making.
 
-**Related docs:** Foundation — `docs/foundation/PRODUCT.md`, `DOMAIN.md`, `WORKFLOW.md`, `LANDSCAPE.md`. Operational usage — [btr-portal-operational.md](./btr-portal-operational.md). Technical architecture — [btr-portal-architecture.md](./btr-portal-architecture.md).
+**Related docs:** Foundation — `docs/foundation/PRODUCT.md`, `DOMAIN.md`, `WORKFLOW.md`, `LANDSCAPE.md`. Operational usage — [btr-portal-operational.md](./btr-portal-operational.md). **KPI catalog (SSOT)** — [btr-portal-kpi-catalog.md](./btr-portal-kpi-catalog.md). Technical architecture — [btr-portal-architecture.md](./btr-portal-architecture.md).
 
 This document describes **business meaning only**. It does not describe APIs, databases, frameworks, or implementation.
 
@@ -327,7 +327,9 @@ Phase 5 — Operational Monitor  →  Field execution visibility (M18.5)
 
 ## 7. KPI Catalog
 
-All monetary values are Indonesian Rupiah (IDR). For each KPI: business meaning, why management uses it, and related business area.
+> **Full definitions (WHAT / HOW / WHY / WHEN, menu codes, formulas):** see **[btr-portal-kpi-catalog.md](./btr-portal-kpi-catalog.md)** — authoritative SSOT for every portal KPI.
+
+The tables below are a **quick index** by business area. All monetary values are Indonesian Rupiah (IDR).
 
 ### 7.1 Sales KPIs (Current)
 
@@ -810,6 +812,7 @@ M28  Inventory Forecast Dashboard                          ✓ Current
 M28.5 Inventory Optimization Dashboard                    ✓ Current
 M29  Customer Risk Forecast Dashboard                     ✓ Current
 M30  Collection Optimization Dashboard                    ✓ Current
+M31  Customer Portfolio Optimization Dashboard            ✓ Current
 M16 Phase 2 / M19 Phase 2 / M21 Phase 2                 → Future Accepted (Executive promotions)
 Filtering Phase (date range, search)                    → Future Accepted
 ```

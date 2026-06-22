@@ -7,7 +7,7 @@
 
 **Related docs:** [Architecture (WHAT)](./materialized-dashboard-architecture.md) · [Operational (HOW)](./materialized-dashboard-operational.md) · [BTR Portal domain](../btr-portal/btr-portal-domain.md)
 
-For portal navigation, report definitions, and full KPI catalog, see [btr-portal-domain.md](../btr-portal/btr-portal-domain.md). This document covers **materialization-specific** product decisions and semantic rules.
+For portal navigation, report definitions, and full KPI catalog, see **[btr-portal-kpi-catalog.md](../btr-portal/btr-portal-kpi-catalog.md)** (SSOT) and [btr-portal-domain.md](../btr-portal/btr-portal-domain.md) §7 (quick index). This document covers **materialization-specific** product decisions and semantic rules.
 
 ---
 

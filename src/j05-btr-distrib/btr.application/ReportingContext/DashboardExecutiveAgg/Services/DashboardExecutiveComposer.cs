@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using btr.application.ReportingContext.DashboardAlertCenterAgg.Services;
+using btr.application.ReportingContext.DashboardCustomerPortfolioAgg.Queries;
 using btr.application.ReportingContext.DashboardExecutiveAgg.Queries;
 using btr.application.ReportingContext.DashboardSnapshotAgg;
 using btr.application.ReportingContext.Shared;
@@ -36,6 +37,7 @@ namespace btr.application.ReportingContext.DashboardExecutiveAgg.Services
             var piutangAttention = ComposePiutang(piutang);
             var purchasingAttention = ComposePurchasing(purchasing, input.PurchasingManagement);
             var inventoryAttention = ComposeInventory(inventory);
+            var portfolioAttention = ComposePortfolio(input.PortfolioKpi);
             var criticalExposures = ComposeCriticalExposures(piutang, inventory, purchasing);
 
             var lastRefreshed = DashboardSnapshotHealthHelper.ResolveLastRefreshed(
@@ -62,8 +64,26 @@ namespace btr.application.ReportingContext.DashboardExecutiveAgg.Services
                 Piutang = piutangAttention,
                 Purchasing = purchasingAttention,
                 Inventory = inventoryAttention,
+                Portfolio = portfolioAttention,
                 CriticalExposures = criticalExposures,
                 DomainSummaries = domainSummaries
+            };
+        }
+
+        private static DashboardExecutivePortfolioAttention ComposePortfolio(DashboardCustomerPortfolioKpiDto portfolioKpi)
+        {
+            if (portfolioKpi == null)
+            {
+                return new DashboardExecutivePortfolioAttention { IsAvailable = false };
+            }
+
+            return new DashboardExecutivePortfolioAttention
+            {
+                IsAvailable = true,
+                PortfolioHealthyPercent = portfolioKpi.PortfolioHealthyPercent,
+                CustomersAtRiskCount = portfolioKpi.CustomersAtRiskCount,
+                StrategicCustomersAtRiskCount = portfolioKpi.StrategicAtRiskCount,
+                DashboardRoute = CustomerPortfolioOptimizationPolicy.CustomerPortfolioDashboardRoute
             };
         }
 
@@ -378,6 +398,8 @@ namespace btr.application.ReportingContext.DashboardExecutiveAgg.Services
         public DashboardPurchasingAggregateResult Purchasing { get; set; }
 
         public DashboardPurchasingManagementAggregateResult PurchasingManagement { get; set; }
+
+        public DashboardCustomerPortfolioKpiDto PortfolioKpi { get; set; }
 
         public IReadOnlyList<DashboardSnapshotRefreshStatusModel> RefreshStatuses { get; set; }
 

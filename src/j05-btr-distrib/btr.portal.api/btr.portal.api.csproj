@@ -203,6 +203,7 @@
     <Compile Include="Controllers\Dashboard\SalesForecastDashboardController.cs" />
     <Compile Include="Controllers\Dashboard\CashFlowForecastDashboardController.cs" />
     <Compile Include="Controllers\Dashboard\CollectionOptimizationDashboardController.cs" />
+    <Compile Include="Controllers\Dashboard\CustomerPortfolioDashboardController.cs" />
     <Compile Include="Controllers\Dashboard\CustomerRiskForecastDashboardController.cs" />
     <Compile Include="Controllers\Dashboard\InventoryForecastDashboardController.cs" />
     <Compile Include="Controllers\Dashboard\InventoryOptimizationDashboardController.cs" />
@@ -211,6 +212,7 @@
     <Compile Include="Controllers\PresentationConfigController.cs" />
     <Compile Include="Controllers\Reports\InventoryReportController.cs" />
     <Compile Include="Controllers\Reports\PiutangReportController.cs" />
+    <Compile Include="Controllers\Reports\CustomerReportController.cs" />
     <Compile Include="Controllers\Reports\PurchasingReportController.cs" />
     <Compile Include="Controllers\Reports\SalesReportController.cs" />
     <Compile Include="Filters\GlobalExceptionFilter.cs" />

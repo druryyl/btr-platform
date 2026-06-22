@@ -18,5 +18,12 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.Contracts
             DashboardCustomerRiskForecastAggregateResult forecast,
             DashboardCollectionOptimizationAggregateResult optimization,
             string refreshLogId);
+
+        void ReplaceCurrent(
+            DashboardCustomerAggregateResult result,
+            DashboardCustomerRiskForecastAggregateResult forecast,
+            DashboardCollectionOptimizationAggregateResult optimization,
+            DashboardCustomerPortfolioAggregateResult portfolio,
+            string refreshLogId);
     }
 }

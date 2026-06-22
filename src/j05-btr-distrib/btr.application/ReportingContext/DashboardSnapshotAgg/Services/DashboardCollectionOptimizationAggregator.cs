@@ -229,7 +229,11 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.Services
                 Workload = workload,
                 PriorityQueue = priorityQueue,
                 SpecializedQueues = specializedQueues,
-                TopImpactOpportunities = impactRows
+                TopImpactOpportunities = impactRows,
+                ContextsByKey = processed.ToDictionary(
+                    x => x.Opt.CustomerKey,
+                    x => x.Opt,
+                    StringComparer.OrdinalIgnoreCase)
             };
         }
 

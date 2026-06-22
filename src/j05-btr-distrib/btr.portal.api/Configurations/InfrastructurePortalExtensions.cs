@@ -1,4 +1,5 @@
 using btr.application.FinanceContext.PiutangAgg.Contracts;
+using btr.application.ReportingContext.CustomerReportAgg.Contracts;
 using btr.application.ReportingContext.DashboardAlertCenterAgg.Contracts;
 using btr.application.ReportingContext.DashboardAlertCenterAgg.Services;
 using btr.application.ReportingContext.DashboardCashFlowForecastAgg.Contracts;
@@ -6,6 +7,7 @@ using btr.application.ReportingContext.DashboardCollectionAgg.Contracts;
 using btr.application.ReportingContext.DashboardCustomerAgg.Contracts;
 using btr.application.ReportingContext.DashboardCustomerRiskForecastAgg.Contracts;
 using btr.application.ReportingContext.DashboardCollectionOptimizationAgg.Contracts;
+using btr.application.ReportingContext.DashboardCustomerPortfolioAgg.Contracts;
 using btr.application.ReportingContext.DashboardExecutiveAgg.Contracts;
 using btr.application.ReportingContext.DashboardExecutiveAgg.Services;
 using btr.application.ReportingContext.DashboardFieldActivityAgg.Contracts;
@@ -41,6 +43,7 @@ using btr.infrastructure.ReportingContext.DashboardCashFlowForecastAgg;
 using btr.infrastructure.ReportingContext.DashboardCollectionAgg;
 using btr.infrastructure.ReportingContext.DashboardCustomerAgg;
 using btr.infrastructure.ReportingContext.DashboardCollectionOptimizationAgg;
+using btr.infrastructure.ReportingContext.DashboardCustomerPortfolioAgg;
 using btr.infrastructure.ReportingContext.DashboardCustomerRiskForecastAgg;
 using btr.infrastructure.ReportingContext.DashboardExecutiveAgg;
 using btr.infrastructure.ReportingContext.DashboardFieldActivityAgg;
@@ -55,6 +58,7 @@ using btr.infrastructure.ReportingContext.DashboardSalesAgg;
 using btr.infrastructure.ReportingContext.DashboardSalesForecastAgg;
 using btr.infrastructure.ReportingContext.DashboardSalesmanAgg;
 using btr.infrastructure.ReportingContext.DashboardSnapshotAgg;
+using btr.infrastructure.ReportingContext.CustomerReportAgg;
 using btr.infrastructure.ReportingContext.InventoryReportAgg;
 using btr.infrastructure.ReportingContext.PiutangReportAgg;
 using btr.infrastructure.ReportingContext.PurchasingReportAgg;
@@ -105,6 +109,8 @@ namespace btr.portal.api.Configurations
             services.AddScoped<IDashboardCollectionSnapshotDal, DashboardCollectionSnapshotDal>();
             services.AddScoped<IDashboardLocationSnapshotDal, DashboardLocationSnapshotDal>();
             services.AddScoped<ICustomerLastFakturDal, CustomerLastFakturDal>();
+            services.AddScoped<ICustomerFirstFakturDal, CustomerFirstFakturDal>();
+            services.AddScoped<ICustomerPurchaseFrequencyDal, CustomerPurchaseFrequencyDal>();
             services.AddScoped<IBrgLastFakturDal, BrgLastFakturDal>();
             services.AddScoped<IBrgConsumptionDal, BrgConsumptionDal>();
             services.AddScoped<IBrgWarehouseConsumptionDal, BrgWarehouseConsumptionDal>();
@@ -118,6 +124,7 @@ namespace btr.portal.api.Configurations
             services.AddScoped<IDashboardCashFlowForecastDal, DashboardCashFlowForecastDal>();
             services.AddScoped<IDashboardCustomerRiskForecastDal, DashboardCustomerRiskForecastDal>();
             services.AddScoped<IDashboardCollectionOptimizationDal, DashboardCollectionOptimizationDal>();
+            services.AddScoped<IDashboardCustomerPortfolioDal, DashboardCustomerPortfolioDal>();
             services.AddScoped<ICustomerPelunasanSummaryDal, CustomerPelunasanSummaryDal>();
             services.AddScoped<ICustomerPaymentBehaviorDal, CustomerPaymentBehaviorDal>();
             services.AddScoped<ICustomerOmzetHistoryDal, CustomerOmzetHistoryDal>();
@@ -145,6 +152,7 @@ namespace btr.portal.api.Configurations
             services.AddScoped<IInventoryReportDal, InventoryReportDal>();
             services.AddScoped<IPiutangReportDal, PiutangReportDal>();
             services.AddScoped<IPurchasingReportDal, PurchasingReportDal>();
+            services.AddScoped<ICustomerReportDal, CustomerReportDal>();
 
             services
                 .Scan(selector => selector

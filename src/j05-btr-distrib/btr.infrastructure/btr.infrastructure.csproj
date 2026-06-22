@@ -199,6 +199,8 @@
     <Compile Include="ReportingContext\DashboardSalesForecastAgg\DashboardSalesForecastDal.cs" />
     <Compile Include="ReportingContext\DashboardCashFlowForecastAgg\DashboardCashFlowForecastDal.cs" />
     <Compile Include="ReportingContext\DashboardCollectionOptimizationAgg\DashboardCollectionOptimizationDal.cs" />
+    <Compile Include="ReportingContext\DashboardCustomerPortfolioAgg\DashboardCustomerPortfolioDal.cs" />
+    <Compile Include="ReportingContext\CustomerReportAgg\CustomerReportDal.cs" />
     <Compile Include="ReportingContext\DashboardCustomerRiskForecastAgg\DashboardCustomerRiskForecastDal.cs" />
     <Compile Include="ReportingContext\DashboardInventoryForecastAgg\DashboardInventoryForecastDal.cs" />
     <Compile Include="ReportingContext\DashboardInventoryOptimizationAgg\DashboardInventoryOptimizationDal.cs" />
@@ -228,6 +230,8 @@
     <Compile Include="SalesContext\FakturControlAgg\FakturControlStatusDal.cs" />
     <Compile Include="SalesContext\FakturInfoAgg\FakturBrgViewDal.cs" />
     <Compile Include="SalesContext\FakturInfoAgg\CustomerLastFakturDal.cs" />
+    <Compile Include="SalesContext\FakturInfoAgg\CustomerFirstFakturDal.cs" />
+    <Compile Include="SalesContext\FakturInfoAgg\CustomerPurchaseFrequencyDal.cs" />
     <Compile Include="SalesContext\FakturInfoAgg\CustomerOmzetHistoryDal.cs" />
     <Compile Include="SalesContext\FakturInfoAgg\BrgLastFakturDal.cs" />
     <Compile Include="SalesContext\FakturInfoAgg\FakturViewDal.cs" />

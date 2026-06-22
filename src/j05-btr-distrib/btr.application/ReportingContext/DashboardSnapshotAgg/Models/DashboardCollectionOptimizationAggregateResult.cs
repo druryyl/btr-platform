@@ -79,6 +79,9 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.Models
 
         public List<DashboardCollectionOptimizationImpactRow> TopImpactOpportunities { get; set; }
             = new List<DashboardCollectionOptimizationImpactRow>();
+
+        public Dictionary<string, CollectionOptimizationContext> ContextsByKey { get; set; }
+            = new Dictionary<string, CollectionOptimizationContext>(StringComparer.OrdinalIgnoreCase);
     }
 
     public sealed class DashboardCollectionOptimizationKpiSnapshot

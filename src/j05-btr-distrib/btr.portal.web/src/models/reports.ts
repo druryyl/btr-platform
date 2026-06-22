@@ -95,3 +95,43 @@ export interface PurchasingReportResponse {
   Summary: PurchasingReportSummary
   Rows: PurchasingReportRow[]
 }
+
+export interface CustomerReportQuery {
+  customerCode?: string
+}
+
+export interface CustomerReportRow {
+  CustomerCode: string
+  CustomerName: string
+  WilayahName: string
+  Klasifikasi: string
+  MtdOmzet: number
+  OpenBalance: number
+  OverdueBalance: number | null
+  LastPurchaseDate: string | null
+  FirstPurchaseDate: string | null
+  LifecycleStage: string
+  LifecycleLabel: string
+  PortfolioTier: string
+  TierLabel: string
+  PrimaryActionKey: string
+  PrimaryActionLabel: string
+  ActionOwner: string
+  ActionReasonText: string
+  SalesPersonName: string
+  SalesmanAchievementPercent: number | null
+  M29Category: string
+  ValueDisclaimer: string
+}
+
+export interface CustomerReportSummary {
+  TotalCustomerCount: number
+  TotalMtdOmzet: number
+  TotalOpenBalance: number
+}
+
+export interface CustomerReportResponse {
+  GeneratedAt: string
+  Summary: CustomerReportSummary
+  Rows: CustomerReportRow[]
+}

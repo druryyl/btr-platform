@@ -35,6 +35,11 @@ function createTestRouter(base = '/') {
                 component: { template: '<div />' },
               },
               {
+                path: 'customer-portfolio',
+                name: 'customer-portfolio-dashboard',
+                component: { template: '<div />' },
+              },
+              {
                 path: 'inventory-forecast',
                 name: 'inventory-forecast-dashboard',
                 component: { template: '<div />' },
@@ -86,6 +91,12 @@ describe('dashboard route matching', () => {
     expect(resolved.name).toBe('collection-optimization-dashboard')
   })
 
+  it('resolves /dashboard/customer-portfolio to customer-portfolio-dashboard', () => {
+    const router = createTestRouter()
+    const resolved = router.resolve('/dashboard/customer-portfolio')
+    expect(resolved.name).toBe('customer-portfolio-dashboard')
+  })
+
   it('resolves /dashboard/inventory-forecast to inventory-forecast-dashboard', () => {
     const router = createTestRouter()
     const resolved = router.resolve('/dashboard/inventory-forecast')
@@ -120,6 +131,9 @@ describe('dashboard route matching', () => {
   it('with /portal/ base, resolve href for dashboard child routes', () => {
     const router = createTestRouter('/portal/')
     expect(router.resolve('/dashboard/sales').href).toBe('/portal/dashboard/sales')
+    expect(router.resolve('/dashboard/customer-portfolio').href).toBe(
+      '/portal/dashboard/customer-portfolio',
+    )
     expect(router.resolve('/dashboard').href).toBe('/portal/dashboard')
     expect(router.resolve('/alerts').href).toBe('/portal/alerts')
     expect(router.resolve('/reports/sales').href).toBe('/portal/reports/sales')

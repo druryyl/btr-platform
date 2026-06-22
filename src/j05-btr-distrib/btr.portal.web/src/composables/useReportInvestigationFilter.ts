@@ -3,6 +3,7 @@ import { filterRowsByFreeText } from '@/services/reportFreeTextFilter'
 
 export interface ReportInvestigationIdFilter {
   customerId?: Ref<string>
+  customerCode?: Ref<string>
   salesmanId?: Ref<string>
   brgId?: Ref<string>
   warehouseId?: Ref<string>
@@ -33,6 +34,11 @@ export function useReportInvestigationFilter<T extends object>(
 ) {
   const idFilteredRows = computed(() => {
     const source = rows.value as Array<T & Record<string, unknown>>
+
+    if (idFilter.customerCode?.value.trim()) {
+      const code = idFilter.customerCode.value.trim()
+      return source.filter((row) => matchesId(row, 'CustomerCode', code))
+    }
 
     if (idFilter.customerId?.value.trim()) {
       const id = idFilter.customerId.value.trim()
@@ -76,7 +82,8 @@ export function useReportInvestigationFilter<T extends object>(
 
   const hasIdFilter = computed(() =>
   Boolean(
-    idFilter.customerId?.value.trim()
+    idFilter.customerCode?.value.trim()
+      || idFilter.customerId?.value.trim()
       || idFilter.salesmanId?.value.trim()
       || idFilter.brgId?.value.trim()
       || idFilter.warehouseId?.value.trim()

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { RouterLink } from 'vue-router'
 import Card from 'primevue/card'
+import PortalMenuLabel from '@/components/navigation/PortalMenuLabel.vue'
 import type { DashboardPurchasingNavigationLinks } from '@/models/dashboard'
 
 defineProps<{
@@ -19,21 +20,21 @@ defineProps<{
             :to="navigation.PurchasingReportRoute"
             class="purchasing-navigation__link"
           >
-            Purchasing Report
+            <PortalMenuLabel :route="navigation.PurchasingReportRoute" />
           </RouterLink>
           <RouterLink
             v-if="navigation"
             :to="navigation.InventoryDashboardRoute"
             class="purchasing-navigation__link"
           >
-            Inventory Dashboard
+            <PortalMenuLabel :route="navigation.InventoryDashboardRoute" />
           </RouterLink>
           <RouterLink
             v-if="navigation"
             :to="navigation.InventoryRiskDashboardRoute"
             class="purchasing-navigation__link"
           >
-            Inventory Risk Dashboard
+            <PortalMenuLabel :route="navigation.InventoryRiskDashboardRoute" />
           </RouterLink>
         </div>
       </template>

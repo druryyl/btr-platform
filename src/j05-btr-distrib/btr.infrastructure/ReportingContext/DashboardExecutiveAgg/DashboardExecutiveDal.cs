@@ -1,4 +1,5 @@
 using System;
+using btr.application.ReportingContext.DashboardCustomerPortfolioAgg.Contracts;
 using btr.application.ReportingContext.DashboardExecutiveAgg.Contracts;
 using btr.application.ReportingContext.DashboardExecutiveAgg.Queries;
 using btr.application.ReportingContext.DashboardExecutiveAgg.Services;
@@ -16,6 +17,7 @@ namespace btr.infrastructure.ReportingContext.DashboardExecutiveAgg
         private readonly IDashboardPurchasingSnapshotDal _purchasingSnapshotDal;
         private readonly IDashboardPurchasingManagementSnapshotDal _purchasingManagementSnapshotDal;
         private readonly IDashboardSnapshotRefreshLogDal _refreshLogDal;
+        private readonly IDashboardCustomerPortfolioDal _customerPortfolioDal;
         private readonly DashboardExecutiveComposer _composer;
         private readonly DashboardSnapshotOptions _options;
 
@@ -26,6 +28,7 @@ namespace btr.infrastructure.ReportingContext.DashboardExecutiveAgg
             IDashboardPurchasingSnapshotDal purchasingSnapshotDal,
             IDashboardPurchasingManagementSnapshotDal purchasingManagementSnapshotDal,
             IDashboardSnapshotRefreshLogDal refreshLogDal,
+            IDashboardCustomerPortfolioDal customerPortfolioDal,
             DashboardExecutiveComposer composer,
             IOptions<DashboardSnapshotOptions> options)
         {
@@ -35,6 +38,7 @@ namespace btr.infrastructure.ReportingContext.DashboardExecutiveAgg
             _purchasingSnapshotDal = purchasingSnapshotDal;
             _purchasingManagementSnapshotDal = purchasingManagementSnapshotDal;
             _refreshLogDal = refreshLogDal;
+            _customerPortfolioDal = customerPortfolioDal;
             _composer = composer;
             _options = options?.Value ?? new DashboardSnapshotOptions();
         }
@@ -48,6 +52,7 @@ namespace btr.infrastructure.ReportingContext.DashboardExecutiveAgg
                 Inventory = _inventorySnapshotDal.GetCurrent(),
                 Purchasing = _purchasingSnapshotDal.GetCurrent(),
                 PurchasingManagement = _purchasingManagementSnapshotDal.GetCurrent(),
+                PortfolioKpi = _customerPortfolioDal.GetCurrentKpi(),
                 RefreshStatuses = _refreshLogDal.GetLatestPerDomain(),
                 Options = _options,
                 UtcNow = DateTime.UtcNow

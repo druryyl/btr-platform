@@ -142,6 +142,16 @@ ORDER BY SegmentType, SortOrder";
             DashboardCollectionOptimizationAggregateResult optimization,
             string refreshLogId)
         {
+            ReplaceCurrent(result, forecast, optimization, null, refreshLogId);
+        }
+
+        public void ReplaceCurrent(
+            DashboardCustomerAggregateResult result,
+            DashboardCustomerRiskForecastAggregateResult forecast,
+            DashboardCollectionOptimizationAggregateResult optimization,
+            DashboardCustomerPortfolioAggregateResult portfolio,
+            string refreshLogId)
+        {
             if (result is null)
                 throw new System.ArgumentNullException(nameof(result));
 
@@ -152,7 +162,7 @@ ORDER BY SegmentType, SortOrder";
                 {
                     try
                     {
-                        ReplaceCurrentCore(conn, transaction, result, forecast, optimization, refreshLogId);
+                        ReplaceCurrentCore(conn, transaction, result, forecast, optimization, portfolio, refreshLogId);
                         transaction.Commit();
                     }
                     catch
@@ -170,6 +180,7 @@ ORDER BY SegmentType, SortOrder";
             DashboardCustomerAggregateResult result,
             DashboardCustomerRiskForecastAggregateResult forecast,
             DashboardCollectionOptimizationAggregateResult optimization,
+            DashboardCustomerPortfolioAggregateResult portfolio,
             string refreshLogId)
         {
                 conn.Execute(
@@ -334,6 +345,9 @@ VALUES (
 
             if (optimization != null)
                 ReplaceOptimizationCore(conn, transaction, optimization, refreshLogId);
+
+            if (portfolio != null)
+                ReplacePortfolioCore(conn, transaction, portfolio, refreshLogId);
         }
 
         private void ReplaceOptimizationCore(
@@ -571,6 +585,294 @@ VALUES (
                     row.DueWithin7Days,
                     ReportRoute = row.ReportRoute ?? string.Empty,
                     DrillDownRoute = row.DrillDownRoute ?? string.Empty
+                }, transaction);
+            }
+        }
+
+        private void ReplacePortfolioCore(
+            SqlConnection conn,
+            SqlTransaction transaction,
+            DashboardCustomerPortfolioAggregateResult portfolio,
+            string refreshLogId)
+        {
+            conn.Execute("DELETE FROM BTRPD_CustomerPortfolioLifecycleDist WHERE SnapshotKey = @SnapshotKey", new { SnapshotKey }, transaction);
+            conn.Execute("DELETE FROM BTRPD_CustomerPortfolioTierDist WHERE SnapshotKey = @SnapshotKey", new { SnapshotKey }, transaction);
+            conn.Execute("DELETE FROM BTRPD_CustomerPortfolioActionDist WHERE SnapshotKey = @SnapshotKey", new { SnapshotKey }, transaction);
+            conn.Execute("DELETE FROM BTRPD_CustomerPortfolioPriority WHERE SnapshotKey = @SnapshotKey", new { SnapshotKey }, transaction);
+            conn.Execute("DELETE FROM BTRPD_CustomerPortfolioCustomer WHERE SnapshotKey = @SnapshotKey", new { SnapshotKey }, transaction);
+            conn.Execute("DELETE FROM BTRPD_CustomerPortfolioConcentration WHERE SnapshotKey = @SnapshotKey", new { SnapshotKey }, transaction);
+            conn.Execute("DELETE FROM BTRPD_CustomerPortfolioWilayah WHERE SnapshotKey = @SnapshotKey", new { SnapshotKey }, transaction);
+
+            var kpi = portfolio.Kpi ?? new DashboardCustomerPortfolioKpiSnapshot();
+
+            const string mergeKpiSql = @"
+MERGE BTRPD_CustomerPortfolioKpi AS target
+USING (SELECT @SnapshotKey AS SnapshotKey) AS source
+ON target.SnapshotKey = source.SnapshotKey
+WHEN MATCHED THEN
+    UPDATE SET
+        GeneratedAt = @GeneratedAt,
+        BusinessDate = @BusinessDate,
+        PortfolioHealthScore = @PortfolioHealthScore,
+        PortfolioHealthyPercent = @PortfolioHealthyPercent,
+        TotalCustomerCount = @TotalCustomerCount,
+        AttentionCustomerCount = @AttentionCustomerCount,
+        StrategicCustomerCount = @StrategicCustomerCount,
+        StrategicAtRiskCount = @StrategicAtRiskCount,
+        CustomersAtRiskCount = @CustomersAtRiskCount,
+        WorkingCapitalTiedAmount = @WorkingCapitalTiedAmount,
+        TotalMtdOmzet = @TotalMtdOmzet,
+        TotalOpenBalance = @TotalOpenBalance,
+        NeverPurchasedCount = @NeverPurchasedCount,
+        DormantCount = @DormantCount,
+        DecliningCount = @DecliningCount,
+        ExecutiveSummaryText = @ExecutiveSummaryText,
+        ValueDisclaimerText = @ValueDisclaimerText,
+        LastRefreshLogId = @LastRefreshLogId
+WHEN NOT MATCHED THEN
+    INSERT (SnapshotKey, GeneratedAt, BusinessDate, PortfolioHealthScore, PortfolioHealthyPercent,
+            TotalCustomerCount, AttentionCustomerCount, StrategicCustomerCount, StrategicAtRiskCount,
+            CustomersAtRiskCount, WorkingCapitalTiedAmount, TotalMtdOmzet, TotalOpenBalance,
+            NeverPurchasedCount, DormantCount, DecliningCount, ExecutiveSummaryText, ValueDisclaimerText, LastRefreshLogId)
+    VALUES (@SnapshotKey, @GeneratedAt, @BusinessDate, @PortfolioHealthScore, @PortfolioHealthyPercent,
+            @TotalCustomerCount, @AttentionCustomerCount, @StrategicCustomerCount, @StrategicAtRiskCount,
+            @CustomersAtRiskCount, @WorkingCapitalTiedAmount, @TotalMtdOmzet, @TotalOpenBalance,
+            @NeverPurchasedCount, @DormantCount, @DecliningCount, @ExecutiveSummaryText, @ValueDisclaimerText, @LastRefreshLogId);";
+
+            conn.Execute(mergeKpiSql, new
+            {
+                SnapshotKey,
+                portfolio.GeneratedAt,
+                portfolio.BusinessDate,
+                kpi.PortfolioHealthScore,
+                kpi.PortfolioHealthyPercent,
+                kpi.TotalCustomerCount,
+                kpi.AttentionCustomerCount,
+                kpi.StrategicCustomerCount,
+                kpi.StrategicAtRiskCount,
+                kpi.CustomersAtRiskCount,
+                kpi.WorkingCapitalTiedAmount,
+                kpi.TotalMtdOmzet,
+                kpi.TotalOpenBalance,
+                kpi.NeverPurchasedCount,
+                kpi.DormantCount,
+                kpi.DecliningCount,
+                ExecutiveSummaryText = kpi.ExecutiveSummaryText ?? string.Empty,
+                ValueDisclaimerText = kpi.ValueDisclaimerText ?? string.Empty,
+                LastRefreshLogId = refreshLogId ?? string.Empty
+            }, transaction);
+
+            const string insertLifecycleDistSql = @"
+INSERT INTO BTRPD_CustomerPortfolioLifecycleDist (
+    CustomerPortfolioLifecycleDistId, SnapshotKey, LifecycleStage, LifecycleLabel, CustomerCount, SortOrder)
+VALUES (
+    @CustomerPortfolioLifecycleDistId, @SnapshotKey, @LifecycleStage, @LifecycleLabel, @CustomerCount, @SortOrder)";
+
+            foreach (var row in portfolio.LifecycleDistribution ?? new List<DashboardCustomerPortfolioDistRow>())
+            {
+                conn.Execute(insertLifecycleDistSql, new
+                {
+                    CustomerPortfolioLifecycleDistId = Ulid.NewUlid().ToString(),
+                    SnapshotKey,
+                    LifecycleStage = row.Key ?? string.Empty,
+                    LifecycleLabel = row.Label ?? string.Empty,
+                    row.CustomerCount,
+                    row.SortOrder
+                }, transaction);
+            }
+
+            const string insertTierDistSql = @"
+INSERT INTO BTRPD_CustomerPortfolioTierDist (
+    CustomerPortfolioTierDistId, SnapshotKey, PortfolioTier, TierLabel, CustomerCount, SortOrder)
+VALUES (
+    @CustomerPortfolioTierDistId, @SnapshotKey, @PortfolioTier, @TierLabel, @CustomerCount, @SortOrder)";
+
+            foreach (var row in portfolio.TierDistribution ?? new List<DashboardCustomerPortfolioDistRow>())
+            {
+                conn.Execute(insertTierDistSql, new
+                {
+                    CustomerPortfolioTierDistId = Ulid.NewUlid().ToString(),
+                    SnapshotKey,
+                    PortfolioTier = row.Key ?? string.Empty,
+                    TierLabel = row.Label ?? string.Empty,
+                    row.CustomerCount,
+                    row.SortOrder
+                }, transaction);
+            }
+
+            const string insertActionDistSql = @"
+INSERT INTO BTRPD_CustomerPortfolioActionDist (
+    CustomerPortfolioActionDistId, SnapshotKey, PrimaryActionKey, PrimaryActionLabel, CustomerCount, SortOrder)
+VALUES (
+    @CustomerPortfolioActionDistId, @SnapshotKey, @PrimaryActionKey, @PrimaryActionLabel, @CustomerCount, @SortOrder)";
+
+            foreach (var row in portfolio.ActionDistribution ?? new List<DashboardCustomerPortfolioDistRow>())
+            {
+                conn.Execute(insertActionDistSql, new
+                {
+                    CustomerPortfolioActionDistId = Ulid.NewUlid().ToString(),
+                    SnapshotKey,
+                    PrimaryActionKey = row.Key ?? string.Empty,
+                    PrimaryActionLabel = row.Label ?? string.Empty,
+                    row.CustomerCount,
+                    row.SortOrder
+                }, transaction);
+            }
+
+            const string insertPrioritySql = @"
+INSERT INTO BTRPD_CustomerPortfolioPriority (
+    CustomerPortfolioPriorityId, SnapshotKey, SortOrder, PortfolioPriorityScore, CustomerKey,
+    CustomerCode, CustomerName, WilayahName, Klasifikasi, LifecycleStage, LifecycleLabel,
+    PortfolioTier, TierLabel, PrimaryActionKey, PrimaryActionLabel, ActionOwner, ActionReasonText,
+    TriggeredRuleIds, MtdOmzet, OpenBalance, OverdueBalance, M29Category, SalesPersonName,
+    SalesmanAchievementPercent, SalesmanHighPiutangExposure, IsAttention, M30LinkRoute,
+    CustomerReportRoute, DrillDownRouteM17, DrillDownRouteM29)
+VALUES (
+    @CustomerPortfolioPriorityId, @SnapshotKey, @SortOrder, @PortfolioPriorityScore, @CustomerKey,
+    @CustomerCode, @CustomerName, @WilayahName, @Klasifikasi, @LifecycleStage, @LifecycleLabel,
+    @PortfolioTier, @TierLabel, @PrimaryActionKey, @PrimaryActionLabel, @ActionOwner, @ActionReasonText,
+    @TriggeredRuleIds, @MtdOmzet, @OpenBalance, @OverdueBalance, @M29Category, @SalesPersonName,
+    @SalesmanAchievementPercent, @SalesmanHighPiutangExposure, @IsAttention, @M30LinkRoute,
+    @CustomerReportRoute, @DrillDownRouteM17, @DrillDownRouteM29)";
+
+            foreach (var row in portfolio.PriorityQueue ?? new List<DashboardCustomerPortfolioPriorityRow>())
+            {
+                conn.Execute(insertPrioritySql, new
+                {
+                    CustomerPortfolioPriorityId = Ulid.NewUlid().ToString(),
+                    SnapshotKey,
+                    row.SortOrder,
+                    row.PortfolioPriorityScore,
+                    CustomerKey = row.CustomerKey ?? string.Empty,
+                    CustomerCode = row.CustomerCode ?? string.Empty,
+                    CustomerName = row.CustomerName ?? string.Empty,
+                    WilayahName = row.WilayahName ?? string.Empty,
+                    Klasifikasi = row.Klasifikasi ?? string.Empty,
+                    LifecycleStage = row.LifecycleStage ?? string.Empty,
+                    LifecycleLabel = row.LifecycleLabel ?? string.Empty,
+                    PortfolioTier = row.PortfolioTier ?? string.Empty,
+                    TierLabel = row.TierLabel ?? string.Empty,
+                    PrimaryActionKey = row.PrimaryActionKey ?? string.Empty,
+                    PrimaryActionLabel = row.PrimaryActionLabel ?? string.Empty,
+                    ActionOwner = row.ActionOwner ?? string.Empty,
+                    ActionReasonText = row.ActionReasonText ?? string.Empty,
+                    TriggeredRuleIds = row.TriggeredRuleIds ?? string.Empty,
+                    row.MtdOmzet,
+                    row.OpenBalance,
+                    row.OverdueBalance,
+                    M29Category = row.M29Category ?? string.Empty,
+                    SalesPersonName = row.SalesPersonName ?? string.Empty,
+                    row.SalesmanAchievementPercent,
+                    row.SalesmanHighPiutangExposure,
+                    row.IsAttention,
+                    M30LinkRoute = row.M30LinkRoute ?? string.Empty,
+                    CustomerReportRoute = row.CustomerReportRoute ?? string.Empty,
+                    DrillDownRouteM17 = row.DrillDownRouteM17 ?? string.Empty,
+                    DrillDownRouteM29 = row.DrillDownRouteM29 ?? string.Empty
+                }, transaction);
+            }
+
+            const string insertCustomerSql = @"
+INSERT INTO BTRPD_CustomerPortfolioCustomer (
+    CustomerPortfolioCustomerId, SnapshotKey, SortOrder, CustomerKey, CustomerCode, CustomerName,
+    WilayahName, Klasifikasi, LifecycleStage, LifecycleLabel, PortfolioTier, TierLabel,
+    PrimaryActionKey, PrimaryActionLabel, ActionOwner, ActionReasonText, TriggeredRuleIds,
+    MtdOmzet, OpenBalance, OverdueBalance, FakturCount6Mo, IsActiveMtd, LastPurchaseDate,
+    FirstPurchaseDate, M29Category, M29PrimarySignalKey, SalesPersonName, SalesmanAchievementPercent,
+    SalesmanHighPiutangExposure, IsAttention, PortfolioPriorityScore, M30LinkRoute,
+    CustomerReportRoute, DrillDownRouteM17, DrillDownRouteM29, ValueDisclaimer)
+VALUES (
+    @CustomerPortfolioCustomerId, @SnapshotKey, @SortOrder, @CustomerKey, @CustomerCode, @CustomerName,
+    @WilayahName, @Klasifikasi, @LifecycleStage, @LifecycleLabel, @PortfolioTier, @TierLabel,
+    @PrimaryActionKey, @PrimaryActionLabel, @ActionOwner, @ActionReasonText, @TriggeredRuleIds,
+    @MtdOmzet, @OpenBalance, @OverdueBalance, @FakturCount6Mo, @IsActiveMtd, @LastPurchaseDate,
+    @FirstPurchaseDate, @M29Category, @M29PrimarySignalKey, @SalesPersonName, @SalesmanAchievementPercent,
+    @SalesmanHighPiutangExposure, @IsAttention, @PortfolioPriorityScore, @M30LinkRoute,
+    @CustomerReportRoute, @DrillDownRouteM17, @DrillDownRouteM29, @ValueDisclaimer)";
+
+            foreach (var row in portfolio.Customers ?? new List<DashboardCustomerPortfolioCustomerRow>())
+            {
+                conn.Execute(insertCustomerSql, new
+                {
+                    CustomerPortfolioCustomerId = Ulid.NewUlid().ToString(),
+                    SnapshotKey,
+                    row.SortOrder,
+                    CustomerKey = row.CustomerKey ?? string.Empty,
+                    CustomerCode = row.CustomerCode ?? string.Empty,
+                    CustomerName = row.CustomerName ?? string.Empty,
+                    WilayahName = row.WilayahName ?? string.Empty,
+                    Klasifikasi = row.Klasifikasi ?? string.Empty,
+                    LifecycleStage = row.LifecycleStage ?? string.Empty,
+                    LifecycleLabel = row.LifecycleLabel ?? string.Empty,
+                    PortfolioTier = row.PortfolioTier ?? string.Empty,
+                    TierLabel = row.TierLabel ?? string.Empty,
+                    PrimaryActionKey = row.PrimaryActionKey ?? string.Empty,
+                    PrimaryActionLabel = row.PrimaryActionLabel ?? string.Empty,
+                    ActionOwner = row.ActionOwner ?? string.Empty,
+                    ActionReasonText = row.ActionReasonText ?? string.Empty,
+                    TriggeredRuleIds = row.TriggeredRuleIds ?? string.Empty,
+                    row.MtdOmzet,
+                    row.OpenBalance,
+                    row.OverdueBalance,
+                    row.FakturCount6Mo,
+                    row.IsActiveMtd,
+                    row.LastPurchaseDate,
+                    row.FirstPurchaseDate,
+                    M29Category = row.M29Category ?? string.Empty,
+                    M29PrimarySignalKey = row.M29PrimarySignalKey ?? string.Empty,
+                    SalesPersonName = row.SalesPersonName ?? string.Empty,
+                    row.SalesmanAchievementPercent,
+                    row.SalesmanHighPiutangExposure,
+                    row.IsAttention,
+                    row.PortfolioPriorityScore,
+                    M30LinkRoute = row.M30LinkRoute ?? string.Empty,
+                    CustomerReportRoute = row.CustomerReportRoute ?? string.Empty,
+                    DrillDownRouteM17 = row.DrillDownRouteM17 ?? string.Empty,
+                    DrillDownRouteM29 = row.DrillDownRouteM29 ?? string.Empty,
+                    ValueDisclaimer = row.ValueDisclaimer ?? string.Empty
+                }, transaction);
+            }
+
+            const string insertConcentrationSql = @"
+INSERT INTO BTRPD_CustomerPortfolioConcentration (
+    CustomerPortfolioConcentrationId, SnapshotKey, ConcentrationType, SortOrder, Rank,
+    CustomerCode, CustomerName, Amount, PercentOfTotal)
+VALUES (
+    @CustomerPortfolioConcentrationId, @SnapshotKey, @ConcentrationType, @SortOrder, @Rank,
+    @CustomerCode, @CustomerName, @Amount, @PercentOfTotal)";
+
+            foreach (var row in portfolio.Concentration ?? new List<DashboardCustomerPortfolioConcentrationRow>())
+            {
+                conn.Execute(insertConcentrationSql, new
+                {
+                    CustomerPortfolioConcentrationId = Ulid.NewUlid().ToString(),
+                    SnapshotKey,
+                    ConcentrationType = row.ConcentrationType ?? string.Empty,
+                    row.SortOrder,
+                    row.Rank,
+                    CustomerCode = row.CustomerCode ?? string.Empty,
+                    CustomerName = row.CustomerName ?? string.Empty,
+                    row.Amount,
+                    row.PercentOfTotal
+                }, transaction);
+            }
+
+            const string insertWilayahSql = @"
+INSERT INTO BTRPD_CustomerPortfolioWilayah (
+    CustomerPortfolioWilayahId, SnapshotKey, SortOrder, WilayahName, CustomerCount, AttentionCustomerCount)
+VALUES (
+    @CustomerPortfolioWilayahId, @SnapshotKey, @SortOrder, @WilayahName, @CustomerCount, @AttentionCustomerCount)";
+
+            foreach (var row in portfolio.WilayahBreakdown ?? new List<DashboardCustomerPortfolioWilayahRow>())
+            {
+                conn.Execute(insertWilayahSql, new
+                {
+                    CustomerPortfolioWilayahId = Ulid.NewUlid().ToString(),
+                    SnapshotKey,
+                    row.SortOrder,
+                    WilayahName = row.WilayahName ?? string.Empty,
+                    row.CustomerCount,
+                    row.AttentionCustomerCount
                 }, transaction);
             }
         }

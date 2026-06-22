@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { RouterLink } from 'vue-router'
 import Card from 'primevue/card'
+import PortalMenuLabel from '@/components/navigation/PortalMenuLabel.vue'
 import type { DashboardInventoryRiskNavigationLinks } from '@/models/dashboard'
 
 defineProps<{
@@ -19,14 +20,14 @@ defineProps<{
             :to="navigation.InventoryDashboardRoute"
             class="inventory-risk-navigation__link"
           >
-            Inventory Dashboard
+            <PortalMenuLabel :route="navigation.InventoryDashboardRoute" />
           </RouterLink>
           <RouterLink
             v-if="navigation"
             :to="navigation.InventoryReportRoute"
             class="inventory-risk-navigation__link"
           >
-            Inventory Report
+            <PortalMenuLabel :route="navigation.InventoryReportRoute" />
           </RouterLink>
         </div>
       </template>

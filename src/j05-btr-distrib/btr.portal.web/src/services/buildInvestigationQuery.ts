@@ -15,6 +15,16 @@ export function buildInvestigationQuery(
     query.customerId = suggested.CustomerId.trim()
   }
 
+  if (suggested?.CustomerCode?.trim()) {
+    query.customerCode = suggested.CustomerCode.trim()
+  } else if (
+    investigation.EntityType === 'Customer' &&
+    investigation.EntityId?.trim() &&
+    investigation.ReportRoute?.includes('/reports/customers')
+  ) {
+    query.customerCode = investigation.EntityId.trim()
+  }
+
   if (suggested?.SalesmanId?.trim()) {
     query.salesmanId = suggested.SalesmanId.trim()
   }

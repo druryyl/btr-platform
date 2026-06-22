@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { RouterLink } from 'vue-router'
 import Card from 'primevue/card'
+import PortalMenuLabel from '@/components/navigation/PortalMenuLabel.vue'
 import type { DashboardCollectionNavigationLinks } from '@/models/dashboard'
 
 defineProps<{
@@ -19,28 +20,28 @@ defineProps<{
             :to="navigation.PiutangDashboardRoute"
             class="collection-navigation__link"
           >
-            Piutang Dashboard
+            <PortalMenuLabel :route="navigation.PiutangDashboardRoute" />
           </RouterLink>
           <RouterLink
             v-if="navigation"
             :to="navigation.CustomerDashboardRoute"
             class="collection-navigation__link"
           >
-            Customer Analytics
+            <PortalMenuLabel :route="navigation.CustomerDashboardRoute" />
           </RouterLink>
           <RouterLink
             v-if="navigation"
             :to="navigation.SalesmanDashboardRoute"
             class="collection-navigation__link"
           >
-            Salesman Performance
+            <PortalMenuLabel :route="navigation.SalesmanDashboardRoute" />
           </RouterLink>
           <RouterLink
             v-if="navigation"
             :to="navigation.PiutangReportRoute"
             class="collection-navigation__link"
           >
-            Piutang Report
+            <PortalMenuLabel :route="navigation.PiutangReportRoute" />
           </RouterLink>
         </div>
       </template>

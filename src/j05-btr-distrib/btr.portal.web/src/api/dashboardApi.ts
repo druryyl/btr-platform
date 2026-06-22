@@ -21,6 +21,7 @@ import type {
   DashboardInventoryOptimizationResponse,
   DashboardCustomerRiskForecastResponse,
   DashboardCollectionOptimizationResponse,
+  DashboardCustomerPortfolioResponse,
 } from '@/models/dashboard'
 
 export async function fetchDashboardOverview(): Promise<DashboardOverviewResponse> {
@@ -160,6 +161,18 @@ export async function fetchDashboardCollectionOptimization(): Promise<DashboardC
 
   if (!isApiSuccess(data) || !data.Data) {
     throw new Error(data.Message ?? 'Failed to load collection optimization dashboard.')
+  }
+
+  return data.Data
+}
+
+export async function fetchDashboardCustomerPortfolio(): Promise<DashboardCustomerPortfolioResponse> {
+  const { data } = await httpClient.get<ApiResponse<DashboardCustomerPortfolioResponse>>(
+    '/api/dashboard/customer-portfolio',
+  )
+
+  if (!isApiSuccess(data) || !data.Data) {
+    throw new Error(data.Message ?? 'Failed to load customer portfolio dashboard.')
   }
 
   return data.Data

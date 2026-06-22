@@ -1,6 +1,8 @@
 import { httpClient } from '@/api/httpClient'
 import { isApiSuccess, type ApiResponse } from '@/models/api'
 import type {
+  CustomerReportQuery,
+  CustomerReportResponse,
   InventoryReportResponse,
   PiutangReportQuery,
   PiutangReportResponse,
@@ -55,6 +57,20 @@ export async function fetchPurchasingReport(query: ReportDateQuery): Promise<Pur
 
   if (!isApiSuccess(data) || !data.Data) {
     throw new Error(data.Message ?? 'Failed to load purchasing report.')
+  }
+
+  return data.Data
+}
+
+export async function fetchCustomerReport(
+  query: CustomerReportQuery = {},
+): Promise<CustomerReportResponse> {
+  const { data } = await httpClient.get<ApiResponse<CustomerReportResponse>>('/api/reports/customers', {
+    params: query.customerCode ? { customerCode: query.customerCode } : undefined,
+  })
+
+  if (!isApiSuccess(data) || !data.Data) {
+    throw new Error(data.Message ?? 'Failed to load customer report.')
   }
 
   return data.Data

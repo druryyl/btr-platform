@@ -28,6 +28,8 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.UseCases
 
         private readonly IFakturViewDal _fakturViewDal;
         private readonly ICustomerLastFakturDal _lastFakturDal;
+        private readonly ICustomerFirstFakturDal _firstFakturDal;
+        private readonly ICustomerPurchaseFrequencyDal _purchaseFrequencyDal;
         private readonly IPiutangOpenBalanceDal _openBalanceDal;
         private readonly ICustomerDal _customerDal;
         private readonly ICustomerOmzetHistoryDal _customerOmzetHistoryDal;
@@ -36,7 +38,9 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.UseCases
         private readonly DashboardCustomerAggregator _aggregator;
         private readonly DashboardCustomerRiskForecastAggregator _forecastAggregator;
         private readonly DashboardCollectionOptimizationAggregator _optimizationAggregator;
+        private readonly DashboardCustomerPortfolioAggregator _portfolioAggregator;
         private readonly IDashboardCollectionSnapshotDal _collectionSnapshotDal;
+        private readonly IDashboardSalesmanSnapshotDal _salesmanSnapshotDal;
         private readonly IDashboardCustomerSnapshotDal _snapshotDal;
         private readonly IDashboardSnapshotRefreshLogDal _refreshLogDal;
         private readonly ITglJamDal _tglJamDal;
@@ -46,6 +50,8 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.UseCases
         public RefreshDashboardCustomerSnapshotWorker(
             IFakturViewDal fakturViewDal,
             ICustomerLastFakturDal lastFakturDal,
+            ICustomerFirstFakturDal firstFakturDal,
+            ICustomerPurchaseFrequencyDal purchaseFrequencyDal,
             IPiutangOpenBalanceDal openBalanceDal,
             ICustomerDal customerDal,
             ICustomerOmzetHistoryDal customerOmzetHistoryDal,
@@ -54,7 +60,9 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.UseCases
             DashboardCustomerAggregator aggregator,
             DashboardCustomerRiskForecastAggregator forecastAggregator,
             DashboardCollectionOptimizationAggregator optimizationAggregator,
+            DashboardCustomerPortfolioAggregator portfolioAggregator,
             IDashboardCollectionSnapshotDal collectionSnapshotDal,
+            IDashboardSalesmanSnapshotDal salesmanSnapshotDal,
             IDashboardCustomerSnapshotDal snapshotDal,
             IDashboardSnapshotRefreshLogDal refreshLogDal,
             ITglJamDal tglJamDal,
@@ -63,6 +71,8 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.UseCases
         {
             _fakturViewDal = fakturViewDal;
             _lastFakturDal = lastFakturDal;
+            _firstFakturDal = firstFakturDal;
+            _purchaseFrequencyDal = purchaseFrequencyDal;
             _openBalanceDal = openBalanceDal;
             _customerDal = customerDal;
             _customerOmzetHistoryDal = customerOmzetHistoryDal;
@@ -71,7 +81,9 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.UseCases
             _aggregator = aggregator;
             _forecastAggregator = forecastAggregator;
             _optimizationAggregator = optimizationAggregator;
+            _portfolioAggregator = portfolioAggregator;
             _collectionSnapshotDal = collectionSnapshotDal;
+            _salesmanSnapshotDal = salesmanSnapshotDal;
             _snapshotDal = snapshotDal;
             _refreshLogDal = refreshLogDal;
             _tglJamDal = tglJamDal;
@@ -105,9 +117,10 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.UseCases
                 var periode = CurrentMonthPeriode(today);
                 var priorMonth = PriorMonthPeriode(today);
                 var generatedAt = _tglJamDal.Now;
-                const int loadSteps = 7;
+                const int loadSteps = 10;
                 var forecastOptions = CustomerRiskForecastOptions.FromDashboardOptions(_options);
                 var optimizationOptions = CollectionOptimizationOptions.FromDashboardOptions(_options);
+                var portfolioOptions = CustomerPortfolioOptions.FromDashboardOptions(_options);
 
                 WorkerProgressScope.Current.StepStarted($"{Domain}:LoadCollectionContext", "Load M20 collection snapshot");
                 var collectionSnapshot = _collectionSnapshotDal.GetCurrent();
@@ -145,11 +158,30 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.UseCases
                     today,
                     forecastOptions.MinSettledFaktursForLag)?.ToList()
                     ?? new System.Collections.Generic.List<CustomerPaymentBehaviorDto>();
+
+                WorkerProgressScope.Current.ReportPhaseProgress($"{Domain}: Load last faktur with salesman", 8, loadSteps);
+                var lastFakturWithSalesman = _lastFakturDal.ListLastFakturWithSalesmanByCustomer()?.ToList()
+                    ?? new System.Collections.Generic.List<CustomerLastFakturWithSalesmanDto>();
+
+                WorkerProgressScope.Current.ReportPhaseProgress($"{Domain}: Load first faktur by customer", 9, loadSteps);
+                var firstFakturRows = _firstFakturDal.ListFirstFakturByCustomer()?.ToList()
+                    ?? new System.Collections.Generic.List<CustomerFirstFakturDto>();
+
+                var frequencyFrom = today.AddMonths(-portfolioOptions.PurchaseFrequencyLookbackMonths);
+                WorkerProgressScope.Current.ReportPhaseProgress($"{Domain}: Load purchase frequency", 10, loadSteps);
+                var frequencyRows = _purchaseFrequencyDal.ListFakturCountByCustomer(frequencyFrom, today)?.ToList()
+                    ?? new System.Collections.Generic.List<CustomerPurchaseFrequencyDto>();
+
+                WorkerProgressScope.Current.StepStarted($"{Domain}:LoadPortfolioContext", "Load M18 salesman snapshot");
+                var salesmanSnapshot = _salesmanSnapshotDal.GetCurrent();
+                WorkerProgressScope.Current.StepCompleted($"{Domain}:LoadPortfolioContext");
+
                 WorkerProgressScope.Current.StepCompleted($"{Domain}:Load", new WorkerProgressStepInfo
                 {
                     RecordCount = fakturRows.Count + omzetHistoryRows.Count + lastFakturRows.Count +
                                   piutangRows.Count + customers.Count + pelunasanSummaryRows.Count +
-                                  paymentBehaviorRows.Count
+                                  paymentBehaviorRows.Count + lastFakturWithSalesman.Count +
+                                  firstFakturRows.Count + frequencyRows.Count
                 });
 
                 WorkerProgressScope.Current.StepStarted($"{Domain}:Aggregate", "Aggregate metrics");
@@ -190,10 +222,28 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.UseCases
                     optimizationOptions);
                 WorkerProgressScope.Current.StepCompleted($"{Domain}:AggregateOptimization");
 
+                WorkerProgressScope.Current.StepStarted($"{Domain}:AggregatePortfolio", "Aggregate customer portfolio optimization");
+                var portfolioAggregate = _portfolioAggregator.Aggregate(
+                    aggregate,
+                    forecastAggregate.Contexts,
+                    forecastAggregate,
+                    optimizationAggregate.ContextsByKey,
+                    salesmanSnapshot,
+                    customers,
+                    lastFakturWithSalesman,
+                    firstFakturRows,
+                    frequencyRows,
+                    fakturRows,
+                    piutangRows,
+                    today,
+                    generatedAt,
+                    portfolioOptions);
+                WorkerProgressScope.Current.StepCompleted($"{Domain}:AggregatePortfolio");
+
                 WorkerProgressScope.Current.StepStarted($"{Domain}:Save", "Save snapshot");
                 using (var trans = TransHelper.NewScope())
                 {
-                    _snapshotDal.ReplaceCurrent(aggregate, forecastAggregate, optimizationAggregate, refreshLogId);
+                    _snapshotDal.ReplaceCurrent(aggregate, forecastAggregate, optimizationAggregate, portfolioAggregate, refreshLogId);
                     trans.Complete();
                 }
                 WorkerProgressScope.Current.StepCompleted($"{Domain}:Save");

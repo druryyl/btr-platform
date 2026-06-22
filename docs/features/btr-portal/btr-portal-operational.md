@@ -7,7 +7,7 @@
 
 **Related permanent docs:** [Domain (WHY)](./btr-portal-domain.md) · [Architecture (WHAT)](./btr-portal-architecture.md) · [Materialized dashboard ops](../materialized-dashboard/materialized-dashboard-operational.md) · [Extraction — M16/M17](./knowledge-extraction-report-m16-m17.md) · [Extraction — M18](./knowledge-extraction-report-m18.md) · [Extraction — M19](./knowledge-extraction-report-m19.md) · [Extraction — M21](./knowledge-extraction-report-m21.md) · [Extraction — Purchasing V1](./knowledge-extraction-report-purchasing-dashboard.md)
 
-For business definitions and KPI formulas, see [btr-portal-domain.md](./btr-portal-domain.md).
+For business definitions and KPI formulas, see **[btr-portal-kpi-catalog.md](./btr-portal-kpi-catalog.md)** (authoritative SSOT). Domain concept summary: [btr-portal-domain.md](./btr-portal-domain.md) §7.
 
 ---
 
@@ -49,7 +49,7 @@ The Dashboard has two levels:
 | **Executive (Home)** | `/dashboard` | **Management Attention Center** — attention-oriented KPIs across Sales, Piutang, Inventory, and Purchasing; Top 5 exposure lists; domain summaries. Links go to domain dashboards only. |
 | **Detail** | `/dashboard/sales`, `/dashboard/sales-forecast`, `/dashboard/piutang`, `/dashboard/customers`, `/dashboard/customer-risk-forecast`, `/dashboard/collection-optimization`, `/dashboard/salesmen`, `/dashboard/inventory`, `/dashboard/inventory-risk`, `/dashboard/inventory-forecast`, `/dashboard/purchasing`, `/dashboard/collection`, `/dashboard/cash-flow-forecast` | Full KPI row, charts, and Top 10 tables for that business area (Customer, Salesman, and Inventory Risk use attention-oriented layout). |
 
-**Navigate:** Sidebar → Dashboard → **Executive** (default home). Use **Open Alert Center** on the executive page or Sidebar → **Alert Center** for the company-wide exception feed.
+**Navigate:** Sidebar → Executive → **EX01 Executive** (default home). Use **Open Alert Center** on the executive page or Sidebar → **EX02 Alert Center** for the company-wide exception feed.
 
 **Daily review question:** *What requires management attention today?*
 
@@ -261,6 +261,48 @@ Use **Refresh** on any dashboard page to reload data from the server. Detail pag
 - Sales recovery visits when purchase decline dominates over collection urgency
 
 **Related:** [Collection Optimization feature doc](../collection-optimization/feature.md)
+
+---
+
+## Customer Portfolio Optimization Dashboard (M31)
+
+**Navigate:** Sidebar → Dashboard → Customer Portfolio.
+
+**Route:** `/dashboard/customer-portfolio`
+
+**Question answered:** What should Management do with each customer — grow, retain, protect, collect, recover, or exit review — across the full portfolio?
+
+### What You See
+
+1. **Executive summary** — plain-language portfolio brief (server-computed)
+2. **KPI row** — Portfolio health %, strategic at risk, working capital tied, attention customer count
+3. **Lifecycle / tier / action distribution charts**
+4. **Priority portfolio queue** — default Attention Customers (top 50 by portfolio priority score)
+5. **Action segments** — expandable lists by portfolio action
+6. **Concentration tables** — Top 10 omzet and piutang (from M17 snapshot)
+7. **Traceability footer** — links to M17, M29, M30, Customer Report, Sales/Piutang reports; value disclaimer
+
+### Filters
+
+- View toggle: **Attention Customers** (default) / **All Customers**
+- Wilayah, Klasifikasi (filter only), Tier, Lifecycle, Action, Salesman
+
+### How to Read It
+
+- **Composition milestone** — consumes M17, M29, and M30 outputs; does not recalculate upstream rules.
+- **Collect** action links to M30 Collection Optimization (`?customerKey=`) — does not duplicate M30 queue.
+- **Customer Value = Omzet Proxy, NOT profitability** — shown in KPI disclaimer and row context.
+- Refreshes with **Customer** snapshot worker (~30 minutes) after M30 step.
+
+### Customer Report (M31)
+
+**Navigate:** Sidebar → Reports → Customer Report, or drill from portfolio row.
+
+**Route:** `/reports/customers` (optional `?customerCode=` pre-filter)
+
+One row per customer from M31 snapshot — lifecycle, tier, portfolio action, salesman summary, MTD omzet, open balance.
+
+**Related:** [Customer Portfolio Optimization feature doc](../customer-portfolio-optimization/feature.md)
 
 ---
 
@@ -822,24 +864,47 @@ Drill-down from Customer Analytics, Collection, Piutang Dashboard, or piutang-bo
 
 ### Menu Hierarchy
 
+Navigation is organized by **business domain**. Each menu item displays a permanent code (`CODE · Label`) for support and training communication.
+
 ```text
 BTR Portal
-├── Dashboard
-│   ├── Executive         → /dashboard
-│   ├── Alert Center      → /alerts
-│   ├── Sales             → /dashboard/sales
-│   ├── Piutang           → /dashboard/piutang
-│   ├── Customers         → /dashboard/customers
-│   ├── Salesmen          → /dashboard/salesmen
-│   ├── Inventory         → /dashboard/inventory
-│   ├── Inventory Risk    → /dashboard/inventory-risk
-│   └── Purchasing        → /dashboard/purchasing
-└── Reports
-    ├── Sales Report      → /reports/sales
-    ├── Piutang Report    → /reports/piutang
-    ├── Inventory Report  → /reports/inventory
-    └── Purchasing Report → /reports/purchasing
+├── Executive
+│   ├── EX01 · Executive           → /dashboard
+│   └── EX02 · Alert Center        → /alerts
+├── Sales
+│   ├── SA01 · Sales               → /dashboard/sales
+│   ├── SA02 · Sales Forecast      → /dashboard/sales-forecast
+│   └── SA03 · Sales Report        → /reports/sales
+├── Customers
+│   ├── CU01 · Customers           → /dashboard/customers
+│   ├── CU02 · Customer Risk Forecast → /dashboard/customer-risk-forecast
+│   ├── CU03 · Collection Optimization → /dashboard/collection-optimization
+│   ├── CU04 · Customer Portfolio  → /dashboard/customer-portfolio
+│   └── CU05 · Customer Report     → /reports/customers
+├── Finance
+│   ├── FI01 · Piutang             → /dashboard/piutang
+│   ├── FI02 · Collection          → /dashboard/collection
+│   ├── FI03 · Cash Flow Forecast  → /dashboard/cash-flow-forecast
+│   └── FI04 · Piutang Report      → /reports/piutang
+├── Sales Force
+│   ├── SF01 · Salesmen            → /dashboard/salesmen
+│   └── SF02 · Field Activity      → /dashboard/field-activity
+├── Inventory
+│   ├── IN01 · Inventory           → /dashboard/inventory
+│   ├── IN02 · Inventory Risk        → /dashboard/inventory-risk
+│   ├── IN03 · Inventory Forecast  → /dashboard/inventory-forecast
+│   ├── IN04 · Inventory Optimization → /dashboard/inventory-optimization
+│   └── IN05 · Inventory Report    → /reports/inventory
+├── Purchasing
+│   ├── PU01 · Purchasing          → /dashboard/purchasing
+│   └── PU02 · Purchasing Report   → /reports/purchasing
+└── Operations
+    └── OP01 · Locations           → /dashboard/locations
 ```
+
+**Menu codes** are Portal-specific identifiers (e.g. `CU03`, `SA02`). They are independent of BTR Desktop screen codes (e.g. `RO2`, `FT5`). When both systems are involved, SOPs should specify which code namespace applies.
+
+**Support communication:** Use menu codes in WhatsApp, phone, and SOP references — e.g. "Open **CU03**" instead of describing scroll position in the sidebar.
 
 ### Routes
 
@@ -857,6 +922,7 @@ BTR Portal
 | `/dashboard/cash-flow-forecast` | Cash Flow Forecast Dashboard | Yes |
 | `/dashboard/customer-risk-forecast` | Customer Risk Forecast Dashboard | Yes |
 | `/dashboard/collection-optimization` | Collection Optimization Dashboard | Yes |
+| `/dashboard/customer-portfolio` | Customer Portfolio Optimization Dashboard | Yes |
 | `/dashboard/inventory-forecast` | Inventory Forecast Dashboard | Yes |
 | `/dashboard/locations` | Branch / Warehouse Performance Dashboard | Yes |
 | `/dashboard/inventory` | Inventory analytics | Yes |
@@ -866,6 +932,7 @@ BTR Portal
 | `/reports/piutang` | Piutang Report | Yes |
 | `/reports/inventory` | Inventory Report | Yes |
 | `/reports/purchasing` | Purchasing Report | Yes |
+| `/reports/customers` | Customer Report | Yes |
 
 ### Navigation Flow
 
@@ -886,7 +953,7 @@ Salesman Performance → click salesman row → Sales or Piutang Report (pre-fil
 Inventory Risk → click item row → Inventory Report (pre-filtered)
 Executive / Domain Dashboard → Report (domain reports)
 
-Sidebar → Reports → [Sales | Piutang | Inventory | Purchasing] Report
+Sidebar → [domain group] → [menu code]
 ```
 
 Authenticated users visiting `/login` are redirected to Dashboard home.
