@@ -131,6 +131,8 @@ namespace btr.portal.api.Configurations
             services.AddScoped<ICustomerPaymentBehaviorDal, CustomerPaymentBehaviorDal>();
             services.AddScoped<ICustomerOmzetHistoryDal, CustomerOmzetHistoryDal>();
             services.AddScoped<ICustomerMtdItemRollupDal, CustomerMtdItemRollupDal>();
+            services.AddScoped<ISalesmanMtdItemRollupDal, SalesmanMtdItemRollupDal>();
+            services.AddScoped<ISupplierMtdItemRollupDal, SupplierMtdItemRollupDal>();
             services.AddScoped<IDashboardInventoryForecastDal, DashboardInventoryForecastDal>();
             services.AddScoped<IDashboardInventoryOptimizationDal, DashboardInventoryOptimizationDal>();
             services.AddScoped<IDashboardPurchasingDal, DashboardPurchasingDal>();

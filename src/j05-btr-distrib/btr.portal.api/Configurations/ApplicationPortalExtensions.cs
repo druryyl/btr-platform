@@ -110,6 +110,10 @@ namespace btr.portal.api.Configurations
             services.AddScoped<DashboardCollectionOptimizationAggregator>();
             services.AddScoped<DashboardCustomerPortfolioAggregator>();
             services.AddScoped<DashboardCustomerRelationshipAggregator>();
+            services.AddScoped<DashboardSalesmanRelationshipAggregator>();
+            services.AddScoped<DashboardSupplierRelationshipAggregator>();
+            services.AddScoped<DashboardItemRelationshipAggregator>();
+            services.AddScoped<DashboardItemPortfolioBuilder>();
             services.AddScoped<DashboardInventoryForecastAggregator>();
             services.AddScoped<DashboardInventoryOptimizationAggregator>();
             services.AddScoped<DashboardLocationAggregator>();
@@ -120,6 +124,9 @@ namespace btr.portal.api.Configurations
             services.AddSingleton<IRelationshipDefinitionRegistry, EntityRelationshipDefinitionRegistry>();
             services.AddSingleton<IEntityAnalyticsRegistrar, EntityAnalyticsPlatformRegistrar>();
             services.AddSingleton<IEntityAnalyticsRegistrar, CustomerEntityAnalyticsRegistrar>();
+            services.AddSingleton<IEntityAnalyticsRegistrar, SalesmanEntityAnalyticsRegistrar>();
+            services.AddSingleton<IEntityAnalyticsRegistrar, SupplierEntityAnalyticsRegistrar>();
+            services.AddSingleton<IEntityAnalyticsRegistrar, ItemEntityAnalyticsRegistrar>();
             services.AddSingleton<IKpiRegistry, EntityAnalyticsKpiRegistry>();
             services.AddSingleton<EntityKpiEnvelopeFormatter>();
             services.AddScoped<IEntityTrendEngine, EntityTrendEngine>();

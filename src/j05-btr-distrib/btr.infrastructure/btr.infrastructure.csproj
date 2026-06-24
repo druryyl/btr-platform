@@ -177,6 +177,8 @@
     <Compile Include="ReportingContext\DashboardSnapshotAgg\DashboardPiutangSnapshotDal.cs" />
     <Compile Include="ReportingContext\DashboardSnapshotAgg\DashboardCustomerSnapshotDal.cs" />
     <Compile Include="ReportingContext\DashboardSnapshotAgg\CustomerMtdItemRollupDal.cs" />
+    <Compile Include="ReportingContext\DashboardSnapshotAgg\SalesmanMtdItemRollupDal.cs" />
+    <Compile Include="ReportingContext\DashboardSnapshotAgg\SupplierMtdItemRollupDal.cs" />
     <Compile Include="ReportingContext\DashboardSnapshotAgg\DashboardSalesmanSnapshotDal.cs" />
     <Compile Include="ReportingContext\DashboardSnapshotAgg\DashboardCollectionSnapshotDal.cs" />
     <Compile Include="ReportingContext\DashboardSnapshotAgg\DashboardLocationSnapshotDal.cs" />

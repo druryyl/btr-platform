@@ -577,6 +577,7 @@ export interface DashboardInventoryRiskAttentionItem {
   SignalKey: string
   SignalLabel: string
   ReportRoute: string
+  ProfileRoute?: string | null
   Investigation?: InvestigationMetadata | null
 }
 
@@ -591,6 +592,7 @@ export interface DashboardInventoryRiskRankingRow {
   DaysSinceLastFaktur: number
   PercentOfAtRisk: number | null
   ReportRoute: string
+  ProfileRoute?: string | null
   Investigation?: InvestigationMetadata | null
 }
 
@@ -667,11 +669,13 @@ export interface DashboardPurchasingAttentionItem {
   ValueAmount: number | null
   ValueText: string | null
   ReportRoute: string | null
+  ProfileRoute?: string | null
   Investigation?: InvestigationMetadata | null
 }
 
 export interface DashboardPurchasingPrincipalExposureItem {
   Rank: number
+  SupplierCode?: string | null
   PrincipalName: string
   MtdPurchaseAmount: number
   PercentOfPurchase: number | null
@@ -682,6 +686,7 @@ export interface DashboardPurchasingPrincipalExposureItem {
   IsCompoundDependency: boolean
   IsInventoryNoPurchase: boolean
   ReportRoute: string | null
+  ProfileRoute?: string | null
   Investigation?: InvestigationMetadata | null
 }
 
@@ -816,6 +821,7 @@ export interface DashboardSalesmanAttentionItem {
   ValueText: string | null
   WilayahName: string
   ReportRoute: string
+  ProfileRoute?: string | null
   RequiresAttention: boolean
   IsActive: boolean
   Investigation?: InvestigationMetadata | null
@@ -831,6 +837,7 @@ export interface DashboardSalesmanRankingRow {
   AchievementPercent?: number | null
   TargetAmount?: number | null
   ReportRoute: string
+  ProfileRoute?: string | null
   IsActive: boolean
   Investigation?: InvestigationMetadata | null
 }

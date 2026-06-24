@@ -97,12 +97,16 @@ namespace btr.application.ReportingContext.DashboardPurchasingAgg.Queries
 
         public string ReportRoute { get; set; }
 
+        public string ProfileRoute { get; set; }
+
         public InvestigationMetadata Investigation { get; set; }
     }
 
     public class DashboardPurchasingPrincipalExposureItem
     {
         public int Rank { get; set; }
+
+        public string SupplierCode { get; set; }
 
         public string PrincipalName { get; set; }
 
@@ -123,6 +127,8 @@ namespace btr.application.ReportingContext.DashboardPurchasingAgg.Queries
         public bool IsInventoryNoPurchase { get; set; }
 
         public string ReportRoute { get; set; }
+
+        public string ProfileRoute { get; set; }
 
         public InvestigationMetadata Investigation { get; set; }
     }

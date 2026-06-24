@@ -196,6 +196,15 @@
     <Compile Include="ReportingContext\DashboardCustomerRelationshipAggregatorTest.cs" />
     <Compile Include="ReportingContext\CustomerEntityAnalyticsProducerTest.cs" />
     <Compile Include="ReportingContext\CustomerEntityAnalyticsReconciliationTest.cs" />
+    <Compile Include="ReportingContext\SalesmanEntityAnalyticsProducerTest.cs" />
+    <Compile Include="ReportingContext\SalesmanEntityAnalyticsReconciliationTest.cs" />
+    <Compile Include="ReportingContext\SupplierEntityAnalyticsProducerTest.cs" />
+    <Compile Include="ReportingContext\SupplierEntityAnalyticsReconciliationTest.cs" />
+    <Compile Include="ReportingContext\ItemEntityAnalyticsProducerTest.cs" />
+    <Compile Include="ReportingContext\ItemEntityAnalyticsReconciliationTest.cs" />
+    <Compile Include="ReportingContext\DashboardItemRelationshipAggregatorTest.cs" />
+    <Compile Include="ReportingContext\DashboardSupplierRelationshipAggregatorTest.cs" />
+    <Compile Include="ReportingContext\DashboardSalesmanRelationshipAggregatorTest.cs" />
     <Compile Include="ReportingContext\EntityComparisonCalculatorTest.cs" />
     <Compile Include="ReportingContext\EntityComparisonEngineTest.cs" />
     <Compile Include="ReportingContext\EntityPerformanceProfileComposerTest.cs" />

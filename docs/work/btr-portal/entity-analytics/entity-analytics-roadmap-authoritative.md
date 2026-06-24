@@ -15,7 +15,7 @@ Entity Analytics is delivered in two tracks:
 1. **Capability layers** — prove each snapshot layer and read engine on **Customer** first (M32.1–M32.8).
 2. **Entity packs** — register Salesman, Supplier, Item, and future types by adopting the proven pipeline (M32.9+).
 
-Customer remains the reference consumer until platform layers M32.6–M32.8 complete.
+Customer was the reference consumer through M32.8. **Salesman (M32.9)** is the second enabled entity type.
 
 ---
 
@@ -32,13 +32,13 @@ Customer remains the reference consumer until platform layers M32.6–M32.8 comp
 | **M32.6** | Relationship Engine (L4) | **Complete** | Customer |
 | **M32.7** | Comparison Engine | **Complete** | Customer |
 | **M32.8** | Radar Engine (L5) | **Complete** | Customer |
-| **M32.9** | Salesman Entity Pack | Planned | Salesman |
-| **M32.10** | Supplier Entity Pack | Planned | Supplier |
-| **M32.11** | Item Entity Pack | Planned | Item |
+| **M32.9** | Salesman Entity Pack | **Complete** | Salesman |
+| **M32.10** | Supplier Entity Pack | **Complete** | Supplier |
+| **M32.11** | Item Entity Pack | **Complete** | Item |
 | **M32.12** | Future Entity Types | Planned | Warehouse, Wilayah, … |
 | **M33** | Portal Cloud Snapshot Platform | Separate | All portal features |
 
-**Next milestone:** M32.9 Salesman Entity Pack.
+**Next milestone:** M32.12 Future Entity Types.
 
 ---
 
@@ -121,6 +121,31 @@ Customer remains the reference consumer until platform layers M32.6–M32.8 comp
 | **Delivered** | `BTRPD_EntityAnalytics_Radar`; `EntityRadarEngine` + `PeerGroupResolver`; Customer 6-axis radar pack; `ProfileRadarSection.vue`; `RadarCompareSection.vue`; peer group minimum gate (≥ 5) |
 | **Summary** | [m32.8-implementation-summary.md](./m32.8-implementation-summary.md) |
 
+### M32.9 — Salesman Entity Pack
+
+| Field | Content |
+| ----- | ------- |
+| **Objective** | Second entity type adopting full L0→L5 pipeline; SF01 KPI reconciliation |
+| **Delivered** | `SalesmanEntityAnalyticsRegistrar/Producer/EvidenceResolver`; attention + relationship catalogs; `SalesmanMtdItemRollupDal`; worker hook; SF01 `ProfileRoute`; `SalesmanProfileView` / `SalesmanCompareView`; reconciliation tests |
+| **Note** | RepHistory → L1 historical backfill deferred (current month written at refresh) |
+| **Summary** | [m32.9-implementation-summary.md](./m32.9-implementation-summary.md) |
+
+### M32.10 — Supplier Entity Pack
+
+| Field | Content |
+| ----- | ------- |
+| **Objective** | Principal-centric cross-domain profile; PU01 KPI reconciliation |
+| **Delivered** | `SupplierEntityAnalyticsRegistrar/Producer/EvidenceResolver`; M21 attention + relationship catalogs; `SupplierMtdItemRollupDal`; worker hook; PU01 `ProfileRoute`; `SupplierProfileView` / `SupplierCompareView`; reconciliation tests |
+| **Summary** | [m32.10-implementation-summary.md](./m32.10-implementation-summary.md) |
+
+### M32.11 — Item Entity Pack
+
+| Field | Content |
+| ----- | ------- |
+| **Objective** | SKU profile with active-subset L1 scope (ADR-EA-011); highest cardinality |
+| **Delivered** | `ItemEntityAnalyticsRegistrar/Producer/EvidenceResolver`; M19/M28 attention + relationship catalogs; `DashboardItemPortfolioBuilder`; worker hook; IN02 `ProfileRoute`; `ItemProfileView` / `ItemCompareView`; reconciliation tests |
+| **Summary** | [m32.11-implementation-summary.md](./m32.11-implementation-summary.md) |
+
 ---
 
 ## Remaining Milestones
@@ -144,15 +169,6 @@ Customer remains the reference consumer until platform layers M32.6–M32.8 comp
 | **Deliverables** | `BTRPD_EntityAnalytics_Radar` SQL + repository; `EntityRadarEngine`; Customer radar axes; `ProfileRadarSection.vue`; peer group minimum gate (≥ 5) |
 | **Architectural role** | Platform infrastructure — L5 snapshot layer |
 
-### M32.9 — Salesman Entity Pack
-
-| Field | Content |
-| ----- | ------- |
-| **Objective** | Second entity type adopting L0→L5 pipeline; RepHistory → L1 adapter/backfill |
-| **Dependencies** | M32.5–M32.8 platform layers (or partial enable per section) |
-| **Deliverables** | `SalesmanEntityAnalyticsRegistrar/Producer/EvidenceResolver`; Salesman worker hook; SF01 `ProfileRoute` links; optional RepHistory backfill |
-| **Architectural role** | Entity consumer — registration only |
-
 ### M32.10 — Supplier Entity Pack
 
 | Field | Content |
@@ -161,15 +177,17 @@ Customer remains the reference consumer until platform layers M32.6–M32.8 comp
 | **Dependencies** | M32.9 pattern proven; M21 purchasing worker |
 | **Deliverables** | Supplier registrar/producer/resolver; PU01 profile links |
 | **Architectural role** | Entity consumer |
+| **Status** | Complete — see [m32.10-implementation-summary.md](./m32.10-implementation-summary.md) |
 
 ### M32.11 — Item Entity Pack
 
 | Field | Content |
 | ----- | ------- |
 | **Objective** | SKU profile with active-subset L1 scope (ADR-EA-011); highest cardinality |
-| **Dependencies** | M32.8 platform complete; M19/M28 workers |
-| **Deliverables** | Item registrar/producer/resolver; IN02 profile links; refresh SLA monitoring |
+| **Dependencies** | M32.8 platform complete; M19; M28 |
+| **Deliverables** | Item registrar/producer/resolver; IN02 profile links |
 | **Architectural role** | Entity consumer |
+| **Status** | Complete — see [m32.11-implementation-summary.md](./m32.11-implementation-summary.md) |
 
 ### M32.12 — Future Entity Types
 

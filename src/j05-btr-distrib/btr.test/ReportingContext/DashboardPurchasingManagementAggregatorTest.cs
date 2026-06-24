@@ -262,12 +262,45 @@ namespace btr.test.ReportingContext
                 && a.EntityName == "Principal A");
         }
 
+        [Fact]
+        public void Aggregate_Portfolio_IncludesActivePrincipalWithPurchaseAndInventory()
+        {
+            var inventory = InventorySnapshot(
+                ("Principal A", 5_000m, 1));
+
+            var result = Aggregate(
+                new[] { Invoice("A", 1_000m, "SUDAH", FixedToday, "Principal A") },
+                inventorySnapshot: inventory,
+                suppliers: new[]
+                {
+                    new btr.domain.PurchaseContext.SupplierAgg.SupplierModel
+                    {
+                        SupplierId = "S001",
+                        SupplierCode = "SUPA",
+                        SupplierName = "Principal A"
+                    }
+                });
+
+            result.Portfolio.Should().ContainSingle();
+            var row = result.Portfolio[0];
+            row.SupplierId.Should().Be("S001");
+            row.SupplierCode.Should().Be("SUPA");
+            row.MtdPurchaseAmount.Should().Be(1_000m);
+            row.MtdInvoiceCount.Should().Be(1);
+            row.InventoryValue.Should().Be(5_000m);
+            row.IsActiveMtd.Should().BeTrue();
+            result.TopPrincipal[0].SupplierCode.Should().Be("SUPA");
+            result.AttentionList.Should().Contain(a =>
+                a.SupplierId == "S001" && a.EntityName == "Principal A");
+        }
+
         private DashboardPurchasingManagementAggregateResult Aggregate(
             InvoiceView[] invoices = null,
             DashboardInventoryAggregateResult inventorySnapshot = null,
             DashboardInventoryRiskAggregateResult inventoryRiskSnapshot = null,
             DateTime? today = null,
-            int qualifiedBacklogDays = 3)
+            int qualifiedBacklogDays = 3,
+            btr.domain.PurchaseContext.SupplierAgg.SupplierModel[] suppliers = null)
         {
             var invoiceList = invoices ?? Array.Empty<InvoiceView>();
             var purchasingSnapshot = new DashboardPurchasingAggregateResult
@@ -297,7 +330,8 @@ namespace btr.test.ReportingContext
                 June2026,
                 today ?? FixedToday,
                 FixedGeneratedAt,
-                qualifiedBacklogDays);
+                qualifiedBacklogDays,
+                suppliers);
         }
 
         private static InvoiceView Invoice(

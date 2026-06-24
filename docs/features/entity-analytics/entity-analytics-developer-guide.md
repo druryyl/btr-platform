@@ -2,7 +2,7 @@
 
 
 
-**Status:** Permanent knowledge (M32.6 complete)  
+**Status:** Permanent knowledge (M32.11 complete)  
 
 **Audience:** Implementers adding entity types or history layers  
 
@@ -28,7 +28,7 @@ Entity Analytics is a **platform layer** that materializes per-entity KPI snapsh
 
 
 
-**Current status (M32.8):** Customer is the only enabled entity type. L0–L5 are implemented. Comparison Engine, Search API, and Radar Engine are implemented.
+**Current status (M32.11):** Customer, **Salesman**, **Supplier**, and **Item** are enabled entity types. L0–L5 platform layers, Comparison Engine, Search API, and Radar Engine are implemented on Customer; Salesman (M32.9), Supplier (M32.10), and Item (M32.11) adopt the full pipeline via entity packs.
 
 
 
@@ -501,31 +501,81 @@ Profile `Comparison` section uses Cross-Period mode by default.
 
 
 
-Example: **Salesman** (M32.9 entity pack)
+Example: **Salesman** (M32.9 entity pack) — **implemented**
 
+Reference: [m32.9-implementation-summary.md](../../work/btr-portal/entity-analytics/m32.9-implementation-summary.md)
 
+1. **Platform registrar** — `EntityTypeCode.Salesman` metadata in `EntityAnalyticsPlatformRegistrar` (`salesman-default`, `salesman-relationships`, route `/analytics/salesmen/{code}`).
 
-1. **Platform registrar** — `EntityTypeCode.Salesman` metadata already in `EntityAnalyticsPlatformRegistrar`.
+2. **`SalesmanEntityAnalyticsRegistrar`** — KPI pack SF-KPI-008/009/010 + radar/meta axes; dimension labels.
 
-2. **Create `SalesmanEntityAnalyticsRegistrar`** — KPI pack, metadata, dimension labels.
+3. **`SalesmanEntityAnalyticsProducer`** — maps `DashboardSalesmanAggregateResult.Portfolio` to L0; L0→L5 orchestration (`EntityId = SalesPersonId`, `EntityCode = SalesPersonCode`).
 
-3. **Create `SalesmanEntityAnalyticsProducer`** — map aggregator output to KPI IDs; call L0→L1→L2 hooks (and L3–L5 when platform layers exist).
+4. **`SalesmanEntityAnalyticsProduceInput`** — wraps salesman aggregate + `DashboardSalesmanRelationshipAggregateResult`.
 
-4. **Create `SalesmanEntityAnalyticsProduceInput`** — attach to worker `DomainInput`.
+5. **Worker hook** — `RefreshDashboardSalesmanSnapshotWorker` calls orchestrator after domain save (loads `SalesmanMtdItemRollupDal` + relationship aggregator first).
 
-5. **Hook worker** — orchestrator after Salesman domain save.
+6. **`SalesmanEntityAnalyticsEvidenceResolver`** — `/reports/sales`, `/reports/piutang` with `salesPersonCode` filter.
 
-6. **Create `SalesmanEntityAnalyticsEvidenceResolver`** — report routes + filter dimension.
+7. **Attention / relationship catalogs** — `SalesmanAttentionSignalCatalog`, `SalesmanRelationshipCatalog` (registered in bootstrap).
 
-7. **Enable** — add `Salesman` to `EntityAnalytics.EnabledEntityTypes`.
+8. **Enable** — `Salesman` in `EntityAnalytics.EnabledEntityTypes` (API + worker).
 
-8. **Register DI** — `AddSingleton<IEntityAnalyticsRegistrar, SalesmanEntityAnalyticsRegistrar>()`.
+9. **Register DI** — `AddSingleton<IEntityAnalyticsRegistrar, SalesmanEntityAnalyticsRegistrar>()`.
 
+10. **Frontend** — `SalesmanProfileView.vue` (shell wrapper), `SalesmanCompareView.vue`, SF01 `ProfileRoute` links.
 
+No changes required to platform engines, `EntityPerformanceProfileComposer`, or `EntityAnalyticsController`.
 
-No changes required to `EntityPerformanceProfileComposer`, trend/ranking engines, or API controller.
+Example: **Supplier** (M32.10 entity pack) — **implemented**
 
+Reference: [m32.10-implementation-summary.md](../../work/btr-portal/entity-analytics/m32.10-implementation-summary.md)
 
+1. **Platform registrar** — `EntityTypeCode.Supplier` metadata in `EntityAnalyticsPlatformRegistrar` (`supplier-default`, `supplier-relationships`, route `/analytics/suppliers/{code}`).
+
+2. **`SupplierEntityAnalyticsRegistrar`** — KPI pack PU-KPI-001/002/003 + radar/meta axes; dimension labels.
+
+3. **`SupplierEntityAnalyticsProducer`** — maps `DashboardPurchasingManagementAggregateResult.Portfolio` to L0; L0→L5 orchestration (`EntityId = SupplierId`, `EntityCode = SupplierCode`).
+
+4. **`SupplierEntityAnalyticsProduceInput`** — wraps management aggregate + `DashboardSupplierRelationshipAggregateResult`.
+
+5. **Worker hook** — `RefreshDashboardPurchasingManagementSnapshotWorker` calls orchestrator after domain save (loads `ISupplierDal`, `ISupplierMtdItemRollupDal`, relationship aggregator first).
+
+6. **`SupplierEntityAnalyticsEvidenceResolver`** — `/reports/purchasing`, `/reports/inventory` with `supplierCode` filter.
+
+7. **Attention / relationship catalogs** — `SupplierAttentionSignalCatalog`, `SupplierRelationshipCatalog`.
+
+8. **Enable** — `Supplier` in `EntityAnalytics.EnabledEntityTypes` (API + worker).
+
+9. **Register DI** — `AddSingleton<IEntityAnalyticsRegistrar, SupplierEntityAnalyticsRegistrar>()`.
+
+10. **Frontend** — `SupplierProfileView.vue`, `SupplierCompareView.vue`, PU01 `ProfileRoute` links.
+
+Example: **Item** (M32.11 entity pack) — **implemented**
+
+Reference: [m32.11-implementation-summary.md](../../work/btr-portal/entity-analytics/m32.11-implementation-summary.md)
+
+1. **Platform registrar** — `EntityTypeCode.Item` metadata in `EntityAnalyticsPlatformRegistrar` (`item-default`, `item-relationships`, route `/analytics/items/{code}`).
+
+2. **`ItemEntityAnalyticsRegistrar`** — KPI pack IN-KPI-001/020/021 + radar/meta axes; dimension labels.
+
+3. **`ItemEntityAnalyticsProducer`** — maps `DashboardItemPortfolioRow` list to L0; L0→L5 orchestration (`EntityId = BrgId`, `EntityCode = BrgCode`).
+
+4. **`ItemEntityAnalyticsProduceInput`** — wraps risk/forecast aggregates + portfolio + `DashboardItemRelationshipAggregateResult`.
+
+5. **Worker hook** — `RefreshDashboardInventoryRiskSnapshotWorker` calls orchestrator after domain save (loads `ISalesmanMtdItemRollupDal`, portfolio builder, relationship aggregator first).
+
+6. **`ItemEntityAnalyticsEvidenceResolver`** — `/reports/inventory` with `brgCode` filter.
+
+7. **Attention / relationship catalogs** — `ItemAttentionSignalCatalog`, `ItemRelationshipCatalog`.
+
+8. **Enable** — `Item` in `EntityAnalytics.EnabledEntityTypes` (API + worker).
+
+9. **Register DI** — `AddSingleton<IEntityAnalyticsRegistrar, ItemEntityAnalyticsRegistrar>()`.
+
+10. **Frontend** — `ItemProfileView.vue`, `ItemCompareView.vue`, IN02 `ProfileRoute` links.
+
+**ADR-EA-011:** L1 monthly history only when `DashboardItemPortfolioRow.IsTrendEligible` (stock > 0 OR sale in 24 months).
 
 ---
 
@@ -553,7 +603,7 @@ No changes required to `EntityPerformanceProfileComposer`, trend/ranking engines
 
 | `IEntityAnalyticsRelationshipRepository` | L4 relationships | **Implemented** (M32.6) |
 
-| `IEntityAnalyticsRadarRepository` | L5 radar | Stub → M32.8 |
+| `IEntityAnalyticsRadarRepository` | L5 radar | **Implemented** (M32.8) |
 
 
 
@@ -578,18 +628,9 @@ See [entity-analytics-roadmap-authoritative.md](../../work/btr-portal/entity-ana
 
 
 | Next | Milestone |
-
 |------|-----------|
-
-| **M32.5** | Attention History (L3) |
-
-| M32.6 | Relationship Engine (L4) |
-
-| M32.7 | Comparison Engine |
-
-| M32.8 | Radar Engine (L5) |
-
-| M32.9+ | Entity packs (Salesman, Supplier, Item, …) |
+| **M32.12** | Future Entity Types (Warehouse, Wilayah, Category) |
+| M32.12+ | Future entity types |
 
 
 
@@ -605,7 +646,7 @@ See [entity-analytics-roadmap-authoritative.md](../../work/btr-portal/entity-ana
 
 "EntityAnalytics": {
 
-  "EnabledEntityTypes": [ "Customer" ],
+  "EnabledEntityTypes": [ "Customer", "Salesman", "Supplier", "Item" ],
 
   "HistoryRetentionMonths": 36
 
@@ -637,9 +678,12 @@ See [entity-analytics-roadmap-authoritative.md](../../work/btr-portal/entity-ana
 
 | Ranking engine / L2 math | `EntityRankingCalculatorTest`, `EntityRankingEngineTest` |
 
-| Producer L0/L1/L2 mapping | `CustomerEntityAnalyticsProducerTest` |
-
+| Producer L0/L1/L2 mapping | `CustomerEntityAnalyticsProducerTest`, `SalesmanEntityAnalyticsProducerTest`, `ItemEntityAnalyticsProducerTest` |
 | CU01/CU05 reconciliation | `CustomerEntityAnalyticsReconciliationTest` |
+| SF01 reconciliation | `SalesmanEntityAnalyticsReconciliationTest` |
+| PU01 reconciliation | `SupplierEntityAnalyticsReconciliationTest` |
+| IN02 reconciliation | `ItemEntityAnalyticsReconciliationTest` |
+| Relationship aggregator | `DashboardSalesmanRelationshipAggregatorTest`, `DashboardItemRelationshipAggregatorTest` |
 
 | KPI registry / pack validation | `EntityAnalyticsKpiRegistryTest` |
 
@@ -671,5 +715,7 @@ See [entity-analytics-roadmap-authoritative.md](../../work/btr-portal/entity-ana
 
 | [m32.3-implementation-summary.md](../../work/btr-portal/entity-analytics/m32.3-implementation-summary.md) | L1 + Trend milestone |
 
-| [m32.4-implementation-summary.md](../../work/btr-portal/entity-analytics/m32.4-implementation-summary.md) | L2 + Ranking milestone |
+| [m32.8-implementation-summary.md](../../work/btr-portal/entity-analytics/m32.8-implementation-summary.md) | L5 Radar milestone |
+| [m32.9-implementation-summary.md](../../work/btr-portal/entity-analytics/m32.9-implementation-summary.md) | Salesman entity pack |
+| [m32.10-implementation-summary.md](../../work/btr-portal/entity-analytics/m32.10-implementation-summary.md) | Supplier entity pack |
 

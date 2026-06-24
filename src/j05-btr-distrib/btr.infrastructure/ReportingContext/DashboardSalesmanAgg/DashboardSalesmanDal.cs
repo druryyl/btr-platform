@@ -19,6 +19,14 @@ namespace btr.infrastructure.ReportingContext.DashboardSalesmanAgg
         private const string SalesReportRoute = "/reports/sales";
         private const string PiutangReportRoute = "/reports/piutang";
 
+        private static string BuildSalesmanProfileRoute(string salesPersonCode)
+        {
+            if (string.IsNullOrWhiteSpace(salesPersonCode))
+                return null;
+
+            return $"/analytics/salesmen/{Uri.EscapeDataString(salesPersonCode.Trim())}";
+        }
+
         private readonly IDashboardSalesmanSnapshotDal _snapshotDal;
         private readonly DashboardSnapshotOptions _options;
 
@@ -144,6 +152,7 @@ namespace btr.infrastructure.ReportingContext.DashboardSalesmanAgg
                             PercentOfTotal = r.PercentOfTotal,
                             IsActive = r.IsActive,
                             ReportRoute = SalesReportRoute,
+                            ProfileRoute = BuildSalesmanProfileRoute(r.SalesPersonCode),
                             Investigation = InvestigationMetadataBuilder.Build(
                                 InvestigationRegistry.SignalRankingSalesmanTopOmzet,
                                 InvestigationMetadataBuilder.EntityTypeSalesman,
@@ -164,6 +173,7 @@ namespace btr.infrastructure.ReportingContext.DashboardSalesmanAgg
                             TargetAmount = r.TargetAmount,
                             IsActive = r.IsActive,
                             ReportRoute = SalesReportRoute,
+                            ProfileRoute = BuildSalesmanProfileRoute(r.SalesPersonCode),
                             Investigation = InvestigationMetadataBuilder.Build(
                                 InvestigationRegistry.SignalRankingSalesmanTopAchievement,
                                 InvestigationMetadataBuilder.EntityTypeSalesman,
@@ -185,6 +195,7 @@ namespace btr.infrastructure.ReportingContext.DashboardSalesmanAgg
                             PercentOfTotal = r.PercentOfTotal,
                             IsActive = r.IsActive,
                             ReportRoute = PiutangReportRoute,
+                            ProfileRoute = BuildSalesmanProfileRoute(r.SalesPersonCode),
                             Investigation = InvestigationMetadataBuilder.Build(
                                 InvestigationRegistry.SignalRankingSalesmanTopPiutang,
                                 InvestigationMetadataBuilder.EntityTypeSalesman,
@@ -221,6 +232,7 @@ namespace btr.infrastructure.ReportingContext.DashboardSalesmanAgg
                 WilayahName = row.WilayahName,
                 IsActive = row.IsActive,
                 ReportRoute = ResolveReportRoute(row.SignalKey),
+                ProfileRoute = BuildSalesmanProfileRoute(row.SalesPersonCode),
                 RequiresAttention = true,
                 Investigation = InvestigationMetadataBuilder.Build(
                     row.SignalKey,

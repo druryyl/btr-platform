@@ -5,6 +5,7 @@ using System.Linq;
 using btr.application.ReportingContext.DashboardPurchasingAgg.Contracts;
 using btr.application.ReportingContext.DashboardPurchasingAgg.Queries;
 using btr.application.ReportingContext.Shared;
+using btr.application.ReportingContext.DashboardSnapshotAgg.Services;
 using btr.application.ReportingContext.DashboardSnapshotAgg;
 using btr.application.ReportingContext.DashboardSnapshotAgg.Contracts;
 using btr.application.ReportingContext.DashboardSnapshotAgg.Models;
@@ -31,6 +32,14 @@ namespace btr.infrastructure.ReportingContext.DashboardPurchasingAgg
             _snapshotDal = snapshotDal;
             _managementSnapshotDal = managementSnapshotDal;
             _options = options?.Value ?? new DashboardSnapshotOptions();
+        }
+
+        private static string BuildSupplierProfileRoute(string supplierCode)
+        {
+            if (string.IsNullOrWhiteSpace(supplierCode))
+                return null;
+
+            return $"/analytics/suppliers/{Uri.EscapeDataString(supplierCode.Trim())}";
         }
 
         public DashboardPurchasingResponse GetSummary()
@@ -131,6 +140,12 @@ namespace btr.infrastructure.ReportingContext.DashboardPurchasingAgg
                     ValueAmount = row.ValueAmount,
                     ValueText = row.ValueText,
                     ReportRoute = row.ReportRoute,
+                    ProfileRoute = string.Equals(
+                        row.EntityType,
+                        DashboardPurchasingManagementAggregator.EntityTypePrincipal,
+                        StringComparison.OrdinalIgnoreCase)
+                        ? BuildSupplierProfileRoute(row.SupplierCode)
+                        : null,
                     Investigation = InvestigationMetadataBuilder.Build(
                         row.SignalKey,
                         row.EntityType ?? InvestigationMetadataBuilder.EntityTypePrincipal,
@@ -145,6 +160,7 @@ namespace btr.infrastructure.ReportingContext.DashboardPurchasingAgg
                 .Select(row => new DashboardPurchasingPrincipalExposureItem
                 {
                     Rank = row.Rank,
+                    SupplierCode = row.SupplierCode,
                     PrincipalName = row.PrincipalName,
                     MtdPurchaseAmount = row.MtdPurchaseAmount,
                     PercentOfPurchase = row.PercentOfPurchase,
@@ -155,6 +171,7 @@ namespace btr.infrastructure.ReportingContext.DashboardPurchasingAgg
                     IsCompoundDependency = row.IsCompoundDependency,
                     IsInventoryNoPurchase = row.IsInventoryNoPurchase,
                     ReportRoute = row.ReportRoute ?? PurchasingReportRoute,
+                    ProfileRoute = BuildSupplierProfileRoute(row.SupplierCode),
                     Investigation = InvestigationMetadataBuilder.Build(
                         InvestigationRegistry.SignalRankingTopPrincipal,
                         InvestigationMetadataBuilder.EntityTypePrincipal,

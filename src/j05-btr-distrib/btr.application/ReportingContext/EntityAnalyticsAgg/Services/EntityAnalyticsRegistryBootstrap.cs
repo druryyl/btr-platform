@@ -25,6 +25,12 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Services
 
             CustomerAttentionSignalCatalog.Register(attentionSignals);
             CustomerRelationshipCatalog.Register(relationshipDefinitions);
+            SalesmanAttentionSignalCatalog.Register(attentionSignals);
+            SalesmanRelationshipCatalog.Register(relationshipDefinitions);
+            SupplierAttentionSignalCatalog.Register(attentionSignals);
+            SupplierRelationshipCatalog.Register(relationshipDefinitions);
+            ItemAttentionSignalCatalog.Register(attentionSignals);
+            ItemRelationshipCatalog.Register(relationshipDefinitions);
         }
     }
 }

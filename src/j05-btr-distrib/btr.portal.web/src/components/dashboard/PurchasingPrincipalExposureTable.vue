@@ -18,6 +18,11 @@ const router = useRouter()
 
 function onRowClick(event: { data: DashboardPurchasingPrincipalExposureItem }): void {
   const row = event.data
+  if (row.ProfileRoute) {
+    void router.push(row.ProfileRoute)
+    return
+  }
+
   if (row.ReportRoute && row.PrincipalName) {
     navigateToReport(router, row.ReportRoute, row.PrincipalName)
   }

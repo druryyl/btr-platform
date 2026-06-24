@@ -155,12 +155,42 @@ const router = createRouter({
           component: () => import('@/views/analytics/CustomerCompareView.vue'),
         },
         {
+          path: 'analytics/salesmen/compare',
+          name: 'salesman-compare',
+          component: () => import('@/views/analytics/SalesmanCompareView.vue'),
+        },
+        {
+          path: 'analytics/suppliers/compare',
+          name: 'supplier-compare',
+          component: () => import('@/views/analytics/SupplierCompareView.vue'),
+        },
+        {
+          path: 'analytics/items/compare',
+          name: 'item-compare',
+          component: () => import('@/views/analytics/ItemCompareView.vue'),
+        },
+        {
           path: 'analytics/customers/:customerCode',
           name: 'customer-performance-profile',
           redirect: (to) => ({
             name: 'entity-performance-profile',
             params: { entityType: 'Customer', entityId: to.params.customerCode },
           }),
+        },
+        {
+          path: 'analytics/salesmen/:salesPersonCode',
+          name: 'salesman-performance-profile',
+          component: () => import('@/views/analytics/SalesmanProfileView.vue'),
+        },
+        {
+          path: 'analytics/suppliers/:supplierCode',
+          name: 'supplier-performance-profile',
+          component: () => import('@/views/analytics/SupplierProfileView.vue'),
+        },
+        {
+          path: 'analytics/items/:brgCode',
+          name: 'item-performance-profile',
+          component: () => import('@/views/analytics/ItemProfileView.vue'),
         },
         {
           path: 'analytics/:entityType/:entityId',

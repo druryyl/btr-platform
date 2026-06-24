@@ -88,6 +88,11 @@ function investigate(item: DashboardSalesmanAttentionItem): void {
     resolveInvestigationSourceLabel(route.path),
   )
 }
+
+function openProfile(item: DashboardSalesmanAttentionItem): void {
+  if (!item.ProfileRoute) return
+  void router.push(item.ProfileRoute)
+}
 </script>
 
 <template>
@@ -138,13 +143,25 @@ function investigate(item: DashboardSalesmanAttentionItem): void {
               <p class="salesman-attention-list__empty">{{ emptyMessage }}</p>
             </template>
 
-            <Column field="SalesPersonCode" header="Code" />
+            <Column field="SalesPersonCode" header="Code">
+              <template #body="{ data }">
+                <button
+                  v-if="data.ProfileRoute"
+                  type="button"
+                  class="salesman-attention-list__name-link"
+                  @click="openProfile(data)"
+                >
+                  {{ data.SalesPersonCode }}
+                </button>
+                <span v-else>{{ data.SalesPersonCode }}</span>
+              </template>
+            </Column>
             <Column header="Salesman">
               <template #body="{ data }">
                 <button
                   type="button"
                   class="salesman-attention-list__name-link"
-                  @click="emit('salesmanClick', data)"
+                  @click="data.ProfileRoute ? openProfile(data) : emit('salesmanClick', data)"
                 >
                   {{ data.SalesPersonName }}
                 </button>
@@ -159,13 +176,22 @@ function investigate(item: DashboardSalesmanAttentionItem): void {
             <Column field="WilayahName" header="Wilayah" />
             <Column header="">
               <template #body="{ data }">
-                <Button
-                  v-if="data.Investigation"
-                  label="Investigate"
-                  text
-                  size="small"
-                  @click="investigate(data)"
-                />
+                <div class="salesman-attention-list__actions">
+                  <Button
+                    v-if="data.ProfileRoute"
+                    label="Profile"
+                    text
+                    size="small"
+                    @click="openProfile(data)"
+                  />
+                  <Button
+                    v-if="data.Investigation"
+                    label="Investigate"
+                    text
+                    size="small"
+                    @click="investigate(data)"
+                  />
+                </div>
               </template>
             </Column>
           </DataTable>

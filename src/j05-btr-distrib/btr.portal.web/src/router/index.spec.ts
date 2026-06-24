@@ -175,4 +175,40 @@ describe('dashboard route matching', () => {
     expect(router.currentRoute.value.params.entityType).toBe('Customer')
     expect(router.currentRoute.value.params.entityId).toBe('C001')
   })
+
+  it('resolves /analytics/salesmen/compare to salesman-compare', () => {
+    const router = createTestRouter()
+    expect(router.resolve('/analytics/salesmen/compare').name).toBe('salesman-compare')
+  })
+
+  it('resolves /analytics/salesmen/SP100 to salesman-performance-profile', async () => {
+    const router = createTestRouter()
+    await router.push('/analytics/salesmen/SP100')
+    expect(router.currentRoute.value.name).toBe('salesman-performance-profile')
+    expect(router.currentRoute.value.params.salesPersonCode).toBe('SP100')
+  })
+
+  it('resolves /analytics/suppliers/compare to supplier-compare', () => {
+    const router = createTestRouter()
+    expect(router.resolve('/analytics/suppliers/compare').name).toBe('supplier-compare')
+  })
+
+  it('resolves /analytics/suppliers/SUPA to supplier-performance-profile', async () => {
+    const router = createTestRouter()
+    await router.push('/analytics/suppliers/SUPA')
+    expect(router.currentRoute.value.name).toBe('supplier-performance-profile')
+    expect(router.currentRoute.value.params.supplierCode).toBe('SUPA')
+  })
+
+  it('resolves /analytics/items/compare to item-compare', () => {
+    const router = createTestRouter()
+    expect(router.resolve('/analytics/items/compare').name).toBe('item-compare')
+  })
+
+  it('resolves /analytics/items/BRG001 to item-performance-profile', async () => {
+    const router = createTestRouter()
+    await router.push('/analytics/items/BRG001')
+    expect(router.currentRoute.value.name).toBe('item-performance-profile')
+    expect(router.currentRoute.value.params.brgCode).toBe('BRG001')
+  })
 })

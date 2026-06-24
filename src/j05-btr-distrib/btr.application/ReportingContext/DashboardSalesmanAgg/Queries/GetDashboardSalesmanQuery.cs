@@ -92,6 +92,8 @@ namespace btr.application.ReportingContext.DashboardSalesmanAgg.Queries
 
         public string ReportRoute { get; set; }
 
+        public string ProfileRoute { get; set; }
+
         public bool RequiresAttention { get; set; }
 
         public bool IsActive { get; set; }
@@ -118,6 +120,8 @@ namespace btr.application.ReportingContext.DashboardSalesmanAgg.Queries
         public decimal? TargetAmount { get; set; }
 
         public string ReportRoute { get; set; }
+
+        public string ProfileRoute { get; set; }
 
         public bool IsActive { get; set; }
 

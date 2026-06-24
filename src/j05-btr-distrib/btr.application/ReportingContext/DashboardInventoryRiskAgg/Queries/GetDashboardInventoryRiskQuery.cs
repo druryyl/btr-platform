@@ -102,6 +102,8 @@ namespace btr.application.ReportingContext.DashboardInventoryRiskAgg.Queries
 
         public string ReportRoute { get; set; }
 
+        public string ProfileRoute { get; set; }
+
         public InvestigationMetadata Investigation { get; set; }
     }
 
@@ -126,6 +128,8 @@ namespace btr.application.ReportingContext.DashboardInventoryRiskAgg.Queries
         public decimal? PercentOfAtRisk { get; set; }
 
         public string ReportRoute { get; set; }
+
+        public string ProfileRoute { get; set; }
 
         public InvestigationMetadata Investigation { get; set; }
     }

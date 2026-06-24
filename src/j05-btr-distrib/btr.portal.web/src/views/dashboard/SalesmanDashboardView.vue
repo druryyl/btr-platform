@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
+import { useRouter } from 'vue-router'
 import InputSwitch from 'primevue/inputswitch'
 import DashboardDetailLayout from '@/components/dashboard/DashboardDetailLayout.vue'
 import PlatformSnapshotHealthBanners from '@/components/platform/PlatformSnapshotHealthBanners.vue'
@@ -21,6 +22,7 @@ import {
 import { useDashboardStore } from '@/stores/dashboardStore'
 
 const dashboard = useDashboardStore()
+const router = useRouter()
 const attentionSignalFilter = ref(SALESMAN_ATTENTION_SIGNAL_ALL)
 const showInactiveSalesmen = ref(false)
 const drawerVisible = ref(false)
@@ -106,10 +108,20 @@ function openSalesmanDetail(salesPersonId: string, salesPersonName: string): voi
 
 function onRankingRowClick(row: Record<string, unknown>): void {
   const item = row as unknown as DashboardSalesmanRankingRow
+  if (item.ProfileRoute) {
+    void router.push(item.ProfileRoute)
+    return
+  }
+
   openSalesmanDetail(item.SalesPersonId, item.SalesPersonName)
 }
 
 function onAttentionSalesmanClick(item: DashboardSalesmanAttentionItem): void {
+  if (item.ProfileRoute) {
+    void router.push(item.ProfileRoute)
+    return
+  }
+
   openSalesmanDetail(item.SalesPersonId, item.SalesPersonName)
 }
 

@@ -119,6 +119,8 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.Services
                 periodStart.Year,
                 periodStart.Month);
 
+            var portfolio = BuildPortfolio(repStates.Values);
+
             return new DashboardSalesmanAggregateResult
             {
                 PeriodYear = periodStart.Year,
@@ -141,7 +143,8 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.Services
                 AttentionList = attentionList,
                 Segmentation = segmentation,
                 PrincipalAchievement = principalAchievement,
-                RepHistory = repHistory
+                RepHistory = repHistory,
+                Portfolio = portfolio
             };
         }
 
@@ -271,6 +274,48 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.Services
                     AchievementBand = r.AchievementBand,
                     OpenBalance = r.OpenBalance,
                     IsActive = r.IsActive
+                })
+                .ToList();
+        }
+
+        private static List<DashboardSalesmanPortfolioRow> BuildPortfolio(IEnumerable<RepState> reps)
+        {
+            return reps
+                .Where(r => !string.IsNullOrWhiteSpace(r.SalesPersonId))
+                .Select(r =>
+                {
+                    var topCustomers = r.CustomerOmzet
+                        .OrderByDescending(x => x.Value)
+                        .ThenBy(x => x.Key, StringComparer.OrdinalIgnoreCase)
+                        .Take(TopSalesmanCount)
+                        .Select((x, index) => new DashboardSalesmanPortfolioCustomerRow
+                        {
+                            Rank = index + 1,
+                            CustomerCode = x.Key,
+                            CustomerName = x.Key,
+                            MetricValue = x.Value
+                        })
+                        .ToList();
+
+                    return new DashboardSalesmanPortfolioRow
+                    {
+                        SalesPersonId = r.SalesPersonId,
+                        SalesPersonCode = r.SalesPersonCode,
+                        SalesPersonName = r.SalesPersonName,
+                        WilayahName = r.WilayahName,
+                        SegmentName = r.SegmentName,
+                        IsActive = r.IsActive,
+                        CompletedOmzet = r.OmzetAmount,
+                        TargetAmount = r.TargetAmount,
+                        AchievementPercent = r.AchievementPercent,
+                        AchievementBand = r.AchievementBand,
+                        OpenBalance = r.OpenBalance,
+                        OverdueBalance = r.OverdueBalance,
+                        CustomerCount = r.CustomerCount,
+                        DormantCustomerCount = r.DormantCustomerCount,
+                        ActiveCustomerCount = r.CustomerOmzet.Count(x => x.Value > 0),
+                        TopCustomers = topCustomers
+                    };
                 })
                 .ToList();
         }

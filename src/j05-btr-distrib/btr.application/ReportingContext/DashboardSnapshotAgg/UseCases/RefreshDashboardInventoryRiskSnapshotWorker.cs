@@ -8,6 +8,9 @@ using btr.application.ReportingContext.DashboardSnapshotAgg.Contracts;
 using btr.application.ReportingContext.DashboardSnapshotAgg.Models;
 using btr.application.ReportingContext.DashboardSnapshotAgg.Progress;
 using btr.application.ReportingContext.DashboardSnapshotAgg.Services;
+using btr.application.ReportingContext.EntityAnalyticsAgg.Contracts;
+using btr.application.ReportingContext.EntityAnalyticsAgg.Producers;
+using btr.application.ReportingContext.EntityAnalyticsAgg.Services;
 using btr.application.SalesContext.FakturInfo;
 using btr.application.Portal;
 using btr.application.SupportContext.TglJamAgg;
@@ -36,6 +39,10 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.UseCases
         private readonly DashboardInventoryRiskAggregator _aggregator;
         private readonly DashboardInventoryForecastAggregator _forecastAggregator;
         private readonly DashboardInventoryOptimizationAggregator _optimizationAggregator;
+        private readonly ISalesmanMtdItemRollupDal _salesmanMtdItemRollupDal;
+        private readonly DashboardItemPortfolioBuilder _itemPortfolioBuilder;
+        private readonly DashboardItemRelationshipAggregator _itemRelationshipAggregator;
+        private readonly EntityAnalyticsProducerOrchestrator _entityAnalyticsOrchestrator;
         private readonly IDashboardInventoryRiskSnapshotDal _snapshotDal;
         private readonly IDashboardSnapshotRefreshLogDal _refreshLogDal;
         private readonly ITglJamDal _tglJamDal;
@@ -52,6 +59,10 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.UseCases
             DashboardInventoryRiskAggregator aggregator,
             DashboardInventoryForecastAggregator forecastAggregator,
             DashboardInventoryOptimizationAggregator optimizationAggregator,
+            ISalesmanMtdItemRollupDal salesmanMtdItemRollupDal,
+            DashboardItemPortfolioBuilder itemPortfolioBuilder,
+            DashboardItemRelationshipAggregator itemRelationshipAggregator,
+            EntityAnalyticsProducerOrchestrator entityAnalyticsOrchestrator,
             IDashboardInventoryRiskSnapshotDal snapshotDal,
             IDashboardSnapshotRefreshLogDal refreshLogDal,
             ITglJamDal tglJamDal,
@@ -67,6 +78,10 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.UseCases
             _aggregator = aggregator;
             _forecastAggregator = forecastAggregator;
             _optimizationAggregator = optimizationAggregator;
+            _salesmanMtdItemRollupDal = salesmanMtdItemRollupDal;
+            _itemPortfolioBuilder = itemPortfolioBuilder;
+            _itemRelationshipAggregator = itemRelationshipAggregator;
+            _entityAnalyticsOrchestrator = entityAnalyticsOrchestrator;
             _snapshotDal = snapshotDal;
             _refreshLogDal = refreshLogDal;
             _tglJamDal = tglJamDal;
@@ -167,10 +182,40 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.UseCases
                     _options);
                 WorkerProgressScope.Current.StepCompleted($"{Domain}:AggregateOptimization");
 
+                var periode = CurrentMonthPeriode(today);
+                var itemRollupRows = _salesmanMtdItemRollupDal.ListMtdItemRollups(periode)?.ToList()
+                    ?? new System.Collections.Generic.List<SalesmanMtdItemRollupDto>();
+                var itemGroups = DashboardInventoryItemGroupBuilder.BuildItemGroups(rows);
+                var portfolio = _itemPortfolioBuilder.Build(
+                    itemGroups,
+                    forecast.ItemContexts,
+                    aggregate,
+                    itemRollupRows,
+                    lastFakturRows,
+                    today);
+                var relationshipAggregate = _itemRelationshipAggregator.Aggregate(itemRollupRows, today, generatedAt);
+
                 WorkerProgressScope.Current.StepStarted($"{Domain}:Save", "Save snapshot");
                 using (var trans = TransHelper.NewScope())
                 {
                     _snapshotDal.ReplaceCurrent(aggregate, forecast, optimization, refreshLogId);
+
+                    WorkerProgressScope.Current.StepStarted($"{Domain}:EntityAnalytics", "Produce entity analytics L0+L1+L2+L3+L4+L5 snapshot");
+                    _entityAnalyticsOrchestrator.ProduceForDomain(Domain, new EntityAnalyticsProduceContext
+                    {
+                        RefreshLogId = refreshLogId,
+                        GeneratedAt = generatedAt,
+                        BusinessDate = today,
+                        DomainInput = new ItemEntityAnalyticsProduceInput
+                        {
+                            RiskAggregate = aggregate,
+                            ForecastAggregate = forecast,
+                            RelationshipAggregate = relationshipAggregate,
+                            Portfolio = portfolio
+                        }
+                    });
+                    WorkerProgressScope.Current.StepCompleted($"{Domain}:EntityAnalytics");
+
                     trans.Complete();
                 }
                 WorkerProgressScope.Current.StepCompleted($"{Domain}:Save");
@@ -195,6 +240,13 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.UseCases
                 WorkerProgressScope.Current.StepFailed($"{Domain}:Execute", message);
                 throw;
             }
+        }
+
+        private static Periode CurrentMonthPeriode(DateTime today)
+        {
+            var monthStart = new DateTime(today.Year, today.Month, 1);
+            var monthEnd = new DateTime(today.Year, today.Month, DateTime.DaysInMonth(today.Year, today.Month));
+            return new Periode(monthStart, monthEnd);
         }
     }
 }

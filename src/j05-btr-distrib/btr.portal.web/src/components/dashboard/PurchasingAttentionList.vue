@@ -107,6 +107,11 @@ function canOpenReport(item: DashboardPurchasingAttentionItem): boolean {
   return item.ReportRoute != null && item.EntityType !== 'Company'
 }
 
+function openProfile(item: DashboardPurchasingAttentionItem): void {
+  if (!item.ProfileRoute) return
+  void router.push(item.ProfileRoute)
+}
+
 function investigate(item: DashboardPurchasingAttentionItem): void {
   if (!canOpenReport(item) || !item.Investigation) return
   navigateToInvestigation(
@@ -169,7 +174,19 @@ function investigate(item: DashboardPurchasingAttentionItem): void {
               <p class="purchasing-attention-list__empty">{{ emptyMessage }}</p>
             </template>
 
-            <Column field="EntityName" header="Entity" />
+            <Column field="EntityName" header="Entity">
+              <template #body="{ data }">
+                <button
+                  v-if="data.ProfileRoute"
+                  type="button"
+                  class="purchasing-attention-list__entity-link"
+                  @click="openProfile(data)"
+                >
+                  {{ data.EntityName }}
+                </button>
+                <span v-else>{{ data.EntityName }}</span>
+              </template>
+            </Column>
             <Column field="SignalLabel" header="Signal" />
             <Column header="Amount">
               <template #body="{ data }">
@@ -183,6 +200,13 @@ function investigate(item: DashboardPurchasingAttentionItem): void {
             </Column>
             <Column header="">
               <template #body="{ data }">
+                <Button
+                  v-if="data.ProfileRoute"
+                  label="Profile"
+                  text
+                  size="small"
+                  @click="openProfile(data)"
+                />
                 <Button
                   v-if="canOpenReport(data) && data.Investigation"
                   label="Investigate"
@@ -289,5 +313,14 @@ function investigate(item: DashboardPurchasingAttentionItem): void {
   padding: 1.5rem 0;
   text-align: center;
   color: var(--p-text-muted-color);
+}
+
+.purchasing-attention-list__entity-link {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--p-primary-color);
+  cursor: pointer;
+  text-align: left;
 }
 </style>

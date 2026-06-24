@@ -72,6 +72,11 @@ function formatDays(days: number | null | undefined): string {
 }
 
 function investigate(item: DashboardInventoryRiskAttentionItem): void {
+  if (item.ProfileRoute) {
+    void router.push(item.ProfileRoute)
+    return
+  }
+
   if (!item.Investigation) return
   navigateToInvestigation(
     router,

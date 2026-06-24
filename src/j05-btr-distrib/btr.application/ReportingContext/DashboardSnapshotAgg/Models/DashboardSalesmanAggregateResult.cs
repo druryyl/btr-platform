@@ -53,6 +53,9 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.Models
 
         public List<DashboardSalesmanRepHistoryRow> RepHistory { get; set; }
             = new List<DashboardSalesmanRepHistoryRow>();
+
+        public List<DashboardSalesmanPortfolioRow> Portfolio { get; set; }
+            = new List<DashboardSalesmanPortfolioRow>();
     }
 
     public class DashboardSalesmanTopOmzetRow
@@ -194,5 +197,52 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.Models
         public decimal OpenBalance { get; set; }
 
         public bool IsActive { get; set; }
+    }
+
+    public class DashboardSalesmanPortfolioRow
+    {
+        public string SalesPersonId { get; set; }
+
+        public string SalesPersonCode { get; set; }
+
+        public string SalesPersonName { get; set; }
+
+        public string WilayahName { get; set; }
+
+        public string SegmentName { get; set; }
+
+        public bool IsActive { get; set; }
+
+        public decimal CompletedOmzet { get; set; }
+
+        public decimal? TargetAmount { get; set; }
+
+        public decimal? AchievementPercent { get; set; }
+
+        public string AchievementBand { get; set; }
+
+        public decimal OpenBalance { get; set; }
+
+        public decimal OverdueBalance { get; set; }
+
+        public int CustomerCount { get; set; }
+
+        public int DormantCustomerCount { get; set; }
+
+        public int ActiveCustomerCount { get; set; }
+
+        public List<DashboardSalesmanPortfolioCustomerRow> TopCustomers { get; set; }
+            = new List<DashboardSalesmanPortfolioCustomerRow>();
+    }
+
+    public class DashboardSalesmanPortfolioCustomerRow
+    {
+        public int Rank { get; set; }
+
+        public string CustomerCode { get; set; }
+
+        public string CustomerName { get; set; }
+
+        public decimal MetricValue { get; set; }
     }
 }

@@ -5,6 +5,9 @@ using btr.application.ReportingContext.DashboardSnapshotAgg.Contracts;
 using btr.application.ReportingContext.DashboardSnapshotAgg.Models;
 using btr.application.ReportingContext.DashboardSnapshotAgg.Progress;
 using btr.application.ReportingContext.DashboardSnapshotAgg.Services;
+using btr.application.ReportingContext.EntityAnalyticsAgg.Producers;
+using btr.application.ReportingContext.EntityAnalyticsAgg.Services;
+using btr.application.ReportingContext.EntityAnalyticsAgg.Contracts;
 using btr.application.SalesContext.FakturInfo;
 using btr.application.SalesContext.SalesOmzetAgg.Contracts;
 using btr.application.SalesContext.SalesPersonAgg.Contracts;
@@ -34,11 +37,14 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.UseCases
         private readonly ISalesPersonPrincipalTargetDal _principalTargetDal;
         private readonly IFakturPrincipalOmzetDal _principalOmzetDal;
         private readonly DashboardSalesmanAggregator _aggregator;
+        private readonly DashboardSalesmanRelationshipAggregator _relationshipAggregator;
+        private readonly ISalesmanMtdItemRollupDal _salesmanMtdItemRollupDal;
         private readonly IDashboardSalesmanSnapshotDal _snapshotDal;
         private readonly IDashboardSnapshotRefreshLogDal _refreshLogDal;
         private readonly ITglJamDal _tglJamDal;
         private readonly IBusinessDateProvider _businessDateProvider;
         private readonly DashboardSnapshotOptions _options;
+        private readonly EntityAnalyticsProducerOrchestrator _entityAnalyticsOrchestrator;
 
         public RefreshDashboardSalesmanSnapshotWorker(
             IFakturViewDal fakturViewDal,
@@ -49,11 +55,14 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.UseCases
             ISalesPersonPrincipalTargetDal principalTargetDal,
             IFakturPrincipalOmzetDal principalOmzetDal,
             DashboardSalesmanAggregator aggregator,
+            DashboardSalesmanRelationshipAggregator relationshipAggregator,
+            ISalesmanMtdItemRollupDal salesmanMtdItemRollupDal,
             IDashboardSalesmanSnapshotDal snapshotDal,
             IDashboardSnapshotRefreshLogDal refreshLogDal,
             ITglJamDal tglJamDal,
             IBusinessDateProvider businessDateProvider,
-            DashboardSnapshotOptions options)
+            DashboardSnapshotOptions options,
+            EntityAnalyticsProducerOrchestrator entityAnalyticsOrchestrator)
         {
             _fakturViewDal = fakturViewDal;
             _lastFakturDal = lastFakturDal;
@@ -63,11 +72,14 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.UseCases
             _principalTargetDal = principalTargetDal;
             _principalOmzetDal = principalOmzetDal;
             _aggregator = aggregator;
+            _relationshipAggregator = relationshipAggregator;
+            _salesmanMtdItemRollupDal = salesmanMtdItemRollupDal;
             _snapshotDal = snapshotDal;
             _refreshLogDal = refreshLogDal;
             _tglJamDal = tglJamDal;
             _businessDateProvider = businessDateProvider;
             _options = options ?? new DashboardSnapshotOptions();
+            _entityAnalyticsOrchestrator = entityAnalyticsOrchestrator;
         }
 
         public void Execute(RefreshDashboardSalesmanSnapshotRequest request)
@@ -95,7 +107,7 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.UseCases
                 var today = _businessDateProvider.Today;
                 var periode = CurrentMonthPeriode(today);
                 var generatedAt = _tglJamDal.Now;
-                const int loadSteps = 7;
+                const int loadSteps = 8;
 
                 WorkerProgressScope.Current.StepStarted($"{Domain}:Load", "Load source data");
                 WorkerProgressScope.Current.ReportPhaseProgress($"{Domain}: Load faktur", 1, loadSteps);
@@ -125,9 +137,13 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.UseCases
                 WorkerProgressScope.Current.ReportPhaseProgress($"{Domain}: Load principal omzet", 7, loadSteps);
                 var principalOmzet = _principalOmzetDal.ListOmzetBySalesPersonPrincipal(periode);
 
+                WorkerProgressScope.Current.ReportPhaseProgress($"{Domain}: Load item rollups", 8, loadSteps);
+                var itemRollupRows = _salesmanMtdItemRollupDal.ListMtdItemRollups(periode)?.ToList()
+                    ?? new System.Collections.Generic.List<SalesmanMtdItemRollupDto>();
+
                 WorkerProgressScope.Current.StepCompleted($"{Domain}:Load", new WorkerProgressStepInfo
                 {
-                    RecordCount = fakturRows.Count + lastFakturRows.Count + piutangRows.Count + salespeople.Count + targetCount + principalTargets.Count + principalOmzet.Count
+                    RecordCount = fakturRows.Count + lastFakturRows.Count + piutangRows.Count + salespeople.Count + targetCount + principalTargets.Count + principalOmzet.Count() + itemRollupRows.Count
                 });
 
                 WorkerProgressScope.Current.StepStarted($"{Domain}:Aggregate", "Aggregate metrics");
@@ -145,10 +161,29 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.UseCases
                     principalOmzet);
                 WorkerProgressScope.Current.StepCompleted($"{Domain}:Aggregate");
 
+                WorkerProgressScope.Current.StepStarted($"{Domain}:AggregateRelationships", "Aggregate salesman relationship rollups");
+                var relationshipAggregate = _relationshipAggregator.Aggregate(itemRollupRows, today, generatedAt);
+                WorkerProgressScope.Current.StepCompleted($"{Domain}:AggregateRelationships");
+
                 WorkerProgressScope.Current.StepStarted($"{Domain}:Save", "Save snapshot");
                 using (var trans = TransHelper.NewScope())
                 {
                     _snapshotDal.ReplaceCurrent(aggregate, refreshLogId);
+
+                    WorkerProgressScope.Current.StepStarted($"{Domain}:EntityAnalytics", "Produce entity analytics L0+L1+L2+L3+L4+L5 snapshot");
+                    _entityAnalyticsOrchestrator.ProduceForDomain(Domain, new EntityAnalyticsProduceContext
+                    {
+                        RefreshLogId = refreshLogId,
+                        GeneratedAt = generatedAt,
+                        BusinessDate = today,
+                        DomainInput = new SalesmanEntityAnalyticsProduceInput
+                        {
+                            SalesmanAggregate = aggregate,
+                            RelationshipAggregate = relationshipAggregate
+                        }
+                    });
+                    WorkerProgressScope.Current.StepCompleted($"{Domain}:EntityAnalytics");
+
                     trans.Complete();
                 }
                 WorkerProgressScope.Current.StepCompleted($"{Domain}:Save");

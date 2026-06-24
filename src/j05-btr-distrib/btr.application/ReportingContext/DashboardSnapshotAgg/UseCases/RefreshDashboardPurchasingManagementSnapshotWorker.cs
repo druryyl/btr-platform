@@ -2,10 +2,14 @@ using System;
 using System.Diagnostics;
 using System.Linq;
 using btr.application.PurchaseContext.InvoiceInfo;
+using btr.application.PurchaseContext.SupplierAgg.Contracts;
 using btr.application.ReportingContext.DashboardSnapshotAgg.Contracts;
 using btr.application.ReportingContext.DashboardSnapshotAgg.Models;
 using btr.application.ReportingContext.DashboardSnapshotAgg.Progress;
 using btr.application.ReportingContext.DashboardSnapshotAgg.Services;
+using btr.application.ReportingContext.EntityAnalyticsAgg.Contracts;
+using btr.application.ReportingContext.EntityAnalyticsAgg.Producers;
+using btr.application.ReportingContext.EntityAnalyticsAgg.Services;
 using btr.application.Portal;
 using btr.application.SupportContext.TglJamAgg;
 using btr.nuna.Application;
@@ -29,11 +33,15 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.UseCases
         private readonly IDashboardInventoryRiskSnapshotDal _inventoryRiskSnapshotDal;
         private readonly IDashboardPurchasingSnapshotDal _purchasingSnapshotDal;
         private readonly DashboardPurchasingManagementAggregator _aggregator;
+        private readonly DashboardSupplierRelationshipAggregator _relationshipAggregator;
+        private readonly ISupplierDal _supplierDal;
+        private readonly ISupplierMtdItemRollupDal _supplierMtdItemRollupDal;
         private readonly IDashboardPurchasingManagementSnapshotDal _snapshotDal;
         private readonly IDashboardSnapshotRefreshLogDal _refreshLogDal;
         private readonly ITglJamDal _tglJamDal;
         private readonly IBusinessDateProvider _businessDateProvider;
         private readonly DashboardSnapshotOptions _options;
+        private readonly EntityAnalyticsProducerOrchestrator _entityAnalyticsOrchestrator;
 
         public RefreshDashboardPurchasingManagementSnapshotWorker(
             IInvoiceViewDal invoiceViewDal,
@@ -41,22 +49,30 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.UseCases
             IDashboardInventoryRiskSnapshotDal inventoryRiskSnapshotDal,
             IDashboardPurchasingSnapshotDal purchasingSnapshotDal,
             DashboardPurchasingManagementAggregator aggregator,
+            DashboardSupplierRelationshipAggregator relationshipAggregator,
+            ISupplierDal supplierDal,
+            ISupplierMtdItemRollupDal supplierMtdItemRollupDal,
             IDashboardPurchasingManagementSnapshotDal snapshotDal,
             IDashboardSnapshotRefreshLogDal refreshLogDal,
             ITglJamDal tglJamDal,
             IBusinessDateProvider businessDateProvider,
-            DashboardSnapshotOptions options)
+            DashboardSnapshotOptions options,
+            EntityAnalyticsProducerOrchestrator entityAnalyticsOrchestrator)
         {
             _invoiceViewDal = invoiceViewDal;
             _inventorySnapshotDal = inventorySnapshotDal;
             _inventoryRiskSnapshotDal = inventoryRiskSnapshotDal;
             _purchasingSnapshotDal = purchasingSnapshotDal;
             _aggregator = aggregator;
+            _relationshipAggregator = relationshipAggregator;
+            _supplierDal = supplierDal;
+            _supplierMtdItemRollupDal = supplierMtdItemRollupDal;
             _snapshotDal = snapshotDal;
             _refreshLogDal = refreshLogDal;
             _tglJamDal = tglJamDal;
             _businessDateProvider = businessDateProvider;
             _options = options ?? new DashboardSnapshotOptions();
+            _entityAnalyticsOrchestrator = entityAnalyticsOrchestrator;
         }
 
         public void Execute(RefreshDashboardPurchasingManagementSnapshotRequest request)
@@ -84,7 +100,7 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.UseCases
                 var today = _businessDateProvider.Today;
                 var periode = CurrentMonthPeriode(today);
                 var generatedAt = _tglJamDal.Now;
-                const int loadSteps = 4;
+                const int loadSteps = 7;
 
                 WorkerProgressScope.Current.StepStarted($"{Domain}:Load", "Load source data");
                 WorkerProgressScope.Current.ReportPhaseProgress($"{Domain}: Load invoices", 1, loadSteps);
@@ -99,9 +115,21 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.UseCases
 
                 WorkerProgressScope.Current.ReportPhaseProgress($"{Domain}: Load purchasing snapshot", 4, loadSteps);
                 var purchasingSnapshot = _purchasingSnapshotDal.GetCurrent();
+
+                WorkerProgressScope.Current.ReportPhaseProgress($"{Domain}: Load suppliers", 5, loadSteps);
+                var suppliers = _supplierDal.ListData()?.ToList()
+                    ?? new System.Collections.Generic.List<btr.domain.PurchaseContext.SupplierAgg.SupplierModel>();
+
+                WorkerProgressScope.Current.ReportPhaseProgress($"{Domain}: Load item rollups", 6, loadSteps);
+                var itemRollupRows = _supplierMtdItemRollupDal.ListMtdItemRollups(periode)?.ToList()
+                    ?? new System.Collections.Generic.List<SupplierMtdItemRollupDto>();
+
+                WorkerProgressScope.Current.ReportPhaseProgress($"{Domain}: Load catalog counts", 7, loadSteps);
+                var catalogCounts = _supplierMtdItemRollupDal.ListSupplierCatalogCounts()?.ToList()
+                    ?? new System.Collections.Generic.List<SupplierCatalogCountDto>();
                 WorkerProgressScope.Current.StepCompleted($"{Domain}:Load", new WorkerProgressStepInfo
                 {
-                    RecordCount = invoiceRows.Count
+                    RecordCount = invoiceRows.Count + suppliers.Count + itemRollupRows.Count
                 });
 
                 if (inventorySnapshot == null)
@@ -125,13 +153,35 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.UseCases
                     periode,
                     today,
                     generatedAt,
-                    _options.PurchasingQualifiedBacklogDays);
+                    _options.PurchasingQualifiedBacklogDays,
+                    suppliers,
+                    itemRollupRows,
+                    catalogCounts);
                 WorkerProgressScope.Current.StepCompleted($"{Domain}:Aggregate");
+
+                WorkerProgressScope.Current.StepStarted($"{Domain}:AggregateRelationships", "Aggregate supplier relationship rollups");
+                var relationshipAggregate = _relationshipAggregator.Aggregate(itemRollupRows, today, generatedAt);
+                WorkerProgressScope.Current.StepCompleted($"{Domain}:AggregateRelationships");
 
                 WorkerProgressScope.Current.StepStarted($"{Domain}:Save", "Save snapshot");
                 using (var trans = TransHelper.NewScope())
                 {
                     _snapshotDal.ReplaceCurrent(aggregate, refreshLogId);
+
+                    WorkerProgressScope.Current.StepStarted($"{Domain}:EntityAnalytics", "Produce entity analytics L0+L1+L2+L3+L4+L5 snapshot");
+                    _entityAnalyticsOrchestrator.ProduceForDomain(Domain, new EntityAnalyticsProduceContext
+                    {
+                        RefreshLogId = refreshLogId,
+                        GeneratedAt = generatedAt,
+                        BusinessDate = today,
+                        DomainInput = new SupplierEntityAnalyticsProduceInput
+                        {
+                            ManagementAggregate = aggregate,
+                            RelationshipAggregate = relationshipAggregate
+                        }
+                    });
+                    WorkerProgressScope.Current.StepCompleted($"{Domain}:EntityAnalytics");
+
                     trans.Complete();
                 }
                 WorkerProgressScope.Current.StepCompleted($"{Domain}:Save");

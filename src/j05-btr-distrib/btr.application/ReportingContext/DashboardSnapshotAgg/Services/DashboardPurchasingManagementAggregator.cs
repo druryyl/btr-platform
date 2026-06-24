@@ -2,7 +2,9 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using btr.application.PurchaseContext.InvoiceInfo;
+using btr.application.ReportingContext.DashboardSnapshotAgg.Contracts;
 using btr.application.ReportingContext.DashboardSnapshotAgg.Models;
+using btr.domain.PurchaseContext.SupplierAgg;
 using btr.nuna.Domain;
 
 namespace btr.application.ReportingContext.DashboardSnapshotAgg.Services
@@ -60,13 +62,19 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.Services
             Periode periode,
             DateTime today,
             DateTime generatedAt,
-            int qualifiedBacklogDays)
+            int qualifiedBacklogDays,
+            IEnumerable<SupplierModel> suppliers = null,
+            IEnumerable<SupplierMtdItemRollupDto> salesRollups = null,
+            IEnumerable<SupplierCatalogCountDto> catalogCounts = null)
         {
             if (periode is null)
                 throw new ArgumentNullException(nameof(periode));
 
             var invoices = (invoiceRows ?? Enumerable.Empty<InvoiceView>()).ToList();
             var periodStart = periode.Tgl1.Date;
+            var supplierLookup = DashboardPurchasingManagementSupplierIdentityResolver.BuildLookup(suppliers);
+            var salesStatsBySupplierId = BuildSalesStatsBySupplierId(salesRollups);
+            var catalogCountsBySupplierId = BuildCatalogCountsBySupplierId(catalogCounts);
             var grandTotalPurchase = purchasingSnapshot?.GrandTotalPurchase
                 ?? invoices.Sum(r => r.GrandTotal);
             var totalInvoice = purchasingSnapshot?.TotalInvoice ?? invoices.Count;
@@ -92,6 +100,22 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.Services
                 .ToDictionary(
                     g => g.Key,
                     g => g.Sum(r => r.GrandTotal),
+                    StringComparer.OrdinalIgnoreCase);
+
+            var invoiceCountByPrincipal = invoices
+                .GroupBy(r => DashboardPurchasingManagementKeyResolver.ResolvePrincipalName(r.SupplierName),
+                    StringComparer.OrdinalIgnoreCase)
+                .ToDictionary(
+                    g => g.Key,
+                    g => g.Count(),
+                    StringComparer.OrdinalIgnoreCase);
+
+            var postedPercentByPrincipal = invoices
+                .GroupBy(r => DashboardPurchasingManagementKeyResolver.ResolvePrincipalName(r.SupplierName),
+                    StringComparer.OrdinalIgnoreCase)
+                .ToDictionary(
+                    g => g.Key,
+                    g => ComputePostedPercentForInvoices(g.ToList()),
                     StringComparer.OrdinalIgnoreCase);
 
             var topPurchasePrincipals = purchaseByPrincipal
@@ -130,7 +154,7 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.Services
                     StringComparer.OrdinalIgnoreCase)
                 .ToDictionary(
                     g => g.Key,
-                    g => new
+                    g => new QualifiedBacklogPrincipalStats
                     {
                         Count = g.Count(),
                         Value = g.Sum(r => r.GrandTotal)
@@ -152,10 +176,15 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.Services
                     var isCompound = inInventoryTop10 || inAtRiskTop10;
                     var mtdPurchase = x.MtdPurchaseAmount;
                     var isInventoryNoPurchase = inInventoryTop10 && mtdPurchase == 0m;
+                    var identity = DashboardPurchasingManagementSupplierIdentityResolver.Resolve(
+                        x.PrincipalName,
+                        supplierLookup);
 
                     return new DashboardPurchasingManagementTopPrincipalRow
                     {
                         Rank = x.Rank,
+                        SupplierId = identity.SupplierId,
+                        SupplierCode = identity.SupplierCode,
                         PrincipalName = x.PrincipalName,
                         MtdPurchaseAmount = x.MtdPurchaseAmount,
                         PercentOfPurchase = x.PercentOfPurchase,
@@ -310,18 +339,43 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.Services
                 .OrderBy(c => SignalPriority.TryGetValue(c.SignalKey, out var priority) ? priority : 99)
                 .ThenByDescending(c => c.ValueAmount ?? decimal.MinValue)
                 .ThenBy(c => c.EntityName, StringComparer.OrdinalIgnoreCase)
-                .Select((c, index) => new DashboardPurchasingManagementAttentionRow
+                .Select((c, index) =>
                 {
-                    EntityType = c.EntityType,
-                    EntityName = c.EntityName,
-                    SignalKey = c.SignalKey,
-                    SignalLabel = SignalLabels.TryGetValue(c.SignalKey, out var label) ? label : c.SignalKey,
-                    ValueAmount = c.ValueAmount,
-                    ValueText = c.ValueText,
-                    ReportRoute = c.ReportRoute,
-                    SortOrder = index + 1
+                    SupplierIdentity identity = null;
+                    if (string.Equals(c.EntityType, EntityTypePrincipal, StringComparison.OrdinalIgnoreCase))
+                    {
+                        identity = DashboardPurchasingManagementSupplierIdentityResolver.Resolve(
+                            c.EntityName,
+                            supplierLookup);
+                    }
+
+                    return new DashboardPurchasingManagementAttentionRow
+                    {
+                        SupplierId = identity?.SupplierId,
+                        SupplierCode = identity?.SupplierCode,
+                        EntityType = c.EntityType,
+                        EntityName = c.EntityName,
+                        SignalKey = c.SignalKey,
+                        SignalLabel = SignalLabels.TryGetValue(c.SignalKey, out var label) ? label : c.SignalKey,
+                        ValueAmount = c.ValueAmount,
+                        ValueText = c.ValueText,
+                        ReportRoute = c.ReportRoute,
+                        SortOrder = index + 1
+                    };
                 })
                 .ToList();
+
+            var portfolio = BuildPortfolio(
+                purchaseByPrincipal,
+                invoiceCountByPrincipal,
+                postedPercentByPrincipal,
+                qualifiedByPrincipal,
+                inventoryTop10,
+                atRiskTop10,
+                grandTotalPurchase,
+                supplierLookup,
+                salesStatsBySupplierId,
+                catalogCountsBySupplierId);
 
             var compoundDependencyCount = topPrincipalRows.Count(r => r.IsCompoundDependency);
             var principalInventoryNoPurchaseCount = inventoryTop10.Values.Count(inventory =>
@@ -353,8 +407,156 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.Services
                 PrincipalAtRiskExposureCount = principalAtRiskExposureCount,
                 GeneratedAt = generatedAt,
                 AttentionList = attentionList,
-                TopPrincipal = topPrincipalRows
+                TopPrincipal = topPrincipalRows,
+                Portfolio = portfolio
             };
+        }
+
+        private static List<DashboardPurchasingManagementPortfolioRow> BuildPortfolio(
+            IReadOnlyDictionary<string, decimal> purchaseByPrincipal,
+            IReadOnlyDictionary<string, int> invoiceCountByPrincipal,
+            IReadOnlyDictionary<string, decimal?> postedPercentByPrincipal,
+            IReadOnlyDictionary<string, QualifiedBacklogPrincipalStats> qualifiedByPrincipal,
+            IReadOnlyDictionary<string, InventoryTop10Entry> inventoryTop10,
+            IReadOnlyDictionary<string, AtRiskTop10Entry> atRiskTop10,
+            decimal grandTotalPurchase,
+            IReadOnlyDictionary<string, SupplierIdentity> supplierLookup,
+            IReadOnlyDictionary<string, SupplierSalesStats> salesStatsBySupplierId,
+            IReadOnlyDictionary<string, int> catalogCountsBySupplierId)
+        {
+            var principalNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            foreach (var name in purchaseByPrincipal.Keys)
+                principalNames.Add(name);
+            foreach (var entry in inventoryTop10.Values)
+                principalNames.Add(entry.Name);
+            foreach (var entry in atRiskTop10.Values)
+                principalNames.Add(entry.Name);
+
+            var portfolio = new List<DashboardPurchasingManagementPortfolioRow>();
+            foreach (var principalName in principalNames.OrderBy(n => n, StringComparer.OrdinalIgnoreCase))
+            {
+                purchaseByPrincipal.TryGetValue(principalName, out var mtdPurchase);
+                invoiceCountByPrincipal.TryGetValue(principalName, out var invoiceCount);
+                postedPercentByPrincipal.TryGetValue(principalName, out var postedPercent);
+
+                inventoryTop10.TryGetValue(
+                    DashboardPurchasingManagementKeyResolver.NormalizeKey(principalName),
+                    out var inventoryMatch);
+                atRiskTop10.TryGetValue(
+                    DashboardPurchasingManagementKeyResolver.NormalizeKey(principalName),
+                    out var atRiskMatch);
+
+                var qualifiedCount = 0;
+                var qualifiedValue = 0m;
+                if (qualifiedByPrincipal.TryGetValue(principalName, out var qualified))
+                {
+                    qualifiedCount = qualified.Count;
+                    qualifiedValue = qualified.Value;
+                }
+
+                var inInventoryTop10 = inventoryMatch != null;
+                var isCompound = inInventoryTop10 || atRiskMatch != null;
+                var isInventoryNoPurchase = inInventoryTop10 && mtdPurchase == 0m;
+                var identity = DashboardPurchasingManagementSupplierIdentityResolver.Resolve(
+                    principalName,
+                    supplierLookup);
+
+                salesStatsBySupplierId.TryGetValue(identity.SupplierId, out var salesStats);
+                catalogCountsBySupplierId.TryGetValue(identity.SupplierId, out var totalSkuCount);
+
+                var activeSkuCount = salesStats?.ActiveSkuCount ?? 0;
+                var salesOutAmount = salesStats?.SalesOutAmount ?? 0m;
+                decimal? catalogPenetration = null;
+                if (totalSkuCount > 0)
+                {
+                    catalogPenetration = Math.Round(activeSkuCount / (decimal)totalSkuCount * 100m, 4);
+                }
+
+                var inventoryValue = inventoryMatch?.InventoryValue;
+                var isActiveMtd = mtdPurchase > 0m
+                    || (inventoryValue ?? 0m) > 0m
+                    || salesOutAmount > 0m
+                    || (atRiskMatch?.AtRiskValue ?? 0m) > 0m;
+
+                if (!isActiveMtd)
+                    continue;
+
+                portfolio.Add(new DashboardPurchasingManagementPortfolioRow
+                {
+                    SupplierId = identity.SupplierId,
+                    SupplierCode = identity.SupplierCode,
+                    SupplierName = identity.SupplierName,
+                    PrincipalName = identity.PrincipalName,
+                    MtdPurchaseAmount = mtdPurchase,
+                    MtdInvoiceCount = invoiceCount,
+                    PostedPercent = postedPercent,
+                    QualifiedBacklogCount = qualifiedCount,
+                    QualifiedBacklogValue = qualifiedValue,
+                    PercentOfPurchase = grandTotalPurchase > 0
+                        ? Math.Round(mtdPurchase / grandTotalPurchase * 100m, 4)
+                        : (decimal?)null,
+                    InventoryValue = inventoryValue,
+                    PercentOfInventory = inventoryMatch?.PercentOfInventory,
+                    AtRiskValue = atRiskMatch?.AtRiskValue,
+                    PercentOfAtRisk = atRiskMatch?.PercentOfAtRisk,
+                    SalesOutAmount = salesOutAmount,
+                    ActiveSkuCount = activeSkuCount,
+                    TotalSkuCount = totalSkuCount,
+                    CatalogPenetrationPercent = catalogPenetration,
+                    IsCompoundDependency = isCompound,
+                    IsInventoryNoPurchase = isInventoryNoPurchase,
+                    IsActiveMtd = isActiveMtd
+                });
+            }
+
+            return portfolio;
+        }
+
+        private static Dictionary<string, SupplierSalesStats> BuildSalesStatsBySupplierId(
+            IEnumerable<SupplierMtdItemRollupDto> salesRollups)
+        {
+            var stats = new Dictionary<string, SupplierSalesStats>(StringComparer.OrdinalIgnoreCase);
+            foreach (var group in (salesRollups ?? Enumerable.Empty<SupplierMtdItemRollupDto>())
+                .Where(r => r != null && !string.IsNullOrWhiteSpace(r.SupplierId))
+                .GroupBy(r => r.SupplierId.Trim(), StringComparer.OrdinalIgnoreCase))
+            {
+                var skuIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+                decimal total = 0m;
+                foreach (var row in group)
+                {
+                    total += row.LineTotal;
+                    if (!string.IsNullOrWhiteSpace(row.BrgId))
+                        skuIds.Add(row.BrgId.Trim());
+                }
+
+                stats[group.Key] = new SupplierSalesStats
+                {
+                    SalesOutAmount = total,
+                    ActiveSkuCount = skuIds.Count
+                };
+            }
+
+            return stats;
+        }
+
+        private static Dictionary<string, int> BuildCatalogCountsBySupplierId(
+            IEnumerable<SupplierCatalogCountDto> catalogCounts)
+        {
+            return (catalogCounts ?? Enumerable.Empty<SupplierCatalogCountDto>())
+                .Where(r => r != null && !string.IsNullOrWhiteSpace(r.SupplierId))
+                .GroupBy(r => r.SupplierId.Trim(), StringComparer.OrdinalIgnoreCase)
+                .ToDictionary(
+                    g => g.Key,
+                    g => g.First().TotalSkuCount,
+                    StringComparer.OrdinalIgnoreCase);
+        }
+
+        private static decimal? ComputePostedPercentForInvoices(List<InvoiceView> invoices)
+        {
+            var sudah = invoices.Where(r => IsSudah(r.PostingStok)).Sum(r => r.GrandTotal);
+            var belum = invoices.Where(r => IsBelum(r.PostingStok)).Sum(r => r.GrandTotal);
+            var total = sudah + belum;
+            return total > 0 ? Math.Round(sudah / total * 100m, 4) : (decimal?)null;
         }
 
         private static decimal? ComputePostedPercent(
@@ -440,6 +642,20 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.Services
         private static bool IsSudah(string postingStok)
         {
             return string.Equals(postingStok?.Trim(), PostingStatusSudahKey, StringComparison.OrdinalIgnoreCase);
+        }
+
+        private sealed class QualifiedBacklogPrincipalStats
+        {
+            public int Count { get; set; }
+
+            public decimal Value { get; set; }
+        }
+
+        private sealed class SupplierSalesStats
+        {
+            public decimal SalesOutAmount { get; set; }
+
+            public int ActiveSkuCount { get; set; }
         }
 
         private sealed class AttentionCandidate
