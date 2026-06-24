@@ -54,6 +54,25 @@ function createTestRouter(base = '/') {
           },
           { path: 'alerts', name: 'alert-center', component: { template: '<div />' } },
           { path: 'reports/sales', name: 'sales-report', component: { template: '<div />' } },
+          { path: 'analytics', name: 'entity-analytics-home', component: { template: '<div />' } },
+          {
+            path: 'analytics/customers/compare',
+            name: 'customer-compare',
+            component: { template: '<div />' },
+          },
+          {
+            path: 'analytics/customers/:customerCode',
+            name: 'customer-performance-profile',
+            redirect: (to) => ({
+              name: 'entity-performance-profile',
+              params: { entityType: 'Customer', entityId: to.params.customerCode },
+            }),
+          },
+          {
+            path: 'analytics/:entityType/:entityId',
+            name: 'entity-performance-profile',
+            component: { template: '<div />' },
+          },
         ],
       },
     ],
@@ -137,5 +156,23 @@ describe('dashboard route matching', () => {
     expect(router.resolve('/dashboard').href).toBe('/portal/dashboard')
     expect(router.resolve('/alerts').href).toBe('/portal/alerts')
     expect(router.resolve('/reports/sales').href).toBe('/portal/reports/sales')
+  })
+
+  it('resolves /analytics to entity-analytics-home', () => {
+    const router = createTestRouter()
+    expect(router.resolve('/analytics').name).toBe('entity-analytics-home')
+  })
+
+  it('resolves /analytics/customers/compare to customer-compare', () => {
+    const router = createTestRouter()
+    expect(router.resolve('/analytics/customers/compare').name).toBe('customer-compare')
+  })
+
+  it('redirects /analytics/customers/C001 to entity-performance-profile', async () => {
+    const router = createTestRouter()
+    await router.push('/analytics/customers/C001')
+    expect(router.currentRoute.value.name).toBe('entity-performance-profile')
+    expect(router.currentRoute.value.params.entityType).toBe('Customer')
+    expect(router.currentRoute.value.params.entityId).toBe('C001')
   })
 })

@@ -69,6 +69,13 @@ const expandedRows = ref<DashboardCustomerPortfolioPriorityRow[]>([])
           <template #body="{ data }">
             <div class="customer-portfolio-priority-table__links">
               <RouterLink
+                v-if="data.ProfileRoute"
+                :to="data.ProfileRoute"
+                class="customer-portfolio-priority-table__link"
+              >
+                Profile
+              </RouterLink>
+              <RouterLink
                 v-if="data.CustomerReportRoute"
                 :to="data.CustomerReportRoute"
                 class="customer-portfolio-priority-table__link"

@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Data.SqlClient;
 using System.Linq;
@@ -162,6 +163,14 @@ ORDER BY SortOrder";
                 ValueDisclaimerText = kpi.ValueDisclaimerText ?? string.Empty
             };
 
+        private static string BuildCustomerProfileRoute(string customerCode)
+        {
+            if (string.IsNullOrWhiteSpace(customerCode))
+                return null;
+
+            return "/analytics/customers/" + Uri.EscapeDataString(customerCode.Trim());
+        }
+
         private static DashboardCustomerPortfolioPriorityDto MapPriority(PriorityRow r) =>
             new DashboardCustomerPortfolioPriorityDto
             {
@@ -192,7 +201,8 @@ ORDER BY SortOrder";
                 M30LinkRoute = r.M30LinkRoute,
                 CustomerReportRoute = r.CustomerReportRoute,
                 DrillDownRouteM17 = r.DrillDownRouteM17,
-                DrillDownRouteM29 = r.DrillDownRouteM29
+                DrillDownRouteM29 = r.DrillDownRouteM29,
+                ProfileRoute = BuildCustomerProfileRoute(r.CustomerCode)
             };
 
         private static DashboardCustomerPortfolioCustomerDto MapCustomer(CustomerRow r) =>

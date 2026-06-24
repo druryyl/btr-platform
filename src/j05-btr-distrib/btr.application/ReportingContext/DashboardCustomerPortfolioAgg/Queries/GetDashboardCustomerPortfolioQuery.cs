@@ -169,6 +169,8 @@ namespace btr.application.ReportingContext.DashboardCustomerPortfolioAgg.Queries
         public string DrillDownRouteM17 { get; set; }
 
         public string DrillDownRouteM29 { get; set; }
+
+        public string ProfileRoute { get; set; }
     }
 
     public class DashboardCustomerPortfolioCustomerDto

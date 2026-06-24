@@ -4,6 +4,10 @@ using btr.application.Portal;
 using btr.application.ReportingContext.DashboardFieldActivityAgg.Services;
 using btr.application.ReportingContext.DashboardSnapshotAgg;
 using btr.application.ReportingContext.DashboardSnapshotAgg.Services;
+using btr.application.ReportingContext.EntityAnalyticsAgg.Contracts;
+using btr.application.ReportingContext.EntityAnalyticsAgg.Options;
+using btr.application.ReportingContext.EntityAnalyticsAgg.Registrars;
+using btr.application.ReportingContext.EntityAnalyticsAgg.Services;
 using btr.application.SalesContext.SalesOmzetAgg.Contracts;
 using btr.application.SalesContext.SalesOmzetAgg.Policies;
 using btr.application.SalesContext.SalesOmzetAgg.Services;
@@ -39,6 +43,8 @@ namespace btr.portal.api.Configurations
                 configuration.GetSection(FieldActivityOptions.SECTION_NAME));
             services.Configure<PresentationOptions>(
                 configuration.GetSection(PresentationOptions.SECTION_NAME));
+            services.Configure<EntityAnalyticsOptions>(
+                configuration.GetSection(EntityAnalyticsOptions.SECTION_NAME));
             services.AddSingleton<IPresentationModeService, PresentationModeService>();
             services.AddScoped<IBusinessDateProvider, PresentationBusinessDateProvider>();
             services.AddScoped(sp =>
@@ -103,9 +109,47 @@ namespace btr.portal.api.Configurations
             services.AddScoped<DashboardCustomerRiskForecastAggregator>();
             services.AddScoped<DashboardCollectionOptimizationAggregator>();
             services.AddScoped<DashboardCustomerPortfolioAggregator>();
+            services.AddScoped<DashboardCustomerRelationshipAggregator>();
             services.AddScoped<DashboardInventoryForecastAggregator>();
             services.AddScoped<DashboardInventoryOptimizationAggregator>();
             services.AddScoped<DashboardLocationAggregator>();
+
+            services.AddSingleton<IEntityTypeRegistry, EntityTypeRegistry>();
+            services.AddSingleton<IDimensionLabelRegistry, EntityAnalyticsDimensionLabelRegistry>();
+            services.AddSingleton<IAttentionSignalRegistry, EntityAttentionSignalRegistry>();
+            services.AddSingleton<IRelationshipDefinitionRegistry, EntityRelationshipDefinitionRegistry>();
+            services.AddSingleton<IEntityAnalyticsRegistrar, EntityAnalyticsPlatformRegistrar>();
+            services.AddSingleton<IEntityAnalyticsRegistrar, CustomerEntityAnalyticsRegistrar>();
+            services.AddSingleton<IKpiRegistry, EntityAnalyticsKpiRegistry>();
+            services.AddSingleton<EntityKpiEnvelopeFormatter>();
+            services.AddScoped<IEntityTrendEngine, EntityTrendEngine>();
+            services.AddScoped<IEntityRankingEngine, EntityRankingEngine>();
+            services.AddScoped<IEntityRadarEngine, EntityRadarEngine>();
+            services.AddScoped<IEntityAttentionEngine, EntityAttentionEngine>();
+            services.AddScoped<IEntityRelationshipEngine, EntityRelationshipEngine>();
+            services.AddScoped<IEntityComparisonEngine, EntityComparisonEngine>();
+            services.AddScoped<IEntityAnalyticsMonthCloseService, EntityAnalyticsMonthCloseService>();
+            services.AddSingleton(sp => new EntityAnalyticsRegistryBootstrap(
+                sp.GetRequiredService<IEntityTypeRegistry>(),
+                sp.GetRequiredService<IKpiRegistry>(),
+                sp.GetRequiredService<IDimensionLabelRegistry>(),
+                sp.GetRequiredService<IAttentionSignalRegistry>(),
+                sp.GetRequiredService<IRelationshipDefinitionRegistry>(),
+                sp.GetServices<IEntityAnalyticsRegistrar>()));
+            services.AddScoped<IEntityProfileBuilder, EntityPerformanceProfileComposer>();
+            services.AddScoped<IEntityAnalyticsService, EntityAnalyticsService>();
+            services.AddScoped<EntityAnalyticsProducerOrchestrator>();
+            services
+                .Scan(selector => selector
+                    .FromAssemblyOf<ApplicationAssemblyAnchor>()
+                    .AddClasses(c => c.AssignableTo<IEntityAnalyticsProducer>())
+                    .UsingRegistrationStrategy(RegistrationStrategy.Skip)
+                    .AsImplementedInterfaces()
+                    .WithScopedLifetime()
+                    .AddClasses(c => c.AssignableTo<IEntityProfileEvidenceResolver>())
+                    .UsingRegistrationStrategy(RegistrationStrategy.Skip)
+                    .AsImplementedInterfaces()
+                    .WithScopedLifetime());
 
             return services;
         }

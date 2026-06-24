@@ -56,6 +56,11 @@ const sectionNavItems = [
 
 function onRankingRowClick(row: Record<string, unknown>): void {
   const item = row as unknown as DashboardCustomerRankingRow
+  if (item.ProfileRoute) {
+    void router.push(item.ProfileRoute)
+    return
+  }
+
   if (!item.Investigation) return
   navigateToInvestigation(router, item.Investigation, sourceLabel)
 }

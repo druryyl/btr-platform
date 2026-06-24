@@ -79,6 +79,8 @@ namespace btr.application.ReportingContext.DashboardCustomerAgg.Queries
 
         public string ReportRoute { get; set; }
 
+        public string ProfileRoute { get; set; }
+
         public bool RequiresAttention { get; set; }
 
         public InvestigationMetadata Investigation { get; set; }
@@ -97,6 +99,8 @@ namespace btr.application.ReportingContext.DashboardCustomerAgg.Queries
         public decimal? PercentOfTotal { get; set; }
 
         public string ReportRoute { get; set; }
+
+        public string ProfileRoute { get; set; }
 
         public InvestigationMetadata Investigation { get; set; }
     }

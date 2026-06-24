@@ -17,6 +17,14 @@ namespace btr.infrastructure.ReportingContext.DashboardCustomerAgg
         private const string SalesReportRoute = "/reports/sales";
         private const string PiutangReportRoute = "/reports/piutang";
 
+        private static string BuildCustomerProfileRoute(string customerCode)
+        {
+            if (string.IsNullOrWhiteSpace(customerCode))
+                return null;
+
+            return "/analytics/customers/" + Uri.EscapeDataString(customerCode.Trim());
+        }
+
         private readonly IDashboardCustomerSnapshotDal _snapshotDal;
         private readonly DashboardSnapshotOptions _options;
 
@@ -90,6 +98,7 @@ namespace btr.infrastructure.ReportingContext.DashboardCustomerAgg
                             Amount = r.OmzetAmount,
                             PercentOfTotal = r.PercentOfTotal,
                             ReportRoute = SalesReportRoute,
+                            ProfileRoute = BuildCustomerProfileRoute(r.CustomerCode),
                             Investigation = InvestigationMetadataBuilder.Build(
                                 InvestigationRegistry.SignalRankingCustomerTopOmzet,
                                 InvestigationMetadataBuilder.EntityTypeCustomer,
@@ -106,6 +115,7 @@ namespace btr.infrastructure.ReportingContext.DashboardCustomerAgg
                             Amount = r.OutstandingBalance,
                             PercentOfTotal = r.PercentOfTotal,
                             ReportRoute = PiutangReportRoute,
+                            ProfileRoute = BuildCustomerProfileRoute(r.CustomerCode),
                             Investigation = InvestigationMetadataBuilder.Build(
                                 InvestigationRegistry.SignalRankingCustomerTopPiutang,
                                 InvestigationMetadataBuilder.EntityTypeCustomer,
@@ -131,6 +141,7 @@ namespace btr.infrastructure.ReportingContext.DashboardCustomerAgg
                 ValueText = row.ValueText,
                 WilayahName = row.WilayahName,
                 ReportRoute = ResolveReportRoute(row.SignalKey),
+                ProfileRoute = BuildCustomerProfileRoute(row.CustomerCode),
                 RequiresAttention = true,
                 Investigation = InvestigationMetadataBuilder.Build(
                     row.SignalKey,

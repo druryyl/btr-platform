@@ -2401,6 +2401,265 @@ CREATE INDEX IX_BTRPD_CustomerPortfolioWilayah_SnapshotKey
     ON BTRPD_CustomerPortfolioWilayah (SnapshotKey, SortOrder)
 GO
 
+-- BTRPD_EntityAnalytics_Current (M32.1)
+IF OBJECT_ID(N'dbo.BTRPD_EntityAnalytics_Current', N'U') IS NULL
+BEGIN
+CREATE TABLE BTRPD_EntityAnalytics_Current
+(
+    EntityAnalyticsCurrentId VARCHAR(26)    NOT NULL CONSTRAINT DF_BTRPD_EntityAnalytics_Current_Id DEFAULT(''),
+    SnapshotKey              VARCHAR(10)    NOT NULL CONSTRAINT DF_BTRPD_EntityAnalytics_Current_SnapshotKey DEFAULT('CURRENT'),
+    EntityType               VARCHAR(30)    NOT NULL CONSTRAINT DF_BTRPD_EntityAnalytics_Current_EntityType DEFAULT(''),
+    EntityId                 VARCHAR(100)   NOT NULL CONSTRAINT DF_BTRPD_EntityAnalytics_Current_EntityId DEFAULT(''),
+    EntityCode               VARCHAR(50)    NOT NULL CONSTRAINT DF_BTRPD_EntityAnalytics_Current_EntityCode DEFAULT(''),
+    KpiId                    VARCHAR(20)    NOT NULL CONSTRAINT DF_BTRPD_EntityAnalytics_Current_KpiId DEFAULT(''),
+    NumericValue             DECIMAL(18,4)  NULL,
+    TextValue                VARCHAR(200)   NULL,
+    DefinitionVersion        INT            NULL,
+    GeneratedAt              DATETIME       NOT NULL CONSTRAINT DF_BTRPD_EntityAnalytics_Current_GeneratedAt DEFAULT('3000-01-01'),
+    UpdatedAt                DATETIME       NOT NULL CONSTRAINT DF_BTRPD_EntityAnalytics_Current_UpdatedAt DEFAULT('3000-01-01'),
+    LastRefreshLogId         VARCHAR(26)    NOT NULL CONSTRAINT DF_BTRPD_EntityAnalytics_Current_LastRefreshLogId DEFAULT(''),
+
+    CONSTRAINT PK_BTRPD_EntityAnalytics_Current PRIMARY KEY CLUSTERED (EntityAnalyticsCurrentId)
+)
+END
+GO
+
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'UX_BTRPD_EntityAnalytics_Current_Entity_Kpi' AND object_id = OBJECT_ID(N'dbo.BTRPD_EntityAnalytics_Current'))
+CREATE UNIQUE INDEX UX_BTRPD_EntityAnalytics_Current_Entity_Kpi
+    ON BTRPD_EntityAnalytics_Current (EntityType, EntityId, KpiId, SnapshotKey)
+GO
+
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_BTRPD_EntityAnalytics_Current_Entity' AND object_id = OBJECT_ID(N'dbo.BTRPD_EntityAnalytics_Current'))
+CREATE INDEX IX_BTRPD_EntityAnalytics_Current_Entity
+    ON BTRPD_EntityAnalytics_Current (EntityType, EntityId)
+    INCLUDE (KpiId, NumericValue, TextValue, GeneratedAt)
+GO
+
+-- BTRPD_EntityAnalytics_Monthly (M32.3)
+IF OBJECT_ID(N'dbo.BTRPD_EntityAnalytics_Monthly', N'U') IS NULL
+BEGIN
+CREATE TABLE BTRPD_EntityAnalytics_Monthly
+(
+    EntityAnalyticsMonthlyId VARCHAR(26)    NOT NULL CONSTRAINT DF_BTRPD_EntityAnalytics_Monthly_Id DEFAULT(''),
+    EntityType               VARCHAR(30)    NOT NULL CONSTRAINT DF_BTRPD_EntityAnalytics_Monthly_EntityType DEFAULT(''),
+    EntityId                 VARCHAR(100)   NOT NULL CONSTRAINT DF_BTRPD_EntityAnalytics_Monthly_EntityId DEFAULT(''),
+    EntityCode               VARCHAR(50)    NOT NULL CONSTRAINT DF_BTRPD_EntityAnalytics_Monthly_EntityCode DEFAULT(''),
+    PeriodYear               INT            NOT NULL CONSTRAINT DF_BTRPD_EntityAnalytics_Monthly_PeriodYear DEFAULT(0),
+    PeriodMonth              INT            NOT NULL CONSTRAINT DF_BTRPD_EntityAnalytics_Monthly_PeriodMonth DEFAULT(0),
+    KpiId                    VARCHAR(20)    NOT NULL CONSTRAINT DF_BTRPD_EntityAnalytics_Monthly_KpiId DEFAULT(''),
+    NumericValue             DECIMAL(18,4)  NULL,
+    TextValue                VARCHAR(200)   NULL,
+    PeriodSemantics          VARCHAR(30)    NOT NULL CONSTRAINT DF_BTRPD_EntityAnalytics_Monthly_PeriodSemantics DEFAULT(''),
+    DefinitionVersion        INT            NULL,
+    IsClosed                 BIT            NOT NULL CONSTRAINT DF_BTRPD_EntityAnalytics_Monthly_IsClosed DEFAULT(0),
+    GeneratedAt              DATETIME       NOT NULL CONSTRAINT DF_BTRPD_EntityAnalytics_Monthly_GeneratedAt DEFAULT('3000-01-01'),
+    UpdatedAt                DATETIME       NOT NULL CONSTRAINT DF_BTRPD_EntityAnalytics_Monthly_UpdatedAt DEFAULT('3000-01-01'),
+    LastRefreshLogId         VARCHAR(26)    NOT NULL CONSTRAINT DF_BTRPD_EntityAnalytics_Monthly_LastRefreshLogId DEFAULT(''),
+
+    CONSTRAINT PK_BTRPD_EntityAnalytics_Monthly PRIMARY KEY CLUSTERED (EntityAnalyticsMonthlyId)
+)
+END
+GO
+
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'UX_BTRPD_EntityAnalytics_Monthly_Entity_Period_Kpi' AND object_id = OBJECT_ID(N'dbo.BTRPD_EntityAnalytics_Monthly'))
+CREATE UNIQUE INDEX UX_BTRPD_EntityAnalytics_Monthly_Entity_Period_Kpi
+    ON BTRPD_EntityAnalytics_Monthly (EntityType, EntityId, PeriodYear, PeriodMonth, KpiId)
+GO
+
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_BTRPD_EntityAnalytics_Monthly_Entity_Period' AND object_id = OBJECT_ID(N'dbo.BTRPD_EntityAnalytics_Monthly'))
+CREATE INDEX IX_BTRPD_EntityAnalytics_Monthly_Entity_Period
+    ON BTRPD_EntityAnalytics_Monthly (EntityType, EntityId, PeriodYear DESC, PeriodMonth DESC)
+    INCLUDE (KpiId, NumericValue, TextValue, PeriodSemantics, IsClosed, GeneratedAt)
+GO
+
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_BTRPD_EntityAnalytics_Monthly_Type_Period' AND object_id = OBJECT_ID(N'dbo.BTRPD_EntityAnalytics_Monthly'))
+CREATE INDEX IX_BTRPD_EntityAnalytics_Monthly_Type_Period
+    ON BTRPD_EntityAnalytics_Monthly (EntityType, PeriodYear, PeriodMonth)
+GO
+
+-- BTRPD_EntityAnalytics_MonthClose (M32.3)
+IF OBJECT_ID(N'dbo.BTRPD_EntityAnalytics_MonthClose', N'U') IS NULL
+BEGIN
+CREATE TABLE BTRPD_EntityAnalytics_MonthClose
+(
+    EntityAnalyticsMonthCloseId VARCHAR(26) NOT NULL CONSTRAINT DF_BTRPD_EntityAnalytics_MonthClose_Id DEFAULT(''),
+    EntityType                  VARCHAR(30) NOT NULL CONSTRAINT DF_BTRPD_EntityAnalytics_MonthClose_EntityType DEFAULT(''),
+    PeriodYear                  INT         NOT NULL CONSTRAINT DF_BTRPD_EntityAnalytics_MonthClose_PeriodYear DEFAULT(0),
+    PeriodMonth                 INT         NOT NULL CONSTRAINT DF_BTRPD_EntityAnalytics_MonthClose_PeriodMonth DEFAULT(0),
+    ClosedAt                    DATETIME    NOT NULL CONSTRAINT DF_BTRPD_EntityAnalytics_MonthClose_ClosedAt DEFAULT('3000-01-01'),
+    LastRefreshLogId            VARCHAR(26) NOT NULL CONSTRAINT DF_BTRPD_EntityAnalytics_MonthClose_LastRefreshLogId DEFAULT(''),
+
+    CONSTRAINT PK_BTRPD_EntityAnalytics_MonthClose PRIMARY KEY CLUSTERED (EntityAnalyticsMonthCloseId)
+)
+END
+GO
+
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'UX_BTRPD_EntityAnalytics_MonthClose_Type_Period' AND object_id = OBJECT_ID(N'dbo.BTRPD_EntityAnalytics_MonthClose'))
+CREATE UNIQUE INDEX UX_BTRPD_EntityAnalytics_MonthClose_Type_Period
+    ON BTRPD_EntityAnalytics_MonthClose (EntityType, PeriodYear, PeriodMonth)
+GO
+
+-- BTRPD_EntityAnalytics_Ranking (M32.4)
+IF OBJECT_ID(N'dbo.BTRPD_EntityAnalytics_Ranking', N'U') IS NULL
+BEGIN
+CREATE TABLE BTRPD_EntityAnalytics_Ranking
+(
+    EntityAnalyticsRankingId VARCHAR(26)    NOT NULL CONSTRAINT DF_BTRPD_EntityAnalytics_Ranking_Id DEFAULT(''),
+    EntityType               VARCHAR(30)    NOT NULL CONSTRAINT DF_BTRPD_EntityAnalytics_Ranking_EntityType DEFAULT(''),
+    EntityId                 VARCHAR(100)   NOT NULL CONSTRAINT DF_BTRPD_EntityAnalytics_Ranking_EntityId DEFAULT(''),
+    EntityCode               VARCHAR(50)    NOT NULL CONSTRAINT DF_BTRPD_EntityAnalytics_Ranking_EntityCode DEFAULT(''),
+    PeriodYear               INT            NOT NULL CONSTRAINT DF_BTRPD_EntityAnalytics_Ranking_PeriodYear DEFAULT(0),
+    PeriodMonth              INT            NOT NULL CONSTRAINT DF_BTRPD_EntityAnalytics_Ranking_PeriodMonth DEFAULT(0),
+    KpiId                    VARCHAR(20)    NOT NULL CONSTRAINT DF_BTRPD_EntityAnalytics_Ranking_KpiId DEFAULT(''),
+    RankPosition             INT            NOT NULL CONSTRAINT DF_BTRPD_EntityAnalytics_Ranking_RankPosition DEFAULT(0),
+    PopulationSize           INT            NOT NULL CONSTRAINT DF_BTRPD_EntityAnalytics_Ranking_PopulationSize DEFAULT(0),
+    Percentile               DECIMAL(5,2)   NOT NULL CONSTRAINT DF_BTRPD_EntityAnalytics_Ranking_Percentile DEFAULT(0),
+    GeneratedAt              DATETIME       NOT NULL CONSTRAINT DF_BTRPD_EntityAnalytics_Ranking_GeneratedAt DEFAULT('3000-01-01'),
+    UpdatedAt                DATETIME       NOT NULL CONSTRAINT DF_BTRPD_EntityAnalytics_Ranking_UpdatedAt DEFAULT('3000-01-01'),
+    LastRefreshLogId         VARCHAR(26)    NOT NULL CONSTRAINT DF_BTRPD_EntityAnalytics_Ranking_LastRefreshLogId DEFAULT(''),
+
+    CONSTRAINT PK_BTRPD_EntityAnalytics_Ranking PRIMARY KEY CLUSTERED (EntityAnalyticsRankingId)
+)
+END
+GO
+
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'UX_BTRPD_EntityAnalytics_Ranking_Entity_Period_Kpi' AND object_id = OBJECT_ID(N'dbo.BTRPD_EntityAnalytics_Ranking'))
+CREATE UNIQUE INDEX UX_BTRPD_EntityAnalytics_Ranking_Entity_Period_Kpi
+    ON BTRPD_EntityAnalytics_Ranking (EntityType, EntityId, PeriodYear, PeriodMonth, KpiId)
+GO
+
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_BTRPD_EntityAnalytics_Ranking_Entity_Period' AND object_id = OBJECT_ID(N'dbo.BTRPD_EntityAnalytics_Ranking'))
+CREATE INDEX IX_BTRPD_EntityAnalytics_Ranking_Entity_Period
+    ON BTRPD_EntityAnalytics_Ranking (EntityType, EntityId, PeriodYear DESC, PeriodMonth DESC)
+    INCLUDE (KpiId, RankPosition, PopulationSize, Percentile, GeneratedAt)
+GO
+
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_BTRPD_EntityAnalytics_Ranking_Type_Period_Kpi' AND object_id = OBJECT_ID(N'dbo.BTRPD_EntityAnalytics_Ranking'))
+CREATE INDEX IX_BTRPD_EntityAnalytics_Ranking_Type_Period_Kpi
+    ON BTRPD_EntityAnalytics_Ranking (EntityType, PeriodYear, PeriodMonth, KpiId)
+GO
+
+-- BTRPD_EntityAnalytics_Attention (M32.5)
+IF OBJECT_ID(N'dbo.BTRPD_EntityAnalytics_Attention', N'U') IS NULL
+BEGIN
+CREATE TABLE BTRPD_EntityAnalytics_Attention
+(
+    EntityAnalyticsAttentionId VARCHAR(26)    NOT NULL CONSTRAINT DF_BTRPD_EntityAnalytics_Attention_Id DEFAULT(''),
+    EntityType                 VARCHAR(30)    NOT NULL CONSTRAINT DF_BTRPD_EntityAnalytics_Attention_EntityType DEFAULT(''),
+    EntityId                   VARCHAR(100)   NOT NULL CONSTRAINT DF_BTRPD_EntityAnalytics_Attention_EntityId DEFAULT(''),
+    EntityCode                 VARCHAR(50)    NOT NULL CONSTRAINT DF_BTRPD_EntityAnalytics_Attention_EntityCode DEFAULT(''),
+    SignalCode                 VARCHAR(50)    NOT NULL CONSTRAINT DF_BTRPD_EntityAnalytics_Attention_SignalCode DEFAULT(''),
+    SignalCategory             VARCHAR(30)    NOT NULL CONSTRAINT DF_BTRPD_EntityAnalytics_Attention_SignalCategory DEFAULT(''),
+    SignalTitle                VARCHAR(100)   NOT NULL CONSTRAINT DF_BTRPD_EntityAnalytics_Attention_SignalTitle DEFAULT(''),
+    FirstSeenYear              INT            NOT NULL CONSTRAINT DF_BTRPD_EntityAnalytics_Attention_FirstSeenYear DEFAULT(0),
+    FirstSeenMonth             INT            NOT NULL CONSTRAINT DF_BTRPD_EntityAnalytics_Attention_FirstSeenMonth DEFAULT(0),
+    LastSeenYear               INT            NOT NULL CONSTRAINT DF_BTRPD_EntityAnalytics_Attention_LastSeenYear DEFAULT(0),
+    LastSeenMonth              INT            NOT NULL CONSTRAINT DF_BTRPD_EntityAnalytics_Attention_LastSeenMonth DEFAULT(0),
+    ConsecutivePeriods         INT            NOT NULL CONSTRAINT DF_BTRPD_EntityAnalytics_Attention_ConsecutivePeriods DEFAULT(0),
+    TotalOccurrences           INT            NOT NULL CONSTRAINT DF_BTRPD_EntityAnalytics_Attention_TotalOccurrences DEFAULT(0),
+    IsActive                   BIT            NOT NULL CONSTRAINT DF_BTRPD_EntityAnalytics_Attention_IsActive DEFAULT(0),
+    GeneratedAt                DATETIME       NOT NULL CONSTRAINT DF_BTRPD_EntityAnalytics_Attention_GeneratedAt DEFAULT('3000-01-01'),
+    CreatedAt                  DATETIME       NOT NULL CONSTRAINT DF_BTRPD_EntityAnalytics_Attention_CreatedAt DEFAULT('3000-01-01'),
+    UpdatedAt                  DATETIME       NOT NULL CONSTRAINT DF_BTRPD_EntityAnalytics_Attention_UpdatedAt DEFAULT('3000-01-01'),
+    LastRefreshLogId           VARCHAR(26)    NOT NULL CONSTRAINT DF_BTRPD_EntityAnalytics_Attention_LastRefreshLogId DEFAULT(''),
+
+    CONSTRAINT PK_BTRPD_EntityAnalytics_Attention PRIMARY KEY CLUSTERED (EntityAnalyticsAttentionId)
+)
+END
+GO
+
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'UX_BTRPD_EntityAnalytics_Attention_Entity_Signal' AND object_id = OBJECT_ID(N'dbo.BTRPD_EntityAnalytics_Attention'))
+CREATE UNIQUE INDEX UX_BTRPD_EntityAnalytics_Attention_Entity_Signal
+    ON BTRPD_EntityAnalytics_Attention (EntityType, EntityId, SignalCode)
+GO
+
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_BTRPD_EntityAnalytics_Attention_Entity_Active' AND object_id = OBJECT_ID(N'dbo.BTRPD_EntityAnalytics_Attention'))
+CREATE INDEX IX_BTRPD_EntityAnalytics_Attention_Entity_Active
+    ON BTRPD_EntityAnalytics_Attention (EntityType, EntityId, IsActive)
+    INCLUDE (SignalCode, SignalTitle, FirstSeenYear, FirstSeenMonth, LastSeenYear, LastSeenMonth,
+             ConsecutivePeriods, TotalOccurrences, GeneratedAt)
+GO
+
+-- BTRPD_EntityAnalytics_Relationship (M32.6)
+IF OBJECT_ID(N'dbo.BTRPD_EntityAnalytics_Relationship', N'U') IS NULL
+BEGIN
+CREATE TABLE BTRPD_EntityAnalytics_Relationship
+(
+    EntityAnalyticsRelationshipId VARCHAR(26)    NOT NULL CONSTRAINT DF_BTRPD_EntityAnalytics_Relationship_Id DEFAULT(''),
+    SourceEntityType              VARCHAR(30)    NOT NULL CONSTRAINT DF_BTRPD_EntityAnalytics_Relationship_SourceEntityType DEFAULT(''),
+    SourceEntityId                VARCHAR(100)   NOT NULL CONSTRAINT DF_BTRPD_EntityAnalytics_Relationship_SourceEntityId DEFAULT(''),
+    SourceEntityCode              VARCHAR(50)    NOT NULL CONSTRAINT DF_BTRPD_EntityAnalytics_Relationship_SourceEntityCode DEFAULT(''),
+    RelationshipCode              VARCHAR(50)    NOT NULL CONSTRAINT DF_BTRPD_EntityAnalytics_Relationship_RelationshipCode DEFAULT(''),
+    TargetEntityType              VARCHAR(30)    NOT NULL CONSTRAINT DF_BTRPD_EntityAnalytics_Relationship_TargetEntityType DEFAULT(''),
+    TargetEntityId                VARCHAR(100)   NOT NULL CONSTRAINT DF_BTRPD_EntityAnalytics_Relationship_TargetEntityId DEFAULT(''),
+    TargetEntityCode              VARCHAR(50)    NOT NULL CONSTRAINT DF_BTRPD_EntityAnalytics_Relationship_TargetEntityCode DEFAULT(''),
+    TargetDisplayName             VARCHAR(100)   NOT NULL CONSTRAINT DF_BTRPD_EntityAnalytics_Relationship_TargetDisplayName DEFAULT(''),
+    Rank                          INT            NOT NULL CONSTRAINT DF_BTRPD_EntityAnalytics_Relationship_Rank DEFAULT(0),
+    MetricValue                   DECIMAL(18,2)  NULL,
+    PeriodYear                    INT            NOT NULL CONSTRAINT DF_BTRPD_EntityAnalytics_Relationship_PeriodYear DEFAULT(0),
+    PeriodMonth                   INT            NOT NULL CONSTRAINT DF_BTRPD_EntityAnalytics_Relationship_PeriodMonth DEFAULT(0),
+    GeneratedAt                   DATETIME       NOT NULL CONSTRAINT DF_BTRPD_EntityAnalytics_Relationship_GeneratedAt DEFAULT('3000-01-01'),
+    UpdatedAt                     DATETIME       NOT NULL CONSTRAINT DF_BTRPD_EntityAnalytics_Relationship_UpdatedAt DEFAULT('3000-01-01'),
+    LastRefreshLogId              VARCHAR(26)    NOT NULL CONSTRAINT DF_BTRPD_EntityAnalytics_Relationship_LastRefreshLogId DEFAULT(''),
+
+    CONSTRAINT PK_BTRPD_EntityAnalytics_Relationship PRIMARY KEY CLUSTERED (EntityAnalyticsRelationshipId)
+)
+END
+GO
+
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'UX_BTRPD_EntityAnalytics_Relationship_Source_Relationship_Period_Rank' AND object_id = OBJECT_ID(N'dbo.BTRPD_EntityAnalytics_Relationship'))
+CREATE UNIQUE INDEX UX_BTRPD_EntityAnalytics_Relationship_Source_Relationship_Period_Rank
+    ON BTRPD_EntityAnalytics_Relationship (SourceEntityType, SourceEntityId, RelationshipCode, PeriodYear, PeriodMonth, Rank)
+GO
+
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_BTRPD_EntityAnalytics_Relationship_Source_Relationship' AND object_id = OBJECT_ID(N'dbo.BTRPD_EntityAnalytics_Relationship'))
+CREATE INDEX IX_BTRPD_EntityAnalytics_Relationship_Source_Relationship
+    ON BTRPD_EntityAnalytics_Relationship (SourceEntityType, SourceEntityId, RelationshipCode)
+    INCLUDE (TargetEntityType, TargetEntityId, TargetEntityCode, TargetDisplayName, Rank, MetricValue,
+             PeriodYear, PeriodMonth, GeneratedAt)
+GO
+
+-- BTRPD_EntityAnalytics_Radar (M32.8)
+IF OBJECT_ID(N'dbo.BTRPD_EntityAnalytics_Radar', N'U') IS NULL
+BEGIN
+CREATE TABLE BTRPD_EntityAnalytics_Radar
+(
+    EntityAnalyticsRadarId VARCHAR(26)    NOT NULL CONSTRAINT DF_BTRPD_EntityAnalytics_Radar_Id DEFAULT(''),
+    EntityType             VARCHAR(30)    NOT NULL CONSTRAINT DF_BTRPD_EntityAnalytics_Radar_EntityType DEFAULT(''),
+    EntityId               VARCHAR(100)   NOT NULL CONSTRAINT DF_BTRPD_EntityAnalytics_Radar_EntityId DEFAULT(''),
+    EntityCode             VARCHAR(50)    NOT NULL CONSTRAINT DF_BTRPD_EntityAnalytics_Radar_EntityCode DEFAULT(''),
+    PeriodYear             INT            NOT NULL CONSTRAINT DF_BTRPD_EntityAnalytics_Radar_PeriodYear DEFAULT(0),
+    PeriodMonth            INT            NOT NULL CONSTRAINT DF_BTRPD_EntityAnalytics_Radar_PeriodMonth DEFAULT(0),
+    AxisKpiId              VARCHAR(50)    NOT NULL CONSTRAINT DF_BTRPD_EntityAnalytics_Radar_AxisKpiId DEFAULT(''),
+    Score                  DECIMAL(5,2)   NULL,
+    PeerGroupRuleId        VARCHAR(50)    NOT NULL CONSTRAINT DF_BTRPD_EntityAnalytics_Radar_PeerGroupRuleId DEFAULT(''),
+    PeerGroupSize          INT            NOT NULL CONSTRAINT DF_BTRPD_EntityAnalytics_Radar_PeerGroupSize DEFAULT(0),
+    NormalizationMethod    VARCHAR(30)    NOT NULL CONSTRAINT DF_BTRPD_EntityAnalytics_Radar_NormalizationMethod DEFAULT(''),
+    GeneratedAt            DATETIME       NOT NULL CONSTRAINT DF_BTRPD_EntityAnalytics_Radar_GeneratedAt DEFAULT('3000-01-01'),
+    UpdatedAt              DATETIME       NOT NULL CONSTRAINT DF_BTRPD_EntityAnalytics_Radar_UpdatedAt DEFAULT('3000-01-01'),
+    LastRefreshLogId       VARCHAR(26)    NOT NULL CONSTRAINT DF_BTRPD_EntityAnalytics_Radar_LastRefreshLogId DEFAULT(''),
+
+    CONSTRAINT PK_BTRPD_EntityAnalytics_Radar PRIMARY KEY CLUSTERED (EntityAnalyticsRadarId)
+)
+END
+GO
+
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'UX_BTRPD_EntityAnalytics_Radar_Entity_Period_Axis' AND object_id = OBJECT_ID(N'dbo.BTRPD_EntityAnalytics_Radar'))
+CREATE UNIQUE INDEX UX_BTRPD_EntityAnalytics_Radar_Entity_Period_Axis
+    ON BTRPD_EntityAnalytics_Radar (EntityType, EntityId, PeriodYear, PeriodMonth, AxisKpiId)
+GO
+
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_BTRPD_EntityAnalytics_Radar_Entity_Period' AND object_id = OBJECT_ID(N'dbo.BTRPD_EntityAnalytics_Radar'))
+CREATE INDEX IX_BTRPD_EntityAnalytics_Radar_Entity_Period
+    ON BTRPD_EntityAnalytics_Radar (EntityType, EntityId, PeriodYear DESC, PeriodMonth DESC)
+    INCLUDE (AxisKpiId, Score, PeerGroupRuleId, PeerGroupSize, NormalizationMethod, GeneratedAt)
+GO
+
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_BTRPD_EntityAnalytics_Radar_Type_Period' AND object_id = OBJECT_ID(N'dbo.BTRPD_EntityAnalytics_Radar'))
+CREATE INDEX IX_BTRPD_EntityAnalytics_Radar_Type_Period
+    ON BTRPD_EntityAnalytics_Radar (EntityType, PeriodYear, PeriodMonth)
+GO
+
 -- IX_BTR_Piutang_OpenBalance
 IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_BTR_Piutang_OpenBalance' AND object_id = OBJECT_ID(N'dbo.BTR_Piutang'))
 CREATE INDEX IX_BTR_Piutang_OpenBalance

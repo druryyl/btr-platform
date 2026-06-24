@@ -44,6 +44,7 @@ namespace btr.portal.api.Configurations
             services.AddTransient<Controllers.Reports.PiutangReportController>();
             services.AddTransient<Controllers.Reports.CustomerReportController>();
             services.AddTransient<Controllers.Reports.PurchasingReportController>();
+            services.AddTransient<Controllers.EntityAnalytics.EntityAnalyticsController>();
 
             return services;
         }

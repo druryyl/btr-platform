@@ -176,6 +176,7 @@
     <Compile Include="ReportingContext\DashboardSnapshotAgg\DashboardInventoryRiskSnapshotDal.cs" />
     <Compile Include="ReportingContext\DashboardSnapshotAgg\DashboardPiutangSnapshotDal.cs" />
     <Compile Include="ReportingContext\DashboardSnapshotAgg\DashboardCustomerSnapshotDal.cs" />
+    <Compile Include="ReportingContext\DashboardSnapshotAgg\CustomerMtdItemRollupDal.cs" />
     <Compile Include="ReportingContext\DashboardSnapshotAgg\DashboardSalesmanSnapshotDal.cs" />
     <Compile Include="ReportingContext\DashboardSnapshotAgg\DashboardCollectionSnapshotDal.cs" />
     <Compile Include="ReportingContext\DashboardSnapshotAgg\DashboardLocationSnapshotDal.cs" />
@@ -201,6 +202,7 @@
     <Compile Include="ReportingContext\DashboardCollectionOptimizationAgg\DashboardCollectionOptimizationDal.cs" />
     <Compile Include="ReportingContext\DashboardCustomerPortfolioAgg\DashboardCustomerPortfolioDal.cs" />
     <Compile Include="ReportingContext\CustomerReportAgg\CustomerReportDal.cs" />
+    <Compile Include="ReportingContext\EntityAnalyticsAgg\EntityAnalyticsRepository.cs" />
     <Compile Include="ReportingContext\DashboardCustomerRiskForecastAgg\DashboardCustomerRiskForecastDal.cs" />
     <Compile Include="ReportingContext\DashboardInventoryForecastAgg\DashboardInventoryForecastDal.cs" />
     <Compile Include="ReportingContext\DashboardInventoryOptimizationAgg\DashboardInventoryOptimizationDal.cs" />

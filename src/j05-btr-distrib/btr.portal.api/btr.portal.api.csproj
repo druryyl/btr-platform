@@ -213,6 +213,7 @@
     <Compile Include="Controllers\Reports\InventoryReportController.cs" />
     <Compile Include="Controllers\Reports\PiutangReportController.cs" />
     <Compile Include="Controllers\Reports\CustomerReportController.cs" />
+    <Compile Include="Controllers\EntityAnalytics\EntityAnalyticsController.cs" />
     <Compile Include="Controllers\Reports\PurchasingReportController.cs" />
     <Compile Include="Controllers\Reports\SalesReportController.cs" />
     <Compile Include="Filters\GlobalExceptionFilter.cs" />

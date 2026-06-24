@@ -84,6 +84,11 @@ function investigate(item: DashboardCustomerAttentionItem): void {
     resolveInvestigationSourceLabel(route.path),
   )
 }
+
+function openProfile(item: DashboardCustomerAttentionItem): void {
+  if (!item.ProfileRoute) return
+  void router.push(item.ProfileRoute)
+}
 </script>
 
 <template>
@@ -134,7 +139,19 @@ function investigate(item: DashboardCustomerAttentionItem): void {
               <p class="customer-attention-list__empty">{{ emptyMessage }}</p>
             </template>
 
-            <Column field="CustomerCode" header="Code" />
+            <Column field="CustomerCode" header="Code">
+              <template #body="{ data }">
+                <button
+                  v-if="data.ProfileRoute"
+                  type="button"
+                  class="customer-attention-list__code-link"
+                  @click="openProfile(data)"
+                >
+                  {{ data.CustomerCode }}
+                </button>
+                <span v-else>{{ data.CustomerCode }}</span>
+              </template>
+            </Column>
             <Column field="CustomerName" header="Customer" />
             <Column field="SignalLabel" header="Signal" />
             <Column header="Value">
@@ -145,13 +162,22 @@ function investigate(item: DashboardCustomerAttentionItem): void {
             <Column field="WilayahName" header="Wilayah" />
             <Column header="">
               <template #body="{ data }">
-                <Button
-                  v-if="data.Investigation"
-                  label="Investigate"
-                  text
-                  size="small"
-                  @click="investigate(data)"
-                />
+                <div class="customer-attention-list__actions">
+                  <Button
+                    v-if="data.ProfileRoute"
+                    label="Profile"
+                    text
+                    size="small"
+                    @click="openProfile(data)"
+                  />
+                  <Button
+                    v-if="data.Investigation"
+                    label="Investigate"
+                    text
+                    size="small"
+                    @click="investigate(data)"
+                  />
+                </div>
               </template>
             </Column>
           </DataTable>
@@ -209,5 +235,22 @@ function investigate(item: DashboardCustomerAttentionItem): void {
   padding: 1.5rem 0;
   text-align: center;
   color: var(--p-text-muted-color);
+}
+
+.customer-attention-list__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+}
+
+.customer-attention-list__code-link {
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--p-primary-color);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: underline;
 }
 </style>

@@ -731,6 +731,7 @@ export interface DashboardCustomerAttentionItem {
   ValueText: string | null
   WilayahName: string
   ReportRoute: string
+  ProfileRoute?: string | null
   RequiresAttention: boolean
   Investigation?: InvestigationMetadata | null
 }
@@ -742,6 +743,7 @@ export interface DashboardCustomerRankingRow {
   Amount: number
   PercentOfTotal: number | null
   ReportRoute: string
+  ProfileRoute?: string | null
   Investigation?: InvestigationMetadata | null
 }
 
@@ -1452,6 +1454,7 @@ export interface DashboardCustomerPortfolioPriorityRow {
   CustomerReportRoute: string
   DrillDownRouteM17: string
   DrillDownRouteM29: string
+  ProfileRoute?: string | null
 }
 
 export interface DashboardCustomerPortfolioCustomerRow {

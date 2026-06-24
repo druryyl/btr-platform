@@ -7,6 +7,9 @@ using btr.application.ReportingContext.DashboardSnapshotAgg.Contracts;
 using btr.application.ReportingContext.DashboardSnapshotAgg.Models;
 using btr.application.ReportingContext.DashboardSnapshotAgg.Progress;
 using btr.application.ReportingContext.DashboardSnapshotAgg.Services;
+using btr.application.ReportingContext.EntityAnalyticsAgg.Contracts;
+using btr.application.ReportingContext.EntityAnalyticsAgg.Producers;
+using btr.application.ReportingContext.EntityAnalyticsAgg.Services;
 using btr.application.SalesContext.CustomerAgg.Contracts;
 using btr.application.SalesContext.FakturInfo;
 using btr.application.Portal;
@@ -39,6 +42,8 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.UseCases
         private readonly DashboardCustomerRiskForecastAggregator _forecastAggregator;
         private readonly DashboardCollectionOptimizationAggregator _optimizationAggregator;
         private readonly DashboardCustomerPortfolioAggregator _portfolioAggregator;
+        private readonly DashboardCustomerRelationshipAggregator _relationshipAggregator;
+        private readonly ICustomerMtdItemRollupDal _customerMtdItemRollupDal;
         private readonly IDashboardCollectionSnapshotDal _collectionSnapshotDal;
         private readonly IDashboardSalesmanSnapshotDal _salesmanSnapshotDal;
         private readonly IDashboardCustomerSnapshotDal _snapshotDal;
@@ -46,6 +51,7 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.UseCases
         private readonly ITglJamDal _tglJamDal;
         private readonly IBusinessDateProvider _businessDateProvider;
         private readonly DashboardSnapshotOptions _options;
+        private readonly EntityAnalyticsProducerOrchestrator _entityAnalyticsOrchestrator;
 
         public RefreshDashboardCustomerSnapshotWorker(
             IFakturViewDal fakturViewDal,
@@ -61,13 +67,16 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.UseCases
             DashboardCustomerRiskForecastAggregator forecastAggregator,
             DashboardCollectionOptimizationAggregator optimizationAggregator,
             DashboardCustomerPortfolioAggregator portfolioAggregator,
+            DashboardCustomerRelationshipAggregator relationshipAggregator,
+            ICustomerMtdItemRollupDal customerMtdItemRollupDal,
             IDashboardCollectionSnapshotDal collectionSnapshotDal,
             IDashboardSalesmanSnapshotDal salesmanSnapshotDal,
             IDashboardCustomerSnapshotDal snapshotDal,
             IDashboardSnapshotRefreshLogDal refreshLogDal,
             ITglJamDal tglJamDal,
             IBusinessDateProvider businessDateProvider,
-            DashboardSnapshotOptions options)
+            DashboardSnapshotOptions options,
+            EntityAnalyticsProducerOrchestrator entityAnalyticsOrchestrator)
         {
             _fakturViewDal = fakturViewDal;
             _lastFakturDal = lastFakturDal;
@@ -82,6 +91,8 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.UseCases
             _forecastAggregator = forecastAggregator;
             _optimizationAggregator = optimizationAggregator;
             _portfolioAggregator = portfolioAggregator;
+            _relationshipAggregator = relationshipAggregator;
+            _customerMtdItemRollupDal = customerMtdItemRollupDal;
             _collectionSnapshotDal = collectionSnapshotDal;
             _salesmanSnapshotDal = salesmanSnapshotDal;
             _snapshotDal = snapshotDal;
@@ -89,6 +100,7 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.UseCases
             _tglJamDal = tglJamDal;
             _businessDateProvider = businessDateProvider;
             _options = options ?? new DashboardSnapshotOptions();
+            _entityAnalyticsOrchestrator = entityAnalyticsOrchestrator;
         }
 
         public void Execute(RefreshDashboardCustomerSnapshotRequest request)
@@ -240,10 +252,34 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.UseCases
                     portfolioOptions);
                 WorkerProgressScope.Current.StepCompleted($"{Domain}:AggregatePortfolio");
 
+                WorkerProgressScope.Current.StepStarted($"{Domain}:AggregateRelationships", "Aggregate customer relationship rollups");
+                var itemRollupRows = _customerMtdItemRollupDal.ListMtdItemRollups(periode)?.ToList()
+                    ?? new System.Collections.Generic.List<CustomerMtdItemRollupDto>();
+                var relationshipAggregate = _relationshipAggregator.Aggregate(itemRollupRows, today, generatedAt);
+                WorkerProgressScope.Current.StepCompleted($"{Domain}:AggregateRelationships");
+
                 WorkerProgressScope.Current.StepStarted($"{Domain}:Save", "Save snapshot");
                 using (var trans = TransHelper.NewScope())
                 {
                     _snapshotDal.ReplaceCurrent(aggregate, forecastAggregate, optimizationAggregate, portfolioAggregate, refreshLogId);
+
+                    WorkerProgressScope.Current.StepStarted($"{Domain}:EntityAnalytics", "Produce entity analytics L0+L1+L2+L3+L4+L5 snapshot");
+                    _entityAnalyticsOrchestrator.ProduceForDomain(Domain, new EntityAnalyticsProduceContext
+                    {
+                        RefreshLogId = refreshLogId,
+                        GeneratedAt = generatedAt,
+                        BusinessDate = today,
+                        DomainInput = new CustomerEntityAnalyticsProduceInput
+                        {
+                            CustomerAggregate = aggregate,
+                            ForecastAggregate = forecastAggregate,
+                            PortfolioAggregate = portfolioAggregate,
+                            SalesmanSnapshot = salesmanSnapshot,
+                            RelationshipAggregate = relationshipAggregate
+                        }
+                    });
+                    WorkerProgressScope.Current.StepCompleted($"{Domain}:EntityAnalytics");
+
                     trans.Complete();
                 }
                 WorkerProgressScope.Current.StepCompleted($"{Domain}:Save");

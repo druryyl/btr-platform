@@ -144,6 +144,29 @@ const router = createRouter({
           name: 'customer-report',
           component: () => import('@/views/reports/CustomerReportView.vue'),
         },
+        {
+          path: 'analytics',
+          name: 'entity-analytics-home',
+          component: () => import('@/views/analytics/EntityAnalyticsHomeView.vue'),
+        },
+        {
+          path: 'analytics/customers/compare',
+          name: 'customer-compare',
+          component: () => import('@/views/analytics/CustomerCompareView.vue'),
+        },
+        {
+          path: 'analytics/customers/:customerCode',
+          name: 'customer-performance-profile',
+          redirect: (to) => ({
+            name: 'entity-performance-profile',
+            params: { entityType: 'Customer', entityId: to.params.customerCode },
+          }),
+        },
+        {
+          path: 'analytics/:entityType/:entityId',
+          name: 'entity-performance-profile',
+          component: () => import('@/views/analytics/EntityPerformanceProfileView.vue'),
+        },
       ],
     },
     {

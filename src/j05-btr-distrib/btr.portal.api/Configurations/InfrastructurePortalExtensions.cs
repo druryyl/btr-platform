@@ -1,5 +1,6 @@
 using btr.application.FinanceContext.PiutangAgg.Contracts;
 using btr.application.ReportingContext.CustomerReportAgg.Contracts;
+using btr.application.ReportingContext.EntityAnalyticsAgg.Contracts;
 using btr.application.ReportingContext.DashboardAlertCenterAgg.Contracts;
 using btr.application.ReportingContext.DashboardAlertCenterAgg.Services;
 using btr.application.ReportingContext.DashboardCashFlowForecastAgg.Contracts;
@@ -59,6 +60,7 @@ using btr.infrastructure.ReportingContext.DashboardSalesForecastAgg;
 using btr.infrastructure.ReportingContext.DashboardSalesmanAgg;
 using btr.infrastructure.ReportingContext.DashboardSnapshotAgg;
 using btr.infrastructure.ReportingContext.CustomerReportAgg;
+using btr.infrastructure.ReportingContext.EntityAnalyticsAgg;
 using btr.infrastructure.ReportingContext.InventoryReportAgg;
 using btr.infrastructure.ReportingContext.PiutangReportAgg;
 using btr.infrastructure.ReportingContext.PurchasingReportAgg;
@@ -128,6 +130,7 @@ namespace btr.portal.api.Configurations
             services.AddScoped<ICustomerPelunasanSummaryDal, CustomerPelunasanSummaryDal>();
             services.AddScoped<ICustomerPaymentBehaviorDal, CustomerPaymentBehaviorDal>();
             services.AddScoped<ICustomerOmzetHistoryDal, CustomerOmzetHistoryDal>();
+            services.AddScoped<ICustomerMtdItemRollupDal, CustomerMtdItemRollupDal>();
             services.AddScoped<IDashboardInventoryForecastDal, DashboardInventoryForecastDal>();
             services.AddScoped<IDashboardInventoryOptimizationDal, DashboardInventoryOptimizationDal>();
             services.AddScoped<IDashboardPurchasingDal, DashboardPurchasingDal>();
@@ -153,6 +156,7 @@ namespace btr.portal.api.Configurations
             services.AddScoped<IPiutangReportDal, PiutangReportDal>();
             services.AddScoped<IPurchasingReportDal, PurchasingReportDal>();
             services.AddScoped<ICustomerReportDal, CustomerReportDal>();
+            services.AddScoped<IEntityAnalyticsRepository, EntityAnalyticsRepository>();
 
             services
                 .Scan(selector => selector
