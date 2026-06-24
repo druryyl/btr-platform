@@ -27,6 +27,7 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.UseCases
         private readonly IFakturViewDal _fakturViewDal;
         private readonly ISalesOmzetTargetDal _targetDal;
         private readonly DashboardSalesFakturAggregator _aggregator;
+        private readonly DashboardSalesForecastAggregator _forecastAggregator;
         private readonly IDashboardSalesSnapshotDal _snapshotDal;
         private readonly IDashboardSnapshotRefreshLogDal _refreshLogDal;
         private readonly ITglJamDal _tglJamDal;
@@ -36,6 +37,7 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.UseCases
             IFakturViewDal fakturViewDal,
             ISalesOmzetTargetDal targetDal,
             DashboardSalesFakturAggregator aggregator,
+            DashboardSalesForecastAggregator forecastAggregator,
             IDashboardSalesSnapshotDal snapshotDal,
             IDashboardSnapshotRefreshLogDal refreshLogDal,
             ITglJamDal tglJamDal,
@@ -44,6 +46,7 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.UseCases
             _fakturViewDal = fakturViewDal;
             _targetDal = targetDal;
             _aggregator = aggregator;
+            _forecastAggregator = forecastAggregator;
             _snapshotDal = snapshotDal;
             _refreshLogDal = refreshLogDal;
             _tglJamDal = tglJamDal;
@@ -89,10 +92,14 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.UseCases
                 var aggregate = _aggregator.Aggregate(rows, periode, totalTarget, generatedAt);
                 WorkerProgressScope.Current.StepCompleted($"{Domain}:Aggregate");
 
+                WorkerProgressScope.Current.StepStarted($"{Domain}:AggregateForecast", "Aggregate forecast metrics");
+                var forecast = _forecastAggregator.Aggregate(rows, periode, totalTarget, today, generatedAt);
+                WorkerProgressScope.Current.StepCompleted($"{Domain}:AggregateForecast");
+
                 WorkerProgressScope.Current.StepStarted($"{Domain}:Save", "Save snapshot");
                 using (var trans = TransHelper.NewScope())
                 {
-                    _snapshotDal.ReplaceCurrent(aggregate, refreshLogId);
+                    _snapshotDal.ReplaceCurrent(aggregate, forecast, refreshLogId);
                     trans.Complete();
                 }
                 WorkerProgressScope.Current.StepCompleted($"{Domain}:Save");

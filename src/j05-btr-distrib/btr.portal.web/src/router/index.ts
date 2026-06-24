@@ -33,6 +33,11 @@ const router = createRouter({
               component: () => import('@/views/dashboard/SalesDashboardView.vue'),
             },
             {
+              path: 'sales-forecast',
+              name: 'sales-forecast-dashboard',
+              component: () => import('@/views/dashboard/SalesForecastDashboardView.vue'),
+            },
+            {
               path: 'piutang',
               name: 'piutang-dashboard',
               component: () => import('@/views/dashboard/PiutangDashboardView.vue'),
@@ -41,6 +46,21 @@ const router = createRouter({
               path: 'customers',
               name: 'customers-dashboard',
               component: () => import('@/views/dashboard/CustomerDashboardView.vue'),
+            },
+            {
+              path: 'customer-risk-forecast',
+              name: 'customer-risk-forecast-dashboard',
+              component: () => import('@/views/dashboard/CustomerRiskForecastDashboardView.vue'),
+            },
+            {
+              path: 'collection-optimization',
+              name: 'collection-optimization-dashboard',
+              component: () => import('@/views/dashboard/CollectionOptimizationDashboardView.vue'),
+            },
+            {
+              path: 'customer-portfolio',
+              name: 'customer-portfolio-dashboard',
+              component: () => import('@/views/dashboard/CustomerPortfolioDashboardView.vue'),
             },
             {
               path: 'salesmen',
@@ -58,6 +78,11 @@ const router = createRouter({
               component: () => import('@/views/dashboard/CollectionDashboardView.vue'),
             },
             {
+              path: 'cash-flow-forecast',
+              name: 'cash-flow-forecast-dashboard',
+              component: () => import('@/views/dashboard/CashFlowForecastDashboardView.vue'),
+            },
+            {
               path: 'inventory',
               name: 'inventory-dashboard',
               component: () => import('@/views/dashboard/InventoryDashboardView.vue'),
@@ -66,6 +91,16 @@ const router = createRouter({
               path: 'inventory-risk',
               name: 'inventory-risk-dashboard',
               component: () => import('@/views/dashboard/InventoryRiskDashboardView.vue'),
+            },
+            {
+              path: 'inventory-forecast',
+              name: 'inventory-forecast-dashboard',
+              component: () => import('@/views/dashboard/InventoryForecastDashboardView.vue'),
+            },
+            {
+              path: 'inventory-optimization',
+              name: 'inventory-optimization-dashboard',
+              component: () => import('@/views/dashboard/InventoryOptimizationDashboardView.vue'),
             },
             {
               path: 'purchasing',
@@ -103,6 +138,11 @@ const router = createRouter({
           path: 'reports/purchasing',
           name: 'purchasing-report',
           component: () => import('@/views/reports/PurchasingReportView.vue'),
+        },
+        {
+          path: 'reports/customers',
+          name: 'customer-report',
+          component: () => import('@/views/reports/CustomerReportView.vue'),
         },
       ],
     },

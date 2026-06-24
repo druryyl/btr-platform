@@ -1,6 +1,7 @@
 export interface InvestigationSuggestedQuery {
   FreeText?: string
   CustomerId?: string
+  CustomerCode?: string
   SalesmanId?: string
   BrgId?: string
   WarehouseId?: string
@@ -45,6 +46,7 @@ export interface InvestigationQueryParams {
   [key: string]: string | undefined
   q?: string
   customerId?: string
+  customerCode?: string
   salesmanId?: string
   brgId?: string
   warehouseId?: string

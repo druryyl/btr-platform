@@ -13,6 +13,13 @@ import {
   fetchDashboardPiutang,
   fetchDashboardPurchasing,
   fetchDashboardSales,
+  fetchDashboardSalesForecast,
+  fetchDashboardCashFlowForecast,
+  fetchDashboardInventoryForecast,
+  fetchDashboardInventoryOptimization,
+  fetchDashboardCustomerRiskForecast,
+  fetchDashboardCollectionOptimization,
+  fetchDashboardCustomerPortfolio,
 } from '@/api/dashboardApi'
 import { getApiErrorMessage } from '@/api/httpClient'
 import { isInfrastructureStoreError } from '@/services/platformDiagnostics'
@@ -30,6 +37,13 @@ import type {
   DashboardPiutangResponse,
   DashboardPurchasingResponse,
   DashboardSalesResponse,
+  DashboardSalesForecastResponse,
+  DashboardCashFlowForecastResponse,
+  DashboardInventoryForecastResponse,
+  DashboardInventoryOptimizationResponse,
+  DashboardCustomerRiskForecastResponse,
+  DashboardCollectionOptimizationResponse,
+  DashboardCustomerPortfolioResponse,
 } from '@/models/dashboard'
 
 export const useDashboardStore = defineStore('dashboard', () => {
@@ -37,11 +51,18 @@ export const useDashboardStore = defineStore('dashboard', () => {
   const executive = ref<DashboardExecutiveResponse | null>(null)
   const alerts = ref<DashboardAlertCenterResponse | null>(null)
   const sales = ref<DashboardSalesResponse | null>(null)
+  const salesForecast = ref<DashboardSalesForecastResponse | null>(null)
+  const cashFlowForecast = ref<DashboardCashFlowForecastResponse | null>(null)
+  const inventoryForecast = ref<DashboardInventoryForecastResponse | null>(null)
+  const inventoryOptimization = ref<DashboardInventoryOptimizationResponse | null>(null)
   const piutang = ref<DashboardPiutangResponse | null>(null)
   const inventory = ref<DashboardInventoryResponse | null>(null)
   const inventoryRisk = ref<DashboardInventoryRiskResponse | null>(null)
   const purchasing = ref<DashboardPurchasingResponse | null>(null)
   const customer = ref<DashboardCustomerResponse | null>(null)
+  const customerRiskForecast = ref<DashboardCustomerRiskForecastResponse | null>(null)
+  const collectionOptimization = ref<DashboardCollectionOptimizationResponse | null>(null)
+  const customerPortfolio = ref<DashboardCustomerPortfolioResponse | null>(null)
   const collection = ref<DashboardCollectionResponse | null>(null)
   const location = ref<DashboardLocationResponse | null>(null)
   const salesman = ref<DashboardSalesmanResponse | null>(null)
@@ -127,6 +148,58 @@ export const useDashboardStore = defineStore('dashboard', () => {
     }
   }
 
+  async function loadSalesForecast(): Promise<void> {
+    loading.value = true
+    error.value = null
+
+    try {
+      salesForecast.value = await fetchDashboardSalesForecast()
+    } catch (err) {
+      error.value = getApiErrorMessage(err, 'Failed to load sales forecast dashboard.')
+    } finally {
+      loading.value = false
+    }
+  }
+
+  async function loadCashFlowForecast(): Promise<void> {
+    loading.value = true
+    error.value = null
+
+    try {
+      cashFlowForecast.value = await fetchDashboardCashFlowForecast()
+    } catch (err) {
+      error.value = getApiErrorMessage(err, 'Failed to load cash flow forecast dashboard.')
+    } finally {
+      loading.value = false
+    }
+  }
+
+  async function loadInventoryForecast(): Promise<void> {
+    loading.value = true
+    error.value = null
+
+    try {
+      inventoryForecast.value = await fetchDashboardInventoryForecast()
+    } catch (err) {
+      error.value = getApiErrorMessage(err, 'Failed to load inventory forecast dashboard.')
+    } finally {
+      loading.value = false
+    }
+  }
+
+  async function loadInventoryOptimization(): Promise<void> {
+    loading.value = true
+    error.value = null
+
+    try {
+      inventoryOptimization.value = await fetchDashboardInventoryOptimization()
+    } catch (err) {
+      error.value = getApiErrorMessage(err, 'Failed to load inventory optimization dashboard.')
+    } finally {
+      loading.value = false
+    }
+  }
+
   async function loadPiutang(): Promise<void> {
     loading.value = true
     error.value = null
@@ -180,6 +253,63 @@ export const useDashboardStore = defineStore('dashboard', () => {
       purchasing.value = await fetchDashboardPurchasing()
     } catch (err) {
       error.value = getApiErrorMessage(err, 'Failed to load purchasing dashboard.')
+    } finally {
+      loading.value = false
+    }
+  }
+
+  async function loadCustomerRiskForecast(): Promise<void> {
+    loading.value = true
+    error.value = null
+
+    try {
+      customerRiskForecast.value = await fetchDashboardCustomerRiskForecast()
+
+      if (!customerRiskForecast.value.IsAvailable) {
+        setInfrastructureError(
+          'Customer risk forecast data is not yet available. Run the snapshot refresh worker.',
+        )
+      }
+    } catch (err) {
+      error.value = getApiErrorMessage(err, 'Failed to load customer risk forecast dashboard.')
+    } finally {
+      loading.value = false
+    }
+  }
+
+  async function loadCollectionOptimization(): Promise<void> {
+    loading.value = true
+    error.value = null
+
+    try {
+      collectionOptimization.value = await fetchDashboardCollectionOptimization()
+
+      if (!collectionOptimization.value.IsAvailable) {
+        setInfrastructureError(
+          'Collection optimization data is not yet available. Run the snapshot refresh worker for the Customer domain.',
+        )
+      }
+    } catch (err) {
+      error.value = getApiErrorMessage(err, 'Failed to load collection optimization dashboard.')
+    } finally {
+      loading.value = false
+    }
+  }
+
+  async function loadCustomerPortfolio(): Promise<void> {
+    loading.value = true
+    error.value = null
+
+    try {
+      customerPortfolio.value = await fetchDashboardCustomerPortfolio()
+
+      if (!customerPortfolio.value.IsAvailable) {
+        setInfrastructureError(
+          'Customer portfolio data is not yet available. Run the snapshot refresh worker for the Customer domain.',
+        )
+      }
+    } catch (err) {
+      error.value = getApiErrorMessage(err, 'Failed to load customer portfolio dashboard.')
     } finally {
       loading.value = false
     }
@@ -266,11 +396,18 @@ export const useDashboardStore = defineStore('dashboard', () => {
     executive.value = null
     alerts.value = null
     sales.value = null
+    salesForecast.value = null
+    cashFlowForecast.value = null
+    inventoryForecast.value = null
+    inventoryOptimization.value = null
     piutang.value = null
     inventory.value = null
     inventoryRisk.value = null
     purchasing.value = null
     customer.value = null
+    customerRiskForecast.value = null
+    collectionOptimization.value = null
+    customerPortfolio.value = null
     collection.value = null
     location.value = null
     salesman.value = null
@@ -283,11 +420,18 @@ export const useDashboardStore = defineStore('dashboard', () => {
     executive,
     alerts,
     sales,
+    salesForecast,
+    cashFlowForecast,
+    inventoryForecast,
+    inventoryOptimization,
     piutang,
     inventory,
     inventoryRisk,
     purchasing,
     customer,
+    customerRiskForecast,
+    collectionOptimization,
+    customerPortfolio,
     collection,
     location,
     salesman,
@@ -297,11 +441,18 @@ export const useDashboardStore = defineStore('dashboard', () => {
     loadExecutive,
     loadAlerts,
     loadSales,
+    loadSalesForecast,
+    loadCashFlowForecast,
+    loadInventoryForecast,
+    loadInventoryOptimization,
     loadPiutang,
     loadInventory,
     loadInventoryRisk,
     loadPurchasing,
     loadCustomer,
+    loadCustomerRiskForecast,
+    loadCollectionOptimization,
+    loadCustomerPortfolio,
     loadCollection,
     loadLocation,
     loadSalesman,

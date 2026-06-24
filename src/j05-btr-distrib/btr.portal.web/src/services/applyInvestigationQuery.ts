@@ -13,6 +13,7 @@ export interface InvestigationQueryApplyResult {
   breadcrumb: InvestigationBreadcrumbContext
   freeText: string
   customerId: string
+  customerCode: string
   salesmanId: string
   brgId: string
   warehouseId: string
@@ -50,6 +51,7 @@ export function applyInvestigationQuery(
     breadcrumb,
     freeText: readQueryString(route, 'q'),
     customerId: readQueryString(route, 'customerId'),
+    customerCode: readQueryString(route, 'customerCode'),
     salesmanId: readQueryString(route, 'salesmanId'),
     brgId: readQueryString(route, 'brgId'),
     warehouseId: readQueryString(route, 'warehouseId'),

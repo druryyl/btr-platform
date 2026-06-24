@@ -77,7 +77,10 @@ namespace btr.test.ReportingContext
 
             public DashboardSalesAggregateResult GetCurrent() => _snapshot;
 
-            public void ReplaceCurrent(DashboardSalesAggregateResult result, string refreshLogId)
+            public void ReplaceCurrent(
+                DashboardSalesAggregateResult sales,
+                DashboardSalesForecastAggregateResult forecast,
+                string refreshLogId)
             {
             }
         }

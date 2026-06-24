@@ -6,6 +6,7 @@ import { applyInvestigationQuery } from '@/services/applyInvestigationQuery'
 export function useReportInvestigationHydration() {
   const breadcrumb = ref<InvestigationBreadcrumbContext>({})
   const customerId = ref('')
+  const customerCode = ref('')
   const salesmanId = ref('')
   const brgId = ref('')
   const warehouseId = ref('')
@@ -14,12 +15,14 @@ export function useReportInvestigationHydration() {
 
   function hydrateFromRoute(route: RouteLocationNormalizedLoaded): {
     freeText: string
+    customerCode: string
     allOpenBalances: boolean
   } {
     const applied = applyInvestigationQuery(route)
 
     breadcrumb.value = applied.breadcrumb
     customerId.value = applied.customerId
+    customerCode.value = applied.customerCode
     salesmanId.value = applied.salesmanId
     brgId.value = applied.brgId
     warehouseId.value = applied.warehouseId
@@ -28,6 +31,7 @@ export function useReportInvestigationHydration() {
 
     return {
       freeText: applied.freeText,
+      customerCode: applied.customerCode,
       allOpenBalances: applied.allOpenBalances,
     }
   }
@@ -35,6 +39,7 @@ export function useReportInvestigationHydration() {
   return {
     breadcrumb,
     customerId,
+    customerCode,
     salesmanId,
     brgId,
     warehouseId,

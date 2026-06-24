@@ -117,6 +117,7 @@ namespace btr.test.ReportingContext
 
             entry.Steps.Should().HaveCount(3);
             entry.Steps.Select(s => s.Order).Should().BeEquivalentTo(new[] { 1, 2, 3 });
+            entry.Steps.Should().OnlyContain(step => step.Label.Contains(" · "));
         }
 
         [Fact]

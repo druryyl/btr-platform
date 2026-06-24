@@ -161,6 +161,8 @@ namespace btr.application.ReportingContext.DashboardAlertCenterAgg.Queries
         public string PurchasingDashboardRoute { get; set; }
 
         public string LocationDashboardRoute { get; set; }
+
+        public IList<PortalMenuLinkModel> DomainDashboards { get; set; } = new List<PortalMenuLinkModel>();
     }
 
     public class GetDashboardAlertCenterHandler

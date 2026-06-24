@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { RouterLink } from 'vue-router'
 import Card from 'primevue/card'
+import PortalMenuLabel from '@/components/navigation/PortalMenuLabel.vue'
 import type { DashboardSalesmanNavigationLinks } from '@/models/dashboard'
 
 defineProps<{
@@ -21,14 +22,14 @@ defineProps<{
               :to="navigation.SalesDashboardRoute"
               class="salesman-navigation__link"
             >
-              Sales Dashboard
+              <PortalMenuLabel :route="navigation.SalesDashboardRoute" />
             </RouterLink>
             <RouterLink
               v-if="navigation"
               :to="navigation.SalesReportRoute"
               class="salesman-navigation__link"
             >
-              Sales Report
+              <PortalMenuLabel :route="navigation.SalesReportRoute" />
             </RouterLink>
           </div>
           <div class="salesman-navigation__group">
@@ -38,14 +39,14 @@ defineProps<{
               :to="navigation.PiutangDashboardRoute"
               class="salesman-navigation__link"
             >
-              Piutang Dashboard
+              <PortalMenuLabel :route="navigation.PiutangDashboardRoute" />
             </RouterLink>
             <RouterLink
               v-if="navigation"
               :to="navigation.PiutangReportRoute"
               class="salesman-navigation__link"
             >
-              Piutang Report
+              <PortalMenuLabel :route="navigation.PiutangReportRoute" />
             </RouterLink>
           </div>
         </div>

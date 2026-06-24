@@ -3,7 +3,7 @@
 **Audience:** Product Owner, Business Owner, Analysts, Future Agents  
 **Purpose:** Authoritative business-domain reference for BTR Portal — what it is, what business problems it solves, what metrics and analytics concepts exist, and how management uses the system for decision making.
 
-**Related docs:** Foundation — `docs/foundation/PRODUCT.md`, `DOMAIN.md`, `WORKFLOW.md`, `LANDSCAPE.md`. Operational usage — [btr-portal-operational.md](./btr-portal-operational.md). Technical architecture — [btr-portal-architecture.md](./btr-portal-architecture.md).
+**Related docs:** Foundation — `docs/foundation/PRODUCT.md`, `DOMAIN.md`, `WORKFLOW.md`, `LANDSCAPE.md`. Operational usage — [btr-portal-operational.md](./btr-portal-operational.md). **KPI catalog (SSOT)** — [btr-portal-kpi-catalog.md](./btr-portal-kpi-catalog.md). Technical architecture — [btr-portal-architecture.md](./btr-portal-architecture.md).
 
 This document describes **business meaning only**. It does not describe APIs, databases, frameworks, or implementation.
 
@@ -15,13 +15,15 @@ BTR Portal is a web-based **read-only management analytics application** for BTR
 
 BTR Desktop remains the **source of truth** for all transactional data. The portal observes and analyzes that data; it does not create, edit, or delete business transactions.
 
-BTR Portal has evolved through three product layers:
+BTR Portal has evolved through five business maturity levels:
 
-| Layer | Question answered | Maturity |
+| Level | Question answered | Maturity |
 | ----- | ----------------- | -------- |
 | **Reporting** | What happened? What are the underlying records? | Established (Sales, Piutang, Inventory, Purchasing reports) |
 | **Analytics** | How is the business performing? Where is value concentrated? | Established (domain dashboards, KPIs, charts, rankings) |
 | **Decision Support** | What requires management attention? Why? What evidence supports action? | Established and expanding (Executive Dashboard, Alert Center, attention signals, investigation workflow) |
+| **Forecasting** | What will probably happen? | Established (Sales Forecast, Cash Flow Forecast, Inventory Forecast) |
+| **Optimization** | Given the forecast, what should management do? | Established (Inventory Optimization — purchase, delay, transfer, clearance recommendations) |
 
 ---
 
@@ -70,13 +72,13 @@ BTR Portal covers the following management business areas. Each area has one or 
 
 | Business Area | Management Question | Portal Coverage (Current) |
 | ------------- | ------------------- | ------------------------- |
-| **Sales** | How much did we invoice? Are we meeting target? Who are top performers? | Sales Dashboard, Executive summary, Sales Report |
+| **Sales** | How much did we invoice? Are we meeting target? Who are top performers? Will we hit target at month-end? | Sales Dashboard, Sales Forecast Dashboard, Executive summary, Sales Report |
 | **Finance (Piutang)** | How much is owed? How old is the debt? Who owes the most? | Piutang Dashboard, Piutang Report |
-| **Collection** | Is debt being converted to cash? Where is collection risk concentrated? | Collection Dashboard |
+| **Collection** | Is debt being converted to cash? Where is collection risk concentrated? Will we have enough cash by month-end? | Collection Dashboard, Cash Flow Forecast Dashboard |
 | **Customer Analytics** | Which customers require attention across sales and receivables? | Customer Analytics Dashboard |
 | **Salesman Performance** | Which salespeople require attention and why? | Salesman Performance Dashboard |
 | **Field Activity** | Did the field team execute the planned route? Where did they go? | Field Activity Dashboard |
-| **Inventory** | How much capital is in stock? How is it distributed? | Inventory Dashboard, Inventory Report |
+| **Inventory** | How much capital is in stock? How is it distributed? Will active SKUs run out? What actions should we take? | Inventory Dashboard, Inventory Forecast Dashboard, Inventory Optimization Dashboard, Inventory Report |
 | **Inventory Risk** | Which stock is not moving? Where is obsolescence risk? | Slow Moving & Dead Stock Dashboard |
 | **Purchasing** | How much did we purchase? What is unposted? Who do we depend on? | Purchasing Dashboard, Purchasing Management Dashboard, Purchasing Report |
 | **Location** | Are we too dependent on one warehouse or territory? | Branch / Warehouse Performance Dashboard |
@@ -300,10 +302,12 @@ Analytics surfaces help management understand performance, distribution, and ris
 | Analytics Domain | Sales Metrics Period | Receivable Metrics Period | Inventory Period |
 | ------------------ | -------------------- | ------------------------- | ---------------- |
 | Sales Dashboard | Current calendar month | — | — |
+| Sales Forecast Dashboard | Current calendar month (as-of business date) | — | — |
 | Piutang Dashboard | — | All-time open balance snapshot | — |
 | Customer Analytics | Current month (sales) | All-time open (piutang) | — |
 | Salesman Performance | Current month (sales) | All-time open (piutang) | — |
 | Collection Dashboard | Current month (recovery) | All-time open (exposure) | — |
+| Cash Flow Forecast Dashboard | Current month (as-of business date) | All-time open (risk context) | — |
 | Inventory Dashboard | — | — | Point-in-time |
 | Inventory Risk | — | — | Point-in-time (movement classification at refresh) |
 | Purchasing | Current month | — | Cross-reads inventory snapshots |
@@ -323,7 +327,9 @@ Phase 5 — Operational Monitor  →  Field execution visibility (M18.5)
 
 ## 7. KPI Catalog
 
-All monetary values are Indonesian Rupiah (IDR). For each KPI: business meaning, why management uses it, and related business area.
+> **Full definitions (WHAT / HOW / WHY / WHEN, menu codes, formulas):** see **[btr-portal-kpi-catalog.md](./btr-portal-kpi-catalog.md)** — authoritative SSOT for every portal KPI.
+
+The tables below are a **quick index** by business area. All monetary values are Indonesian Rupiah (IDR).
 
 ### 7.1 Sales KPIs (Current)
 
@@ -467,12 +473,16 @@ Each dashboard answers a specific management question. Dashboards are **read-onl
 | **Management Attention Center** | What requires management attention today? | Owner, GM, daily executive review |
 | **Alert Center** | What needs attention right now across the entire business? | Management seeking exception workspace |
 | **Sales Dashboard** | How is company sales performance vs target? | Sales management |
+| **Sales Forecast Dashboard** | Where will invoiced sales likely finish at month-end? | Sales and operations leadership |
 | **Piutang Dashboard** | How much is owed and how old is the debt? | Finance management |
 | **Collection Dashboard** | Are receivables being converted to cash? | Collection management |
+| **Cash Flow Forecast Dashboard** | How much cash will we likely receive by month-end? | Finance and operations leadership |
 | **Customer Analytics** | Which customers require attention? | Sales and finance management |
 | **Salesman Performance** | Which salespeople require attention and why? | Sales management |
 | **Field Activity** | Did the field team execute the planned route? | Field supervisors, area managers |
 | **Inventory Dashboard** | How is inventory capital distributed? | Inventory and purchasing management |
+| **Inventory Forecast Dashboard** | Which active SKUs may run out within the horizon, and when should purchasing review replenishment? | Inventory and purchasing management |
+| **Inventory Optimization Dashboard** | Given forecast, risk, and purchasing constraints, what are the highest-priority actions today? | Inventory and purchasing management |
 | **Slow Moving & Dead Stock** | Which inventory requires attention and why? | Inventory management |
 | **Purchasing Dashboard** | What are monthly purchasing statistics? | Purchasing management |
 | **Purchasing Management** | Which suppliers and purchasing activities require attention? | Purchasing and executive management |
@@ -486,7 +496,11 @@ Each dashboard answers a specific management question. Dashboards are **read-onl
 | **Cross-domain dashboards supplement entity dashboards** | Customer and Salesman lenses combine sales + piutang; they do not replace domain views |
 | **Piutang vs Collection** | Piutang = exposure (how much owed); Collection = recovery (is cash coming in) |
 | **Inventory vs Inventory Risk** | Inventory = composition (where capital sits); Inventory Risk = health (what is not moving) |
+| **Inventory Forecast vs Inventory Optimization** | Forecast = projected depletion and reorder timing; Optimization = ranked actions (purchase, delay, transfer, clearance) with explainable rules |
+| **Inventory Forecast vs Inventory Risk** | Forecast = forward-looking for active SKUs; Inventory Risk = backward-looking obsolescence |
 | **Purchasing V1 vs Purchasing Management** | V1 = monthly statistics; Management = attention signals and cross-domain supplier risk |
+| **Sales vs Sales Forecast** | Sales = current achievement; Forecast = projected month-end at current pace |
+| **Collection vs Cash Flow Forecast** | Collection = recovery performance today; Cash Flow Forecast = projected month-end liquidity and required pace |
 | **Salesman Performance vs Field Activity** | M18 = outcome lens (omzet, achievement, exposure); Field Activity = execution lens (visits, routes, GPS) |
 | **Location vs Collection (Wilayah)** | Collection owns wilayah overdue hotspots; Location owns wilayah sales concentration |
 
@@ -792,6 +806,13 @@ M22  Branch / Warehouse Performance                        ✓ Current
 M23  Alert Center                                          ✓ Current
 M24  Dashboard Drill-Down & Investigation                  ✓ Current
 M25  Sales Force Effectiveness                             → Future Accepted
+M26  Sales Forecast Dashboard                              ✓ Current
+M27  Cash Flow Forecast Dashboard                          ✓ Current
+M28  Inventory Forecast Dashboard                          ✓ Current
+M28.5 Inventory Optimization Dashboard                    ✓ Current
+M29  Customer Risk Forecast Dashboard                     ✓ Current
+M30  Collection Optimization Dashboard                    ✓ Current
+M31  Customer Portfolio Optimization Dashboard            ✓ Current
 M16 Phase 2 / M19 Phase 2 / M21 Phase 2                 → Future Accepted (Executive promotions)
 Filtering Phase (date range, search)                    → Future Accepted
 ```

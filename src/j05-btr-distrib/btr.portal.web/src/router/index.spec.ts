@@ -14,6 +14,41 @@ function createTestRouter(base = '/') {
             children: [
               { path: '', name: 'dashboard', component: { template: '<div />' } },
               { path: 'sales', name: 'sales-dashboard', component: { template: '<div />' } },
+              {
+                path: 'sales-forecast',
+                name: 'sales-forecast-dashboard',
+                component: { template: '<div />' },
+              },
+              {
+                path: 'cash-flow-forecast',
+                name: 'cash-flow-forecast-dashboard',
+                component: { template: '<div />' },
+              },
+              {
+                path: 'customer-risk-forecast',
+                name: 'customer-risk-forecast-dashboard',
+                component: { template: '<div />' },
+              },
+              {
+                path: 'collection-optimization',
+                name: 'collection-optimization-dashboard',
+                component: { template: '<div />' },
+              },
+              {
+                path: 'customer-portfolio',
+                name: 'customer-portfolio-dashboard',
+                component: { template: '<div />' },
+              },
+              {
+                path: 'inventory-forecast',
+                name: 'inventory-forecast-dashboard',
+                component: { template: '<div />' },
+              },
+              {
+                path: 'inventory-optimization',
+                name: 'inventory-optimization-dashboard',
+                component: { template: '<div />' },
+              },
               { path: 'field-activity', name: 'field-activity-dashboard', component: { template: '<div />' } },
             ],
           },
@@ -30,6 +65,48 @@ describe('dashboard route matching', () => {
     const router = createTestRouter()
     const resolved = router.resolve('/dashboard/sales')
     expect(resolved.name).toBe('sales-dashboard')
+  })
+
+  it('resolves /dashboard/sales-forecast to sales-forecast-dashboard', () => {
+    const router = createTestRouter()
+    const resolved = router.resolve('/dashboard/sales-forecast')
+    expect(resolved.name).toBe('sales-forecast-dashboard')
+  })
+
+  it('resolves /dashboard/cash-flow-forecast to cash-flow-forecast-dashboard', () => {
+    const router = createTestRouter()
+    const resolved = router.resolve('/dashboard/cash-flow-forecast')
+    expect(resolved.name).toBe('cash-flow-forecast-dashboard')
+  })
+
+  it('resolves /dashboard/customer-risk-forecast to customer-risk-forecast-dashboard', () => {
+    const router = createTestRouter()
+    const resolved = router.resolve('/dashboard/customer-risk-forecast')
+    expect(resolved.name).toBe('customer-risk-forecast-dashboard')
+  })
+
+  it('resolves /dashboard/collection-optimization to collection-optimization-dashboard', () => {
+    const router = createTestRouter()
+    const resolved = router.resolve('/dashboard/collection-optimization')
+    expect(resolved.name).toBe('collection-optimization-dashboard')
+  })
+
+  it('resolves /dashboard/customer-portfolio to customer-portfolio-dashboard', () => {
+    const router = createTestRouter()
+    const resolved = router.resolve('/dashboard/customer-portfolio')
+    expect(resolved.name).toBe('customer-portfolio-dashboard')
+  })
+
+  it('resolves /dashboard/inventory-forecast to inventory-forecast-dashboard', () => {
+    const router = createTestRouter()
+    const resolved = router.resolve('/dashboard/inventory-forecast')
+    expect(resolved.name).toBe('inventory-forecast-dashboard')
+  })
+
+  it('resolves /dashboard/inventory-optimization to inventory-optimization-dashboard', () => {
+    const router = createTestRouter()
+    const resolved = router.resolve('/dashboard/inventory-optimization')
+    expect(resolved.name).toBe('inventory-optimization-dashboard')
   })
 
   it('resolves /dashboard to dashboard', () => {
@@ -54,6 +131,9 @@ describe('dashboard route matching', () => {
   it('with /portal/ base, resolve href for dashboard child routes', () => {
     const router = createTestRouter('/portal/')
     expect(router.resolve('/dashboard/sales').href).toBe('/portal/dashboard/sales')
+    expect(router.resolve('/dashboard/customer-portfolio').href).toBe(
+      '/portal/dashboard/customer-portfolio',
+    )
     expect(router.resolve('/dashboard').href).toBe('/portal/dashboard')
     expect(router.resolve('/alerts').href).toBe('/portal/alerts')
     expect(router.resolve('/reports/sales').href).toBe('/portal/reports/sales')

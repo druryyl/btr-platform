@@ -23,6 +23,7 @@ namespace btr.portal.api.Configurations
             services.AddTransient<Controllers.Dashboard.ExecutiveDashboardController>();
             services.AddTransient<Controllers.Dashboard.AlertCenterDashboardController>();
             services.AddTransient<Controllers.Dashboard.SalesDashboardController>();
+            services.AddTransient<Controllers.Dashboard.SalesForecastDashboardController>();
             services.AddTransient<Controllers.Dashboard.PiutangDashboardController>();
             services.AddTransient<Controllers.Dashboard.InventoryDashboardController>();
             services.AddTransient<Controllers.Dashboard.InventoryRiskDashboardController>();
@@ -31,10 +32,17 @@ namespace btr.portal.api.Configurations
             services.AddTransient<Controllers.Dashboard.SalesmanDashboardController>();
             services.AddTransient<Controllers.Dashboard.FieldActivityDashboardController>();
             services.AddTransient<Controllers.Dashboard.CollectionDashboardController>();
+            services.AddTransient<Controllers.Dashboard.CashFlowForecastDashboardController>();
+            services.AddTransient<Controllers.Dashboard.CustomerRiskForecastDashboardController>();
+            services.AddTransient<Controllers.Dashboard.CollectionOptimizationDashboardController>();
+            services.AddTransient<Controllers.Dashboard.CustomerPortfolioDashboardController>();
+            services.AddTransient<Controllers.Dashboard.InventoryForecastDashboardController>();
+            services.AddTransient<Controllers.Dashboard.InventoryOptimizationDashboardController>();
             services.AddTransient<Controllers.Dashboard.LocationDashboardController>();
             services.AddTransient<Controllers.Reports.SalesReportController>();
             services.AddTransient<Controllers.Reports.InventoryReportController>();
             services.AddTransient<Controllers.Reports.PiutangReportController>();
+            services.AddTransient<Controllers.Reports.CustomerReportController>();
             services.AddTransient<Controllers.Reports.PurchasingReportController>();
 
             return services;

@@ -99,6 +99,7 @@ export interface DashboardExecutiveResponse {
   Piutang: DashboardExecutivePiutangAttention
   Purchasing: DashboardExecutivePurchasingAttention
   Inventory: DashboardExecutiveInventoryAttention
+  Portfolio?: DashboardExecutivePortfolioAttention | null
   CriticalExposures: DashboardExecutiveCriticalExposures
   DomainSummaries: DashboardExecutiveDomainSummary[]
 }
@@ -136,6 +137,352 @@ export interface DashboardSalesResponse {
   AchievementPercent: number | null
   TargetVsAchievement: DashboardSalesTargetVsAchievement
   TopSalesmanRanking: DashboardSalesRankingItem[]
+}
+
+export interface DashboardSalesForecastVsTarget {
+  TargetAmount: number
+  CurrentAmount: number
+  ForecastAmount: number
+}
+
+export interface DashboardSalesDailyPaceItem {
+  PaceDate: string
+  DayOfMonth: number
+  IsElapsed: boolean
+  ActualAmount: number
+  ProjectedDailyAmount: number
+}
+
+export type ForecastConfidence = 'Low' | 'Medium' | 'High'
+
+export type RequiredDailySeverity = 'Normal' | 'Warning' | 'Critical'
+
+export interface DashboardSalesForecastResponse {
+  GeneratedAt: string
+  PeriodYear: number
+  PeriodMonth: number
+  BusinessDate: string
+  DaysInMonth: number
+  DaysElapsed: number
+  DaysRemaining: number
+  CurrentSales: number
+  TotalTarget: number
+  CurrentAchievementPercent: number | null
+  DailyAverageSales: number
+  ForecastSales: number
+  ForecastAchievementPercent: number | null
+  RequiredDailySales: number | null
+  TargetGap: number
+  ForecastVariance: number
+  BestCaseSales: number
+  WorstCaseSales: number
+  ForecastConfidence: ForecastConfidence | string
+  ForecastRiskBand: AchievementBand | string
+  RequiredDailySeverity: RequiredDailySeverity | string
+  ExecutiveSummary: string
+  ForecastVsTarget: DashboardSalesForecastVsTarget
+  DailyPace: DashboardSalesDailyPaceItem[]
+  WeeklyTrend: DashboardSalesWeekTrendItem[]
+}
+
+export interface DashboardCashFlowDailyPaceItem {
+  PaceDate: string
+  DayOfMonth: number
+  IsElapsed: boolean
+  ActualCashAmount: number
+  ActualCollectionAmount: number
+  ProjectedDailyCashAmount: number
+}
+
+export interface DashboardCashFlowRecoveryTrendItem {
+  TrendDate: string
+  DayOfMonth: number
+  IsElapsed: boolean
+  CumulativeCollections: number
+  CumulativeBilling: number
+}
+
+export interface DashboardCashFlowCollectionRiskItem {
+  SortOrder: number
+  RiskKey: string
+  RiskLabel: string
+  EntityType: string
+  EntityId: string
+  EntityName: string
+  Amount: number
+  DueOrAgingText: string
+  RuleExplanation: string
+  ReportRoute: string
+}
+
+export interface DashboardCashFlowForecastResponse {
+  IsAvailable: boolean
+  GeneratedAt: string
+  PeriodYear: number
+  PeriodMonth: number
+  BusinessDate: string
+  DaysInMonth: number
+  DaysElapsed: number
+  DaysRemaining: number
+  CashCollectedMtd: number
+  MonthCollections: number
+  MonthFakturOmzet: number
+  DailyCashCollectionAverage: number
+  DailyCollectionAverage: number
+  ExpectedCashCollection: number
+  ProjectedMonthEndTotalCollections: number
+  CollectionForecastPercent: number | null
+  RecoveryVsBillingPercent: number | null
+  RecoveryVsBillingForecastPercent: number | null
+  RemainingCollectionTarget: number
+  RequiredDailyCollection: number | null
+  OutstandingDueRemaining: number
+  OverdueOutstanding: number
+  CollectionGap: number
+  ForecastVarianceCash: number
+  ExpectedCollectionRatePercent: number | null
+  BestCaseCash: number
+  WorstCaseCash: number
+  ForecastConfidence: ForecastConfidence | string
+  ForecastRiskBand: AchievementBand | string
+  RequiredDailySeverity: RequiredDailySeverity | string
+  ExecutiveSummary: string
+  DailyPace: DashboardCashFlowDailyPaceItem[]
+  RecoveryTrend: DashboardCashFlowRecoveryTrendItem[]
+  CollectionRisks: DashboardCashFlowCollectionRiskItem[]
+}
+
+export interface DashboardInventoryForecastDailyConsumptionItem {
+  ConsumptionDate: string
+  DayIndex: number
+  UnitsSold: number
+  AdcReference: number
+}
+
+export interface DashboardInventoryForecastLevelItem {
+  HorizonDay: number
+  ProjectedInventoryValue: number
+}
+
+export interface DashboardInventoryForecastHeatCellItem {
+  DosBand: string
+  ValueBand: string
+  ItemCount: number
+}
+
+export interface DashboardInventoryForecastRiskItem {
+  SortOrder: number
+  SignalKey: string
+  SignalLabel: string
+  BrgId: string
+  BrgCode: string
+  BrgName: string
+  SupplierName: string
+  DaysOfSupply: number | null
+  StockOutDate: string | null
+  ValueAmount: number
+  Urgency: string
+  DosSeverity: string
+  RuleExplanation: string
+  ReportRoute: string
+  EntityCode: string
+}
+
+export interface DashboardInventoryForecastRecommendationItem {
+  SortOrder: number
+  BrgId: string
+  BrgCode: string
+  BrgName: string
+  SupplierName: string
+  ReorderDate: string | null
+  RecommendedPurchaseQty: number
+  AverageDailyConsumption: number
+  CurrentQty: number
+  DaysOfSupply: number | null
+  Urgency: string
+  ReportRoute: string
+  EntityCode: string
+}
+
+export interface DashboardInventoryForecastTraceability {
+  InventoryDashboardRoute: string
+  InventoryRiskDashboardRoute: string
+  InventoryReportRoute: string
+  PurchasingManagementRoute: string
+  Disclaimer: string
+}
+
+export interface DashboardInventoryForecastResponse {
+  IsAvailable: boolean
+  GeneratedAt: string
+  BusinessDate: string
+  PlanningHorizonDays: number
+  CurrentInventoryValue: number
+  ProjectedInventoryValue: number
+  BestCaseProjectedValue: number
+  WorstCaseProjectedValue: number
+  AverageDailyConsumptionUnits: number
+  WeightedAverageDaysOfSupply: number | null
+  UnderstockValue: number
+  OverstockValue: number
+  StockOutRiskItemCount: number
+  InventoryCoveragePercent: number | null
+  InventoryTurnoverForecast: number | null
+  InventoryHealthScore: number
+  ForecastConfidence: ForecastConfidence | string
+  AtRiskInventoryPercent: number | null
+  ForecastConsumptionUnits: number
+  ExecutiveSummary: string
+  Traceability: DashboardInventoryForecastTraceability
+  DailyConsumption: DashboardInventoryForecastDailyConsumptionItem[]
+  ProjectedLevel: DashboardInventoryForecastLevelItem[]
+  HeatSummary: DashboardInventoryForecastHeatCellItem[]
+  TopRisks: DashboardInventoryForecastRiskItem[]
+  PurchaseRecommendations: DashboardInventoryForecastRecommendationItem[]
+}
+
+export interface DashboardInventoryOptimizationTraceability {
+  InventoryForecastRoute: string
+  InventoryRiskRoute: string
+  PurchasingManagementRoute: string
+  InventoryReportRoute: string
+  PurchasingReportRoute: string
+  Disclaimer: string
+}
+
+export interface DashboardInventoryOptimizationPriorityDistItem {
+  Category: string
+  ActionCount: number
+  SortOrder: number
+}
+
+export interface DashboardInventoryOptimizationActionHeatItem {
+  ActionType: string
+  ActionLabel: string
+  Category: string
+  ActionCount: number
+}
+
+export interface DashboardInventoryOptimizationActionItem {
+  SortOrder: number
+  PriorityScore: number
+  Category: string
+  ActionType: string
+  ActionLabel: string
+  BrgId: string
+  BrgName: string
+  SupplierName: string
+  WarehouseFromName?: string | null
+  WarehouseToName?: string | null
+  Quantity?: number | null
+  ImpactValueIdr: number
+  DaysOfSupply?: number | null
+  ReasonText: string
+  RuleId: string
+  ReportRoute: string
+  DrillDownRoute: string
+}
+
+export interface DashboardInventoryOptimizationReorderItem {
+  SortOrder: number
+  PriorityScore: number
+  Category: string
+  BrgId: string
+  BrgCode: string
+  BrgName: string
+  SupplierName: string
+  RecommendedPurchaseQty: number
+  EstimatedCostIdr: number
+  DaysOfSupply?: number | null
+  ReorderDate?: string | null
+  ReasonText: string
+  RuleId: string
+  ReportRoute: string
+  DrillDownRoute: string
+}
+
+export interface DashboardInventoryOptimizationTransferItem {
+  SortOrder: number
+  PriorityScore: number
+  Category: string
+  BrgId: string
+  BrgName: string
+  WarehouseFromName: string
+  WarehouseToName: string
+  TransferQty: number
+  DestDaysOfSupply?: number | null
+  ReasonText: string
+  RuleId: string
+  ReportRoute: string
+  DrillDownRoute: string
+}
+
+export interface DashboardInventoryOptimizationDelayItem {
+  SortOrder: number
+  PriorityScore: number
+  Category: string
+  ActionType: string
+  ActionLabel: string
+  BrgId: string
+  BrgName: string
+  SupplierName: string
+  DaysOfSupply?: number | null
+  MovementClass: string
+  SuggestedQty?: number | null
+  ReasonText: string
+  RuleId: string
+  ReportRoute: string
+  DrillDownRoute: string
+}
+
+export interface DashboardInventoryOptimizationClearanceItem {
+  SortOrder: number
+  PriorityScore: number
+  Category: string
+  BrgId: string
+  BrgName: string
+  InventoryValueIdr: number
+  IdleDays?: number | null
+  RecommendedAction: string
+  ReasonText: string
+  RuleId: string
+  ReportRoute: string
+  DrillDownRoute: string
+}
+
+export interface DashboardInventoryOptimizationResponse {
+  IsAvailable: boolean
+  GeneratedAt: string
+  BusinessDate: string
+  PlanningHorizonDays: number
+  BudgetCapIdr?: number | null
+  InventoryHealthScore: number
+  CriticalActionCount: number
+  HighActionCount: number
+  MediumActionCount: number
+  LowActionCount: number
+  PurchaseNowCount: number
+  DelayCount: number
+  TransferCount: number
+  ClearanceCount: number
+  PostFirstCount: number
+  DeferCount: number
+  RequiredPurchaseBudgetIdr: number
+  RecommendedPurchaseBudgetIdr: number
+  DeferrableSpendIdr: number
+  RecoverableCapitalIdr: number
+  PurchaseImpactIdr: number
+  DelayImpactIdr: number
+  TransferSavingsIdr: number
+  ExecutiveSummary: string
+  Traceability: DashboardInventoryOptimizationTraceability
+  PriorityDistribution: DashboardInventoryOptimizationPriorityDistItem[]
+  ActionHeatSummary: DashboardInventoryOptimizationActionHeatItem[]
+  TopActions: DashboardInventoryOptimizationActionItem[]
+  ReorderList: DashboardInventoryOptimizationReorderItem[]
+  TransferList: DashboardInventoryOptimizationTransferItem[]
+  DelayList: DashboardInventoryOptimizationDelayItem[]
+  ClearanceList: DashboardInventoryOptimizationClearanceItem[]
 }
 
 export interface DashboardPiutangAgingBucket {
@@ -761,6 +1108,12 @@ export interface DashboardAlertCenterConcentrationItem {
   SortOrder: number
 }
 
+export interface PortalMenuLinkDto {
+  Code: string
+  Label: string
+  Route: string
+}
+
 export interface DashboardAlertCenterNavigationLinks {
   ExecutiveDashboardRoute: string
   SalesDashboardRoute: string
@@ -772,6 +1125,7 @@ export interface DashboardAlertCenterNavigationLinks {
   InventoryRiskDashboardRoute: string
   PurchasingDashboardRoute: string
   LocationDashboardRoute: string
+  DomainDashboards: PortalMenuLinkDto[]
 }
 
 export interface DashboardAlertCenterResponse {
@@ -786,4 +1140,384 @@ export interface DashboardAlertCenterResponse {
   InventoryRiskSummary: DashboardAlertCenterInventoryRiskSummary
   Concentrations: DashboardAlertCenterConcentrationItem[]
   Navigation: DashboardAlertCenterNavigationLinks
+}
+
+export type CustomerRiskForecastCategory =
+  | 'Healthy'
+  | 'Watch'
+  | 'Attention'
+  | 'HighRisk'
+  | 'Critical'
+
+export interface DashboardCustomerRiskForecastKpi {
+  HorizonDays: number
+  CustomersForecastedAtRisk: number
+  HighRiskCustomerCount: number
+  CriticalCustomerCount: number
+  ElevatedRiskReceivable: number
+  ElevatedRiskReceivablePercent: number | null
+  PortfolioHealthScore: number
+  TotalPiutang: number
+  ForecastConfidence: ForecastConfidence | string
+  PaymentDelaySignalCount: number
+  CreditLimitSignalCount: number
+  InactivitySignalCount: number
+  PurchaseDeclineSignalCount: number
+  CollectionRiskSignalCount: number
+  HealthyCount: number
+  WatchCount: number
+  AttentionCount: number
+  HighRiskCount: number
+  CriticalCount: number
+  ExecutiveSummaryText: string
+}
+
+export interface DashboardCustomerRiskForecastDistItem {
+  Category: string
+  CategoryLabel: string
+  CustomerCount: number
+  SortOrder: number
+}
+
+export interface DashboardCustomerRiskForecastWilayahItem {
+  WilayahName: string
+  ElevatedRiskCustomerCount: number
+  SortOrder: number
+}
+
+export interface DashboardCustomerRiskForecastSignalMixItem {
+  SignalFamilyKey: string
+  SignalFamilyLabel: string
+  CustomerCount: number
+  SortOrder: number
+}
+
+export interface DashboardCustomerRiskForecastCustomerItem {
+  SortOrder: number
+  RiskPriorityScore: number
+  Category: string
+  CategoryLabel: string
+  CustomerCode: string
+  CustomerName: string
+  WilayahName: string
+  SalesPersonName: string
+  OpenBalance: number
+  OverdueBalance: number
+  DueWithinHorizon: number
+  Plafond: number
+  ProjectedOpenBalance: number
+  MtdOmzet: number
+  PriorMonthOmzet: number
+  DeclineRatio: number | null
+  DaysSinceLastFaktur: number | null
+  AvgPaymentLagDays: number | null
+  PrimarySignalKey: string
+  PrimarySignalLabel: string
+  ReasonText: string
+  RecommendationKey: string
+  RecommendationLabel: string
+  ReportRoute: string
+  DrillDownRoute: string
+}
+
+export interface DashboardCustomerRiskForecastAttentionItem {
+  SortOrder: number
+  CustomerCode: string
+  CustomerName: string
+  SignalKey: string
+  SignalLabel: string
+  Severity: string
+  Amount: number | null
+  HorizonText: string
+  RuleId: string
+  Explanation: string
+  ReportRoute: string
+}
+
+export interface DashboardCustomerRiskForecastRecommendationItem {
+  SortOrder: number
+  RecommendationKey: string
+  RecommendationLabel: string
+  CustomerCode: string
+  CustomerName: string
+  Category: string
+  ReasonText: string
+  RuleId: string
+  ReportRoute: string
+  DrillDownRoute: string
+}
+
+export interface DashboardCustomerRiskForecastResponse {
+  IsAvailable: boolean
+  GeneratedAt: string
+  BusinessDate: string
+  Kpi: DashboardCustomerRiskForecastKpi | null
+  CategoryDistribution: DashboardCustomerRiskForecastDistItem[]
+  TopWilayah: DashboardCustomerRiskForecastWilayahItem[]
+  SignalMix: DashboardCustomerRiskForecastSignalMixItem[]
+  TopCustomers: DashboardCustomerRiskForecastCustomerItem[]
+  AttentionList: DashboardCustomerRiskForecastAttentionItem[]
+  Recommendations: DashboardCustomerRiskForecastRecommendationItem[]
+}
+
+export interface DashboardCollectionOptimizationKpi {
+  ActionsTodayCount: number
+  ImmediateCollectionCount: number
+  ProactiveReminderCount: number
+  CreditReviewCount: number
+  SalesRecoveryCount: number
+  EscalateManagementCount: number
+  CollectionImpactTotal: number
+  ImmediateImpactTotal: number
+  OverdueExposure: number
+  DueWithin7Days: number
+  RecoveryVsBillingPercent: number | null
+  DeferNoActionCount: number
+  PlanningConfidence: string
+  ExecutiveSummaryText: string
+}
+
+export interface DashboardCollectionOptimizationActionDistItem {
+  ActionCategoryKey: string
+  ActionCategoryLabel: string
+  CustomerCount: number
+  ImpactTotal: number
+  SortOrder: number
+}
+
+export interface DashboardCollectionOptimizationWorkloadItem {
+  WorkloadType: string
+  EntityKey: string
+  EntityLabel: string
+  ActionCount: number
+  ImmediateCount: number
+  ImpactTotal: number
+  OverdueExposure: number
+  IsHotspot: boolean
+  SortOrder: number
+}
+
+export interface DashboardCollectionOptimizationPriorityItem {
+  SortOrder: number
+  CollectionPriorityScore: number
+  CustomerCode: string
+  CustomerName: string
+  WilayahName: string
+  SalesPersonName: string
+  Klasifikasi: string
+  ActionCategoryKey: string
+  ActionCategoryLabel: string
+  RecommendedActionKey: string
+  RecommendedActionLabel: string
+  ActionOwner: string
+  OpenBalance: number
+  OverdueBalance: number
+  DueWithin7Days: number
+  CollectionImpactAmount: number
+  M29Category: string
+  M29RecommendationKey: string
+  M29PrimarySignalKey: string
+  MinDaysUntilDue: number | null
+  CreditUtilizationPercent: number | null
+  SelectionReasonText: string
+  PriorityReasonText: string
+  ActionReasonText: string
+  TriggeredRuleIds: string
+  ReportRoute: string
+  DrillDownRoute: string
+}
+
+export interface DashboardCollectionOptimizationQueueItem {
+  QueueKey: string
+  SortOrder: number
+  CollectionPriorityScore: number
+  CustomerCode: string
+  CustomerName: string
+  WilayahName: string
+  SalesPersonName: string
+  ActionCategoryKey: string
+  ActionCategoryLabel: string
+  RecommendedActionKey: string
+  RecommendedActionLabel: string
+  ActionOwner: string
+  OverdueBalance: number
+  DueWithin7Days: number
+  CollectionImpactAmount: number
+  M29Category: string
+  QueueReasonText: string
+  ReportRoute: string
+  DrillDownRoute: string
+}
+
+export interface DashboardCollectionOptimizationImpactItem {
+  SortOrder: number
+  CustomerCode: string
+  CustomerName: string
+  WilayahName: string
+  SalesPersonName: string
+  ActionCategoryKey: string
+  ActionCategoryLabel: string
+  CollectionImpactAmount: number
+  OverdueBalance: number
+  DueWithin7Days: number
+  ReportRoute: string
+  DrillDownRoute: string
+}
+
+export interface DashboardCollectionOptimizationResponse {
+  IsAvailable: boolean
+  GeneratedAt: string
+  BusinessDate: string
+  Kpi: DashboardCollectionOptimizationKpi | null
+  ActionDistribution: DashboardCollectionOptimizationActionDistItem[]
+  Workload: DashboardCollectionOptimizationWorkloadItem[]
+  PriorityQueue: DashboardCollectionOptimizationPriorityItem[]
+  SpecializedQueues: DashboardCollectionOptimizationQueueItem[]
+  TopImpactOpportunities: DashboardCollectionOptimizationImpactItem[]
+}
+
+export interface DashboardExecutivePortfolioAttention {
+  IsAvailable: boolean
+  PortfolioHealthyPercent: number | null
+  CustomersAtRiskCount: number
+  StrategicCustomersAtRiskCount: number
+  DashboardRoute: string
+}
+
+export interface DashboardCustomerPortfolioKpiSnapshot {
+  PortfolioHealthScore: number
+  PortfolioHealthyPercent: number
+  TotalCustomerCount: number
+  AttentionCustomerCount: number
+  StrategicCustomerCount: number
+  StrategicAtRiskCount: number
+  CustomersAtRiskCount: number
+  WorkingCapitalTiedAmount: number
+  TotalMtdOmzet: number
+  TotalOpenBalance: number
+  NeverPurchasedCount: number
+  DormantCount: number
+  DecliningCount: number
+  ExecutiveSummaryText: string
+  ValueDisclaimerText: string
+}
+
+export interface DashboardCustomerPortfolioLifecycleDistItem {
+  LifecycleStage: string
+  LifecycleLabel: string
+  CustomerCount: number
+  SortOrder: number
+}
+
+export interface DashboardCustomerPortfolioTierDistItem {
+  PortfolioTier: string
+  TierLabel: string
+  CustomerCount: number
+  SortOrder: number
+}
+
+export interface DashboardCustomerPortfolioActionDistItem {
+  PrimaryActionKey: string
+  PrimaryActionLabel: string
+  CustomerCount: number
+  SortOrder: number
+}
+
+export interface DashboardCustomerPortfolioPriorityRow {
+  SortOrder: number
+  PortfolioPriorityScore: number
+  CustomerKey: string
+  CustomerCode: string
+  CustomerName: string
+  WilayahName: string
+  Klasifikasi: string
+  LifecycleStage: string
+  LifecycleLabel: string
+  PortfolioTier: string
+  TierLabel: string
+  PrimaryActionKey: string
+  PrimaryActionLabel: string
+  ActionOwner: string
+  ActionReasonText: string
+  TriggeredRuleIds: string
+  MtdOmzet: number
+  OpenBalance: number
+  OverdueBalance: number | null
+  M29Category: string
+  SalesPersonName: string
+  SalesmanAchievementPercent: number | null
+  SalesmanHighPiutangExposure: boolean
+  IsAttention: boolean
+  M30LinkRoute: string
+  CustomerReportRoute: string
+  DrillDownRouteM17: string
+  DrillDownRouteM29: string
+}
+
+export interface DashboardCustomerPortfolioCustomerRow {
+  SortOrder: number
+  CustomerKey: string
+  CustomerCode: string
+  CustomerName: string
+  WilayahName: string
+  Klasifikasi: string
+  LifecycleStage: string
+  LifecycleLabel: string
+  PortfolioTier: string
+  TierLabel: string
+  PrimaryActionKey: string
+  PrimaryActionLabel: string
+  ActionOwner: string
+  ActionReasonText: string
+  TriggeredRuleIds: string
+  MtdOmzet: number
+  OpenBalance: number
+  OverdueBalance: number | null
+  FakturCount6Mo: number
+  IsActiveMtd: boolean
+  LastPurchaseDate: string | null
+  FirstPurchaseDate: string | null
+  M29Category: string
+  M29PrimarySignalKey: string
+  SalesPersonName: string
+  SalesmanAchievementPercent: number | null
+  SalesmanHighPiutangExposure: boolean
+  IsAttention: boolean
+  PortfolioPriorityScore: number
+  M30LinkRoute: string
+  CustomerReportRoute: string
+  DrillDownRouteM17: string
+  DrillDownRouteM29: string
+  ValueDisclaimer: string
+}
+
+export interface DashboardCustomerPortfolioConcentrationRow {
+  SortOrder: number
+  Rank: number
+  CustomerCode: string
+  CustomerName: string
+  Amount: number
+  PercentOfTotal: number | null
+}
+
+export interface DashboardCustomerPortfolioWilayahRow {
+  SortOrder: number
+  WilayahName: string
+  CustomerCount: number
+  AttentionCustomerCount: number
+}
+
+export interface DashboardCustomerPortfolioResponse {
+  IsAvailable: boolean
+  GeneratedAt: string
+  BusinessDate: string
+  Kpi: DashboardCustomerPortfolioKpiSnapshot | null
+  LifecycleDistribution: DashboardCustomerPortfolioLifecycleDistItem[]
+  TierDistribution: DashboardCustomerPortfolioTierDistItem[]
+  ActionDistribution: DashboardCustomerPortfolioActionDistItem[]
+  PriorityQueue: DashboardCustomerPortfolioPriorityRow[]
+  Customers: DashboardCustomerPortfolioCustomerRow[]
+  TopOmzet: DashboardCustomerPortfolioConcentrationRow[]
+  TopPiutang: DashboardCustomerPortfolioConcentrationRow[]
+  WilayahBreakdown: DashboardCustomerPortfolioWilayahRow[]
 }

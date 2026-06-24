@@ -662,7 +662,8 @@ namespace btr.application.ReportingContext.DashboardAlertCenterAgg.Services
                 InventoryDashboardRoute = "/dashboard/inventory",
                 InventoryRiskDashboardRoute = "/dashboard/inventory-risk",
                 PurchasingDashboardRoute = "/dashboard/purchasing",
-                LocationDashboardRoute = "/dashboard/locations"
+                LocationDashboardRoute = "/dashboard/locations",
+                DomainDashboards = PortalMenuRegistry.GetDomainDashboardLinks().ToList()
             };
         }
 

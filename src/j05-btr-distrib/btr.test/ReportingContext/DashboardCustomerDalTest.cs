@@ -108,6 +108,30 @@ namespace btr.test.ReportingContext
             public void ReplaceCurrent(DashboardCustomerAggregateResult result, string refreshLogId)
             {
             }
+
+            public void ReplaceCurrent(
+                DashboardCustomerAggregateResult result,
+                DashboardCustomerRiskForecastAggregateResult forecast,
+                string refreshLogId)
+            {
+            }
+
+            public void ReplaceCurrent(
+                DashboardCustomerAggregateResult result,
+                DashboardCustomerRiskForecastAggregateResult forecast,
+                DashboardCollectionOptimizationAggregateResult optimization,
+                string refreshLogId)
+            {
+            }
+
+            public void ReplaceCurrent(
+                DashboardCustomerAggregateResult result,
+                DashboardCustomerRiskForecastAggregateResult forecast,
+                DashboardCollectionOptimizationAggregateResult optimization,
+                DashboardCustomerPortfolioAggregateResult portfolio,
+                string refreshLogId)
+            {
+            }
         }
     }
 }

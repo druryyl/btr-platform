@@ -66,7 +66,7 @@ Browser → GET /api/dashboard/{sales|piutang|inventory|purchasing}  (detail —
 | `RefreshDashboardSalesSnapshotWorker` | `IFakturViewDal` (current month) + `ISalesOmzetTargetDal` | `DashboardSalesFakturAggregator` |
 | `RefreshDashboardPurchasingSnapshotWorker` | `IInvoiceViewDal` (current month) | `DashboardPurchasingInvoiceAggregator` |
 | `RefreshDashboardPurchasingManagementSnapshotWorker` | `IInvoiceViewDal` (+ `CreateTime`/`LastUpdate`), V1/M15/M19 snapshot DALs | `DashboardPurchasingManagementAggregator` |
-| `RefreshDashboardCustomerSnapshotWorker` | `IFakturViewDal`, `ICustomerLastFakturDal`, `IPiutangOpenBalanceDal`, `ICustomerDal` | `DashboardCustomerAggregator` |
+| `RefreshDashboardCustomerSnapshotWorker` | `IFakturViewDal`, `ICustomerLastFakturDal`, `IPiutangOpenBalanceDal`, `ICustomerDal`, `ICustomerOmzetHistoryDal`, `ICustomerPelunasanSummaryDal`, `ICustomerPaymentBehaviorDal` | `DashboardCustomerAggregator`, `DashboardCustomerRiskForecastAggregator` |
 | `RefreshDashboardSalesmanSnapshotWorker` | `IFakturViewDal`, `IPiutangOpenBalanceWithSalesmanDal`, `ICustomerLastFakturDal.ListLastFakturWithSalesmanByCustomer()`, `ISalesPersonDal`, `ISalesOmzetTargetDal.ListTargetsForMonth()` | `DashboardSalesmanAggregator` |
 | `RefreshDashboardInventoryRiskSnapshotWorker` | `IStokBalanceViewDal`, `IBrgLastFakturDal` | `DashboardInventoryRiskAggregator` (+ `DashboardInventoryItemGroupBuilder`) |
 | `RefreshAllDashboardSnapshotsWorker` | Orchestrator | Piutang → Inventory → InventoryRisk → Sales → Purchasing → PurchasingManagement → Customer → Salesman; per-domain failure isolation |
@@ -144,6 +144,9 @@ btr.portal.worker/          Program.cs, WorkerDependencyConfig, appsettings.json
 | `BTRPD_PiutangKpi` | `TotalPiutang`, `TotalCustomer`, `OverdueCustomer`, `GeneratedAt` |
 | `BTRPD_InventoryKpi` | `TotalInventoryValue`, `TotalItem`, `GeneratedAt` |
 | `BTRPD_SalesKpi` | `PeriodYear`, `PeriodMonth`, omzet/faktur/customer/target/achievement fields, `PipelineOmzet` (= 0) |
+| `BTRPD_SalesForecastKpi` | Forecast KPIs: projected sales, required daily, confidence, risk band, business date metadata (M26) |
+| `BTRPD_CashFlowForecastKpi` | Cash flow forecast KPIs: expected cash, collection forecast %, required daily, confidence, risk band (M27) |
+| `BTRPD_InventoryForecastKpi` | Inventory forecast KPIs: projected value, DOS, health score, scenario bands, confidence (M28) |
 | `BTRPD_PurchasingKpi` | `GrandTotalPurchase`, `TotalInvoice`, `PendingPostingInvoiceCount`, `PeriodYear`, `PeriodMonth` |
 
 ### Dimensional tables (Layer B)
@@ -154,6 +157,14 @@ btr.portal.worker/          Program.cs, WorkerDependencyConfig, appsettings.json
 | `BTRPD_PiutangTopCustomer` | Top 10 customers |
 | `BTRPD_InventoryBreakdown` | Category/supplier rows with `IsTop10` flag |
 | `BTRPD_SalesWeekTrend` | Weekly Faktur totals |
+| `BTRPD_SalesDailyPace` | Daily Faktur pace buckets for forecast chart (M26) |
+| `BTRPD_CashFlowDailyPace` | Daily cash collection pace for forecast chart (M27) |
+| `BTRPD_CashFlowRecoveryTrend` | Cumulative collections vs billing by day (M27) |
+| `BTRPD_CashFlowCollectionRisk` | Top collection risk rows for forecast dashboard (M27) |
+| `BTRPD_InventoryForecastDailyConsumption` | Daily company consumption + ADC reference (M28) |
+| `BTRPD_InventoryForecastLevel` | Projected inventory value by horizon day (M28) |
+| `BTRPD_InventoryForecastRisk` | Top inventory forecast risk rows (M28) |
+| `BTRPD_InventoryForecastRecommendation` | Top purchase recommendation rows (M28) |
 | `BTRPD_SalesTopSalesman` | Top 10 salespeople |
 | `BTRPD_PurchasingWeekTrend` | Weekly purchase totals |
 | `BTRPD_PurchasingPostingStatus` | `SUDAH` / `BELUM` purchase value buckets |
@@ -168,8 +179,11 @@ btr.portal.worker/          Program.cs, WorkerDependencyConfig, appsettings.json
 | `BTRPD_CustomerTopPiutang` | Top 10 customers by all-time open balance |
 | `BTRPD_CustomerAttention` | Attention list rows (customer × signal) |
 | `BTRPD_CustomerSegmentation` | Klasifikasi, Wilayah, Active/Dormant counts |
+| `BTRPD_CustomerRiskForecastKpi` | Customer risk forecast KPIs: elevated risk receivable, portfolio health, confidence (M29) |
 
 Customer worker reads **source DALs** at refresh — not Sales/Piutang snapshot tables.
+
+**M29 child tables:** `BTRPD_CustomerRiskForecastDist`, `BTRPD_CustomerRiskForecastWilayah`, `BTRPD_CustomerRiskForecastSignalMix`, `BTRPD_CustomerRiskForecastCustomer`, `BTRPD_CustomerRiskForecastAttention`, `BTRPD_CustomerRiskForecastRecommendation`.
 
 ### Salesman tables (M18 — dedicated cross-domain domain)
 

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { InvestigationStep } from '@/models/investigation'
+import { resolveInvestigationStepLabel } from '@/navigation/portalMenuHelpers'
 
 defineProps<{
   steps: InvestigationStep[]
@@ -14,7 +15,9 @@ defineProps<{
       class="investigation-steps__item"
     >
       <span class="investigation-steps__order">{{ step.Order }}.</span>
-      <span>{{ step.Label }}</span>
+      <span>{{
+        resolveInvestigationStepLabel(step.Label, step.DashboardRoute, step.ReportRoute)
+      }}</span>
     </li>
   </ol>
 </template>

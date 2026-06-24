@@ -30,6 +30,8 @@ namespace btr.application.ReportingContext.DashboardExecutiveAgg.Queries
 
         public DashboardExecutiveInventoryAttention Inventory { get; set; }
 
+        public DashboardExecutivePortfolioAttention Portfolio { get; set; }
+
         public DashboardExecutiveCriticalExposures CriticalExposures { get; set; }
 
         public IList<DashboardExecutiveDomainSummary> DomainSummaries { get; set; }
@@ -91,6 +93,19 @@ namespace btr.application.ReportingContext.DashboardExecutiveAgg.Queries
         public bool RequiresAttention { get; set; }
 
         public bool IsAvailable { get; set; }
+    }
+
+    public class DashboardExecutivePortfolioAttention
+    {
+        public bool IsAvailable { get; set; }
+
+        public decimal? PortfolioHealthyPercent { get; set; }
+
+        public int CustomersAtRiskCount { get; set; }
+
+        public int StrategicCustomersAtRiskCount { get; set; }
+
+        public string DashboardRoute { get; set; }
     }
 
     public class DashboardExecutiveCriticalExposures

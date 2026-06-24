@@ -82,4 +82,30 @@ describe('buildInvestigationQuery', () => {
       entityType: 'Salesman',
     })
   })
+
+  it('maps customer report drill-down with customerCode query param', () => {
+    const investigation: InvestigationMetadata = {
+      SignalKey: 'PortfolioCollect',
+      SignalLabel: 'Collect',
+      EntityType: 'Customer',
+      EntityId: 'C001',
+      EntityName: 'PT ABC',
+      ReportRoute: '/reports/customers',
+      SuggestedQuery: {
+        CustomerCode: 'C001',
+        FreeText: 'PT ABC',
+      },
+    }
+
+    const query = buildInvestigationQuery(investigation, '/dashboard/customer-portfolio')
+
+    expect(query).toEqual({
+      q: 'PT ABC',
+      customerCode: 'C001',
+      signalKey: 'PortfolioCollect',
+      signalLabel: 'Collect',
+      source: '/dashboard/customer-portfolio',
+      entityType: 'Customer',
+    })
+  })
 })

@@ -406,4 +406,3 @@ Improve inventory planning and purchasing decisions.
 8. Avoid introducing new SQL when equivalent reporting logic already exists.
 9. Dashboard metrics must be traceable to report data.
 10. Portal is an analytics/reporting product, not a transactional product.
-
