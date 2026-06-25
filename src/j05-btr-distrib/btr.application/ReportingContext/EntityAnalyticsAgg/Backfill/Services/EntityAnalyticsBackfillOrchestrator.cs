@@ -354,14 +354,15 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Backfill.Services
         private static void EnsureWriteSupportedForEntityType(string entityType)
         {
             if (string.Equals(entityType, EntityTypeCode.Customer, StringComparison.OrdinalIgnoreCase)
-                || string.Equals(entityType, EntityTypeCode.Salesman, StringComparison.OrdinalIgnoreCase))
+                || string.Equals(entityType, EntityTypeCode.Salesman, StringComparison.OrdinalIgnoreCase)
+                || string.Equals(entityType, EntityTypeCode.Supplier, StringComparison.OrdinalIgnoreCase))
             {
                 return;
             }
 
             throw new NotSupportedException(
                 $"Historical backfill writes for entity type '{entityType}' are not yet implemented. " +
-                "Customer and Salesman are available in M32.B1.4–B1.5; Supplier and Item follow in M32.B1.6–B1.7.");
+                "Customer, Salesman, and Supplier are available in M32.B1.4–B1.6; Item follows in M32.B1.7.");
         }
 
         private bool ShouldSkipPeriod(

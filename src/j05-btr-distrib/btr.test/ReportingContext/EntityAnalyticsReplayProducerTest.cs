@@ -201,6 +201,129 @@ namespace btr.test.ReportingContext
             repository.RankingRows.Should().NotBeEmpty();
         }
 
+        [Fact]
+        public void SupplierProduce_WithReplay_SkipsL0()
+        {
+            var repository = new ReplayTrackingRepository();
+            var producer = CreateSupplierProducer(repository);
+            var generatedAt = new DateTime(2024, 3, 31, 10, 0, 0);
+
+            producer.Produce(CreateSupplierReplayContext(generatedAt, CreatePortfolioSupplier()));
+
+            repository.ReplaceCurrentMetricsCalled.Should().BeFalse();
+        }
+
+        [Fact]
+        public void SupplierProduce_WithReplay_UsesReplaceMonthlyHistoryForPeriod()
+        {
+            var repository = new ReplayTrackingRepository();
+            var producer = CreateSupplierProducer(repository);
+            var generatedAt = new DateTime(2024, 3, 31, 10, 0, 0);
+
+            producer.Produce(CreateSupplierReplayContext(generatedAt, CreatePortfolioSupplier()));
+
+            repository.ReplaceMonthlyHistoryCallCount.Should().Be(1);
+            repository.MonthlyRows.Should().HaveCount(3);
+            repository.MonthlyRows.Should().OnlyContain(r =>
+                r.PeriodYear == ReplayPeriod.Year
+                && r.PeriodMonth == ReplayPeriod.Month
+                && r.IsClosed);
+        }
+
+        [Fact]
+        public void SupplierProduce_WithReplay_IdempotentReplace()
+        {
+            var repository = new ReplayTrackingRepository();
+            var producer = CreateSupplierProducer(repository);
+            var generatedAt = new DateTime(2024, 3, 31, 10, 0, 0);
+            var context = CreateSupplierReplayContext(generatedAt, CreatePortfolioSupplier());
+
+            producer.Produce(context);
+            producer.Produce(context);
+
+            repository.ReplaceMonthlyHistoryCallCount.Should().Be(2);
+            repository.MonthlyRows.Should().HaveCount(3);
+            repository.MonthlyRows.Single(r => r.KpiId == "PU-KPI-001").NumericValue.Should().Be(1_500_000m);
+        }
+
+        private static EntityAnalyticsProduceContext CreateSupplierReplayContext(
+            DateTime generatedAt,
+            DashboardPurchasingManagementPortfolioRow supplier)
+        {
+            var replay = EntityAnalyticsReplayContextFactory.Create(
+                ReplayPeriod,
+                EntityTypeCode.Supplier,
+                "job-replay",
+                new EntityAnalyticsBackfillRequest());
+
+            return EntityAnalyticsReplayContextFactory.CreateProduceContext(
+                replay,
+                new SupplierEntityAnalyticsProduceInput
+                {
+                    ManagementAggregate = new DashboardPurchasingManagementAggregateResult
+                    {
+                        Portfolio = new List<DashboardPurchasingManagementPortfolioRow> { supplier }
+                    }
+                },
+                "refresh-replay",
+                generatedAt);
+        }
+
+        private static DashboardPurchasingManagementPortfolioRow CreatePortfolioSupplier()
+        {
+            return new DashboardPurchasingManagementPortfolioRow
+            {
+                SupplierId = "S001",
+                SupplierCode = "SUPA",
+                SupplierName = "Alpha Principal",
+                MtdPurchaseAmount = 1_500_000m,
+                MtdInvoiceCount = 4,
+                PostedPercent = 75m,
+                IsActiveMtd = true
+            };
+        }
+
+        private static SupplierEntityAnalyticsProducer CreateSupplierProducer(ReplayTrackingRepository repository)
+        {
+            var entityTypes = new EntityTypeRegistry();
+            entityTypes.Register(new EntityTypeRegistration
+            {
+                EntityTypeCode = EntityTypeCode.Supplier,
+                DisplayName = "Supplier",
+                KpiPackId = SupplierEntityAnalyticsRegistrar.KpiPackId,
+                PeerGroupRuleId = PeerGroupResolver.SupplierAllActive
+            });
+
+            var registry = new EntityAnalyticsKpiRegistry(entityTypes);
+            var dimensionLabels = new EntityAnalyticsDimensionLabelRegistry();
+            new SupplierEntityAnalyticsRegistrar().Register(entityTypes, registry, dimensionLabels);
+
+            var rankingEngine = new EntityRankingEngine(
+                repository,
+                registry,
+                entityTypes,
+                Options.Create(new EntityAnalyticsOptions { HistoryRetentionMonths = 36 }));
+
+            var attentionSignals = new EntityAttentionSignalRegistry();
+            SupplierAttentionSignalCatalog.Register(attentionSignals);
+            var attentionEngine = new EntityAttentionEngine(repository);
+
+            var relationships = new EntityRelationshipDefinitionRegistry(entityTypes);
+            SupplierRelationshipCatalog.Register(relationships);
+            var relationshipEngine = new EntityRelationshipEngine(repository, relationships, entityTypes);
+            var radarEngine = new EntityRadarEngine(repository, registry, entityTypes);
+
+            return new SupplierEntityAnalyticsProducer(
+                repository,
+                registry,
+                new NoOpMonthCloseService(),
+                rankingEngine,
+                attentionEngine,
+                relationshipEngine,
+                radarEngine,
+                attentionSignals);
+        }
+
         private static EntityAnalyticsProduceContext CreateSalesmanReplayContext(
             DateTime generatedAt,
             DashboardSalesmanPortfolioRow rep)
