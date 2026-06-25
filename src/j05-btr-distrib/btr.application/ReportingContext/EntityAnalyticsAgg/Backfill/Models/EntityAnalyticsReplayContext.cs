@@ -18,5 +18,10 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Backfill.Models
         /// When true, L1 was already persisted (e.g. RepHistory fast path) and the producer must skip L1 writes.
         /// </summary>
         public bool SkipL1Persist { get; set; }
+
+        /// <summary>
+        /// Entities per L1 insert chunk during backfill persistence (Item tuning). Zero uses a single transaction.
+        /// </summary>
+        public int BatchSize { get; set; }
     }
 }

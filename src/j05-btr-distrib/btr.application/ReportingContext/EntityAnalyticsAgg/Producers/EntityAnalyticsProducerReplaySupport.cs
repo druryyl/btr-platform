@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using btr.application.ReportingContext.EntityAnalyticsAgg.Contracts;
+using btr.application.ReportingContext.EntityAnalyticsAgg.Models;
 using btr.application.ReportingContext.EntityAnalyticsAgg.Models.Snapshot;
 
 namespace btr.application.ReportingContext.EntityAnalyticsAgg.Producers
@@ -52,12 +53,17 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Producers
                         row.IsClosed = true;
                 }
 
+                var batchSize = string.Equals(entityType, EntityTypeCode.Item, StringComparison.OrdinalIgnoreCase)
+                    ? context.Replay.BatchSize
+                    : 0;
+
                 repository.ReplaceMonthlyHistoryForPeriod(
                     entityType,
                     context.Replay.PeriodYear,
                     context.Replay.PeriodMonth,
                     monthlyRows ?? Array.Empty<EntityAnalyticsMonthlyRow>(),
-                    context.RefreshLogId);
+                    context.RefreshLogId,
+                    batchSize);
                 return;
             }
 

@@ -15,7 +15,8 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Backfill.Contracts
             int periodYear,
             int periodMonth,
             IEnumerable<EntityAnalyticsMonthlyRow> rows,
-            string refreshLogId);
+            string refreshLogId,
+            int batchSize = 0);
 
         void ReplaceRankingForPeriod(
             string entityType,

@@ -561,7 +561,8 @@ namespace btr.test.ReportingContext
             int periodYear,
             int periodMonth,
             IEnumerable<EntityAnalyticsMonthlyRow> rows,
-            string refreshLogId)
+            string refreshLogId,
+            int batchSize = 0)
         {
             ReplaceMonthlyHistoryCallCount++;
             MonthlyRows.RemoveAll(r =>

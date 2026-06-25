@@ -240,6 +240,26 @@ namespace btr.test.ReportingContext
         }
 
         [Fact]
+        public void Run_WithConfirm_Item_WritesCompletedCheckpoint()
+        {
+            var store = new FakeCheckpointStore();
+            var producer = new RecordingBackfillProducer(EntityTypeCode.Item);
+            var orchestrator = CreateOrchestrator(store, producer);
+
+            var result = orchestrator.Run(CreateRequest(
+                entityTypeScope: EntityTypeCode.Item,
+                dryRun: false,
+                confirmToken: "BACKFILL"), default);
+
+            result.Status.Should().Be(EntityAnalyticsBackfillJobStatus.Succeeded);
+            result.PeriodsProcessed.Should().Be(3);
+            store.Checkpoints.Should().HaveCount(3);
+            store.Checkpoints.Should().OnlyContain(c =>
+                c.Status == EntityAnalyticsBackfillCheckpointStatus.Completed);
+            producer.ProduceCount.Should().Be(3);
+        }
+
+        [Fact]
         public void Run_DryRun_Salesman_FastPath_SkipsLoader()
         {
             var store = new FakeCheckpointStore();
@@ -282,6 +302,11 @@ namespace btr.test.ReportingContext
             {
                 EntityTypeCode = EntityTypeCode.Supplier,
                 DisplayName = "Supplier"
+            });
+            entityTypes.Register(new EntityTypeRegistration
+            {
+                EntityTypeCode = EntityTypeCode.Item,
+                DisplayName = "Item"
             });
 
             var producerOrchestrator = new EntityAnalyticsProducerOrchestrator(
@@ -510,6 +535,26 @@ namespace btr.test.ReportingContext
                                     .Select(_ => new DashboardPurchasingManagementPortfolioRow())
                                     .ToList()
                             }
+                        },
+                        EntityCount = 42,
+                        RowCounts = new EntityAnalyticsReplayRowCounts
+                        {
+                            TransactionRowCount = 1,
+                            MasterRowCount = 42
+                        }
+                    };
+                }
+
+                if (string.Equals(replayContext.EntityTypeCode, EntityTypeCode.Item, StringComparison.OrdinalIgnoreCase))
+                {
+                    return new EntityAnalyticsReplayAggregateResult
+                    {
+                        EntityType = replayContext.EntityTypeCode,
+                        ProduceInput = new ItemEntityAnalyticsProduceInput
+                        {
+                            Portfolio = Enumerable.Range(1, 42)
+                                .Select(_ => new DashboardItemPortfolioRow())
+                                .ToList()
                         },
                         EntityCount = 42,
                         RowCounts = new EntityAnalyticsReplayRowCounts

@@ -33,7 +33,8 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Backfill.Models
                 IsDryRun = request?.DryRun ?? false,
                 ResumeMode = resumeMode,
                 SkipLiveMutexCheck = request?.SkipLiveMutexCheck ?? false,
-                BackfillJobId = backfillJobId ?? string.Empty
+                BackfillJobId = backfillJobId ?? string.Empty,
+                BatchSize = request?.BatchSize ?? 0
             };
         }
 

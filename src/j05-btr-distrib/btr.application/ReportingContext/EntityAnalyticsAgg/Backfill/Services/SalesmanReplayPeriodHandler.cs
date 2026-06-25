@@ -63,7 +63,8 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Backfill.Services
                 periodYear,
                 periodMonth,
                 l1Rows,
-                refreshLogId);
+                refreshLogId,
+                batchSize: 0);
         }
 
         public SalesmanEntityAnalyticsProduceInput CreateLayersOnlyInput()

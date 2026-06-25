@@ -1212,12 +1212,68 @@ WHEN NOT MATCHED THEN
             int periodYear,
             int periodMonth,
             IEnumerable<EntityAnalyticsMonthlyRow> rows,
-            string refreshLogId)
+            string refreshLogId,
+            int batchSize = 0)
         {
             if (string.IsNullOrWhiteSpace(entityType))
                 throw new ArgumentException("EntityType is required.", nameof(entityType));
 
             var rowList = rows?.ToList() ?? new List<EntityAnalyticsMonthlyRow>();
+            if (rowList.Count == 0)
+            {
+                ReplaceMonthlyHistoryForPeriodEmpty(entityType, periodYear, periodMonth);
+                return;
+            }
+
+            if (batchSize <= 0)
+            {
+                ReplaceMonthlyHistoryForPeriodSingleTransaction(
+                    entityType,
+                    periodYear,
+                    periodMonth,
+                    rowList,
+                    refreshLogId);
+                return;
+            }
+
+            ReplaceMonthlyHistoryForPeriodBatched(
+                entityType,
+                periodYear,
+                periodMonth,
+                rowList,
+                refreshLogId,
+                batchSize);
+        }
+
+        private void ReplaceMonthlyHistoryForPeriodEmpty(
+            string entityType,
+            int periodYear,
+            int periodMonth)
+        {
+            using (var conn = new SqlConnection(ConnStringHelper.Get(_opt)))
+            {
+                conn.Open();
+                conn.Execute(@"
+DELETE FROM BTRPD_EntityAnalytics_Monthly
+WHERE EntityType = @EntityType
+  AND PeriodYear = @PeriodYear
+  AND PeriodMonth = @PeriodMonth",
+                    new
+                    {
+                        EntityType = entityType,
+                        PeriodYear = periodYear,
+                        PeriodMonth = periodMonth
+                    });
+            }
+        }
+
+        private void ReplaceMonthlyHistoryForPeriodSingleTransaction(
+            string entityType,
+            int periodYear,
+            int periodMonth,
+            IReadOnlyList<EntityAnalyticsMonthlyRow> rowList,
+            string refreshLogId)
+        {
             var now = DateTime.Now;
 
             using (var conn = new SqlConnection(ConnStringHelper.Get(_opt)))
@@ -1225,22 +1281,83 @@ WHEN NOT MATCHED THEN
                 conn.Open();
                 using (var trans = conn.BeginTransaction())
                 {
-                    const string deleteSql = @"
+                    DeleteMonthlyHistoryForPeriod(conn, trans, entityType, periodYear, periodMonth);
+                    InsertMonthlyHistoryRows(conn, trans, entityType, periodYear, periodMonth, rowList, refreshLogId, now);
+                    trans.Commit();
+                }
+            }
+        }
+
+        private void ReplaceMonthlyHistoryForPeriodBatched(
+            string entityType,
+            int periodYear,
+            int periodMonth,
+            IReadOnlyList<EntityAnalyticsMonthlyRow> rowList,
+            string refreshLogId,
+            int batchSize)
+        {
+            var now = DateTime.Now;
+            var offset = 0;
+            var isFirstBatch = true;
+
+            while (offset < rowList.Count)
+            {
+                var chunkSize = Math.Min(batchSize, rowList.Count - offset);
+                var chunk = new List<EntityAnalyticsMonthlyRow>(chunkSize);
+                for (var i = 0; i < chunkSize; i++)
+                    chunk.Add(rowList[offset + i]);
+                offset += chunkSize;
+
+                using (var conn = new SqlConnection(ConnStringHelper.Get(_opt)))
+                {
+                    conn.Open();
+                    using (var trans = conn.BeginTransaction())
+                    {
+                        if (isFirstBatch)
+                        {
+                            DeleteMonthlyHistoryForPeriod(conn, trans, entityType, periodYear, periodMonth);
+                            isFirstBatch = false;
+                        }
+
+                        InsertMonthlyHistoryRows(conn, trans, entityType, periodYear, periodMonth, chunk, refreshLogId, now);
+                        trans.Commit();
+                    }
+                }
+            }
+        }
+
+        private static void DeleteMonthlyHistoryForPeriod(
+            SqlConnection conn,
+            SqlTransaction trans,
+            string entityType,
+            int periodYear,
+            int periodMonth)
+        {
+            const string deleteSql = @"
 DELETE FROM BTRPD_EntityAnalytics_Monthly
 WHERE EntityType = @EntityType
   AND PeriodYear = @PeriodYear
   AND PeriodMonth = @PeriodMonth";
 
-                    conn.Execute(deleteSql, new
-                    {
-                        EntityType = entityType,
-                        PeriodYear = periodYear,
-                        PeriodMonth = periodMonth
-                    }, trans);
+            conn.Execute(deleteSql, new
+            {
+                EntityType = entityType,
+                PeriodYear = periodYear,
+                PeriodMonth = periodMonth
+            }, trans);
+        }
 
-                    if (rowList.Count > 0)
-                    {
-                        const string insertSql = @"
+        private static void InsertMonthlyHistoryRows(
+            SqlConnection conn,
+            SqlTransaction trans,
+            string entityType,
+            int periodYear,
+            int periodMonth,
+            IEnumerable<EntityAnalyticsMonthlyRow> rows,
+            string refreshLogId,
+            DateTime now)
+        {
+            const string insertSql = @"
 INSERT INTO BTRPD_EntityAnalytics_Monthly
     (EntityAnalyticsMonthlyId, EntityType, EntityId, EntityCode, PeriodYear, PeriodMonth,
      KpiId, NumericValue, TextValue, PeriodSemantics, DefinitionVersion, IsClosed,
@@ -1250,31 +1367,26 @@ VALUES
      @KpiId, @NumericValue, @TextValue, @PeriodSemantics, @DefinitionVersion, @IsClosed,
      @GeneratedAt, @UpdatedAt, @LastRefreshLogId)";
 
-                        foreach (var row in rowList)
-                        {
-                            conn.Execute(insertSql, new
-                            {
-                                EntityAnalyticsMonthlyId = Ulid.NewUlid().ToString(),
-                                EntityType = entityType,
-                                row.EntityId,
-                                row.EntityCode,
-                                PeriodYear = periodYear,
-                                PeriodMonth = periodMonth,
-                                row.KpiId,
-                                row.NumericValue,
-                                row.TextValue,
-                                PeriodSemantics = row.PeriodSemantics ?? string.Empty,
-                                DefinitionVersion = row.DefinitionVersion ?? 1,
-                                IsClosed = true,
-                                GeneratedAt = row.GeneratedAt == default ? now : row.GeneratedAt,
-                                UpdatedAt = now,
-                                LastRefreshLogId = refreshLogId ?? string.Empty
-                            }, trans);
-                        }
-                    }
-
-                    trans.Commit();
-                }
+            foreach (var row in rows)
+            {
+                conn.Execute(insertSql, new
+                {
+                    EntityAnalyticsMonthlyId = Ulid.NewUlid().ToString(),
+                    EntityType = entityType,
+                    row.EntityId,
+                    row.EntityCode,
+                    PeriodYear = periodYear,
+                    PeriodMonth = periodMonth,
+                    row.KpiId,
+                    row.NumericValue,
+                    row.TextValue,
+                    PeriodSemantics = row.PeriodSemantics ?? string.Empty,
+                    DefinitionVersion = row.DefinitionVersion ?? 1,
+                    IsClosed = true,
+                    GeneratedAt = row.GeneratedAt == default ? now : row.GeneratedAt,
+                    UpdatedAt = now,
+                    LastRefreshLogId = refreshLogId ?? string.Empty
+                }, trans);
             }
         }
 

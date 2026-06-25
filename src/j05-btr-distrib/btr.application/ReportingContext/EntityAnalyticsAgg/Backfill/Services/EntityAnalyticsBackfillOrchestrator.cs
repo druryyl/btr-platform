@@ -355,14 +355,14 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Backfill.Services
         {
             if (string.Equals(entityType, EntityTypeCode.Customer, StringComparison.OrdinalIgnoreCase)
                 || string.Equals(entityType, EntityTypeCode.Salesman, StringComparison.OrdinalIgnoreCase)
-                || string.Equals(entityType, EntityTypeCode.Supplier, StringComparison.OrdinalIgnoreCase))
+                || string.Equals(entityType, EntityTypeCode.Supplier, StringComparison.OrdinalIgnoreCase)
+                || string.Equals(entityType, EntityTypeCode.Item, StringComparison.OrdinalIgnoreCase))
             {
                 return;
             }
 
             throw new NotSupportedException(
-                $"Historical backfill writes for entity type '{entityType}' are not yet implemented. " +
-                "Customer, Salesman, and Supplier are available in M32.B1.4–B1.6; Item follows in M32.B1.7.");
+                $"Historical backfill writes for entity type '{entityType}' are not supported.");
         }
 
         private bool ShouldSkipPeriod(

@@ -666,6 +666,90 @@ See [entity-analytics-roadmap-authoritative.md](../../work/btr-portal/entity-ana
 
 
 
+## Historical Backfill — Item (M32.B1.7)
+
+
+
+Item is the **last** entity type in the one-time historical replay pipeline (after Salesman, Customer, Supplier). It has the highest SKU cardinality and should run in a **dedicated maintenance window**.
+
+
+
+### Active subset (ADR-EA-011)
+
+
+
+L1 monthly history is written only for SKUs that are **trend-eligible** at `PeriodEnd`:
+
+
+
+- Stock on hand &gt; 0, **or**
+
+- Last faktur date within the trailing **24 months** (730 days)
+
+
+
+Dormant SKUs receive L0 CURRENT from live workers only; they are excluded from historical L1/L2/L5 backfill.
+
+
+
+### Recommended staging sequence
+
+
+
+1. Dry-run: `--dry-run --entity-type Item --from-period YYYY-MM --to-period YYYY-MM`
+
+2. Smoke: 12-month window on staging
+
+3. Full: 36-month window (`HistoryRetentionMonths`) during off-peak production maintenance
+
+
+
+### CLI tuning
+
+
+
+```text
+
+btr.portal.worker --domain EntityAnalyticsHistoricalBackfill \
+
+  --entity-type Item --from-period 2023-01 --to-period 2025-12 \
+
+  --confirm BACKFILL --batch-size 500
+
+```
+
+
+
+- `--batch-size` (default **500**) chunks L1 `ReplaceMonthlyHistoryForPeriod` inserts for Item. Increase if insert pressure is observed; decrease if transaction timeouts occur.
+
+- SqlBulkCopy optimization is deferred to M32.B1.9.
+
+
+
+### Idempotent rerun
+
+
+
+To replace a bad month:
+
+
+
+```text
+
+--force --from-period YYYY-MM --to-period YYYY-MM --entity-type Item --confirm BACKFILL
+
+```
+
+
+
+Ensure the entity-type mutex blocks concurrent live `InventoryRisk` refresh during Item backfill.
+
+
+
+---
+
+
+
 ## Testing Checklist
 
 
@@ -683,6 +767,7 @@ See [entity-analytics-roadmap-authoritative.md](../../work/btr-portal/entity-ana
 | SF01 reconciliation | `SalesmanEntityAnalyticsReconciliationTest` |
 | PU01 reconciliation | `SupplierEntityAnalyticsReconciliationTest` |
 | IN02 reconciliation | `ItemEntityAnalyticsReconciliationTest` |
+| Item replay backfill | `ItemReplayBackfillReconciliationTest` |
 | Relationship aggregator | `DashboardSalesmanRelationshipAggregatorTest`, `DashboardItemRelationshipAggregatorTest` |
 
 | KPI registry / pack validation | `EntityAnalyticsKpiRegistryTest` |

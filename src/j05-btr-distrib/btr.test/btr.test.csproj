@@ -204,6 +204,7 @@
     <Compile Include="ReportingContext\CustomerReplayBackfillReconciliationTest.cs" />
     <Compile Include="ReportingContext\SalesmanReplayBackfillReconciliationTest.cs" />
     <Compile Include="ReportingContext\SupplierReplayBackfillReconciliationTest.cs" />
+    <Compile Include="ReportingContext\ItemReplayBackfillReconciliationTest.cs" />
     <Compile Include="ReportingContext\SalesmanEntityAnalyticsProducerTest.cs" />
     <Compile Include="ReportingContext\SalesmanEntityAnalyticsReconciliationTest.cs" />
     <Compile Include="ReportingContext\SupplierEntityAnalyticsProducerTest.cs" />
