@@ -5,8 +5,12 @@ using btr.application.Portal;
 using btr.application.ReportingContext.EntityAnalyticsAgg.Backfill.Contracts;
 using btr.application.ReportingContext.EntityAnalyticsAgg.Backfill.Models;
 using btr.application.ReportingContext.EntityAnalyticsAgg.Backfill.Services;
+using btr.application.ReportingContext.DashboardSnapshotAgg.Models;
 using btr.application.ReportingContext.EntityAnalyticsAgg.Models;
 using btr.application.ReportingContext.EntityAnalyticsAgg.Options;
+using btr.application.ReportingContext.EntityAnalyticsAgg.Producers;
+using btr.application.SalesContext.FakturInfo;
+using btr.application.SupportContext.TglJamAgg;
 using FluentAssertions;
 using Microsoft.Extensions.Options;
 using Xunit;
@@ -18,6 +22,19 @@ namespace btr.test.ReportingContext
         private static readonly YearMonthPeriod Period1 = new YearMonthPeriod(2023, 1);
         private static readonly YearMonthPeriod Period2 = new YearMonthPeriod(2023, 2);
         private static readonly YearMonthPeriod Period3 = new YearMonthPeriod(2023, 3);
+
+        [Fact]
+        public void Run_DryRun_WritesEntityCountFromAggregate()
+        {
+            var store = new FakeCheckpointStore();
+            var orchestrator = CreateOrchestrator(store);
+
+            var result = orchestrator.Run(CreateRequest(dryRun: true), default);
+
+            result.Status.Should().Be(EntityAnalyticsBackfillJobStatus.Succeeded);
+            store.Checkpoints.Should().OnlyContain(c => c.EntityCount == 42);
+            store.Checkpoints.Should().OnlyContain(c => !string.IsNullOrWhiteSpace(c.RowCountsJson));
+        }
 
         [Fact]
         public void Run_DryRun_WritesDryRunCompletedForEachPeriod()
@@ -33,6 +50,7 @@ namespace btr.test.ReportingContext
             store.Checkpoints.Should().HaveCount(3);
             store.Checkpoints.Should().OnlyContain(c =>
                 c.Status == EntityAnalyticsBackfillCheckpointStatus.DryRunCompleted);
+            store.Checkpoints.Should().OnlyContain(c => c.EntityCount == 42);
         }
 
         [Fact]
@@ -144,6 +162,9 @@ namespace btr.test.ReportingContext
                 store,
                 new FakeMutex(),
                 new FixedBusinessDateProvider(new DateTime(2024, 6, 15)),
+                new FakeLoaderResolver(),
+                new FakeAggregateService(),
+                new FixedTglJamDal(new DateTime(2026, 6, 25, 12, 0, 0)),
                 Options.Create(new EntityAnalyticsOptions { HistoryRetentionMonths = 36 }));
         }
 
@@ -178,6 +199,66 @@ namespace btr.test.ReportingContext
 
             public DateTime Today { get; }
             public bool IsPresentationActive => false;
+        }
+
+        private sealed class FixedTglJamDal : ITglJamDal
+        {
+            public FixedTglJamDal(DateTime now)
+            {
+                Now = now;
+            }
+
+            public DateTime Now { get; }
+        }
+
+        private sealed class FakeLoaderResolver : IEntityAnalyticsReplayDataLoaderResolver
+        {
+            public IEntityAnalyticsReplayDataLoader Resolve(string entityType) => new FakeLoader(entityType);
+        }
+
+        private sealed class FakeLoader : IEntityAnalyticsReplayDataLoader
+        {
+            public FakeLoader(string entityType)
+            {
+                EntityType = entityType;
+            }
+
+            public string EntityType { get; }
+
+            public object Load(EntityAnalyticsReplayContext replayContext) =>
+                new CustomerReplayDataBundle
+                {
+                    FakturRows = new List<FakturView> { new FakturView() }
+                };
+        }
+
+        private sealed class FakeAggregateService : IEntityAnalyticsReplayAggregateService
+        {
+            public EntityAnalyticsReplayAggregateResult Aggregate(
+                EntityAnalyticsReplayContext replayContext,
+                object bundle,
+                DateTime generatedAt)
+            {
+                return new EntityAnalyticsReplayAggregateResult
+                {
+                    EntityType = replayContext.EntityTypeCode,
+                    ProduceInput = new CustomerEntityAnalyticsProduceInput
+                    {
+                        PortfolioAggregate = new btr.application.ReportingContext.DashboardSnapshotAgg.Models.DashboardCustomerPortfolioAggregateResult
+                        {
+                            Customers = Enumerable.Range(1, 42)
+                                .Select(_ => new btr.application.ReportingContext.DashboardSnapshotAgg.Models.DashboardCustomerPortfolioCustomerRow())
+                                .ToList()
+                        }
+                    },
+                    EntityCount = 42,
+                    RowCounts = new EntityAnalyticsReplayRowCounts
+                    {
+                        TransactionRowCount = 1,
+                        MasterRowCount = 42
+                    }
+                };
+            }
         }
 
         private sealed class FakeMutex : IEntityAnalyticsBackfillMutex

@@ -162,6 +162,7 @@ namespace btr.portal.api.Configurations
             services.AddScoped<IEntityAnalyticsRepository, EntityAnalyticsRepository>();
             services.AddScoped<IEntityAnalyticsBackfillCheckpointStore, EntityAnalyticsBackfillCheckpointStoreDal>();
             services.AddScoped<IEntityAnalyticsBackfillMutex, EntityAnalyticsBackfillMutexDal>();
+            services.AddScoped<ISalesmanRepHistoryBackfillDal, SalesmanRepHistoryBackfillDal>();
 
             services
                 .Scan(selector => selector

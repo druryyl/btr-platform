@@ -1,8 +1,10 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Data.SqlClient;
 using btr.application.InventoryContext.StokBalanceInfo;
 using btr.infrastructure.Helpers;
 using btr.nuna.Infrastructure;
+using Dapper;
 using Microsoft.Extensions.Options;
 
 namespace btr.infrastructure.InventoryContext.StokBalanceRpt
@@ -15,6 +17,7 @@ namespace btr.infrastructure.InventoryContext.StokBalanceRpt
         {
             _opt = opt.Value;
         }
+
         public IEnumerable<StokBalanceView> ListData()
         {
             const string sql = @"
@@ -41,11 +44,61 @@ namespace btr.infrastructure.InventoryContext.StokBalanceRpt
                 LEFT JOIN   BTR_Warehouse dd ON bb.WarehouseId = dd.WarehouseId
                 LEFT JOIN   BTR_Kategori ee ON aa.KategoriId = ee.KategoriId
                 LEFT JOIN   BTR_Supplier ff ON aa.SupplierId = ff.SupplierId ";
-            
-            using(var conn = new SqlConnection(ConnStringHelper.Get(_opt)))
+
+            using (var conn = new SqlConnection(ConnStringHelper.Get(_opt)))
             {
                 return conn.Read<StokBalanceView>(sql);
             }
-          }
+        }
+
+        public IEnumerable<StokBalanceView> ListDataAsOf(DateTime asOfDate)
+        {
+            const string sql = @"
+SELECT
+    aa.BrgId,
+    aa.BrgName,
+    aa.BrgCode,
+    aa.SupplierId,
+    aa.KategoriId,
+    aa.Hpp,
+    ISNULL(bb.WarehouseId, '') AS WarehouseId,
+    ISNULL(bb.Qty, 0) AS Qty,
+    ISNULL(cc1.Satuan, '') AS SatKecil,
+    ISNULL(cc2.Satuan, '') AS SatBesar,
+    ISNULL(cc2.Conversion, 1) AS Conversion,
+    ISNULL(dd.WarehouseName, '') AS WarehouseName,
+    ISNULL(ee.KategoriName, '') AS KategoriName,
+    ISNULL(ff.SupplierName, '') AS SupplierName
+FROM BTR_Brg aa
+LEFT JOIN (
+    SELECT
+        sm.BrgId,
+        wh.WarehouseId,
+        SUM(sm.QtyIn - sm.QtyOut) AS Qty
+    FROM BTR_StokMutasi sm
+    LEFT JOIN BTR_Stok st ON sm.StokId = st.StokId
+    LEFT JOIN BTR_Warehouse wh ON st.WarehouseId = wh.WarehouseId
+    WHERE sm.MutasiDate <= @AsOfDate
+    GROUP BY sm.BrgId, wh.WarehouseId
+) bb ON aa.BrgId = bb.BrgId
+LEFT JOIN (
+    SELECT DISTINCT BrgId, Satuan, 1 AS Conversion
+    FROM BTR_BrgSatuan
+    WHERE Conversion = 1
+) cc1 ON aa.BrgId = cc1.BrgId
+LEFT JOIN (
+    SELECT DISTINCT BrgId, Satuan, Conversion
+    FROM BTR_BrgSatuan
+    WHERE Conversion > 1
+) cc2 ON aa.BrgId = cc2.BrgId
+LEFT JOIN BTR_Warehouse dd ON bb.WarehouseId = dd.WarehouseId
+LEFT JOIN BTR_Kategori ee ON aa.KategoriId = ee.KategoriId
+LEFT JOIN BTR_Supplier ff ON aa.SupplierId = ff.SupplierId";
+
+            using (var conn = new SqlConnection(ConnStringHelper.Get(_opt)))
+            {
+                return conn.Query<StokBalanceView>(sql, new { AsOfDate = asOfDate.Date });
+            }
+        }
     }
 }

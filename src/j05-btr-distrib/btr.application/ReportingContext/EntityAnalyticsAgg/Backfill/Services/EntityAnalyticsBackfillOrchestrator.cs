@@ -9,6 +9,7 @@ using btr.application.ReportingContext.DashboardSnapshotAgg.Progress;
 using btr.application.ReportingContext.EntityAnalyticsAgg.Backfill.Contracts;
 using btr.application.ReportingContext.EntityAnalyticsAgg.Backfill.Models;
 using btr.application.ReportingContext.EntityAnalyticsAgg.Options;
+using btr.application.SupportContext.TglJamAgg;
 using Microsoft.Extensions.Options;
 
 namespace btr.application.ReportingContext.EntityAnalyticsAgg.Backfill.Services
@@ -21,17 +22,26 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Backfill.Services
         private readonly IEntityAnalyticsBackfillCheckpointStore _checkpointStore;
         private readonly IEntityAnalyticsBackfillMutex _mutex;
         private readonly IBusinessDateProvider _businessDateProvider;
+        private readonly IEntityAnalyticsReplayDataLoaderResolver _loaderResolver;
+        private readonly IEntityAnalyticsReplayAggregateService _aggregateService;
+        private readonly ITglJamDal _tglJamDal;
         private readonly EntityAnalyticsOptions _options;
 
         public EntityAnalyticsBackfillOrchestrator(
             IEntityAnalyticsBackfillCheckpointStore checkpointStore,
             IEntityAnalyticsBackfillMutex mutex,
             IBusinessDateProvider businessDateProvider,
+            IEntityAnalyticsReplayDataLoaderResolver loaderResolver,
+            IEntityAnalyticsReplayAggregateService aggregateService,
+            ITglJamDal tglJamDal,
             IOptions<EntityAnalyticsOptions> options)
         {
             _checkpointStore = checkpointStore;
             _mutex = mutex;
             _businessDateProvider = businessDateProvider;
+            _loaderResolver = loaderResolver;
+            _aggregateService = aggregateService;
+            _tglJamDal = tglJamDal;
             _options = options?.Value ?? new EntityAnalyticsOptions();
         }
 
@@ -144,6 +154,22 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Backfill.Services
 
                                 if (request.DryRun)
                                 {
+                                    var replayContext = EntityAnalyticsReplayContextFactory.Create(
+                                        period,
+                                        entityType,
+                                        jobId,
+                                        request);
+                                    var loader = _loaderResolver.Resolve(entityType);
+                                    var generatedAt = _tglJamDal.Now;
+
+                                    WorkerProgressScope.Current?.StepStarted($"{periodStepId}:Load", "Load historical replay data");
+                                    var bundle = loader.Load(replayContext);
+                                    WorkerProgressScope.Current?.StepCompleted($"{periodStepId}:Load");
+
+                                    WorkerProgressScope.Current?.StepStarted($"{periodStepId}:Aggregate", "Aggregate historical replay data");
+                                    var aggregateResult = _aggregateService.Aggregate(replayContext, bundle, generatedAt);
+                                    WorkerProgressScope.Current?.StepCompleted($"{periodStepId}:Aggregate");
+
                                     WorkerProgressScope.Current?.StepCompleted($"{periodStepId}:Plan");
 
                                     _checkpointStore.UpsertCheckpoint(new EntityAnalyticsBackfillCheckpointModel
@@ -155,8 +181,8 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Backfill.Services
                                         PeriodMonth = period.Month,
                                         Status = EntityAnalyticsBackfillCheckpointStatus.DryRunCompleted,
                                         LayersCompleted = request.Layers,
-                                        EntityCount = 0,
-                                        RowCountsJson = string.Empty,
+                                        EntityCount = aggregateResult.EntityCount,
+                                        RowCountsJson = JsonConvert.SerializeObject(aggregateResult.RowCounts),
                                         StartedAt = startedAt,
                                         CompletedAt = DateTime.Now,
                                         LastError = string.Empty,
@@ -166,8 +192,8 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Backfill.Services
                                 else
                                 {
                                     throw new NotSupportedException(
-                                        "Historical backfill writes are not implemented until M32.B1.2. " +
-                                        "Use --dry-run or wait for replay context integration.");
+                                        "Historical backfill writes require M32.B1.4 Customer Replay wiring. " +
+                                        "Use --dry-run until producer persistence is integrated.");
                                 }
 
                                 periodsProcessed++;

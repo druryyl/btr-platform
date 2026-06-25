@@ -207,6 +207,7 @@
     <Compile Include="ReportingContext\EntityAnalyticsAgg\EntityAnalyticsRepository.cs" />
     <Compile Include="ReportingContext\EntityAnalyticsAgg\EntityAnalyticsBackfillCheckpointStoreDal.cs" />
     <Compile Include="ReportingContext\EntityAnalyticsAgg\EntityAnalyticsBackfillMutexDal.cs" />
+    <Compile Include="ReportingContext\EntityAnalyticsAgg\SalesmanRepHistoryBackfillDal.cs" />
     <Compile Include="ReportingContext\DashboardCustomerRiskForecastAgg\DashboardCustomerRiskForecastDal.cs" />
     <Compile Include="ReportingContext\DashboardInventoryForecastAgg\DashboardInventoryForecastDal.cs" />
     <Compile Include="ReportingContext\DashboardInventoryOptimizationAgg\DashboardInventoryOptimizationDal.cs" />

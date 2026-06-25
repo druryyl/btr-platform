@@ -110,6 +110,8 @@ namespace btr.test.ReportingContext
             }
 
             public IEnumerable<StokBalanceView> ListData() => _rows;
+
+            public IEnumerable<StokBalanceView> ListDataAsOf(DateTime asOfDate) => _rows;
         }
 
         private sealed class StubTglJamDal : ITglJamDal

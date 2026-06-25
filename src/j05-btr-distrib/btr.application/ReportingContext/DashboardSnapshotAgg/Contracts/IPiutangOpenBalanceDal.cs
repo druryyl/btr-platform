@@ -7,5 +7,7 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.Contracts
     public interface IPiutangOpenBalanceDal
     {
         IReadOnlyList<PiutangOpenBalanceDto> ListOpenBalances();
+
+        IReadOnlyList<PiutangOpenBalanceDto> ListOpenBalancesAsOf(DateTime asOfDate);
     }
 }

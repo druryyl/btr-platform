@@ -1,10 +1,13 @@
 using System;
+using System.Collections.Generic;
 
 namespace btr.application.SalesContext.FakturInfo
 {
     public interface IBrgLastFakturDal
     {
-        System.Collections.Generic.IEnumerable<BrgLastFakturDto> ListLastFakturByBrg();
+        IEnumerable<BrgLastFakturDto> ListLastFakturByBrg();
+
+        IEnumerable<BrgLastFakturDto> ListLastFakturByBrgAsOf(DateTime asOfDate);
     }
 
     public class BrgLastFakturDto

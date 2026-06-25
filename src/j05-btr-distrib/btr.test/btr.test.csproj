@@ -185,7 +185,10 @@
     <Compile Include="ReportingContext\EntityAnalyticsKpiRegistryTest.cs" />
     <Compile Include="ReportingContext\EntityAnalyticsRepositoryStubBase.cs" />
     <Compile Include="ReportingContext\EntityAnalyticsServiceTest.cs" />
+    <Compile Include="ReportingContext\CustomerReplayDataLoaderIntegrationTest.cs" />
+    <Compile Include="ReportingContext\CustomerReplayDataLoaderTest.cs" />
     <Compile Include="ReportingContext\EntityAnalyticsBackfillOrchestratorTest.cs" />
+    <Compile Include="ReportingContext\SalesmanRepHistoryBackfillSourceTest.cs" />
     <Compile Include="ReportingContext\EntityAnalyticsReplayProducerTest.cs" />
     <Compile Include="ReportingContext\EntityTrendEngineTest.cs" />
     <Compile Include="ReportingContext\EntityRankingCalculatorTest.cs" />

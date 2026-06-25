@@ -8,6 +8,10 @@ namespace btr.application.SalesContext.FakturInfo
         IEnumerable<CustomerLastFakturDto> ListLastFakturByCustomer();
 
         IEnumerable<CustomerLastFakturWithSalesmanDto> ListLastFakturWithSalesmanByCustomer();
+
+        IEnumerable<CustomerLastFakturDto> ListLastFakturByCustomerAsOf(DateTime asOfDate);
+
+        IEnumerable<CustomerLastFakturWithSalesmanDto> ListLastFakturWithSalesmanByCustomerAsOf(DateTime asOfDate);
     }
 
     public class CustomerLastFakturDto
