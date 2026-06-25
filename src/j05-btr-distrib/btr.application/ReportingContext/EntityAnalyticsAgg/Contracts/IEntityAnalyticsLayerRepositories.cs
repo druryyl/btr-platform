@@ -126,7 +126,11 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Contracts
 
         bool IsMonthClosed(string entityType, int periodYear, int periodMonth);
 
-
+        IReadOnlyList<EntityPopulationRow> GetPeriodActivePopulation(
+            string entityType,
+            int periodYear,
+            int periodMonth,
+            string dimensionKpiId = null);
 
         void PurgeHistoryOlderThan(string entityType, int retentionMonths);
 

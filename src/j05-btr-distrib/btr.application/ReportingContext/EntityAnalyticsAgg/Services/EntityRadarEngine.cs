@@ -53,12 +53,14 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Services
 
             var peerGroupRuleId = registration.PeerGroupRuleId;
             var dimensionKpiId = PeerGroupResolver.ResolveDimensionKpiId(peerGroupRuleId);
-            var population = _repository.GetActivePopulation(entityType, dimensionKpiId);
+            var population = replay != null
+                ? _repository.GetPeriodActivePopulation(entityType, periodYear, periodMonth, dimensionKpiId)
+                : _repository.GetActivePopulation(entityType, dimensionKpiId);
             if (population.Count == 0)
                 return;
 
             var peerGroupIndex = PeerGroupResolver.BuildPeerGroupIndex(peerGroupRuleId, population);
-            var axisValueMaps = BuildAxisValueMaps(entityType, periodYear, periodMonth, radarAxes);
+            var axisValueMaps = BuildAxisValueMaps(entityType, periodYear, periodMonth, radarAxes, replay);
             var entityCodes = population.ToDictionary(
                 p => p.EntityId,
                 p => p.EntityCode ?? p.EntityId,
@@ -286,7 +288,8 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Services
             string entityType,
             int periodYear,
             int periodMonth,
-            IReadOnlyList<EntityKpiMetadata> radarAxes)
+            IReadOnlyList<EntityKpiMetadata> radarAxes,
+            EntityAnalyticsReplayContext replay = null)
         {
             var maps = new Dictionary<string, Dictionary<string, decimal?>>(StringComparer.OrdinalIgnoreCase);
             var momPeriod = EntityComparisonCalculator.ShiftMonth(periodYear, periodMonth, -1);
@@ -302,7 +305,10 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Services
                     var sourceKpiId = string.IsNullOrWhiteSpace(axis.RadarSourceKpiId)
                         ? axis.KpiId
                         : axis.RadarSourceKpiId;
-                    valueMap = ToValueMap(_repository.GetCurrentKpiPopulation(entityType, sourceKpiId));
+                    valueMap = replay != null
+                        ? ToValueMap(_repository.GetPeriodMetricsForPopulation(
+                            entityType, periodYear, periodMonth, sourceKpiId))
+                        : ToValueMap(_repository.GetCurrentKpiPopulation(entityType, sourceKpiId));
                 }
                 else if (string.Equals(valueSource, RadarValueSource.L0DimensionNumeric, StringComparison.OrdinalIgnoreCase))
                 {

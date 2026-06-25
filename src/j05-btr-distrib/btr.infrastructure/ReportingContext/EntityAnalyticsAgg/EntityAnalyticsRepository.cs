@@ -1564,6 +1564,66 @@ VALUES
             }
         }
 
+        public IReadOnlyList<EntityPopulationRow> GetPeriodActivePopulation(
+            string entityType,
+            int periodYear,
+            int periodMonth,
+            string dimensionKpiId = null)
+        {
+            if (string.IsNullOrWhiteSpace(entityType))
+                return Array.Empty<EntityPopulationRow>();
+
+            var sql = string.IsNullOrWhiteSpace(dimensionKpiId)
+                ? @"
+SELECT DISTINCT m.EntityId,
+       m.EntityCode,
+       CASE WHEN COALESCE(active.NumericValue, 1) > 0 THEN 1 ELSE 0 END AS IsActive,
+       NULL AS DimensionValue
+FROM BTRPD_EntityAnalytics_Monthly m
+LEFT JOIN BTRPD_EntityAnalytics_Current active
+    ON active.SnapshotKey = @SnapshotKey
+   AND active.EntityType = m.EntityType
+   AND active.EntityId = m.EntityId
+   AND active.KpiId = @IsActiveKpiId
+WHERE m.EntityType = @EntityType
+  AND m.PeriodYear = @PeriodYear
+  AND m.PeriodMonth = @PeriodMonth
+  AND COALESCE(active.NumericValue, 1) > 0"
+                : @"
+SELECT DISTINCT m.EntityId,
+       m.EntityCode,
+       CASE WHEN COALESCE(active.NumericValue, 1) > 0 THEN 1 ELSE 0 END AS IsActive,
+       dim.TextValue AS DimensionValue
+FROM BTRPD_EntityAnalytics_Monthly m
+LEFT JOIN BTRPD_EntityAnalytics_Current active
+    ON active.SnapshotKey = @SnapshotKey
+   AND active.EntityType = m.EntityType
+   AND active.EntityId = m.EntityId
+   AND active.KpiId = @IsActiveKpiId
+LEFT JOIN BTRPD_EntityAnalytics_Current dim
+    ON dim.SnapshotKey = @SnapshotKey
+   AND dim.EntityType = m.EntityType
+   AND dim.EntityId = m.EntityId
+   AND dim.KpiId = @DimensionKpiId
+WHERE m.EntityType = @EntityType
+  AND m.PeriodYear = @PeriodYear
+  AND m.PeriodMonth = @PeriodMonth
+  AND COALESCE(active.NumericValue, 1) > 0";
+
+            using (var conn = new SqlConnection(ConnStringHelper.Get(_opt)))
+            {
+                return conn.Query<EntityPopulationRow>(sql, new
+                {
+                    SnapshotKey = EntityAnalyticsConstants.CurrentSnapshotKey,
+                    EntityType = entityType,
+                    PeriodYear = periodYear,
+                    PeriodMonth = periodMonth,
+                    IsActiveKpiId = EntityAnalyticsMetaKpiIds.IsActive,
+                    DimensionKpiId = dimensionKpiId
+                }).ToList();
+            }
+        }
+
         public IReadOnlyList<EntityPopulationRow> GetActivePopulation(string entityType, string dimensionKpiId = null)
         {
             if (string.IsNullOrWhiteSpace(entityType))

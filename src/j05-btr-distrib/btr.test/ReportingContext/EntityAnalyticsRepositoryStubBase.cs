@@ -332,7 +332,7 @@ namespace btr.test.ReportingContext
                     && string.Equals(c.EntityId, m.EntityId, StringComparison.OrdinalIgnoreCase)
                     && string.Equals(c.KpiId, EntityAnalyticsMetaKpiIds.IsActive, StringComparison.OrdinalIgnoreCase));
 
-                var isActive = isActiveRow?.NumericValue.GetValueOrDefault(1m) > 0m;
+                var isActive = (isActiveRow?.NumericValue ?? 1m) > 0m;
 
                 return new EntityAnalyticsPeriodMetricRow
                 {
@@ -748,6 +748,51 @@ namespace btr.test.ReportingContext
                 {
                     dimensionValue = group.FirstOrDefault(r =>
                         string.Equals(r.KpiId, dimensionKpiId, StringComparison.OrdinalIgnoreCase))?.TextValue;
+                }
+
+                population.Add(new EntityPopulationRow
+                {
+                    EntityId = group.Key,
+                    EntityCode = entityCode,
+                    IsActive = true,
+                    DimensionValue = dimensionValue
+                });
+            }
+
+            return population;
+        }
+
+        public virtual IReadOnlyList<EntityPopulationRow> GetPeriodActivePopulation(
+            string entityType,
+            int periodYear,
+            int periodMonth,
+            string dimensionKpiId = null)
+        {
+            var groups = MonthlyRows
+                .Where(r => string.Equals(r.EntityType, entityType, StringComparison.OrdinalIgnoreCase)
+                    && r.PeriodYear == periodYear
+                    && r.PeriodMonth == periodMonth)
+                .GroupBy(r => r.EntityId, StringComparer.OrdinalIgnoreCase);
+
+            var population = new List<EntityPopulationRow>();
+            foreach (var group in groups)
+            {
+                var isActiveNumeric = CurrentRows.FirstOrDefault(r =>
+                    string.Equals(r.EntityType, entityType, StringComparison.OrdinalIgnoreCase)
+                    && string.Equals(r.EntityId, group.Key, StringComparison.OrdinalIgnoreCase)
+                    && string.Equals(r.KpiId, EntityAnalyticsMetaKpiIds.IsActive, StringComparison.OrdinalIgnoreCase))?.NumericValue;
+                var isActive = !isActiveNumeric.HasValue || isActiveNumeric.Value > 0m;
+                if (!isActive)
+                    continue;
+
+                var entityCode = group.Select(r => r.EntityCode).FirstOrDefault(c => !string.IsNullOrWhiteSpace(c)) ?? group.Key;
+                string dimensionValue = null;
+                if (!string.IsNullOrWhiteSpace(dimensionKpiId))
+                {
+                    dimensionValue = CurrentRows.FirstOrDefault(r =>
+                        string.Equals(r.EntityType, entityType, StringComparison.OrdinalIgnoreCase)
+                        && string.Equals(r.EntityId, group.Key, StringComparison.OrdinalIgnoreCase)
+                        && string.Equals(r.KpiId, dimensionKpiId, StringComparison.OrdinalIgnoreCase))?.TextValue;
                 }
 
                 population.Add(new EntityPopulationRow

@@ -6,9 +6,11 @@ using btr.application.ReportingContext.EntityAnalyticsAgg.Backfill.Contracts;
 using btr.application.ReportingContext.EntityAnalyticsAgg.Backfill.Models;
 using btr.application.ReportingContext.EntityAnalyticsAgg.Backfill.Services;
 using btr.application.ReportingContext.DashboardSnapshotAgg.Models;
+using btr.application.ReportingContext.EntityAnalyticsAgg.Contracts;
 using btr.application.ReportingContext.EntityAnalyticsAgg.Models;
 using btr.application.ReportingContext.EntityAnalyticsAgg.Options;
 using btr.application.ReportingContext.EntityAnalyticsAgg.Producers;
+using btr.application.ReportingContext.EntityAnalyticsAgg.Services;
 using btr.application.SalesContext.FakturInfo;
 using btr.application.SupportContext.TglJamAgg;
 using FluentAssertions;
@@ -156,14 +158,70 @@ namespace btr.test.ReportingContext
                 c.PeriodYear == Period3.Year && c.PeriodMonth == Period3.Month);
         }
 
-        private static EntityAnalyticsBackfillOrchestrator CreateOrchestrator(FakeCheckpointStore store)
+        [Fact]
+        public void Run_WithConfirm_WritesCompletedCheckpoint()
         {
+            var store = new FakeCheckpointStore();
+            var producer = new RecordingBackfillProducer();
+            var orchestrator = CreateOrchestrator(store, producer);
+
+            var result = orchestrator.Run(CreateRequest(dryRun: false, confirmToken: "BACKFILL"), default);
+
+            result.Status.Should().Be(EntityAnalyticsBackfillJobStatus.Succeeded);
+            result.PeriodsProcessed.Should().Be(3);
+            store.Checkpoints.Should().HaveCount(3);
+            store.Checkpoints.Should().OnlyContain(c =>
+                c.Status == EntityAnalyticsBackfillCheckpointStatus.Completed);
+            producer.ProduceCount.Should().Be(3);
+        }
+
+        [Fact]
+        public void Run_Force_RerunsProducerOnCompletedCheckpoint()
+        {
+            var store = new FakeCheckpointStore();
+            store.SeedGlobal(EntityTypeCode.Customer, Period1.Year, Period1.Month,
+                EntityAnalyticsBackfillCheckpointStatus.Completed);
+
+            var producer = new RecordingBackfillProducer();
+            var orchestrator = CreateOrchestrator(store, producer);
+            var result = orchestrator.Run(CreateRequest(
+                dryRun: false,
+                resume: true,
+                force: true,
+                confirmToken: "BACKFILL"), default);
+
+            result.PeriodsProcessed.Should().Be(3);
+            result.PeriodsSkipped.Should().Be(0);
+            producer.ProduceCount.Should().Be(3);
+            store.Checkpoints.Should().Contain(c =>
+                c.PeriodYear == Period1.Year
+                && c.PeriodMonth == Period1.Month
+                && c.Status == EntityAnalyticsBackfillCheckpointStatus.Completed);
+        }
+
+        private static EntityAnalyticsBackfillOrchestrator CreateOrchestrator(
+            FakeCheckpointStore store,
+            RecordingBackfillProducer producer = null)
+        {
+            producer = producer ?? new RecordingBackfillProducer();
+            var entityTypes = new EntityTypeRegistry();
+            entityTypes.Register(new EntityTypeRegistration
+            {
+                EntityTypeCode = EntityTypeCode.Customer,
+                DisplayName = "Customer"
+            });
+
+            var producerOrchestrator = new EntityAnalyticsProducerOrchestrator(
+                new IEntityAnalyticsProducer[] { producer },
+                entityTypes);
+
             return new EntityAnalyticsBackfillOrchestrator(
                 store,
                 new FakeMutex(),
                 new FixedBusinessDateProvider(new DateTime(2024, 6, 15)),
                 new FakeLoaderResolver(),
                 new FakeAggregateService(),
+                producerOrchestrator,
                 new FixedTglJamDal(new DateTime(2026, 6, 25, 12, 0, 0)),
                 Options.Create(new EntityAnalyticsOptions { HistoryRetentionMonths = 36 }));
         }
@@ -172,7 +230,8 @@ namespace btr.test.ReportingContext
             bool dryRun = false,
             bool resume = true,
             bool force = false,
-            bool restart = false)
+            bool restart = false,
+            string confirmToken = null)
         {
             return new EntityAnalyticsBackfillRequest
             {
@@ -185,9 +244,24 @@ namespace btr.test.ReportingContext
                 Resume = resume,
                 Force = force,
                 Restart = restart,
+                ConfirmToken = confirmToken,
                 SkipLiveMutexCheck = true,
                 TriggeredBy = "Manual"
             };
+        }
+
+        private sealed class RecordingBackfillProducer : IEntityAnalyticsProducer
+        {
+            public string EntityType => EntityTypeCode.Customer;
+
+            public string WorkerDomain => "Customer";
+
+            public int ProduceCount { get; private set; }
+
+            public void Produce(EntityAnalyticsProduceContext context)
+            {
+                ProduceCount++;
+            }
         }
 
         private sealed class FixedBusinessDateProvider : IBusinessDateProvider

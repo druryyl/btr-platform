@@ -8,7 +8,9 @@ using btr.application.Portal;
 using btr.application.ReportingContext.DashboardSnapshotAgg.Progress;
 using btr.application.ReportingContext.EntityAnalyticsAgg.Backfill.Contracts;
 using btr.application.ReportingContext.EntityAnalyticsAgg.Backfill.Models;
+using btr.application.ReportingContext.EntityAnalyticsAgg.Models;
 using btr.application.ReportingContext.EntityAnalyticsAgg.Options;
+using btr.application.ReportingContext.EntityAnalyticsAgg.Services;
 using btr.application.SupportContext.TglJamAgg;
 using Microsoft.Extensions.Options;
 
@@ -24,6 +26,7 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Backfill.Services
         private readonly IBusinessDateProvider _businessDateProvider;
         private readonly IEntityAnalyticsReplayDataLoaderResolver _loaderResolver;
         private readonly IEntityAnalyticsReplayAggregateService _aggregateService;
+        private readonly EntityAnalyticsProducerOrchestrator _producerOrchestrator;
         private readonly ITglJamDal _tglJamDal;
         private readonly EntityAnalyticsOptions _options;
 
@@ -33,6 +36,7 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Backfill.Services
             IBusinessDateProvider businessDateProvider,
             IEntityAnalyticsReplayDataLoaderResolver loaderResolver,
             IEntityAnalyticsReplayAggregateService aggregateService,
+            EntityAnalyticsProducerOrchestrator producerOrchestrator,
             ITglJamDal tglJamDal,
             IOptions<EntityAnalyticsOptions> options)
         {
@@ -41,6 +45,7 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Backfill.Services
             _businessDateProvider = businessDateProvider;
             _loaderResolver = loaderResolver;
             _aggregateService = aggregateService;
+            _producerOrchestrator = producerOrchestrator;
             _tglJamDal = tglJamDal;
             _options = options?.Value ?? new EntityAnalyticsOptions();
         }
@@ -152,24 +157,17 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Backfill.Services
                                     LastRefreshLogId = request.RefreshLogId ?? string.Empty
                                 });
 
+                                var aggregateResult = ExecutePeriodReplay(
+                                    periodStepId,
+                                    period,
+                                    entityType,
+                                    jobId,
+                                    request,
+                                    out var replayContext,
+                                    out var generatedAt);
+
                                 if (request.DryRun)
                                 {
-                                    var replayContext = EntityAnalyticsReplayContextFactory.Create(
-                                        period,
-                                        entityType,
-                                        jobId,
-                                        request);
-                                    var loader = _loaderResolver.Resolve(entityType);
-                                    var generatedAt = _tglJamDal.Now;
-
-                                    WorkerProgressScope.Current?.StepStarted($"{periodStepId}:Load", "Load historical replay data");
-                                    var bundle = loader.Load(replayContext);
-                                    WorkerProgressScope.Current?.StepCompleted($"{periodStepId}:Load");
-
-                                    WorkerProgressScope.Current?.StepStarted($"{periodStepId}:Aggregate", "Aggregate historical replay data");
-                                    var aggregateResult = _aggregateService.Aggregate(replayContext, bundle, generatedAt);
-                                    WorkerProgressScope.Current?.StepCompleted($"{periodStepId}:Aggregate");
-
                                     WorkerProgressScope.Current?.StepCompleted($"{periodStepId}:Plan");
 
                                     _checkpointStore.UpsertCheckpoint(new EntityAnalyticsBackfillCheckpointModel
@@ -191,9 +189,34 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Backfill.Services
                                 }
                                 else
                                 {
-                                    throw new NotSupportedException(
-                                        "Historical backfill writes require M32.B1.4 Customer Replay wiring. " +
-                                        "Use --dry-run until producer persistence is integrated.");
+                                    EnsureWriteSupportedForEntityType(entityType);
+
+                                    WorkerProgressScope.Current?.StepStarted($"{periodStepId}:Produce", "Produce entity analytics snapshot");
+                                    var produceContext = EntityAnalyticsReplayContextFactory.CreateProduceContext(
+                                        replayContext,
+                                        aggregateResult.ProduceInput,
+                                        request.RefreshLogId ?? string.Empty,
+                                        generatedAt);
+                                    _producerOrchestrator.ProduceForEntityType(entityType, produceContext);
+                                    WorkerProgressScope.Current?.StepCompleted($"{periodStepId}:Produce");
+                                    WorkerProgressScope.Current?.StepCompleted($"{periodStepId}:Plan");
+
+                                    _checkpointStore.UpsertCheckpoint(new EntityAnalyticsBackfillCheckpointModel
+                                    {
+                                        BackfillCheckpointId = checkpointId,
+                                        BackfillJobId = jobId,
+                                        EntityType = entityType,
+                                        PeriodYear = period.Year,
+                                        PeriodMonth = period.Month,
+                                        Status = EntityAnalyticsBackfillCheckpointStatus.Completed,
+                                        LayersCompleted = request.Layers,
+                                        EntityCount = aggregateResult.EntityCount,
+                                        RowCountsJson = JsonConvert.SerializeObject(aggregateResult.RowCounts),
+                                        StartedAt = startedAt,
+                                        CompletedAt = DateTime.Now,
+                                        LastError = string.Empty,
+                                        LastRefreshLogId = request.RefreshLogId ?? string.Empty
+                                    });
                                 }
 
                                 periodsProcessed++;
@@ -269,6 +292,44 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Backfill.Services
                     periodsSkipped,
                     sw,
                     failureMessage ?? ex.Message);
+            }
+        }
+
+        private EntityAnalyticsReplayAggregateResult ExecutePeriodReplay(
+            string periodStepId,
+            YearMonthPeriod period,
+            string entityType,
+            string jobId,
+            EntityAnalyticsBackfillRequest request,
+            out EntityAnalyticsReplayContext replayContext,
+            out DateTime generatedAt)
+        {
+            replayContext = EntityAnalyticsReplayContextFactory.Create(
+                period,
+                entityType,
+                jobId,
+                request);
+            var loader = _loaderResolver.Resolve(entityType);
+            generatedAt = _tglJamDal.Now;
+
+            WorkerProgressScope.Current?.StepStarted($"{periodStepId}:Load", "Load historical replay data");
+            var bundle = loader.Load(replayContext);
+            WorkerProgressScope.Current?.StepCompleted($"{periodStepId}:Load");
+
+            WorkerProgressScope.Current?.StepStarted($"{periodStepId}:Aggregate", "Aggregate historical replay data");
+            var aggregateResult = _aggregateService.Aggregate(replayContext, bundle, generatedAt);
+            WorkerProgressScope.Current?.StepCompleted($"{periodStepId}:Aggregate");
+
+            return aggregateResult;
+        }
+
+        private static void EnsureWriteSupportedForEntityType(string entityType)
+        {
+            if (!string.Equals(entityType, EntityTypeCode.Customer, StringComparison.OrdinalIgnoreCase))
+            {
+                throw new NotSupportedException(
+                    $"Historical backfill writes for entity type '{entityType}' are not yet implemented. " +
+                    "Customer is available in M32.B1.4; Salesman, Supplier, and Item follow in M32.B1.5–B1.7.");
             }
         }
 

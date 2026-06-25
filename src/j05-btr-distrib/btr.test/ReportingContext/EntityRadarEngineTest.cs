@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using btr.application.ReportingContext.EntityAnalyticsAgg.Backfill.Models;
 using btr.application.ReportingContext.EntityAnalyticsAgg.Models;
 using btr.application.ReportingContext.EntityAnalyticsAgg.Models.Snapshot;
 using btr.application.ReportingContext.EntityAnalyticsAgg.Registrars;
@@ -86,6 +87,28 @@ namespace btr.test.ReportingContext
         }
 
         [Fact]
+        public void ComputeAndPersistScores_WithReplay_UsesL1KpiPopulationWithoutL0Omzet()
+        {
+            SeedReplayPeerGroupFromMonthlyOnly("Jakarta", 5, 1000m);
+            var replay = EntityAnalyticsReplayContextFactory.Create(
+                new YearMonthPeriod(2024, 3),
+                EntityTypeCode.Customer,
+                "job-replay",
+                new EntityAnalyticsBackfillRequest());
+
+            _engine.ComputeAndPersistScores(
+                EntityTypeCode.Customer,
+                2024,
+                3,
+                "refresh-replay",
+                new DateTime(2024, 3, 31),
+                replay);
+
+            _repository.RadarRows.Should().Contain(r => r.AxisKpiId == "CU-KPI-009");
+            _repository.CurrentRows.Should().NotContain(r => r.KpiId == "CU-KPI-009");
+        }
+
+        [Fact]
         public void ComputeAndPersistScores_SalesmanAllActivePeerGroup_UsesUndimensionedPopulationQuery()
         {
             var entityTypes = new EntityTypeRegistry();
@@ -168,6 +191,34 @@ namespace btr.test.ReportingContext
                     PeriodMonth = 5,
                     KpiId = "CU-KPI-009",
                     NumericValue = omzet,
+                    IsClosed = true
+                });
+            }
+        }
+
+        private void SeedReplayPeerGroupFromMonthlyOnly(string wilayah, int count, decimal omzet)
+        {
+            for (var i = 1; i <= count; i++)
+            {
+                var entityId = $"C00{i}";
+                _repository.CurrentRows.Add(new EntityAnalyticsCurrentRow
+                {
+                    EntityType = EntityTypeCode.Customer,
+                    EntityId = entityId,
+                    EntityCode = entityId,
+                    KpiId = EntityAnalyticsMetaKpiIds.Wilayah,
+                    TextValue = wilayah,
+                    GeneratedAt = new DateTime(2024, 3, 31)
+                });
+                _repository.MonthlyRows.Add(new EntityAnalyticsMonthlyRow
+                {
+                    EntityType = EntityTypeCode.Customer,
+                    EntityId = entityId,
+                    EntityCode = entityId,
+                    PeriodYear = 2024,
+                    PeriodMonth = 3,
+                    KpiId = "CU-KPI-009",
+                    NumericValue = omzet + i,
                     IsClosed = true
                 });
             }
