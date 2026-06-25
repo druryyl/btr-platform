@@ -61,12 +61,42 @@ function createTestRouter(base = '/') {
             component: { template: '<div />' },
           },
           {
+            path: 'analytics/salesmen/compare',
+            name: 'salesman-compare',
+            component: { template: '<div />' },
+          },
+          {
+            path: 'analytics/suppliers/compare',
+            name: 'supplier-compare',
+            component: { template: '<div />' },
+          },
+          {
+            path: 'analytics/items/compare',
+            name: 'item-compare',
+            component: { template: '<div />' },
+          },
+          {
             path: 'analytics/customers/:customerCode',
             name: 'customer-performance-profile',
             redirect: (to) => ({
               name: 'entity-performance-profile',
               params: { entityType: 'Customer', entityId: to.params.customerCode },
             }),
+          },
+          {
+            path: 'analytics/salesmen/:salesPersonCode',
+            name: 'salesman-performance-profile',
+            component: { template: '<div />' },
+          },
+          {
+            path: 'analytics/suppliers/:supplierCode',
+            name: 'supplier-performance-profile',
+            component: { template: '<div />' },
+          },
+          {
+            path: 'analytics/items/:brgCode',
+            name: 'item-performance-profile',
+            component: { template: '<div />' },
           },
           {
             path: 'analytics/:entityType/:entityId',

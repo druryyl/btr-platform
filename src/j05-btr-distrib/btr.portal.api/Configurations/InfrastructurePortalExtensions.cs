@@ -1,6 +1,7 @@
 using btr.application.FinanceContext.PiutangAgg.Contracts;
 using btr.application.ReportingContext.CustomerReportAgg.Contracts;
 using btr.application.ReportingContext.EntityAnalyticsAgg.Contracts;
+using btr.application.ReportingContext.EntityAnalyticsAgg.Backfill.Contracts;
 using btr.application.ReportingContext.DashboardAlertCenterAgg.Contracts;
 using btr.application.ReportingContext.DashboardAlertCenterAgg.Services;
 using btr.application.ReportingContext.DashboardCashFlowForecastAgg.Contracts;
@@ -159,6 +160,8 @@ namespace btr.portal.api.Configurations
             services.AddScoped<IPurchasingReportDal, PurchasingReportDal>();
             services.AddScoped<ICustomerReportDal, CustomerReportDal>();
             services.AddScoped<IEntityAnalyticsRepository, EntityAnalyticsRepository>();
+            services.AddScoped<IEntityAnalyticsBackfillCheckpointStore, EntityAnalyticsBackfillCheckpointStoreDal>();
+            services.AddScoped<IEntityAnalyticsBackfillMutex, EntityAnalyticsBackfillMutexDal>();
 
             services
                 .Scan(selector => selector

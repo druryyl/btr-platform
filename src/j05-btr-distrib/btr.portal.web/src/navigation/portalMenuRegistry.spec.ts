@@ -6,6 +6,7 @@ import { formatMenuLabel, findMenuItemByRoute } from '@/navigation/portalMenuHel
 const expectedRouteNames = [
   'dashboard',
   'alert-center',
+  'entity-analytics-home',
   'sales-dashboard',
   'sales-forecast-dashboard',
   'sales-report',
@@ -31,8 +32,8 @@ const expectedRouteNames = [
 ] as const
 
 describe('portalMenuRegistry', () => {
-  it('contains exactly 24 menu items', () => {
-    expect(allPortalMenuItems).toHaveLength(24)
+  it('contains exactly 25 menu items', () => {
+    expect(allPortalMenuItems).toHaveLength(25)
   })
 
   it('defines 8 domain groups in management scan order', () => {
@@ -54,15 +55,22 @@ describe('portalMenuRegistry', () => {
     const routes = allPortalMenuItems.map((item) => item.route)
     const routeNames = allPortalMenuItems.map((item) => item.routeName)
 
-    expect(new Set(codes).size).toBe(24)
-    expect(new Set(routes).size).toBe(24)
-    expect(new Set(routeNames).size).toBe(24)
+    expect(new Set(codes).size).toBe(25)
+    expect(new Set(routes).size).toBe(25)
+    expect(new Set(routeNames).size).toBe(25)
   })
 
   it('maps collection optimization to customers group as CU03', () => {
     const item = findMenuItemByRoute('/dashboard/collection-optimization')
     expect(item?.code).toBe(PortalMenuCodes.CU03)
     expect(item?.groupId).toBe('customers')
+  })
+
+  it('registers Entity Analytics under Executive as EX03', () => {
+    const item = findMenuItemByRoute('/analytics')
+    expect(item?.code).toBe(PortalMenuCodes.EX03)
+    expect(item?.groupId).toBe('executive')
+    expect(item?.routeName).toBe('entity-analytics-home')
   })
 
   it('nests reports within domain groups', () => {

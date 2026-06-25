@@ -266,13 +266,12 @@ WHERE SnapshotKey = @SnapshotKey
 
         public bool HasAnyCurrentMetrics(string entityType)
         {
+            // Any L0 row means the dashboard worker produced a snapshot for this entity type.
             const string sql = @"
 SELECT TOP 1 1
 FROM BTRPD_EntityAnalytics_Current
 WHERE SnapshotKey = @SnapshotKey
-  AND EntityType = @EntityType
-  AND KpiId NOT LIKE 'EA-META-%'
-  AND KpiId NOT LIKE 'EA-DIM-%'";
+  AND EntityType = @EntityType";
 
             using (var conn = new SqlConnection(ConnStringHelper.Get(_opt)))
             {
@@ -1226,7 +1225,7 @@ FROM (
 ) c
 LEFT JOIN BTRPD_EntityAnalytics_Current active
     ON active.SnapshotKey = @SnapshotKey
-   AND active.EntityType = c.EntityType
+   AND active.EntityType = @EntityType
    AND active.EntityId = c.EntityId
    AND active.KpiId = @IsActiveKpiId
 WHERE COALESCE(active.NumericValue, 1) > 0"
@@ -1236,7 +1235,7 @@ SELECT c.EntityId,
        CASE WHEN COALESCE(active.NumericValue, 1) > 0 THEN 1 ELSE 0 END AS IsActive,
        dim.TextValue AS DimensionValue
 FROM (
-    SELECT DISTINCT EntityId, EntityCode
+    SELECT DISTINCT EntityId, EntityCode, EntityType
     FROM BTRPD_EntityAnalytics_Current
     WHERE SnapshotKey = @SnapshotKey AND EntityType = @EntityType
 ) c

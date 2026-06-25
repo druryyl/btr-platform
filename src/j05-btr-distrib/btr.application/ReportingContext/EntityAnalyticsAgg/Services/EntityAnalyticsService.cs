@@ -41,17 +41,17 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Services
 
         public IReadOnlyList<EntityAnalyticsTypeDto> GetEnabledTypes()
         {
-            var enabled = new HashSet<string>(
-                _options.EnabledEntityTypes ?? new string[0],
-                System.StringComparer.OrdinalIgnoreCase);
+            var enabledTypes = _options.EnabledEntityTypes ?? new string[0];
+            var enabled = new HashSet<string>(enabledTypes, System.StringComparer.OrdinalIgnoreCase);
+            var restrictToConfiguredList = enabledTypes.Length > 0;
 
             return _entityTypes.GetAll()
                 .Select(registration => new EntityAnalyticsTypeDto
                 {
                     EntityType = registration.EntityTypeCode,
                     DisplayName = registration.DisplayName,
-                    IsEnabled = enabled.Contains(registration.EntityTypeCode),
-                    IsAvailable = enabled.Contains(registration.EntityTypeCode)
+                    IsEnabled = !restrictToConfiguredList || enabled.Contains(registration.EntityTypeCode),
+                    IsAvailable = (!restrictToConfiguredList || enabled.Contains(registration.EntityTypeCode))
                         && _repository.HasAnyCurrentMetrics(registration.EntityTypeCode),
                     ProfileRouteTemplate = registration.ProfileRouteTemplate
                 })

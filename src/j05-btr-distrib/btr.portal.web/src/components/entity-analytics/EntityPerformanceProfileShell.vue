@@ -1,5 +1,8 @@
 <script setup lang="ts">
 import Message from 'primevue/message'
+import Button from 'primevue/button'
+import { RouterLink } from 'vue-router'
+import { computed } from 'vue'
 import DashboardDetailLayout from '@/components/dashboard/DashboardDetailLayout.vue'
 import ProfileOverviewSection from '@/components/entity-analytics/ProfileOverviewSection.vue'
 import ProfileKpiSummarySection from '@/components/entity-analytics/ProfileKpiSummarySection.vue'
@@ -11,16 +14,42 @@ import ProfileAttentionHistorySection from '@/components/entity-analytics/Profil
 import ProfileRelatedEntitiesSection from '@/components/entity-analytics/ProfileRelatedEntitiesSection.vue'
 import ProfileEvidenceSection from '@/components/entity-analytics/ProfileEvidenceSection.vue'
 import type { EntityPerformanceProfileResponse } from '@/models/entityAnalytics'
+import { buildCompareRoute, getEntityAnalyticsNav } from '@/navigation/entityAnalyticsNavigation'
 
-defineProps<{
+const props = defineProps<{
   profile: EntityPerformanceProfileResponse | null
   loading?: boolean
   error?: string | null
+  entityCode?: string | null
 }>()
 
 const emit = defineEmits<{
   refresh: []
 }>()
+
+const resolvedEntityType = computed(
+  () => props.profile?.EntityType ?? props.profile?.Overview?.EntityType ?? null,
+)
+
+const resolvedEntityCode = computed(
+  () =>
+    props.entityCode?.trim()
+    || props.profile?.Overview?.EntityCode?.trim()
+    || props.profile?.EntityId?.trim()
+    || null,
+)
+
+const navConfig = computed(() => getEntityAnalyticsNav(resolvedEntityType.value))
+
+const compareRoute = computed(() => {
+  if (!navConfig.value) return null
+  return buildCompareRoute(navConfig.value.entityType, resolvedEntityCode.value)
+})
+
+const compareLabel = computed(() => {
+  if (!navConfig.value) return null
+  return `Compare ${navConfig.value.pluralLabel}`
+})
 </script>
 
 <template>
@@ -32,14 +61,40 @@ const emit = defineEmits<{
     :generated-at="profile?.GeneratedAt"
     @refresh="emit('refresh')"
   >
+    <template #header-actions>
+      <RouterLink
+        v-if="compareRoute && compareLabel"
+        v-slot="{ navigate }"
+        :to="compareRoute"
+        custom
+      >
+        <Button
+          :label="compareLabel"
+          icon="pi pi-chart-bar"
+          outlined
+          severity="secondary"
+          @click="navigate"
+        />
+      </RouterLink>
+      <RouterLink v-slot="{ navigate }" :to="{ name: 'entity-analytics-home' }" custom>
+        <Button
+          label="Entity Analytics"
+          icon="pi pi-id-card"
+          text
+          severity="secondary"
+          @click="navigate"
+        />
+      </RouterLink>
+    </template>
+
     <Message
       v-if="profile && profile.IsAvailable === false && !loading"
       severity="info"
       :closable="false"
       class="entity-profile-shell__banner"
     >
-      Snapshot data is not yet available for this entity. Run the Customer dashboard snapshot
-      worker to populate Entity Analytics L0 data.
+      Snapshot data is not yet available for this entity. Run the domain dashboard snapshot worker
+      to populate Entity Analytics data.
     </Message>
 
     <div class="entity-profile-shell__sections">

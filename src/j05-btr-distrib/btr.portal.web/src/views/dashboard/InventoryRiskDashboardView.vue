@@ -13,6 +13,7 @@ import InventoryRiskAttentionList from '@/components/dashboard/InventoryRiskAtte
 import InventoryRiskNavigationSection from '@/components/dashboard/InventoryRiskNavigationSection.vue'
 import Top10RankingTable from '@/components/dashboard/Top10RankingTable.vue'
 import { formatCurrency, formatNumber, formatPercent } from '@/services/formatters'
+import { PROFILE_ROW_CLICK_HINT } from '@/navigation/entityAnalyticsNavigation'
 import { INVENTORY_RISK_ATTENTION_SIGNAL_ALL } from '@/services/inventoryRiskAttentionSignals'
 import { resolveInvestigationSourceLabel } from '@/services/investigationSourceLabels'
 import { navigateToInvestigation } from '@/services/navigateToInvestigation'
@@ -286,6 +287,7 @@ onMounted(() => {
           value-field="InventoryValue"
           percent-field="PercentOfAtRisk"
           empty-message="No dead stock ranking data."
+          :click-hint="PROFILE_ROW_CLICK_HINT"
           clickable
           @row-click="onRankingRowClick"
         />
@@ -297,6 +299,7 @@ onMounted(() => {
           value-field="InventoryValue"
           percent-field="PercentOfAtRisk"
           empty-message="No slow moving ranking data."
+          :click-hint="PROFILE_ROW_CLICK_HINT"
           clickable
           @row-click="onRankingRowClick"
         />

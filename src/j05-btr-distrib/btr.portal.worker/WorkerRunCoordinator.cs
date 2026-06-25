@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.Linq;
 using btr.application.ReportingContext.DashboardSnapshotAgg.Progress;
 using btr.application.ReportingContext.DashboardSnapshotAgg.UseCases;
+using btr.application.ReportingContext.EntityAnalyticsAgg.Backfill.UseCases;
 using btr.infrastructure.Helpers;
 using btr.portal.worker.Progress;
 using WorkerStepIds = btr.application.ReportingContext.DashboardSnapshotAgg.Progress.WorkerProgressStepIds;
@@ -53,7 +54,7 @@ namespace btr.portal.worker
 
                     using (var scope = serviceProvider.CreateScope())
                     {
-                        ExecuteRefresh(scope.ServiceProvider, domain, triggeredBy);
+                        ExecuteRefresh(scope.ServiceProvider, domain, triggeredBy, args);
                     }
 
                     ExecuteGenerateSummary();
@@ -167,7 +168,7 @@ namespace btr.portal.worker
             _reporter.StepCompleted(stepId, new WorkerProgressStepInfo { Duration = sw.Elapsed });
         }
 
-        private void ExecuteRefresh(IServiceProvider serviceProvider, string domain, string triggeredBy)
+        private void ExecuteRefresh(IServiceProvider serviceProvider, string domain, string triggeredBy, string[] args)
         {
             switch (domain.ToUpperInvariant())
             {
@@ -278,6 +279,16 @@ namespace btr.portal.worker
                     });
                     break;
 
+                case "ENTITYANALYTICSHISTORICALBACKFILL":
+                    RunDomain(serviceProvider, "EntityAnalyticsHistoricalBackfill", triggeredBy, sp =>
+                    {
+                        var worker = sp.GetRequiredService<IEntityAnalyticsHistoricalBackfillWorker>();
+                        var request = EntityAnalyticsBackfillCliParser.Parse(args, triggeredBy);
+                        worker.Execute(request);
+                        return request.Result?.DurationMs ?? 0;
+                    });
+                    break;
+
                 default:
                     throw new ArgumentException($"Unsupported domain '{domain}'.");
             }
@@ -370,6 +381,11 @@ namespace btr.portal.worker
                     displayNames.Add($"Refresh {domainName} Snapshot");
                 }
             }
+            else if (string.Equals(domain, "EntityAnalyticsHistoricalBackfill", StringComparison.OrdinalIgnoreCase))
+            {
+                stepIds.Add(WorkerStepIds.DomainStep("EntityAnalyticsHistoricalBackfill"));
+                displayNames.Add("Entity Analytics Historical Backfill");
+            }
             else
             {
                 stepIds.Add(WorkerStepIds.DomainStep(domain));
@@ -387,7 +403,8 @@ namespace btr.portal.worker
             var validDomains = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
             {
                 "All", "Sales", "Piutang", "Inventory", "InventoryRisk", "Purchasing",
-                "PurchasingManagement", "Customer", "Salesman", "Collection", "Location"
+                "PurchasingManagement", "Customer", "Salesman", "Collection", "Location",
+                "EntityAnalyticsHistoricalBackfill"
             };
 
             var validTriggers = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
@@ -397,7 +414,7 @@ namespace btr.portal.worker
 
             if (!validDomains.Contains(domain))
                 throw new ArgumentException(
-                    $"Invalid --domain '{domain}'. Expected All, Sales, Piutang, Inventory, InventoryRisk, Purchasing, PurchasingManagement, Customer, Salesman, Collection, or Location.");
+                    $"Invalid --domain '{domain}'. Expected All, Sales, Piutang, Inventory, InventoryRisk, Purchasing, PurchasingManagement, Customer, Salesman, Collection, Location, or EntityAnalyticsHistoricalBackfill.");
 
             if (!validTriggers.Contains(triggeredBy))
                 throw new ArgumentException(

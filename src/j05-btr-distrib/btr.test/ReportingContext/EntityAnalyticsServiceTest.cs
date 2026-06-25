@@ -1,5 +1,7 @@
 using System;
+using System;
 using System.Collections.Generic;
+using System.Linq;
 using btr.application.ReportingContext.EntityAnalyticsAgg.Contracts;
 using btr.application.ReportingContext.EntityAnalyticsAgg.Models;
 using btr.application.ReportingContext.EntityAnalyticsAgg.Models.Snapshot;
@@ -49,6 +51,33 @@ namespace btr.test.ReportingContext
                 t.EntityType == EntityTypeCode.Customer && t.IsEnabled && t.IsAvailable);
             types.Should().Contain(t =>
                 t.EntityType == EntityTypeCode.Salesman && !t.IsEnabled);
+        }
+
+        [Fact]
+        public void GetEnabledTypes_ReflectsPerEntitySnapshotAvailability()
+        {
+            var repository = new ServiceTestRepository(EntityTypeCode.Customer);
+            var service = CreateService(
+                enabledTypes: new[] { EntityTypeCode.Customer, EntityTypeCode.Salesman },
+                repository: repository);
+
+            var types = service.GetEnabledTypes();
+
+            types.Single(t => t.EntityType == EntityTypeCode.Customer).IsAvailable.Should().BeTrue();
+            types.Single(t => t.EntityType == EntityTypeCode.Salesman).IsAvailable.Should().BeFalse();
+        }
+
+        [Fact]
+        public void GetEnabledTypes_WhenConfigEmpty_EnablesAllRegisteredTypes()
+        {
+            var repository = new ServiceTestRepository { HasMetrics = true };
+            var service = CreateService(enabledTypes: new string[0], repository: repository);
+
+            var types = service.GetEnabledTypes();
+
+            types.Should().OnlyContain(t => t.IsEnabled);
+            types.Should().Contain(t => t.EntityType == EntityTypeCode.Customer);
+            types.Should().Contain(t => t.EntityType == EntityTypeCode.Salesman);
         }
 
         private static EntityAnalyticsService CreateService(
@@ -107,6 +136,15 @@ namespace btr.test.ReportingContext
 
         private sealed class ServiceTestRepository : EntityAnalyticsRepositoryStubBase
         {
+            private readonly HashSet<string> _typesWithMetrics;
+
+            public ServiceTestRepository(params string[] typesWithMetrics)
+            {
+                _typesWithMetrics = new HashSet<string>(
+                    typesWithMetrics ?? Array.Empty<string>(),
+                    StringComparer.OrdinalIgnoreCase);
+            }
+
             public bool HasMetrics { get; set; }
 
             public override IReadOnlyList<EntityAnalyticsCurrentRow> GetCurrentMetrics(string entityType, string entityId)
@@ -120,7 +158,8 @@ namespace btr.test.ReportingContext
 
             public override DateTime? GetLatestGeneratedAt(string entityType, string entityId) => null;
 
-            public override bool HasAnyCurrentMetrics(string entityType) => HasMetrics;
+            public override bool HasAnyCurrentMetrics(string entityType)
+                => HasMetrics || _typesWithMetrics.Contains(entityType);
         }
     }
 }

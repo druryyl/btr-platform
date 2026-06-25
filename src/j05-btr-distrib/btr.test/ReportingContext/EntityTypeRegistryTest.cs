@@ -1,4 +1,6 @@
+using System;
 using System.Collections.Generic;
+using System.Linq;
 using btr.application.ReportingContext.EntityAnalyticsAgg.Contracts;
 using btr.application.ReportingContext.EntityAnalyticsAgg.Models;
 using btr.application.ReportingContext.EntityAnalyticsAgg.Services;
@@ -80,6 +82,19 @@ namespace btr.test.ReportingContext
             orchestrator.ProduceForEntityType("customer", new EntityAnalyticsProduceContext());
 
             customerProducer.ProduceCount.Should().Be(1);
+        }
+
+        [Fact]
+        public void ProduceForDomain_WhenNoProducerRegistered_Throws()
+        {
+            var orchestrator = new EntityAnalyticsProducerOrchestrator(
+                Array.Empty<IEntityAnalyticsProducer>(),
+                new EntityTypeRegistry());
+
+            Action act = () => orchestrator.ProduceForDomain("Salesman", new EntityAnalyticsProduceContext());
+
+            act.Should().Throw<InvalidOperationException>()
+                .WithMessage("*Salesman*");
         }
 
         private sealed class RecordingProducer : IEntityAnalyticsProducer

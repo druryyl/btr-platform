@@ -3,6 +3,7 @@ import type { PortalMenuCode } from './portalMenu.types'
 export const PortalMenuCodes = {
   EX01: 'EX01',
   EX02: 'EX02',
+  EX03: 'EX03',
   SA01: 'SA01',
   SA02: 'SA02',
   SA03: 'SA03',

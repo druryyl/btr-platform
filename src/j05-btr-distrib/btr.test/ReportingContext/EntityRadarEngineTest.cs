@@ -85,6 +85,39 @@ namespace btr.test.ReportingContext
             section.Axes.First().DisplayName.Should().Be("Revenue");
         }
 
+        [Fact]
+        public void ComputeAndPersistScores_SalesmanAllActivePeerGroup_UsesUndimensionedPopulationQuery()
+        {
+            var entityTypes = new EntityTypeRegistry();
+            entityTypes.Register(new EntityTypeRegistration
+            {
+                EntityTypeCode = EntityTypeCode.Salesman,
+                DisplayName = "Salesman",
+                KpiPackId = SalesmanEntityAnalyticsRegistrar.KpiPackId,
+                PeerGroupRuleId = PeerGroupResolver.SalesmanAllActive
+            });
+            var registry = new EntityAnalyticsKpiRegistry(entityTypes);
+            new SalesmanEntityAnalyticsRegistrar().Register(
+                entityTypes,
+                registry,
+                new EntityAnalyticsDimensionLabelRegistry());
+
+            var repository = new PopulationTrackingRepository();
+            var engine = new EntityRadarEngine(repository, registry, entityTypes);
+            SeedSalesmanPeerGroup(repository, 5);
+
+            engine.ComputeAndPersistScores(
+                EntityTypeCode.Salesman,
+                2026,
+                6,
+                "refresh-1",
+                new DateTime(2026, 6, 24));
+
+            repository.LastDimensionKpiId.Should().BeNull(
+                "salesman-all-active has no dimension KPI; GetActivePopulation must use the undimensioned SQL branch");
+            repository.RadarRows.Should().NotBeEmpty();
+        }
+
         private void SeedPeerGroup(string wilayah, int count, decimal omzet)
         {
             for (var i = 1; i <= count; i++)
@@ -140,7 +173,71 @@ namespace btr.test.ReportingContext
             }
         }
 
-        private sealed class RadarTestRepository : EntityAnalyticsRepositoryStubBase
+        private static void SeedSalesmanPeerGroup(PopulationTrackingRepository repository, int count)
+        {
+            for (var i = 1; i <= count; i++)
+            {
+                var entityId = $"SP00{i}";
+                repository.CurrentRows.Add(new EntityAnalyticsCurrentRow
+                {
+                    EntityType = EntityTypeCode.Salesman,
+                    EntityId = entityId,
+                    EntityCode = entityId,
+                    KpiId = EntityAnalyticsMetaKpiIds.IsActive,
+                    NumericValue = 1m,
+                    GeneratedAt = new DateTime(2026, 6, 24)
+                });
+                repository.CurrentRows.Add(new EntityAnalyticsCurrentRow
+                {
+                    EntityType = EntityTypeCode.Salesman,
+                    EntityId = entityId,
+                    EntityCode = entityId,
+                    KpiId = "SF-KPI-008",
+                    NumericValue = 1_000_000m + i,
+                    GeneratedAt = new DateTime(2026, 6, 24)
+                });
+                repository.CurrentRows.Add(new EntityAnalyticsCurrentRow
+                {
+                    EntityType = EntityTypeCode.Salesman,
+                    EntityId = entityId,
+                    EntityCode = entityId,
+                    KpiId = "SF-KPI-009",
+                    NumericValue = 80m + i,
+                    GeneratedAt = new DateTime(2026, 6, 24)
+                });
+                repository.CurrentRows.Add(new EntityAnalyticsCurrentRow
+                {
+                    EntityType = EntityTypeCode.Salesman,
+                    EntityId = entityId,
+                    EntityCode = entityId,
+                    KpiId = "SF-KPI-010",
+                    NumericValue = 50_000m,
+                    GeneratedAt = new DateTime(2026, 6, 24)
+                });
+                repository.MonthlyRows.Add(new EntityAnalyticsMonthlyRow
+                {
+                    EntityType = EntityTypeCode.Salesman,
+                    EntityId = entityId,
+                    PeriodYear = 2026,
+                    PeriodMonth = 6,
+                    KpiId = "SF-KPI-008",
+                    NumericValue = 1_000_000m + i,
+                    IsClosed = false
+                });
+                repository.MonthlyRows.Add(new EntityAnalyticsMonthlyRow
+                {
+                    EntityType = EntityTypeCode.Salesman,
+                    EntityId = entityId,
+                    PeriodYear = 2026,
+                    PeriodMonth = 5,
+                    KpiId = "SF-KPI-008",
+                    NumericValue = 900_000m,
+                    IsClosed = true
+                });
+            }
+        }
+
+        private class RadarTestRepository : EntityAnalyticsRepositoryStubBase
         {
             public override IReadOnlyList<EntityAnalyticsCurrentRow> GetCurrentMetrics(string entityType, string entityId)
                 => CurrentRows.Where(r => string.Equals(r.EntityType, entityType, StringComparison.OrdinalIgnoreCase)
@@ -157,6 +254,17 @@ namespace btr.test.ReportingContext
             public override DateTime? GetLatestGeneratedAt(string entityType, string entityId) => new DateTime(2026, 6, 24);
 
             public override bool HasAnyCurrentMetrics(string entityType) => CurrentRows.Any();
+        }
+
+        private sealed class PopulationTrackingRepository : RadarTestRepository
+        {
+            public string LastDimensionKpiId { get; private set; }
+
+            public override IReadOnlyList<EntityPopulationRow> GetActivePopulation(string entityType, string dimensionKpiId = null)
+            {
+                LastDimensionKpiId = dimensionKpiId;
+                return base.GetActivePopulation(entityType, dimensionKpiId);
+            }
         }
     }
 }

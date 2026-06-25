@@ -25,6 +25,7 @@ watch([entityType, entityId], loadCurrentProfile)
     :profile="store.profile"
     :loading="store.loading"
     :error="store.error"
+    :entity-code="entityId"
     @refresh="loadCurrentProfile()"
   />
 </template>

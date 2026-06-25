@@ -7,6 +7,7 @@ import ProgressSpinner from 'primevue/progressspinner'
 import Tag from 'primevue/tag'
 import type { DashboardPurchasingPrincipalExposureItem } from '@/models/dashboard'
 import { formatCurrency, formatPercent } from '@/services/formatters'
+import { PROFILE_ROW_CLICK_HINT } from '@/navigation/entityAnalyticsNavigation'
 import { navigateToReport } from '@/services/navigateToReport'
 
 defineProps<{
@@ -32,9 +33,13 @@ function onRowClick(event: { data: DashboardPurchasingPrincipalExposureItem }): 
 <template>
   <Card class="purchasing-exposure-table">
     <template #title>
-      <div class="purchasing-exposure-table__title">
-        <i class="pi pi-chart-bar" aria-hidden="true" />
-        <span>Principal Exposure Comparison</span>
+      <div class="purchasing-exposure-table__title-block">
+        <div class="purchasing-exposure-table__title">
+          <i class="pi pi-chart-bar" aria-hidden="true" />
+          <span>Principal Exposure Comparison</span>
+          <i class="pi pi-id-card purchasing-exposure-table__profile-icon" aria-hidden="true" />
+        </div>
+        <p class="purchasing-exposure-table__hint">{{ PROFILE_ROW_CLICK_HINT }}</p>
       </div>
     </template>
 
@@ -94,10 +99,28 @@ function onRowClick(event: { data: DashboardPurchasingPrincipalExposureItem }): 
 </template>
 
 <style scoped>
+.purchasing-exposure-table__title-block {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
 .purchasing-exposure-table__title {
   display: flex;
   align-items: center;
   gap: 0.5rem;
+}
+
+.purchasing-exposure-table__profile-icon {
+  color: var(--p-primary-color);
+  font-size: 0.95rem;
+}
+
+.purchasing-exposure-table__hint {
+  margin: 0;
+  font-size: 0.8125rem;
+  font-weight: 400;
+  color: var(--p-text-muted-color);
 }
 
 .purchasing-exposure-table__loading {
@@ -115,6 +138,10 @@ function onRowClick(event: { data: DashboardPurchasingPrincipalExposureItem }): 
 
 .purchasing-exposure-table__table--clickable :deep(.p-datatable-tbody > tr) {
   cursor: pointer;
+}
+
+.purchasing-exposure-table__table--clickable :deep(.p-datatable-tbody > tr:hover) {
+  background: var(--p-surface-100);
 }
 
 .purchasing-exposure-table__pct {

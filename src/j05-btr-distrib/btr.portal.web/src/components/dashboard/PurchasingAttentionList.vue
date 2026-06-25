@@ -203,8 +203,10 @@ function investigate(item: DashboardPurchasingAttentionItem): void {
                 <Button
                   v-if="data.ProfileRoute"
                   label="Profile"
+                  icon="pi pi-id-card"
                   text
                   size="small"
+                  title="Open Performance Profile"
                   @click="openProfile(data)"
                 />
                 <Button

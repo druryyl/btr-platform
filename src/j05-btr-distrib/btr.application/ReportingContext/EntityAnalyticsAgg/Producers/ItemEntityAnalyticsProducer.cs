@@ -375,10 +375,7 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Producers
 
             foreach (var (kpiId, value) in BuildTrendKpiValues(item))
             {
-                if (value.HasValue)
-                {
-                    rows.Add(CreateRow(entityId, entityCode, kpiId, value, null, generatedAt));
-                }
+                rows.Add(CreateRow(entityId, entityCode, kpiId, value, null, generatedAt));
             }
 
             rows.Add(CreateMetaRow(entityId, entityCode, EntityAnalyticsMetaKpiIds.DisplayName, null, item.BrgName, generatedAt));

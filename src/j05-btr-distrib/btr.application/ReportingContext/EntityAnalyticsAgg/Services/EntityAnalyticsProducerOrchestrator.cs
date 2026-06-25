@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using btr.application.ReportingContext.EntityAnalyticsAgg.Contracts;
@@ -27,8 +28,17 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Services
             if (string.IsNullOrWhiteSpace(workerDomain) || context is null)
                 return;
 
-            foreach (var producer in _producers.Where(p =>
-                string.Equals(p.WorkerDomain, workerDomain, System.StringComparison.OrdinalIgnoreCase)))
+            var matched = _producers
+                .Where(p => string.Equals(p.WorkerDomain, workerDomain, StringComparison.OrdinalIgnoreCase))
+                .ToList();
+
+            if (matched.Count == 0)
+            {
+                throw new InvalidOperationException(
+                    $"No {nameof(IEntityAnalyticsProducer)} is registered for worker domain '{workerDomain}'.");
+            }
+
+            foreach (var producer in matched)
             {
                 producer.Produce(context);
             }

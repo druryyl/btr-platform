@@ -2411,7 +2411,7 @@ CREATE TABLE BTRPD_EntityAnalytics_Current
     EntityType               VARCHAR(30)    NOT NULL CONSTRAINT DF_BTRPD_EntityAnalytics_Current_EntityType DEFAULT(''),
     EntityId                 VARCHAR(100)   NOT NULL CONSTRAINT DF_BTRPD_EntityAnalytics_Current_EntityId DEFAULT(''),
     EntityCode               VARCHAR(50)    NOT NULL CONSTRAINT DF_BTRPD_EntityAnalytics_Current_EntityCode DEFAULT(''),
-    KpiId                    VARCHAR(20)    NOT NULL CONSTRAINT DF_BTRPD_EntityAnalytics_Current_KpiId DEFAULT(''),
+    KpiId                    VARCHAR(50)    NOT NULL CONSTRAINT DF_BTRPD_EntityAnalytics_Current_KpiId DEFAULT(''),
     NumericValue             DECIMAL(18,4)  NULL,
     TextValue                VARCHAR(200)   NULL,
     DefinitionVersion        INT            NULL,
@@ -2446,7 +2446,7 @@ CREATE TABLE BTRPD_EntityAnalytics_Monthly
     EntityCode               VARCHAR(50)    NOT NULL CONSTRAINT DF_BTRPD_EntityAnalytics_Monthly_EntityCode DEFAULT(''),
     PeriodYear               INT            NOT NULL CONSTRAINT DF_BTRPD_EntityAnalytics_Monthly_PeriodYear DEFAULT(0),
     PeriodMonth              INT            NOT NULL CONSTRAINT DF_BTRPD_EntityAnalytics_Monthly_PeriodMonth DEFAULT(0),
-    KpiId                    VARCHAR(20)    NOT NULL CONSTRAINT DF_BTRPD_EntityAnalytics_Monthly_KpiId DEFAULT(''),
+    KpiId                    VARCHAR(50)    NOT NULL CONSTRAINT DF_BTRPD_EntityAnalytics_Monthly_KpiId DEFAULT(''),
     NumericValue             DECIMAL(18,4)  NULL,
     TextValue                VARCHAR(200)   NULL,
     PeriodSemantics          VARCHAR(30)    NOT NULL CONSTRAINT DF_BTRPD_EntityAnalytics_Monthly_PeriodSemantics DEFAULT(''),
@@ -2510,7 +2510,7 @@ CREATE TABLE BTRPD_EntityAnalytics_Ranking
     EntityCode               VARCHAR(50)    NOT NULL CONSTRAINT DF_BTRPD_EntityAnalytics_Ranking_EntityCode DEFAULT(''),
     PeriodYear               INT            NOT NULL CONSTRAINT DF_BTRPD_EntityAnalytics_Ranking_PeriodYear DEFAULT(0),
     PeriodMonth              INT            NOT NULL CONSTRAINT DF_BTRPD_EntityAnalytics_Ranking_PeriodMonth DEFAULT(0),
-    KpiId                    VARCHAR(20)    NOT NULL CONSTRAINT DF_BTRPD_EntityAnalytics_Ranking_KpiId DEFAULT(''),
+    KpiId                    VARCHAR(50)    NOT NULL CONSTRAINT DF_BTRPD_EntityAnalytics_Ranking_KpiId DEFAULT(''),
     RankPosition             INT            NOT NULL CONSTRAINT DF_BTRPD_EntityAnalytics_Ranking_RankPosition DEFAULT(0),
     PopulationSize           INT            NOT NULL CONSTRAINT DF_BTRPD_EntityAnalytics_Ranking_PopulationSize DEFAULT(0),
     Percentile               DECIMAL(5,2)   NOT NULL CONSTRAINT DF_BTRPD_EntityAnalytics_Ranking_Percentile DEFAULT(0),
@@ -2658,6 +2658,84 @@ GO
 IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_BTRPD_EntityAnalytics_Radar_Type_Period' AND object_id = OBJECT_ID(N'dbo.BTRPD_EntityAnalytics_Radar'))
 CREATE INDEX IX_BTRPD_EntityAnalytics_Radar_Type_Period
     ON BTRPD_EntityAnalytics_Radar (EntityType, PeriodYear, PeriodMonth)
+GO
+
+-- BTRPD_EntityAnalytics_BackfillJob (M32.B1.1)
+IF OBJECT_ID(N'dbo.BTRPD_EntityAnalytics_BackfillJob', N'U') IS NULL
+BEGIN
+CREATE TABLE BTRPD_EntityAnalytics_BackfillJob
+(
+    BackfillJobId       VARCHAR(26)  NOT NULL CONSTRAINT DF_BTRPD_EntityAnalytics_BackfillJob_Id DEFAULT(''),
+    EntityTypeScope     VARCHAR(30)  NOT NULL CONSTRAINT DF_BTRPD_EntityAnalytics_BackfillJob_EntityTypeScope DEFAULT(''),
+    FromPeriodYear      INT          NOT NULL CONSTRAINT DF_BTRPD_EntityAnalytics_BackfillJob_FromPeriodYear DEFAULT(0),
+    FromPeriodMonth     INT          NOT NULL CONSTRAINT DF_BTRPD_EntityAnalytics_BackfillJob_FromPeriodMonth DEFAULT(0),
+    ToPeriodYear        INT          NOT NULL CONSTRAINT DF_BTRPD_EntityAnalytics_BackfillJob_ToPeriodYear DEFAULT(0),
+    ToPeriodMonth       INT          NOT NULL CONSTRAINT DF_BTRPD_EntityAnalytics_BackfillJob_ToPeriodMonth DEFAULT(0),
+    Layers              VARCHAR(50)  NOT NULL CONSTRAINT DF_BTRPD_EntityAnalytics_BackfillJob_Layers DEFAULT(''),
+    OptionsJson         VARCHAR(2000) NOT NULL CONSTRAINT DF_BTRPD_EntityAnalytics_BackfillJob_OptionsJson DEFAULT(''),
+    Status              VARCHAR(20)  NOT NULL CONSTRAINT DF_BTRPD_EntityAnalytics_BackfillJob_Status DEFAULT(''),
+    StartedAt           DATETIME     NOT NULL CONSTRAINT DF_BTRPD_EntityAnalytics_BackfillJob_StartedAt DEFAULT('3000-01-01'),
+    CompletedAt         DATETIME     NULL,
+    TriggeredBy         VARCHAR(20)  NOT NULL CONSTRAINT DF_BTRPD_EntityAnalytics_BackfillJob_TriggeredBy DEFAULT(''),
+    MachineName         VARCHAR(100) NOT NULL CONSTRAINT DF_BTRPD_EntityAnalytics_BackfillJob_MachineName DEFAULT(''),
+    LastError           VARCHAR(500) NOT NULL CONSTRAINT DF_BTRPD_EntityAnalytics_BackfillJob_LastError DEFAULT(''),
+
+    CONSTRAINT PK_BTRPD_EntityAnalytics_BackfillJob PRIMARY KEY CLUSTERED (BackfillJobId)
+)
+END
+GO
+
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_BTRPD_EntityAnalytics_BackfillJob_Status_StartedAt' AND object_id = OBJECT_ID(N'dbo.BTRPD_EntityAnalytics_BackfillJob'))
+CREATE INDEX IX_BTRPD_EntityAnalytics_BackfillJob_Status_StartedAt
+    ON BTRPD_EntityAnalytics_BackfillJob (Status, StartedAt DESC)
+GO
+
+-- BTRPD_EntityAnalytics_BackfillCheckpoint (M32.B1.1)
+IF OBJECT_ID(N'dbo.BTRPD_EntityAnalytics_BackfillCheckpoint', N'U') IS NULL
+BEGIN
+CREATE TABLE BTRPD_EntityAnalytics_BackfillCheckpoint
+(
+    BackfillCheckpointId VARCHAR(26)  NOT NULL CONSTRAINT DF_BTRPD_EntityAnalytics_BackfillCheckpoint_Id DEFAULT(''),
+    BackfillJobId        VARCHAR(26)  NOT NULL CONSTRAINT DF_BTRPD_EntityAnalytics_BackfillCheckpoint_JobId DEFAULT(''),
+    EntityType           VARCHAR(30)  NOT NULL CONSTRAINT DF_BTRPD_EntityAnalytics_BackfillCheckpoint_EntityType DEFAULT(''),
+    PeriodYear           INT          NOT NULL CONSTRAINT DF_BTRPD_EntityAnalytics_BackfillCheckpoint_PeriodYear DEFAULT(0),
+    PeriodMonth          INT          NOT NULL CONSTRAINT DF_BTRPD_EntityAnalytics_BackfillCheckpoint_PeriodMonth DEFAULT(0),
+    Status               VARCHAR(20)  NOT NULL CONSTRAINT DF_BTRPD_EntityAnalytics_BackfillCheckpoint_Status DEFAULT(''),
+    LayersCompleted      VARCHAR(50)  NOT NULL CONSTRAINT DF_BTRPD_EntityAnalytics_BackfillCheckpoint_LayersCompleted DEFAULT(''),
+    EntityCount          INT          NOT NULL CONSTRAINT DF_BTRPD_EntityAnalytics_BackfillCheckpoint_EntityCount DEFAULT(0),
+    RowCountsJson        VARCHAR(500) NOT NULL CONSTRAINT DF_BTRPD_EntityAnalytics_BackfillCheckpoint_RowCountsJson DEFAULT(''),
+    StartedAt            DATETIME     NOT NULL CONSTRAINT DF_BTRPD_EntityAnalytics_BackfillCheckpoint_StartedAt DEFAULT('3000-01-01'),
+    CompletedAt          DATETIME     NULL,
+    LastError            VARCHAR(500) NOT NULL CONSTRAINT DF_BTRPD_EntityAnalytics_BackfillCheckpoint_LastError DEFAULT(''),
+    LastRefreshLogId     VARCHAR(26)  NOT NULL CONSTRAINT DF_BTRPD_EntityAnalytics_BackfillCheckpoint_LastRefreshLogId DEFAULT(''),
+
+    CONSTRAINT PK_BTRPD_EntityAnalytics_BackfillCheckpoint PRIMARY KEY CLUSTERED (BackfillCheckpointId)
+)
+END
+GO
+
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'UX_BTRPD_EntityAnalytics_BackfillCheckpoint_Job_Type_Period' AND object_id = OBJECT_ID(N'dbo.BTRPD_EntityAnalytics_BackfillCheckpoint'))
+CREATE UNIQUE INDEX UX_BTRPD_EntityAnalytics_BackfillCheckpoint_Job_Type_Period
+    ON BTRPD_EntityAnalytics_BackfillCheckpoint (BackfillJobId, EntityType, PeriodYear, PeriodMonth)
+GO
+
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_BTRPD_EntityAnalytics_BackfillCheckpoint_Job_Status' AND object_id = OBJECT_ID(N'dbo.BTRPD_EntityAnalytics_BackfillCheckpoint'))
+CREATE INDEX IX_BTRPD_EntityAnalytics_BackfillCheckpoint_Job_Status
+    ON BTRPD_EntityAnalytics_BackfillCheckpoint (BackfillJobId, EntityType, Status)
+GO
+
+-- BTRPD_EntityAnalytics_BackfillLock (M32.B1.1)
+IF OBJECT_ID(N'dbo.BTRPD_EntityAnalytics_BackfillLock', N'U') IS NULL
+BEGIN
+CREATE TABLE BTRPD_EntityAnalytics_BackfillLock
+(
+    EntityType    VARCHAR(30) NOT NULL CONSTRAINT DF_BTRPD_EntityAnalytics_BackfillLock_EntityType DEFAULT(''),
+    BackfillJobId VARCHAR(26) NOT NULL CONSTRAINT DF_BTRPD_EntityAnalytics_BackfillLock_JobId DEFAULT(''),
+    AcquiredAt    DATETIME    NOT NULL CONSTRAINT DF_BTRPD_EntityAnalytics_BackfillLock_AcquiredAt DEFAULT('3000-01-01'),
+
+    CONSTRAINT PK_BTRPD_EntityAnalytics_BackfillLock PRIMARY KEY CLUSTERED (EntityType)
+)
+END
 GO
 
 -- IX_BTR_Piutang_OpenBalance

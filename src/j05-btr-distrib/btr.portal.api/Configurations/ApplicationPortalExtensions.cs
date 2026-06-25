@@ -5,7 +5,10 @@ using btr.application.ReportingContext.DashboardFieldActivityAgg.Services;
 using btr.application.ReportingContext.DashboardSnapshotAgg;
 using btr.application.ReportingContext.DashboardSnapshotAgg.Services;
 using btr.application.ReportingContext.EntityAnalyticsAgg.Contracts;
+using btr.application.ReportingContext.EntityAnalyticsAgg.Backfill.Contracts;
+using btr.application.ReportingContext.EntityAnalyticsAgg.Backfill.Services;
 using btr.application.ReportingContext.EntityAnalyticsAgg.Options;
+using btr.application.ReportingContext.EntityAnalyticsAgg.Producers;
 using btr.application.ReportingContext.EntityAnalyticsAgg.Registrars;
 using btr.application.ReportingContext.EntityAnalyticsAgg.Services;
 using btr.application.SalesContext.SalesOmzetAgg.Contracts;
@@ -146,6 +149,11 @@ namespace btr.portal.api.Configurations
             services.AddScoped<IEntityProfileBuilder, EntityPerformanceProfileComposer>();
             services.AddScoped<IEntityAnalyticsService, EntityAnalyticsService>();
             services.AddScoped<EntityAnalyticsProducerOrchestrator>();
+            services.AddScoped<IEntityAnalyticsBackfillOrchestrator, EntityAnalyticsBackfillOrchestrator>();
+            services.AddScoped<IEntityAnalyticsProducer, CustomerEntityAnalyticsProducer>();
+            services.AddScoped<IEntityAnalyticsProducer, SalesmanEntityAnalyticsProducer>();
+            services.AddScoped<IEntityAnalyticsProducer, SupplierEntityAnalyticsProducer>();
+            services.AddScoped<IEntityAnalyticsProducer, ItemEntityAnalyticsProducer>();
             services
                 .Scan(selector => selector
                     .FromAssemblyOf<ApplicationAssemblyAnchor>()

@@ -14,6 +14,7 @@ import type {
   DashboardSalesmanAttentionItem,
   DashboardSalesmanRankingRow,
 } from '@/models/dashboard'
+import { PROFILE_ROW_CLICK_HINT } from '@/navigation/entityAnalyticsNavigation'
 import { formatNumber, formatPercent } from '@/services/formatters'
 import {
   filterActiveSalesmen,
@@ -272,6 +273,7 @@ onMounted(() => {
           value-field="Amount"
           percent-field="PercentOfTotal"
           empty-message="No omzet ranking data."
+          :click-hint="PROFILE_ROW_CLICK_HINT"
           clickable
           @row-click="onRankingRowClick"
         />
@@ -282,6 +284,7 @@ onMounted(() => {
           :loading="dashboard.loading"
           value-field="Amount"
           empty-message="No achievement ranking data."
+          :click-hint="PROFILE_ROW_CLICK_HINT"
           clickable
           @row-click="onRankingRowClick"
         />
@@ -298,6 +301,7 @@ onMounted(() => {
         value-field="Amount"
         percent-field="PercentOfTotal"
         empty-message="No piutang ranking data."
+        :click-hint="PROFILE_ROW_CLICK_HINT"
         clickable
         @row-click="onRankingRowClick"
       />

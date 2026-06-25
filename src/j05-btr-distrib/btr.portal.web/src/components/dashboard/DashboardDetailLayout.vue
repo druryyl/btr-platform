@@ -41,13 +41,16 @@ const visibleError = computed(() => (showError.value ? props.error : null))
           Data as of {{ formatDateTime(generatedAt!) }}
         </p>
       </div>
-      <Button
-        label="Refresh"
-        icon="pi pi-refresh"
-        outlined
-        :loading="loading"
-        @click="emit('refresh')"
-      />
+      <div class="dashboard-detail__header-actions">
+        <slot name="header-actions" />
+        <Button
+          label="Refresh"
+          icon="pi pi-refresh"
+          outlined
+          :loading="loading"
+          @click="emit('refresh')"
+        />
+      </div>
     </div>
 
     <Message v-if="visibleError" severity="error" :closable="false">
@@ -65,6 +68,13 @@ const visibleError = computed(() => (showError.value ? props.error : null))
   justify-content: space-between;
   gap: 1rem;
   margin-bottom: 1.5rem;
+}
+
+.dashboard-detail__header-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-shrink: 0;
 }
 
 .dashboard-detail__header h1 {

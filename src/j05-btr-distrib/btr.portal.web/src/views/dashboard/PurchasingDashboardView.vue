@@ -14,6 +14,7 @@ import PostingStatusPieChart from '@/components/dashboard/PostingStatusPieChart.
 import Top10RankingTable from '@/components/dashboard/Top10RankingTable.vue'
 import WeeklyTrendChart from '@/components/dashboard/WeeklyTrendChart.vue'
 import type { DashboardPurchasingPrincipalExposureItem, DashboardSalesWeekTrendItem } from '@/models/dashboard'
+import { PROFILE_ROW_CLICK_HINT } from '@/navigation/entityAnalyticsNavigation'
 import { PURCHASING_ATTENTION_SIGNAL_ALL } from '@/services/purchasingAttentionSignals'
 import { resolveInvestigationSourceLabel } from '@/services/investigationSourceLabels'
 import { navigateToInvestigation } from '@/services/navigateToInvestigation'
@@ -59,6 +60,11 @@ const sectionNavItems = [
 
 function onTop10RowClick(row: Record<string, unknown>): void {
   const item = row as unknown as DashboardPurchasingPrincipalExposureItem
+  if (item.ProfileRoute) {
+    void router.push(item.ProfileRoute)
+    return
+  }
+
   if (!item.Investigation) return
   navigateToInvestigation(router, item.Investigation, sourceLabel)
 }
@@ -159,6 +165,7 @@ onMounted(() => {
         value-field="MtdPurchaseAmount"
         percent-field="PercentOfPurchase"
         empty-message="No principal ranking data for the current period."
+        :click-hint="PROFILE_ROW_CLICK_HINT"
         clickable
         @row-click="onTop10RowClick"
       />

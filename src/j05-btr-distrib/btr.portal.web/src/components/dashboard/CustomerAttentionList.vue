@@ -145,6 +145,7 @@ function openProfile(item: DashboardCustomerAttentionItem): void {
                   v-if="data.ProfileRoute"
                   type="button"
                   class="customer-attention-list__code-link"
+                  title="Open Performance Profile"
                   @click="openProfile(data)"
                 >
                   {{ data.CustomerCode }}
@@ -166,8 +167,10 @@ function openProfile(item: DashboardCustomerAttentionItem): void {
                   <Button
                     v-if="data.ProfileRoute"
                     label="Profile"
+                    icon="pi pi-id-card"
                     text
                     size="small"
+                    title="Open Performance Profile"
                     @click="openProfile(data)"
                   />
                   <Button

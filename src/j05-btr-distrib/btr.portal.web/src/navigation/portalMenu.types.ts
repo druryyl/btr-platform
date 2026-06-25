@@ -1,6 +1,7 @@
 export type PortalMenuCode =
   | 'EX01'
   | 'EX02'
+  | 'EX03'
   | 'SA01'
   | 'SA02'
   | 'SA03'

@@ -30,6 +30,16 @@ const portalMenuItems: PortalMenuItem[] = [
     groupId: 'executive',
   }),
   item({
+    code: PortalMenuCodes.EX03,
+    label: 'Entity Analytics',
+    icon: 'pi pi-id-card',
+    routeName: 'entity-analytics-home',
+    route: '/analytics',
+    order: 3,
+    groupId: 'executive',
+    isDashboard: false,
+  }),
+  item({
     code: PortalMenuCodes.SA01,
     label: 'Sales',
     icon: 'pi pi-chart-line',

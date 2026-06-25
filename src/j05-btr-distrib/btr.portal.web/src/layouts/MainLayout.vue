@@ -36,6 +36,12 @@ const route = useRoute()
 
 function isActive(routeName: string): boolean {
 
+  if (routeName === 'entity-analytics-home') {
+
+    return route.path.startsWith('/analytics')
+
+  }
+
   return route.name === routeName
 
 }

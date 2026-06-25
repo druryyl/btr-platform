@@ -358,7 +358,6 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Producers
             rows.Add(CreateMetaRow(entityId, entityCode, EntityAnalyticsMetaKpiIds.IsActive, supplier.IsActiveMtd ? 1m : 0m, null, generatedAt));
 
             AddDimension(rows, entityId, entityCode, EntityAnalyticsMetaKpiIds.PurchaseShare, supplier.PercentOfPurchase, generatedAt);
-            AddDimension(rows, entityId, entityCode, EntityAnalyticsMetaKpiIds.InventoryValue, supplier.InventoryValue, generatedAt);
             AddDimension(rows, entityId, entityCode, EntityAnalyticsMetaKpiIds.AtRiskValue, supplier.AtRiskValue, generatedAt);
             AddDimension(rows, entityId, entityCode, EntityAnalyticsMetaKpiIds.ActiveMtd, supplier.IsActiveMtd ? "Yes" : "No", generatedAt);
             AddDimension(rows, entityId, entityCode, EntityAnalyticsMetaKpiIds.ActiveSkuCount, supplier.ActiveSkuCount.ToString(CultureInfo.InvariantCulture), generatedAt);

@@ -41,6 +41,29 @@ namespace btr.test.ReportingContext
         }
 
         [Fact]
+        public void Produce_EmitsUniqueEntityKpiPairs()
+        {
+            var repository = new RecordingRepository();
+            var producer = CreateProducer(repository);
+            var generatedAt = new DateTime(2026, 6, 24, 10, 0, 0);
+
+            producer.Produce(CreateContext(generatedAt, CreatePortfolioSupplier()));
+
+            var duplicates = repository.Rows
+                .GroupBy(r => new { r.EntityId, r.KpiId })
+                .Where(g => g.Count() > 1)
+                .Select(g => $"{g.Key.EntityId}/{g.Key.KpiId}")
+                .ToList();
+
+            duplicates.Should().BeEmpty("each EntityId+KpiId pair must appear exactly once in L0 output");
+
+            repository.Rows.Should().ContainSingle(r =>
+                r.EntityId == "S001"
+                && r.KpiId == EntityAnalyticsMetaKpiIds.InventoryValue
+                && r.NumericValue == 500_000m);
+        }
+
+        [Fact]
         public void Produce_WritesL1MonthlyRowsForTrendEligibleKpis()
         {
             var repository = new RecordingRepository();

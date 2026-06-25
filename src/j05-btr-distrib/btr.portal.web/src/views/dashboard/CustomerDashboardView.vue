@@ -9,6 +9,7 @@ import CustomerSegmentationSection from '@/components/dashboard/CustomerSegmenta
 import CustomerNavigationSection from '@/components/dashboard/CustomerNavigationSection.vue'
 import Top10RankingTable from '@/components/dashboard/Top10RankingTable.vue'
 import type { DashboardCustomerRankingRow } from '@/models/dashboard'
+import { PROFILE_ROW_CLICK_HINT } from '@/navigation/entityAnalyticsNavigation'
 import { formatCurrency, formatNumber, formatPercent } from '@/services/formatters'
 import { CUSTOMER_ATTENTION_SIGNAL_ALL } from '@/services/customerAttentionSignals'
 import { resolveInvestigationSourceLabel } from '@/services/investigationSourceLabels'
@@ -225,6 +226,7 @@ onMounted(() => {
           value-field="Amount"
           percent-field="PercentOfTotal"
           empty-message="No omzet ranking data."
+          :click-hint="PROFILE_ROW_CLICK_HINT"
           clickable
           @row-click="onRankingRowClick"
         />
@@ -236,6 +238,7 @@ onMounted(() => {
           value-field="Amount"
           percent-field="PercentOfTotal"
           empty-message="No piutang ranking data."
+          :click-hint="PROFILE_ROW_CLICK_HINT"
           clickable
           @row-click="onRankingRowClick"
         />
