@@ -41,6 +41,9 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Producers
             string entityType,
             IList<EntityAnalyticsMonthlyRow> monthlyRows)
         {
+            if (context?.Replay?.SkipL1Persist == true)
+                return;
+
             if (context?.Replay != null)
             {
                 if (monthlyRows != null)

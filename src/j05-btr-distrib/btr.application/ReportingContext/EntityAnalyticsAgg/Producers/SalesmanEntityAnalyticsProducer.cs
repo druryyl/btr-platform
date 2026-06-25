@@ -53,8 +53,16 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Producers
 
             var input = context.DomainInput as SalesmanEntityAnalyticsProduceInput;
             var portfolio = input?.SalesmanAggregate?.Portfolio;
+            var (periodYear, periodMonth) = EntityAnalyticsProducerReplaySupport.ResolvePeriod(context);
+
             if (portfolio == null || portfolio.Count == 0)
             {
+                if (context.Replay?.SkipL1Persist == true)
+                {
+                    ProduceReplayLayersOnly(context, input, periodYear, periodMonth);
+                    return;
+                }
+
                 EntityAnalyticsProducerReplaySupport.PersistL0(
                     _repository, context, EntityTypeCode.Salesman, Array.Empty<EntityAnalyticsCurrentRow>());
                 return;
@@ -66,8 +74,6 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Producers
             var monthlyRows = new List<EntityAnalyticsMonthlyRow>();
             var signalsByEntity = new Dictionary<string, IReadOnlyList<EntityAttentionSignalSnapshot>>(
                 StringComparer.OrdinalIgnoreCase);
-
-            var (periodYear, periodMonth) = EntityAnalyticsProducerReplaySupport.ResolvePeriod(context);
 
             foreach (var rep in portfolio)
             {
@@ -107,6 +113,53 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Producers
                 periodYear,
                 periodMonth,
                 signalsByEntity,
+                context.RefreshLogId,
+                context.GeneratedAt,
+                context.Replay);
+
+            _relationshipEngine.PersistRollups(
+                EntityTypeCode.Salesman,
+                periodYear,
+                periodMonth,
+                BuildRelationshipSnapshots(input),
+                context.RefreshLogId,
+                context.GeneratedAt,
+                context.Replay);
+
+            _radarEngine.ComputeAndPersistScores(
+                EntityTypeCode.Salesman,
+                periodYear,
+                periodMonth,
+                context.RefreshLogId,
+                context.GeneratedAt,
+                context.Replay);
+        }
+
+        private void ProduceReplayLayersOnly(
+            EntityAnalyticsProduceContext context,
+            SalesmanEntityAnalyticsProduceInput input,
+            int periodYear,
+            int periodMonth)
+        {
+            EntityAnalyticsProducerReplaySupport.PersistL0(
+                _repository, context, EntityTypeCode.Salesman, Array.Empty<EntityAnalyticsCurrentRow>());
+
+            EntityAnalyticsProducerReplaySupport.PersistL1(
+                _repository, _monthCloseService, context, EntityTypeCode.Salesman, Array.Empty<EntityAnalyticsMonthlyRow>());
+
+            _rankingEngine.ComputeAndPersistRanks(
+                EntityTypeCode.Salesman,
+                periodYear,
+                periodMonth,
+                context.RefreshLogId,
+                context.GeneratedAt,
+                context.Replay);
+
+            _attentionEngine.DiffAndPersistSignals(
+                EntityTypeCode.Salesman,
+                periodYear,
+                periodMonth,
+                new Dictionary<string, IReadOnlyList<EntityAttentionSignalSnapshot>>(StringComparer.OrdinalIgnoreCase),
                 context.RefreshLogId,
                 context.GeneratedAt,
                 context.Replay);

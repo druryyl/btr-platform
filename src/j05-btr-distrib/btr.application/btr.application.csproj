@@ -508,6 +508,7 @@
     <Compile Include="ReportingContext\EntityAnalyticsAgg\Backfill\Contracts\IEntityAnalyticsReplayDataLoaderResolver.cs" />
     <Compile Include="ReportingContext\EntityAnalyticsAgg\Backfill\Contracts\ISalesmanRepHistoryBackfillDal.cs" />
     <Compile Include="ReportingContext\EntityAnalyticsAgg\Backfill\Contracts\ISalesmanRepHistoryBackfillSource.cs" />
+    <Compile Include="ReportingContext\EntityAnalyticsAgg\Backfill\Contracts\ISalesmanReplayPeriodHandler.cs" />
     <Compile Include="ReportingContext\EntityAnalyticsAgg\Backfill\Loaders\CustomerReplayDataLoader.cs" />
     <Compile Include="ReportingContext\EntityAnalyticsAgg\Backfill\Loaders\EntityAnalyticsReplayDataLoaderResolver.cs" />
     <Compile Include="ReportingContext\EntityAnalyticsAgg\Backfill\Loaders\ItemReplayDataLoader.cs" />
@@ -520,6 +521,7 @@
     <Compile Include="ReportingContext\EntityAnalyticsAgg\Backfill\Models\SupplierReplayDataBundle.cs" />
     <Compile Include="ReportingContext\EntityAnalyticsAgg\Backfill\Services\EntityAnalyticsReplayAggregateService.cs" />
     <Compile Include="ReportingContext\EntityAnalyticsAgg\Backfill\Services\EntityAnalyticsReplayEntityCountHelper.cs" />
+    <Compile Include="ReportingContext\EntityAnalyticsAgg\Backfill\Services\SalesmanReplayPeriodHandler.cs" />
     <Compile Include="ReportingContext\EntityAnalyticsAgg\Backfill\Sources\SalesmanRepHistoryBackfillSource.cs" />
     <Compile Include="ReportingContext\EntityAnalyticsAgg\Backfill\Models\EntityAnalyticsBackfillCheckpointModel.cs" />
     <Compile Include="ReportingContext\EntityAnalyticsAgg\Backfill\Models\EntityAnalyticsBackfillCheckpointStatus.cs" />

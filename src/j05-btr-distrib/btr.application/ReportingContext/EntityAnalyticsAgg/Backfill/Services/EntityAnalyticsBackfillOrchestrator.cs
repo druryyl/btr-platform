@@ -26,6 +26,7 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Backfill.Services
         private readonly IBusinessDateProvider _businessDateProvider;
         private readonly IEntityAnalyticsReplayDataLoaderResolver _loaderResolver;
         private readonly IEntityAnalyticsReplayAggregateService _aggregateService;
+        private readonly ISalesmanReplayPeriodHandler _salesmanReplayPeriodHandler;
         private readonly EntityAnalyticsProducerOrchestrator _producerOrchestrator;
         private readonly ITglJamDal _tglJamDal;
         private readonly EntityAnalyticsOptions _options;
@@ -36,6 +37,7 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Backfill.Services
             IBusinessDateProvider businessDateProvider,
             IEntityAnalyticsReplayDataLoaderResolver loaderResolver,
             IEntityAnalyticsReplayAggregateService aggregateService,
+            ISalesmanReplayPeriodHandler salesmanReplayPeriodHandler,
             EntityAnalyticsProducerOrchestrator producerOrchestrator,
             ITglJamDal tglJamDal,
             IOptions<EntityAnalyticsOptions> options)
@@ -45,6 +47,7 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Backfill.Services
             _businessDateProvider = businessDateProvider;
             _loaderResolver = loaderResolver;
             _aggregateService = aggregateService;
+            _salesmanReplayPeriodHandler = salesmanReplayPeriodHandler;
             _producerOrchestrator = producerOrchestrator;
             _tglJamDal = tglJamDal;
             _options = options?.Value ?? new EntityAnalyticsOptions();
@@ -191,10 +194,22 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Backfill.Services
                                 {
                                     EnsureWriteSupportedForEntityType(entityType);
 
+                                    var produceInput = aggregateResult.ProduceInput;
+                                    if (string.Equals(entityType, EntityTypeCode.Salesman, StringComparison.OrdinalIgnoreCase)
+                                        && replayContext.SkipL1Persist)
+                                    {
+                                        _salesmanReplayPeriodHandler.PersistFastPathL1(
+                                            period.Year,
+                                            period.Month,
+                                            request.RefreshLogId ?? string.Empty,
+                                            generatedAt);
+                                        produceInput = _salesmanReplayPeriodHandler.CreateLayersOnlyInput();
+                                    }
+
                                     WorkerProgressScope.Current?.StepStarted($"{periodStepId}:Produce", "Produce entity analytics snapshot");
                                     var produceContext = EntityAnalyticsReplayContextFactory.CreateProduceContext(
                                         replayContext,
-                                        aggregateResult.ProduceInput,
+                                        produceInput,
                                         request.RefreshLogId ?? string.Empty,
                                         generatedAt);
                                     _producerOrchestrator.ProduceForEntityType(entityType, produceContext);
@@ -309,6 +324,19 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Backfill.Services
                 entityType,
                 jobId,
                 request);
+
+            if (string.Equals(entityType, EntityTypeCode.Salesman, StringComparison.OrdinalIgnoreCase)
+                && _salesmanReplayPeriodHandler.CanUseFastPath(period.Year, period.Month))
+            {
+                replayContext.SkipL1Persist = true;
+                generatedAt = _tglJamDal.Now;
+                return _salesmanReplayPeriodHandler.BuildFastPathPlan(
+                    period.Year,
+                    period.Month,
+                    request.RefreshLogId ?? string.Empty,
+                    generatedAt);
+            }
+
             var loader = _loaderResolver.Resolve(entityType);
             generatedAt = _tglJamDal.Now;
 
@@ -325,12 +353,15 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Backfill.Services
 
         private static void EnsureWriteSupportedForEntityType(string entityType)
         {
-            if (!string.Equals(entityType, EntityTypeCode.Customer, StringComparison.OrdinalIgnoreCase))
+            if (string.Equals(entityType, EntityTypeCode.Customer, StringComparison.OrdinalIgnoreCase)
+                || string.Equals(entityType, EntityTypeCode.Salesman, StringComparison.OrdinalIgnoreCase))
             {
-                throw new NotSupportedException(
-                    $"Historical backfill writes for entity type '{entityType}' are not yet implemented. " +
-                    "Customer is available in M32.B1.4; Salesman, Supplier, and Item follow in M32.B1.5–B1.7.");
+                return;
             }
+
+            throw new NotSupportedException(
+                $"Historical backfill writes for entity type '{entityType}' are not yet implemented. " +
+                "Customer and Salesman are available in M32.B1.4–B1.5; Supplier and Item follow in M32.B1.6–B1.7.");
         }
 
         private bool ShouldSkipPeriod(

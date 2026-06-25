@@ -129,6 +129,156 @@ namespace btr.test.ReportingContext
             repository.PurgeHistoryCalled.Should().BeTrue();
         }
 
+        [Fact]
+        public void SalesmanProduce_WithReplay_SkipsL0()
+        {
+            var repository = new ReplayTrackingRepository();
+            var producer = CreateSalesmanProducer(repository);
+            var generatedAt = new DateTime(2024, 3, 31, 10, 0, 0);
+
+            producer.Produce(CreateSalesmanReplayContext(generatedAt, CreatePortfolioRep()));
+
+            repository.ReplaceCurrentMetricsCalled.Should().BeFalse();
+        }
+
+        [Fact]
+        public void SalesmanProduce_WithReplay_UsesReplaceMonthlyHistoryForPeriod()
+        {
+            var repository = new ReplayTrackingRepository();
+            var producer = CreateSalesmanProducer(repository);
+            var generatedAt = new DateTime(2024, 3, 31, 10, 0, 0);
+
+            producer.Produce(CreateSalesmanReplayContext(generatedAt, CreatePortfolioRep()));
+
+            repository.ReplaceMonthlyHistoryCallCount.Should().Be(1);
+            repository.MonthlyRows.Should().HaveCount(3);
+            repository.MonthlyRows.Should().OnlyContain(r =>
+                r.PeriodYear == ReplayPeriod.Year
+                && r.PeriodMonth == ReplayPeriod.Month
+                && r.IsClosed);
+        }
+
+        [Fact]
+        public void SalesmanProduce_WithReplay_SkipL1Persist_SkipsSecondL1Write()
+        {
+            var repository = new ReplayTrackingRepository();
+            repository.MonthlyRows.Add(new EntityAnalyticsMonthlyRow
+            {
+                EntityType = EntityTypeCode.Salesman,
+                EntityId = "SP001",
+                EntityCode = "R001",
+                PeriodYear = ReplayPeriod.Year,
+                PeriodMonth = ReplayPeriod.Month,
+                KpiId = "SF-KPI-008",
+                NumericValue = 1500000m,
+                IsClosed = true
+            });
+
+            var producer = CreateSalesmanProducer(repository);
+            var generatedAt = new DateTime(2024, 3, 31, 10, 0, 0);
+            var replay = EntityAnalyticsReplayContextFactory.Create(
+                ReplayPeriod,
+                EntityTypeCode.Salesman,
+                "job-replay",
+                new EntityAnalyticsBackfillRequest());
+            replay.SkipL1Persist = true;
+
+            var context = EntityAnalyticsReplayContextFactory.CreateProduceContext(
+                replay,
+                new SalesmanEntityAnalyticsProduceInput
+                {
+                    SalesmanAggregate = new DashboardSalesmanAggregateResult
+                    {
+                        Portfolio = new List<DashboardSalesmanPortfolioRow>()
+                    }
+                },
+                "refresh-replay",
+                generatedAt);
+
+            producer.Produce(context);
+
+            repository.ReplaceMonthlyHistoryCallCount.Should().Be(0);
+            repository.RankingRows.Should().NotBeEmpty();
+        }
+
+        private static EntityAnalyticsProduceContext CreateSalesmanReplayContext(
+            DateTime generatedAt,
+            DashboardSalesmanPortfolioRow rep)
+        {
+            var replay = EntityAnalyticsReplayContextFactory.Create(
+                ReplayPeriod,
+                EntityTypeCode.Salesman,
+                "job-replay",
+                new EntityAnalyticsBackfillRequest());
+
+            return EntityAnalyticsReplayContextFactory.CreateProduceContext(
+                replay,
+                new SalesmanEntityAnalyticsProduceInput
+                {
+                    SalesmanAggregate = new DashboardSalesmanAggregateResult
+                    {
+                        Portfolio = new List<DashboardSalesmanPortfolioRow> { rep }
+                    }
+                },
+                "refresh-replay",
+                generatedAt);
+        }
+
+        private static DashboardSalesmanPortfolioRow CreatePortfolioRep()
+        {
+            return new DashboardSalesmanPortfolioRow
+            {
+                SalesPersonId = "SP001",
+                SalesPersonCode = "R001",
+                SalesPersonName = "Alpha Rep",
+                CompletedOmzet = 1500000m,
+                AchievementPercent = 85m,
+                OpenBalance = 500000m,
+                IsActive = true
+            };
+        }
+
+        private static SalesmanEntityAnalyticsProducer CreateSalesmanProducer(ReplayTrackingRepository repository)
+        {
+            var entityTypes = new EntityTypeRegistry();
+            entityTypes.Register(new EntityTypeRegistration
+            {
+                EntityTypeCode = EntityTypeCode.Salesman,
+                DisplayName = "Salesman",
+                KpiPackId = SalesmanEntityAnalyticsRegistrar.KpiPackId,
+                PeerGroupRuleId = PeerGroupResolver.SalesmanAllActive
+            });
+
+            var registry = new EntityAnalyticsKpiRegistry(entityTypes);
+            var dimensionLabels = new EntityAnalyticsDimensionLabelRegistry();
+            new SalesmanEntityAnalyticsRegistrar().Register(entityTypes, registry, dimensionLabels);
+
+            var rankingEngine = new EntityRankingEngine(
+                repository,
+                registry,
+                entityTypes,
+                Options.Create(new EntityAnalyticsOptions { HistoryRetentionMonths = 36 }));
+
+            var attentionSignals = new EntityAttentionSignalRegistry();
+            SalesmanAttentionSignalCatalog.Register(attentionSignals);
+            var attentionEngine = new EntityAttentionEngine(repository);
+
+            var relationships = new EntityRelationshipDefinitionRegistry(entityTypes);
+            SalesmanRelationshipCatalog.Register(relationships);
+            var relationshipEngine = new EntityRelationshipEngine(repository, relationships, entityTypes);
+            var radarEngine = new EntityRadarEngine(repository, registry, entityTypes);
+
+            return new SalesmanEntityAnalyticsProducer(
+                repository,
+                registry,
+                new NoOpMonthCloseService(),
+                rankingEngine,
+                attentionEngine,
+                relationshipEngine,
+                radarEngine,
+                attentionSignals);
+        }
+
         private static void SeedActiveCurrent(ReplayTrackingRepository repository, string entityId)
         {
             repository.CurrentRows.Add(new EntityAnalyticsCurrentRow

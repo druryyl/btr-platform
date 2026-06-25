@@ -199,16 +199,64 @@ namespace btr.test.ReportingContext
                 && c.Status == EntityAnalyticsBackfillCheckpointStatus.Completed);
         }
 
+        [Fact]
+        public void Run_WithConfirm_Salesman_WritesCompletedCheckpoint()
+        {
+            var store = new FakeCheckpointStore();
+            var producer = new RecordingBackfillProducer(EntityTypeCode.Salesman);
+            var orchestrator = CreateOrchestrator(store, producer);
+
+            var result = orchestrator.Run(CreateRequest(
+                entityTypeScope: EntityTypeCode.Salesman,
+                dryRun: false,
+                confirmToken: "BACKFILL"), default);
+
+            result.Status.Should().Be(EntityAnalyticsBackfillJobStatus.Succeeded);
+            result.PeriodsProcessed.Should().Be(3);
+            store.Checkpoints.Should().HaveCount(3);
+            store.Checkpoints.Should().OnlyContain(c =>
+                c.Status == EntityAnalyticsBackfillCheckpointStatus.Completed);
+            producer.ProduceCount.Should().Be(3);
+        }
+
+        [Fact]
+        public void Run_DryRun_Salesman_FastPath_SkipsLoader()
+        {
+            var store = new FakeCheckpointStore();
+            var loader = new TrackingLoader(EntityTypeCode.Salesman);
+            var orchestrator = CreateOrchestrator(
+                store,
+                salesmanHandler: new FakeSalesmanReplayPeriodHandler(useFastPath: true, entityCount: 5),
+                loaderResolver: new SingleLoaderResolver(loader));
+
+            var result = orchestrator.Run(CreateRequest(
+                entityTypeScope: EntityTypeCode.Salesman,
+                dryRun: true), default);
+
+            result.Status.Should().Be(EntityAnalyticsBackfillJobStatus.Succeeded);
+            loader.LoadCount.Should().Be(0);
+            store.Checkpoints.Should().OnlyContain(c => c.EntityCount == 5);
+        }
+
         private static EntityAnalyticsBackfillOrchestrator CreateOrchestrator(
             FakeCheckpointStore store,
-            RecordingBackfillProducer producer = null)
+            RecordingBackfillProducer producer = null,
+            ISalesmanReplayPeriodHandler salesmanHandler = null,
+            IEntityAnalyticsReplayDataLoaderResolver loaderResolver = null)
         {
             producer = producer ?? new RecordingBackfillProducer();
+            salesmanHandler = salesmanHandler ?? new FakeSalesmanReplayPeriodHandler();
+            loaderResolver = loaderResolver ?? new FakeLoaderResolver();
             var entityTypes = new EntityTypeRegistry();
             entityTypes.Register(new EntityTypeRegistration
             {
                 EntityTypeCode = EntityTypeCode.Customer,
                 DisplayName = "Customer"
+            });
+            entityTypes.Register(new EntityTypeRegistration
+            {
+                EntityTypeCode = EntityTypeCode.Salesman,
+                DisplayName = "Salesman"
             });
 
             var producerOrchestrator = new EntityAnalyticsProducerOrchestrator(
@@ -219,14 +267,16 @@ namespace btr.test.ReportingContext
                 store,
                 new FakeMutex(),
                 new FixedBusinessDateProvider(new DateTime(2024, 6, 15)),
-                new FakeLoaderResolver(),
+                loaderResolver,
                 new FakeAggregateService(),
+                salesmanHandler,
                 producerOrchestrator,
                 new FixedTglJamDal(new DateTime(2026, 6, 25, 12, 0, 0)),
                 Options.Create(new EntityAnalyticsOptions { HistoryRetentionMonths = 36 }));
         }
 
         private static EntityAnalyticsBackfillRequest CreateRequest(
+            string entityTypeScope = EntityTypeCode.Customer,
             bool dryRun = false,
             bool resume = true,
             bool force = false,
@@ -235,7 +285,7 @@ namespace btr.test.ReportingContext
         {
             return new EntityAnalyticsBackfillRequest
             {
-                EntityTypeScope = EntityTypeCode.Customer,
+                EntityTypeScope = entityTypeScope,
                 FromPeriodYear = Period1.Year,
                 FromPeriodMonth = Period1.Month,
                 ToPeriodYear = Period3.Year,
@@ -252,9 +302,14 @@ namespace btr.test.ReportingContext
 
         private sealed class RecordingBackfillProducer : IEntityAnalyticsProducer
         {
-            public string EntityType => EntityTypeCode.Customer;
+            public RecordingBackfillProducer(string entityType = EntityTypeCode.Customer)
+            {
+                EntityType = entityType;
+            }
 
-            public string WorkerDomain => "Customer";
+            public string EntityType { get; }
+
+            public string WorkerDomain => EntityType;
 
             public int ProduceCount { get; private set; }
 
@@ -290,6 +345,87 @@ namespace btr.test.ReportingContext
             public IEntityAnalyticsReplayDataLoader Resolve(string entityType) => new FakeLoader(entityType);
         }
 
+        private sealed class SingleLoaderResolver : IEntityAnalyticsReplayDataLoaderResolver
+        {
+            private readonly IEntityAnalyticsReplayDataLoader _loader;
+
+            public SingleLoaderResolver(IEntityAnalyticsReplayDataLoader loader)
+            {
+                _loader = loader;
+            }
+
+            public IEntityAnalyticsReplayDataLoader Resolve(string entityType) => _loader;
+        }
+
+        private sealed class TrackingLoader : IEntityAnalyticsReplayDataLoader
+        {
+            public TrackingLoader(string entityType)
+            {
+                EntityType = entityType;
+            }
+
+            public string EntityType { get; }
+
+            public int LoadCount { get; private set; }
+
+            public object Load(EntityAnalyticsReplayContext replayContext)
+            {
+                LoadCount++;
+                return new CustomerReplayDataBundle();
+            }
+        }
+
+        private sealed class FakeSalesmanReplayPeriodHandler : ISalesmanReplayPeriodHandler
+        {
+            private readonly bool _useFastPath;
+            private readonly int _entityCount;
+
+            public FakeSalesmanReplayPeriodHandler(bool useFastPath = false, int entityCount = 0)
+            {
+                _useFastPath = useFastPath;
+                _entityCount = entityCount;
+            }
+
+            public bool CanUseFastPath(int periodYear, int periodMonth) => _useFastPath;
+
+            public EntityAnalyticsReplayAggregateResult BuildFastPathPlan(
+                int periodYear,
+                int periodMonth,
+                string refreshLogId,
+                DateTime generatedAt)
+            {
+                return new EntityAnalyticsReplayAggregateResult
+                {
+                    EntityType = EntityTypeCode.Salesman,
+                    ProduceInput = CreateLayersOnlyInput(),
+                    EntityCount = _entityCount,
+                    RowCounts = new EntityAnalyticsReplayRowCounts
+                    {
+                        MasterRowCount = _entityCount
+                    }
+                };
+            }
+
+            public void PersistFastPathL1(
+                int periodYear,
+                int periodMonth,
+                string refreshLogId,
+                DateTime generatedAt)
+            {
+            }
+
+            public SalesmanEntityAnalyticsProduceInput CreateLayersOnlyInput()
+            {
+                return new SalesmanEntityAnalyticsProduceInput
+                {
+                    SalesmanAggregate = new DashboardSalesmanAggregateResult
+                    {
+                        Portfolio = new List<DashboardSalesmanPortfolioRow>()
+                    }
+                };
+            }
+        }
+
         private sealed class FakeLoader : IEntityAnalyticsReplayDataLoader
         {
             public FakeLoader(string entityType)
@@ -313,6 +449,29 @@ namespace btr.test.ReportingContext
                 object bundle,
                 DateTime generatedAt)
             {
+                if (string.Equals(replayContext.EntityTypeCode, EntityTypeCode.Salesman, StringComparison.OrdinalIgnoreCase))
+                {
+                    return new EntityAnalyticsReplayAggregateResult
+                    {
+                        EntityType = replayContext.EntityTypeCode,
+                        ProduceInput = new SalesmanEntityAnalyticsProduceInput
+                        {
+                            SalesmanAggregate = new DashboardSalesmanAggregateResult
+                            {
+                                Portfolio = Enumerable.Range(1, 42)
+                                    .Select(_ => new DashboardSalesmanPortfolioRow())
+                                    .ToList()
+                            }
+                        },
+                        EntityCount = 42,
+                        RowCounts = new EntityAnalyticsReplayRowCounts
+                        {
+                            TransactionRowCount = 1,
+                            MasterRowCount = 42
+                        }
+                    };
+                }
+
                 return new EntityAnalyticsReplayAggregateResult
                 {
                     EntityType = replayContext.EntityTypeCode,
