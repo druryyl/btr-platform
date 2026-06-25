@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using btr.application.ReportingContext.DashboardSnapshotAgg.Services;
+using btr.application.ReportingContext.EntityAnalyticsAgg.Backfill.Models;
 using btr.application.ReportingContext.EntityAnalyticsAgg.Contracts;
 using btr.application.ReportingContext.EntityAnalyticsAgg.Models;
 using btr.application.ReportingContext.EntityAnalyticsAgg.Models.Snapshot;
@@ -214,6 +215,44 @@ namespace btr.test.ReportingContext
             section.Events[0].FirstSeen.Should().Be("Apr 2026");
             section.Events[0].ConsecutivePeriods.Should().Be(3);
             section.Events[0].TotalOccurrences.Should().Be(3);
+        }
+
+        [Fact]
+        public void DiffAndPersistSignals_ReplayMode_NextMonth_UpdatesExistingRowWithoutDuplicateKey()
+        {
+            var repository = new AttentionRepository();
+            var engine = CreateEngine(repository);
+            var signal = Signal("C001", DashboardCustomerAggregator.SignalOverdue);
+            var replay = new EntityAnalyticsReplayContext
+            {
+                EntityTypeCode = EntityTypeCode.Customer,
+                PeriodYear = 2026,
+                PeriodMonth = 6
+            };
+
+            engine.DiffAndPersistSignals(
+                EntityTypeCode.Customer,
+                2026,
+                5,
+                Signals("C001", signal),
+                "r1",
+                new DateTime(2026, 5, 31),
+                replay);
+
+            engine.DiffAndPersistSignals(
+                EntityTypeCode.Customer,
+                2026,
+                6,
+                Signals("C001", signal),
+                "r2",
+                new DateTime(2026, 6, 24),
+                replay);
+
+            repository.AttentionRows.Should().ContainSingle();
+            repository.ReplaceAttentionCallCount.Should().Be(2);
+            var row = repository.AttentionRows.Single();
+            row.ConsecutivePeriods.Should().Be(2);
+            row.LastSeenPeriodMonth.Should().Be(6);
         }
 
         [Fact]

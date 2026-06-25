@@ -288,6 +288,12 @@ namespace btr.portal.worker
 
                         using (var cancellationSource = new CancellationTokenSource())
                         {
+                            void OnCancelKeyPress(object sender, ConsoleCancelEventArgs e)
+                            {
+                                e.Cancel = true;
+                                cancellationSource.Cancel();
+                            }
+
                             Console.CancelKeyPress += OnCancelKeyPress;
                             try
                             {
@@ -301,12 +307,6 @@ namespace btr.portal.worker
                         }
 
                         return request.Result?.DurationMs ?? 0;
-
-                        void OnCancelKeyPress(object sender, ConsoleCancelEventArgs e)
-                        {
-                            e.Cancel = true;
-                            cancellationSource.Cancel();
-                        }
                     });
                     break;
 

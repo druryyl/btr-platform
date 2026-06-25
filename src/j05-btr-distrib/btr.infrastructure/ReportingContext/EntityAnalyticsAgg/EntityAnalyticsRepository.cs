@@ -1464,74 +1464,10 @@ VALUES
             IEnumerable<EntityAnalyticsAttentionEventRow> rows,
             string refreshLogId)
         {
-            if (string.IsNullOrWhiteSpace(entityType))
-                throw new ArgumentException("EntityType is required.", nameof(entityType));
-
-            var rowList = rows?.Where(r => r != null).ToList() ?? new List<EntityAnalyticsAttentionEventRow>();
-            var now = DateTime.Now;
-
-            using (var conn = new SqlConnection(ConnStringHelper.Get(_opt)))
-            {
-                conn.Open();
-                using (var trans = conn.BeginTransaction())
-                {
-                    const string deleteSql = @"
-DELETE FROM BTRPD_EntityAnalytics_Attention
-WHERE EntityType = @EntityType
-  AND LastSeenYear = @PeriodYear
-  AND LastSeenMonth = @PeriodMonth";
-
-                    conn.Execute(deleteSql, new
-                    {
-                        EntityType = entityType,
-                        PeriodYear = periodYear,
-                        PeriodMonth = periodMonth
-                    }, trans);
-
-                    if (rowList.Count > 0)
-                    {
-                        const string insertSql = @"
-INSERT INTO BTRPD_EntityAnalytics_Attention
-    (EntityAnalyticsAttentionId, EntityType, EntityId, EntityCode, SignalCode, SignalCategory, SignalTitle,
-     FirstSeenYear, FirstSeenMonth, LastSeenYear, LastSeenMonth, ConsecutivePeriods, TotalOccurrences,
-     IsActive, GeneratedAt, CreatedAt, UpdatedAt, LastRefreshLogId)
-VALUES
-    (@EntityAnalyticsAttentionId, @EntityType, @EntityId, @EntityCode, @SignalCode, @SignalCategory, @SignalTitle,
-     @FirstSeenYear, @FirstSeenMonth, @LastSeenYear, @LastSeenMonth, @ConsecutivePeriods, @TotalOccurrences,
-     @IsActive, @GeneratedAt, @CreatedAt, @UpdatedAt, @LastRefreshLogId)";
-
-                        foreach (var row in rowList)
-                        {
-                            var createdAt = row.CreatedAt == default ? now : row.CreatedAt;
-                            conn.Execute(insertSql, new
-                            {
-                                EntityAnalyticsAttentionId = string.IsNullOrWhiteSpace(row.EntityAnalyticsAttentionId)
-                                    ? Ulid.NewUlid().ToString()
-                                    : row.EntityAnalyticsAttentionId,
-                                EntityType = entityType,
-                                row.EntityId,
-                                EntityCode = row.EntityCode ?? row.EntityId,
-                                row.SignalCode,
-                                SignalCategory = row.SignalCategory ?? string.Empty,
-                                SignalTitle = row.SignalTitle ?? row.SignalCode,
-                                FirstSeenYear = row.FirstSeenPeriodYear,
-                                FirstSeenMonth = row.FirstSeenPeriodMonth,
-                                LastSeenYear = row.LastSeenPeriodYear,
-                                LastSeenMonth = row.LastSeenPeriodMonth,
-                                row.ConsecutivePeriods,
-                                row.TotalOccurrences,
-                                IsActive = row.IsActive ? 1 : 0,
-                                GeneratedAt = row.GeneratedAt == default ? now : row.GeneratedAt,
-                                CreatedAt = createdAt,
-                                UpdatedAt = now,
-                                LastRefreshLogId = refreshLogId ?? string.Empty
-                            }, trans);
-                        }
-                    }
-
-                    trans.Commit();
-                }
-            }
+            // L3 attention is lifecycle state keyed by (EntityType, EntityId, SignalCode), not a period
+            // snapshot. MERGE upsert is required so advancing LastSeen across replay months does not
+            // collide with the prior month's row for the same EntityAnalyticsAttentionId.
+            SaveAttentionRecords(entityType, rows, refreshLogId);
         }
 
         public void ReplaceRelationshipForPeriod(

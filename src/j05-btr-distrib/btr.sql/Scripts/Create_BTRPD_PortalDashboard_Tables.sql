@@ -12,7 +12,7 @@ BEGIN
 CREATE TABLE BTRPD_RefreshLog
 (
     RefreshLogId VARCHAR(26)  NOT NULL CONSTRAINT DF_BTRPD_RefreshLog_RefreshLogId DEFAULT(''),
-    Domain         VARCHAR(20)  NOT NULL CONSTRAINT DF_BTRPD_RefreshLog_Domain DEFAULT(''),
+    Domain         VARCHAR(50)  NOT NULL CONSTRAINT DF_BTRPD_RefreshLog_Domain DEFAULT(''),
     StartedAt      DATETIME     NOT NULL CONSTRAINT DF_BTRPD_RefreshLog_StartedAt DEFAULT('3000-01-01'),
     CompletedAt    DATETIME     NULL,
     Status         VARCHAR(10)  NOT NULL CONSTRAINT DF_BTRPD_RefreshLog_Status DEFAULT(''),

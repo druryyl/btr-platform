@@ -631,34 +631,7 @@ namespace btr.test.ReportingContext
             string refreshLogId)
         {
             ReplaceAttentionCallCount++;
-            AttentionRows.RemoveAll(r =>
-                string.Equals(r.EntityType, entityType, StringComparison.OrdinalIgnoreCase)
-                && r.LastSeenPeriodYear == periodYear
-                && r.LastSeenPeriodMonth == periodMonth);
-
-            foreach (var row in rows ?? Array.Empty<EntityAnalyticsAttentionEventRow>())
-            {
-                AttentionRows.Add(new EntityAnalyticsAttentionEventRow
-                {
-                    EntityAnalyticsAttentionId = row.EntityAnalyticsAttentionId,
-                    EntityType = entityType,
-                    EntityId = row.EntityId,
-                    EntityCode = row.EntityCode,
-                    SignalCode = row.SignalCode,
-                    SignalCategory = row.SignalCategory,
-                    SignalTitle = row.SignalTitle,
-                    FirstSeenPeriodYear = row.FirstSeenPeriodYear,
-                    FirstSeenPeriodMonth = row.FirstSeenPeriodMonth,
-                    LastSeenPeriodYear = row.LastSeenPeriodYear,
-                    LastSeenPeriodMonth = row.LastSeenPeriodMonth,
-                    ConsecutivePeriods = row.ConsecutivePeriods,
-                    TotalOccurrences = row.TotalOccurrences,
-                    IsActive = row.IsActive,
-                    GeneratedAt = row.GeneratedAt,
-                    CreatedAt = row.CreatedAt,
-                    LastRefreshLogId = refreshLogId
-                });
-            }
+            SaveAttentionRecords(entityType, rows, refreshLogId);
         }
 
         public virtual void ReplaceRelationshipForPeriod(
