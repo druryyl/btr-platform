@@ -1,4 +1,5 @@
 using System;
+using btr.application.ReportingContext.EntityAnalyticsAgg.Backfill.Models;
 
 namespace btr.application.ReportingContext.EntityAnalyticsAgg.Contracts
 {
@@ -23,5 +24,10 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Contracts
         /// Domain-specific in-memory aggregator output. Cast in entity producer implementation only.
         /// </summary>
         public object DomainInput { get; set; }
+
+        /// <summary>
+        /// Set during historical backfill replay; null for live domain workers.
+        /// </summary>
+        public EntityAnalyticsReplayContext Replay { get; set; }
     }
 }

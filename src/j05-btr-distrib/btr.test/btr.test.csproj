@@ -186,6 +186,7 @@
     <Compile Include="ReportingContext\EntityAnalyticsRepositoryStubBase.cs" />
     <Compile Include="ReportingContext\EntityAnalyticsServiceTest.cs" />
     <Compile Include="ReportingContext\EntityAnalyticsBackfillOrchestratorTest.cs" />
+    <Compile Include="ReportingContext\EntityAnalyticsReplayProducerTest.cs" />
     <Compile Include="ReportingContext\EntityTrendEngineTest.cs" />
     <Compile Include="ReportingContext\EntityRankingCalculatorTest.cs" />
     <Compile Include="ReportingContext\EntityRankingEngineTest.cs" />

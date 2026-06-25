@@ -19,6 +19,13 @@ namespace btr.test.ReportingContext
         protected readonly HashSet<(string EntityType, int Year, int Month)> ClosedMonths =
             new HashSet<(string, int, int)>();
 
+        public int ReplaceMonthlyHistoryCallCount { get; protected set; }
+        public int ReplaceRankingCallCount { get; protected set; }
+        public int ReplaceAttentionCallCount { get; protected set; }
+        public int ReplaceRelationshipCallCount { get; protected set; }
+        public int ReplaceRadarCallCount { get; protected set; }
+        public bool ReplaceCurrentMetricsCalled { get; protected set; }
+
         public abstract IReadOnlyList<EntityAnalyticsCurrentRow> GetCurrentMetrics(string entityType, string entityId);
 
         public virtual IReadOnlyList<EntityAnalyticsCurrentRow> GetCurrentMetricsBatch(
@@ -546,6 +553,177 @@ namespace btr.test.ReportingContext
                         LastRefreshLogId = refreshLogId
                     });
                 }
+            }
+        }
+
+        public virtual void ReplaceMonthlyHistoryForPeriod(
+            string entityType,
+            int periodYear,
+            int periodMonth,
+            IEnumerable<EntityAnalyticsMonthlyRow> rows,
+            string refreshLogId)
+        {
+            ReplaceMonthlyHistoryCallCount++;
+            MonthlyRows.RemoveAll(r =>
+                string.Equals(r.EntityType, entityType, StringComparison.OrdinalIgnoreCase)
+                && r.PeriodYear == periodYear
+                && r.PeriodMonth == periodMonth);
+
+            foreach (var row in rows ?? Array.Empty<EntityAnalyticsMonthlyRow>())
+            {
+                MonthlyRows.Add(new EntityAnalyticsMonthlyRow
+                {
+                    EntityType = entityType,
+                    EntityId = row.EntityId,
+                    EntityCode = row.EntityCode,
+                    PeriodYear = periodYear,
+                    PeriodMonth = periodMonth,
+                    KpiId = row.KpiId,
+                    NumericValue = row.NumericValue,
+                    TextValue = row.TextValue,
+                    PeriodSemantics = row.PeriodSemantics,
+                    DefinitionVersion = row.DefinitionVersion,
+                    IsClosed = true,
+                    GeneratedAt = row.GeneratedAt,
+                    LastRefreshLogId = refreshLogId
+                });
+            }
+        }
+
+        public virtual void ReplaceRankingForPeriod(
+            string entityType,
+            int periodYear,
+            int periodMonth,
+            IEnumerable<EntityAnalyticsRankingRow> rows,
+            string refreshLogId)
+        {
+            ReplaceRankingCallCount++;
+            RankingRows.RemoveAll(r =>
+                string.Equals(r.EntityType, entityType, StringComparison.OrdinalIgnoreCase)
+                && r.PeriodYear == periodYear
+                && r.PeriodMonth == periodMonth);
+
+            foreach (var row in rows ?? Array.Empty<EntityAnalyticsRankingRow>())
+            {
+                RankingRows.Add(new EntityAnalyticsRankingRow
+                {
+                    EntityType = entityType,
+                    EntityId = row.EntityId,
+                    EntityCode = row.EntityCode ?? row.EntityId,
+                    RankMetricKpiId = row.RankMetricKpiId,
+                    PeriodYear = periodYear,
+                    PeriodMonth = periodMonth,
+                    RankPosition = row.RankPosition,
+                    PopulationSize = row.PopulationSize,
+                    Percentile = row.Percentile,
+                    GeneratedAt = row.GeneratedAt,
+                    LastRefreshLogId = refreshLogId
+                });
+            }
+        }
+
+        public virtual void ReplaceAttentionForPeriod(
+            string entityType,
+            int periodYear,
+            int periodMonth,
+            IEnumerable<EntityAnalyticsAttentionEventRow> rows,
+            string refreshLogId)
+        {
+            ReplaceAttentionCallCount++;
+            AttentionRows.RemoveAll(r =>
+                string.Equals(r.EntityType, entityType, StringComparison.OrdinalIgnoreCase)
+                && r.LastSeenPeriodYear == periodYear
+                && r.LastSeenPeriodMonth == periodMonth);
+
+            foreach (var row in rows ?? Array.Empty<EntityAnalyticsAttentionEventRow>())
+            {
+                AttentionRows.Add(new EntityAnalyticsAttentionEventRow
+                {
+                    EntityAnalyticsAttentionId = row.EntityAnalyticsAttentionId,
+                    EntityType = entityType,
+                    EntityId = row.EntityId,
+                    EntityCode = row.EntityCode,
+                    SignalCode = row.SignalCode,
+                    SignalCategory = row.SignalCategory,
+                    SignalTitle = row.SignalTitle,
+                    FirstSeenPeriodYear = row.FirstSeenPeriodYear,
+                    FirstSeenPeriodMonth = row.FirstSeenPeriodMonth,
+                    LastSeenPeriodYear = row.LastSeenPeriodYear,
+                    LastSeenPeriodMonth = row.LastSeenPeriodMonth,
+                    ConsecutivePeriods = row.ConsecutivePeriods,
+                    TotalOccurrences = row.TotalOccurrences,
+                    IsActive = row.IsActive,
+                    GeneratedAt = row.GeneratedAt,
+                    CreatedAt = row.CreatedAt,
+                    LastRefreshLogId = refreshLogId
+                });
+            }
+        }
+
+        public virtual void ReplaceRelationshipForPeriod(
+            string sourceEntityType,
+            int periodYear,
+            int periodMonth,
+            IEnumerable<EntityAnalyticsRelationshipRow> rows,
+            string refreshLogId)
+        {
+            ReplaceRelationshipCallCount++;
+            RelationshipRows.RemoveAll(r =>
+                string.Equals(r.SourceEntityType, sourceEntityType, StringComparison.OrdinalIgnoreCase)
+                && r.PeriodYear == periodYear
+                && r.PeriodMonth == periodMonth);
+
+            foreach (var row in rows ?? Array.Empty<EntityAnalyticsRelationshipRow>())
+            {
+                RelationshipRows.Add(new EntityAnalyticsRelationshipRow
+                {
+                    SourceEntityType = sourceEntityType,
+                    SourceEntityId = row.SourceEntityId,
+                    SourceEntityCode = row.SourceEntityCode,
+                    RelationshipCode = row.RelationshipCode,
+                    TargetEntityType = row.TargetEntityType,
+                    TargetEntityId = row.TargetEntityId,
+                    TargetEntityCode = row.TargetEntityCode,
+                    TargetDisplayName = row.TargetDisplayName,
+                    Rank = row.Rank,
+                    MetricValue = row.MetricValue,
+                    PeriodYear = periodYear,
+                    PeriodMonth = periodMonth,
+                    GeneratedAt = row.GeneratedAt
+                });
+            }
+        }
+
+        public virtual void ReplaceRadarForPeriod(
+            string entityType,
+            int periodYear,
+            int periodMonth,
+            IEnumerable<EntityAnalyticsRadarScoreRow> rows,
+            string refreshLogId)
+        {
+            ReplaceRadarCallCount++;
+            RadarRows.RemoveAll(r =>
+                string.Equals(r.EntityType, entityType, StringComparison.OrdinalIgnoreCase)
+                && r.PeriodYear == periodYear
+                && r.PeriodMonth == periodMonth);
+
+            foreach (var row in rows ?? Array.Empty<EntityAnalyticsRadarScoreRow>())
+            {
+                RadarRows.Add(new EntityAnalyticsRadarScoreRow
+                {
+                    EntityType = entityType,
+                    EntityId = row.EntityId,
+                    EntityCode = row.EntityCode ?? row.EntityId,
+                    PeriodYear = periodYear,
+                    PeriodMonth = periodMonth,
+                    AxisKpiId = row.AxisKpiId,
+                    Score = row.Score,
+                    PeerGroupRuleId = row.PeerGroupRuleId,
+                    PeerGroupSize = row.PeerGroupSize,
+                    NormalizationMethod = row.NormalizationMethod,
+                    GeneratedAt = row.GeneratedAt,
+                    LastRefreshLogId = refreshLogId
+                });
             }
         }
 

@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
+using btr.application.ReportingContext.EntityAnalyticsAgg.Backfill.Models;
 using btr.application.ReportingContext.EntityAnalyticsAgg.Contracts;
 using btr.application.ReportingContext.EntityAnalyticsAgg.Models;
 using btr.application.ReportingContext.EntityAnalyticsAgg.Models.Snapshot;
@@ -33,12 +34,13 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Services
             int periodYear,
             int periodMonth,
             string refreshLogId,
-            DateTime generatedAt)
+            DateTime generatedAt,
+            EntityAnalyticsReplayContext replay = null)
         {
             if (string.IsNullOrWhiteSpace(entityType))
                 return;
 
-            if (_repository.IsMonthClosed(entityType, periodYear, periodMonth))
+            if (replay == null && _repository.IsMonthClosed(entityType, periodYear, periodMonth))
                 return;
 
             var radarAxes = ResolveRadarEligibleAxes(entityType);
@@ -133,7 +135,10 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Services
                 }
             }
 
-            _repository.SaveRadarScores(entityType, allRows, refreshLogId);
+            if (replay != null)
+                _repository.ReplaceRadarForPeriod(entityType, periodYear, periodMonth, allRows, refreshLogId);
+            else
+                _repository.SaveRadarScores(entityType, allRows, refreshLogId);
         }
 
         public ProfileRadarSectionDto BuildRadarSection(string entityType, string entityId)

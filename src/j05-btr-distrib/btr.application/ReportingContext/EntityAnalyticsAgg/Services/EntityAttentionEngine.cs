@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
+using btr.application.ReportingContext.EntityAnalyticsAgg.Backfill.Models;
 using btr.application.ReportingContext.EntityAnalyticsAgg.Contracts;
 using btr.application.ReportingContext.EntityAnalyticsAgg.Models;
 using btr.application.ReportingContext.EntityAnalyticsAgg.Models.Snapshot;
@@ -28,12 +29,13 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Services
             int periodMonth,
             IReadOnlyDictionary<string, IReadOnlyList<EntityAttentionSignalSnapshot>> signalsByEntity,
             string refreshLogId,
-            DateTime generatedAt)
+            DateTime generatedAt,
+            EntityAnalyticsReplayContext replay = null)
         {
             if (string.IsNullOrWhiteSpace(entityType) || signalsByEntity == null)
                 return;
 
-            if (_repository.IsMonthClosed(entityType, periodYear, periodMonth))
+            if (replay == null && _repository.IsMonthClosed(entityType, periodYear, periodMonth))
                 return;
 
             var updates = new List<EntityAnalyticsAttentionEventRow>();
@@ -74,7 +76,10 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Services
                 }
             }
 
-            _repository.SaveAttentionRecords(entityType, updates, refreshLogId);
+            if (replay != null)
+                _repository.ReplaceAttentionForPeriod(entityType, periodYear, periodMonth, updates, refreshLogId);
+            else
+                _repository.SaveAttentionRecords(entityType, updates, refreshLogId);
         }
 
         public ProfileAttentionSectionDto BuildAttentionSection(string entityType, string entityId)

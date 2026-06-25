@@ -1,4 +1,5 @@
 using System;
+using btr.application.ReportingContext.EntityAnalyticsAgg.Backfill.Models;
 using btr.application.ReportingContext.EntityAnalyticsAgg.Queries;
 
 namespace btr.application.ReportingContext.EntityAnalyticsAgg.Contracts
@@ -10,7 +11,8 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Contracts
             int periodYear,
             int periodMonth,
             string refreshLogId,
-            DateTime generatedAt);
+            DateTime generatedAt,
+            EntityAnalyticsReplayContext replay = null);
 
         ProfileRadarSectionDto BuildRadarSection(string entityType, string entityId);
     }

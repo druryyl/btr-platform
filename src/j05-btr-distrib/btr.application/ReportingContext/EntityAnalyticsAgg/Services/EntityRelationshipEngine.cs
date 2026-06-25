@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using btr.application.ReportingContext.EntityAnalyticsAgg.Backfill.Models;
 using btr.application.ReportingContext.EntityAnalyticsAgg.Contracts;
 using btr.application.ReportingContext.EntityAnalyticsAgg.Models;
 using btr.application.ReportingContext.EntityAnalyticsAgg.Models.Snapshot;
@@ -33,12 +34,13 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Services
             int periodMonth,
             IReadOnlyList<EntityRelationshipSnapshot> snapshots,
             string refreshLogId,
-            DateTime generatedAt)
+            DateTime generatedAt,
+            EntityAnalyticsReplayContext replay = null)
         {
             if (string.IsNullOrWhiteSpace(entityType) || snapshots == null)
                 return;
 
-            if (_repository.IsMonthClosed(entityType, periodYear, periodMonth))
+            if (replay == null && _repository.IsMonthClosed(entityType, periodYear, periodMonth))
                 return;
 
             var definitions = _relationships.ResolvePackForEntityType(entityType);
@@ -90,7 +92,10 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Services
                 }
             }
 
-            _repository.ReplaceRelationshipRollups(entityType, periodYear, periodMonth, rows, refreshLogId);
+            if (replay != null)
+                _repository.ReplaceRelationshipForPeriod(entityType, periodYear, periodMonth, rows, refreshLogId);
+            else
+                _repository.ReplaceRelationshipRollups(entityType, periodYear, periodMonth, rows, refreshLogId);
         }
 
         public ProfileRelatedEntitiesSectionDto BuildRelatedEntitiesSection(string entityType, string entityId)

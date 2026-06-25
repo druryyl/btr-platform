@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using btr.application.ReportingContext.EntityAnalyticsAgg.Backfill.Contracts;
 using btr.application.ReportingContext.EntityAnalyticsAgg.Models;
 
 namespace btr.application.ReportingContext.EntityAnalyticsAgg.Contracts
@@ -13,7 +14,8 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Contracts
             IEntityAnalyticsRankingRepository,
             IEntityAnalyticsAttentionRepository,
             IEntityAnalyticsRelationshipRepository,
-            IEntityAnalyticsRadarRepository
+            IEntityAnalyticsRadarRepository,
+            IEntityAnalyticsBackfillRepository
     {
         EntityIdentity TryResolveIdentity(string entityType, string entityId);
     }

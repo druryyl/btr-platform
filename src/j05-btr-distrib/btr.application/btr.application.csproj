@@ -466,6 +466,7 @@
     <Compile Include="ReportingContext\EntityAnalyticsAgg\Producers\CustomerEntityAnalyticsEvidenceResolver.cs" />
     <Compile Include="ReportingContext\EntityAnalyticsAgg\Producers\CustomerEntityAnalyticsProduceInput.cs" />
     <Compile Include="ReportingContext\EntityAnalyticsAgg\Producers\CustomerEntityAnalyticsProducer.cs" />
+    <Compile Include="ReportingContext\EntityAnalyticsAgg\Producers\EntityAnalyticsProducerReplaySupport.cs" />
     <Compile Include="ReportingContext\EntityAnalyticsAgg\Producers\SalesmanEntityAnalyticsEvidenceResolver.cs" />
     <Compile Include="ReportingContext\EntityAnalyticsAgg\Producers\SalesmanEntityAnalyticsProduceInput.cs" />
     <Compile Include="ReportingContext\EntityAnalyticsAgg\Producers\SalesmanEntityAnalyticsProducer.cs" />
@@ -501,6 +502,7 @@
     <Compile Include="ReportingContext\EntityAnalyticsAgg\Backfill\Contracts\IEntityAnalyticsBackfillCheckpointStore.cs" />
     <Compile Include="ReportingContext\EntityAnalyticsAgg\Backfill\Contracts\IEntityAnalyticsBackfillMutex.cs" />
     <Compile Include="ReportingContext\EntityAnalyticsAgg\Backfill\Contracts\IEntityAnalyticsBackfillOrchestrator.cs" />
+    <Compile Include="ReportingContext\EntityAnalyticsAgg\Backfill\Contracts\IEntityAnalyticsBackfillRepository.cs" />
     <Compile Include="ReportingContext\EntityAnalyticsAgg\Backfill\Models\EntityAnalyticsBackfillCheckpointModel.cs" />
     <Compile Include="ReportingContext\EntityAnalyticsAgg\Backfill\Models\EntityAnalyticsBackfillCheckpointStatus.cs" />
     <Compile Include="ReportingContext\EntityAnalyticsAgg\Backfill\Models\EntityAnalyticsBackfillExecutionOrder.cs" />
@@ -508,6 +510,9 @@
     <Compile Include="ReportingContext\EntityAnalyticsAgg\Backfill\Models\EntityAnalyticsBackfillJobStatus.cs" />
     <Compile Include="ReportingContext\EntityAnalyticsAgg\Backfill\Models\EntityAnalyticsBackfillPeriodHelper.cs" />
     <Compile Include="ReportingContext\EntityAnalyticsAgg\Backfill\Models\EntityAnalyticsBackfillRequest.cs" />
+    <Compile Include="ReportingContext\EntityAnalyticsAgg\Backfill\Models\EntityAnalyticsReplayContext.cs" />
+    <Compile Include="ReportingContext\EntityAnalyticsAgg\Backfill\Models\EntityAnalyticsReplayContextFactory.cs" />
+    <Compile Include="ReportingContext\EntityAnalyticsAgg\Backfill\Models\EntityAnalyticsReplayResumeMode.cs" />
     <Compile Include="ReportingContext\EntityAnalyticsAgg\Backfill\Services\EntityAnalyticsBackfillOrchestrator.cs" />
     <Compile Include="ReportingContext\EntityAnalyticsAgg\Backfill\UseCases\EntityAnalyticsHistoricalBackfillWorker.cs" />
     <Compile Include="ReportingContext\DashboardSnapshotAgg\Services\CustomerRiskSignalBuilder.cs" />

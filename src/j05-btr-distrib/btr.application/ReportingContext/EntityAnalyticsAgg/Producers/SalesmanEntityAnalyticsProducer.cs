@@ -55,7 +55,8 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Producers
             var portfolio = input?.SalesmanAggregate?.Portfolio;
             if (portfolio == null || portfolio.Count == 0)
             {
-                _repository.ReplaceCurrentMetrics(EntityTypeCode.Salesman, Array.Empty<EntityAnalyticsCurrentRow>(), context.RefreshLogId);
+                EntityAnalyticsProducerReplaySupport.PersistL0(
+                    _repository, context, EntityTypeCode.Salesman, Array.Empty<EntityAnalyticsCurrentRow>());
                 return;
             }
 
@@ -66,11 +67,7 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Producers
             var signalsByEntity = new Dictionary<string, IReadOnlyList<EntityAttentionSignalSnapshot>>(
                 StringComparer.OrdinalIgnoreCase);
 
-            var businessDate = context.BusinessDate == default
-                ? context.GeneratedAt.Date
-                : context.BusinessDate.Date;
-            var periodYear = businessDate.Year;
-            var periodMonth = businessDate.Month;
+            var (periodYear, periodMonth) = EntityAnalyticsProducerReplaySupport.ResolvePeriod(context);
 
             foreach (var rep in portfolio)
             {
@@ -92,17 +89,18 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Producers
                     attentionDetailById);
             }
 
-            _repository.ReplaceCurrentMetrics(EntityTypeCode.Salesman, rows, context.RefreshLogId);
+            EntityAnalyticsProducerReplaySupport.PersistL0(_repository, context, EntityTypeCode.Salesman, rows);
 
-            _monthCloseService.EnsurePriorMonthClosed(EntityTypeCode.Salesman, context);
-            _repository.SaveMonthlyHistory(EntityTypeCode.Salesman, monthlyRows, context.RefreshLogId);
+            EntityAnalyticsProducerReplaySupport.PersistL1(
+                _repository, _monthCloseService, context, EntityTypeCode.Salesman, monthlyRows);
 
             _rankingEngine.ComputeAndPersistRanks(
                 EntityTypeCode.Salesman,
                 periodYear,
                 periodMonth,
                 context.RefreshLogId,
-                context.GeneratedAt);
+                context.GeneratedAt,
+                context.Replay);
 
             _attentionEngine.DiffAndPersistSignals(
                 EntityTypeCode.Salesman,
@@ -110,7 +108,8 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Producers
                 periodMonth,
                 signalsByEntity,
                 context.RefreshLogId,
-                context.GeneratedAt);
+                context.GeneratedAt,
+                context.Replay);
 
             _relationshipEngine.PersistRollups(
                 EntityTypeCode.Salesman,
@@ -118,14 +117,16 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Producers
                 periodMonth,
                 BuildRelationshipSnapshots(input),
                 context.RefreshLogId,
-                context.GeneratedAt);
+                context.GeneratedAt,
+                context.Replay);
 
             _radarEngine.ComputeAndPersistScores(
                 EntityTypeCode.Salesman,
                 periodYear,
                 periodMonth,
                 context.RefreshLogId,
-                context.GeneratedAt);
+                context.GeneratedAt,
+                context.Replay);
         }
 
         private IEnumerable<EntityAnalyticsMonthlyRow> BuildMonthlyRows(

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using btr.application.ReportingContext.EntityAnalyticsAgg.Backfill.Models;
 using btr.application.ReportingContext.EntityAnalyticsAgg.Models;
 using btr.application.ReportingContext.EntityAnalyticsAgg.Queries;
 
@@ -13,7 +14,8 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Contracts
             int periodMonth,
             IReadOnlyDictionary<string, IReadOnlyList<EntityAttentionSignalSnapshot>> signalsByEntity,
             string refreshLogId,
-            DateTime generatedAt);
+            DateTime generatedAt,
+            EntityAnalyticsReplayContext replay = null);
 
         ProfileAttentionSectionDto BuildAttentionSection(string entityType, string entityId);
     }

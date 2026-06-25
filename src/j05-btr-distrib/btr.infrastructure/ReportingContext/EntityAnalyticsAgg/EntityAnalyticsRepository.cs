@@ -1207,6 +1207,363 @@ WHEN NOT MATCHED THEN
             }
         }
 
+        public void ReplaceMonthlyHistoryForPeriod(
+            string entityType,
+            int periodYear,
+            int periodMonth,
+            IEnumerable<EntityAnalyticsMonthlyRow> rows,
+            string refreshLogId)
+        {
+            if (string.IsNullOrWhiteSpace(entityType))
+                throw new ArgumentException("EntityType is required.", nameof(entityType));
+
+            var rowList = rows?.ToList() ?? new List<EntityAnalyticsMonthlyRow>();
+            var now = DateTime.Now;
+
+            using (var conn = new SqlConnection(ConnStringHelper.Get(_opt)))
+            {
+                conn.Open();
+                using (var trans = conn.BeginTransaction())
+                {
+                    const string deleteSql = @"
+DELETE FROM BTRPD_EntityAnalytics_Monthly
+WHERE EntityType = @EntityType
+  AND PeriodYear = @PeriodYear
+  AND PeriodMonth = @PeriodMonth";
+
+                    conn.Execute(deleteSql, new
+                    {
+                        EntityType = entityType,
+                        PeriodYear = periodYear,
+                        PeriodMonth = periodMonth
+                    }, trans);
+
+                    if (rowList.Count > 0)
+                    {
+                        const string insertSql = @"
+INSERT INTO BTRPD_EntityAnalytics_Monthly
+    (EntityAnalyticsMonthlyId, EntityType, EntityId, EntityCode, PeriodYear, PeriodMonth,
+     KpiId, NumericValue, TextValue, PeriodSemantics, DefinitionVersion, IsClosed,
+     GeneratedAt, UpdatedAt, LastRefreshLogId)
+VALUES
+    (@EntityAnalyticsMonthlyId, @EntityType, @EntityId, @EntityCode, @PeriodYear, @PeriodMonth,
+     @KpiId, @NumericValue, @TextValue, @PeriodSemantics, @DefinitionVersion, @IsClosed,
+     @GeneratedAt, @UpdatedAt, @LastRefreshLogId)";
+
+                        foreach (var row in rowList)
+                        {
+                            conn.Execute(insertSql, new
+                            {
+                                EntityAnalyticsMonthlyId = Ulid.NewUlid().ToString(),
+                                EntityType = entityType,
+                                row.EntityId,
+                                row.EntityCode,
+                                PeriodYear = periodYear,
+                                PeriodMonth = periodMonth,
+                                row.KpiId,
+                                row.NumericValue,
+                                row.TextValue,
+                                PeriodSemantics = row.PeriodSemantics ?? string.Empty,
+                                DefinitionVersion = row.DefinitionVersion ?? 1,
+                                IsClosed = true,
+                                GeneratedAt = row.GeneratedAt == default ? now : row.GeneratedAt,
+                                UpdatedAt = now,
+                                LastRefreshLogId = refreshLogId ?? string.Empty
+                            }, trans);
+                        }
+                    }
+
+                    trans.Commit();
+                }
+            }
+        }
+
+        public void ReplaceRankingForPeriod(
+            string entityType,
+            int periodYear,
+            int periodMonth,
+            IEnumerable<EntityAnalyticsRankingRow> rows,
+            string refreshLogId)
+        {
+            if (string.IsNullOrWhiteSpace(entityType))
+                throw new ArgumentException("EntityType is required.", nameof(entityType));
+
+            var rowList = rows?.ToList() ?? new List<EntityAnalyticsRankingRow>();
+            var now = DateTime.Now;
+
+            using (var conn = new SqlConnection(ConnStringHelper.Get(_opt)))
+            {
+                conn.Open();
+                using (var trans = conn.BeginTransaction())
+                {
+                    const string deleteSql = @"
+DELETE FROM BTRPD_EntityAnalytics_Ranking
+WHERE EntityType = @EntityType
+  AND PeriodYear = @PeriodYear
+  AND PeriodMonth = @PeriodMonth";
+
+                    conn.Execute(deleteSql, new
+                    {
+                        EntityType = entityType,
+                        PeriodYear = periodYear,
+                        PeriodMonth = periodMonth
+                    }, trans);
+
+                    if (rowList.Count > 0)
+                    {
+                        const string insertSql = @"
+INSERT INTO BTRPD_EntityAnalytics_Ranking
+    (EntityAnalyticsRankingId, EntityType, EntityId, EntityCode, PeriodYear, PeriodMonth,
+     KpiId, RankPosition, PopulationSize, Percentile, GeneratedAt, UpdatedAt, LastRefreshLogId)
+VALUES
+    (@EntityAnalyticsRankingId, @EntityType, @EntityId, @EntityCode, @PeriodYear, @PeriodMonth,
+     @KpiId, @RankPosition, @PopulationSize, @Percentile, @GeneratedAt, @UpdatedAt, @LastRefreshLogId)";
+
+                        foreach (var row in rowList)
+                        {
+                            conn.Execute(insertSql, new
+                            {
+                                EntityAnalyticsRankingId = Ulid.NewUlid().ToString(),
+                                EntityType = entityType,
+                                row.EntityId,
+                                EntityCode = row.EntityCode ?? row.EntityId,
+                                PeriodYear = periodYear,
+                                PeriodMonth = periodMonth,
+                                KpiId = row.RankMetricKpiId,
+                                row.RankPosition,
+                                row.PopulationSize,
+                                row.Percentile,
+                                GeneratedAt = row.GeneratedAt == default ? now : row.GeneratedAt,
+                                UpdatedAt = now,
+                                LastRefreshLogId = refreshLogId ?? string.Empty
+                            }, trans);
+                        }
+                    }
+
+                    trans.Commit();
+                }
+            }
+        }
+
+        public void ReplaceAttentionForPeriod(
+            string entityType,
+            int periodYear,
+            int periodMonth,
+            IEnumerable<EntityAnalyticsAttentionEventRow> rows,
+            string refreshLogId)
+        {
+            if (string.IsNullOrWhiteSpace(entityType))
+                throw new ArgumentException("EntityType is required.", nameof(entityType));
+
+            var rowList = rows?.Where(r => r != null).ToList() ?? new List<EntityAnalyticsAttentionEventRow>();
+            var now = DateTime.Now;
+
+            using (var conn = new SqlConnection(ConnStringHelper.Get(_opt)))
+            {
+                conn.Open();
+                using (var trans = conn.BeginTransaction())
+                {
+                    const string deleteSql = @"
+DELETE FROM BTRPD_EntityAnalytics_Attention
+WHERE EntityType = @EntityType
+  AND LastSeenYear = @PeriodYear
+  AND LastSeenMonth = @PeriodMonth";
+
+                    conn.Execute(deleteSql, new
+                    {
+                        EntityType = entityType,
+                        PeriodYear = periodYear,
+                        PeriodMonth = periodMonth
+                    }, trans);
+
+                    if (rowList.Count > 0)
+                    {
+                        const string insertSql = @"
+INSERT INTO BTRPD_EntityAnalytics_Attention
+    (EntityAnalyticsAttentionId, EntityType, EntityId, EntityCode, SignalCode, SignalCategory, SignalTitle,
+     FirstSeenYear, FirstSeenMonth, LastSeenYear, LastSeenMonth, ConsecutivePeriods, TotalOccurrences,
+     IsActive, GeneratedAt, CreatedAt, UpdatedAt, LastRefreshLogId)
+VALUES
+    (@EntityAnalyticsAttentionId, @EntityType, @EntityId, @EntityCode, @SignalCode, @SignalCategory, @SignalTitle,
+     @FirstSeenYear, @FirstSeenMonth, @LastSeenYear, @LastSeenMonth, @ConsecutivePeriods, @TotalOccurrences,
+     @IsActive, @GeneratedAt, @CreatedAt, @UpdatedAt, @LastRefreshLogId)";
+
+                        foreach (var row in rowList)
+                        {
+                            var createdAt = row.CreatedAt == default ? now : row.CreatedAt;
+                            conn.Execute(insertSql, new
+                            {
+                                EntityAnalyticsAttentionId = string.IsNullOrWhiteSpace(row.EntityAnalyticsAttentionId)
+                                    ? Ulid.NewUlid().ToString()
+                                    : row.EntityAnalyticsAttentionId,
+                                EntityType = entityType,
+                                row.EntityId,
+                                EntityCode = row.EntityCode ?? row.EntityId,
+                                row.SignalCode,
+                                SignalCategory = row.SignalCategory ?? string.Empty,
+                                SignalTitle = row.SignalTitle ?? row.SignalCode,
+                                FirstSeenYear = row.FirstSeenPeriodYear,
+                                FirstSeenMonth = row.FirstSeenPeriodMonth,
+                                LastSeenYear = row.LastSeenPeriodYear,
+                                LastSeenMonth = row.LastSeenPeriodMonth,
+                                row.ConsecutivePeriods,
+                                row.TotalOccurrences,
+                                IsActive = row.IsActive ? 1 : 0,
+                                GeneratedAt = row.GeneratedAt == default ? now : row.GeneratedAt,
+                                CreatedAt = createdAt,
+                                UpdatedAt = now,
+                                LastRefreshLogId = refreshLogId ?? string.Empty
+                            }, trans);
+                        }
+                    }
+
+                    trans.Commit();
+                }
+            }
+        }
+
+        public void ReplaceRelationshipForPeriod(
+            string sourceEntityType,
+            int periodYear,
+            int periodMonth,
+            IEnumerable<EntityAnalyticsRelationshipRow> rows,
+            string refreshLogId)
+        {
+            if (string.IsNullOrWhiteSpace(sourceEntityType))
+                throw new ArgumentException("SourceEntityType is required.", nameof(sourceEntityType));
+
+            var rowList = rows?.ToList() ?? new List<EntityAnalyticsRelationshipRow>();
+            var now = DateTime.Now;
+
+            using (var conn = new SqlConnection(ConnStringHelper.Get(_opt)))
+            {
+                conn.Open();
+                using (var trans = conn.BeginTransaction())
+                {
+                    const string deleteSql = @"
+DELETE FROM BTRPD_EntityAnalytics_Relationship
+WHERE SourceEntityType = @SourceEntityType
+  AND PeriodYear = @PeriodYear
+  AND PeriodMonth = @PeriodMonth";
+
+                    conn.Execute(deleteSql, new
+                    {
+                        SourceEntityType = sourceEntityType,
+                        PeriodYear = periodYear,
+                        PeriodMonth = periodMonth
+                    }, trans);
+
+                    if (rowList.Count > 0)
+                    {
+                        const string insertSql = @"
+INSERT INTO BTRPD_EntityAnalytics_Relationship
+    (EntityAnalyticsRelationshipId, SourceEntityType, SourceEntityId, SourceEntityCode,
+     RelationshipCode, TargetEntityType, TargetEntityId, TargetEntityCode, TargetDisplayName,
+     Rank, MetricValue, PeriodYear, PeriodMonth, GeneratedAt, UpdatedAt, LastRefreshLogId)
+VALUES
+    (@EntityAnalyticsRelationshipId, @SourceEntityType, @SourceEntityId, @SourceEntityCode,
+     @RelationshipCode, @TargetEntityType, @TargetEntityId, @TargetEntityCode, @TargetDisplayName,
+     @Rank, @MetricValue, @PeriodYear, @PeriodMonth, @GeneratedAt, @UpdatedAt, @LastRefreshLogId)";
+
+                        foreach (var row in rowList)
+                        {
+                            conn.Execute(insertSql, new
+                            {
+                                EntityAnalyticsRelationshipId = Ulid.NewUlid().ToString(),
+                                SourceEntityType = sourceEntityType,
+                                row.SourceEntityId,
+                                SourceEntityCode = row.SourceEntityCode ?? row.SourceEntityId,
+                                row.RelationshipCode,
+                                row.TargetEntityType,
+                                row.TargetEntityId,
+                                TargetEntityCode = row.TargetEntityCode ?? row.TargetEntityId,
+                                TargetDisplayName = row.TargetDisplayName ?? row.TargetEntityCode ?? row.TargetEntityId,
+                                row.Rank,
+                                row.MetricValue,
+                                PeriodYear = periodYear,
+                                PeriodMonth = periodMonth,
+                                GeneratedAt = row.GeneratedAt == default ? now : row.GeneratedAt,
+                                UpdatedAt = now,
+                                LastRefreshLogId = refreshLogId ?? string.Empty
+                            }, trans);
+                        }
+                    }
+
+                    trans.Commit();
+                }
+            }
+        }
+
+        public void ReplaceRadarForPeriod(
+            string entityType,
+            int periodYear,
+            int periodMonth,
+            IEnumerable<EntityAnalyticsRadarScoreRow> rows,
+            string refreshLogId)
+        {
+            if (string.IsNullOrWhiteSpace(entityType))
+                throw new ArgumentException("EntityType is required.", nameof(entityType));
+
+            var rowList = rows?.ToList() ?? new List<EntityAnalyticsRadarScoreRow>();
+            var now = DateTime.Now;
+
+            using (var conn = new SqlConnection(ConnStringHelper.Get(_opt)))
+            {
+                conn.Open();
+                using (var trans = conn.BeginTransaction())
+                {
+                    const string deleteSql = @"
+DELETE FROM BTRPD_EntityAnalytics_Radar
+WHERE EntityType = @EntityType
+  AND PeriodYear = @PeriodYear
+  AND PeriodMonth = @PeriodMonth";
+
+                    conn.Execute(deleteSql, new
+                    {
+                        EntityType = entityType,
+                        PeriodYear = periodYear,
+                        PeriodMonth = periodMonth
+                    }, trans);
+
+                    if (rowList.Count > 0)
+                    {
+                        const string insertSql = @"
+INSERT INTO BTRPD_EntityAnalytics_Radar
+    (EntityAnalyticsRadarId, EntityType, EntityId, EntityCode, PeriodYear, PeriodMonth,
+     AxisKpiId, Score, PeerGroupRuleId, PeerGroupSize, NormalizationMethod,
+     GeneratedAt, UpdatedAt, LastRefreshLogId)
+VALUES
+    (@EntityAnalyticsRadarId, @EntityType, @EntityId, @EntityCode, @PeriodYear, @PeriodMonth,
+     @AxisKpiId, @Score, @PeerGroupRuleId, @PeerGroupSize, @NormalizationMethod,
+     @GeneratedAt, @UpdatedAt, @LastRefreshLogId)";
+
+                        foreach (var row in rowList)
+                        {
+                            conn.Execute(insertSql, new
+                            {
+                                EntityAnalyticsRadarId = Ulid.NewUlid().ToString(),
+                                EntityType = entityType,
+                                row.EntityId,
+                                EntityCode = row.EntityCode ?? row.EntityId,
+                                PeriodYear = periodYear,
+                                PeriodMonth = periodMonth,
+                                row.AxisKpiId,
+                                row.Score,
+                                PeerGroupRuleId = row.PeerGroupRuleId ?? string.Empty,
+                                row.PeerGroupSize,
+                                NormalizationMethod = row.NormalizationMethod ?? RadarNormalizationMethod.PeerPercentile,
+                                GeneratedAt = row.GeneratedAt == default ? now : row.GeneratedAt,
+                                UpdatedAt = now,
+                                LastRefreshLogId = refreshLogId ?? string.Empty
+                            }, trans);
+                        }
+                    }
+
+                    trans.Commit();
+                }
+            }
+        }
+
         public IReadOnlyList<EntityPopulationRow> GetActivePopulation(string entityType, string dimensionKpiId = null)
         {
             if (string.IsNullOrWhiteSpace(entityType))
