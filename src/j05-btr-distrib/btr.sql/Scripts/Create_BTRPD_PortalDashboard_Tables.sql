@@ -2724,6 +2724,11 @@ CREATE INDEX IX_BTRPD_EntityAnalytics_BackfillCheckpoint_Job_Status
     ON BTRPD_EntityAnalytics_BackfillCheckpoint (BackfillJobId, EntityType, Status)
 GO
 
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_BTRPD_EntityAnalytics_BackfillCheckpoint_Type_Period_StartedAt' AND object_id = OBJECT_ID(N'dbo.BTRPD_EntityAnalytics_BackfillCheckpoint'))
+CREATE INDEX IX_BTRPD_EntityAnalytics_BackfillCheckpoint_Type_Period_StartedAt
+    ON BTRPD_EntityAnalytics_BackfillCheckpoint (EntityType, PeriodYear, PeriodMonth, StartedAt DESC)
+GO
+
 -- BTRPD_EntityAnalytics_BackfillLock (M32.B1.1)
 IF OBJECT_ID(N'dbo.BTRPD_EntityAnalytics_BackfillLock', N'U') IS NULL
 BEGIN

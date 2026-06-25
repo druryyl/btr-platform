@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using btr.application.Portal;
 using btr.application.ReportingContext.EntityAnalyticsAgg.Backfill.Contracts;
 using btr.application.ReportingContext.EntityAnalyticsAgg.Backfill.Models;
@@ -278,15 +279,92 @@ namespace btr.test.ReportingContext
             store.Checkpoints.Should().OnlyContain(c => c.EntityCount == 5);
         }
 
+        [Fact]
+        public void Run_CrossJobResume_SkipsPriorCompleted()
+        {
+            var store = new FakeCheckpointStore();
+            store.SeedGlobal(EntityTypeCode.Customer, Period1.Year, Period1.Month,
+                EntityAnalyticsBackfillCheckpointStatus.Completed);
+
+            var orchestrator = CreateOrchestrator(store);
+            var result = orchestrator.Run(CreateRequest(dryRun: true, resume: true), default);
+
+            result.PeriodsProcessed.Should().Be(2);
+            result.PeriodsSkipped.Should().Be(1);
+        }
+
+        [Fact]
+        public void Run_ContinueOnError_ProcessesRemainingPeriods()
+        {
+            var store = new FakeCheckpointStore
+            {
+                FailOnPeriod = Period2
+            };
+            var orchestrator = CreateOrchestrator(store);
+
+            var result = orchestrator.Run(CreateRequest(dryRun: true, continueOnError: true), default);
+
+            result.Status.Should().Be(EntityAnalyticsBackfillJobStatus.Failed);
+            result.PeriodsProcessed.Should().Be(2);
+            store.Checkpoints.Should().Contain(c =>
+                c.PeriodYear == Period2.Year
+                && c.PeriodMonth == Period2.Month
+                && c.Status == EntityAnalyticsBackfillCheckpointStatus.Failed);
+            store.Checkpoints.Should().Contain(c =>
+                c.PeriodYear == Period3.Year
+                && c.PeriodMonth == Period3.Month
+                && c.Status == EntityAnalyticsBackfillCheckpointStatus.DryRunCompleted);
+        }
+
+        [Fact]
+        public void Run_Cancellation_MarksCheckpointCancelled()
+        {
+            var store = new FakeCheckpointStore();
+            var orchestrator = CreateOrchestrator(
+                store,
+                aggregateService: new CancellingAggregateService(Period2));
+
+            Action act = () => orchestrator.Run(CreateRequest(dryRun: true), default);
+
+            act.Should().Throw<OperationCanceledException>();
+            store.Checkpoints.Should().Contain(c =>
+                c.PeriodYear == Period2.Year
+                && c.PeriodMonth == Period2.Month
+                && c.Status == EntityAnalyticsBackfillCheckpointStatus.Cancelled);
+        }
+
+        [Fact]
+        public void Run_Force_RerunPreservesRowCounts()
+        {
+            var store = new FakeCheckpointStore();
+            var orchestrator = CreateOrchestrator(store);
+            var request = CreateRequest(dryRun: true, resume: true, force: true);
+
+            orchestrator.Run(request, default);
+            var firstRunCheckpoint = store.Checkpoints
+                .Single(c => c.PeriodYear == Period1.Year && c.PeriodMonth == Period1.Month);
+
+            orchestrator.Run(request, default);
+            var secondRunCheckpoint = store.Checkpoints
+                .Where(c => c.PeriodYear == Period1.Year && c.PeriodMonth == Period1.Month)
+                .OrderByDescending(c => c.StartedAt)
+                .First();
+
+            secondRunCheckpoint.EntityCount.Should().Be(firstRunCheckpoint.EntityCount);
+            secondRunCheckpoint.RowCountsJson.Should().Be(firstRunCheckpoint.RowCountsJson);
+        }
+
         private static EntityAnalyticsBackfillOrchestrator CreateOrchestrator(
             FakeCheckpointStore store,
             RecordingBackfillProducer producer = null,
             ISalesmanReplayPeriodHandler salesmanHandler = null,
-            IEntityAnalyticsReplayDataLoaderResolver loaderResolver = null)
+            IEntityAnalyticsReplayDataLoaderResolver loaderResolver = null,
+            IEntityAnalyticsReplayAggregateService aggregateService = null)
         {
             producer = producer ?? new RecordingBackfillProducer();
             salesmanHandler = salesmanHandler ?? new FakeSalesmanReplayPeriodHandler();
             loaderResolver = loaderResolver ?? new FakeLoaderResolver();
+            aggregateService = aggregateService ?? new FakeAggregateService();
             var entityTypes = new EntityTypeRegistry();
             entityTypes.Register(new EntityTypeRegistration
             {
@@ -318,7 +396,7 @@ namespace btr.test.ReportingContext
                 new FakeMutex(),
                 new FixedBusinessDateProvider(new DateTime(2024, 6, 15)),
                 loaderResolver,
-                new FakeAggregateService(),
+                aggregateService,
                 salesmanHandler,
                 producerOrchestrator,
                 new FixedTglJamDal(new DateTime(2026, 6, 25, 12, 0, 0)),
@@ -331,6 +409,7 @@ namespace btr.test.ReportingContext
             bool resume = true,
             bool force = false,
             bool restart = false,
+            bool continueOnError = false,
             string confirmToken = null)
         {
             return new EntityAnalyticsBackfillRequest
@@ -344,6 +423,7 @@ namespace btr.test.ReportingContext
                 Resume = resume,
                 Force = force,
                 Restart = restart,
+                ContinueOnError = continueOnError,
                 ConfirmToken = confirmToken,
                 SkipLiveMutexCheck = true,
                 TriggeredBy = "Manual"
@@ -492,18 +572,23 @@ namespace btr.test.ReportingContext
                 };
         }
 
-        private sealed class FakeAggregateService : IEntityAnalyticsReplayAggregateService
+        private class FakeAggregateService : IEntityAnalyticsReplayAggregateService
         {
-            public EntityAnalyticsReplayAggregateResult Aggregate(
+            public virtual EntityAnalyticsReplayAggregateResult Aggregate(
                 EntityAnalyticsReplayContext replayContext,
                 object bundle,
                 DateTime generatedAt)
             {
-                if (string.Equals(replayContext.EntityTypeCode, EntityTypeCode.Salesman, StringComparison.OrdinalIgnoreCase))
+                return BuildResult(replayContext.EntityTypeCode);
+            }
+
+            protected EntityAnalyticsReplayAggregateResult BuildResult(string entityTypeCode)
+            {
+                if (string.Equals(entityTypeCode, EntityTypeCode.Salesman, StringComparison.OrdinalIgnoreCase))
                 {
                     return new EntityAnalyticsReplayAggregateResult
                     {
-                        EntityType = replayContext.EntityTypeCode,
+                        EntityType = entityTypeCode,
                         ProduceInput = new SalesmanEntityAnalyticsProduceInput
                         {
                             SalesmanAggregate = new DashboardSalesmanAggregateResult
@@ -522,11 +607,11 @@ namespace btr.test.ReportingContext
                     };
                 }
 
-                if (string.Equals(replayContext.EntityTypeCode, EntityTypeCode.Supplier, StringComparison.OrdinalIgnoreCase))
+                if (string.Equals(entityTypeCode, EntityTypeCode.Supplier, StringComparison.OrdinalIgnoreCase))
                 {
                     return new EntityAnalyticsReplayAggregateResult
                     {
-                        EntityType = replayContext.EntityTypeCode,
+                        EntityType = entityTypeCode,
                         ProduceInput = new SupplierEntityAnalyticsProduceInput
                         {
                             ManagementAggregate = new DashboardPurchasingManagementAggregateResult
@@ -545,11 +630,11 @@ namespace btr.test.ReportingContext
                     };
                 }
 
-                if (string.Equals(replayContext.EntityTypeCode, EntityTypeCode.Item, StringComparison.OrdinalIgnoreCase))
+                if (string.Equals(entityTypeCode, EntityTypeCode.Item, StringComparison.OrdinalIgnoreCase))
                 {
                     return new EntityAnalyticsReplayAggregateResult
                     {
-                        EntityType = replayContext.EntityTypeCode,
+                        EntityType = entityTypeCode,
                         ProduceInput = new ItemEntityAnalyticsProduceInput
                         {
                             Portfolio = Enumerable.Range(1, 42)
@@ -567,7 +652,7 @@ namespace btr.test.ReportingContext
 
                 return new EntityAnalyticsReplayAggregateResult
                 {
-                    EntityType = replayContext.EntityTypeCode,
+                    EntityType = entityTypeCode,
                     ProduceInput = new CustomerEntityAnalyticsProduceInput
                     {
                         PortfolioAggregate = new btr.application.ReportingContext.DashboardSnapshotAgg.Models.DashboardCustomerPortfolioAggregateResult
@@ -584,6 +669,30 @@ namespace btr.test.ReportingContext
                         MasterRowCount = 42
                     }
                 };
+            }
+        }
+
+        private sealed class CancellingAggregateService : FakeAggregateService
+        {
+            private readonly YearMonthPeriod _cancelOnPeriod;
+
+            public CancellingAggregateService(YearMonthPeriod cancelOnPeriod)
+            {
+                _cancelOnPeriod = cancelOnPeriod;
+            }
+
+            public override EntityAnalyticsReplayAggregateResult Aggregate(
+                EntityAnalyticsReplayContext replayContext,
+                object bundle,
+                DateTime generatedAt)
+            {
+                if (replayContext.PeriodYear == _cancelOnPeriod.Year
+                    && replayContext.PeriodMonth == _cancelOnPeriod.Month)
+                {
+                    throw new OperationCanceledException();
+                }
+
+                return base.Aggregate(replayContext, bundle, generatedAt);
             }
         }
 
@@ -670,6 +779,23 @@ namespace btr.test.ReportingContext
                 return _globalCheckpoints.TryGetValue(BuildKey(entityType, year, month), out var seeded)
                     ? seeded
                     : null;
+            }
+
+            public EntityAnalyticsBackfillCheckpointModel GetLatestCheckpoint(
+                string entityType,
+                int year,
+                int month)
+            {
+                return _jobCheckpoints
+                    .Where(c =>
+                        c.EntityType == entityType
+                        && c.PeriodYear == year
+                        && c.PeriodMonth == month)
+                    .Concat(_globalCheckpoints.TryGetValue(BuildKey(entityType, year, month), out var seeded)
+                        ? new[] { seeded }
+                        : Array.Empty<EntityAnalyticsBackfillCheckpointModel>())
+                    .OrderByDescending(c => c.StartedAt)
+                    .FirstOrDefault();
             }
 
             public IReadOnlyList<EntityAnalyticsBackfillCheckpointModel> GetCheckpointsForJob(

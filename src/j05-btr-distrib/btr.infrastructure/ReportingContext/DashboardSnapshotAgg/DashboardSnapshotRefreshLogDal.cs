@@ -102,7 +102,7 @@ FROM (
             PARTITION BY Domain
             ORDER BY COALESCE(CompletedAt, StartedAt) DESC, StartedAt DESC) AS RowNum
     FROM BTRPD_RefreshLog
-    WHERE Domain IN ('Piutang', 'Inventory', 'InventoryRisk', 'Sales', 'Purchasing', 'Customer', 'Salesman', 'Collection')
+    WHERE Domain IN ('Piutang', 'Inventory', 'InventoryRisk', 'Sales', 'Purchasing', 'Customer', 'Salesman', 'Collection', 'EntityAnalyticsHistoricalBackfill')
 ) ranked
 WHERE RowNum = 1
 ORDER BY Domain";

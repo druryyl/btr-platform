@@ -103,6 +103,32 @@ WHERE BackfillJobId = @JobId
             }
         }
 
+        public EntityAnalyticsBackfillCheckpointModel GetLatestCheckpoint(
+            string entityType,
+            int year,
+            int month)
+        {
+            const string sql = @"
+SELECT TOP 1 BackfillCheckpointId, BackfillJobId, EntityType, PeriodYear, PeriodMonth,
+       Status, LayersCompleted, EntityCount, RowCountsJson,
+       StartedAt, CompletedAt, LastError, LastRefreshLogId
+FROM BTRPD_EntityAnalytics_BackfillCheckpoint
+WHERE EntityType = @EntityType
+  AND PeriodYear = @Year
+  AND PeriodMonth = @Month
+ORDER BY StartedAt DESC";
+
+            using (var conn = new SqlConnection(ConnStringHelper.Get(_opt)))
+            {
+                return conn.QuerySingleOrDefault<EntityAnalyticsBackfillCheckpointModel>(sql, new
+                {
+                    EntityType = entityType,
+                    Year = year,
+                    Month = month
+                });
+            }
+        }
+
         public IReadOnlyList<EntityAnalyticsBackfillCheckpointModel> GetCheckpointsForJob(
             string jobId,
             string entityType)

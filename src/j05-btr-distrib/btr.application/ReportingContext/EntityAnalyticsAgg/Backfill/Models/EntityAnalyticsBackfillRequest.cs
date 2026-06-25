@@ -1,4 +1,5 @@
 using System;
+using System.Threading;
 using btr.application.ReportingContext.EntityAnalyticsAgg.Backfill.Models;
 
 namespace btr.application.ReportingContext.EntityAnalyticsAgg.Backfill.Models
@@ -17,9 +18,11 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Backfill.Models
         public bool Restart { get; set; }
         public bool Force { get; set; }
         public bool DryRun { get; set; }
+        public bool ContinueOnError { get; set; }
         public int BatchSize { get; set; } = 500;
         public string ConfirmToken { get; set; }
         public bool SkipLiveMutexCheck { get; set; }
+        public CancellationToken CancellationToken { get; set; } = CancellationToken.None;
 
         public EntityAnalyticsBackfillResult Result { get; set; }
     }

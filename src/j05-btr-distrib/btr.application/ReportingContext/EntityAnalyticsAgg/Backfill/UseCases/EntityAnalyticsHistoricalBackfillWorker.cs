@@ -1,5 +1,6 @@
 using System;
 using System.Diagnostics;
+using System.Threading;
 using btr.application.ReportingContext.DashboardSnapshotAgg.Contracts;
 using btr.application.ReportingContext.DashboardSnapshotAgg.Models;
 using btr.application.ReportingContext.DashboardSnapshotAgg.Progress;
@@ -59,7 +60,11 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Backfill.UseCases
             try
             {
                 WorkerProgressScope.Current?.StepStarted($"{Domain}:Run", "Run historical backfill orchestrator");
-                var result = _orchestrator.Run(request, System.Threading.CancellationToken.None);
+                var cancellationToken = request.CancellationToken;
+                if (cancellationToken == default)
+                    cancellationToken = CancellationToken.None;
+
+                var result = _orchestrator.Run(request, cancellationToken);
                 request.Result = result;
                 WorkerProgressScope.Current?.StepCompleted($"{Domain}:Run", new WorkerProgressStepInfo
                 {
@@ -77,6 +82,13 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Backfill.UseCases
                 }
 
                 _refreshLogDal.MarkSuccess(refreshLogId, (int)sw.ElapsedMilliseconds);
+            }
+            catch (OperationCanceledException)
+            {
+                sw.Stop();
+                _refreshLogDal.MarkFailed(refreshLogId, (int)sw.ElapsedMilliseconds, "Cancelled.");
+                WorkerProgressScope.Current?.StepFailed($"{Domain}:Run", "Cancelled.");
+                throw;
             }
             catch (Exception ex) when (!(ex is InvalidOperationException))
             {

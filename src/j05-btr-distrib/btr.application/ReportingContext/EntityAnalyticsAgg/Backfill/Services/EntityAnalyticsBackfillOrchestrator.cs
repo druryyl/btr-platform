@@ -92,6 +92,7 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Backfill.Services
                 request.Restart,
                 request.Force,
                 request.DryRun,
+                request.ContinueOnError,
                 request.BatchSize
             });
 
@@ -114,7 +115,12 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Backfill.Services
             var periods = EntityAnalyticsBackfillPeriodHelper.EnumeratePeriods(fromPeriod, toPeriod);
             var periodsProcessed = 0;
             var periodsSkipped = 0;
+            var periodsFailed = 0;
             string failureMessage = null;
+            string inProgressCheckpointId = null;
+            string inProgressEntityType = null;
+            YearMonthPeriod? inProgressPeriod = null;
+            DateTime? inProgressStartedAt = null;
 
             try
             {
@@ -129,7 +135,7 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Backfill.Services
                         {
                             cancellationToken.ThrowIfCancellationRequested();
 
-                            if (ShouldSkipPeriod(request, jobId, entityType, period, out var existing))
+                            if (ShouldSkipPeriod(request, entityType, period, out _))
                             {
                                 periodsSkipped++;
                                 continue;
@@ -138,8 +144,12 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Backfill.Services
                             var periodStepId = $"Backfill:{entityType}:{period.Label}";
                             WorkerProgressScope.Current?.StepStarted($"{periodStepId}:Plan", "Plan historical replay period");
 
-                            var checkpointId = existing?.BackfillCheckpointId ?? Ulid.NewUlid().ToString();
+                            var checkpointId = Ulid.NewUlid().ToString();
                             var startedAt = DateTime.Now;
+                            inProgressCheckpointId = checkpointId;
+                            inProgressEntityType = entityType;
+                            inProgressPeriod = period;
+                            inProgressStartedAt = startedAt;
 
                             try
                             {
@@ -235,8 +245,12 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Backfill.Services
                                 }
 
                                 periodsProcessed++;
+                                inProgressCheckpointId = null;
+                                inProgressEntityType = null;
+                                inProgressPeriod = null;
+                                inProgressStartedAt = null;
                             }
-                            catch (Exception ex)
+                            catch (Exception ex) when (!(ex is OperationCanceledException))
                             {
                                 var message = Truncate(ex.Message);
                                 _checkpointStore.UpsertCheckpoint(new EntityAnalyticsBackfillCheckpointModel
@@ -257,6 +271,20 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Backfill.Services
                                 });
 
                                 WorkerProgressScope.Current?.StepFailed($"{periodStepId}:Plan", message);
+                                inProgressCheckpointId = null;
+                                inProgressEntityType = null;
+                                inProgressPeriod = null;
+                                inProgressStartedAt = null;
+
+                                if (request.ContinueOnError)
+                                {
+                                    periodsFailed++;
+                                    failureMessage = periodsFailed == 1
+                                        ? message
+                                        : $"{periodsFailed} period(s) failed.";
+                                    continue;
+                                }
+
                                 failureMessage = message;
                                 throw;
                             }
@@ -266,6 +294,26 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Backfill.Services
                     {
                         _mutex.Release(entityType, jobId);
                     }
+                }
+
+                if (periodsFailed > 0)
+                {
+                    var summary = failureMessage ?? $"{periodsFailed} period(s) failed.";
+                    _checkpointStore.UpdateJob(jobId, job =>
+                    {
+                        job.Status = EntityAnalyticsBackfillJobStatus.Failed;
+                        job.CompletedAt = DateTime.Now;
+                        job.LastError = Truncate(summary);
+                    });
+
+                    sw.Stop();
+                    return BuildResult(
+                        jobId,
+                        EntityAnalyticsBackfillJobStatus.Failed,
+                        periodsProcessed,
+                        periodsSkipped,
+                        sw,
+                        summary);
                 }
 
                 _checkpointStore.UpdateJob(jobId, job =>
@@ -280,6 +328,28 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Backfill.Services
             }
             catch (OperationCanceledException)
             {
+                if (inProgressCheckpointId != null
+                    && inProgressPeriod.HasValue
+                    && inProgressStartedAt.HasValue)
+                {
+                    _checkpointStore.UpsertCheckpoint(new EntityAnalyticsBackfillCheckpointModel
+                    {
+                        BackfillCheckpointId = inProgressCheckpointId,
+                        BackfillJobId = jobId,
+                        EntityType = inProgressEntityType,
+                        PeriodYear = inProgressPeriod.Value.Year,
+                        PeriodMonth = inProgressPeriod.Value.Month,
+                        Status = EntityAnalyticsBackfillCheckpointStatus.Cancelled,
+                        LayersCompleted = string.Empty,
+                        EntityCount = 0,
+                        RowCountsJson = string.Empty,
+                        StartedAt = inProgressStartedAt.Value,
+                        CompletedAt = DateTime.Now,
+                        LastError = "Cancelled.",
+                        LastRefreshLogId = request.RefreshLogId ?? string.Empty
+                    });
+                }
+
                 _checkpointStore.UpdateJob(jobId, job =>
                 {
                     job.Status = EntityAnalyticsBackfillJobStatus.Cancelled;
@@ -367,12 +437,11 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Backfill.Services
 
         private bool ShouldSkipPeriod(
             EntityAnalyticsBackfillRequest request,
-            string jobId,
             string entityType,
             YearMonthPeriod period,
             out EntityAnalyticsBackfillCheckpointModel existing)
         {
-            existing = _checkpointStore.GetCheckpoint(jobId, entityType, period.Year, period.Month);
+            existing = _checkpointStore.GetLatestCheckpoint(entityType, period.Year, period.Month);
 
             if (!request.Resume || request.Force)
                 return false;

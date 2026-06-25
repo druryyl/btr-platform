@@ -17,6 +17,7 @@ namespace btr.portal.worker
                 Restart = ParseFlag(args, "--restart"),
                 Force = ParseFlag(args, "--force"),
                 DryRun = ParseFlag(args, "--dry-run"),
+                ContinueOnError = ParseFlag(args, "--continue-on-error"),
                 BatchSize = ParseOptionalInt(args, "--batch-size", 500),
                 ConfirmToken = ParseOptionalOption(args, "--confirm"),
                 SkipLiveMutexCheck = ParseFlag(args, "--skip-live-mutex-check")

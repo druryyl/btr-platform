@@ -25,3 +25,7 @@ GO
 CREATE INDEX IX_BTRPD_EntityAnalytics_BackfillCheckpoint_Job_Status
     ON BTRPD_EntityAnalytics_BackfillCheckpoint (BackfillJobId, EntityType, Status)
 GO
+
+CREATE INDEX IX_BTRPD_EntityAnalytics_BackfillCheckpoint_Type_Period_StartedAt
+    ON BTRPD_EntityAnalytics_BackfillCheckpoint (EntityType, PeriodYear, PeriodMonth, StartedAt DESC)
+GO

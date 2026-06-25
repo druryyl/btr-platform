@@ -750,6 +750,108 @@ Ensure the entity-type mutex blocks concurrent live `InventoryRisk` refresh duri
 
 
 
+## Historical Backfill — Checkpoint & Resume (M32.B1.8)
+
+
+
+Production backfill may span multiple nights. Checkpoint state is persisted per `(EntityType, PeriodYear, PeriodMonth)` in `BTRPD_EntityAnalytics_BackfillCheckpoint`. Resume looks up the **latest** checkpoint across all jobs — not only the current CLI invocation.
+
+
+
+### Resume semantics
+
+
+
+| Checkpoint status | On `--resume true` (default) |
+|-------------------|------------------------------|
+| `Completed`, `DryRunCompleted` | Skip period |
+| `Running`, `Failed`, `Cancelled` | Re-execute period |
+| (none) | Process period |
+
+
+
+`--force` reprocesses all periods regardless of prior status. `--restart` deletes checkpoint rows for the selected scope (snapshot data is untouched unless `--force` is also used).
+
+
+
+### Flag decision table
+
+
+
+| Goal | Flags |
+|------|-------|
+| Continue after crash | `--resume true` (default) |
+| Re-run one bad month | `--force --from-period YYYY-MM --to-period YYYY-MM --confirm BACKFILL` |
+| Clear progress and start over | `--restart` |
+| Staging: log failures but keep going | `--continue-on-error` (non-production only) |
+| Graceful stop | Ctrl+C (completes current period, then exits) |
+
+
+
+### Failure recovery
+
+
+
+1. Inspect `BTRPD_EntityAnalytics_BackfillCheckpoint.LastError` for the failed period.
+
+2. Fix source data or infrastructure issue.
+
+3. Re-run with `--force --from-period YYYY-MM` for the affected entity type.
+
+
+
+### Monitoring
+
+
+
+**Refresh log** (job-level audit):
+
+
+
+```sql
+
+SELECT TOP 5 *
+
+FROM BTRPD_RefreshLog
+
+WHERE Domain = 'EntityAnalyticsHistoricalBackfill'
+
+ORDER BY StartedAt DESC
+
+```
+
+
+
+**Checkpoint progress** (per-period):
+
+
+
+```sql
+
+SELECT EntityType, PeriodYear, PeriodMonth, Status, EntityCount, LastError, StartedAt, CompletedAt
+
+FROM BTRPD_EntityAnalytics_BackfillCheckpoint
+
+WHERE EntityType = 'Customer'
+
+ORDER BY PeriodYear, PeriodMonth
+
+```
+
+
+
+### Mutex reminder
+
+
+
+Pause or verify mutex for the target entity type before backfill writes. Customer backfill blocks live `Customer` refresh; other domains may continue.
+
+
+
+---
+
+
+
 ## Testing Checklist
 
 
@@ -768,6 +870,7 @@ Ensure the entity-type mutex blocks concurrent live `InventoryRisk` refresh duri
 | PU01 reconciliation | `SupplierEntityAnalyticsReconciliationTest` |
 | IN02 reconciliation | `ItemEntityAnalyticsReconciliationTest` |
 | Item replay backfill | `ItemReplayBackfillReconciliationTest` |
+| Backfill checkpoint / resume | `EntityAnalyticsBackfillOrchestratorTest` |
 | Relationship aggregator | `DashboardSalesmanRelationshipAggregatorTest`, `DashboardItemRelationshipAggregatorTest` |
 
 | KPI registry / pack validation | `EntityAnalyticsKpiRegistryTest` |

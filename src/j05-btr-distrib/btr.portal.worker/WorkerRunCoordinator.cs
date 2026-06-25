@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Threading;
 using btr.application.ReportingContext.DashboardSnapshotAgg.Progress;
 using btr.application.ReportingContext.DashboardSnapshotAgg.UseCases;
 using btr.application.ReportingContext.EntityAnalyticsAgg.Backfill.UseCases;
@@ -284,8 +285,28 @@ namespace btr.portal.worker
                     {
                         var worker = sp.GetRequiredService<IEntityAnalyticsHistoricalBackfillWorker>();
                         var request = EntityAnalyticsBackfillCliParser.Parse(args, triggeredBy);
-                        worker.Execute(request);
+
+                        using (var cancellationSource = new CancellationTokenSource())
+                        {
+                            Console.CancelKeyPress += OnCancelKeyPress;
+                            try
+                            {
+                                request.CancellationToken = cancellationSource.Token;
+                                worker.Execute(request);
+                            }
+                            finally
+                            {
+                                Console.CancelKeyPress -= OnCancelKeyPress;
+                            }
+                        }
+
                         return request.Result?.DurationMs ?? 0;
+
+                        void OnCancelKeyPress(object sender, ConsoleCancelEventArgs e)
+                        {
+                            e.Cancel = true;
+                            cancellationSource.Cancel();
+                        }
                     });
                     break;
 
