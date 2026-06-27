@@ -17,7 +17,7 @@ using btr.application.ReportingContext.EntityAnalyticsAgg.Models;
 using btr.application.ReportingContext.EntityAnalyticsAgg.Models.Snapshot;
 
 using btr.application.ReportingContext.EntityAnalyticsAgg.Registrars;
-
+using btr.application.ReportingContext.EntityAnalyticsAgg.Services;
 using btr.nuna.Domain;
 
 
@@ -145,21 +145,23 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Producers
 
 
 
-                var entityId = customer.CustomerCode.Trim();
+                var entityCode = customer.CustomerCode.Trim();
+
+                var entityId = ResolveCustomerEntityId(customer, context);
 
                 var generatedAt = context.GeneratedAt;
 
 
 
-                rows.AddRange(BuildCustomerRows(customer, entityId, generatedAt, attentionByCode));
+                rows.AddRange(BuildCustomerRows(customer, entityId, entityCode, generatedAt, attentionByCode));
 
-                monthlyRows.AddRange(BuildMonthlyRows(customer, entityId, periodYear, periodMonth, generatedAt));
+                monthlyRows.AddRange(BuildMonthlyRows(customer, entityId, entityCode, periodYear, periodMonth, generatedAt));
 
                 signalsByEntity[entityId] = BuildAttentionSnapshots(
 
                     entityId,
 
-                    entityId,
+                    entityCode,
 
                     attentionByCode,
 
@@ -195,7 +197,7 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Producers
                 EntityTypeCode.Customer,
                 periodYear,
                 periodMonth,
-                BuildRelationshipSnapshots(input),
+                BuildRelationshipSnapshots(input, context),
                 context.RefreshLogId,
                 context.GeneratedAt,
                 context.Replay);
@@ -218,6 +220,8 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Producers
 
             string entityId,
 
+            string entityCode,
+
             int periodYear,
 
             int periodMonth,
@@ -225,10 +229,6 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Producers
             DateTime generatedAt)
 
         {
-
-            var entityCode = customer.CustomerCode;
-
-
 
             foreach (var (kpiId, value) in BuildTrendKpiValues(customer))
 
@@ -450,7 +450,9 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Producers
 
         private static IReadOnlyList<EntityRelationshipSnapshot> BuildRelationshipSnapshots(
 
-            CustomerEntityAnalyticsProduceInput input)
+            CustomerEntityAnalyticsProduceInput input,
+
+            EntityAnalyticsProduceContext context)
 
         {
 
@@ -484,9 +486,9 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Producers
 
 
 
-                var entityId = customer.CustomerCode.Trim();
+                var entityCode = customer.CustomerCode.Trim();
 
-                var entityCode = entityId;
+                var entityId = ResolveCustomerEntityId(customer, context);
 
 
 
@@ -702,13 +704,13 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Producers
 
             string entityId,
 
+            string entityCode,
+
             DateTime generatedAt,
 
             IReadOnlyDictionary<string, HashSet<string>> attentionByCode)
 
         {
-
-            var entityCode = customer.CustomerCode;
 
             var rows = new List<EntityAnalyticsCurrentRow>();
 
@@ -878,6 +880,18 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Producers
 
             return CreateRow(entityId, entityCode, kpiId, numericValue, textValue, generatedAt);
 
+        }
+
+        private static string ResolveCustomerEntityId(
+            DashboardCustomerPortfolioCustomerRow customer,
+            EntityAnalyticsProduceContext context)
+        {
+            if (!string.IsNullOrWhiteSpace(customer.CustomerId))
+                return customer.CustomerId.Trim();
+
+            return EntityAnalyticsCustomerIdentityResolver.Resolve(
+                customer.CustomerCode,
+                context?.CustomerIdentityLookup).CustomerId;
         }
 
     }

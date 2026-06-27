@@ -231,23 +231,32 @@ RefreshDashboardSalesmanSnapshotWorker
 
 **Protected modules unchanged:** `DashboardSalesFakturAggregator`, `BTRPD_SalesTopSalesman`, `DashboardExecutiveComposer`.
 
-### Field Activity Live Query (M18.5)
+### Field Activity Hybrid Model (M18.5 + M18.6)
 
-Field Activity is a **parameterized live-query dashboard** — no `BTRPD_*` tables, no worker refresh. User selects `(salesPersonId, visitDate)` and the API composes the response on demand:
+Field Activity uses a **hybrid data path**:
+
+| View | Route | Data path |
+| ---- | ----- | --------- |
+| **Sales Force Overview** (M18.6) | `/dashboard/field-activity` | Today → `BTRPD_FieldActivity*` snapshot (15 min refresh); historical dates → batch `FieldActivityOverviewComposer` |
+| **Salesman Field Activity** (M18.5 detail) | `/dashboard/field-activity/detail` | Live `FieldActivityComposer` per `(salesPersonId, visitDate)` |
 
 ```text
+GET /api/dashboard/field-activity/overview?visitDate=
+        ↓ GetFieldActivityOverviewQueryHandler
+        ↓ (today + snapshot exists) IDashboardFieldActivitySnapshotDal
+        ↓ (else) FieldActivityOverviewComposer + batch DALs
+FieldActivityOverviewResponse
+
 GET /api/dashboard/field-activity?salesPersonId=&visitDate=
-        ↓ GetFieldActivityQueryHandler
-        ↓ FieldActivityComposer
-        ↓ IEffectiveVisitPlanDal (Desktop resolver)
-        ↓ IFieldActivityCheckInDal / IFieldActivityOrderDal / ICustomerCoordinateDal
-        ↓ GpsValidationClassifier (RO1 bands)
-FieldActivityResponse (KPIs, stops, GeoJSON routes, meta)
+        ↓ FieldActivityComposer (unchanged M18.5 detail)
+FieldActivityResponse
 ```
 
-**Why live query:** Intraday freshness for Today; visit-level coordinates and salesman-day scope do not fit the `CURRENT` snapshot replace model. Team trends and Alert Center integration deferred to Release 2 snapshot domain.
+**Snapshot domain:** `RefreshDashboardFieldActivitySnapshotWorker` (Domain=`FieldActivity`, 15 min) persists `BTRPD_FieldActivityKpi`, `BTRPD_FieldActivitySalesman`, `BTRPD_FieldActivityTrend`.
 
-**Config:** `FieldActivity:VisitPlanGoLiveDate` in portal API appsettings — dates before go-live return empty planned set with `PlanDataAvailable = false`.
+**Why hybrid:** Overview compares 20–100 salesmen in one payload; batch SQL avoids N+1 composer calls. Detail retains visit-level GeoJSON and replay via live query.
+
+**Config:** `FieldActivity:VisitPlanGoLiveDate`; `DashboardSnapshot:FieldActivityIntervalMinutes` (default 15).
 
 ### Inventory Risk Snapshot Domain (M19)
 
@@ -308,8 +317,9 @@ GET /api/dashboard/purchasing
 | `GET /api/dashboard/purchasing` | `PurchasingDashboardController` | V1 Layer A + B + PurchasingManagement snapshot | Purchasing Management Dashboard (M21 extends response) |
 | `GET /api/dashboard/customers` | `CustomerDashboardController` | Dedicated Customer snapshot (`DashboardCustomerAgg`) | Customer Analytics (M17) |
 | `GET /api/dashboard/salesmen` | `SalesmanDashboardController` | Dedicated Salesman snapshot (`DashboardSalesmanAgg`) | Salesman Performance (M18) |
-| `GET /api/dashboard/field-activity` | `FieldActivityDashboardController` | Live query via `FieldActivityComposer` (`DashboardFieldActivityAgg`) | Field Activity Control Tower (M18.5) |
-| `GET /api/dashboard/field-activity/salesmen` | `FieldActivityDashboardController` | `ISalesPersonDal` | Salesman selector for Field Activity |
+| `GET /api/dashboard/field-activity/overview` | `FieldActivityDashboardController` | Hybrid snapshot/batch overview (`DashboardFieldActivityOverviewAgg`) | Sales Force Overview (M18.6) |
+| `GET /api/dashboard/field-activity` | `FieldActivityDashboardController` | Live query via `FieldActivityComposer` (`DashboardFieldActivityAgg`) | Salesman Field Activity detail (M18.5) |
+| `GET /api/dashboard/field-activity/salesmen` | `FieldActivityDashboardController` | `ISalesPersonDal` | Salesman selector for Field Activity detail |
 | `GET /api/dashboard/collection` | `CollectionDashboardController` | Dedicated Collection snapshot (`DashboardCollectionAgg`) | Collection Dashboard (M20) |
 | `GET /api/dashboard/locations` | `LocationDashboardController` | Dedicated Location snapshot (`DashboardLocationAgg`) | Branch / Warehouse Performance (M22) |
 | `GET /api/dashboard/inventory-risk` | `InventoryRiskDashboardController` | Dedicated Inventory Risk snapshot (`DashboardInventoryRiskAgg`) | Slow Moving & Dead Stock (M19) |

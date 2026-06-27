@@ -166,6 +166,25 @@ export interface CompareRankingEntity {
   Ranking: ProfileRankingSection
 }
 
+export interface CompareRankingOverlay {
+  KpiId: string
+  DisplayName: string
+  Unit: string
+  RankingDirection: string
+  EntitySeries: CompareRankingEntitySeries[]
+}
+
+export interface CompareRankingEntitySeries {
+  EntityCode: string
+  DisplayName: string
+  CurrentRank: number | null
+  CurrentPercentile: number | null
+  CurrentPopulationSize: number | null
+  BestRank: number | null
+  WorstRank: number | null
+  Points: ProfileRankingPoint[]
+}
+
 export interface CompareAttentionSection extends ProfileSectionBase {
   Entities: CompareAttentionEntity[]
 }
@@ -194,10 +213,12 @@ export interface CompareRadarSection extends ProfileSectionBase {
   PeriodLabel?: string | null
   Axes: CompareRadarAxis[]
   Overlays: CompareRadarOverlay[]
+  PeerAverageScores?: Array<number | null> | null
 }
 
 export interface CompareRadarAxis {
   KpiId: string
+  SignatureDimensionKey?: string | null
   DisplayName: string
   Direction?: string | null
 }
@@ -266,10 +287,12 @@ export interface ProfileRadarSection extends ProfileSectionBase {
   PeriodLabel?: string | null
   UnavailableExplanation?: string | null
   Axes: ProfileRadarAxis[]
+  PeerAverageScores?: Array<number | null> | null
 }
 
 export interface ProfileRadarAxis {
   KpiId: string
+  SignatureDimensionKey?: string | null
   DisplayName: string
   Score: number | null
   Direction?: string | null

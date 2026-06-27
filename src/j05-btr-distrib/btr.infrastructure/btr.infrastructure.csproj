@@ -188,6 +188,10 @@
     <Compile Include="ReportingContext\DashboardFieldActivityAgg\CustomerCoordinateDal.cs" />
     <Compile Include="ReportingContext\DashboardFieldActivityAgg\FieldActivityCheckInDal.cs" />
     <Compile Include="ReportingContext\DashboardFieldActivityAgg\FieldActivityOrderDal.cs" />
+    <Compile Include="ReportingContext\DashboardFieldActivityOverviewAgg\DashboardFieldActivitySnapshotDal.cs" />
+    <Compile Include="ReportingContext\DashboardFieldActivityOverviewAgg\FieldActivityBatchCheckInDal.cs" />
+    <Compile Include="ReportingContext\DashboardFieldActivityOverviewAgg\FieldActivityBatchOrderDal.cs" />
+    <Compile Include="ReportingContext\DashboardFieldActivityOverviewAgg\FieldActivityBatchVisitPlanDal.cs" />
     <Compile Include="ReportingContext\DashboardLocationAgg\DashboardLocationDal.cs" />
     <Compile Include="ReportingContext\DashboardSnapshotAgg\DashboardSalesSnapshotDal.cs" />
     <Compile Include="ReportingContext\DashboardSnapshotAgg\DashboardPurchasingSnapshotDal.cs" />

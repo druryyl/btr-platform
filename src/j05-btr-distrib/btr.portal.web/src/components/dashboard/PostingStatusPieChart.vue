@@ -2,6 +2,7 @@
 import { computed } from 'vue'
 import Card from 'primevue/card'
 import Chart from 'primevue/chart'
+import { chartLegend, createChartOptions } from '@/services/chartLayout'
 import ProgressSpinner from 'primevue/progressspinner'
 import { formatCurrency } from '@/services/formatters'
 import type { DashboardPurchasingPostingStatusItem } from '@/models/dashboard'
@@ -37,25 +38,23 @@ const chartData = computed(() => {
   }
 })
 
-const chartOptions = computed(() => ({
-  responsive: true,
-  maintainAspectRatio: false,
-  plugins: {
-    legend: {
-      position: 'right' as const,
-    },
-    tooltip: {
-      callbacks: {
-        label: (context: { parsed: number; label: string }) =>
-          ` ${context.label}: ${formatCurrency(context.parsed)}`,
+const chartOptions = computed(() =>
+  createChartOptions({
+    plugins: {
+      legend: chartLegend.right(),
+      tooltip: {
+        callbacks: {
+          label: (context: { parsed: number; label: string }) =>
+            ` ${context.label}: ${formatCurrency(context.parsed)}`,
+        },
       },
     },
-  },
-}))
+  }),
+)
 </script>
 
 <template>
-  <Card class="posting-status-pie-chart">
+  <Card class="posting-status-pie-chart portal-chart-card">
     <template #title>
       <div class="posting-status-pie-chart__title">
         <i class="pi pi-chart-pie" aria-hidden="true" />
@@ -69,7 +68,7 @@ const chartOptions = computed(() => ({
       </div>
 
       <template v-else>
-        <div v-if="hasData" class="posting-status-pie-chart__canvas">
+        <div v-if="hasData" class="posting-status-pie-chart__canvas portal-chart-canvas">
           <Chart type="pie" :data="chartData" :options="chartOptions" />
         </div>
         <p v-else class="posting-status-pie-chart__empty">
@@ -91,10 +90,6 @@ const chartOptions = computed(() => ({
   display: flex;
   justify-content: center;
   padding: 2rem 0;
-}
-
-.posting-status-pie-chart__canvas {
-  height: 280px;
 }
 
 .posting-status-pie-chart__empty {

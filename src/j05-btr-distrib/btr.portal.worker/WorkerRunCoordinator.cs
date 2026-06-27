@@ -270,6 +270,16 @@ namespace btr.portal.worker
                     });
                     break;
 
+                case "FIELDACTIVITY":
+                    RunDomain(serviceProvider, "FieldActivity", triggeredBy, sp =>
+                    {
+                        var worker = sp.GetRequiredService<IRefreshDashboardFieldActivitySnapshotWorker>();
+                        var request = new RefreshDashboardFieldActivitySnapshotRequest { TriggeredBy = triggeredBy };
+                        worker.Execute(request);
+                        return request.Result?.DurationMs ?? 0;
+                    });
+                    break;
+
                 case "LOCATION":
                     RunDomain(serviceProvider, "Location", triggeredBy, sp =>
                     {
@@ -424,7 +434,7 @@ namespace btr.portal.worker
             var validDomains = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
             {
                 "All", "Sales", "Piutang", "Inventory", "InventoryRisk", "Purchasing",
-                "PurchasingManagement", "Customer", "Salesman", "Collection", "Location",
+                "PurchasingManagement", "Customer", "Salesman", "Collection", "FieldActivity", "Location",
                 "EntityAnalyticsHistoricalBackfill"
             };
 
@@ -435,7 +445,7 @@ namespace btr.portal.worker
 
             if (!validDomains.Contains(domain))
                 throw new ArgumentException(
-                    $"Invalid --domain '{domain}'. Expected All, Sales, Piutang, Inventory, InventoryRisk, Purchasing, PurchasingManagement, Customer, Salesman, Collection, Location, or EntityAnalyticsHistoricalBackfill.");
+                    $"Invalid --domain '{domain}'. Expected All, Sales, Piutang, Inventory, InventoryRisk, Purchasing, PurchasingManagement, Customer, Salesman, Collection, FieldActivity, Location, or EntityAnalyticsHistoricalBackfill.");
 
             if (!validTriggers.Contains(triggeredBy))
                 throw new ArgumentException(

@@ -24,14 +24,14 @@ const store = useEntityAnalyticsStore()
 
 const slots = ref<Array<EntitySearchResult | null>>([null, null])
 
-const selectedCodes = computed(() =>
+const selectedEntityIds = computed(() =>
   slots.value
     .filter((slot): slot is EntitySearchResult => slot != null)
-    .map((slot) => slot.EntityCode),
+    .map((slot) => slot.EntityId),
 )
 
 const canCompare = computed(
-  () => selectedCodes.value.length >= MIN_ENTITIES && selectedCodes.value.length <= MAX_ENTITIES,
+  () => selectedEntityIds.value.length >= MIN_ENTITIES && selectedEntityIds.value.length <= MAX_ENTITIES,
 )
 
 function addSlot() {
@@ -47,7 +47,7 @@ function removeSlot(index: number) {
 }
 
 function syncRouteQuery() {
-  const entities = selectedCodes.value.join(',')
+  const entities = selectedEntityIds.value.join(',')
   router.replace({
     query: entities ? { entities } : {},
   })
@@ -56,24 +56,24 @@ function syncRouteQuery() {
 async function runCompare() {
   if (!canCompare.value) return
   syncRouteQuery()
-  await store.loadCompare(ENTITY_TYPE, selectedCodes.value)
+  await store.loadCompare(ENTITY_TYPE, selectedEntityIds.value)
 }
 
 function applyEntitiesFromQuery() {
   const raw = route.query.entities
-  const codes = typeof raw === 'string'
-    ? raw.split(',').map((code) => code.trim()).filter(Boolean)
+  const ids = typeof raw === 'string'
+    ? raw.split(',').map((id) => id.trim()).filter(Boolean)
     : []
 
-  if (codes.length === 0) return
+  if (ids.length === 0) return
 
-  slots.value = codes.slice(0, MAX_ENTITIES).map((code) => ({
+  slots.value = ids.slice(0, MAX_ENTITIES).map((id) => ({
     EntityType: ENTITY_TYPE,
-    EntityId: code,
-    EntityCode: code,
-    DisplayName: code,
+    EntityId: id,
+    EntityCode: id,
+    DisplayName: id,
     IsActive: true,
-    ProfileRoute: `/analytics/items/${code}`,
+    ProfileRoute: `/analytics/items/${id}`,
   }))
 
   while (slots.value.length < MIN_ENTITIES) {

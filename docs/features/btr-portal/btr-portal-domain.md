@@ -451,6 +451,8 @@ The tables below are a **quick index** by business area. All monetary values are
 | **Visit Execution %** | Actual ÷ planned | Route compliance | Field Activity |
 | **Effective Call Rate** | Effective ÷ actual | Visit productivity | Field Activity |
 
+Team-level overview KPIs (M18.6 Sales Force Overview, SF02): Active Salesmen, team sum-ratio Visit Execution % and Effective Call Rate, team GPS Valid Rate, daily order count and order value (`BTR_Order`, not Faktur omzet), salesman status indicators, 7/30-day team trends (SF-KPI-019–027).
+
 ### 7.11 Executive and Platform KPIs (Current)
 
 | KPI | Business Meaning | Why Management Uses It | Business Area |
@@ -479,7 +481,8 @@ Each dashboard answers a specific management question. Dashboards are **read-onl
 | **Cash Flow Forecast Dashboard** | How much cash will we likely receive by month-end? | Finance and operations leadership |
 | **Customer Analytics** | Which customers require attention? | Sales and finance management |
 | **Salesman Performance** | Which salespeople require attention and why? | Sales management |
-| **Field Activity** | Did the field team execute the planned route? | Field supervisors, area managers |
+| **Sales Force Overview** | How is the entire sales organization performing today? | Sales management, executives |
+| **Salesman Field Activity** | Did this rep execute the planned route? | Field supervisors, area managers |
 | **Inventory Dashboard** | How is inventory capital distributed? | Inventory and purchasing management |
 | **Inventory Forecast Dashboard** | Which active SKUs may run out within the horizon, and when should purchasing review replenishment? | Inventory and purchasing management |
 | **Inventory Optimization Dashboard** | Given forecast, risk, and purchasing constraints, what are the highest-priority actions today? | Inventory and purchasing management |

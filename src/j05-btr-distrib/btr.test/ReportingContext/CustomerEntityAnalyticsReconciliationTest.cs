@@ -171,17 +171,17 @@ namespace btr.test.ReportingContext
             entityTypes.Register(new EntityTypeRegistration
             {
                 EntityTypeCode = EntityTypeCode.Salesman,
-                ProfileRouteTemplate = "/analytics/salesmen/{code}"
+                ProfileRouteTemplate = "/analytics/salesmen/{id}"
             });
             entityTypes.Register(new EntityTypeRegistration
             {
                 EntityTypeCode = EntityTypeCode.Item,
-                ProfileRouteTemplate = "/analytics/items/{code}"
+                ProfileRouteTemplate = "/analytics/items/{id}"
             });
             entityTypes.Register(new EntityTypeRegistration
             {
                 EntityTypeCode = EntityTypeCode.Supplier,
-                ProfileRouteTemplate = "/analytics/suppliers/{code}"
+                ProfileRouteTemplate = "/analytics/suppliers/{id}"
             });
 
             return new CustomerEntityAnalyticsProducer(

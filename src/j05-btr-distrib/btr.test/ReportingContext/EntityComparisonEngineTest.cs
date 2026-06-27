@@ -28,7 +28,7 @@ namespace btr.test.ReportingContext
                 KpiPackId = CustomerEntityAnalyticsRegistrar.KpiPackId,
                 RelationshipPackId = CustomerRelationshipCatalog.PackId,
                 PeerGroupRuleId = PeerGroupResolver.CustomerWilayah,
-                ProfileRouteTemplate = "/analytics/customers/{code}"
+                ProfileRouteTemplate = "/analytics/customers/{id}"
             });
             _registry = new EntityAnalyticsKpiRegistry(_entityTypes);
             new CustomerEntityAnalyticsRegistrar().Register(
@@ -256,6 +256,12 @@ namespace btr.test.ReportingContext
 
             public override EntityIdentity TryResolveIdentity(string entityType, string entityId)
             {
+                if (!CurrentRows.Any(r => string.Equals(r.EntityType, entityType, StringComparison.OrdinalIgnoreCase)
+                        && string.Equals(r.EntityId, entityId, StringComparison.OrdinalIgnoreCase)))
+                {
+                    return null;
+                }
+
                 var displayName = CurrentRows
                     .FirstOrDefault(r => string.Equals(r.EntityId, entityId, StringComparison.OrdinalIgnoreCase)
                         && string.Equals(r.KpiId, EntityAnalyticsMetaKpiIds.DisplayName, StringComparison.OrdinalIgnoreCase))

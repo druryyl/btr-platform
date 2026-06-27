@@ -2743,6 +2743,81 @@ CREATE TABLE BTRPD_EntityAnalytics_BackfillLock
 END
 GO
 
+-- BTRPD_FieldActivityKpi (M18.6)
+IF OBJECT_ID(N'dbo.BTRPD_FieldActivityKpi', N'U') IS NULL
+BEGIN
+CREATE TABLE BTRPD_FieldActivityKpi
+(
+    SnapshotKey               VARCHAR(10)   NOT NULL CONSTRAINT DF_BTRPD_FieldActivityKpi_SnapshotKey DEFAULT('CURRENT'),
+    GeneratedAt               DATETIME      NOT NULL CONSTRAINT DF_BTRPD_FieldActivityKpi_GeneratedAt DEFAULT('3000-01-01'),
+    ActivityDate              DATE          NOT NULL CONSTRAINT DF_BTRPD_FieldActivityKpi_ActivityDate DEFAULT('3000-01-01'),
+    ActiveSalesmenCount       INT           NOT NULL CONSTRAINT DF_BTRPD_FieldActivityKpi_ActiveSalesmenCount DEFAULT(0),
+    PlannedVisits             INT           NOT NULL CONSTRAINT DF_BTRPD_FieldActivityKpi_PlannedVisits DEFAULT(0),
+    ActualVisits              INT           NOT NULL CONSTRAINT DF_BTRPD_FieldActivityKpi_ActualVisits DEFAULT(0),
+    VisitExecutionPercent     DECIMAL(9,4)  NULL,
+    EffectiveCalls            INT           NOT NULL CONSTRAINT DF_BTRPD_FieldActivityKpi_EffectiveCalls DEFAULT(0),
+    EffectiveCallRate         DECIMAL(9,4)  NULL,
+    MissedVisits              INT           NOT NULL CONSTRAINT DF_BTRPD_FieldActivityKpi_MissedVisits DEFAULT(0),
+    UnplannedVisits           INT           NOT NULL CONSTRAINT DF_BTRPD_FieldActivityKpi_UnplannedVisits DEFAULT(0),
+    GpsValidRate              DECIMAL(9,4)  NULL,
+    TotalOrders               INT           NOT NULL CONSTRAINT DF_BTRPD_FieldActivityKpi_TotalOrders DEFAULT(0),
+    TotalOmzet                DECIMAL(18,2) NOT NULL CONSTRAINT DF_BTRPD_FieldActivityKpi_TotalOmzet DEFAULT(0),
+    LastRefreshLogId          VARCHAR(26)   NOT NULL CONSTRAINT DF_BTRPD_FieldActivityKpi_LastRefreshLogId DEFAULT(''),
+
+    CONSTRAINT PK_BTRPD_FieldActivityKpi PRIMARY KEY CLUSTERED (SnapshotKey)
+)
+END
+GO
+
+-- BTRPD_FieldActivitySalesman (M18.6)
+IF OBJECT_ID(N'dbo.BTRPD_FieldActivitySalesman', N'U') IS NULL
+BEGIN
+CREATE TABLE BTRPD_FieldActivitySalesman
+(
+    SnapshotKey             VARCHAR(10)   NOT NULL CONSTRAINT DF_BTRPD_FieldActivitySalesman_SnapshotKey DEFAULT('CURRENT'),
+    SalesPersonId           VARCHAR(26)   NOT NULL CONSTRAINT DF_BTRPD_FieldActivitySalesman_SalesPersonId DEFAULT(''),
+    SalesPersonCode         VARCHAR(20)   NOT NULL CONSTRAINT DF_BTRPD_FieldActivitySalesman_SalesPersonCode DEFAULT(''),
+    SalesPersonName         VARCHAR(100)  NOT NULL CONSTRAINT DF_BTRPD_FieldActivitySalesman_SalesPersonName DEFAULT(''),
+    WilayahName             VARCHAR(100)  NOT NULL CONSTRAINT DF_BTRPD_FieldActivitySalesman_WilayahName DEFAULT(''),
+    HasEmail                BIT           NOT NULL CONSTRAINT DF_BTRPD_FieldActivitySalesman_HasEmail DEFAULT(0),
+    Rank                    INT           NOT NULL CONSTRAINT DF_BTRPD_FieldActivitySalesman_Rank DEFAULT(0),
+    PlannedVisits           INT           NOT NULL CONSTRAINT DF_BTRPD_FieldActivitySalesman_PlannedVisits DEFAULT(0),
+    ActualVisits            INT           NOT NULL CONSTRAINT DF_BTRPD_FieldActivitySalesman_ActualVisits DEFAULT(0),
+    VisitExecutionPercent   DECIMAL(9,4)  NULL,
+    EffectiveCalls          INT           NOT NULL CONSTRAINT DF_BTRPD_FieldActivitySalesman_EffectiveCalls DEFAULT(0),
+    EffectiveCallRate       DECIMAL(9,4)  NULL,
+    MissedVisits            INT           NOT NULL CONSTRAINT DF_BTRPD_FieldActivitySalesman_MissedVisits DEFAULT(0),
+    UnplannedVisits         INT           NOT NULL CONSTRAINT DF_BTRPD_FieldActivitySalesman_UnplannedVisits DEFAULT(0),
+    GpsValidPercent         DECIMAL(9,4)  NULL,
+    GpsValidCount           INT           NOT NULL CONSTRAINT DF_BTRPD_FieldActivitySalesman_GpsValidCount DEFAULT(0),
+    GpsWarningCount         INT           NOT NULL CONSTRAINT DF_BTRPD_FieldActivitySalesman_GpsWarningCount DEFAULT(0),
+    GpsSuspiciousCount      INT           NOT NULL CONSTRAINT DF_BTRPD_FieldActivitySalesman_GpsSuspiciousCount DEFAULT(0),
+    OrdersCount             INT           NOT NULL CONSTRAINT DF_BTRPD_FieldActivitySalesman_OrdersCount DEFAULT(0),
+    OmzetAmount             DECIMAL(18,2) NOT NULL CONSTRAINT DF_BTRPD_FieldActivitySalesman_OmzetAmount DEFAULT(0),
+    StatusCode              VARCHAR(20)   NOT NULL CONSTRAINT DF_BTRPD_FieldActivitySalesman_StatusCode DEFAULT(''),
+
+    CONSTRAINT PK_BTRPD_FieldActivitySalesman PRIMARY KEY CLUSTERED (SnapshotKey, SalesPersonId)
+)
+END
+GO
+
+-- BTRPD_FieldActivityTrend (M18.6)
+IF OBJECT_ID(N'dbo.BTRPD_FieldActivityTrend', N'U') IS NULL
+BEGIN
+CREATE TABLE BTRPD_FieldActivityTrend
+(
+    SnapshotKey             VARCHAR(10)   NOT NULL CONSTRAINT DF_BTRPD_FieldActivityTrend_SnapshotKey DEFAULT('CURRENT'),
+    TrendDate               DATE          NOT NULL,
+    VisitExecutionPercent   DECIMAL(9,4)  NULL,
+    EffectiveCallRate       DECIMAL(9,4)  NULL,
+    OrdersCount             INT           NOT NULL CONSTRAINT DF_BTRPD_FieldActivityTrend_OrdersCount DEFAULT(0),
+    OmzetAmount             DECIMAL(18,2) NOT NULL CONSTRAINT DF_BTRPD_FieldActivityTrend_OmzetAmount DEFAULT(0),
+
+    CONSTRAINT PK_BTRPD_FieldActivityTrend PRIMARY KEY CLUSTERED (SnapshotKey, TrendDate)
+)
+END
+GO
+
 -- IX_BTR_Piutang_OpenBalance
 IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_BTR_Piutang_OpenBalance' AND object_id = OBJECT_ID(N'dbo.BTR_Piutang'))
 CREATE INDEX IX_BTR_Piutang_OpenBalance

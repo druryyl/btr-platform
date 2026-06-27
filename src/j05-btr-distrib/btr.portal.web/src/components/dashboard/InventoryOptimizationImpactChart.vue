@@ -2,6 +2,7 @@
 import { computed } from 'vue'
 import Card from 'primevue/card'
 import Chart from 'primevue/chart'
+import { createChartOptions } from '@/services/chartLayout'
 import ProgressSpinner from 'primevue/progressspinner'
 
 const props = defineProps<{
@@ -23,22 +24,21 @@ const chartData = computed(() => ({
   ],
 }))
 
-const chartOptions = computed(() => ({
-  responsive: true,
-  maintainAspectRatio: false,
-  plugins: { legend: { display: false } },
-  scales: { y: { beginAtZero: true } },
-}))
+const chartOptions = computed(() =>
+  createChartOptions({
+    scales: { y: { beginAtZero: true } },
+  }),
+)
 </script>
 
 <template>
-  <Card class="inventory-optimization-impact-chart">
+  <Card class="inventory-optimization-impact-chart portal-chart-card">
     <template #title>Business Impact Summary</template>
     <template #content>
       <div v-if="loading" class="inventory-optimization-impact-chart__loading">
         <ProgressSpinner style="width: 2.5rem; height: 2.5rem" stroke-width="4" />
       </div>
-      <div v-else class="inventory-optimization-impact-chart__canvas">
+      <div v-else class="inventory-optimization-impact-chart__canvas portal-chart-canvas portal-chart-canvas--short">
         <Chart type="bar" :data="chartData" :options="chartOptions" />
       </div>
     </template>
@@ -52,7 +52,4 @@ const chartOptions = computed(() => ({
   padding: 2rem 0;
 }
 
-.inventory-optimization-impact-chart__canvas {
-  height: 220px;
-}
 </style>

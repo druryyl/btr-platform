@@ -123,7 +123,7 @@ FROM BTRPD_CustomerPortfolioKpi
 WHERE SnapshotKey = @SnapshotKey";
 
         private const string PrioritySql = @"
-SELECT SortOrder, PortfolioPriorityScore, CustomerKey, CustomerCode, CustomerName, WilayahName, Klasifikasi,
+SELECT SortOrder, PortfolioPriorityScore, CustomerKey, CustomerId, CustomerCode, CustomerName, WilayahName, Klasifikasi,
        LifecycleStage, LifecycleLabel, PortfolioTier, TierLabel, PrimaryActionKey, PrimaryActionLabel,
        ActionOwner, ActionReasonText, TriggeredRuleIds, MtdOmzet, OpenBalance, OverdueBalance, M29Category,
        SalesPersonName, SalesmanAchievementPercent, SalesmanHighPiutangExposure, IsAttention, M30LinkRoute,
@@ -133,7 +133,7 @@ WHERE SnapshotKey = @SnapshotKey
 ORDER BY SortOrder";
 
         private const string CustomerSql = @"
-SELECT SortOrder, CustomerKey, CustomerCode, CustomerName, WilayahName, Klasifikasi, LifecycleStage, LifecycleLabel,
+SELECT SortOrder, CustomerKey, CustomerId, CustomerCode, CustomerName, WilayahName, Klasifikasi, LifecycleStage, LifecycleLabel,
        PortfolioTier, TierLabel, PrimaryActionKey, PrimaryActionLabel, ActionOwner, ActionReasonText,
        TriggeredRuleIds, MtdOmzet, OpenBalance, OverdueBalance, FakturCount6Mo, IsActiveMtd, LastPurchaseDate,
        FirstPurchaseDate, M29Category, M29PrimarySignalKey, SalesPersonName, SalesmanAchievementPercent,
@@ -163,12 +163,12 @@ ORDER BY SortOrder";
                 ValueDisclaimerText = kpi.ValueDisclaimerText ?? string.Empty
             };
 
-        private static string BuildCustomerProfileRoute(string customerCode)
+        private static string BuildCustomerProfileRoute(string customerId)
         {
-            if (string.IsNullOrWhiteSpace(customerCode))
+            if (string.IsNullOrWhiteSpace(customerId))
                 return null;
 
-            return "/analytics/customers/" + Uri.EscapeDataString(customerCode.Trim());
+            return "/analytics/customers/" + Uri.EscapeDataString(customerId.Trim());
         }
 
         private static DashboardCustomerPortfolioPriorityDto MapPriority(PriorityRow r) =>
@@ -177,6 +177,7 @@ ORDER BY SortOrder";
                 SortOrder = r.SortOrder,
                 PortfolioPriorityScore = r.PortfolioPriorityScore,
                 CustomerKey = r.CustomerKey,
+                CustomerId = r.CustomerId,
                 CustomerCode = r.CustomerCode,
                 CustomerName = r.CustomerName,
                 WilayahName = r.WilayahName,
@@ -202,7 +203,7 @@ ORDER BY SortOrder";
                 CustomerReportRoute = r.CustomerReportRoute,
                 DrillDownRouteM17 = r.DrillDownRouteM17,
                 DrillDownRouteM29 = r.DrillDownRouteM29,
-                ProfileRoute = BuildCustomerProfileRoute(r.CustomerCode)
+                ProfileRoute = BuildCustomerProfileRoute(r.CustomerId)
             };
 
         private static DashboardCustomerPortfolioCustomerDto MapCustomer(CustomerRow r) =>
@@ -210,6 +211,7 @@ ORDER BY SortOrder";
             {
                 SortOrder = r.SortOrder,
                 CustomerKey = r.CustomerKey,
+                CustomerId = r.CustomerId,
                 CustomerCode = r.CustomerCode,
                 CustomerName = r.CustomerName,
                 WilayahName = r.WilayahName,
@@ -309,6 +311,7 @@ ORDER BY SortOrder";
             public int SortOrder { get; set; }
             public int PortfolioPriorityScore { get; set; }
             public string CustomerKey { get; set; }
+            public string CustomerId { get; set; }
             public string CustomerCode { get; set; }
             public string CustomerName { get; set; }
             public string WilayahName { get; set; }
@@ -340,6 +343,7 @@ ORDER BY SortOrder";
         {
             public int SortOrder { get; set; }
             public string CustomerKey { get; set; }
+            public string CustomerId { get; set; }
             public string CustomerCode { get; set; }
             public string CustomerName { get; set; }
             public string WilayahName { get; set; }

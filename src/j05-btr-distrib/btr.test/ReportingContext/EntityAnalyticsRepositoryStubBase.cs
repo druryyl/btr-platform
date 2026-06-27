@@ -66,6 +66,7 @@ namespace btr.test.ReportingContext
 
                     return new
                     {
+                        EntityId = group.Key,
                         EntityCode = entityCode,
                         DisplayName = displayName,
                         IsActive = isActive
@@ -78,7 +79,7 @@ namespace btr.test.ReportingContext
                 .Select(x => new EntityIdentity
                 {
                     EntityType = entityType,
-                    EntityId = x.EntityCode,
+                    EntityId = x.EntityId,
                     EntityCode = x.EntityCode,
                     DisplayName = x.DisplayName,
                     IsActive = x.IsActive

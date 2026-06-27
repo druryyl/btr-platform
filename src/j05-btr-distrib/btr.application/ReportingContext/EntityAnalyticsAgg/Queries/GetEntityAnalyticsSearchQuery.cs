@@ -5,6 +5,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using btr.application.ReportingContext.EntityAnalyticsAgg.Contracts;
 using btr.application.ReportingContext.EntityAnalyticsAgg.Models;
+using btr.application.ReportingContext.EntityAnalyticsAgg.Services;
 using MediatR;
 
 namespace btr.application.ReportingContext.EntityAnalyticsAgg.Queries
@@ -77,11 +78,14 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Queries
                 .Select(identity => new EntitySearchResultDto
                 {
                     EntityType = identity.EntityType,
-                    EntityId = identity.EntityCode,
+                    EntityId = identity.EntityId,
                     EntityCode = identity.EntityCode,
                     DisplayName = identity.DisplayName,
                     IsActive = identity.IsActive,
-                    ProfileRoute = BuildProfileRoute(normalizedType, identity.EntityCode)
+                    ProfileRoute = EntityAnalyticsRouteBuilder.BuildProfileRoute(
+                        _entityTypes,
+                        normalizedType,
+                        identity.EntityId)
                 })
                 .ToList();
 
@@ -90,17 +94,6 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Queries
                 EntityType = normalizedType,
                 Results = results
             });
-        }
-
-        private string BuildProfileRoute(string entityType, string entityCode)
-        {
-            if (!_entityTypes.TryGet(entityType, out var registration)
-                || string.IsNullOrWhiteSpace(registration.ProfileRouteTemplate))
-            {
-                return $"/analytics/{entityType}/{entityCode}";
-            }
-
-            return registration.ProfileRouteTemplate.Replace("{code}", entityCode);
         }
     }
 }

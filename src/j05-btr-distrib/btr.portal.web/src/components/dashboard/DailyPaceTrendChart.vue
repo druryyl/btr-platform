@@ -2,6 +2,7 @@
 import { computed } from 'vue'
 import Card from 'primevue/card'
 import Chart from 'primevue/chart'
+import { chartLegend, compactAxisTitle, createChartOptions } from '@/services/chartLayout'
 import ProgressSpinner from 'primevue/progressspinner'
 import { formatCurrency } from '@/services/formatters'
 import type { DashboardSalesDailyPaceItem } from '@/models/dashboard'
@@ -46,39 +47,33 @@ const chartData = computed(() => ({
   ],
 }))
 
-const chartOptions = computed(() => ({
-  responsive: true,
-  maintainAspectRatio: false,
-  plugins: {
-    legend: {
-      display: true,
-      position: 'bottom' as const,
-    },
-    tooltip: {
-      callbacks: {
-        label: (context: { dataset: { label?: string }; parsed: { y: number } }) =>
-          ` ${context.dataset.label ?? ''}: ${formatCurrency(context.parsed.y)}`,
+const chartOptions = computed(() =>
+  createChartOptions({
+    plugins: {
+      legend: chartLegend.bottom(),
+      tooltip: {
+        callbacks: {
+          label: (context: { dataset: { label?: string }; parsed: { y: number } }) =>
+            ` ${context.dataset.label ?? ''}: ${formatCurrency(context.parsed.y)}`,
+        },
       },
     },
-  },
-  scales: {
-    x: {
-      title: {
-        display: true,
-        text: 'Day of month',
+    scales: {
+      x: {
+        title: compactAxisTitle('Day of month'),
+      },
+      y: {
+        ticks: {
+          callback: (value: string | number) => formatCurrency(Number(value)),
+        },
       },
     },
-    y: {
-      ticks: {
-        callback: (value: string | number) => formatCurrency(Number(value)),
-      },
-    },
-  },
-}))
+  }),
+)
 </script>
 
 <template>
-  <Card class="daily-pace-trend-chart">
+  <Card class="daily-pace-trend-chart portal-chart-card">
     <template #title>
       <div class="daily-pace-trend-chart__title">
         <i class="pi pi-chart-bar" aria-hidden="true" />
@@ -92,7 +87,7 @@ const chartOptions = computed(() => ({
       </div>
 
       <template v-else>
-        <div v-if="hasData || dailyPace.length > 0" class="daily-pace-trend-chart__canvas">
+        <div v-if="hasData || dailyPace.length > 0" class="daily-pace-trend-chart__canvas portal-chart-canvas portal-chart-canvas--tall">
           <Chart type="bar" :data="chartData" :options="chartOptions" />
         </div>
         <p v-else class="daily-pace-trend-chart__empty">
@@ -114,10 +109,6 @@ const chartOptions = computed(() => ({
   display: flex;
   justify-content: center;
   padding: 2rem 0;
-}
-
-.daily-pace-trend-chart__canvas {
-  height: 320px;
 }
 
 .daily-pace-trend-chart__empty {

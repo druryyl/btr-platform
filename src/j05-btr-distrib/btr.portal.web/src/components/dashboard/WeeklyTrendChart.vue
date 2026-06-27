@@ -3,6 +3,7 @@ import { computed } from 'vue'
 import Card from 'primevue/card'
 import Chart from 'primevue/chart'
 import ProgressSpinner from 'primevue/progressspinner'
+import { createChartOptions } from '@/services/chartLayout'
 import { formatCurrency } from '@/services/formatters'
 import type { DashboardSalesWeekTrendItem } from '@/models/dashboard'
 
@@ -39,14 +40,10 @@ const chartData = computed(() => ({
   ],
 }))
 
-const chartOptions = computed(() => ({
-  responsive: true,
-  maintainAspectRatio: false,
-  plugins: {
-    legend: {
-      display: false,
-    },
-    tooltip: {
+const chartOptions = computed(() =>
+  createChartOptions({
+    plugins: {
+      tooltip: {
       callbacks: {
         label: (context: { parsed: { y: number } }) =>
           ` ${formatCurrency(context.parsed.y)}`,
@@ -66,11 +63,12 @@ const chartOptions = computed(() => ({
       },
     },
   },
-}))
+  }),
+)
 </script>
 
 <template>
-  <Card class="weekly-trend-chart">
+  <Card class="weekly-trend-chart portal-chart-card">
     <template #title>
       <div class="weekly-trend-chart__title">
         <i class="pi pi-chart-line" aria-hidden="true" />
@@ -84,7 +82,7 @@ const chartOptions = computed(() => ({
       </div>
 
       <template v-else>
-        <div v-if="hasWeeklyData" class="weekly-trend-chart__canvas">
+        <div v-if="hasWeeklyData" class="weekly-trend-chart__canvas portal-chart-canvas">
           <Chart type="line" :data="chartData" :options="chartOptions" />
         </div>
         <p v-else class="weekly-trend-chart__empty">{{ emptyMessage }}</p>
@@ -104,10 +102,6 @@ const chartOptions = computed(() => ({
   display: flex;
   justify-content: center;
   padding: 2rem 0;
-}
-
-.weekly-trend-chart__canvas {
-  height: 280px;
 }
 
 .weekly-trend-chart__empty {

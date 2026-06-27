@@ -2,6 +2,7 @@
 import { computed } from 'vue'
 import Card from 'primevue/card'
 import Chart from 'primevue/chart'
+import { createChartOptions } from '@/services/chartLayout'
 import ProgressSpinner from 'primevue/progressspinner'
 import type { DashboardCustomerRiskForecastWilayahItem } from '@/models/dashboard'
 
@@ -18,7 +19,7 @@ const hasData = computed(() =>
   sortedWilayah.value.some((item) => item.ElevatedRiskCustomerCount > 0),
 )
 
-const chartHeight = computed(() => Math.max(280, sortedWilayah.value.length * 28))
+const chartHeight = computed(() => Math.max(224, sortedWilayah.value.length * 26))
 
 const chartData = computed(() => ({
   labels: sortedWilayah.value.map((item) => item.WilayahName),
@@ -30,34 +31,31 @@ const chartData = computed(() => ({
   ],
 }))
 
-const chartOptions = computed(() => ({
-  indexAxis: 'y' as const,
-  responsive: true,
-  maintainAspectRatio: false,
-  plugins: {
-    legend: {
-      display: false,
-    },
-    tooltip: {
-      callbacks: {
-        label: (context: { parsed: { x: number } }) =>
-          ` ${context.parsed.x} elevated-risk customers`,
+const chartOptions = computed(() =>
+  createChartOptions({
+    indexAxis: 'y' as const,
+    plugins: {
+      tooltip: {
+        callbacks: {
+          label: (context: { parsed: { x: number } }) =>
+            ` ${context.parsed.x} elevated-risk customers`,
+        },
       },
     },
-  },
-  scales: {
-    x: {
-      beginAtZero: true,
-      ticks: {
-        precision: 0,
+    scales: {
+      x: {
+        beginAtZero: true,
+        ticks: {
+          precision: 0,
+        },
       },
     },
-  },
-}))
+  }),
+)
 </script>
 
 <template>
-  <Card class="customer-risk-forecast-wilayah-chart">
+  <Card class="customer-risk-forecast-wilayah-chart portal-chart-card">
     <template #title>
       <div class="customer-risk-forecast-wilayah-chart__title">
         <i class="pi pi-chart-bar" aria-hidden="true" />
@@ -73,7 +71,7 @@ const chartOptions = computed(() => ({
       <template v-else>
         <div
           v-if="hasData"
-          class="customer-risk-forecast-wilayah-chart__canvas"
+          class="customer-risk-forecast-wilayah-chart__canvas portal-chart-canvas portal-chart-canvas--fluid"
           :style="{ height: `${chartHeight}px` }"
         >
           <Chart type="bar" :data="chartData" :options="chartOptions" />
@@ -97,10 +95,6 @@ const chartOptions = computed(() => ({
   display: flex;
   justify-content: center;
   padding: 2rem 0;
-}
-
-.customer-risk-forecast-wilayah-chart__canvas {
-  min-height: 280px;
 }
 
 .customer-risk-forecast-wilayah-chart__empty {

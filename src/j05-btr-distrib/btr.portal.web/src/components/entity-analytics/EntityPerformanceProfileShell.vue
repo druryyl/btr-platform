@@ -35,15 +35,18 @@ const resolvedEntityCode = computed(
   () =>
     props.entityCode?.trim()
     || props.profile?.Overview?.EntityCode?.trim()
-    || props.profile?.EntityId?.trim()
     || null,
+)
+
+const resolvedEntityId = computed(
+  () => props.profile?.EntityId?.trim() || null,
 )
 
 const navConfig = computed(() => getEntityAnalyticsNav(resolvedEntityType.value))
 
 const compareRoute = computed(() => {
   if (!navConfig.value) return null
-  return buildCompareRoute(navConfig.value.entityType, resolvedEntityCode.value)
+  return buildCompareRoute(navConfig.value.entityType, resolvedEntityId.value)
 })
 
 const compareLabel = computed(() => {
@@ -55,7 +58,7 @@ const compareLabel = computed(() => {
 <template>
   <DashboardDetailLayout
     :title="profile?.Overview?.DisplayName || profile?.EntityId || 'Entity Performance Profile'"
-    :subtitle="profile ? `${profile.EntityType} · ${profile.EntityId}` : 'Entity Analytics'"
+    :subtitle="profile ? `${profile.EntityType} · ${profile.Overview?.EntityCode || profile.EntityId}` : 'Entity Analytics'"
     :loading="loading"
     :error="error"
     :generated-at="profile?.GeneratedAt"
@@ -99,10 +102,18 @@ const compareLabel = computed(() => {
 
     <div class="entity-profile-shell__sections">
       <ProfileOverviewSection :section="profile?.Overview" :loading="loading" />
-      <ProfileKpiSummarySection :section="profile?.KpiSummary" :loading="loading" />
+      <ProfileKpiSummarySection
+        :section="profile?.KpiSummary"
+        :entity-code="resolvedEntityCode"
+        :loading="loading"
+      />
       <ProfileComparisonSection :section="profile?.Comparison" :loading="loading" />
       <ProfileTrendSection :section="profile?.Trend" :loading="loading" />
-      <ProfileRadarSection :section="profile?.Radar" :loading="loading" />
+      <ProfileRadarSection
+        :section="profile?.Radar"
+        :loading="loading"
+        :entity-label="profile?.Overview?.DisplayName"
+      />
       <ProfileRankingHistorySection :section="profile?.Ranking" :loading="loading" />
       <ProfileAttentionHistorySection :section="profile?.Attention" :loading="loading" />
       <ProfileRelatedEntitiesSection :section="profile?.RelatedEntities" :loading="loading" />

@@ -4,6 +4,8 @@ using System.Globalization;
 using System.Linq;
 using btr.application.ReportingContext.DashboardFieldActivityAgg.Contracts;
 using btr.application.ReportingContext.DashboardFieldActivityAgg.Models;
+using btr.application.ReportingContext.DashboardFieldActivityOverviewAgg.Contracts;
+using btr.application.ReportingContext.DashboardFieldActivityOverviewAgg.Services;
 using btr.application.SalesContext.SalesPersonAgg.Contracts;
 using btr.application.SalesContext.VisitPlanAgg;
 using btr.domain.SalesContext.SalesPersonAgg;
@@ -82,39 +84,34 @@ namespace btr.application.ReportingContext.DashboardFieldActivityAgg.Services
             var unplannedSet = actualSet.Except(plannedSet, StringComparer.OrdinalIgnoreCase).ToHashSet(StringComparer.OrdinalIgnoreCase);
             var visitedPlannedSet = plannedSet.Intersect(actualSet, StringComparer.OrdinalIgnoreCase).ToHashSet(StringComparer.OrdinalIgnoreCase);
 
-            var effectiveCallCount = checkIns
-                .Select(x => x.CustomerId)
-                .Where(id => orderCustomerIds.Contains(id))
-                .Distinct(StringComparer.OrdinalIgnoreCase)
-                .Count();
-
             var plannedStops = BuildPlannedStops(effectivePlan, customerCoordinates, visitedPlannedSet, missedSet);
             var actualStops = BuildActualStops(checkIns, plannedSet, unplannedSet, orderCustomerIds);
             var missedVisits = BuildMissedVisits(effectivePlan, customerCoordinates, missedSet);
 
             var plannedWithCoords = plannedStops.Count(x => x.HasCoordinates);
             var plannedCount = plannedStops.Count;
-            var actualCount = actualStops.Count;
+
+            var kpiInput = FieldActivityKpiCalculator.Compute(
+                effectivePlan,
+                checkIns,
+                orderCustomerIds,
+                BuildOrderRowsFromCustomerIds(orderCustomerIds));
 
             var kpis = new FieldActivityKpis
             {
-                PlannedVisits = plannedCount,
-                ActualVisits = actualCount,
-                EffectiveCalls = effectiveCallCount,
-                MissedVisits = missedSet.Count,
-                UnplannedVisits = unplannedSet.Count,
-                VisitExecutionPercent = plannedCount == 0
-                    ? (double?)null
-                    : Math.Round(actualCount * 100.0 / plannedCount, 1),
-                EffectiveCallRate = actualCount == 0
-                    ? (double?)null
-                    : Math.Round(effectiveCallCount * 100.0 / actualCount, 1),
+                PlannedVisits = kpiInput.PlannedVisits,
+                ActualVisits = kpiInput.ActualVisits,
+                EffectiveCalls = kpiInput.EffectiveCalls,
+                MissedVisits = kpiInput.MissedVisits,
+                UnplannedVisits = kpiInput.UnplannedVisits,
+                VisitExecutionPercent = kpiInput.VisitExecutionPercent,
+                EffectiveCallRate = kpiInput.EffectiveCallRate,
                 CoordinateCoveragePercent = plannedCount == 0
                     ? (double?)null
                     : Math.Round(plannedWithCoords * 100.0 / plannedCount, 1),
-                GpsValidCount = actualStops.Count(x => x.GpsValidation == GpsValidationClass.Valid.ToString()),
-                GpsWarningCount = actualStops.Count(x => x.GpsValidation == GpsValidationClass.Warning.ToString()),
-                GpsSuspiciousCount = actualStops.Count(x => x.GpsValidation == GpsValidationClass.Suspicious.ToString())
+                GpsValidCount = kpiInput.GpsValidCount,
+                GpsWarningCount = kpiInput.GpsWarningCount,
+                GpsSuspiciousCount = kpiInput.GpsSuspiciousCount
             };
 
             return new FieldActivityResponse
@@ -240,6 +237,18 @@ namespace btr.application.ReportingContext.DashboardFieldActivityAgg.Services
                         NoUrut = entry.NoUrut,
                         HasCoordinates = GpsValidationClassifier.HasNonZeroCoordinates(latitude, longitude)
                     };
+                })
+                .ToList();
+        }
+
+        private static IReadOnlyList<FieldActivityOrderBatchRow> BuildOrderRowsFromCustomerIds(
+            ISet<string> orderCustomerIds)
+        {
+            return orderCustomerIds
+                .Select(id => new FieldActivityOrderBatchRow
+                {
+                    CustomerId = id,
+                    TotalAmount = 0
                 })
                 .ToList();
         }

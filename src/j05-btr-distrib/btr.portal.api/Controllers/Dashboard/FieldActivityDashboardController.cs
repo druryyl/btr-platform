@@ -3,6 +3,8 @@ using System.Net;
 using System.Threading.Tasks;
 using System.Web.Http;
 using btr.application.ReportingContext.DashboardFieldActivityAgg.Queries;
+using btr.application.ReportingContext.DashboardFieldActivityOverviewAgg.Models;
+using btr.application.ReportingContext.DashboardFieldActivityOverviewAgg.Queries;
 using btr.portal.api.Models;
 using MediatR;
 
@@ -50,6 +52,17 @@ namespace btr.portal.api.Controllers.Dashboard
         {
             var result = await _mediator.Send(new ListFieldActivitySalesmenQuery());
             return Ok(ApiResponse<FieldActivitySalesmenResponse>.Success(result));
+        }
+
+        [HttpGet, Route("overview")]
+        public async Task<IHttpActionResult> GetOverview(DateTime? visitDate)
+        {
+            var result = await _mediator.Send(new GetFieldActivityOverviewQuery
+            {
+                VisitDate = visitDate
+            });
+
+            return Ok(ApiResponse<FieldActivityOverviewResponse>.Success(result));
         }
     }
 }

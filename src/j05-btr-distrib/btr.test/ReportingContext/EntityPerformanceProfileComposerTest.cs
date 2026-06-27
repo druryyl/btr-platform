@@ -29,12 +29,12 @@ namespace btr.test.ReportingContext
                 KpiPackId = "customer-default",
                 RelationshipPackId = CustomerRelationshipCatalog.PackId,
                 PeerGroupRuleId = PeerGroupResolver.CustomerWilayah,
-                ProfileRouteTemplate = "/analytics/customers/{code}"
+                ProfileRouteTemplate = "/analytics/customers/{id}"
             });
             _entityTypes.Register(new EntityTypeRegistration
             {
                 EntityTypeCode = EntityTypeCode.Item,
-                ProfileRouteTemplate = "/analytics/items/{code}"
+                ProfileRouteTemplate = "/analytics/items/{id}"
             });
             _registry = new EntityAnalyticsKpiRegistry(_entityTypes);
             new CustomerEntityAnalyticsRegistrar().Register(
@@ -252,7 +252,7 @@ namespace btr.test.ReportingContext
             result.RelatedEntities.IsAvailable.Should().BeTrue();
             result.RelatedEntities.Blocks.Should().ContainSingle();
             result.RelatedEntities.Blocks[0].RelationshipLabel.Should().Be("Top Items");
-            result.RelatedEntities.Blocks[0].Rows[0].ProfileRoute.Should().Be("/analytics/items/BRG1");
+            result.RelatedEntities.Blocks[0].Rows[0].ProfileRoute.Should().Be("/analytics/items/I1");
         }
 
         [Fact]
@@ -289,6 +289,9 @@ namespace btr.test.ReportingContext
 
             public override EntityIdentity TryResolveIdentity(string entityType, string entityId)
             {
+                if (!Metrics.Any(m => m.EntityType == entityType && m.EntityId == entityId))
+                    return null;
+
                 return new EntityIdentity
                 {
                     EntityType = entityType,

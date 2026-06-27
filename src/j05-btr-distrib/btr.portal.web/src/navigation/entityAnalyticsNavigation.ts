@@ -36,17 +36,17 @@ export function getEntityAnalyticsNav(entityType: string | null | undefined): En
 
 export function buildCompareRoute(
   entityType: string,
-  entityCode?: string | null,
+  entityId?: string | null,
 ): RouteLocationRaw {
   const config = getEntityAnalyticsNav(entityType)
   if (!config) {
     return { name: 'entity-analytics-home' }
   }
 
-  const code = entityCode?.trim()
+  const id = entityId?.trim()
   return {
     name: config.compareRouteName,
-    query: code ? { entities: code } : {},
+    query: id ? { entities: id } : {},
   }
 }
 

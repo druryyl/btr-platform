@@ -14,7 +14,11 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.Contracts
 
         public string SalesPersonCode { get; set; }
 
+        public string SalesPersonName { get; set; }
+
         public string CustomerCode { get; set; }
+
+        public string CustomerName { get; set; }
 
         public string BrgId { get; set; }
 

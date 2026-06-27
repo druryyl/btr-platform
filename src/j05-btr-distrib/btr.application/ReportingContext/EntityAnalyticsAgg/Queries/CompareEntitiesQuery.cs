@@ -177,11 +177,15 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Queries
         public List<CompareRadarAxisDto> Axes { get; set; } = new List<CompareRadarAxisDto>();
 
         public List<CompareRadarOverlayDto> Overlays { get; set; } = new List<CompareRadarOverlayDto>();
+
+        public List<decimal?> PeerAverageScores { get; set; }
     }
 
     public class CompareRadarAxisDto
     {
         public string KpiId { get; set; }
+
+        public string SignatureDimensionKey { get; set; }
 
         public string DisplayName { get; set; }
 

@@ -90,6 +90,44 @@ namespace btr.test.ReportingContext
         }
 
         [Fact]
+        public void Produce_UsesCustomerIdForRelationshipTargets()
+        {
+            var repository = new RecordingRepository();
+            var producer = CreateProducer(repository);
+            var generatedAt = new DateTime(2026, 6, 24, 10, 0, 0);
+            var context = CreateContext(generatedAt, new DashboardSalesmanPortfolioRow
+            {
+                SalesPersonId = "SP-ID-1",
+                SalesPersonCode = "SP01",
+                SalesPersonName = "Rep Alpha",
+                TopCustomers = new List<DashboardSalesmanPortfolioCustomerRow>
+                {
+                    new DashboardSalesmanPortfolioCustomerRow
+                    {
+                        CustomerCode = "C099",
+                        CustomerName = "Buyer",
+                        MetricValue = 1000m
+                    }
+                }
+            });
+            context.CustomerIdentityLookup = EntityAnalyticsCustomerIdentityResolver.BuildLookup(new[]
+            {
+                new btr.domain.SalesContext.CustomerAgg.CustomerModel("CUST-99")
+                {
+                    CustomerCode = "C099",
+                    CustomerName = "Buyer"
+                }
+            });
+
+            producer.Produce(context);
+
+            repository.RelationshipRows.Should().Contain(r =>
+                r.TargetEntityType == EntityTypeCode.Customer
+                && r.TargetEntityId == "CUST-99"
+                && r.TargetEntityCode == "C099");
+        }
+
+        [Fact]
         public void SalesmanDefaultPack_RegistersCatalogKpiIds()
         {
             var entityTypes = new EntityTypeRegistry();

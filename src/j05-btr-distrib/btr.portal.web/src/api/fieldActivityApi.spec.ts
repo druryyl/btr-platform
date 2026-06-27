@@ -1,6 +1,6 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest'
 import { httpClient } from '@/api/httpClient'
-import { getFieldActivity, listFieldActivitySalesmen } from '@/api/fieldActivityApi'
+import { getFieldActivity, getFieldActivityOverview, listFieldActivitySalesmen } from '@/api/fieldActivityApi'
 
 vi.mock('@/api/httpClient', () => ({
   httpClient: {
@@ -49,5 +49,25 @@ describe('fieldActivityApi', () => {
     await listFieldActivitySalesmen()
 
     expect(httpClient.get).toHaveBeenCalledWith('/api/dashboard/field-activity/salesmen')
+  })
+
+  it('getFieldActivityOverview calls overview endpoint with visit date', async () => {
+    vi.mocked(httpClient.get).mockResolvedValue({
+      data: {
+        Status: 'success',
+        Code: 200,
+        Message: null,
+        Data: {
+          VisitDate: '2026-06-11',
+          DataSource: 'LiveBatch',
+        },
+      },
+    })
+
+    await getFieldActivityOverview('2026-06-11')
+
+    expect(httpClient.get).toHaveBeenCalledWith('/api/dashboard/field-activity/overview', {
+      params: { visitDate: '2026-06-11' },
+    })
   })
 })

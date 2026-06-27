@@ -123,19 +123,20 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Services
             var comparisonKpis = ResolveComparisonKpis(normalizedType, context.MetricKpiIds);
             var columns = BuildEntityColumns(normalizedType, entityIds);
             var warnings = BuildWarnings(columns);
+            var internalEntityIds = columns.Select(c => c.EntityId).ToList();
 
             return new EntityCompareResponse
             {
                 EntityType = normalizedType,
                 ContractVersion = EntityAnalyticsConstants.ProfileContractVersion,
                 Entities = columns,
-                KpiComparison = BuildKpiComparison(normalizedType, entityIds, columns, comparisonKpis),
-                TrendComparison = BuildTrendComparison(normalizedType, entityIds, columns, comparisonKpis),
-                RankingComparison = BuildRankingComparison(normalizedType, entityIds, columns),
-                AttentionComparison = BuildAttentionComparison(normalizedType, entityIds, columns),
-                RelationshipComparison = BuildRelationshipComparison(normalizedType, entityIds, columns),
-                RadarComparison = BuildRadarComparison(normalizedType, entityIds, columns, context),
-                PeerComparison = BuildPeerComparison(normalizedType, entityIds, columns),
+                KpiComparison = BuildKpiComparison(normalizedType, internalEntityIds, columns, comparisonKpis),
+                TrendComparison = BuildTrendComparison(normalizedType, internalEntityIds, columns, comparisonKpis),
+                RankingComparison = BuildRankingComparison(normalizedType, internalEntityIds, columns),
+                AttentionComparison = BuildAttentionComparison(normalizedType, internalEntityIds, columns),
+                RelationshipComparison = BuildRelationshipComparison(normalizedType, internalEntityIds, columns),
+                RadarComparison = BuildRadarComparison(normalizedType, internalEntityIds, columns, context),
+                PeerComparison = BuildPeerComparison(normalizedType, internalEntityIds, columns),
                 Warnings = warnings
             };
         }
@@ -404,7 +405,8 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Services
                 .Select(axis => new CompareRadarAxisDto
                 {
                     KpiId = axis.KpiId,
-                    DisplayName = string.IsNullOrWhiteSpace(axis.RadarDisplayName) ? axis.DisplayName : axis.RadarDisplayName,
+                    SignatureDimensionKey = axis.SignatureDimensionKey,
+                    DisplayName = EntityRadarEngine.ResolveAxisDisplayName(axis),
                     Direction = axis.Direction
                 })
                 .ToList();
@@ -430,6 +432,19 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Services
                 });
             }
 
+            List<decimal?> peerAverageScores = null;
+            if (_radarEngine is EntityRadarEngine concreteRadar && columns.Count > 0)
+            {
+                peerAverageScores = concreteRadar.ComputePeerAverageScores(
+                    entityType,
+                    columns[0].EntityId,
+                    period.Value.Year,
+                    period.Value.Month,
+                    radarAxes,
+                    peerGroupRuleId,
+                    peerGroupSize);
+            }
+
             return new CompareRadarSectionDto
             {
                 IsAvailable = overlays.Count > 0 && compareAxes.Count > 0,
@@ -440,7 +455,8 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Services
                 PeriodMonth = period.Value.Month,
                 PeriodLabel = BuildRadarPeriodLabel(period.Value.Year, period.Value.Month),
                 Axes = compareAxes,
-                Overlays = overlays
+                Overlays = overlays,
+                PeerAverageScores = peerAverageScores
             };
         }
 
@@ -501,8 +517,10 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Services
                 return Array.Empty<EntityKpiMetadata>();
 
             return _kpiRegistry.ResolvePackMetadata(packId)
-                .Where(m => m.RadarEligible)
-                .OrderBy(m => m.RadarAxisOrder)
+                .Where(m => m.RadarEligible
+                    && !string.Equals(m.Direction, "Neutral", StringComparison.OrdinalIgnoreCase))
+                .OrderBy(m => EntityAnalyticsSignatureDimensions.GetOrderIndex(m.SignatureDimensionKey))
+                .ThenBy(m => m.RadarAxisOrder)
                 .ThenBy(m => m.KpiId, StringComparer.OrdinalIgnoreCase)
                 .ToList();
         }
@@ -523,16 +541,23 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Services
             foreach (var entityId in entityIds)
             {
                 var identity = _repository.TryResolveIdentity(entityType, entityId);
-                var resolvedId = identity?.EntityCode ?? entityId;
+                if (identity == null)
+                    continue;
+
+                var internalId = identity.EntityId;
+                var businessCode = identity.EntityCode;
                 columns.Add(new CompareEntityColumnDto
                 {
                     EntityType = entityType,
-                    EntityId = resolvedId,
-                    EntityCode = identity?.EntityCode ?? entityId,
-                    DisplayName = identity?.DisplayName ?? entityId,
-                    IsActive = identity?.IsActive ?? true,
-                    GeneratedAt = _repository.GetLatestGeneratedAt(entityType, resolvedId),
-                    ProfileRoute = BuildProfileRoute(entityType, identity?.EntityCode ?? entityId)
+                    EntityId = internalId,
+                    EntityCode = businessCode,
+                    DisplayName = identity.DisplayName,
+                    IsActive = identity.IsActive,
+                    GeneratedAt = _repository.GetLatestGeneratedAt(entityType, internalId),
+                    ProfileRoute = EntityAnalyticsRouteBuilder.BuildProfileRoute(
+                        _entityTypes,
+                        entityType,
+                        internalId)
                 });
             }
 
@@ -552,17 +577,6 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Services
                 warnings.Add(EntityComparisonWarnings.GeneratedAtMismatch);
 
             return warnings;
-        }
-
-        private string BuildProfileRoute(string entityType, string entityCode)
-        {
-            if (!_entityTypes.TryGet(entityType, out var registration)
-                || string.IsNullOrWhiteSpace(registration.ProfileRouteTemplate))
-            {
-                return $"/analytics/{entityType}/{entityCode}";
-            }
-
-            return registration.ProfileRouteTemplate.Replace("{code}", entityCode);
         }
 
         private IReadOnlyList<EntityKpiMetadata> ResolveComparisonKpis(

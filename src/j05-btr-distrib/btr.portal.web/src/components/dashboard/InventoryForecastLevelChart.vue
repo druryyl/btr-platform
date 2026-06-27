@@ -2,6 +2,7 @@
 import { computed } from 'vue'
 import Card from 'primevue/card'
 import Chart from 'primevue/chart'
+import { chartLegend, compactAxisTitle, createChartOptions } from '@/services/chartLayout'
 import ProgressSpinner from 'primevue/progressspinner'
 import { formatCurrency } from '@/services/formatters'
 import type { DashboardInventoryForecastLevelItem } from '@/models/dashboard'
@@ -28,39 +29,33 @@ const chartData = computed(() => ({
   ],
 }))
 
-const chartOptions = computed(() => ({
-  responsive: true,
-  maintainAspectRatio: false,
-  plugins: {
-    legend: {
-      display: true,
-      position: 'bottom' as const,
-    },
-    tooltip: {
-      callbacks: {
-        label: (context: { dataset: { label?: string }; parsed: { y: number } }) =>
-          ` ${context.dataset.label ?? ''}: ${formatCurrency(context.parsed.y)}`,
+const chartOptions = computed(() =>
+  createChartOptions({
+    plugins: {
+      legend: chartLegend.bottom(),
+      tooltip: {
+        callbacks: {
+          label: (context: { dataset: { label?: string }; parsed: { y: number } }) =>
+            ` ${context.dataset.label ?? ''}: ${formatCurrency(context.parsed.y)}`,
+        },
       },
     },
-  },
-  scales: {
-    x: {
-      title: {
-        display: true,
-        text: 'Planning horizon (days)',
+    scales: {
+      x: {
+        title: compactAxisTitle('Planning horizon (days)'),
+      },
+      y: {
+        ticks: {
+          callback: (value: string | number) => formatCurrency(Number(value)),
+        },
       },
     },
-    y: {
-      ticks: {
-        callback: (value: string | number) => formatCurrency(Number(value)),
-      },
-    },
-  },
-}))
+  }),
+)
 </script>
 
 <template>
-  <Card class="inventory-forecast-level-chart">
+  <Card class="inventory-forecast-level-chart portal-chart-card">
     <template #title>
       <div class="inventory-forecast-level-chart__title">
         <i class="pi pi-chart-line" aria-hidden="true" />
@@ -74,7 +69,7 @@ const chartOptions = computed(() => ({
       </div>
 
       <template v-else>
-        <div v-if="hasData" class="inventory-forecast-level-chart__canvas">
+        <div v-if="hasData" class="inventory-forecast-level-chart__canvas portal-chart-canvas portal-chart-canvas--tall">
           <Chart type="line" :data="chartData" :options="chartOptions" />
         </div>
         <p v-else class="inventory-forecast-level-chart__empty">
@@ -96,10 +91,6 @@ const chartOptions = computed(() => ({
   display: flex;
   justify-content: center;
   padding: 2rem 0;
-}
-
-.inventory-forecast-level-chart__canvas {
-  height: 320px;
 }
 
 .inventory-forecast-level-chart__empty {

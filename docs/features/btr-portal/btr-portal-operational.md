@@ -888,7 +888,8 @@ BTR Portal
 │   └── FI04 · Piutang Report      → /reports/piutang
 ├── Sales Force
 │   ├── SF01 · Salesmen            → /dashboard/salesmen
-│   └── SF02 · Field Activity      → /dashboard/field-activity
+│   ├── SF02 · Sales Force Overview → /dashboard/field-activity
+│   └── SF03 · Salesman Field Activity → /dashboard/field-activity/detail
 ├── Inventory
 │   ├── IN01 · Inventory           → /dashboard/inventory
 │   ├── IN02 · Inventory Risk        → /dashboard/inventory-risk

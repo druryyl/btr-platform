@@ -57,29 +57,61 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Services
             if (string.IsNullOrWhiteSpace(entityId))
                 throw new ArgumentException("EntityId is required.", nameof(entityId));
 
-            var identity = _repository.TryResolveIdentity(normalizedType, entityId);
-            var resolvedEntityId = identity?.EntityCode ?? entityId.Trim();
-            var metrics = _repository.GetCurrentMetrics(normalizedType, resolvedEntityId);
-            var generatedAt = _repository.GetLatestGeneratedAt(normalizedType, resolvedEntityId);
+            var trimmedEntityId = entityId.Trim();
+            var identity = _repository.TryResolveIdentity(normalizedType, trimmedEntityId);
+            if (identity == null)
+            {
+                return new EntityPerformanceProfileResponse
+                {
+                    IsAvailable = false,
+                    EntityType = normalizedType,
+                    EntityId = trimmedEntityId,
+                    SnapshotVersion = EntityAnalyticsConstants.CurrentSnapshotVersion,
+                    ContractVersion = EntityAnalyticsConstants.ProfileContractVersion,
+                    Overview = CreateUnavailableSection<ProfileOverviewSectionDto>(
+                        EntityAnalyticsUnavailableReasons.NoSnapshotData),
+                    KpiSummary = CreateUnavailableSection<ProfileKpiSummarySectionDto>(
+                        EntityAnalyticsUnavailableReasons.NoSnapshotData),
+                    Comparison = CreateUnavailableSection<ProfileComparisonSectionDto>(
+                        EntityAnalyticsUnavailableReasons.NoSnapshotData),
+                    Trend = CreateUnavailableSection<ProfileTrendSectionDto>(
+                        EntityAnalyticsUnavailableReasons.NoSnapshotData),
+                    Radar = CreateUnavailableSection<ProfileRadarSectionDto>(
+                        EntityAnalyticsUnavailableReasons.NoSnapshotData),
+                    Ranking = CreateUnavailableSection<ProfileRankingSectionDto>(
+                        EntityAnalyticsUnavailableReasons.NoSnapshotData),
+                    Attention = CreateUnavailableSection<ProfileAttentionSectionDto>(
+                        EntityAnalyticsUnavailableReasons.NoSnapshotData),
+                    RelatedEntities = CreateUnavailableSection<ProfileRelatedEntitiesSectionDto>(
+                        EntityAnalyticsUnavailableReasons.NoSnapshotData),
+                    Evidence = CreateUnavailableSection<ProfileEvidenceSectionDto>(
+                        EntityAnalyticsUnavailableReasons.NoSnapshotData)
+                };
+            }
+
+            var internalEntityId = identity.EntityId;
+            var businessEntityCode = identity.EntityCode;
+            var metrics = _repository.GetCurrentMetrics(normalizedType, internalEntityId);
+            var generatedAt = _repository.GetLatestGeneratedAt(normalizedType, internalEntityId);
             var isAvailable = metrics.Count > 0;
 
             return new EntityPerformanceProfileResponse
             {
                 IsAvailable = isAvailable,
                 EntityType = normalizedType,
-                EntityId = resolvedEntityId,
+                EntityId = internalEntityId,
                 GeneratedAt = generatedAt,
                 SnapshotVersion = EntityAnalyticsConstants.CurrentSnapshotVersion,
                 ContractVersion = EntityAnalyticsConstants.ProfileContractVersion,
-                Overview = BuildOverview(identity, normalizedType, resolvedEntityId, generatedAt),
+                Overview = BuildOverview(identity, normalizedType, internalEntityId, businessEntityCode, generatedAt),
                 KpiSummary = BuildKpiSummary(metrics, isAvailable),
-                Comparison = _comparisonEngine.BuildCrossPeriodSection(normalizedType, resolvedEntityId),
-                Trend = _trendEngine.BuildTrendSection(normalizedType, resolvedEntityId),
-                Radar = _radarEngine.BuildRadarSection(normalizedType, resolvedEntityId),
-                Ranking = _rankingEngine.BuildRankingSection(normalizedType, resolvedEntityId),
-                Attention = _attentionEngine.BuildAttentionSection(normalizedType, resolvedEntityId),
-                RelatedEntities = _relationshipEngine.BuildRelatedEntitiesSection(normalizedType, resolvedEntityId),
-                Evidence = BuildEvidence(normalizedType, resolvedEntityId, identity, isAvailable)
+                Comparison = _comparisonEngine.BuildCrossPeriodSection(normalizedType, internalEntityId),
+                Trend = _trendEngine.BuildTrendSection(normalizedType, internalEntityId),
+                Radar = _radarEngine.BuildRadarSection(normalizedType, internalEntityId),
+                Ranking = _rankingEngine.BuildRankingSection(normalizedType, internalEntityId),
+                Attention = _attentionEngine.BuildAttentionSection(normalizedType, internalEntityId),
+                RelatedEntities = _relationshipEngine.BuildRelatedEntitiesSection(normalizedType, internalEntityId),
+                Evidence = BuildEvidence(normalizedType, businessEntityCode, identity, isAvailable)
             };
         }
 
@@ -140,15 +172,16 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Services
         private static ProfileOverviewSectionDto BuildOverview(
             EntityIdentity identity,
             string entityType,
-            string entityId,
+            string internalEntityId,
+            string businessEntityCode,
             DateTime? generatedAt)
         {
             identity = identity ?? new EntityIdentity
             {
                 EntityType = entityType,
-                EntityId = entityId,
-                EntityCode = entityId,
-                DisplayName = entityId,
+                EntityId = internalEntityId,
+                EntityCode = businessEntityCode,
+                DisplayName = businessEntityCode,
                 IsActive = true
             };
 
@@ -156,7 +189,7 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Services
             {
                 IsAvailable = true,
                 EntityType = identity.EntityType,
-                EntityId = identity.EntityCode,
+                EntityId = identity.EntityId,
                 EntityCode = identity.EntityCode,
                 DisplayName = identity.DisplayName,
                 IsActive = identity.IsActive,

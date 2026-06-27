@@ -142,7 +142,9 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Registrars
 
                 RadarAxisOrder = 1,
 
-                RadarDisplayName = "Revenue",
+                RadarDisplayName = "Performance",
+
+                SignatureDimensionKey = EntityAnalyticsSignatureDimensions.Performance,
 
                 RadarValueSource = RadarValueSource.L0Kpi,
 
@@ -202,7 +204,9 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Registrars
 
                 RadarAxisOrder = 3,
 
-                RadarDisplayName = "Stability",
+                RadarDisplayName = "Quality",
+
+                SignatureDimensionKey = EntityAnalyticsSignatureDimensions.Quality,
 
                 RadarValueSource = RadarValueSource.L0Kpi,
 
@@ -298,6 +302,8 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Registrars
                 VisualizationType = "RadarAxis",
                 RadarEligible = true,
                 RadarAxisOrder = 2,
+                RadarDisplayName = "Growth",
+                SignatureDimensionKey = EntityAnalyticsSignatureDimensions.Growth,
                 RadarValueSource = RadarValueSource.L1MomGrowthPercent,
                 RadarSourceKpiId = "CU-KPI-009",
                 DisplayPrecision = 1,
@@ -322,7 +328,9 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Registrars
                 NormalizationRule = "PeerPercentile",
                 VisualizationType = "RadarAxis",
                 RadarEligible = true,
-                RadarAxisOrder = 4,
+                RadarAxisOrder = 5,
+                RadarDisplayName = "Reach",
+                SignatureDimensionKey = EntityAnalyticsSignatureDimensions.Reach,
                 RadarValueSource = RadarValueSource.L0DimensionNumeric,
                 DisplayPrecision = 0,
                 NullableBehavior = "Omit",
@@ -346,7 +354,9 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Registrars
                 NormalizationRule = "PeerPercentile",
                 VisualizationType = "RadarAxis",
                 RadarEligible = true,
-                RadarAxisOrder = 5,
+                RadarAxisOrder = 6,
+                RadarDisplayName = "Risk",
+                SignatureDimensionKey = EntityAnalyticsSignatureDimensions.Risk,
                 RadarValueSource = RadarValueSource.L3ActiveSignalCount,
                 DisplayPrecision = 0,
                 NullableBehavior = "Omit",
@@ -370,7 +380,9 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Registrars
                 NormalizationRule = "PeerPercentile",
                 VisualizationType = "RadarAxis",
                 RadarEligible = true,
-                RadarAxisOrder = 6,
+                RadarAxisOrder = 4,
+                RadarDisplayName = "Stability",
+                SignatureDimensionKey = EntityAnalyticsSignatureDimensions.Stability,
                 RadarValueSource = RadarValueSource.L0DimensionNumeric,
                 DisplayPrecision = 0,
                 NullableBehavior = "Omit",

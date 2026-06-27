@@ -49,7 +49,16 @@ function createTestRouter(base = '/') {
                 name: 'inventory-optimization-dashboard',
                 component: { template: '<div />' },
               },
-              { path: 'field-activity', name: 'field-activity-dashboard', component: { template: '<div />' } },
+              {
+                path: 'field-activity',
+                name: 'field-activity-overview',
+                component: { template: '<div />' },
+              },
+              {
+                path: 'field-activity/detail',
+                name: 'field-activity-detail',
+                component: { template: '<div />' },
+              },
             ],
           },
           { path: 'alerts', name: 'alert-center', component: { template: '<div />' } },
@@ -76,25 +85,25 @@ function createTestRouter(base = '/') {
             component: { template: '<div />' },
           },
           {
-            path: 'analytics/customers/:customerCode',
+            path: 'analytics/customers/:customerId',
             name: 'customer-performance-profile',
             redirect: (to) => ({
               name: 'entity-performance-profile',
-              params: { entityType: 'Customer', entityId: to.params.customerCode },
+              params: { entityType: 'Customer', entityId: to.params.customerId },
             }),
           },
           {
-            path: 'analytics/salesmen/:salesPersonCode',
+            path: 'analytics/salesmen/:salesPersonId',
             name: 'salesman-performance-profile',
             component: { template: '<div />' },
           },
           {
-            path: 'analytics/suppliers/:supplierCode',
+            path: 'analytics/suppliers/:supplierId',
             name: 'supplier-performance-profile',
             component: { template: '<div />' },
           },
           {
-            path: 'analytics/items/:brgCode',
+            path: 'analytics/items/:brgId',
             name: 'item-performance-profile',
             component: { template: '<div />' },
           },
@@ -164,10 +173,16 @@ describe('dashboard route matching', () => {
     expect(resolved.name).toBe('dashboard')
   })
 
-  it('resolves /dashboard/field-activity to field-activity-dashboard', () => {
+  it('resolves /dashboard/field-activity to field-activity-overview', () => {
     const router = createTestRouter()
     const resolved = router.resolve('/dashboard/field-activity')
-    expect(resolved.name).toBe('field-activity-dashboard')
+    expect(resolved.name).toBe('field-activity-overview')
+  })
+
+  it('resolves /dashboard/field-activity/detail to field-activity-detail', () => {
+    const router = createTestRouter()
+    const resolved = router.resolve('/dashboard/field-activity/detail')
+    expect(resolved.name).toBe('field-activity-detail')
   })
 
   it('with /portal/ base, push /dashboard/sales stays under portal', async () => {
@@ -215,7 +230,7 @@ describe('dashboard route matching', () => {
     const router = createTestRouter()
     await router.push('/analytics/salesmen/SP100')
     expect(router.currentRoute.value.name).toBe('salesman-performance-profile')
-    expect(router.currentRoute.value.params.salesPersonCode).toBe('SP100')
+    expect(router.currentRoute.value.params.salesPersonId).toBe('SP100')
   })
 
   it('resolves /analytics/suppliers/compare to supplier-compare', () => {
@@ -227,7 +242,7 @@ describe('dashboard route matching', () => {
     const router = createTestRouter()
     await router.push('/analytics/suppliers/SUPA')
     expect(router.currentRoute.value.name).toBe('supplier-performance-profile')
-    expect(router.currentRoute.value.params.supplierCode).toBe('SUPA')
+    expect(router.currentRoute.value.params.supplierId).toBe('SUPA')
   })
 
   it('resolves /analytics/items/compare to item-compare', () => {
@@ -239,6 +254,6 @@ describe('dashboard route matching', () => {
     const router = createTestRouter()
     await router.push('/analytics/items/BRG001')
     expect(router.currentRoute.value.name).toBe('item-performance-profile')
-    expect(router.currentRoute.value.params.brgCode).toBe('BRG001')
+    expect(router.currentRoute.value.params.brgId).toBe('BRG001')
   })
 })

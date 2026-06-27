@@ -200,7 +200,7 @@ Every entity type implements a common contract:
 | **Relationships** | Top-N rollup pattern with metric KPI ID | Which relationship types are registered |
 | **Peer group** | Declared scope for radar and benchmarks | Customer → same Wilayah; Item → same Category; Salesman → all active reps |
 | **Evidence map** | Category → report route + filter dimension | Customer → Sales Report + Piutang Report; Item → Inventory Report |
-| **Profile route** | `/analytics/{entityTypePlural}/{entityCode}` | Route segment naming only |
+| **Profile route** | `/analytics/{entityTypePlural}/{entityId}` — system identifier in URL | Customer → `CustomerId`; Salesman → `SalesPersonId`; Supplier → `SupplierId`; Item → `BrgId` |
 
 ### Entity type registration (extensibility pattern)
 
@@ -208,7 +208,7 @@ Every entity type implements a common contract:
 EntityTypeRegistration
   EntityTypeCode          : Customer | Salesman | Item | Supplier | Warehouse | …
   MasterDalContract       : ICustomerDal | ISalesPersonDal | …
-  EntityIdResolver        : CustomerCode-first | SalesPersonId | BrgId | SupplierId
+  EntityIdResolver        : CustomerId | SalesPersonId | BrgId | SupplierId
   KpiPackId               : customer-default | salesman-default | …
   RelationshipPackId      : customer-relationships | …
   PeerGroupRuleId         : customer-wilayah | item-category | …
@@ -331,7 +331,7 @@ Entity Analytics introduces **generic platform layers L0–L5** alongside existi
 | **L2** | RANKING history | `(EntityType, EntityId, Period, RankMetricKpiId)` | Ranking History section | Computed at refresh after L1 for period |
 | **L3** | ATTENTION history | `(EntityType, EntityId, SignalCode)` + periods | Attention timeline | Event log — diff signals each refresh |
 | **L4** | RELATIONSHIP rollups | `(SourceEntity, TargetEntityType, RelationshipCode, Period)` × TopN | Related Entities section | Materialized at refresh |
-| **L5** | RADAR scores | `(EntityType, EntityId, Period)` × axis KPI IDs | Radar section | Precomputed peer-normalized scores |
+| **L5** | RADAR scores | `(EntityType, EntityId, Period)` × axis KPI IDs | Performance Signature section | Precomputed peer-normalized scores; six universal dimensions (`EA-SIG-*`) |
 
 Domain snapshots (`BTRPD_Customer*`, `BTRPD_Salesman*`, etc.) continue serving CU01, SF01, and other dashboards.
 
@@ -449,7 +449,7 @@ ComparisonContext
 | **Peer Comparison** | 1 entity, peer group | Percentile rank per KPI | Read L5 or compute rank from L0 peer distribution |
 | **Average Comparison** | 1 entity vs peer mean | Delta vs average | Mean from L0 over peer group at last refresh |
 | **Trend Comparison** | 1–4 entities | Overlay chart series | L1 series per entity; same KPI ID |
-| **Radar Comparison** | 2 entities | Overlay on identical axes | L5 scores; same peer group scope |
+| **Performance Signature Comparison** | 2–5 entities | Outline overlays on identical universal axes | L5 scores; entity colors only; optional peer-average dashed overlay |
 
 ### Unified engine design
 
@@ -484,7 +484,7 @@ RelationshipDefinition
   MetricKpiId          : CU-KPI-009 (drives sort)
   PeriodSemantics      : MTD | Rolling12Mo
   TopN                 : 10
-  ProfileRouteTemplate : /analytics/items/{code}
+  ProfileRouteTemplate : /analytics/items/{id}
 ```
 
 ### Generic rollup pattern

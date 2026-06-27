@@ -9,7 +9,7 @@ const ENTITY_TYPE = 'Item'
 const route = useRoute()
 const store = useEntityAnalyticsStore()
 
-const entityId = computed(() => String(route.params.brgCode ?? ''))
+const entityId = computed(() => String(route.params.brgId ?? ''))
 
 function loadCurrentProfile() {
   if (!entityId.value) return
@@ -26,7 +26,7 @@ watch(entityId, loadCurrentProfile)
     :profile="store.profile"
     :loading="store.loading"
     :error="store.error"
-    :entity-code="entityId"
+    :entity-code="store.profile?.Overview?.EntityCode ?? undefined"
     @refresh="loadCurrentProfile()"
   />
 </template>

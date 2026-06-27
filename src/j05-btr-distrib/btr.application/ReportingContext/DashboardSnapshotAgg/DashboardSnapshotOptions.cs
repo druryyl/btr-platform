@@ -22,6 +22,8 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg
 
         public int CollectionIntervalMinutes { get; set; } = 30;
 
+        public int FieldActivityIntervalMinutes { get; set; } = 15;
+
         public int LocationIntervalMinutes { get; set; } = 60;
 
         public int PurchasingManagementIntervalMinutes { get; set; } = 30;

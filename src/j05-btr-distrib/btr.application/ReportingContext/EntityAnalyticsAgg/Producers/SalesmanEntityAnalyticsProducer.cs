@@ -7,6 +7,7 @@ using btr.application.ReportingContext.EntityAnalyticsAgg.Contracts;
 using btr.application.ReportingContext.EntityAnalyticsAgg.Models;
 using btr.application.ReportingContext.EntityAnalyticsAgg.Models.Snapshot;
 using btr.application.ReportingContext.EntityAnalyticsAgg.Registrars;
+using btr.application.ReportingContext.EntityAnalyticsAgg.Services;
 using btr.nuna.Domain;
 
 namespace btr.application.ReportingContext.EntityAnalyticsAgg.Producers
@@ -121,7 +122,7 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Producers
                 EntityTypeCode.Salesman,
                 periodYear,
                 periodMonth,
-                BuildRelationshipSnapshots(input),
+                BuildRelationshipSnapshots(input, context),
                 context.RefreshLogId,
                 context.GeneratedAt,
                 context.Replay);
@@ -168,7 +169,7 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Producers
                 EntityTypeCode.Salesman,
                 periodYear,
                 periodMonth,
-                BuildRelationshipSnapshots(input),
+                BuildRelationshipSnapshots(input, context),
                 context.RefreshLogId,
                 context.GeneratedAt,
                 context.Replay);
@@ -301,11 +302,14 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Producers
         }
 
         private static IReadOnlyList<EntityRelationshipSnapshot> BuildRelationshipSnapshots(
-            SalesmanEntityAnalyticsProduceInput input)
+            SalesmanEntityAnalyticsProduceInput input,
+            EntityAnalyticsProduceContext context)
         {
             var portfolio = input?.SalesmanAggregate?.Portfolio;
             if (portfolio == null || portfolio.Count == 0)
                 return Array.Empty<EntityRelationshipSnapshot>();
+
+            var customerLookup = context?.CustomerIdentityLookup;
 
             var relationshipById = input.RelationshipAggregate?.BySalesPersonId
                 ?? new Dictionary<string, DashboardSalesmanRelationshipSalesmanRollup>(StringComparer.OrdinalIgnoreCase);
@@ -333,15 +337,20 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Producers
                     if (string.IsNullOrWhiteSpace(customer.CustomerCode))
                         continue;
 
+                    var customerIdentity = EntityAnalyticsCustomerIdentityResolver.Resolve(
+                        customer.CustomerCode,
+                        customerLookup,
+                        customerName: customer.CustomerName);
+
                     snapshots.Add(new EntityRelationshipSnapshot
                     {
                         SourceEntityId = entityId,
                         SourceEntityCode = entityCode,
                         RelationshipCode = SalesmanRelationshipCatalog.ManagedCustomers,
                         TargetEntityType = EntityTypeCode.Customer,
-                        TargetEntityId = customer.CustomerCode.Trim(),
-                        TargetEntityCode = customer.CustomerCode.Trim(),
-                        TargetDisplayName = customer.CustomerName ?? customer.CustomerCode,
+                        TargetEntityId = customerIdentity.CustomerId,
+                        TargetEntityCode = customerIdentity.CustomerCode,
+                        TargetDisplayName = customer.CustomerName ?? customerIdentity.CustomerCode,
                         MetricValue = customer.MetricValue
                     });
                 }
@@ -350,15 +359,20 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Producers
                 {
                     foreach (var customer in rollup.TopCustomers)
                     {
+                        var customerIdentity = EntityAnalyticsCustomerIdentityResolver.Resolve(
+                            customer.CustomerCode,
+                            customerLookup,
+                            customerName: customer.CustomerName);
+
                         snapshots.Add(new EntityRelationshipSnapshot
                         {
                             SourceEntityId = entityId,
                             SourceEntityCode = entityCode,
                             RelationshipCode = SalesmanRelationshipCatalog.TopCustomersByOmzet,
                             TargetEntityType = EntityTypeCode.Customer,
-                            TargetEntityId = customer.CustomerCode,
-                            TargetEntityCode = customer.CustomerCode,
-                            TargetDisplayName = customer.CustomerName ?? customer.CustomerCode,
+                            TargetEntityId = customerIdentity.CustomerId,
+                            TargetEntityCode = customerIdentity.CustomerCode,
+                            TargetDisplayName = customer.CustomerName ?? customerIdentity.CustomerCode,
                             MetricValue = customer.MetricValue
                         });
                     }

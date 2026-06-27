@@ -1,22 +1,20 @@
 <script setup lang="ts">
-import { useRoute } from 'vue-router'
 import { RouterLink } from 'vue-router'
 import KpiCard from '@/components/KpiCard.vue'
 import ProfileSectionCard from '@/components/entity-analytics/ProfileSectionCard.vue'
 import type { ProfileKpiSummarySection } from '@/models/entityAnalytics'
 
-defineProps<{
+const props = defineProps<{
   section: ProfileKpiSummarySection | null | undefined
+  entityCode?: string | null
   loading?: boolean
 }>()
 
-const route = useRoute()
-
 function evidenceHref(baseRoute: string, filterDimension?: string | null): string {
-  const entityId = String(route.params.entityId ?? route.params.customerCode ?? '')
-  if (!entityId || !filterDimension) return baseRoute
+  const entityCode = props.entityCode?.trim() ?? ''
+  if (!entityCode || !filterDimension) return baseRoute
   const separator = baseRoute.includes('?') ? '&' : '?'
-  return `${baseRoute}${separator}${encodeURIComponent(filterDimension)}=${encodeURIComponent(entityId)}`
+  return `${baseRoute}${separator}${encodeURIComponent(filterDimension)}=${encodeURIComponent(entityCode)}`
 }
 </script>
 

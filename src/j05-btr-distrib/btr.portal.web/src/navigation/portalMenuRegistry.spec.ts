@@ -20,7 +20,8 @@ const expectedRouteNames = [
   'cash-flow-forecast-dashboard',
   'piutang-report',
   'salesmen-dashboard',
-  'field-activity-dashboard',
+  'field-activity-overview',
+  'field-activity-detail',
   'inventory-dashboard',
   'inventory-risk-dashboard',
   'inventory-forecast-dashboard',
@@ -32,8 +33,8 @@ const expectedRouteNames = [
 ] as const
 
 describe('portalMenuRegistry', () => {
-  it('contains exactly 25 menu items', () => {
-    expect(allPortalMenuItems).toHaveLength(25)
+  it('contains exactly 26 menu items', () => {
+    expect(allPortalMenuItems).toHaveLength(26)
   })
 
   it('defines 8 domain groups in management scan order', () => {
@@ -55,9 +56,9 @@ describe('portalMenuRegistry', () => {
     const routes = allPortalMenuItems.map((item) => item.route)
     const routeNames = allPortalMenuItems.map((item) => item.routeName)
 
-    expect(new Set(codes).size).toBe(25)
-    expect(new Set(routes).size).toBe(25)
-    expect(new Set(routeNames).size).toBe(25)
+    expect(new Set(codes).size).toBe(26)
+    expect(new Set(routes).size).toBe(26)
+    expect(new Set(routeNames).size).toBe(26)
   })
 
   it('maps collection optimization to customers group as CU03', () => {
@@ -78,8 +79,8 @@ describe('portalMenuRegistry', () => {
     expect(salesGroup?.items.map((i) => i.code)).toEqual(['SA01', 'SA02', 'SA03'])
   })
 
-  it('provides 18 domain dashboard links excluding alert center', () => {
-    expect(getDomainDashboardLinks()).toHaveLength(18)
+  it('provides 19 domain dashboard links excluding alert center', () => {
+    expect(getDomainDashboardLinks()).toHaveLength(19)
     expect(getDomainDashboardLinks().some((item) => item.code === PortalMenuCodes.EX02)).toBe(false)
   })
 

@@ -292,7 +292,9 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.Services
                         {
                             Rank = index + 1,
                             CustomerCode = x.Key,
-                            CustomerName = x.Key,
+                            CustomerName = r.CustomerNames.TryGetValue(x.Key, out var customerName)
+                                ? customerName
+                                : x.Key,
                             MetricValue = x.Value
                         })
                         .ToList();
@@ -414,6 +416,16 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.Services
                     current = 0m;
 
                 rep.CustomerOmzet[customerOmzetKey] = current + row.GrandTotal;
+
+                if (customerKey.Length > 0 && !string.IsNullOrWhiteSpace(row.Customer))
+                {
+                    var customerName = row.Customer.Trim();
+                    if (!rep.CustomerNames.TryGetValue(customerKey, out var existingName)
+                        || string.Equals(existingName, customerKey, StringComparison.OrdinalIgnoreCase))
+                    {
+                        rep.CustomerNames[customerKey] = customerName;
+                    }
+                }
             }
 
             foreach (var rep in states.Values)
@@ -861,6 +873,9 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.Services
 
             public Dictionary<string, decimal> CustomerOmzet { get; } =
                 new Dictionary<string, decimal>(StringComparer.OrdinalIgnoreCase);
+
+            public Dictionary<string, string> CustomerNames { get; } =
+                new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 
             public decimal? TopCustomerPercent { get; set; }
 

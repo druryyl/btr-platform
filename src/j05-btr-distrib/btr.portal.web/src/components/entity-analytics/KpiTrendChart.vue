@@ -2,6 +2,7 @@
 import { computed } from 'vue'
 import Card from 'primevue/card'
 import Chart from 'primevue/chart'
+import { chartLegend, createChartOptions } from '@/services/chartLayout'
 import { formatCurrency } from '@/services/formatters'
 import type { CompareTrendOverlay, ProfileTrendSeries } from '@/models/entityAnalytics'
 
@@ -66,33 +67,30 @@ const chartData = computed(() => {
   }
 })
 
-const chartOptions = computed(() => ({
-  responsive: true,
-  maintainAspectRatio: false,
-  plugins: {
-    legend: {
-      display: Boolean(props.overlay),
-      position: 'bottom' as const,
-    },
-    tooltip: {
-      callbacks: {
-        label: (context: { parsed: { y: number | null } }) =>
-          ` ${formatCurrency(context.parsed.y ?? 0)}`,
+const chartOptions = computed(() =>
+  createChartOptions({
+    plugins: {
+      legend: props.overlay ? chartLegend.bottom() : chartLegend.hidden(),
+      tooltip: {
+        callbacks: {
+          label: (context: { parsed: { y: number | null } }) =>
+            ` ${formatCurrency(context.parsed.y ?? 0)}`,
+        },
       },
     },
-  },
-  scales: {
-    y: {
-      ticks: {
-        callback: (value: number | string) => formatCurrency(Number(value)),
+    scales: {
+      y: {
+        ticks: {
+          callback: (value: number | string) => formatCurrency(Number(value)),
+        },
       },
     },
-  },
-}))
+  }),
+)
 </script>
 
 <template>
-  <Card class="kpi-trend-chart">
+  <Card class="kpi-trend-chart portal-chart-card">
     <template #title>
       <div class="kpi-trend-chart__header">
         <span>{{ title }}</span>
@@ -102,7 +100,7 @@ const chartOptions = computed(() => ({
       </div>
     </template>
     <template #content>
-      <div v-if="hasData" class="kpi-trend-chart__canvas">
+      <div v-if="hasData" class="kpi-trend-chart__canvas portal-chart-canvas portal-chart-canvas--short">
         <Chart type="line" :data="chartData" :options="chartOptions" />
       </div>
       <p v-else class="kpi-trend-chart__empty">No historical data yet for this metric.</p>
@@ -120,10 +118,6 @@ const chartOptions = computed(() => ({
 .kpi-trend-chart__semantics {
   color: var(--p-text-muted-color, #64748b);
   font-weight: 400;
-}
-
-.kpi-trend-chart__canvas {
-  height: 220px;
 }
 
 .kpi-trend-chart__empty {

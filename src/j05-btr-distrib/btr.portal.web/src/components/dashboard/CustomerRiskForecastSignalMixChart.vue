@@ -2,6 +2,7 @@
 import { computed } from 'vue'
 import Card from 'primevue/card'
 import Chart from 'primevue/chart'
+import { createChartOptions } from '@/services/chartLayout'
 import ProgressSpinner from 'primevue/progressspinner'
 import type { DashboardCustomerRiskForecastSignalMixItem } from '@/models/dashboard'
 import {
@@ -39,33 +40,30 @@ const chartData = computed(() => ({
   ],
 }))
 
-const chartOptions = computed(() => ({
-  responsive: true,
-  maintainAspectRatio: false,
-  plugins: {
-    legend: {
-      display: false,
-    },
-    tooltip: {
-      callbacks: {
-        label: (context: { parsed: { y: number } }) =>
-          ` ${context.parsed.y} customers`,
+const chartOptions = computed(() =>
+  createChartOptions({
+    plugins: {
+      tooltip: {
+        callbacks: {
+          label: (context: { parsed: { y: number } }) =>
+            ` ${context.parsed.y} customers`,
+        },
       },
     },
-  },
-  scales: {
-    y: {
-      beginAtZero: true,
-      ticks: {
-        precision: 0,
+    scales: {
+      y: {
+        beginAtZero: true,
+        ticks: {
+          precision: 0,
+        },
       },
     },
-  },
-}))
+  }),
+)
 </script>
 
 <template>
-  <Card class="customer-risk-forecast-signal-mix-chart">
+  <Card class="customer-risk-forecast-signal-mix-chart portal-chart-card">
     <template #title>
       <div class="customer-risk-forecast-signal-mix-chart__title">
         <i class="pi pi-chart-bar" aria-hidden="true" />
@@ -79,7 +77,7 @@ const chartOptions = computed(() => ({
       </div>
 
       <template v-else>
-        <div v-if="hasData" class="customer-risk-forecast-signal-mix-chart__canvas">
+        <div v-if="hasData" class="customer-risk-forecast-signal-mix-chart__canvas portal-chart-canvas">
           <Chart type="bar" :data="chartData" :options="chartOptions" />
         </div>
         <p v-else class="customer-risk-forecast-signal-mix-chart__empty">
@@ -101,10 +99,6 @@ const chartOptions = computed(() => ({
   display: flex;
   justify-content: center;
   padding: 2rem 0;
-}
-
-.customer-risk-forecast-signal-mix-chart__canvas {
-  height: 280px;
 }
 
 .customer-risk-forecast-signal-mix-chart__empty {

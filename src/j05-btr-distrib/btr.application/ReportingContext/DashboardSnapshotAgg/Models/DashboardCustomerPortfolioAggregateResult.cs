@@ -7,6 +7,8 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.Models
     {
         public string CustomerKey { get; set; }
 
+        public string CustomerId { get; set; }
+
         public string CustomerCode { get; set; }
 
         public string CustomerName { get; set; }
@@ -145,6 +147,8 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.Models
 
         public string CustomerKey { get; set; }
 
+        public string CustomerId { get; set; }
+
         public string CustomerCode { get; set; }
 
         public string CustomerName { get; set; }
@@ -201,6 +205,8 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.Models
         public int SortOrder { get; set; }
 
         public string CustomerKey { get; set; }
+
+        public string CustomerId { get; set; }
 
         public string CustomerCode { get; set; }
 

@@ -7,9 +7,9 @@ namespace btr.test.ReportingContext
     public class PortalMenuRegistryTest
     {
         [Fact]
-        public void PortalMenuRegistry_ContainsTwentyFourEntries()
+        public void PortalMenuRegistry_ContainsTwentyFiveEntries()
         {
-            PortalMenuRegistry.GetAllLinks().Should().HaveCount(24);
+            PortalMenuRegistry.GetAllLinks().Should().HaveCount(25);
         }
 
         [Fact]
@@ -17,7 +17,7 @@ namespace btr.test.ReportingContext
         {
             var links = PortalMenuRegistry.GetDomainDashboardLinks();
 
-            links.Should().HaveCount(18);
+            links.Should().HaveCount(19);
             links.Should().NotContain(link => link.Code == PortalMenuRegistry.AlertCenterCode);
         }
 

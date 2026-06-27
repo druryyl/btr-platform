@@ -16,12 +16,12 @@ namespace btr.infrastructure.ReportingContext.DashboardInventoryRiskAgg
     {
         private const string InventoryReportRoute = "/reports/inventory";
 
-        private static string BuildItemProfileRoute(string brgCode)
+        private static string BuildItemProfileRoute(string brgId)
         {
-            if (string.IsNullOrWhiteSpace(brgCode))
+            if (string.IsNullOrWhiteSpace(brgId))
                 return null;
 
-            return $"/analytics/items/{Uri.EscapeDataString(brgCode.Trim())}";
+            return $"/analytics/items/{Uri.EscapeDataString(brgId.Trim())}";
         }
 
         private readonly IDashboardInventoryRiskSnapshotDal _snapshotDal;
@@ -143,7 +143,7 @@ namespace btr.infrastructure.ReportingContext.DashboardInventoryRiskAgg
                 SignalKey = row.SignalKey,
                 SignalLabel = row.SignalLabel,
                 ReportRoute = InventoryReportRoute,
-                ProfileRoute = BuildItemProfileRoute(row.BrgCode),
+                ProfileRoute = BuildItemProfileRoute(row.BrgId),
                 Investigation = InvestigationMetadataBuilder.Build(
                     row.SignalKey,
                     InvestigationMetadataBuilder.EntityTypeItem,
@@ -168,7 +168,7 @@ namespace btr.infrastructure.ReportingContext.DashboardInventoryRiskAgg
                 DaysSinceLastFaktur = row.DaysSinceLastFaktur,
                 PercentOfAtRisk = row.PercentOfAtRisk,
                 ReportRoute = InventoryReportRoute,
-                ProfileRoute = BuildItemProfileRoute(row.BrgCode),
+                ProfileRoute = BuildItemProfileRoute(row.BrgId),
                 Investigation = InvestigationMetadataBuilder.Build(
                     signalKey,
                     InvestigationMetadataBuilder.EntityTypeItem,

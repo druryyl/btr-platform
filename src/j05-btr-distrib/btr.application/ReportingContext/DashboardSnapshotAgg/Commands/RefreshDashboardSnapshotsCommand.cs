@@ -35,6 +35,7 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.Commands
         private readonly IRefreshDashboardCustomerSnapshotWorker _customerWorker;
         private readonly IRefreshDashboardSalesmanSnapshotWorker _salesmanWorker;
         private readonly IRefreshDashboardCollectionSnapshotWorker _collectionWorker;
+        private readonly IRefreshDashboardFieldActivitySnapshotWorker _fieldActivityWorker;
         private readonly IRefreshDashboardLocationSnapshotWorker _locationWorker;
 
         public RefreshDashboardSnapshotsHandler(
@@ -48,6 +49,7 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.Commands
             IRefreshDashboardCustomerSnapshotWorker customerWorker,
             IRefreshDashboardSalesmanSnapshotWorker salesmanWorker,
             IRefreshDashboardCollectionSnapshotWorker collectionWorker,
+            IRefreshDashboardFieldActivitySnapshotWorker fieldActivityWorker,
             IRefreshDashboardLocationSnapshotWorker locationWorker)
         {
             _allWorker = allWorker;
@@ -60,6 +62,7 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.Commands
             _customerWorker = customerWorker;
             _salesmanWorker = salesmanWorker;
             _collectionWorker = collectionWorker;
+            _fieldActivityWorker = fieldActivityWorker;
             _locationWorker = locationWorker;
         }
 
@@ -176,6 +179,14 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.Commands
                     _collectionWorker.Execute(collectionRequest);
                     return MapResult("Collection", collectionRequest.Result);
 
+                case "FieldActivity":
+                    var fieldActivityRequest = new RefreshDashboardFieldActivitySnapshotRequest
+                    {
+                        TriggeredBy = triggeredBy
+                    };
+                    _fieldActivityWorker.Execute(fieldActivityRequest);
+                    return MapResult("FieldActivity", fieldActivityRequest.Result);
+
                 case "Location":
                     var locationRequest = new RefreshDashboardLocationSnapshotRequest
                     {
@@ -186,7 +197,7 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.Commands
 
                 default:
                     throw new ArgumentException(
-                        "Domain must be All, Piutang, Inventory, InventoryRisk, Sales, Purchasing, PurchasingManagement, Customer, Salesman, Collection, or Location.",
+                        "Domain must be All, Piutang, Inventory, InventoryRisk, Sales, Purchasing, PurchasingManagement, Customer, Salesman, Collection, FieldActivity, or Location.",
                         nameof(RefreshDashboardSnapshotsCommand.Domain));
             }
         }
@@ -301,6 +312,18 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.Commands
 
         private static RefreshDashboardDomainResult MapResult(
             string domain,
+            RefreshDashboardFieldActivitySnapshotResult result)
+        {
+            return new RefreshDashboardDomainResult
+            {
+                Domain = domain,
+                RefreshLogId = result?.RefreshLogId,
+                DurationMs = result?.DurationMs ?? 0
+            };
+        }
+
+        private static RefreshDashboardDomainResult MapResult(
+            string domain,
             RefreshDashboardLocationSnapshotResult result)
         {
             return new RefreshDashboardDomainResult
@@ -347,6 +370,9 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.Commands
 
             if (string.Equals(trimmed, "Collection", StringComparison.OrdinalIgnoreCase))
                 return "Collection";
+
+            if (string.Equals(trimmed, "FieldActivity", StringComparison.OrdinalIgnoreCase))
+                return "FieldActivity";
 
             if (string.Equals(trimmed, "Location", StringComparison.OrdinalIgnoreCase))
                 return "Location";

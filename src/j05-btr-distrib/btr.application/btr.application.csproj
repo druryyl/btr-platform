@@ -296,6 +296,16 @@
     <Compile Include="ReportingContext\DashboardFieldActivityAgg\Services\FieldActivityComposer.cs" />
     <Compile Include="ReportingContext\DashboardFieldActivityAgg\Services\FieldActivityOptions.cs" />
     <Compile Include="ReportingContext\DashboardFieldActivityAgg\Services\GpsValidationClassifier.cs" />
+    <Compile Include="ReportingContext\DashboardFieldActivityOverviewAgg\Contracts\IDashboardFieldActivitySnapshotDal.cs" />
+    <Compile Include="ReportingContext\DashboardFieldActivityOverviewAgg\Contracts\IFieldActivityBatchCheckInDal.cs" />
+    <Compile Include="ReportingContext\DashboardFieldActivityOverviewAgg\Contracts\IFieldActivityBatchOrderDal.cs" />
+    <Compile Include="ReportingContext\DashboardFieldActivityOverviewAgg\Contracts\IFieldActivityBatchVisitPlanDal.cs" />
+    <Compile Include="ReportingContext\DashboardFieldActivityOverviewAgg\Models\FieldActivityOverviewModels.cs" />
+    <Compile Include="ReportingContext\DashboardFieldActivityOverviewAgg\Queries\GetFieldActivityOverviewQuery.cs" />
+    <Compile Include="ReportingContext\DashboardFieldActivityOverviewAgg\Services\DashboardFieldActivityOverviewAggregator.cs" />
+    <Compile Include="ReportingContext\DashboardFieldActivityOverviewAgg\Services\FieldActivityKpiCalculator.cs" />
+    <Compile Include="ReportingContext\DashboardFieldActivityOverviewAgg\Services\FieldActivityOverviewComposer.cs" />
+    <Compile Include="ReportingContext\DashboardFieldActivityOverviewAgg\Services\FieldActivityStatusPolicy.cs" />
     <Compile Include="ReportingContext\DashboardSalesmanAgg\Contracts\IDashboardSalesmanDal.cs" />
     <Compile Include="ReportingContext\DashboardSalesmanAgg\Queries\GetDashboardSalesmanQuery.cs" />
     <Compile Include="ReportingContext\DashboardSalesmanAgg\Queries\GetSalesmanPrincipalAchievementQuery.cs" />
@@ -425,6 +435,7 @@
     <Compile Include="ReportingContext\EntityAnalyticsAgg\Models\EntityRelationshipSnapshot.cs" />
     <Compile Include="ReportingContext\EntityAnalyticsAgg\Models\RelationshipDefinition.cs" />
     <Compile Include="ReportingContext\EntityAnalyticsAgg\Models\EntityIdentity.cs" />
+    <Compile Include="ReportingContext\EntityAnalyticsAgg\Models\EntityAnalyticsCustomerIdentity.cs" />
     <Compile Include="ReportingContext\EntityAnalyticsAgg\Models\EntityKpi.cs" />
     <Compile Include="ReportingContext\EntityAnalyticsAgg\Models\EntityKpiCategory.cs" />
     <Compile Include="ReportingContext\EntityAnalyticsAgg\Models\EntityKpiMetadata.cs" />
@@ -437,6 +448,7 @@
     <Compile Include="ReportingContext\EntityAnalyticsAgg\Models\ComparisonContext.cs" />
     <Compile Include="ReportingContext\EntityAnalyticsAgg\Models\KpiEnvelope.cs" />
     <Compile Include="ReportingContext\EntityAnalyticsAgg\Models\RadarValueSource.cs" />
+    <Compile Include="ReportingContext\EntityAnalyticsAgg\Models\EntityAnalyticsSignatureDimensions.cs" />
     <Compile Include="ReportingContext\EntityAnalyticsAgg\Models\PeerGroupResolution.cs" />
     <Compile Include="ReportingContext\EntityAnalyticsAgg\Models\Snapshot\EntityAnalyticsAttentionEventRow.cs" />
     <Compile Include="ReportingContext\EntityAnalyticsAgg\Models\Snapshot\EntityAnalyticsCurrentRow.cs" />
@@ -476,6 +488,7 @@
     <Compile Include="ReportingContext\EntityAnalyticsAgg\Producers\ItemEntityAnalyticsEvidenceResolver.cs" />
     <Compile Include="ReportingContext\EntityAnalyticsAgg\Producers\ItemEntityAnalyticsProduceInput.cs" />
     <Compile Include="ReportingContext\EntityAnalyticsAgg\Producers\ItemEntityAnalyticsProducer.cs" />
+    <Compile Include="ReportingContext\EntityAnalyticsAgg\Services\EntityAnalyticsDisplayNameResolver.cs" />
     <Compile Include="ReportingContext\EntityAnalyticsAgg\Services\EntityAnalyticsMonthCloseService.cs" />
     <Compile Include="ReportingContext\EntityAnalyticsAgg\Services\EntityTrendEngine.cs" />
     <Compile Include="ReportingContext\EntityAnalyticsAgg\Services\EntityRankingCalculator.cs" />
@@ -494,6 +507,8 @@
     <Compile Include="ReportingContext\EntityAnalyticsAgg\Services\EntityAnalyticsKpiRegistry.cs" />
     <Compile Include="ReportingContext\EntityAnalyticsAgg\Services\EntityKpiEnvelopeFormatter.cs" />
     <Compile Include="ReportingContext\EntityAnalyticsAgg\Services\EntityAnalyticsPlatformRegistrar.cs" />
+    <Compile Include="ReportingContext\EntityAnalyticsAgg\Services\EntityAnalyticsRouteBuilder.cs" />
+    <Compile Include="ReportingContext\EntityAnalyticsAgg\Services\EntityAnalyticsCustomerIdentityResolver.cs" />
     <Compile Include="ReportingContext\EntityAnalyticsAgg\Services\EntityAnalyticsProducerOrchestrator.cs" />
     <Compile Include="ReportingContext\EntityAnalyticsAgg\Services\EntityAnalyticsRegistryBootstrap.cs" />
     <Compile Include="ReportingContext\EntityAnalyticsAgg\Services\EntityAnalyticsService.cs" />
@@ -578,6 +593,7 @@
     <Compile Include="ReportingContext\DashboardSnapshotAgg\UseCases\RefreshDashboardSalesmanSnapshotWorker.cs" />
     <Compile Include="ReportingContext\DashboardSnapshotAgg\UseCases\RefreshDashboardCollectionSnapshotRequest.cs" />
     <Compile Include="ReportingContext\DashboardSnapshotAgg\UseCases\RefreshDashboardCollectionSnapshotWorker.cs" />
+    <Compile Include="ReportingContext\DashboardSnapshotAgg\UseCases\RefreshDashboardFieldActivitySnapshotWorker.cs" />
     <Compile Include="ReportingContext\DashboardSnapshotAgg\UseCases\RefreshDashboardLocationSnapshotRequest.cs" />
     <Compile Include="ReportingContext\DashboardSnapshotAgg\UseCases\RefreshDashboardLocationSnapshotWorker.cs" />
     <Compile Include="ReportingContext\DashboardPurchasingAgg\Contracts\IDashboardPurchasingDal.cs" />

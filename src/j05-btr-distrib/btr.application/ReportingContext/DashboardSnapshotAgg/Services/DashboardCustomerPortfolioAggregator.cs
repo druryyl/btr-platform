@@ -137,6 +137,7 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.Services
                 var ctx = new PortfolioCustomerContext
                 {
                     CustomerKey = key,
+                    CustomerId = entry.CustomerId,
                     CustomerCode = entry.CustomerCode,
                     CustomerName = entry.CustomerName,
                     WilayahName = entry.WilayahName,
@@ -337,6 +338,7 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.Services
                 SortOrder = sortOrder,
                 PortfolioPriorityScore = ctx.PortfolioPriorityScore,
                 CustomerKey = ctx.CustomerKey,
+                CustomerId = ctx.CustomerId ?? string.Empty,
                 CustomerCode = ctx.CustomerCode ?? string.Empty,
                 CustomerName = ctx.CustomerName ?? string.Empty,
                 WilayahName = ctx.WilayahName ?? string.Empty,
@@ -369,6 +371,7 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.Services
             {
                 SortOrder = sortOrder,
                 CustomerKey = ctx.CustomerKey,
+                CustomerId = ctx.CustomerId ?? string.Empty,
                 CustomerCode = ctx.CustomerCode ?? string.Empty,
                 CustomerName = ctx.CustomerName ?? string.Empty,
                 WilayahName = ctx.WilayahName ?? string.Empty,
@@ -407,6 +410,8 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.Services
         {
             public string Key { get; set; }
 
+            public string CustomerId { get; set; }
+
             public string CustomerCode { get; set; }
 
             public string CustomerName { get; set; }
@@ -430,6 +435,7 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.Services
                 universe.Add(new CustomerUniverseEntry
                 {
                     Key = key,
+                    CustomerId = customer.CustomerId?.Trim() ?? string.Empty,
                     CustomerCode = customer.CustomerCode?.Trim() ?? string.Empty,
                     CustomerName = customer.CustomerName?.Trim() ?? string.Empty,
                     WilayahName = customer.WilayahName?.Trim() ?? string.Empty,

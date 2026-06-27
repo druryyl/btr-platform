@@ -12,6 +12,8 @@ CREATE TABLE BTRPD_CustomerPortfolioPriority
 
     CustomerKey                   VARCHAR(100)   NOT NULL CONSTRAINT DF_BTRPD_CustomerPortfolioPriority_CustomerKey DEFAULT(''),
 
+    CustomerId                    VARCHAR(13)    NOT NULL CONSTRAINT DF_BTRPD_CustomerPortfolioPriority_CustomerId DEFAULT(''),
+
     CustomerCode                  VARCHAR(20)    NOT NULL CONSTRAINT DF_BTRPD_CustomerPortfolioPriority_CustomerCode DEFAULT(''),
 
     CustomerName                  VARCHAR(100)   NOT NULL CONSTRAINT DF_BTRPD_CustomerPortfolioPriority_CustomerName DEFAULT(''),

@@ -11,6 +11,7 @@ using btr.application.ReportingContext.DashboardSnapshotAgg.Services;
 using btr.application.ReportingContext.EntityAnalyticsAgg.Contracts;
 using btr.application.ReportingContext.EntityAnalyticsAgg.Producers;
 using btr.application.ReportingContext.EntityAnalyticsAgg.Services;
+using btr.application.SalesContext.CustomerAgg.Contracts;
 using btr.application.SalesContext.FakturInfo;
 using btr.application.Portal;
 using btr.application.SupportContext.TglJamAgg;
@@ -43,6 +44,7 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.UseCases
         private readonly DashboardItemPortfolioBuilder _itemPortfolioBuilder;
         private readonly DashboardItemRelationshipAggregator _itemRelationshipAggregator;
         private readonly EntityAnalyticsProducerOrchestrator _entityAnalyticsOrchestrator;
+        private readonly ICustomerDal _customerDal;
         private readonly IDashboardInventoryRiskSnapshotDal _snapshotDal;
         private readonly IDashboardSnapshotRefreshLogDal _refreshLogDal;
         private readonly ITglJamDal _tglJamDal;
@@ -63,6 +65,7 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.UseCases
             DashboardItemPortfolioBuilder itemPortfolioBuilder,
             DashboardItemRelationshipAggregator itemRelationshipAggregator,
             EntityAnalyticsProducerOrchestrator entityAnalyticsOrchestrator,
+            ICustomerDal customerDal,
             IDashboardInventoryRiskSnapshotDal snapshotDal,
             IDashboardSnapshotRefreshLogDal refreshLogDal,
             ITglJamDal tglJamDal,
@@ -82,6 +85,7 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.UseCases
             _itemPortfolioBuilder = itemPortfolioBuilder;
             _itemRelationshipAggregator = itemRelationshipAggregator;
             _entityAnalyticsOrchestrator = entityAnalyticsOrchestrator;
+            _customerDal = customerDal;
             _snapshotDal = snapshotDal;
             _refreshLogDal = refreshLogDal;
             _tglJamDal = tglJamDal;
@@ -196,6 +200,8 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.UseCases
                 var relationshipAggregate = _itemRelationshipAggregator.Aggregate(itemRollupRows, today, generatedAt);
 
                 WorkerProgressScope.Current.StepStarted($"{Domain}:Save", "Save snapshot");
+                var customers = _customerDal.ListData()?.ToList()
+                    ?? new System.Collections.Generic.List<btr.domain.SalesContext.CustomerAgg.CustomerModel>();
                 using (var trans = TransHelper.NewScope())
                 {
                     _snapshotDal.ReplaceCurrent(aggregate, forecast, optimization, refreshLogId);
@@ -206,6 +212,7 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.UseCases
                         RefreshLogId = refreshLogId,
                         GeneratedAt = generatedAt,
                         BusinessDate = today,
+                        CustomerIdentityLookup = EntityAnalyticsCustomerIdentityResolver.BuildLookup(customers),
                         DomainInput = new ItemEntityAnalyticsProduceInput
                         {
                             RiskAggregate = aggregate,

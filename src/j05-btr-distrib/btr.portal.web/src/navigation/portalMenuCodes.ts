@@ -18,6 +18,7 @@ export const PortalMenuCodes = {
   FI04: 'FI04',
   SF01: 'SF01',
   SF02: 'SF02',
+  SF03: 'SF03',
   IN01: 'IN01',
   IN02: 'IN02',
   IN03: 'IN03',

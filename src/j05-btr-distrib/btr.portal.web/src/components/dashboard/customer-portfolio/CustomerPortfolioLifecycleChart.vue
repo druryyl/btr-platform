@@ -2,6 +2,7 @@
 import { computed } from 'vue'
 import Card from 'primevue/card'
 import Chart from 'primevue/chart'
+import { chartLegend, createChartOptions } from '@/services/chartLayout'
 import ProgressSpinner from 'primevue/progressspinner'
 import type { DashboardCustomerPortfolioLifecycleDistItem } from '@/models/dashboard'
 import {
@@ -41,23 +42,23 @@ const chartData = computed(() => {
   }
 })
 
-const chartOptions = computed(() => ({
-  responsive: true,
-  maintainAspectRatio: false,
-  plugins: {
-    legend: { position: 'right' as const },
-    tooltip: {
-      callbacks: {
-        label: (context: { parsed: number; label: string }) =>
-          ` ${context.label}: ${context.parsed} customers`,
+const chartOptions = computed(() =>
+  createChartOptions({
+    plugins: {
+      legend: chartLegend.right(),
+      tooltip: {
+        callbacks: {
+          label: (context: { parsed: number; label: string }) =>
+            ` ${context.label}: ${context.parsed} customers`,
+        },
       },
     },
-  },
-}))
+  }),
+)
 </script>
 
 <template>
-  <Card class="customer-portfolio-lifecycle-chart">
+  <Card class="customer-portfolio-lifecycle-chart portal-chart-card">
     <template #title>
       <div class="customer-portfolio-lifecycle-chart__title">
         <i class="pi pi-chart-pie" aria-hidden="true" />
@@ -70,7 +71,7 @@ const chartOptions = computed(() => ({
         <ProgressSpinner style="width: 2.5rem; height: 2.5rem" stroke-width="4" />
       </div>
       <template v-else>
-        <div v-if="hasData" class="customer-portfolio-lifecycle-chart__canvas">
+        <div v-if="hasData" class="customer-portfolio-lifecycle-chart__canvas portal-chart-canvas">
           <Chart type="doughnut" :data="chartData" :options="chartOptions" />
         </div>
         <p v-else class="customer-portfolio-lifecycle-chart__empty">
@@ -92,10 +93,6 @@ const chartOptions = computed(() => ({
   display: flex;
   justify-content: center;
   padding: 2rem 0;
-}
-
-.customer-portfolio-lifecycle-chart__canvas {
-  height: 280px;
 }
 
 .customer-portfolio-lifecycle-chart__empty {

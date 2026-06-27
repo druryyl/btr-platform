@@ -34,12 +34,12 @@ namespace btr.infrastructure.ReportingContext.DashboardPurchasingAgg
             _options = options?.Value ?? new DashboardSnapshotOptions();
         }
 
-        private static string BuildSupplierProfileRoute(string supplierCode)
+        private static string BuildSupplierProfileRoute(string supplierId)
         {
-            if (string.IsNullOrWhiteSpace(supplierCode))
+            if (string.IsNullOrWhiteSpace(supplierId))
                 return null;
 
-            return $"/analytics/suppliers/{Uri.EscapeDataString(supplierCode.Trim())}";
+            return $"/analytics/suppliers/{Uri.EscapeDataString(supplierId.Trim())}";
         }
 
         public DashboardPurchasingResponse GetSummary()
@@ -144,7 +144,7 @@ namespace btr.infrastructure.ReportingContext.DashboardPurchasingAgg
                         row.EntityType,
                         DashboardPurchasingManagementAggregator.EntityTypePrincipal,
                         StringComparison.OrdinalIgnoreCase)
-                        ? BuildSupplierProfileRoute(row.SupplierCode)
+                        ? BuildSupplierProfileRoute(row.SupplierId)
                         : null,
                     Investigation = InvestigationMetadataBuilder.Build(
                         row.SignalKey,
@@ -171,7 +171,7 @@ namespace btr.infrastructure.ReportingContext.DashboardPurchasingAgg
                     IsCompoundDependency = row.IsCompoundDependency,
                     IsInventoryNoPurchase = row.IsInventoryNoPurchase,
                     ReportRoute = row.ReportRoute ?? PurchasingReportRoute,
-                    ProfileRoute = BuildSupplierProfileRoute(row.SupplierCode),
+                    ProfileRoute = BuildSupplierProfileRoute(row.SupplierId),
                     Investigation = InvestigationMetadataBuilder.Build(
                         InvestigationRegistry.SignalRankingTopPrincipal,
                         InvestigationMetadataBuilder.EntityTypePrincipal,

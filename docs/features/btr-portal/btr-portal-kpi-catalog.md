@@ -83,7 +83,8 @@ Pembaca harus dapat menjawab untuk setiap KPI:
 | FI03 | Cash Flow Forecast | `/dashboard/cash-flow-forecast` |
 | FI04 | Piutang Report | `/reports/piutang` |
 | SF01 | Salesmen | `/dashboard/salesmen` |
-| SF02 | Field Activity | `/dashboard/field-activity` |
+| SF02 | Sales Force Overview | `/dashboard/field-activity` |
+| SF03 | Salesman Field Activity | `/dashboard/field-activity/detail` |
 | IN01 | Inventory | `/dashboard/inventory` |
 | IN02 | Inventory Risk | `/dashboard/inventory-risk` |
 | IN03 | Inventory Forecast | `/dashboard/inventory-forecast` |
@@ -6787,6 +6788,7 @@ Warehouse × Signal rows: Inactive With Stock, No Sales With Inventory, concentr
 | M17 Customer Analytics | — | CU-KPI-001–010 |
 | M18 Salesman Performance | — | SF-KPI-001–011 |
 | M18.5 Field Activity | — | SF-KPI-012–018 |
+| M18.6 Sales Force Overview | — | SF-KPI-019–027 |
 | M19 Inventory Risk | — | IN-KPI-005–012 |
 | M20 Collection | — | FI-KPI-013–028 |
 | M21 Purchasing | — | PU-KPI |

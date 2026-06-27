@@ -1,5 +1,7 @@
 using System;
+using System.Collections.Generic;
 using btr.application.ReportingContext.EntityAnalyticsAgg.Backfill.Models;
+using btr.application.ReportingContext.EntityAnalyticsAgg.Models;
 
 namespace btr.application.ReportingContext.EntityAnalyticsAgg.Contracts
 {
@@ -29,5 +31,10 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Contracts
         /// Set during historical backfill replay; null for live domain workers.
         /// </summary>
         public EntityAnalyticsReplayContext Replay { get; set; }
+
+        /// <summary>
+        /// Customer code to internal identity lookup for cross-entity relationship targets.
+        /// </summary>
+        public IReadOnlyDictionary<string, EntityAnalyticsCustomerIdentity> CustomerIdentityLookup { get; set; }
     }
 }

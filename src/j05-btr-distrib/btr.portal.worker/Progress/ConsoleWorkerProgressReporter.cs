@@ -246,6 +246,7 @@ namespace btr.portal.worker.Progress
             "Customer",
             "Salesman",
             "Collection",
+            "FieldActivity",
             "Location"
         };
     }

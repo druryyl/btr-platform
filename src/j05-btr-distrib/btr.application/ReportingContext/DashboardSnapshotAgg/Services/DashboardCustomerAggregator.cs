@@ -64,8 +64,8 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.Services
                 .Where(r => ResolveAgingBucketKey(r.JatuhTempo, today) == AgingOver90BucketKey)
                 .Sum(r => r.KurangBayar);
 
-            var topOmzet = BuildTopOmzet(fakturList, totalOmzet, codeByKey, displayNames);
-            var topPiutang = BuildTopPiutang(outstanding, totalPiutang, codeByKey, displayNames);
+            var topOmzet = BuildTopOmzet(fakturList, totalOmzet, codeByKey, displayNames, masterByKey);
+            var topPiutang = BuildTopPiutang(outstanding, totalPiutang, codeByKey, displayNames, masterByKey);
 
             var topOmzetPercent = topOmzet.Count > 0 && totalOmzet > 0
                 ? topOmzet[0].OmzetAmount / totalOmzet * 100m
@@ -290,11 +290,25 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.Services
             return keys;
         }
 
+        private static string ResolveCustomerId(
+            string key,
+            Dictionary<string, CustomerModel> masterByKey)
+        {
+            if (!masterByKey.TryGetValue(key, out var customer)
+                || string.IsNullOrWhiteSpace(customer.CustomerId))
+            {
+                return string.Empty;
+            }
+
+            return customer.CustomerId.Trim();
+        }
+
         private static List<DashboardCustomerTopOmzetRow> BuildTopOmzet(
             List<FakturView> fakturList,
             decimal totalOmzet,
             Dictionary<string, string> codeByKey,
-            Dictionary<string, string> displayNames)
+            Dictionary<string, string> displayNames,
+            Dictionary<string, CustomerModel> masterByKey)
         {
             return fakturList
                 .GroupBy(r => DashboardCustomerKeyResolver.ResolveCodeFirst(r.CustomerCode, r.Customer))
@@ -311,6 +325,7 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.Services
                 .Select((x, index) => new DashboardCustomerTopOmzetRow
                 {
                     Rank = index + 1,
+                    CustomerId = ResolveCustomerId(x.Key, masterByKey),
                     CustomerCode = codeByKey.TryGetValue(x.Key, out var code) ? code : string.Empty,
                     CustomerName = x.CustomerName,
                     OmzetAmount = x.OmzetAmount,
@@ -323,7 +338,8 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.Services
             List<PiutangOpenBalanceDto> outstanding,
             decimal totalPiutang,
             Dictionary<string, string> codeByKey,
-            Dictionary<string, string> displayNames)
+            Dictionary<string, string> displayNames,
+            Dictionary<string, CustomerModel> masterByKey)
         {
             return outstanding
                 .GroupBy(r => DashboardCustomerKeyResolver.ResolveCodeFirst(r.CustomerCode, r.CustomerName))
@@ -343,6 +359,7 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.Services
                 .Select((x, index) => new DashboardCustomerTopPiutangRow
                 {
                     Rank = index + 1,
+                    CustomerId = ResolveCustomerId(x.Key, masterByKey),
                     CustomerCode = codeByKey.TryGetValue(x.Key, out var code) ? code : string.Empty,
                     CustomerName = x.CustomerName,
                     OutstandingBalance = x.OutstandingBalance,
@@ -386,6 +403,7 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.Services
                     customerName,
                     new DashboardCustomerAttentionRow
                     {
+                        CustomerId = ResolveCustomerId(key, masterByKey),
                         CustomerCode = customerCode,
                         CustomerName = customerName,
                         SignalKey = signalKey,

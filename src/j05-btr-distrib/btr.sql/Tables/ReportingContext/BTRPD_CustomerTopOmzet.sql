@@ -3,6 +3,7 @@ CREATE TABLE BTRPD_CustomerTopOmzet
     CustomerTopOmzetId VARCHAR(26)   NOT NULL CONSTRAINT DF_BTRPD_CustomerTopOmzet_CustomerTopOmzetId DEFAULT(''),
     SnapshotKey        VARCHAR(10)   NOT NULL CONSTRAINT DF_BTRPD_CustomerTopOmzet_SnapshotKey DEFAULT('CURRENT'),
     Rank               INT           NOT NULL CONSTRAINT DF_BTRPD_CustomerTopOmzet_Rank DEFAULT(0),
+    CustomerId         VARCHAR(13)   NOT NULL CONSTRAINT DF_BTRPD_CustomerTopOmzet_CustomerId DEFAULT(''),
     CustomerCode       VARCHAR(20)   NOT NULL CONSTRAINT DF_BTRPD_CustomerTopOmzet_CustomerCode DEFAULT(''),
     CustomerName       VARCHAR(50)   NOT NULL CONSTRAINT DF_BTRPD_CustomerTopOmzet_CustomerName DEFAULT(''),
     OmzetAmount        DECIMAL(18,2) NOT NULL CONSTRAINT DF_BTRPD_CustomerTopOmzet_OmzetAmount DEFAULT(0),

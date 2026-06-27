@@ -178,7 +178,7 @@ When implementing M32.5+, extend the Customer producer first. Entity packs inher
 
 - **Input:** `CustomerEntityAnalyticsProduceInput` (portfolio + attention aggregate)
 
-- **Entity key:** `CustomerCode` (business identifier = `EntityId` = `EntityCode`)
+- **Entity key:** `CustomerId` (internal identifier = `EntityId`), `CustomerCode` (business identifier = `EntityCode`)
 
 - **Worker hook:** `RefreshDashboardCustomerSnapshotWorker` after domain save
 
@@ -365,17 +365,39 @@ Profile and compare read L5 only — no normalization at HTTP request time.
 
 ---
 
-## Radar Engine (M32.8)
+## Radar Engine / Performance Signature (M32.8)
 
 `EntityRadarEngine` runs after L4 in the producer pipeline:
 
-1. Resolve `RadarEligible` axes from KPI pack (ordered by `RadarAxisOrder`)
+1. Resolve `RadarEligible` axes from KPI pack (ordered by `SignatureDimensionKey` / `RadarAxisOrder`)
 2. Build peer groups via `PeerGroupResolver` from `EntityTypeRegistration.PeerGroupRuleId`
 3. Skip entities when peer group &lt; 5 (`MinRadarPeerGroupSize`)
 4. Resolve axis raw values from L0–L3 per `RadarValueSource`
 5. Compute peer-percentile scores → `SaveRadarScores`
 
-Customer v1 axes: Revenue, Growth, Stability, Portfolio Strength, Attention Risk, Engagement (see `m32.8-implementation-summary.md`).
+### Universal Performance Signature dimensions
+
+Every entity type exposes the **same six axes** (clockwise, identical labels):
+
+| Order | `SignatureDimensionKey` | UI label |
+| ----- | ----------------------- | -------- |
+| 1 | `EA-SIG-PERFORMANCE` | Performance |
+| 2 | `EA-SIG-GROWTH` | Growth |
+| 3 | `EA-SIG-QUALITY` | Quality |
+| 4 | `EA-SIG-STABILITY` | Stability |
+| 5 | `EA-SIG-REACH` | Reach |
+| 6 | `EA-SIG-RISK` | Risk |
+
+Entity packs map existing KPIs into these slots via `SignatureDimensionKey` on `EntityKpiMetadata`. KPI math is unchanged — only axis metadata and display labels are unified.
+
+Constants: `EntityAnalyticsSignatureDimensions.cs`. Integrity test: `EntitySignatureDimensionIntegrityTest`.
+
+### Profile / compare API
+
+- `ProfileRadarSectionDto` / `CompareRadarSectionDto` include `PeerAverageScores` (optional mean of peer L5 scores per axis; aligned to returned axes).
+- UI section title: **Performance Signature** (`PerformanceSignatureSection.vue`).
+
+Customer KPI mapping (example): Performance → CU-KPI-009; Growth → `EA-RADAR-GROWTH-MOM`; Quality → CU-KPI-010; Stability → `EA-DIM-FAKTUR-COUNT-6MO`; Reach → portfolio priority; Risk → attention risk. See registrars for Salesman, Supplier, and Item mappings.
 
 ---
 
@@ -485,9 +507,19 @@ Profile `Comparison` section uses Cross-Period mode by default.
 
 - **Route:** `GET /api/entity-analytics/{entityType}/{entityId}`
 
-- **Also available:** `GET /api/entity-analytics/types`, `GET /api/entity-analytics/compare`, `GET /api/entity-analytics/search`
+- **`entityId` is the system identifier** (`CustomerId`, `SalesPersonId`, `SupplierId`, `BrgId`). Business codes (`EntityCode`) are **not** accepted as route or lookup keys.
+
+- **Compare:** `GET /api/entity-analytics/compare?entityIds={id1},{id2}` — CSV of system identifiers.
+
+- **Search:** `GET /api/entity-analytics/search` — `q` may match code, name, or id; response `ProfileRoute` uses `{id}` template with `EntityId`.
+
+- **Portal profile routes:** `/analytics/customers/{customerId}`, `/analytics/salesmen/{salesPersonId}`, `/analytics/suppliers/{supplierId}`, `/analytics/items/{brgId}` (deployed under portal base path, e.g. `/portal/analytics/...`).
+
+- **Also available:** `GET /api/entity-analytics/types`
 
 - **Response version fields:** `SnapshotVersion`, `ContractVersion` (additive)
+
+- **`EntityCode` in responses** remains for display and report evidence filters only.
 
 - **Unavailable reasons:** `NotImplemented`, `NoSnapshotData`, `NoRegisteredKpis`, `EntityTypeDisabled`
 
@@ -505,7 +537,7 @@ Example: **Salesman** (M32.9 entity pack) — **implemented**
 
 Reference: [m32.9-implementation-summary.md](../../work/btr-portal/entity-analytics/m32.9-implementation-summary.md)
 
-1. **Platform registrar** — `EntityTypeCode.Salesman` metadata in `EntityAnalyticsPlatformRegistrar` (`salesman-default`, `salesman-relationships`, route `/analytics/salesmen/{code}`).
+1. **Platform registrar** — `EntityTypeCode.Salesman` metadata in `EntityAnalyticsPlatformRegistrar` (`salesman-default`, `salesman-relationships`, route `/analytics/salesmen/{id}`).
 
 2. **`SalesmanEntityAnalyticsRegistrar`** — KPI pack SF-KPI-008/009/010 + radar/meta axes; dimension labels.
 
@@ -531,7 +563,7 @@ Example: **Supplier** (M32.10 entity pack) — **implemented**
 
 Reference: [m32.10-implementation-summary.md](../../work/btr-portal/entity-analytics/m32.10-implementation-summary.md)
 
-1. **Platform registrar** — `EntityTypeCode.Supplier` metadata in `EntityAnalyticsPlatformRegistrar` (`supplier-default`, `supplier-relationships`, route `/analytics/suppliers/{code}`).
+1. **Platform registrar** — `EntityTypeCode.Supplier` metadata in `EntityAnalyticsPlatformRegistrar` (`supplier-default`, `supplier-relationships`, route `/analytics/suppliers/{id}`).
 
 2. **`SupplierEntityAnalyticsRegistrar`** — KPI pack PU-KPI-001/002/003 + radar/meta axes; dimension labels.
 
@@ -555,7 +587,7 @@ Example: **Item** (M32.11 entity pack) — **implemented**
 
 Reference: [m32.11-implementation-summary.md](../../work/btr-portal/entity-analytics/m32.11-implementation-summary.md)
 
-1. **Platform registrar** — `EntityTypeCode.Item` metadata in `EntityAnalyticsPlatformRegistrar` (`item-default`, `item-relationships`, route `/analytics/items/{code}`).
+1. **Platform registrar** — `EntityTypeCode.Item` metadata in `EntityAnalyticsPlatformRegistrar` (`item-default`, `item-relationships`, route `/analytics/items/{id}`).
 
 2. **`ItemEntityAnalyticsRegistrar`** — KPI pack IN-KPI-001/020/021 + radar/meta axes; dimension labels.
 

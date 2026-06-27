@@ -2,6 +2,7 @@ using System.Reflection;
 using btr.application;
 using btr.application.Portal;
 using btr.application.ReportingContext.DashboardFieldActivityAgg.Services;
+using btr.application.ReportingContext.DashboardFieldActivityOverviewAgg.Services;
 using btr.application.ReportingContext.DashboardSnapshotAgg;
 using btr.application.ReportingContext.DashboardSnapshotAgg.Services;
 using btr.application.ReportingContext.EntityAnalyticsAgg.Contracts;
@@ -122,6 +123,8 @@ namespace btr.portal.api.Configurations
             services.AddScoped<DashboardInventoryForecastAggregator>();
             services.AddScoped<DashboardInventoryOptimizationAggregator>();
             services.AddScoped<DashboardLocationAggregator>();
+            services.AddScoped<DashboardFieldActivityOverviewAggregator>();
+            services.AddScoped<FieldActivityOverviewComposer>();
 
             services.AddSingleton<IEntityTypeRegistry, EntityTypeRegistry>();
             services.AddSingleton<IDimensionLabelRegistry, EntityAnalyticsDimensionLabelRegistry>();

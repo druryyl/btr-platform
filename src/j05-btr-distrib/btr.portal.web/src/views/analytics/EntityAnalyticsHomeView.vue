@@ -36,7 +36,7 @@ function openProfile(entityType: string): void {
 
 function compareRoute(entityType: string) {
   const selected = selectionFor(entityType)
-  return buildCompareRoute(entityType, selected?.EntityCode)
+  return buildCompareRoute(entityType, selected?.EntityId)
 }
 
 function navFor(entityType: string) {

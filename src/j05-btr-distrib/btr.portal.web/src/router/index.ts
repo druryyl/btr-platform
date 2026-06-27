@@ -69,7 +69,12 @@ const router = createRouter({
             },
             {
               path: 'field-activity',
-              name: 'field-activity-dashboard',
+              name: 'field-activity-overview',
+              component: () => import('@/views/dashboard/FieldActivityOverviewView.vue'),
+            },
+            {
+              path: 'field-activity/detail',
+              name: 'field-activity-detail',
               component: () => import('@/views/dashboard/FieldActivityDashboardView.vue'),
             },
             {
@@ -170,25 +175,25 @@ const router = createRouter({
           component: () => import('@/views/analytics/ItemCompareView.vue'),
         },
         {
-          path: 'analytics/customers/:customerCode',
+          path: 'analytics/customers/:customerId',
           name: 'customer-performance-profile',
           redirect: (to) => ({
             name: 'entity-performance-profile',
-            params: { entityType: 'Customer', entityId: to.params.customerCode },
+            params: { entityType: 'Customer', entityId: to.params.customerId },
           }),
         },
         {
-          path: 'analytics/salesmen/:salesPersonCode',
+          path: 'analytics/salesmen/:salesPersonId',
           name: 'salesman-performance-profile',
           component: () => import('@/views/analytics/SalesmanProfileView.vue'),
         },
         {
-          path: 'analytics/suppliers/:supplierCode',
+          path: 'analytics/suppliers/:supplierId',
           name: 'supplier-performance-profile',
           component: () => import('@/views/analytics/SupplierProfileView.vue'),
         },
         {
-          path: 'analytics/items/:brgCode',
+          path: 'analytics/items/:brgId',
           name: 'item-performance-profile',
           component: () => import('@/views/analytics/ItemProfileView.vue'),
         },

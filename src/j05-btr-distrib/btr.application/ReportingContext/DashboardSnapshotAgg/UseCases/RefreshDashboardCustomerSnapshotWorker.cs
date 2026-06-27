@@ -269,6 +269,7 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.UseCases
                         RefreshLogId = refreshLogId,
                         GeneratedAt = generatedAt,
                         BusinessDate = today,
+                        CustomerIdentityLookup = EntityAnalyticsCustomerIdentityResolver.BuildLookup(customers),
                         DomainInput = new CustomerEntityAnalyticsProduceInput
                         {
                             CustomerAggregate = aggregate,

@@ -63,6 +63,8 @@ namespace btr.application.ReportingContext.DashboardCustomerAgg.Queries
 
     public class DashboardCustomerAttentionItem
     {
+        public string CustomerId { get; set; }
+
         public string CustomerCode { get; set; }
 
         public string CustomerName { get; set; }
@@ -89,6 +91,8 @@ namespace btr.application.ReportingContext.DashboardCustomerAgg.Queries
     public class DashboardCustomerRankingRow
     {
         public int Rank { get; set; }
+
+        public string CustomerId { get; set; }
 
         public string CustomerCode { get; set; }
 

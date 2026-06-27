@@ -161,11 +161,20 @@ const portalMenuItems: PortalMenuItem[] = [
   }),
   item({
     code: PortalMenuCodes.SF02,
-    label: 'Field Activity',
-    icon: 'pi pi-map',
-    routeName: 'field-activity-dashboard',
+    label: 'Sales Force Overview',
+    icon: 'pi pi-users',
+    routeName: 'field-activity-overview',
     route: '/dashboard/field-activity',
     order: 2,
+    groupId: 'sales-force',
+  }),
+  item({
+    code: PortalMenuCodes.SF03,
+    label: 'Salesman Field Activity',
+    icon: 'pi pi-map',
+    routeName: 'field-activity-detail',
+    route: '/dashboard/field-activity/detail',
+    order: 3,
     groupId: 'sales-force',
   }),
   item({

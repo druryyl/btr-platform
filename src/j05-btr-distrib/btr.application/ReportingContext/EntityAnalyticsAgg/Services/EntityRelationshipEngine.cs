@@ -63,6 +63,11 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Services
                     continue;
 
                 var ordered = group
+                    .GroupBy(s => s.TargetEntityId, StringComparer.OrdinalIgnoreCase)
+                    .Select(g => g
+                        .OrderByDescending(s => s.MetricValue ?? 0m)
+                        .ThenBy(s => s.TargetDisplayName, StringComparer.OrdinalIgnoreCase)
+                        .First())
                     .OrderByDescending(s => s.MetricValue ?? 0m)
                     .ThenBy(s => s.TargetDisplayName, StringComparer.OrdinalIgnoreCase)
                     .Take(definition.TopN > 0 ? definition.TopN : 10)
@@ -112,6 +117,32 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Services
                 };
             }
 
+            var profilePeriod = ResolveProfilePeriod(entityType, entityId, rows);
+            if (!profilePeriod.HasValue)
+            {
+                return new ProfileRelatedEntitiesSectionDto
+                {
+                    IsAvailable = false,
+                    UnavailableReason = EntityAnalyticsUnavailableReasons.NoSnapshotData,
+                    Blocks = new List<ProfileRelationshipBlockDto>()
+                };
+            }
+
+            rows = rows
+                .Where(r => r.PeriodYear == profilePeriod.Value.Year
+                    && r.PeriodMonth == profilePeriod.Value.Month)
+                .ToList();
+
+            if (rows.Count == 0)
+            {
+                return new ProfileRelatedEntitiesSectionDto
+                {
+                    IsAvailable = false,
+                    UnavailableReason = EntityAnalyticsUnavailableReasons.NoSnapshotData,
+                    Blocks = new List<ProfileRelationshipBlockDto>()
+                };
+            }
+
             var rowsByCode = rows
                 .GroupBy(r => r.RelationshipCode, StringComparer.OrdinalIgnoreCase)
                 .ToDictionary(g => g.Key, g => g.OrderBy(r => r.Rank).ToList(), StringComparer.OrdinalIgnoreCase);
@@ -140,34 +171,55 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Services
             };
         }
 
+        private (int Year, int Month)? ResolveProfilePeriod(
+            string entityType,
+            string entityId,
+            IReadOnlyList<EntityAnalyticsRelationshipRow> rows)
+        {
+            var latestPeriods = _repository.GetLatestPeriods(entityType, entityId, 1);
+            if (latestPeriods.Count > 0)
+                return latestPeriods[latestPeriods.Count - 1];
+
+            if (rows.Count == 0)
+                return null;
+
+            var latestRow = rows
+                .OrderByDescending(r => r.PeriodYear)
+                .ThenByDescending(r => r.PeriodMonth)
+                .First();
+
+            return (latestRow.PeriodYear, latestRow.PeriodMonth);
+        }
+
         private ProfileRelatedEntityRowDto MapRow(EntityAnalyticsRelationshipRow row, string targetEntityType)
         {
+            var displayName = ResolveTargetDisplayName(row, targetEntityType);
+
             return new ProfileRelatedEntityRowDto
             {
                 Rank = row.Rank,
                 EntityId = row.TargetEntityId,
                 EntityCode = row.TargetEntityCode,
-                DisplayName = row.TargetDisplayName,
+                DisplayName = displayName,
                 TargetEntityType = targetEntityType,
                 TargetEntityCode = row.TargetEntityCode,
-                TargetEntityName = row.TargetDisplayName,
+                TargetEntityName = displayName,
                 MetricValue = row.MetricValue,
-                ProfileRoute = BuildProfileRoute(targetEntityType, row.TargetEntityCode ?? row.TargetEntityId)
+                ProfileRoute = EntityAnalyticsRouteBuilder.BuildProfileRoute(
+                    _entityTypes,
+                    targetEntityType,
+                    row.TargetEntityId)
             };
         }
 
-        private string BuildProfileRoute(string targetEntityType, string targetCode)
+        private string ResolveTargetDisplayName(EntityAnalyticsRelationshipRow row, string targetEntityType)
         {
-            if (string.IsNullOrWhiteSpace(targetEntityType) || string.IsNullOrWhiteSpace(targetCode))
-                return null;
-
-            if (!_entityTypes.TryGet(targetEntityType, out var registration)
-                || string.IsNullOrWhiteSpace(registration.ProfileRouteTemplate))
-            {
-                return null;
-            }
-
-            return registration.ProfileRouteTemplate.Replace("{code}", targetCode);
+            var identity = _repository.TryResolveIdentity(targetEntityType, row.TargetEntityId);
+            return EntityAnalyticsDisplayNameResolver.ResolveStoredOrLookup(
+                row.TargetDisplayName,
+                row.TargetEntityCode,
+                row.TargetEntityId,
+                identity?.DisplayName);
         }
     }
 }

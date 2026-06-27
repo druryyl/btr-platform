@@ -33,19 +33,19 @@ FROM BTRPD_CustomerKpi
 WHERE SnapshotKey = @SnapshotKey";
 
             const string topOmzetSql = @"
-SELECT Rank, CustomerCode, CustomerName, OmzetAmount, PercentOfTotal
+SELECT Rank, CustomerId, CustomerCode, CustomerName, OmzetAmount, PercentOfTotal
 FROM BTRPD_CustomerTopOmzet
 WHERE SnapshotKey = @SnapshotKey
 ORDER BY Rank";
 
             const string topPiutangSql = @"
-SELECT Rank, CustomerCode, CustomerName, OutstandingBalance, PercentOfTotal
+SELECT Rank, CustomerId, CustomerCode, CustomerName, OutstandingBalance, PercentOfTotal
 FROM BTRPD_CustomerTopPiutang
 WHERE SnapshotKey = @SnapshotKey
 ORDER BY Rank";
 
             const string attentionSql = @"
-SELECT CustomerCode, CustomerName, SignalKey, SignalLabel, ValueAmount, ValueText, WilayahName, SortOrder
+SELECT CustomerId, CustomerCode, CustomerName, SignalKey, SignalLabel, ValueAmount, ValueText, WilayahName, SortOrder
 FROM BTRPD_CustomerAttention
 WHERE SnapshotKey = @SnapshotKey
 ORDER BY SortOrder";
@@ -85,6 +85,7 @@ ORDER BY SegmentType, SortOrder";
                     TopOmzet = topOmzet.Select(r => new DashboardCustomerTopOmzetRow
                     {
                         Rank = r.Rank,
+                        CustomerId = r.CustomerId,
                         CustomerCode = r.CustomerCode,
                         CustomerName = r.CustomerName,
                         OmzetAmount = r.OmzetAmount,
@@ -93,6 +94,7 @@ ORDER BY SegmentType, SortOrder";
                     TopPiutang = topPiutang.Select(r => new DashboardCustomerTopPiutangRow
                     {
                         Rank = r.Rank,
+                        CustomerId = r.CustomerId,
                         CustomerCode = r.CustomerCode,
                         CustomerName = r.CustomerName,
                         OutstandingBalance = r.OutstandingBalance,
@@ -100,6 +102,7 @@ ORDER BY SegmentType, SortOrder";
                     }).ToList(),
                     AttentionList = attention.Select(r => new DashboardCustomerAttentionRow
                     {
+                        CustomerId = r.CustomerId,
                         CustomerCode = r.CustomerCode,
                         CustomerName = r.CustomerName,
                         SignalKey = r.SignalKey,
@@ -253,9 +256,9 @@ WHEN NOT MATCHED THEN
 
                 const string insertTopOmzetSql = @"
 INSERT INTO BTRPD_CustomerTopOmzet (
-    CustomerTopOmzetId, SnapshotKey, Rank, CustomerCode, CustomerName, OmzetAmount, PercentOfTotal)
+    CustomerTopOmzetId, SnapshotKey, Rank, CustomerId, CustomerCode, CustomerName, OmzetAmount, PercentOfTotal)
 VALUES (
-    @CustomerTopOmzetId, @SnapshotKey, @Rank, @CustomerCode, @CustomerName, @OmzetAmount, @PercentOfTotal)";
+    @CustomerTopOmzetId, @SnapshotKey, @Rank, @CustomerId, @CustomerCode, @CustomerName, @OmzetAmount, @PercentOfTotal)";
 
                 foreach (var row in result.TopOmzet ?? new List<DashboardCustomerTopOmzetRow>())
                 {
@@ -264,6 +267,7 @@ VALUES (
                         CustomerTopOmzetId = Ulid.NewUlid().ToString(),
                         SnapshotKey,
                         row.Rank,
+                        CustomerId = row.CustomerId ?? string.Empty,
                         CustomerCode = row.CustomerCode ?? string.Empty,
                         CustomerName = row.CustomerName ?? string.Empty,
                         row.OmzetAmount,
@@ -273,9 +277,9 @@ VALUES (
 
                 const string insertTopPiutangSql = @"
 INSERT INTO BTRPD_CustomerTopPiutang (
-    CustomerTopPiutangId, SnapshotKey, Rank, CustomerCode, CustomerName, OutstandingBalance, PercentOfTotal)
+    CustomerTopPiutangId, SnapshotKey, Rank, CustomerId, CustomerCode, CustomerName, OutstandingBalance, PercentOfTotal)
 VALUES (
-    @CustomerTopPiutangId, @SnapshotKey, @Rank, @CustomerCode, @CustomerName, @OutstandingBalance, @PercentOfTotal)";
+    @CustomerTopPiutangId, @SnapshotKey, @Rank, @CustomerId, @CustomerCode, @CustomerName, @OutstandingBalance, @PercentOfTotal)";
 
                 foreach (var row in result.TopPiutang ?? new List<DashboardCustomerTopPiutangRow>())
                 {
@@ -284,6 +288,7 @@ VALUES (
                         CustomerTopPiutangId = Ulid.NewUlid().ToString(),
                         SnapshotKey,
                         row.Rank,
+                        CustomerId = row.CustomerId ?? string.Empty,
                         CustomerCode = row.CustomerCode ?? string.Empty,
                         CustomerName = row.CustomerName ?? string.Empty,
                         row.OutstandingBalance,
@@ -293,10 +298,10 @@ VALUES (
 
                 const string insertAttentionSql = @"
 INSERT INTO BTRPD_CustomerAttention (
-    CustomerAttentionId, SnapshotKey, CustomerCode, CustomerName, SignalKey, SignalLabel,
+    CustomerAttentionId, SnapshotKey, CustomerId, CustomerCode, CustomerName, SignalKey, SignalLabel,
     ValueAmount, ValueText, WilayahName, SortOrder)
 VALUES (
-    @CustomerAttentionId, @SnapshotKey, @CustomerCode, @CustomerName, @SignalKey, @SignalLabel,
+    @CustomerAttentionId, @SnapshotKey, @CustomerId, @CustomerCode, @CustomerName, @SignalKey, @SignalLabel,
     @ValueAmount, @ValueText, @WilayahName, @SortOrder)";
 
                 foreach (var row in result.AttentionList ?? new List<DashboardCustomerAttentionRow>())
@@ -305,6 +310,7 @@ VALUES (
                     {
                         CustomerAttentionId = Ulid.NewUlid().ToString(),
                         SnapshotKey,
+                        CustomerId = row.CustomerId ?? string.Empty,
                         CustomerCode = row.CustomerCode ?? string.Empty,
                         CustomerName = row.CustomerName ?? string.Empty,
                         row.SignalKey,
@@ -722,14 +728,14 @@ VALUES (
             const string insertPrioritySql = @"
 INSERT INTO BTRPD_CustomerPortfolioPriority (
     CustomerPortfolioPriorityId, SnapshotKey, SortOrder, PortfolioPriorityScore, CustomerKey,
-    CustomerCode, CustomerName, WilayahName, Klasifikasi, LifecycleStage, LifecycleLabel,
+    CustomerId, CustomerCode, CustomerName, WilayahName, Klasifikasi, LifecycleStage, LifecycleLabel,
     PortfolioTier, TierLabel, PrimaryActionKey, PrimaryActionLabel, ActionOwner, ActionReasonText,
     TriggeredRuleIds, MtdOmzet, OpenBalance, OverdueBalance, M29Category, SalesPersonName,
     SalesmanAchievementPercent, SalesmanHighPiutangExposure, IsAttention, M30LinkRoute,
     CustomerReportRoute, DrillDownRouteM17, DrillDownRouteM29)
 VALUES (
     @CustomerPortfolioPriorityId, @SnapshotKey, @SortOrder, @PortfolioPriorityScore, @CustomerKey,
-    @CustomerCode, @CustomerName, @WilayahName, @Klasifikasi, @LifecycleStage, @LifecycleLabel,
+    @CustomerId, @CustomerCode, @CustomerName, @WilayahName, @Klasifikasi, @LifecycleStage, @LifecycleLabel,
     @PortfolioTier, @TierLabel, @PrimaryActionKey, @PrimaryActionLabel, @ActionOwner, @ActionReasonText,
     @TriggeredRuleIds, @MtdOmzet, @OpenBalance, @OverdueBalance, @M29Category, @SalesPersonName,
     @SalesmanAchievementPercent, @SalesmanHighPiutangExposure, @IsAttention, @M30LinkRoute,
@@ -744,6 +750,7 @@ VALUES (
                     row.SortOrder,
                     row.PortfolioPriorityScore,
                     CustomerKey = row.CustomerKey ?? string.Empty,
+                    CustomerId = row.CustomerId ?? string.Empty,
                     CustomerCode = row.CustomerCode ?? string.Empty,
                     CustomerName = row.CustomerName ?? string.Empty,
                     WilayahName = row.WilayahName ?? string.Empty,
@@ -774,7 +781,7 @@ VALUES (
 
             const string insertCustomerSql = @"
 INSERT INTO BTRPD_CustomerPortfolioCustomer (
-    CustomerPortfolioCustomerId, SnapshotKey, SortOrder, CustomerKey, CustomerCode, CustomerName,
+    CustomerPortfolioCustomerId, SnapshotKey, SortOrder, CustomerKey, CustomerId, CustomerCode, CustomerName,
     WilayahName, Klasifikasi, LifecycleStage, LifecycleLabel, PortfolioTier, TierLabel,
     PrimaryActionKey, PrimaryActionLabel, ActionOwner, ActionReasonText, TriggeredRuleIds,
     MtdOmzet, OpenBalance, OverdueBalance, FakturCount6Mo, IsActiveMtd, LastPurchaseDate,
@@ -782,7 +789,7 @@ INSERT INTO BTRPD_CustomerPortfolioCustomer (
     SalesmanHighPiutangExposure, IsAttention, PortfolioPriorityScore, M30LinkRoute,
     CustomerReportRoute, DrillDownRouteM17, DrillDownRouteM29, ValueDisclaimer)
 VALUES (
-    @CustomerPortfolioCustomerId, @SnapshotKey, @SortOrder, @CustomerKey, @CustomerCode, @CustomerName,
+    @CustomerPortfolioCustomerId, @SnapshotKey, @SortOrder, @CustomerKey, @CustomerId, @CustomerCode, @CustomerName,
     @WilayahName, @Klasifikasi, @LifecycleStage, @LifecycleLabel, @PortfolioTier, @TierLabel,
     @PrimaryActionKey, @PrimaryActionLabel, @ActionOwner, @ActionReasonText, @TriggeredRuleIds,
     @MtdOmzet, @OpenBalance, @OverdueBalance, @FakturCount6Mo, @IsActiveMtd, @LastPurchaseDate,
@@ -798,6 +805,7 @@ VALUES (
                     SnapshotKey,
                     row.SortOrder,
                     CustomerKey = row.CustomerKey ?? string.Empty,
+                    CustomerId = row.CustomerId ?? string.Empty,
                     CustomerCode = row.CustomerCode ?? string.Empty,
                     CustomerName = row.CustomerName ?? string.Empty,
                     WilayahName = row.WilayahName ?? string.Empty,
@@ -1149,6 +1157,7 @@ VALUES (
         private sealed class TopOmzetRow
         {
             public int Rank { get; set; }
+            public string CustomerId { get; set; }
             public string CustomerCode { get; set; }
             public string CustomerName { get; set; }
             public decimal OmzetAmount { get; set; }
@@ -1158,6 +1167,7 @@ VALUES (
         private sealed class TopPiutangRow
         {
             public int Rank { get; set; }
+            public string CustomerId { get; set; }
             public string CustomerCode { get; set; }
             public string CustomerName { get; set; }
             public decimal OutstandingBalance { get; set; }
@@ -1166,6 +1176,7 @@ VALUES (
 
         private sealed class AttentionRow
         {
+            public string CustomerId { get; set; }
             public string CustomerCode { get; set; }
             public string CustomerName { get; set; }
             public string SignalKey { get; set; }

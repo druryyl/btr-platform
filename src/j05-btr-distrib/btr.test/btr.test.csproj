@@ -208,11 +208,13 @@
     <Compile Include="ReportingContext\EntityRankingEngineTest.cs" />
     <Compile Include="ReportingContext\EntityRadarCalculatorTest.cs" />
     <Compile Include="ReportingContext\EntityRadarEngineTest.cs" />
+    <Compile Include="ReportingContext\EntitySignatureDimensionIntegrityTest.cs" />
     <Compile Include="ReportingContext\PeerGroupResolverTest.cs" />
     <Compile Include="ReportingContext\EntityAttentionEngineTest.cs" />
     <Compile Include="ReportingContext\EntityRelationshipEngineTest.cs" />
     <Compile Include="ReportingContext\DashboardCustomerRelationshipAggregatorTest.cs" />
     <Compile Include="ReportingContext\CustomerEntityAnalyticsProducerTest.cs" />
+    <Compile Include="ReportingContext\EntityIdentityIntegrityTest.cs" />
     <Compile Include="ReportingContext\CustomerEntityAnalyticsReconciliationTest.cs" />
     <Compile Include="ReportingContext\CustomerReplayBackfillReconciliationTest.cs" />
     <Compile Include="ReportingContext\SalesmanReplayBackfillReconciliationTest.cs" />
@@ -233,6 +235,8 @@
     <Compile Include="ReportingContext\EntityTypeRegistryTest.cs" />
     <Compile Include="ReportingContext\DashboardExecutiveComposerTest.cs" />
     <Compile Include="ReportingContext\FieldActivityComposerTest.cs" />
+    <Compile Include="ReportingContext\FieldActivityKpiCalculatorTest.cs" />
+    <Compile Include="ReportingContext\FieldActivityStatusPolicyTest.cs" />
     <Compile Include="ReportingContext\GpsValidationClassifierTest.cs" />
     <Compile Include="ReportingContext\ExecutiveSalesAchievementBandResolverTest.cs" />
     <Compile Include="ReportingContext\DashboardPiutangDalTest.cs" />
@@ -263,7 +267,6 @@
     <Compile Include="SalesContext\SalesOmzetTargetResolutionTest.cs" />
     <Compile Include="SalesContext\SegmentDalTest.cs" />
     <Compile Include="Portal\BusinessDateProviderTest.cs" />
-    <Compile Include="Portal\EntityAnalyticsControllerIntegrationTest.cs" />
     <Compile Include="Portal\PresentationModeServiceTest.cs" />
     <Compile Include="Tests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

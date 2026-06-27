@@ -67,7 +67,7 @@ namespace btr.test.ReportingContext
                 default).GetAwaiter().GetResult();
 
             act.Should().Throw<ArgumentException>()
-                .WithMessage("*Domain must be All, Piutang, Inventory, InventoryRisk, Sales, Purchasing, PurchasingManagement, Customer, Salesman, Collection, or Location*");
+                .WithMessage("*Domain must be All, Piutang, Inventory, InventoryRisk, Sales, Purchasing, PurchasingManagement, Customer, Salesman, Collection, FieldActivity, or Location*");
         }
 
         [Fact]
@@ -132,6 +132,7 @@ namespace btr.test.ReportingContext
             StubCustomerWorker customerWorker = null,
             StubSalesmanWorker salesmanWorker = null,
             StubCollectionWorker collectionWorker = null,
+            StubFieldActivityWorker fieldActivityWorker = null,
             StubLocationWorker locationWorker = null)
         {
             return new RefreshDashboardSnapshotsHandler(
@@ -145,6 +146,7 @@ namespace btr.test.ReportingContext
                 customerWorker ?? new StubCustomerWorker(),
                 salesmanWorker ?? new StubSalesmanWorker(),
                 collectionWorker ?? new StubCollectionWorker(),
+                fieldActivityWorker ?? new StubFieldActivityWorker(),
                 locationWorker ?? new StubLocationWorker());
         }
 
@@ -272,6 +274,13 @@ namespace btr.test.ReportingContext
         private sealed class StubCollectionWorker : IRefreshDashboardCollectionSnapshotWorker
         {
             public void Execute(RefreshDashboardCollectionSnapshotRequest request)
+            {
+            }
+        }
+
+        private sealed class StubFieldActivityWorker : IRefreshDashboardFieldActivitySnapshotWorker
+        {
+            public void Execute(RefreshDashboardFieldActivitySnapshotRequest request)
             {
             }
         }

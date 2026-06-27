@@ -21,6 +21,7 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.UseCases
         private readonly IRefreshDashboardCustomerSnapshotWorker _customerWorker;
         private readonly IRefreshDashboardSalesmanSnapshotWorker _salesmanWorker;
         private readonly IRefreshDashboardCollectionSnapshotWorker _collectionWorker;
+        private readonly IRefreshDashboardFieldActivitySnapshotWorker _fieldActivityWorker;
         private readonly IRefreshDashboardLocationSnapshotWorker _locationWorker;
 
         public RefreshAllDashboardSnapshotsWorker(
@@ -33,6 +34,7 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.UseCases
             IRefreshDashboardCustomerSnapshotWorker customerWorker,
             IRefreshDashboardSalesmanSnapshotWorker salesmanWorker,
             IRefreshDashboardCollectionSnapshotWorker collectionWorker,
+            IRefreshDashboardFieldActivitySnapshotWorker fieldActivityWorker,
             IRefreshDashboardLocationSnapshotWorker locationWorker)
         {
             _piutangWorker = piutangWorker;
@@ -44,6 +46,7 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.UseCases
             _customerWorker = customerWorker;
             _salesmanWorker = salesmanWorker;
             _collectionWorker = collectionWorker;
+            _fieldActivityWorker = fieldActivityWorker;
             _locationWorker = locationWorker;
         }
 
@@ -183,6 +186,20 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.UseCases
                 failures);
 
             RunDomain(
+                "FieldActivity",
+                () =>
+                {
+                    var fieldActivityRequest = new RefreshDashboardFieldActivitySnapshotRequest
+                    {
+                        TriggeredBy = triggeredBy
+                    };
+                    _fieldActivityWorker.Execute(fieldActivityRequest);
+                    return fieldActivityRequest.Result;
+                },
+                domainResults,
+                failures);
+
+            RunDomain(
                 "Location",
                 () =>
                 {
@@ -298,6 +315,13 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.UseCases
                         Domain = domain,
                         RefreshLogId = collection.RefreshLogId,
                         DurationMs = collection.DurationMs
+                    };
+                case RefreshDashboardFieldActivitySnapshotResult fieldActivity:
+                    return new RefreshDashboardDomainResult
+                    {
+                        Domain = domain,
+                        RefreshLogId = fieldActivity.RefreshLogId,
+                        DurationMs = fieldActivity.DurationMs
                     };
                 case RefreshDashboardLocationSnapshotResult location:
                     return new RefreshDashboardDomainResult

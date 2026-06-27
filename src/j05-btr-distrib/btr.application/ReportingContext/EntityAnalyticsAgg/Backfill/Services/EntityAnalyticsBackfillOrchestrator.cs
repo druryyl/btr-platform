@@ -11,7 +11,9 @@ using btr.application.ReportingContext.EntityAnalyticsAgg.Backfill.Models;
 using btr.application.ReportingContext.EntityAnalyticsAgg.Models;
 using btr.application.ReportingContext.EntityAnalyticsAgg.Options;
 using btr.application.ReportingContext.EntityAnalyticsAgg.Services;
+using btr.application.SalesContext.CustomerAgg.Contracts;
 using btr.application.SupportContext.TglJamAgg;
+using btr.domain.SalesContext.CustomerAgg;
 using Microsoft.Extensions.Options;
 
 namespace btr.application.ReportingContext.EntityAnalyticsAgg.Backfill.Services
@@ -29,6 +31,7 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Backfill.Services
         private readonly ISalesmanReplayPeriodHandler _salesmanReplayPeriodHandler;
         private readonly EntityAnalyticsProducerOrchestrator _producerOrchestrator;
         private readonly ITglJamDal _tglJamDal;
+        private readonly ICustomerDal _customerDal;
         private readonly EntityAnalyticsOptions _options;
 
         public EntityAnalyticsBackfillOrchestrator(
@@ -40,6 +43,7 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Backfill.Services
             ISalesmanReplayPeriodHandler salesmanReplayPeriodHandler,
             EntityAnalyticsProducerOrchestrator producerOrchestrator,
             ITglJamDal tglJamDal,
+            ICustomerDal customerDal,
             IOptions<EntityAnalyticsOptions> options)
         {
             _checkpointStore = checkpointStore;
@@ -50,6 +54,7 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Backfill.Services
             _salesmanReplayPeriodHandler = salesmanReplayPeriodHandler;
             _producerOrchestrator = producerOrchestrator;
             _tglJamDal = tglJamDal;
+            _customerDal = customerDal;
             _options = options?.Value ?? new EntityAnalyticsOptions();
         }
 
@@ -65,6 +70,7 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Backfill.Services
             var entityTypes = ResolveEntityTypes(request.EntityTypeScope);
             var fromPeriod = ResolveFromPeriod(request);
             var toPeriod = ResolveToPeriod(request);
+            var customerIdentityLookup = BuildCustomerIdentityLookupFromMaster();
 
             ValidateRequest(request, entityTypes, fromPeriod, toPeriod);
 
@@ -222,6 +228,7 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Backfill.Services
                                         produceInput,
                                         request.RefreshLogId ?? string.Empty,
                                         generatedAt);
+                                    produceContext.CustomerIdentityLookup = customerIdentityLookup;
                                     _producerOrchestrator.ProduceForEntityType(entityType, produceContext);
                                     WorkerProgressScope.Current?.StepCompleted($"{periodStepId}:Produce");
                                     WorkerProgressScope.Current?.StepCompleted($"{periodStepId}:Plan");
@@ -564,6 +571,12 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Backfill.Services
                 DurationMs = (int)sw.ElapsedMilliseconds,
                 ErrorMessage = errorMessage
             };
+        }
+
+        private IReadOnlyDictionary<string, EntityAnalyticsCustomerIdentity> BuildCustomerIdentityLookupFromMaster()
+        {
+            var customers = _customerDal.ListData() ?? Enumerable.Empty<CustomerModel>();
+            return EntityAnalyticsCustomerIdentityResolver.BuildLookup(customers);
         }
 
         private static string Truncate(string message)

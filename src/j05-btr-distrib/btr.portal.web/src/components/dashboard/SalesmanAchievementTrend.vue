@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import Chart from 'primevue/chart'
+import { createChartOptions } from '@/services/chartLayout'
 import ProgressSpinner from 'primevue/progressspinner'
 import { formatPercent } from '@/services/formatters'
 import type { SalesmanAchievementTrendPoint } from '@/models/dashboard'
@@ -34,34 +35,31 @@ const chartData = computed(() => ({
   ],
 }))
 
-const chartOptions = computed(() => ({
-  responsive: true,
-  maintainAspectRatio: false,
-  plugins: {
-    legend: {
-      display: false,
-    },
-    tooltip: {
-      callbacks: {
-        label: (context: { parsed: { y: number | null } }) =>
-          context.parsed.y != null ? ` ${formatPercent(context.parsed.y)}` : ' —',
+const chartOptions = computed(() =>
+  createChartOptions({
+    plugins: {
+      tooltip: {
+        callbacks: {
+          label: (context: { parsed: { y: number | null } }) =>
+            context.parsed.y != null ? ` ${formatPercent(context.parsed.y)}` : ' —',
+        },
       },
     },
-  },
-  scales: {
-    x: {
-      ticks: {
-        maxRotation: 45,
-        minRotation: 0,
+    scales: {
+      x: {
+        ticks: {
+          maxRotation: 45,
+          minRotation: 0,
+        },
+      },
+      y: {
+        ticks: {
+          callback: (value: string | number) => formatPercent(Number(value)),
+        },
       },
     },
-    y: {
-      ticks: {
-        callback: (value: string | number) => formatPercent(Number(value)),
-      },
-    },
-  },
-}))
+  }),
+)
 </script>
 
 <template>
@@ -71,7 +69,7 @@ const chartOptions = computed(() => ({
     </div>
 
     <template v-else>
-      <div v-if="hasTrendData" class="salesman-achievement-trend__canvas">
+      <div v-if="hasTrendData" class="salesman-achievement-trend__canvas portal-chart-canvas">
         <Chart type="line" :data="chartData" :options="chartOptions" />
       </div>
       <p v-else class="salesman-achievement-trend__empty">{{ emptyMessage }}</p>
@@ -84,10 +82,6 @@ const chartOptions = computed(() => ({
   display: flex;
   justify-content: center;
   padding: 2rem 0;
-}
-
-.salesman-achievement-trend__canvas {
-  height: 280px;
 }
 
 .salesman-achievement-trend__empty {

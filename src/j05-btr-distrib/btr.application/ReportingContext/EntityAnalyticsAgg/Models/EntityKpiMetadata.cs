@@ -52,6 +52,9 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Models
         /// <summary>Optional radar axis label override.</summary>
         public string RadarDisplayName { get; set; }
 
+        /// <summary>Universal Performance Signature dimension key (EA-SIG-*).</summary>
+        public string SignatureDimensionKey { get; set; }
+
         /// <summary>Decimal places for numeric display (0 for IDR, 2 for percent).</summary>
         public int DisplayPrecision { get; set; }
 

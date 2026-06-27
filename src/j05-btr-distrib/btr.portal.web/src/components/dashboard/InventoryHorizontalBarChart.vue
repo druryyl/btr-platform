@@ -2,6 +2,7 @@
 import { computed } from 'vue'
 import Card from 'primevue/card'
 import Chart from 'primevue/chart'
+import { createChartOptions } from '@/services/chartLayout'
 import ProgressSpinner from 'primevue/progressspinner'
 import { formatCurrency } from '@/services/formatters'
 import type { DashboardInventoryBreakdownItem } from '@/models/dashboard'
@@ -17,7 +18,7 @@ const hasData = computed(() =>
 )
 
 const chartHeight = computed(() =>
-  Math.max(280, props.items.length * 28),
+  Math.max(224, props.items.length * 26),
 )
 
 const chartData = computed(() => ({
@@ -30,33 +31,30 @@ const chartData = computed(() => ({
   ],
 }))
 
-const chartOptions = computed(() => ({
-  indexAxis: 'y' as const,
-  responsive: true,
-  maintainAspectRatio: false,
-  plugins: {
-    legend: {
-      display: false,
-    },
-    tooltip: {
-      callbacks: {
-        label: (context: { parsed: { x: number } }) =>
-          ` ${formatCurrency(context.parsed.x)}`,
+const chartOptions = computed(() =>
+  createChartOptions({
+    indexAxis: 'y' as const,
+    plugins: {
+      tooltip: {
+        callbacks: {
+          label: (context: { parsed: { x: number } }) =>
+            ` ${formatCurrency(context.parsed.x)}`,
+        },
       },
     },
-  },
-  scales: {
-    x: {
-      ticks: {
-        callback: (value: string | number) => formatCurrency(Number(value)),
+    scales: {
+      x: {
+        ticks: {
+          callback: (value: string | number) => formatCurrency(Number(value)),
+        },
       },
     },
-  },
-}))
+  }),
+)
 </script>
 
 <template>
-  <Card class="inventory-horizontal-bar-chart">
+  <Card class="inventory-horizontal-bar-chart portal-chart-card">
     <template #title>
       <div class="inventory-horizontal-bar-chart__title">
         <i class="pi pi-chart-bar" aria-hidden="true" />
@@ -72,7 +70,7 @@ const chartOptions = computed(() => ({
       <template v-else>
         <div
           v-if="hasData"
-          class="inventory-horizontal-bar-chart__canvas"
+          class="inventory-horizontal-bar-chart__canvas portal-chart-canvas portal-chart-canvas--fluid"
           :style="{ height: `${chartHeight}px` }"
         >
           <Chart type="bar" :data="chartData" :options="chartOptions" />
@@ -96,10 +94,6 @@ const chartOptions = computed(() => ({
   display: flex;
   justify-content: center;
   padding: 2rem 0;
-}
-
-.inventory-horizontal-bar-chart__canvas {
-  min-height: 280px;
 }
 
 .inventory-horizontal-bar-chart__empty {

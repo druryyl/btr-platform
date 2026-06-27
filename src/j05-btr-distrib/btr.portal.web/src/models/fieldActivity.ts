@@ -87,3 +87,93 @@ export interface FieldActivitySalesmenResponse {
 }
 
 export type GpsValidationLevel = 'Valid' | 'Warning' | 'Suspicious' | 'Invalid'
+
+export interface FieldActivityTeamKpis {
+  ActiveSalesmenCount: number
+  PlannedVisits: number
+  ActualVisits: number
+  VisitExecutionPercent: number | null
+  EffectiveCalls: number
+  EffectiveCallRate: number | null
+  MissedVisits: number
+  UnplannedVisits: number
+  GpsValidRate: number | null
+  TotalOrders: number
+  TotalOmzet: number
+}
+
+export interface FieldActivitySalesmanOverviewRow {
+  SalesPersonId: string
+  SalesPersonCode: string
+  SalesPersonName: string
+  WilayahName: string
+  HasEmail: boolean
+  Rank: number
+  PlannedVisits: number
+  ActualVisits: number
+  VisitExecutionPercent: number | null
+  EffectiveCalls: number
+  EffectiveCallRate: number | null
+  MissedVisits: number
+  UnplannedVisits: number
+  GpsValidPercent: number | null
+  OrdersCount: number
+  OmzetAmount: number
+  StatusCode: string
+}
+
+export interface FieldActivityRankingEntry {
+  Rank: number
+  SalesPersonId: string
+  SalesPersonCode: string
+  SalesPersonName: string
+  PrimaryValue: number | null
+  PrimaryLabel: string
+}
+
+export interface FieldActivityRankingSection {
+  TopVisitExecution: FieldActivityRankingEntry[]
+  BottomVisitExecution: FieldActivityRankingEntry[]
+  TopEffectiveCallRate: FieldActivityRankingEntry[]
+  BottomEffectiveCallRate: FieldActivityRankingEntry[]
+  TopOmzet: FieldActivityRankingEntry[]
+  TopOrders: FieldActivityRankingEntry[]
+  MostMissedVisits: FieldActivityRankingEntry[]
+  MostUnplannedVisits: FieldActivityRankingEntry[]
+}
+
+export interface FieldActivityTrendPoint {
+  TrendDate: string
+  VisitExecutionPercent: number | null
+  EffectiveCallRate: number | null
+  OrdersCount: number
+  OmzetAmount: number
+}
+
+export interface FieldActivityTrendSection {
+  Last7Days: FieldActivityTrendPoint[]
+  Last30Days: FieldActivityTrendPoint[]
+}
+
+export interface FieldActivityWilayahBreakdownRow {
+  WilayahName: string
+  ActualVisits: number
+}
+
+export interface FieldActivityOverviewMeta {
+  PlanDataAvailable: boolean
+  VisitPlanGoLiveDate: string
+}
+
+export interface FieldActivityOverviewResponse {
+  VisitDate: string
+  DataSource: string
+  GeneratedAt: string | null
+  QueriedAt: string | null
+  TeamKpis: FieldActivityTeamKpis
+  Salesmen: FieldActivitySalesmanOverviewRow[]
+  Rankings: FieldActivityRankingSection
+  Trends: FieldActivityTrendSection
+  WilayahBreakdown: FieldActivityWilayahBreakdownRow[]
+  Meta: FieldActivityOverviewMeta
+}

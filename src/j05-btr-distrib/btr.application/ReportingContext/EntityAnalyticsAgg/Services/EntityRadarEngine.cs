@@ -197,10 +197,33 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Services
                 axes.Add(new ProfileRadarAxisDto
                 {
                     KpiId = axis.KpiId,
-                    DisplayName = string.IsNullOrWhiteSpace(axis.RadarDisplayName) ? axis.DisplayName : axis.RadarDisplayName,
+                    SignatureDimensionKey = axis.SignatureDimensionKey,
+                    DisplayName = ResolveAxisDisplayName(axis),
                     Score = row.Score,
                     Direction = axis.Direction
                 });
+            }
+
+            var peerAverageScores = ComputePeerAverageScores(
+                entityType,
+                entityId,
+                period.Year,
+                period.Month,
+                radarAxes,
+                peerGroupRuleId,
+                peerGroupSize);
+
+            if (peerAverageScores != null && axes.Count > 0)
+            {
+                var axisIndex = radarAxes
+                    .Select((axis, index) => new { axis.KpiId, index })
+                    .ToDictionary(x => x.KpiId, x => x.index, StringComparer.OrdinalIgnoreCase);
+
+                peerAverageScores = axes
+                    .Select(axis => axisIndex.TryGetValue(axis.KpiId, out var index)
+                        ? peerAverageScores[index]
+                        : null)
+                    .ToList();
             }
 
             return new ProfileRadarSectionDto
@@ -212,8 +235,79 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Services
                 PeriodYear = period.Year,
                 PeriodMonth = period.Month,
                 PeriodLabel = BuildPeriodLabel(period.Year, period.Month),
-                Axes = axes
+                Axes = axes,
+                PeerAverageScores = peerAverageScores
             };
+        }
+
+        internal List<decimal?> ComputePeerAverageScores(
+            string entityType,
+            string entityId,
+            int periodYear,
+            int periodMonth,
+            IReadOnlyList<EntityKpiMetadata> radarAxes,
+            string peerGroupRuleId,
+            int peerGroupSize)
+        {
+            if (peerGroupSize < EntityAnalyticsConstants.MinRadarPeerGroupSize
+                || string.IsNullOrWhiteSpace(peerGroupRuleId)
+                || string.IsNullOrWhiteSpace(entityId)
+                || radarAxes == null
+                || radarAxes.Count == 0)
+                return null;
+
+            if (!_entityTypes.TryGet(entityType, out var registration))
+                return null;
+
+            var dimensionKpiId = PeerGroupResolver.ResolveDimensionKpiId(peerGroupRuleId);
+            var population = _repository.GetActivePopulation(entityType, dimensionKpiId);
+            var peerGroupIndex = PeerGroupResolver.BuildPeerGroupIndex(peerGroupRuleId, population);
+            var resolution = PeerGroupResolver.ResolveForEntity(
+                entityId,
+                peerGroupRuleId,
+                peerGroupIndex,
+                population);
+
+            if (!resolution.IsSufficient || resolution.PeerEntityIds.Count == 0)
+                return null;
+
+            var batchRows = _repository.GetRadarScoresBatch(
+                entityType,
+                resolution.PeerEntityIds,
+                periodYear,
+                periodMonth);
+
+            if (batchRows.Count == 0)
+                return null;
+
+            var averages = new List<decimal?>();
+            foreach (var axis in radarAxes)
+            {
+                var scores = batchRows
+                    .Where(r => string.Equals(r.AxisKpiId, axis.KpiId, StringComparison.OrdinalIgnoreCase))
+                    .Select(r => r.Score)
+                    .Where(s => s.HasValue)
+                    .Select(s => s.Value)
+                    .ToList();
+
+                averages.Add(scores.Count > 0
+                    ? Math.Round(scores.Average(), 0, MidpointRounding.AwayFromZero)
+                    : (decimal?)null);
+            }
+
+            return averages;
+        }
+
+        public static string ResolveAxisDisplayName(EntityKpiMetadata axis)
+        {
+            if (axis == null)
+                return null;
+
+            var fromKey = EntityAnalyticsSignatureDimensions.GetDisplayLabel(axis.SignatureDimensionKey);
+            if (!string.IsNullOrWhiteSpace(fromKey))
+                return fromKey;
+
+            return string.IsNullOrWhiteSpace(axis.RadarDisplayName) ? axis.DisplayName : axis.RadarDisplayName;
         }
 
         private ProfileRadarSectionDto BuildUnavailableSection(
@@ -379,7 +473,8 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Services
             return _kpiRegistry.ResolvePackMetadata(packId)
                 .Where(m => m.RadarEligible
                     && !string.Equals(m.Direction, "Neutral", StringComparison.OrdinalIgnoreCase))
-                .OrderBy(m => m.RadarAxisOrder)
+                .OrderBy(m => EntityAnalyticsSignatureDimensions.GetOrderIndex(m.SignatureDimensionKey))
+                .ThenBy(m => m.RadarAxisOrder)
                 .ThenBy(m => m.KpiId, StringComparer.OrdinalIgnoreCase)
                 .ToList();
         }

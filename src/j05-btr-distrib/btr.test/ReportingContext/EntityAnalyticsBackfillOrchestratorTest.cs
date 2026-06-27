@@ -400,6 +400,7 @@ namespace btr.test.ReportingContext
                 salesmanHandler,
                 producerOrchestrator,
                 new FixedTglJamDal(new DateTime(2026, 6, 25, 12, 0, 0)),
+                new EmptyCustomerDal(),
                 Options.Create(new EntityAnalyticsOptions { HistoryRetentionMonths = 36 }));
         }
 
@@ -892,6 +893,21 @@ namespace btr.test.ReportingContext
                 var to = new YearMonthPeriod(toYear, toMonth);
                 return period >= from && period <= to;
             }
+        }
+
+        private sealed class EmptyCustomerDal : btr.application.SalesContext.CustomerAgg.Contracts.ICustomerDal
+        {
+            public IEnumerable<btr.domain.SalesContext.CustomerAgg.CustomerModel> ListData()
+                => Array.Empty<btr.domain.SalesContext.CustomerAgg.CustomerModel>();
+
+            public IEnumerable<btr.application.SalesContext.CustomerAgg.Contracts.CustomerLocationView> ListLocation()
+                => Array.Empty<btr.application.SalesContext.CustomerAgg.Contracts.CustomerLocationView>();
+
+            public void Insert(btr.domain.SalesContext.CustomerAgg.CustomerModel data) => throw new NotSupportedException();
+            public void Update(btr.domain.SalesContext.CustomerAgg.CustomerModel data) => throw new NotSupportedException();
+            public void Delete(btr.domain.SalesContext.CustomerAgg.ICustomerKey key) => throw new NotSupportedException();
+            public btr.domain.SalesContext.CustomerAgg.CustomerModel GetData(btr.domain.SalesContext.CustomerAgg.ICustomerKey key)
+                => throw new NotSupportedException();
         }
     }
 }

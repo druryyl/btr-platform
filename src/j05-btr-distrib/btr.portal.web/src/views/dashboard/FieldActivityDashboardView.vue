@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue'
-import { RouterLink } from 'vue-router'
+import { RouterLink, useRoute } from 'vue-router'
 import Button from 'primevue/button'
 import DatePicker from 'primevue/datepicker'
 import Message from 'primevue/message'
@@ -23,6 +23,7 @@ import { usePresentationStore } from '@/stores/presentationStore'
 type DatePreset = 'today' | 'yesterday' | 'custom'
 
 const presentation = usePresentationStore()
+const route = useRoute()
 const salesmen = ref<FieldActivitySalesmanItem[]>([])
 const selectedSalesPersonId = ref<string | null>(null)
 const selectedDate = ref<Date>(startOfDay(new Date()))
@@ -62,6 +63,49 @@ const dataHealthText = computed(() => {
 
   return `Coordinate coverage ${coverage} · ${planNote}`
 })
+
+const breadcrumbName = computed(
+  () => fieldActivity.value?.SalesPersonName ?? 'Salesman Field Activity',
+)
+
+const overviewBackQuery = computed(() => ({
+  name: 'field-activity-overview' as const,
+  query: { visitDate: formatVisitDate(selectedDate.value) },
+}))
+
+function parseVisitDate(value: unknown): Date | null {
+  if (typeof value !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return null
+  const [year, month, day] = value.split('-').map(Number)
+  return startOfDay(new Date(year, month - 1, day))
+}
+
+function applyRouteQuery(): void {
+  const salesPersonId = route.query.salesPersonId
+  const visitDate = route.query.visitDate
+
+  if (typeof visitDate === 'string') {
+    const parsed = parseVisitDate(visitDate)
+    if (parsed) {
+      selectedDate.value = parsed
+      customDate.value = parsed
+      const today = businessToday()
+      const yesterday = new Date(today)
+      yesterday.setDate(yesterday.getDate() - 1)
+
+      if (parsed.getTime() === today.getTime()) {
+        datePreset.value = 'today'
+      } else if (parsed.getTime() === yesterday.getTime()) {
+        datePreset.value = 'yesterday'
+      } else {
+        datePreset.value = 'custom'
+      }
+    }
+  }
+
+  if (typeof salesPersonId === 'string' && salesPersonId.trim()) {
+    selectedSalesPersonId.value = salesPersonId
+  }
+}
 
 function startOfDay(date: Date): Date {
   const copy = new Date(date)
@@ -150,14 +194,34 @@ onMounted(async () => {
   customDate.value = businessToday()
   applyDatePreset('today')
   await loadSalesmen()
+  applyRouteQuery()
+
+  if (route.query.salesPersonId && route.query.visitDate) {
+    await loadFieldActivity()
+  }
 })
+
+watch(
+  () => [route.query.salesPersonId, route.query.visitDate],
+  async () => {
+    applyRouteQuery()
+    if (route.query.salesPersonId && route.query.visitDate) {
+      await loadFieldActivity()
+    }
+  },
+)
 </script>
 
 <template>
   <div class="field-activity-dashboard">
     <header class="field-activity-dashboard__header">
       <div>
-        <h1>Field Activity</h1>
+        <nav class="field-activity-dashboard__breadcrumb" aria-label="Breadcrumb">
+          <RouterLink :to="overviewBackQuery">Sales Force Overview</RouterLink>
+          <span aria-hidden="true">→</span>
+          <span>{{ breadcrumbName }}</span>
+        </nav>
+        <h1>Salesman Field Activity</h1>
         <p>Route execution, GPS check-in visibility, and daily visit replay.</p>
       </div>
     </header>
@@ -281,6 +345,22 @@ onMounted(async () => {
 .field-activity-dashboard__header p {
   margin: 0.375rem 0 0;
   color: var(--p-text-muted-color);
+}
+
+.field-activity-dashboard__breadcrumb {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.375rem;
+  margin-bottom: 0.375rem;
+  font-size: 0.875rem;
+  color: var(--p-text-muted-color);
+}
+
+.field-activity-dashboard__breadcrumb a {
+  color: var(--p-primary-color);
+  text-decoration: none;
+  font-weight: 600;
 }
 
 .field-activity-dashboard__toolbar {

@@ -208,11 +208,15 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Queries
         public string UnavailableExplanation { get; set; }
 
         public List<ProfileRadarAxisDto> Axes { get; set; } = new List<ProfileRadarAxisDto>();
+
+        public List<decimal?> PeerAverageScores { get; set; }
     }
 
     public class ProfileRadarAxisDto
     {
         public string KpiId { get; set; }
+
+        public string SignatureDimensionKey { get; set; }
 
         public string DisplayName { get; set; }
 

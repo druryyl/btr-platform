@@ -16,6 +16,7 @@ export type PortalMenuCode =
   | 'FI04'
   | 'SF01'
   | 'SF02'
+  | 'SF03'
   | 'IN01'
   | 'IN02'
   | 'IN03'

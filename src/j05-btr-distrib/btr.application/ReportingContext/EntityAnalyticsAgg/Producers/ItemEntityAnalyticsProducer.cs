@@ -8,6 +8,7 @@ using btr.application.ReportingContext.EntityAnalyticsAgg.Contracts;
 using btr.application.ReportingContext.EntityAnalyticsAgg.Models;
 using btr.application.ReportingContext.EntityAnalyticsAgg.Models.Snapshot;
 using btr.application.ReportingContext.EntityAnalyticsAgg.Registrars;
+using btr.application.ReportingContext.EntityAnalyticsAgg.Services;
 using btr.nuna.Domain;
 
 namespace btr.application.ReportingContext.EntityAnalyticsAgg.Producers
@@ -120,7 +121,7 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Producers
                 EntityTypeCode.Item,
                 periodYear,
                 periodMonth,
-                BuildRelationshipSnapshots(input),
+                BuildRelationshipSnapshots(input, context),
                 context.RefreshLogId,
                 context.GeneratedAt,
                 context.Replay);
@@ -286,11 +287,14 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Producers
         }
 
         private static IReadOnlyList<EntityRelationshipSnapshot> BuildRelationshipSnapshots(
-            ItemEntityAnalyticsProduceInput input)
+            ItemEntityAnalyticsProduceInput input,
+            EntityAnalyticsProduceContext context)
         {
             var portfolio = input?.Portfolio;
             if (portfolio == null || portfolio.Count == 0)
                 return Array.Empty<EntityRelationshipSnapshot>();
+
+            var customerLookup = context?.CustomerIdentityLookup;
 
             var relationshipById = input.RelationshipAggregate?.ByBrgId
                 ?? new Dictionary<string, DashboardItemRelationshipItemRollup>(StringComparer.OrdinalIgnoreCase);
@@ -333,15 +337,20 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Producers
 
                 foreach (var customer in rollup.TopCustomers)
                 {
+                    var customerIdentity = EntityAnalyticsCustomerIdentityResolver.Resolve(
+                        customer.CustomerCode,
+                        customerLookup,
+                        customerName: customer.CustomerName);
+
                     snapshots.Add(new EntityRelationshipSnapshot
                     {
                         SourceEntityId = entityId,
                         SourceEntityCode = entityCode,
                         RelationshipCode = ItemRelationshipCatalog.TopCustomersByOmzet,
                         TargetEntityType = EntityTypeCode.Customer,
-                        TargetEntityId = customer.CustomerCode,
-                        TargetEntityCode = customer.CustomerCode,
-                        TargetDisplayName = customer.CustomerName ?? customer.CustomerCode,
+                        TargetEntityId = customerIdentity.CustomerId,
+                        TargetEntityCode = customerIdentity.CustomerCode,
+                        TargetDisplayName = customer.CustomerName ?? customerIdentity.CustomerCode,
                         MetricValue = customer.MetricValue
                     });
                 }

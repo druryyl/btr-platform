@@ -27,6 +27,8 @@ namespace btr.test.ReportingContext
 
             repository.EntityType.Should().Be(EntityTypeCode.Customer);
             repository.Rows.Should().NotBeEmpty();
+            repository.Rows.Should().OnlyContain(r =>
+                r.EntityId == "CUST-001" && r.EntityCode == "C001");
 
             var kpiRows = repository.Rows
                 .Where(r => !EntityAnalyticsMetaKpiIds.IsMetaOrDimension(r.KpiId))
@@ -146,6 +148,8 @@ namespace btr.test.ReportingContext
 
             repository.RelationshipRows.Should().NotBeEmpty();
             repository.RelationshipRows.Should().Contain(r =>
+                r.SourceEntityId == "CUST-001" && r.SourceEntityCode == "C001");
+            repository.RelationshipRows.Should().Contain(r =>
                 r.RelationshipCode == CustomerRelationshipCatalog.TopItemsByOmzet);
         }
 
@@ -226,22 +230,22 @@ namespace btr.test.ReportingContext
             {
                 EntityTypeCode = EntityTypeCode.Customer,
                 RelationshipPackId = CustomerRelationshipCatalog.PackId,
-                ProfileRouteTemplate = "/analytics/customers/{code}"
+                ProfileRouteTemplate = "/analytics/customers/{id}"
             });
             entityTypesForRelationships.Register(new EntityTypeRegistration
             {
                 EntityTypeCode = EntityTypeCode.Salesman,
-                ProfileRouteTemplate = "/analytics/salesmen/{code}"
+                ProfileRouteTemplate = "/analytics/salesmen/{id}"
             });
             entityTypesForRelationships.Register(new EntityTypeRegistration
             {
                 EntityTypeCode = EntityTypeCode.Item,
-                ProfileRouteTemplate = "/analytics/items/{code}"
+                ProfileRouteTemplate = "/analytics/items/{id}"
             });
             entityTypesForRelationships.Register(new EntityTypeRegistration
             {
                 EntityTypeCode = EntityTypeCode.Supplier,
-                ProfileRouteTemplate = "/analytics/suppliers/{code}"
+                ProfileRouteTemplate = "/analytics/suppliers/{id}"
             });
             var relationships = new EntityRelationshipDefinitionRegistry(entityTypesForRelationships);
             CustomerRelationshipCatalog.Register(relationships);
@@ -352,6 +356,7 @@ namespace btr.test.ReportingContext
         {
             return new DashboardCustomerPortfolioCustomerRow
             {
+                CustomerId = "CUST-001",
                 CustomerCode = "C001",
                 CustomerName = "Alpha Customer",
                 WilayahName = "Jakarta",

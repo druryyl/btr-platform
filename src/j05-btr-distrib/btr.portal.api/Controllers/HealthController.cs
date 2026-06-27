@@ -118,6 +118,8 @@ namespace btr.portal.api.Controllers
                     return _snapshotOptions.SalesmanIntervalMinutes;
                 case "Collection":
                     return _snapshotOptions.CollectionIntervalMinutes;
+                case "FieldActivity":
+                    return _snapshotOptions.FieldActivityIntervalMinutes;
                 case "Location":
                     return _snapshotOptions.LocationIntervalMinutes;
                 default:

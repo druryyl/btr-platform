@@ -7,6 +7,7 @@ using btr.application.ReportingContext.DashboardSnapshotAgg.Progress;
 using btr.application.ReportingContext.DashboardSnapshotAgg.Services;
 using btr.application.ReportingContext.EntityAnalyticsAgg.Producers;
 using btr.application.ReportingContext.EntityAnalyticsAgg.Services;
+using btr.application.SalesContext.CustomerAgg.Contracts;
 using btr.application.ReportingContext.EntityAnalyticsAgg.Contracts;
 using btr.application.SalesContext.FakturInfo;
 using btr.application.SalesContext.SalesOmzetAgg.Contracts;
@@ -45,6 +46,7 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.UseCases
         private readonly IBusinessDateProvider _businessDateProvider;
         private readonly DashboardSnapshotOptions _options;
         private readonly EntityAnalyticsProducerOrchestrator _entityAnalyticsOrchestrator;
+        private readonly ICustomerDal _customerDal;
 
         public RefreshDashboardSalesmanSnapshotWorker(
             IFakturViewDal fakturViewDal,
@@ -62,7 +64,8 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.UseCases
             ITglJamDal tglJamDal,
             IBusinessDateProvider businessDateProvider,
             DashboardSnapshotOptions options,
-            EntityAnalyticsProducerOrchestrator entityAnalyticsOrchestrator)
+            EntityAnalyticsProducerOrchestrator entityAnalyticsOrchestrator,
+            ICustomerDal customerDal)
         {
             _fakturViewDal = fakturViewDal;
             _lastFakturDal = lastFakturDal;
@@ -80,6 +83,7 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.UseCases
             _businessDateProvider = businessDateProvider;
             _options = options ?? new DashboardSnapshotOptions();
             _entityAnalyticsOrchestrator = entityAnalyticsOrchestrator;
+            _customerDal = customerDal;
         }
 
         public void Execute(RefreshDashboardSalesmanSnapshotRequest request)
@@ -166,6 +170,8 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.UseCases
                 WorkerProgressScope.Current.StepCompleted($"{Domain}:AggregateRelationships");
 
                 WorkerProgressScope.Current.StepStarted($"{Domain}:Save", "Save snapshot");
+                var customers = _customerDal.ListData()?.ToList()
+                    ?? new System.Collections.Generic.List<btr.domain.SalesContext.CustomerAgg.CustomerModel>();
                 using (var trans = TransHelper.NewScope())
                 {
                     _snapshotDal.ReplaceCurrent(aggregate, refreshLogId);
@@ -176,6 +182,7 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.UseCases
                         RefreshLogId = refreshLogId,
                         GeneratedAt = generatedAt,
                         BusinessDate = today,
+                        CustomerIdentityLookup = EntityAnalyticsCustomerIdentityResolver.BuildLookup(customers),
                         DomainInput = new SalesmanEntityAnalyticsProduceInput
                         {
                             SalesmanAggregate = aggregate,

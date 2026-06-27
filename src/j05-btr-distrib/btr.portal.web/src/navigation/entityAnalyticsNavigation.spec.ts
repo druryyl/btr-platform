@@ -9,10 +9,10 @@ describe('entityAnalyticsNavigation', () => {
     expect(getEntityAnalyticsNav('Item')?.compareRouteName).toBe('item-compare')
   })
 
-  it('builds compare route with optional entity preselect', () => {
-    expect(buildCompareRoute('Customer', 'C001')).toEqual({
+  it('builds compare route with optional entity id preselect', () => {
+    expect(buildCompareRoute('Customer', 'CUST-42')).toEqual({
       name: 'customer-compare',
-      query: { entities: 'C001' },
+      query: { entities: 'CUST-42' },
     })
     expect(buildCompareRoute('Item')).toEqual({
       name: 'item-compare',

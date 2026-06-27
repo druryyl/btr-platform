@@ -53,10 +53,15 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.Services
             return rows
                 .Where(r => !string.IsNullOrWhiteSpace(r.CustomerCode))
                 .GroupBy(r => r.CustomerCode.Trim(), StringComparer.OrdinalIgnoreCase)
-                .Select(g => new
+                .Select(g =>
                 {
-                    CustomerCode = g.Key,
-                    Total = g.Sum(x => x.LineTotal)
+                    var first = g.First();
+                    return new
+                    {
+                        CustomerCode = g.Key,
+                        CustomerName = first.CustomerName?.Trim() ?? g.Key,
+                        Total = g.Sum(x => x.LineTotal)
+                    };
                 })
                 .OrderByDescending(x => x.Total)
                 .ThenBy(x => x.CustomerCode, StringComparer.OrdinalIgnoreCase)
@@ -65,7 +70,7 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.Services
                 {
                     Rank = index + 1,
                     CustomerCode = x.CustomerCode,
-                    CustomerName = x.CustomerCode,
+                    CustomerName = x.CustomerName,
                     MetricValue = x.Total
                 })
                 .ToList();

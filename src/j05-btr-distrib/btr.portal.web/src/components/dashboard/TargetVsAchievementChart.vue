@@ -2,6 +2,7 @@
 import { computed } from 'vue'
 import Card from 'primevue/card'
 import Chart from 'primevue/chart'
+import { createChartOptions } from '@/services/chartLayout'
 import ProgressSpinner from 'primevue/progressspinner'
 import { formatCurrency } from '@/services/formatters'
 import type { DashboardSalesTargetVsAchievement } from '@/models/dashboard'
@@ -28,32 +29,29 @@ const chartData = computed(() => ({
   ],
 }))
 
-const chartOptions = computed(() => ({
-  responsive: true,
-  maintainAspectRatio: false,
-  plugins: {
-    legend: {
-      display: false,
-    },
-    tooltip: {
-      callbacks: {
-        label: (context: { parsed: { y: number } }) =>
-          ` ${formatCurrency(context.parsed.y)}`,
+const chartOptions = computed(() =>
+  createChartOptions({
+    plugins: {
+      tooltip: {
+        callbacks: {
+          label: (context: { parsed: { y: number } }) =>
+            ` ${formatCurrency(context.parsed.y)}`,
+        },
       },
     },
-  },
-  scales: {
-    y: {
-      ticks: {
-        callback: (value: string | number) => formatCurrency(Number(value)),
+    scales: {
+      y: {
+        ticks: {
+          callback: (value: string | number) => formatCurrency(Number(value)),
+        },
       },
     },
-  },
-}))
+  }),
+)
 </script>
 
 <template>
-  <Card class="target-vs-achievement-chart">
+  <Card class="target-vs-achievement-chart portal-chart-card">
     <template #title>
       <div class="target-vs-achievement-chart__title">
         <i class="pi pi-chart-bar" aria-hidden="true" />
@@ -67,7 +65,7 @@ const chartOptions = computed(() => ({
       </div>
 
       <template v-else>
-        <div v-if="hasData" class="target-vs-achievement-chart__canvas">
+        <div v-if="hasData" class="target-vs-achievement-chart__canvas portal-chart-canvas">
           <Chart type="bar" :data="chartData" :options="chartOptions" />
         </div>
         <p v-else class="target-vs-achievement-chart__empty">
@@ -89,10 +87,6 @@ const chartOptions = computed(() => ({
   display: flex;
   justify-content: center;
   padding: 2rem 0;
-}
-
-.target-vs-achievement-chart__canvas {
-  height: 280px;
 }
 
 .target-vs-achievement-chart__empty {

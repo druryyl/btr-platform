@@ -51,7 +51,7 @@ SELECT EntityAnalyticsCurrentId, SnapshotKey, EntityType, EntityId, EntityCode, 
 FROM BTRPD_EntityAnalytics_Current
 WHERE SnapshotKey = @SnapshotKey
   AND EntityType = @EntityType
-  AND (EntityId IN @EntityIds OR EntityCode IN @EntityIds)";
+  AND EntityId IN @EntityIds";
 
             using (var conn = new SqlConnection(ConnStringHelper.Get(_opt)))
             {
@@ -123,7 +123,7 @@ ORDER BY c.EntityCode";
                     return new EntityIdentity
                     {
                         EntityType = entityType,
-                        EntityId = entityCode,
+                        EntityId = (string)row.EntityId ?? entityCode,
                         EntityCode = entityCode,
                         DisplayName = displayName,
                         IsActive = isActive
@@ -139,16 +139,7 @@ ORDER BY c.EntityCode";
 
             var rows = QueryRows(entityType, entityId);
             if (rows.Count == 0)
-            {
-                return new EntityIdentity
-                {
-                    EntityType = entityType,
-                    EntityId = entityId,
-                    EntityCode = entityId,
-                    DisplayName = entityId,
-                    IsActive = true
-                };
-            }
+                return null;
 
             var entityCode = rows
                 .Select(r => r.EntityCode)
@@ -251,7 +242,7 @@ SELECT MAX(GeneratedAt)
 FROM BTRPD_EntityAnalytics_Current
 WHERE SnapshotKey = @SnapshotKey
   AND EntityType = @EntityType
-  AND (EntityId = @EntityId OR EntityCode = @EntityId)";
+  AND EntityId = @EntityId";
 
             using (var conn = new SqlConnection(ConnStringHelper.Get(_opt)))
             {
@@ -320,7 +311,7 @@ SELECT EntityType, EntityId, EntityCode, PeriodYear, PeriodMonth, KpiId,
        GeneratedAt, LastRefreshLogId
 FROM BTRPD_EntityAnalytics_Monthly
 WHERE EntityType = @EntityType
-  AND (EntityId = @EntityId OR EntityCode = @EntityId)";
+  AND EntityId = @EntityId";
 
             var parameters = new DynamicParameters();
             parameters.Add("EntityType", entityType);
@@ -360,7 +351,7 @@ WHERE EntityType = @EntityType
 SELECT DISTINCT TOP (@MaxPeriods) PeriodYear, PeriodMonth
 FROM BTRPD_EntityAnalytics_Monthly
 WHERE EntityType = @EntityType
-  AND (EntityId = @EntityId OR EntityCode = @EntityId)
+  AND EntityId = @EntityId
 ORDER BY PeriodYear DESC, PeriodMonth DESC";
 
             using (var conn = new SqlConnection(ConnStringHelper.Get(_opt)))
@@ -668,7 +659,7 @@ SELECT EntityType, EntityId, EntityCode, KpiId AS RankMetricKpiId,
        GeneratedAt, LastRefreshLogId
 FROM BTRPD_EntityAnalytics_Ranking
 WHERE EntityType = @EntityType
-  AND (EntityId = @EntityId OR EntityCode = @EntityId)
+  AND EntityId = @EntityId
   AND KpiId = @KpiId
   AND (@FromYear IS NULL OR PeriodYear > @FromYear OR (PeriodYear = @FromYear AND PeriodMonth >= @FromMonth))
   AND (@ToYear IS NULL OR PeriodYear < @ToYear OR (PeriodYear = @ToYear AND PeriodMonth <= @ToMonth))
@@ -707,7 +698,7 @@ SELECT TOP 1 EntityType, EntityId, EntityCode, KpiId AS RankMetricKpiId,
        GeneratedAt, LastRefreshLogId
 FROM BTRPD_EntityAnalytics_Ranking
 WHERE EntityType = @EntityType
-  AND (EntityId = @EntityId OR EntityCode = @EntityId)
+  AND EntityId = @EntityId
   AND KpiId = @KpiId
 ORDER BY PeriodYear DESC, PeriodMonth DESC";
 
@@ -740,7 +731,7 @@ ORDER BY PeriodYear DESC, PeriodMonth DESC";
 SELECT DISTINCT TOP (@MaxPeriods) PeriodYear, PeriodMonth
 FROM BTRPD_EntityAnalytics_Ranking
 WHERE EntityType = @EntityType
-  AND (EntityId = @EntityId OR EntityCode = @EntityId)
+  AND EntityId = @EntityId
   AND KpiId = @KpiId
 ORDER BY PeriodYear DESC, PeriodMonth DESC";
 
@@ -811,7 +802,7 @@ SELECT EntityAnalyticsAttentionId, EntityType, EntityId, EntityCode, SignalCode,
        ConsecutivePeriods, TotalOccurrences, IsActive, GeneratedAt, CreatedAt, UpdatedAt, LastRefreshLogId
 FROM BTRPD_EntityAnalytics_Attention
 WHERE EntityType = @EntityType
-  AND (EntityId = @EntityId OR EntityCode = @EntityId)
+  AND EntityId = @EntityId
 ORDER BY IsActive DESC, LastSeenYear DESC, LastSeenMonth DESC, SignalTitle";
 
             using (var conn = new SqlConnection(ConnStringHelper.Get(_opt)))
@@ -936,7 +927,7 @@ SELECT SourceEntityType, SourceEntityId, SourceEntityCode, RelationshipCode,
        Rank, MetricValue, PeriodYear, PeriodMonth, GeneratedAt, LastRefreshLogId
 FROM BTRPD_EntityAnalytics_Relationship
 WHERE SourceEntityType = @EntityType
-  AND (SourceEntityId = @EntityId OR SourceEntityCode = @EntityId)
+  AND SourceEntityId = @EntityId
   AND (@RelationshipCode IS NULL OR RelationshipCode = @RelationshipCode)
 ORDER BY RelationshipCode, Rank";
 
@@ -1040,7 +1031,7 @@ SELECT EntityType, EntityId, EntityCode, PeriodYear, PeriodMonth, AxisKpiId, Sco
        PeerGroupRuleId, PeerGroupSize, NormalizationMethod, GeneratedAt, LastRefreshLogId
 FROM BTRPD_EntityAnalytics_Radar
 WHERE EntityType = @EntityType
-  AND (EntityId = @EntityId OR EntityCode = @EntityId)
+  AND EntityId = @EntityId
   AND PeriodYear = @PeriodYear
   AND PeriodMonth = @PeriodMonth
 ORDER BY AxisKpiId";
@@ -1077,7 +1068,7 @@ SELECT EntityType, EntityId, EntityCode, PeriodYear, PeriodMonth, AxisKpiId, Sco
        PeerGroupRuleId, PeerGroupSize, NormalizationMethod, GeneratedAt, LastRefreshLogId
 FROM BTRPD_EntityAnalytics_Radar
 WHERE EntityType = @EntityType
-  AND (EntityId IN @EntityIds OR EntityCode IN @EntityIds)
+  AND EntityId IN @EntityIds
   AND PeriodYear = @PeriodYear
   AND PeriodMonth = @PeriodMonth
 ORDER BY EntityId, AxisKpiId";
@@ -1106,7 +1097,7 @@ ORDER BY EntityId, AxisKpiId";
 SELECT DISTINCT TOP (@MaxPeriods) PeriodYear, PeriodMonth
 FROM BTRPD_EntityAnalytics_Radar
 WHERE EntityType = @EntityType
-  AND (EntityId = @EntityId OR EntityCode = @EntityId)
+  AND EntityId = @EntityId
 ORDER BY PeriodYear DESC, PeriodMonth DESC";
 
             using (var conn = new SqlConnection(ConnStringHelper.Get(_opt)))
@@ -1824,7 +1815,7 @@ SELECT EntityAnalyticsCurrentId, SnapshotKey, EntityType, EntityId, EntityCode, 
 FROM BTRPD_EntityAnalytics_Current
 WHERE SnapshotKey = @SnapshotKey
   AND EntityType = @EntityType
-  AND (EntityId = @EntityId OR EntityCode = @EntityId)";
+  AND EntityId = @EntityId";
 
             using (var conn = new SqlConnection(ConnStringHelper.Get(_opt)))
             {

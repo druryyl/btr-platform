@@ -2,6 +2,7 @@ CREATE TABLE BTRPD_CustomerAttention
 (
     CustomerAttentionId VARCHAR(26)   NOT NULL CONSTRAINT DF_BTRPD_CustomerAttention_CustomerAttentionId DEFAULT(''),
     SnapshotKey         VARCHAR(10)   NOT NULL CONSTRAINT DF_BTRPD_CustomerAttention_SnapshotKey DEFAULT('CURRENT'),
+    CustomerId          VARCHAR(13)   NOT NULL CONSTRAINT DF_BTRPD_CustomerAttention_CustomerId DEFAULT(''),
     CustomerCode        VARCHAR(20)   NOT NULL CONSTRAINT DF_BTRPD_CustomerAttention_CustomerCode DEFAULT(''),
     CustomerName        VARCHAR(50)   NOT NULL CONSTRAINT DF_BTRPD_CustomerAttention_CustomerName DEFAULT(''),
     SignalKey           VARCHAR(30)   NOT NULL CONSTRAINT DF_BTRPD_CustomerAttention_SignalKey DEFAULT(''),

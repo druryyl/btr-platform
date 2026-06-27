@@ -83,7 +83,57 @@ namespace btr.test.ReportingContext
 
             section.IsAvailable.Should().BeTrue();
             section.Axes.Should().ContainSingle(a => a.KpiId == "CU-KPI-009" && a.Score == 88m);
-            section.Axes.First().DisplayName.Should().Be("Revenue");
+            section.Axes.First().DisplayName.Should().Be("Performance");
+            section.Axes.First().SignatureDimensionKey.Should().Be(EntityAnalyticsSignatureDimensions.Performance);
+        }
+
+        [Fact]
+        public void BuildRadarSection_WithPeerScores_ReturnsPeerAverage()
+        {
+            SeedPeerGroup("Jakarta", 5, 1000m);
+            var scores = new[] { 60m, 70m, 80m, 90m, 100m };
+            for (var i = 1; i <= 5; i++)
+            {
+                _repository.RadarRows.Add(new EntityAnalyticsRadarScoreRow
+                {
+                    EntityType = EntityTypeCode.Customer,
+                    EntityId = $"C00{i}",
+                    PeriodYear = 2026,
+                    PeriodMonth = 6,
+                    AxisKpiId = "CU-KPI-009",
+                    Score = scores[i - 1],
+                    PeerGroupRuleId = PeerGroupResolver.CustomerWilayah,
+                    PeerGroupSize = 5,
+                    NormalizationMethod = RadarNormalizationMethod.PeerPercentile
+                });
+            }
+
+            var section = _engine.BuildRadarSection(EntityTypeCode.Customer, "C001");
+
+            section.IsAvailable.Should().BeTrue();
+            section.PeerAverageScores.Should().NotBeNull();
+            section.PeerAverageScores[0].Should().Be(80m);
+        }
+
+        [Fact]
+        public void BuildRadarSection_SmallPeerGroup_PeerAverageIsNull()
+        {
+            _repository.RadarRows.Add(new EntityAnalyticsRadarScoreRow
+            {
+                EntityType = EntityTypeCode.Customer,
+                EntityId = "C001",
+                PeriodYear = 2026,
+                PeriodMonth = 6,
+                AxisKpiId = "CU-KPI-009",
+                Score = 88m,
+                PeerGroupRuleId = PeerGroupResolver.CustomerWilayah,
+                PeerGroupSize = 3,
+                NormalizationMethod = RadarNormalizationMethod.PeerPercentile
+            });
+
+            var section = _engine.BuildRadarSection(EntityTypeCode.Customer, "C001");
+
+            section.PeerAverageScores.Should().BeNull();
         }
 
         [Fact]

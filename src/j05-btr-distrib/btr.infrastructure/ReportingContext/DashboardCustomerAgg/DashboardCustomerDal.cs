@@ -17,12 +17,12 @@ namespace btr.infrastructure.ReportingContext.DashboardCustomerAgg
         private const string SalesReportRoute = "/reports/sales";
         private const string PiutangReportRoute = "/reports/piutang";
 
-        private static string BuildCustomerProfileRoute(string customerCode)
+        private static string BuildCustomerProfileRoute(string customerId)
         {
-            if (string.IsNullOrWhiteSpace(customerCode))
+            if (string.IsNullOrWhiteSpace(customerId))
                 return null;
 
-            return "/analytics/customers/" + Uri.EscapeDataString(customerCode.Trim());
+            return "/analytics/customers/" + Uri.EscapeDataString(customerId.Trim());
         }
 
         private readonly IDashboardCustomerSnapshotDal _snapshotDal;
@@ -93,12 +93,13 @@ namespace btr.infrastructure.ReportingContext.DashboardCustomerAgg
                         .Select(r => new DashboardCustomerRankingRow
                         {
                             Rank = r.Rank,
+                            CustomerId = r.CustomerId,
                             CustomerCode = r.CustomerCode,
                             CustomerName = r.CustomerName,
                             Amount = r.OmzetAmount,
                             PercentOfTotal = r.PercentOfTotal,
                             ReportRoute = SalesReportRoute,
-                            ProfileRoute = BuildCustomerProfileRoute(r.CustomerCode),
+                            ProfileRoute = BuildCustomerProfileRoute(r.CustomerId),
                             Investigation = InvestigationMetadataBuilder.Build(
                                 InvestigationRegistry.SignalRankingCustomerTopOmzet,
                                 InvestigationMetadataBuilder.EntityTypeCustomer,
@@ -110,12 +111,13 @@ namespace btr.infrastructure.ReportingContext.DashboardCustomerAgg
                         .Select(r => new DashboardCustomerRankingRow
                         {
                             Rank = r.Rank,
+                            CustomerId = r.CustomerId,
                             CustomerCode = r.CustomerCode,
                             CustomerName = r.CustomerName,
                             Amount = r.OutstandingBalance,
                             PercentOfTotal = r.PercentOfTotal,
                             ReportRoute = PiutangReportRoute,
-                            ProfileRoute = BuildCustomerProfileRoute(r.CustomerCode),
+                            ProfileRoute = BuildCustomerProfileRoute(r.CustomerId),
                             Investigation = InvestigationMetadataBuilder.Build(
                                 InvestigationRegistry.SignalRankingCustomerTopPiutang,
                                 InvestigationMetadataBuilder.EntityTypeCustomer,
@@ -133,6 +135,7 @@ namespace btr.infrastructure.ReportingContext.DashboardCustomerAgg
         {
             return new DashboardCustomerAttentionItem
             {
+                CustomerId = row.CustomerId,
                 CustomerCode = row.CustomerCode,
                 CustomerName = row.CustomerName,
                 SignalKey = row.SignalKey,
@@ -141,7 +144,7 @@ namespace btr.infrastructure.ReportingContext.DashboardCustomerAgg
                 ValueText = row.ValueText,
                 WilayahName = row.WilayahName,
                 ReportRoute = ResolveReportRoute(row.SignalKey),
-                ProfileRoute = BuildCustomerProfileRoute(row.CustomerCode),
+                ProfileRoute = BuildCustomerProfileRoute(row.CustomerId),
                 RequiresAttention = true,
                 Investigation = InvestigationMetadataBuilder.Build(
                     row.SignalKey,

@@ -25,7 +25,9 @@ namespace btr.infrastructure.ReportingContext.DashboardSnapshotAgg
 SELECT
     ISNULL(ee.SalesPersonId, '') AS SalesPersonId,
     ISNULL(ee.SalesPersonCode, '') AS SalesPersonCode,
+    ISNULL(ee.SalesPersonName, '') AS SalesPersonName,
     ISNULL(dd.CustomerCode, '') AS CustomerCode,
+    ISNULL(dd.CustomerName, '') AS CustomerName,
     ISNULL(aa.BrgId, '') AS BrgId,
     ISNULL(cc.BrgCode, '') AS BrgCode,
     ISNULL(cc.BrgName, '') AS BrgName,

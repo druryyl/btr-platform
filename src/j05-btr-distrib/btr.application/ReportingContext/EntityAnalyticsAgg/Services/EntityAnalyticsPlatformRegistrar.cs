@@ -19,7 +19,7 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Services
                 RelationshipPackId = "customer-relationships",
                 PeerGroupRuleId = "customer-wilayah",
                 WorkerDomainHook = "Customer",
-                ProfileRouteTemplate = "/analytics/customers/{code}"
+                ProfileRouteTemplate = "/analytics/customers/{id}"
             });
 
             entityTypes.Register(new EntityTypeRegistration
@@ -30,7 +30,7 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Services
                 RelationshipPackId = "salesman-relationships",
                 PeerGroupRuleId = "salesman-all-active",
                 WorkerDomainHook = "Salesman",
-                ProfileRouteTemplate = "/analytics/salesmen/{code}"
+                ProfileRouteTemplate = "/analytics/salesmen/{id}"
             });
 
             entityTypes.Register(new EntityTypeRegistration
@@ -41,7 +41,7 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Services
                 RelationshipPackId = "item-relationships",
                 PeerGroupRuleId = "item-category",
                 WorkerDomainHook = "InventoryRisk",
-                ProfileRouteTemplate = "/analytics/items/{code}"
+                ProfileRouteTemplate = "/analytics/items/{id}"
             });
 
             entityTypes.Register(new EntityTypeRegistration
@@ -52,7 +52,7 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Services
                 RelationshipPackId = "supplier-relationships",
                 PeerGroupRuleId = "supplier-all-active",
                 WorkerDomainHook = "PurchasingManagement",
-                ProfileRouteTemplate = "/analytics/suppliers/{code}"
+                ProfileRouteTemplate = "/analytics/suppliers/{id}"
             });
         }
     }
