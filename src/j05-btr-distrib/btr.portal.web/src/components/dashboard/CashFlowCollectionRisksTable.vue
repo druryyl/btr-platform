@@ -40,7 +40,7 @@ const rows = computed(() => props.risks ?? [])
         >
           <Column field="RiskLabel" header="Risk Type" />
           <Column field="EntityName" header="Entity" />
-          <Column header="Amount">
+          <Column header="Amount" body-class="dash-numeric" header-class="dash-numeric">
             <template #body="{ data }">
               {{ formatCurrency(data.Amount) }}
             </template>
@@ -69,6 +69,24 @@ const rows = computed(() => props.risks ?? [])
 </template>
 
 <style scoped>
+.cash-flow-collection-risks-table {
+  border-radius: var(--dashboard-radius);
+  box-shadow: var(--dashboard-shadow-idle);
+  transition: box-shadow var(--dashboard-transition);
+}
+
+.cash-flow-collection-risks-table__grid :deep(.p-datatable-thead > tr > th) {
+  background: var(--dashboard-table-header-bg);
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: var(--p-text-muted-color);
+  border-bottom: 1px solid var(--p-surface-200);
+}
+
+.cash-flow-collection-risks-table__grid :deep(.p-datatable-tbody > tr:hover) {
+  background: var(--dashboard-table-row-hover);
+}
+
 .cash-flow-collection-risks-table__title {
   display: flex;
   align-items: center;

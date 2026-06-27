@@ -48,7 +48,7 @@ function urgencySeverity(urgency: string): 'danger' | 'warn' | 'info' | 'seconda
         >
           <Column field="BrgName" header="Item" />
           <Column field="SignalLabel" header="Signal" />
-          <Column header="DOS">
+          <Column header="DOS" body-class="dash-numeric" header-class="dash-numeric">
             <template #body="{ data }">
               {{ data.DaysOfSupply != null ? data.DaysOfSupply.toFixed(1) : '—' }}
             </template>
@@ -58,7 +58,7 @@ function urgencySeverity(urgency: string): 'danger' | 'warn' | 'info' | 'seconda
               {{ data.StockOutDate ? formatDate(data.StockOutDate) : '—' }}
             </template>
           </Column>
-          <Column header="Value">
+          <Column header="Value" body-class="dash-numeric" header-class="dash-numeric">
             <template #body="{ data }">
               {{ formatCurrency(data.ValueAmount) }}
             </template>
@@ -90,6 +90,24 @@ function urgencySeverity(urgency: string): 'danger' | 'warn' | 'info' | 'seconda
 </template>
 
 <style scoped>
+.inventory-forecast-risks-table {
+  border-radius: var(--dashboard-radius);
+  box-shadow: var(--dashboard-shadow-idle);
+  transition: box-shadow var(--dashboard-transition);
+}
+
+.inventory-forecast-risks-table__grid :deep(.p-datatable-thead > tr > th) {
+  background: var(--dashboard-table-header-bg);
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: var(--p-text-muted-color);
+  border-bottom: 1px solid var(--p-surface-200);
+}
+
+.inventory-forecast-risks-table__grid :deep(.p-datatable-tbody > tr:hover) {
+  background: var(--dashboard-table-row-hover);
+}
+
 .inventory-forecast-risks-table__title {
   display: flex;
   align-items: center;

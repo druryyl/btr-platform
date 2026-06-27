@@ -1,72 +1,162 @@
 <script setup lang="ts">
-import KpiCard from '@/components/KpiCard.vue'
+import { computed } from 'vue'
+import DashboardMetricCard, {
+  type KpiChipStatus,
+} from '@/components/dashboard/primitives/DashboardMetricCard.vue'
 import type { FieldActivityTeamKpis } from '@/models/fieldActivity'
 import { formatCurrency, formatNumber, formatPercent } from '@/services/formatters'
 
-defineProps<{
+const props = defineProps<{
   kpis: FieldActivityTeamKpis | null
   loading?: boolean
 }>()
+
+type ChipResult = { label: string; status: KpiChipStatus }
+
+function executionChip(val: number | null | undefined): ChipResult {
+  if (val == null) return { label: 'No Data', status: 'unknown' }
+  if (val >= 100) return { label: 'On Target', status: 'healthy' }
+  if (val >= 80) return { label: 'Good', status: 'stable' }
+  if (val >= 60) return { label: 'Review', status: 'warning' }
+  return { label: 'Low', status: 'critical' }
+}
+
+function gpsChip(val: number | null | undefined): ChipResult {
+  if (val == null) return { label: 'No Data', status: 'unknown' }
+  if (val >= 95) return { label: 'On Target', status: 'healthy' }
+  if (val >= 80) return { label: 'Good', status: 'stable' }
+  return { label: 'Review', status: 'warning' }
+}
+
+function effectiveRateChip(val: number | null | undefined): ChipResult {
+  if (val == null) return { label: 'No Data', status: 'unknown' }
+  if (val >= 70) return { label: 'On Target', status: 'healthy' }
+  if (val >= 50) return { label: 'Good', status: 'stable' }
+  if (val >= 30) return { label: 'Review', status: 'warning' }
+  return { label: 'Low', status: 'critical' }
+}
+
+const execChip = computed(() => executionChip(props.kpis?.VisitExecutionPercent))
+const gpsRateChip = computed(() => gpsChip(props.kpis?.GpsValidRate))
+const effRateChip = computed(() => effectiveRateChip(props.kpis?.EffectiveCallRate))
 </script>
 
 <template>
-  <div class="field-activity-team-kpi-strip">
-    <KpiCard title="Active Salesmen" icon="pi pi-users" :loading="loading">
-      <div class="field-activity-team-kpi-strip__value">
-        {{ formatNumber(kpis?.ActiveSalesmenCount ?? 0) }}
-      </div>
-    </KpiCard>
-    <KpiCard title="Planned" icon="pi pi-calendar" :loading="loading">
-      <div class="field-activity-team-kpi-strip__value">{{ formatNumber(kpis?.PlannedVisits ?? 0) }}</div>
-    </KpiCard>
-    <KpiCard title="Actual" icon="pi pi-check-circle" :loading="loading">
-      <div class="field-activity-team-kpi-strip__value">{{ formatNumber(kpis?.ActualVisits ?? 0) }}</div>
-    </KpiCard>
-    <KpiCard title="Execution %" icon="pi pi-percentage" :loading="loading">
-      <div class="field-activity-team-kpi-strip__value">
-        {{ kpis ? formatPercent(kpis.VisitExecutionPercent) : '—' }}
-      </div>
-    </KpiCard>
-    <KpiCard title="Effective Calls" icon="pi pi-shopping-cart" :loading="loading">
-      <div class="field-activity-team-kpi-strip__value">{{ formatNumber(kpis?.EffectiveCalls ?? 0) }}</div>
-    </KpiCard>
-    <KpiCard title="Effective Call Rate" icon="pi pi-chart-line" :loading="loading">
-      <div class="field-activity-team-kpi-strip__value">
-        {{ kpis ? formatPercent(kpis.EffectiveCallRate) : '—' }}
-      </div>
-    </KpiCard>
-    <KpiCard title="Missed" icon="pi pi-times-circle" :loading="loading">
-      <div class="field-activity-team-kpi-strip__value">{{ formatNumber(kpis?.MissedVisits ?? 0) }}</div>
-    </KpiCard>
-    <KpiCard title="Unplanned" icon="pi pi-map-marker" :loading="loading">
-      <div class="field-activity-team-kpi-strip__value">{{ formatNumber(kpis?.UnplannedVisits ?? 0) }}</div>
-    </KpiCard>
-    <KpiCard title="GPS Valid Rate" icon="pi pi-compass" :loading="loading">
-      <div class="field-activity-team-kpi-strip__value">
-        {{ kpis ? formatPercent(kpis.GpsValidRate) : '—' }}
-      </div>
-    </KpiCard>
-    <KpiCard title="Orders" icon="pi pi-receipt" :loading="loading">
-      <div class="field-activity-team-kpi-strip__value">{{ formatNumber(kpis?.TotalOrders ?? 0) }}</div>
-    </KpiCard>
-    <KpiCard title="Order Value" icon="pi pi-wallet" :loading="loading">
-      <div class="field-activity-team-kpi-strip__value">
-        {{ formatCurrency(kpis?.TotalOmzet ?? 0) }}
-      </div>
-    </KpiCard>
+  <div class="fa-team-kpi-strip">
+    <!-- Execution group: Active Salesmen / Planned / Actual / Execution % -->
+    <DashboardMetricCard
+      title="Active Salesmen"
+      :value="formatNumber(kpis?.ActiveSalesmenCount ?? 0)"
+      icon="pi pi-users"
+      kpi-group="execution"
+      subtitle="Field active today"
+      :loading="loading"
+    />
+    <DashboardMetricCard
+      title="Planned"
+      :value="formatNumber(kpis?.PlannedVisits ?? 0)"
+      icon="pi pi-calendar"
+      kpi-group="execution"
+      subtitle="Scheduled visits"
+      :loading="loading"
+    />
+    <DashboardMetricCard
+      title="Actual"
+      :value="formatNumber(kpis?.ActualVisits ?? 0)"
+      icon="pi pi-check-circle"
+      kpi-group="execution"
+      subtitle="Executed visits"
+      size="large"
+      :loading="loading"
+    />
+    <DashboardMetricCard
+      title="Execution %"
+      :value="kpis ? formatPercent(kpis.VisitExecutionPercent) : '—'"
+      icon="pi pi-percentage"
+      kpi-group="execution"
+      subtitle="vs plan"
+      :progress="kpis?.VisitExecutionPercent"
+      :chip-label="execChip.label"
+      :chip-status="execChip.status"
+      :loading="loading"
+    />
+
+    <!-- Productivity group: Effective Calls / Effective Call Rate / Orders / Order Value -->
+    <DashboardMetricCard
+      title="Effective Calls"
+      :value="formatNumber(kpis?.EffectiveCalls ?? 0)"
+      icon="pi pi-shopping-cart"
+      kpi-group="productivity"
+      subtitle="Customer contacted"
+      :loading="loading"
+    />
+    <DashboardMetricCard
+      title="Effective Call Rate"
+      :value="kpis ? formatPercent(kpis.EffectiveCallRate) : '—'"
+      icon="pi pi-chart-line"
+      kpi-group="productivity"
+      subtitle="of actual visits"
+      :progress="kpis?.EffectiveCallRate"
+      :chip-label="effRateChip.label"
+      :chip-status="effRateChip.status"
+      :loading="loading"
+    />
+    <DashboardMetricCard
+      title="Orders"
+      :value="formatNumber(kpis?.TotalOrders ?? 0)"
+      icon="pi pi-receipt"
+      kpi-group="productivity"
+      subtitle="Sales orders"
+      size="large"
+      :loading="loading"
+    />
+    <DashboardMetricCard
+      title="Order Value"
+      :value="formatCurrency(kpis?.TotalOmzet ?? 0)"
+      icon="pi pi-wallet"
+      kpi-group="productivity"
+      subtitle="Revenue today"
+      size="large"
+      :loading="loading"
+    />
+
+    <!-- Quality group: GPS Valid Rate -->
+    <DashboardMetricCard
+      title="GPS Valid Rate"
+      :value="kpis ? formatPercent(kpis.GpsValidRate) : '—'"
+      icon="pi pi-compass"
+      kpi-group="quality"
+      subtitle="Target >95%"
+      :progress="kpis?.GpsValidRate"
+      :chip-label="gpsRateChip.label"
+      :chip-status="gpsRateChip.status"
+      :loading="loading"
+    />
+
+    <!-- Issues group: Missed / Unplanned -->
+    <DashboardMetricCard
+      title="Missed"
+      :value="formatNumber(kpis?.MissedVisits ?? 0)"
+      icon="pi pi-times-circle"
+      kpi-group="issues"
+      subtitle="Planned but skipped"
+      :loading="loading"
+    />
+    <DashboardMetricCard
+      title="Unplanned"
+      :value="formatNumber(kpis?.UnplannedVisits ?? 0)"
+      icon="pi pi-map-marker"
+      kpi-group="issues"
+      subtitle="Off-schedule"
+      :loading="loading"
+    />
   </div>
 </template>
 
 <style scoped>
-.field-activity-team-kpi-strip {
+.fa-team-kpi-strip {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(7.5rem, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
   gap: 0.75rem;
-}
-
-.field-activity-team-kpi-strip__value {
-  font-size: 1.35rem;
-  font-weight: 700;
-  line-height: 1.2;
 }
 </style>

@@ -41,6 +41,7 @@ const canNavigate = computed(
       :title="title"
       :icon="icon"
       :loading="loading"
+      domain="customer"
       class="customer-attention-card"
       :class="{
         'customer-attention-card--attention': requiresAttention,
@@ -60,6 +61,7 @@ const canNavigate = computed(
       :title="title"
       :icon="icon"
       :loading="loading"
+      domain="customer"
       class="customer-attention-card"
       :class="{
         'customer-attention-card--attention': requiresAttention,
@@ -74,6 +76,7 @@ const canNavigate = computed(
       :title="title"
       :icon="icon"
       :loading="loading"
+      domain="customer"
       class="customer-attention-card"
       :class="{
         'customer-attention-card--attention': requiresAttention,

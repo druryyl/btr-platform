@@ -42,7 +42,7 @@ const rows = computed(() => props.customers ?? [])
           :rows="10"
           class="customer-risk-forecast-customers-table__grid"
         >
-          <Column header="Priority" field="RiskPriorityScore" />
+          <Column header="Priority" field="RiskPriorityScore" body-class="dash-numeric" header-class="dash-numeric" />
           <Column header="Category">
             <template #body="{ data }">
               <Tag
@@ -55,23 +55,23 @@ const rows = computed(() => props.customers ?? [])
           <Column field="CustomerName" header="Customer" />
           <Column field="WilayahName" header="Wilayah" />
           <Column field="SalesPersonName" header="Salesman" />
-          <Column header="Open Balance">
+          <Column header="Open Balance" body-class="dash-numeric" header-class="dash-numeric">
             <template #body="{ data }">
               {{ formatCurrency(data.OpenBalance) }}
             </template>
           </Column>
-          <Column header="Overdue">
+          <Column header="Overdue" body-class="dash-numeric" header-class="dash-numeric">
             <template #body="{ data }">
               {{ formatCurrency(data.OverdueBalance) }}
             </template>
           </Column>
-          <Column header="Due in Horizon">
+          <Column header="Due in Horizon" body-class="dash-numeric" header-class="dash-numeric">
             <template #body="{ data }">
               {{ formatCurrency(data.DueWithinHorizon) }}
             </template>
           </Column>
           <Column field="PrimarySignalLabel" header="Primary Signal" />
-          <Column header="Decline">
+          <Column header="Decline" body-class="dash-numeric" header-class="dash-numeric">
             <template #body="{ data }">
               {{ data.DeclineRatio != null ? formatPercent(data.DeclineRatio * 100) : '—' }}
             </template>
@@ -105,6 +105,24 @@ const rows = computed(() => props.customers ?? [])
 </template>
 
 <style scoped>
+.customer-risk-forecast-customers-table {
+  border-radius: var(--dashboard-radius);
+  box-shadow: var(--dashboard-shadow-idle);
+  transition: box-shadow var(--dashboard-transition);
+}
+
+.customer-risk-forecast-customers-table__grid :deep(.p-datatable-thead > tr > th) {
+  background: var(--dashboard-table-header-bg);
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: var(--p-text-muted-color);
+  border-bottom: 1px solid var(--p-surface-200);
+}
+
+.customer-risk-forecast-customers-table__grid :deep(.p-datatable-tbody > tr:hover) {
+  background: var(--dashboard-table-row-hover);
+}
+
 .customer-risk-forecast-customers-table__title {
   display: flex;
   align-items: center;

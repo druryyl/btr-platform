@@ -1,0 +1,130 @@
+/*
+ * BTR Portal — Dashboard design tokens
+ * Visual language for executive and domain dashboards.
+ */
+
+:root {
+  /* Border radius */
+  --dashboard-radius: 11px;
+  --dashboard-radius-sm: 8px;
+  --dashboard-radius-chip: 999px;
+
+  /* Elevation */
+  --dashboard-shadow-idle: 0 1px 3px rgb(15 23 42 / 6%), 0 1px 2px rgb(15 23 42 / 4%);
+  --dashboard-shadow-hover: 0 4px 12px rgb(15 23 42 / 8%), 0 2px 4px rgb(15 23 42 / 4%);
+  --dashboard-transition: 175ms ease;
+
+  /* Domain accent colors */
+  --domain-sales-color: #2563eb;
+  --domain-sales-tint: #f8fbff;
+  --domain-finance-color: #dc2626;
+  --domain-finance-tint: #fff8f8;
+  --domain-collection-color: #ea580c;
+  --domain-collection-tint: #fff8f3;
+  --domain-inventory-color: #16a34a;
+  --domain-inventory-tint: #f7fff7;
+  --domain-purchasing-color: #9333ea;
+  --domain-purchasing-tint: #faf5ff;
+  --domain-customer-color: #0891b2;
+  --domain-customer-tint: #f0fdfa;
+  --domain-salesman-color: #4f46e5;
+  --domain-salesman-tint: #f5f3ff;
+  --domain-alert-color: #be123c;
+  --domain-alert-tint: #fff1f2;
+  --domain-portfolio-color: #0891b2;
+  --domain-portfolio-tint: #f0fdfa;
+
+  /* KPI status colors */
+  --kpi-status-healthy-color: #15803d;
+  --kpi-status-healthy-bg: #dcfce7;
+  --kpi-status-warning-color: #c2410c;
+  --kpi-status-warning-bg: #ffedd5;
+  --kpi-status-critical-color: #b91c1c;
+  --kpi-status-critical-bg: #fee2e2;
+  --kpi-status-unknown-color: #64748b;
+  --kpi-status-unknown-bg: #f1f5f9;
+  --kpi-status-stable-color: #0369a1;
+  --kpi-status-stable-bg: #e0f2fe;
+
+  /* KPI semantic groups — used by DashboardMetricCard */
+  --kpi-group-execution-color: #2563eb;
+  --kpi-group-productivity-color: #7c3aed;
+  --kpi-group-quality-color: #15803d;
+  --kpi-group-issues-color: #ea580c;
+
+  /* Ranking medals */
+  --rank-gold: #d97706;
+  --rank-gold-bg: #fef3c7;
+  --rank-silver: #64748b;
+  --rank-silver-bg: #f1f5f9;
+  --rank-bronze: #b45309;
+  --rank-bronze-bg: #ffedd5;
+
+  /* Table */
+  --dashboard-table-header-bg: #f8fafc;
+  --dashboard-table-row-alt: #fafbfc;
+  --dashboard-table-row-hover: #f0f7ff;
+  --dashboard-table-row-top: rgb(37 99 235 / 3%);
+}
+
+/* Hero card KPI emphasis */
+.kpi-card--hero .kpi-value--primary {
+  font-size: 1.875rem;
+}
+
+/* Tabular numerals — applied globally to any legacy .metric__value */
+.metric__value {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Utility: right-aligned tabular numeric cell (for ad-hoc table cells) */
+.dash-numeric {
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+/* Domain utility classes — applied via data-domain attribute */
+[data-domain='sales'] {
+  --dashboard-domain-color: var(--domain-sales-color);
+  --dashboard-domain-tint: var(--domain-sales-tint);
+}
+
+[data-domain='finance'] {
+  --dashboard-domain-color: var(--domain-finance-color);
+  --dashboard-domain-tint: var(--domain-finance-tint);
+}
+
+[data-domain='collection'] {
+  --dashboard-domain-color: var(--domain-collection-color);
+  --dashboard-domain-tint: var(--domain-collection-tint);
+}
+
+[data-domain='inventory'] {
+  --dashboard-domain-color: var(--domain-inventory-color);
+  --dashboard-domain-tint: var(--domain-inventory-tint);
+}
+
+[data-domain='purchasing'] {
+  --dashboard-domain-color: var(--domain-purchasing-color);
+  --dashboard-domain-tint: var(--domain-purchasing-tint);
+}
+
+[data-domain='customer'] {
+  --dashboard-domain-color: var(--domain-customer-color);
+  --dashboard-domain-tint: var(--domain-customer-tint);
+}
+
+[data-domain='salesman'] {
+  --dashboard-domain-color: var(--domain-salesman-color);
+  --dashboard-domain-tint: var(--domain-salesman-tint);
+}
+
+[data-domain='alert'] {
+  --dashboard-domain-color: var(--domain-alert-color);
+  --dashboard-domain-tint: var(--domain-alert-tint);
+}
+
+[data-domain='portfolio'] {
+  --dashboard-domain-color: var(--domain-portfolio-color);
+  --dashboard-domain-tint: var(--domain-portfolio-tint);
+}

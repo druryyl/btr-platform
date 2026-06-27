@@ -5,6 +5,7 @@ import Message from 'primevue/message'
 import DashboardDetailLayout from '@/components/dashboard/DashboardDetailLayout.vue'
 import PlatformSnapshotHealthBanners from '@/components/platform/PlatformSnapshotHealthBanners.vue'
 import { usePresentationStore } from '@/stores/presentationStore'
+import DashboardMetric from '@/components/dashboard/primitives/DashboardMetric.vue'
 import ExecutiveAttentionCard from '@/components/dashboard/ExecutiveAttentionCard.vue'
 import KpiCard from '@/components/KpiCard.vue'
 import AgingPieChart from '@/components/dashboard/AgingPieChart.vue'
@@ -163,55 +164,71 @@ onMounted(() => {
         <KpiCard
           title="Dead Stock Item Count"
           icon="pi pi-box"
+          domain="inventory"
           :loading="dashboard.loading"
           class="inventory-risk-dashboard__kpi-card--clickable"
           @click="navigateToAttentionList('DeadStock')"
         >
-          <span class="metric__value">
-            {{ cards ? formatNumber(cards.DeadStockItemCount) : '—' }}
-          </span>
+          <DashboardMetric
+            label="Dead Stock Item Count"
+            :value="cards ? formatNumber(cards.DeadStockItemCount) : '—'"
+            :empty="!cards"
+          />
         </KpiCard>
         <KpiCard
           title="Dead Stock Value"
           icon="pi pi-wallet"
+          domain="inventory"
           :loading="dashboard.loading"
           class="inventory-risk-dashboard__kpi-card--clickable"
           @click="navigateToAttentionList('DeadStock')"
         >
-          <span class="metric__value">
-            {{ cards ? formatCurrency(cards.DeadStockValue) : '—' }}
-          </span>
+          <DashboardMetric
+            label="Dead Stock Value"
+            :value="cards ? formatCurrency(cards.DeadStockValue) : '—'"
+            :empty="!cards"
+          />
         </KpiCard>
         <KpiCard
           title="Slow Moving Item Count"
           icon="pi pi-clock"
+          domain="inventory"
           :loading="dashboard.loading"
           class="inventory-risk-dashboard__kpi-card--clickable"
           @click="navigateToAttentionList('SlowMoving')"
         >
-          <span class="metric__value">
-            {{ cards ? formatNumber(cards.SlowMovingItemCount) : '—' }}
-          </span>
+          <DashboardMetric
+            label="Slow Moving Item Count"
+            :value="cards ? formatNumber(cards.SlowMovingItemCount) : '—'"
+            :empty="!cards"
+          />
         </KpiCard>
         <KpiCard
           title="Slow Moving Value"
           icon="pi pi-chart-line"
+          domain="inventory"
           :loading="dashboard.loading"
           class="inventory-risk-dashboard__kpi-card--clickable"
           @click="navigateToAttentionList('SlowMoving')"
         >
-          <span class="metric__value">
-            {{ cards ? formatCurrency(cards.SlowMovingValue) : '—' }}
-          </span>
+          <DashboardMetric
+            label="Slow Moving Value"
+            :value="cards ? formatCurrency(cards.SlowMovingValue) : '—'"
+            :empty="!cards"
+          />
         </KpiCard>
         <KpiCard
           title="At-Risk Inventory %"
           icon="pi pi-percentage"
+          domain="inventory"
           :loading="dashboard.loading"
         >
-          <span class="metric__value">
-            {{ cards ? formatPercent(cards.AtRiskInventoryPercent) : '—' }}
-          </span>
+          <DashboardMetric
+            label="At-Risk Inventory %"
+            :value="cards ? formatPercent(cards.AtRiskInventoryPercent) : '—'"
+            :empty="!cards"
+            :progress="cards?.AtRiskInventoryPercent ?? null"
+          />
         </KpiCard>
       </div>
 
@@ -219,18 +236,18 @@ onMounted(() => {
         v-if="cards?.RequiresAttention"
         title="Inventory Risk"
         icon="pi pi-exclamation-triangle"
+        domain="inventory"
         route="/dashboard/inventory-risk"
         :loading="dashboard.loading"
         :requires-attention="cards.RequiresAttention"
         :unavailable="unavailable"
         class="inventory-risk-dashboard__attention-card"
       >
-        <div class="metric">
-          <span class="metric__label">At-Risk Inventory</span>
-          <span class="metric__value">
-            {{ formatPercent(cards.AtRiskInventoryPercent) }}
-          </span>
-        </div>
+        <DashboardMetric
+          label="At-Risk Inventory"
+          :value="formatPercent(cards.AtRiskInventoryPercent)"
+          :progress="cards.AtRiskInventoryPercent"
+        />
       </ExecutiveAttentionCard>
     </section>
 
@@ -288,6 +305,7 @@ onMounted(() => {
           percent-field="PercentOfAtRisk"
           empty-message="No dead stock ranking data."
           :click-hint="PROFILE_ROW_CLICK_HINT"
+          domain="inventory"
           clickable
           @row-click="onRankingRowClick"
         />
@@ -300,6 +318,7 @@ onMounted(() => {
           percent-field="PercentOfAtRisk"
           empty-message="No slow moving ranking data."
           :click-hint="PROFILE_ROW_CLICK_HINT"
+          domain="inventory"
           clickable
           @row-click="onRankingRowClick"
         />
@@ -379,16 +398,4 @@ onMounted(() => {
   gap: 1rem;
 }
 
-.metric__label {
-  display: block;
-  font-size: 0.875rem;
-  color: var(--p-text-muted-color);
-}
-
-.metric__value {
-  display: block;
-  font-size: 1.25rem;
-  font-weight: 700;
-  margin-top: 0.25rem;
-}
 </style>

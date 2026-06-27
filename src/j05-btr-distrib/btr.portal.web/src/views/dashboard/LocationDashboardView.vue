@@ -5,6 +5,7 @@ import { computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 
 import DashboardDetailLayout from '@/components/dashboard/DashboardDetailLayout.vue'
+import DashboardMetric from '@/components/dashboard/primitives/DashboardMetric.vue'
 import PlatformSnapshotHealthBanners from '@/components/platform/PlatformSnapshotHealthBanners.vue'
 
 import LocationAttentionCardGroup from '@/components/dashboard/LocationAttentionCardGroup.vue'
@@ -165,149 +166,74 @@ onMounted(() => {
       <div class="location-dashboard__cards">
 
         <LocationAttentionCardGroup
-
           title="Inventory Concentration"
-
           icon="pi pi-box"
-
+          domain="inventory"
           :loading="dashboard.loading"
-
           :unavailable="unavailable"
-
         >
-
-          <div class="metric">
-
-            <span class="metric__label">Top Warehouse Inventory %</span>
-
-            <span class="metric__value">
-
-              {{ cards?.Top1WarehouseInventoryPercent != null ? formatPercent(cards.Top1WarehouseInventoryPercent) : '—' }}
-
-            </span>
-
-          </div>
-
-          <div class="metric">
-
-            <span class="metric__label">Top 3 Warehouse Inventory %</span>
-
-            <span class="metric__value">
-
-              {{ cards?.Top3WarehouseInventoryPercent != null ? formatPercent(cards.Top3WarehouseInventoryPercent) : '—' }}
-
-            </span>
-
-          </div>
-
+          <DashboardMetric
+            label="Top Warehouse Inventory %"
+            :value="cards?.Top1WarehouseInventoryPercent != null ? formatPercent(cards.Top1WarehouseInventoryPercent) : '—'"
+            :empty="cards?.Top1WarehouseInventoryPercent == null"
+          />
+          <DashboardMetric
+            label="Top 3 Warehouse Inventory %"
+            :value="cards?.Top3WarehouseInventoryPercent != null ? formatPercent(cards.Top3WarehouseInventoryPercent) : '—'"
+            :empty="cards?.Top3WarehouseInventoryPercent == null"
+          />
         </LocationAttentionCardGroup>
 
-
-
         <LocationAttentionCardGroup
-
           title="At-Risk Concentration"
-
           icon="pi pi-exclamation-triangle"
-
+          domain="alert"
           :loading="dashboard.loading"
-
           :unavailable="unavailable"
-
         >
-
-          <div class="metric">
-
-            <span class="metric__label">Top Warehouse At-Risk %</span>
-
-            <span class="metric__value">
-
-              {{ cards?.Top1WarehouseAtRiskPercent != null ? formatPercent(cards.Top1WarehouseAtRiskPercent) : '—' }}
-
-            </span>
-
-          </div>
-
+          <DashboardMetric
+            label="Top Warehouse At-Risk %"
+            :value="cards?.Top1WarehouseAtRiskPercent != null ? formatPercent(cards.Top1WarehouseAtRiskPercent) : '—'"
+            :empty="cards?.Top1WarehouseAtRiskPercent == null"
+          />
         </LocationAttentionCardGroup>
 
-
-
         <LocationAttentionCardGroup
-
           title="Sales Concentration"
-
           icon="pi pi-chart-line"
-
+          domain="sales"
           :loading="dashboard.loading"
-
           :unavailable="unavailable"
-
         >
-
-          <div class="metric">
-
-            <span class="metric__label">Top Warehouse Sales %</span>
-
-            <span class="metric__value">
-
-              {{ cards?.Top1WarehouseSalesPercent != null ? formatPercent(cards.Top1WarehouseSalesPercent) : '—' }}
-
-            </span>
-
-          </div>
-
-          <div class="metric">
-
-            <span class="metric__label">Top Wilayah Sales %</span>
-
-            <span class="metric__value">
-
-              {{ cards?.Top1WilayahSalesPercent != null ? formatPercent(cards.Top1WilayahSalesPercent) : '—' }}
-
-            </span>
-
-          </div>
-
+          <DashboardMetric
+            label="Top Warehouse Sales %"
+            :value="cards?.Top1WarehouseSalesPercent != null ? formatPercent(cards.Top1WarehouseSalesPercent) : '—'"
+            :empty="cards?.Top1WarehouseSalesPercent == null"
+          />
+          <DashboardMetric
+            label="Top Wilayah Sales %"
+            :value="cards?.Top1WilayahSalesPercent != null ? formatPercent(cards.Top1WilayahSalesPercent) : '—'"
+            :empty="cards?.Top1WilayahSalesPercent == null"
+          />
         </LocationAttentionCardGroup>
 
-
-
         <LocationAttentionCardGroup
-
           title="Operational Signals"
-
           icon="pi pi-map-marker"
-
+          domain="inventory"
           :loading="dashboard.loading"
-
           :unavailable="unavailable"
-
         >
-
-          <div class="metric">
-
-            <span class="metric__label">Inactive Warehouse With Stock</span>
-
-            <span class="metric__value">
-
-              {{ cards ? formatNumber(cards.InactiveWarehouseWithStockCount) : '—' }}
-
-            </span>
-
-          </div>
-
-          <div class="metric">
-
-            <span class="metric__label">Stock Without Sales</span>
-
-            <span class="metric__value">
-
-              {{ cards ? formatNumber(cards.WarehouseNoSalesWithInventoryCount) : '—' }}
-
-            </span>
-
-          </div>
-
+          <DashboardMetric
+            label="Inactive Warehouse With Stock"
+            :value="cards ? formatNumber(cards.InactiveWarehouseWithStockCount) : '—'"
+            :empty="!cards"
+          />
+          <DashboardMetric
+            label="Stock Without Sales"
+            :value="cards ? formatNumber(cards.WarehouseNoSalesWithInventoryCount) : '—'"
+            :empty="!cards"
+          />
         </LocationAttentionCardGroup>
 
       </div>
@@ -524,29 +450,6 @@ onMounted(() => {
 
 
 
-.metric__label {
-
-  display: block;
-
-  font-size: 0.875rem;
-
-  color: var(--p-text-muted-color);
-
-}
-
-
-
-.metric__value {
-
-  display: block;
-
-  font-size: 1.25rem;
-
-  font-weight: 700;
-
-  margin-top: 0.25rem;
-
-}
 
 </style>
 

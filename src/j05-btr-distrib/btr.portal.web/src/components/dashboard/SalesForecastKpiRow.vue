@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import KpiChip from '@/components/dashboard/primitives/KpiChip.vue'
+
 export interface SalesForecastKpiMetric {
   label: string
   value: string
@@ -10,18 +12,36 @@ defineProps<{
   metrics: SalesForecastKpiMetric[]
 }>()
 
-function valueClass(severity?: SalesForecastKpiMetric['severity']): string {
-  if (!severity || severity === 'normal') return 'sales-forecast-kpi-row__value'
-  return `sales-forecast-kpi-row__value sales-forecast-kpi-row__value--${severity}`
+interface ChipSpec {
+  status: 'healthy' | 'warning' | 'critical'
+  label: string
+}
+
+function chipSpec(severity?: SalesForecastKpiMetric['severity']): ChipSpec | null {
+  if (severity === 'success') return { status: 'healthy', label: 'Good' }
+  if (severity === 'warning') return { status: 'warning', label: 'Watch' }
+  if (severity === 'critical') return { status: 'critical', label: 'Risk' }
+  return null
 }
 </script>
 
 <template>
   <div class="sales-forecast-kpi-row">
-    <div v-for="metric in metrics" :key="metric.label" class="metric">
-      <span class="metric__label">{{ metric.label }}</span>
-      <span :class="valueClass(metric.severity)">{{ metric.value }}</span>
-      <span v-if="metric.hint" class="metric__hint">{{ metric.hint }}</span>
+    <div v-for="metric in metrics" :key="metric.label" class="sfkpi-metric">
+      <span class="sfkpi-metric__label">{{ metric.label }}</span>
+      <div class="sfkpi-metric__value-row">
+        <span
+          class="sfkpi-metric__value"
+          :class="`sfkpi-metric__value--${metric.severity ?? 'normal'}`"
+        >{{ metric.value }}</span>
+        <KpiChip
+          v-if="chipSpec(metric.severity)"
+          :label="chipSpec(metric.severity)!.label"
+          :status="chipSpec(metric.severity)!.status"
+          class="sfkpi-metric__chip"
+        />
+      </div>
+      <span v-if="metric.hint" class="sfkpi-metric__hint">{{ metric.hint }}</span>
     </div>
   </div>
 </template>
@@ -35,43 +55,61 @@ function valueClass(severity?: SalesForecastKpiMetric['severity']): string {
   padding: 1rem;
   background: var(--p-surface-0);
   border: 1px solid var(--p-surface-200);
-  border-radius: var(--p-border-radius);
+  border-radius: var(--dashboard-radius-sm);
+  box-shadow: var(--dashboard-shadow-idle);
+  transition: box-shadow var(--dashboard-transition);
 }
 
-.metric {
+.sales-forecast-kpi-row:hover {
+  box-shadow: var(--dashboard-shadow-hover);
+}
+
+.sfkpi-metric {
   display: flex;
   flex-direction: column;
   gap: 0.25rem;
 }
 
-.metric__label {
+.sfkpi-metric__label {
   font-size: 0.875rem;
   color: var(--p-text-muted-color);
 }
 
-.sales-forecast-kpi-row__value {
+.sfkpi-metric__value-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.sfkpi-metric__value {
   font-size: 1.125rem;
   font-weight: 700;
+  font-variant-numeric: tabular-nums;
   color: var(--p-text-color);
 }
 
-.sales-forecast-kpi-row__value--success {
-  color: #16a34a;
+.sfkpi-metric__value--success {
+  color: var(--kpi-status-healthy-color);
 }
 
-.sales-forecast-kpi-row__value--warning {
-  color: #d97706;
+.sfkpi-metric__value--warning {
+  color: var(--kpi-status-warning-color);
 }
 
-.sales-forecast-kpi-row__value--critical {
-  color: #dc2626;
+.sfkpi-metric__value--critical {
+  color: var(--kpi-status-critical-color);
 }
 
-.sales-forecast-kpi-row__value--muted {
+.sfkpi-metric__value--muted {
   color: var(--p-text-muted-color);
 }
 
-.metric__hint {
+.sfkpi-metric__chip {
+  font-size: 0.6875rem;
+  padding: 0.1rem 0.4rem;
+}
+
+.sfkpi-metric__hint {
   font-size: 0.75rem;
   color: var(--p-text-muted-color);
 }

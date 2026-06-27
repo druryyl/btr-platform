@@ -59,9 +59,9 @@ function onRowClick(event: { data: DashboardPurchasingPrincipalExposureItem }): 
           <p class="purchasing-exposure-table__empty">No principal exposure data.</p>
         </template>
 
-        <Column field="Rank" header="Rank" />
+        <Column field="Rank" header="Rank" body-class="dash-numeric" header-class="dash-numeric" />
         <Column field="PrincipalName" header="Principal" />
-        <Column header="MTD Purchase">
+        <Column header="MTD Purchase" body-class="dash-numeric" header-class="dash-numeric">
           <template #body="{ data }">
             {{ formatCurrency(data.MtdPurchaseAmount) }}
             <span v-if="data.PercentOfPurchase != null" class="purchasing-exposure-table__pct">
@@ -69,7 +69,7 @@ function onRowClick(event: { data: DashboardPurchasingPrincipalExposureItem }): 
             </span>
           </template>
         </Column>
-        <Column header="Inventory Value">
+        <Column header="Inventory Value" body-class="dash-numeric" header-class="dash-numeric">
           <template #body="{ data }">
             {{
               data.InventoryValue != null
@@ -78,7 +78,7 @@ function onRowClick(event: { data: DashboardPurchasingPrincipalExposureItem }): 
             }}
           </template>
         </Column>
-        <Column header="At-Risk Value">
+        <Column header="At-Risk Value" body-class="dash-numeric" header-class="dash-numeric">
           <template #body="{ data }">
             {{
               data.AtRiskValue != null
@@ -99,6 +99,24 @@ function onRowClick(event: { data: DashboardPurchasingPrincipalExposureItem }): 
 </template>
 
 <style scoped>
+.purchasing-exposure-table {
+  border-radius: var(--dashboard-radius);
+  box-shadow: var(--dashboard-shadow-idle);
+  transition: box-shadow var(--dashboard-transition);
+}
+
+.purchasing-exposure-table__table :deep(.p-datatable-thead > tr > th) {
+  background: var(--dashboard-table-header-bg);
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: var(--p-text-muted-color);
+  border-bottom: 1px solid var(--p-surface-200);
+}
+
+.purchasing-exposure-table__table :deep(.p-datatable-tbody > tr:nth-child(even)) {
+  background: var(--dashboard-table-row-alt);
+}
+
 .purchasing-exposure-table__title-block {
   display: flex;
   flex-direction: column;
@@ -141,7 +159,7 @@ function onRowClick(event: { data: DashboardPurchasingPrincipalExposureItem }): 
 }
 
 .purchasing-exposure-table__table--clickable :deep(.p-datatable-tbody > tr:hover) {
-  background: var(--p-surface-100);
+  background: var(--dashboard-table-row-hover);
 }
 
 .purchasing-exposure-table__pct {

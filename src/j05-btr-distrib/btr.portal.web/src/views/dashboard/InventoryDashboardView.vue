@@ -2,6 +2,7 @@
 import { computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import DashboardDetailLayout from '@/components/dashboard/DashboardDetailLayout.vue'
+import DashboardMetric from '@/components/dashboard/primitives/DashboardMetric.vue'
 import InventoryHorizontalBarChart from '@/components/dashboard/InventoryHorizontalBarChart.vue'
 import Top10RankingTable from '@/components/dashboard/Top10RankingTable.vue'
 import { formatCurrency, formatNumber } from '@/services/formatters'
@@ -53,19 +54,17 @@ onMounted(() => {
     :error="dashboard.error"
     @refresh="dashboard.loadInventory()"
   >
-    <div class="inventory-dashboard__kpi-row">
-      <div class="metric">
-        <span class="metric__label">Total Inventory Value</span>
-        <span class="metric__value">
-          {{ dashboard.inventory ? formatCurrency(dashboard.inventory.TotalInventoryValue) : '—' }}
-        </span>
-      </div>
-      <div class="metric">
-        <span class="metric__label">Total Item</span>
-        <span class="metric__value">
-          {{ dashboard.inventory ? formatNumber(dashboard.inventory.TotalItem) : '—' }}
-        </span>
-      </div>
+    <div class="inventory-dashboard__kpi-row" data-domain="inventory">
+      <DashboardMetric
+        label="Total Inventory Value"
+        :value="dashboard.inventory ? formatCurrency(dashboard.inventory.TotalInventoryValue) : '—'"
+        :empty="!dashboard.inventory"
+      />
+      <DashboardMetric
+        label="Total Item"
+        :value="dashboard.inventory ? formatNumber(dashboard.inventory.TotalItem) : '—'"
+        :empty="!dashboard.inventory"
+      />
     </div>
 
     <InventoryHorizontalBarChart
@@ -117,24 +116,9 @@ onMounted(() => {
   padding: 1rem;
   background: var(--p-surface-0);
   border: 1px solid var(--p-surface-200);
-  border-radius: var(--p-border-radius);
-}
-
-.metric {
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-}
-
-.metric__label {
-  font-size: 0.875rem;
-  color: var(--p-text-muted-color);
-}
-
-.metric__value {
-  font-size: 1.25rem;
-  font-weight: 700;
-  color: var(--p-text-color);
+  border-radius: var(--dashboard-radius-sm);
+  box-shadow: var(--dashboard-shadow-idle);
+  transition: box-shadow var(--dashboard-transition);
 }
 
 .inventory-dashboard__section {

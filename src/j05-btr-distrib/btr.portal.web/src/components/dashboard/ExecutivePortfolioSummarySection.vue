@@ -1,7 +1,12 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import ExecutiveAttentionCard from '@/components/dashboard/ExecutiveAttentionCard.vue'
-import { formatPercent } from '@/services/formatters'
+import DashboardSectionHeader from '@/components/dashboard/primitives/DashboardSectionHeader.vue'
+import DashboardMetric from '@/components/dashboard/primitives/DashboardMetric.vue'
+import {
+  formatDashboardEmpty,
+  formatDashboardPercent,
+} from '@/services/dashboardEmptyStates'
 import type { DashboardExecutivePortfolioAttention } from '@/models/dashboard'
 
 const props = defineProps<{
@@ -18,11 +23,16 @@ const unavailable = computed(() => props.portfolio != null && !props.portfolio.I
 
 <template>
   <section class="executive-portfolio-summary">
-    <h2 class="executive-portfolio-summary__title">Customer Portfolio</h2>
+    <DashboardSectionHeader
+      title="Customer Portfolio"
+      icon="pi pi-heart"
+      domain="portfolio"
+    />
     <div class="executive-portfolio-summary__grid">
       <ExecutiveAttentionCard
         title="Portfolio Healthy %"
         icon="pi pi-heart"
+        domain="portfolio"
         :route="route"
         :loading="loading"
         :requires-attention="
@@ -30,50 +40,59 @@ const unavailable = computed(() => props.portfolio != null && !props.portfolio.I
         "
         :unavailable="unavailable"
       >
-        <div class="metric">
-          <span class="metric__label">Healthy Customers</span>
-          <span class="metric__value">
-            {{
-              portfolio?.IsAvailable
-                ? formatPercent(portfolio.PortfolioHealthyPercent)
-                : '—'
-            }}
-          </span>
-        </div>
+        <DashboardMetric
+          label="Healthy Customers"
+          :value="
+            portfolio?.IsAvailable
+              ? formatDashboardPercent(portfolio.PortfolioHealthyPercent)
+              : formatDashboardEmpty('not-available')
+          "
+          variant="primary"
+          :empty="!portfolio?.IsAvailable || portfolio.PortfolioHealthyPercent == null"
+          :progress="portfolio?.PortfolioHealthyPercent ?? null"
+        />
       </ExecutiveAttentionCard>
 
       <ExecutiveAttentionCard
         title="Customers At Risk"
         icon="pi pi-exclamation-circle"
+        domain="customer"
         :route="route"
         :loading="loading"
         :requires-attention="(portfolio?.CustomersAtRiskCount ?? 0) > 0"
         :unavailable="unavailable"
       >
-        <div class="metric">
-          <span class="metric__label">At Risk Count</span>
-          <span class="metric__value">
-            {{ portfolio?.IsAvailable ? portfolio.CustomersAtRiskCount : '—' }}
-          </span>
-        </div>
+        <DashboardMetric
+          label="At Risk Count"
+          :value="
+            portfolio?.IsAvailable
+              ? String(portfolio.CustomersAtRiskCount)
+              : formatDashboardEmpty('not-available')
+          "
+          variant="primary"
+          :empty="!portfolio?.IsAvailable"
+        />
       </ExecutiveAttentionCard>
 
       <ExecutiveAttentionCard
         title="Strategic At Risk"
         icon="pi pi-star"
+        domain="customer"
         :route="route"
         :loading="loading"
         :requires-attention="(portfolio?.StrategicCustomersAtRiskCount ?? 0) > 0"
         :unavailable="unavailable"
       >
-        <div class="metric">
-          <span class="metric__label">Strategic Customers</span>
-          <span class="metric__value">
-            {{
-              portfolio?.IsAvailable ? portfolio.StrategicCustomersAtRiskCount : '—'
-            }}
-          </span>
-        </div>
+        <DashboardMetric
+          label="Strategic Customers"
+          :value="
+            portfolio?.IsAvailable
+              ? String(portfolio.StrategicCustomersAtRiskCount)
+              : formatDashboardEmpty('not-available')
+          "
+          variant="primary"
+          :empty="!portfolio?.IsAvailable"
+        />
       </ExecutiveAttentionCard>
     </div>
   </section>
@@ -84,36 +103,10 @@ const unavailable = computed(() => props.portfolio != null && !props.portfolio.I
   margin-bottom: 2rem;
 }
 
-.executive-portfolio-summary__title {
-  margin: 0 0 1rem;
-  font-size: 1.1rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  color: var(--p-text-muted-color);
-}
-
 .executive-portfolio-summary__grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 1rem;
-}
-
-.metric {
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-}
-
-.metric__label {
-  font-size: 0.875rem;
-  color: var(--p-text-muted-color);
-}
-
-.metric__value {
-  font-size: 1.1rem;
-  font-weight: 700;
-  color: var(--p-text-color);
 }
 
 @media (max-width: 960px) {

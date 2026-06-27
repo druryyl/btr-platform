@@ -81,6 +81,8 @@ function formatCell(field: string, value: unknown): string {
             :key="col.field"
             :field="col.field"
             :header="col.header"
+            :body-class="currencyFields.has(col.field) ? 'dash-numeric' : undefined"
+            :header-class="currencyFields.has(col.field) ? 'dash-numeric' : undefined"
           >
             <template #body="{ data }">
               {{ formatCell(col.field, data[col.field]) }}
@@ -93,6 +95,16 @@ function formatCell(field: string, value: unknown): string {
 </template>
 
 <style scoped>
+.piutang-customer-risk-table {
+  border-radius: var(--dashboard-radius);
+  box-shadow: var(--dashboard-shadow-idle);
+  transition: box-shadow var(--dashboard-transition);
+}
+
+.piutang-customer-risk-table:hover {
+  box-shadow: var(--dashboard-shadow-hover);
+}
+
 .piutang-customer-risk-table__title {
   display: flex;
   align-items: center;
@@ -114,6 +126,18 @@ function formatCell(field: string, value: unknown): string {
   padding: 1.5rem 0;
   text-align: center;
   color: var(--p-text-muted-color);
+}
+
+.piutang-customer-risk-table__table :deep(.p-datatable-thead > tr > th) {
+  background: var(--dashboard-table-header-bg);
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: var(--p-text-muted-color);
+  border-bottom: 1px solid var(--p-surface-200);
+}
+
+.piutang-customer-risk-table__table :deep(.p-datatable-tbody > tr:hover) {
+  background: var(--dashboard-table-row-hover);
 }
 
 .piutang-customer-risk-table__table--clickable :deep(.p-datatable-tbody > tr) {

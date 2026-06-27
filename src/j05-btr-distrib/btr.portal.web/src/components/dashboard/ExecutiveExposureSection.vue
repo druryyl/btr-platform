@@ -3,6 +3,7 @@ import { computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import Top10RankingTable from '@/components/dashboard/Top10RankingTable.vue'
 import type { DashboardExecutiveRiskItem } from '@/models/dashboard'
+import type { DashboardDomain } from '@/services/dashboardDomains'
 import { resolveInvestigationSourceLabel } from '@/services/investigationSourceLabels'
 import { navigateToInvestigation } from '@/services/navigateToInvestigation'
 
@@ -12,6 +13,7 @@ const props = defineProps<{
   loading: boolean
   nameHeader?: string
   amountHeader?: string
+  domain?: DashboardDomain
 }>()
 
 const router = useRouter()
@@ -42,6 +44,7 @@ function onRowClick(row: Record<string, unknown>): void {
     :rows="rows"
     :loading="loading"
     value-field="Amount"
+    :domain="domain"
     clickable
     :empty-message="`No ${title.toLowerCase()} data available.`"
     @row-click="onRowClick"

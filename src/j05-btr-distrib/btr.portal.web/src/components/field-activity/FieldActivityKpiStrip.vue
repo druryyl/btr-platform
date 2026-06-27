@@ -11,27 +11,27 @@ defineProps<{
 
 <template>
   <div class="field-activity-kpi-strip">
-    <KpiCard title="Planned" icon="pi pi-calendar" :loading="loading">
+    <KpiCard title="Planned" icon="pi pi-calendar" domain="salesman" :loading="loading">
       <div class="field-activity-kpi-strip__value">{{ formatNumber(kpis?.PlannedVisits ?? 0) }}</div>
     </KpiCard>
-    <KpiCard title="Actual" icon="pi pi-check-circle" :loading="loading">
+    <KpiCard title="Actual" icon="pi pi-check-circle" domain="salesman" :loading="loading">
       <div class="field-activity-kpi-strip__value">{{ formatNumber(kpis?.ActualVisits ?? 0) }}</div>
     </KpiCard>
-    <KpiCard title="Effective" icon="pi pi-shopping-cart" :loading="loading">
+    <KpiCard title="Effective" icon="pi pi-shopping-cart" domain="salesman" :loading="loading">
       <div class="field-activity-kpi-strip__value">{{ formatNumber(kpis?.EffectiveCalls ?? 0) }}</div>
     </KpiCard>
-    <KpiCard title="Missed" icon="pi pi-times-circle" :loading="loading">
+    <KpiCard title="Missed" icon="pi pi-times-circle" domain="salesman" :loading="loading">
       <div class="field-activity-kpi-strip__value">{{ formatNumber(kpis?.MissedVisits ?? 0) }}</div>
     </KpiCard>
-    <KpiCard title="Unplanned" icon="pi pi-map-marker" :loading="loading">
+    <KpiCard title="Unplanned" icon="pi pi-map-marker" domain="salesman" :loading="loading">
       <div class="field-activity-kpi-strip__value">{{ formatNumber(kpis?.UnplannedVisits ?? 0) }}</div>
     </KpiCard>
-    <KpiCard title="Execution %" icon="pi pi-percentage" :loading="loading">
+    <KpiCard title="Execution %" icon="pi pi-percentage" domain="salesman" :loading="loading">
       <div class="field-activity-kpi-strip__value">
         {{ kpis ? formatPercent(kpis.VisitExecutionPercent) : '—' }}
       </div>
     </KpiCard>
-    <KpiCard title="Effective Call Rate" icon="pi pi-chart-line" :loading="loading">
+    <KpiCard title="Effective Call Rate" icon="pi pi-chart-line" domain="salesman" :loading="loading">
       <div class="field-activity-kpi-strip__value">
         {{ kpis ? formatPercent(kpis.EffectiveCallRate) : '—' }}
       </div>
@@ -50,5 +50,6 @@ defineProps<{
   font-size: 1.5rem;
   font-weight: 700;
   line-height: 1.2;
+  font-variant-numeric: tabular-nums;
 }
 </style>

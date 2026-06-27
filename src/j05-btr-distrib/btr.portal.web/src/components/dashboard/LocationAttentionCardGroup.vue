@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import KpiCard from '@/components/KpiCard.vue'
+import type { DashboardDomain } from '@/services/dashboardDomains'
 import { usePresentationStore } from '@/stores/presentationStore'
 
 const props = defineProps<{
@@ -8,6 +9,7 @@ const props = defineProps<{
   icon: string
   loading?: boolean
   unavailable?: boolean
+  domain?: DashboardDomain
 }>()
 
 const presentation = usePresentationStore()
@@ -27,6 +29,7 @@ const canNavigate = computed(
       :title="title"
       :icon="icon"
       :loading="loading"
+      :domain="domain"
       class="location-attention-card"
       :class="{ 'location-attention-card--unavailable': showUnavailableLabel }"
     >

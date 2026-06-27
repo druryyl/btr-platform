@@ -2,6 +2,7 @@
 import { computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import DashboardDetailLayout from '@/components/dashboard/DashboardDetailLayout.vue'
+import DashboardMetric from '@/components/dashboard/primitives/DashboardMetric.vue'
 import TargetVsAchievementChart from '@/components/dashboard/TargetVsAchievementChart.vue'
 import Top10RankingTable from '@/components/dashboard/Top10RankingTable.vue'
 import WeeklyTrendChart from '@/components/dashboard/WeeklyTrendChart.vue'
@@ -45,25 +46,23 @@ onMounted(() => {
     :generated-at="dashboard.sales?.GeneratedAt ?? null"
     @refresh="dashboard.loadSales()"
   >
-    <div class="sales-dashboard__kpi-row">
-      <div class="metric">
-        <span class="metric__label">Total Target</span>
-        <span class="metric__value">
-          {{ dashboard.sales ? formatCurrency(dashboard.sales.TotalTarget) : '—' }}
-        </span>
-      </div>
-      <div class="metric">
-        <span class="metric__label">Total Achievement</span>
-        <span class="metric__value">
-          {{ dashboard.sales ? formatCurrency(dashboard.sales.TotalAchievement) : '—' }}
-        </span>
-      </div>
-      <div class="metric">
-        <span class="metric__label">Achievement %</span>
-        <span class="metric__value">
-          {{ dashboard.sales ? formatPercent(dashboard.sales.AchievementPercent) : '—' }}
-        </span>
-      </div>
+    <div class="sales-dashboard__kpi-row" data-domain="sales">
+      <DashboardMetric
+        label="Total Target"
+        :value="dashboard.sales ? formatCurrency(dashboard.sales.TotalTarget) : '—'"
+        :empty="!dashboard.sales"
+      />
+      <DashboardMetric
+        label="Total Achievement"
+        :value="dashboard.sales ? formatCurrency(dashboard.sales.TotalAchievement) : '—'"
+        :empty="!dashboard.sales"
+      />
+      <DashboardMetric
+        label="Achievement %"
+        :value="dashboard.sales ? formatPercent(dashboard.sales.AchievementPercent) : '—'"
+        :empty="!dashboard.sales"
+        :progress="dashboard.sales?.AchievementPercent ?? null"
+      />
     </div>
 
     <TargetVsAchievementChart
@@ -101,24 +100,9 @@ onMounted(() => {
   padding: 1rem;
   background: var(--p-surface-0);
   border: 1px solid var(--p-surface-200);
-  border-radius: var(--p-border-radius);
-}
-
-.metric {
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-}
-
-.metric__label {
-  font-size: 0.875rem;
-  color: var(--p-text-muted-color);
-}
-
-.metric__value {
-  font-size: 1.25rem;
-  font-weight: 700;
-  color: var(--p-text-color);
+  border-radius: var(--dashboard-radius-sm);
+  box-shadow: var(--dashboard-shadow-idle);
+  transition: box-shadow var(--dashboard-transition);
 }
 
 .sales-dashboard__section {
