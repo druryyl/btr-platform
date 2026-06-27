@@ -83,5 +83,55 @@ namespace btr.infrastructure.FinanceContext.PiutangAgg
                 return conn.Read<PenerimaanPelunasanSalesDto>(sql, dp);
             }
         }
+
+        public IEnumerable<PenerimaanPelunasanSalesLunasSourceDto> ListPiutangLunasSource(Periode filter)
+        {
+            const string sql = @"
+            SELECT
+                aa.PiutangId,
+                CAST(aa.LunasDate AS DATE) AS LunasDate,
+                aa.JenisLunas,
+                aa.Nilai,
+                ISNULL(cc.SalesPersonId, '') AS SalesPersonId,
+                ISNULL(cc.SalesPersonName, '') AS SalesName
+            FROM BTR_PiutangLunas aa
+                LEFT JOIN BTR_Faktur bb ON aa.PiutangId = bb.FakturId
+                LEFT JOIN BTR_SalesPerson cc ON bb.SalesPersonId = cc.SalesPersonId
+            WHERE aa.LunasDate BETWEEN @Tgl1 AND @Tgl2
+            ORDER BY aa.LunasDate, cc.SalesPersonId, aa.PiutangId";
+
+            var dp = new DynamicParameters();
+            dp.AddParam("@Tgl1", filter.Tgl1, SqlDbType.DateTime);
+            dp.AddParam("@Tgl2", filter.Tgl2, SqlDbType.DateTime);
+
+            using (var conn = new SqlConnection(ConnStringHelper.Get(_opt)))
+            {
+                return conn.Read<PenerimaanPelunasanSalesLunasSourceDto>(sql, dp);
+            }
+        }
+
+        public IEnumerable<PenerimaanPelunasanSalesElementDto> ListPiutangElementTotals(IEnumerable<string> piutangIds)
+        {
+            var ids = piutangIds?.Where(id => !string.IsNullOrEmpty(id)).Distinct().ToList()
+                ?? new List<string>();
+            if (ids.Count == 0)
+                return Enumerable.Empty<PenerimaanPelunasanSalesElementDto>();
+
+            const string sql = @"
+            SELECT PiutangId,
+                SUM(CASE WHEN ElementName = 'Retur' THEN NilaiPlus - NilaiMinus ELSE 0 END) AS Retur,
+                SUM(CASE WHEN ElementName = 'Potongan' THEN NilaiPlus - NilaiMinus ELSE 0 END) AS Potongan,
+                SUM(CASE WHEN ElementName IN ('Materai','Admin') THEN NilaiPlus - NilaiMinus ELSE 0 END) AS MateraiAdmin
+            FROM BTR_PiutangElement
+            WHERE PiutangId IN @PiutangIds
+            GROUP BY PiutangId";
+
+            using (var conn = new SqlConnection(ConnStringHelper.Get(_opt)))
+            {
+                var dp = new DynamicParameters();
+                dp.Add("@PiutangIds", ids);
+                return conn.Read<PenerimaanPelunasanSalesElementDto>(sql, dp);
+            }
+        }
     }
 }

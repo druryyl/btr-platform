@@ -1,4 +1,5 @@
 ﻿using btr.application.FinanceContext.PiutangAgg.Contracts;
+using btr.application.FinanceContext.PiutangAgg.Services;
 using btr.application.InventoryContext.StokBalanceInfo;
 using btr.nuna.Domain;
 using ClosedXML.Excel;
@@ -116,8 +117,8 @@ namespace btr.distrib.FinanceContext.PenerimaanPelunasanSalesRpt
         private void Proses()
         {
             var periode = new Periode(Faktur1Date.Value, Faktur2Date.Value);
-            var listFaktur = _penerimaanPelunasanSalesDal.ListData(periode)?.ToList() ?? new List<PenerimaanPelunasanSalesDto>();
-            _dataSource = listFaktur;
+            var aggregator = new PenerimaanPelunasanSalesAggregator(_penerimaanPelunasanSalesDal);
+            _dataSource = aggregator.Build(periode);
             InfoGrid.DataSource = _dataSource;
         }
 

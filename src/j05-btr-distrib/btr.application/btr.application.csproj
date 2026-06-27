@@ -148,6 +148,7 @@
     <Compile Include="FinanceContext\PiutangAgg\Contracts\ICustomerPelunasanSummaryDal.cs" />
     <Compile Include="FinanceContext\PiutangAgg\Contracts\ICustomerPaymentBehaviorDal.cs" />
     <Compile Include="FinanceContext\PiutangAgg\Services\CollectionDayGrouper.cs" />
+    <Compile Include="FinanceContext\PiutangAgg\Services\PenerimaanPelunasanSalesAggregator.cs" />
     <Compile Include="FinanceContext\PiutangAgg\Contracts\IPiutangDal.cs" />
     <Compile Include="FinanceContext\PiutangAgg\Contracts\IPIutangElementDal.cs" />
     <Compile Include="FinanceContext\PiutangAgg\Contracts\IPiutangLunasDal.cs" />

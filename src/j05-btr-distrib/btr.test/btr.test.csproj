@@ -160,6 +160,7 @@
     <Compile Include="ReportingContext\CustomerRiskRecommendationBuilderTest.cs" />
     <Compile Include="ReportingContext\DashboardCustomerRiskForecastAggregatorTest.cs" />
     <Compile Include="ReportingContext\CollectionDayGrouperTest.cs" />
+    <Compile Include="ReportingContext\PenerimaanPelunasanSalesAggregatorTest.cs" />
     <Compile Include="ReportingContext\DashboardCashFlowForecastAggregatorTest.cs" />
     <Compile Include="ReportingContext\CashFlowForecastExecutiveSummaryBuilderTest.cs" />
     <Compile Include="ReportingContext\InventoryForecastPolicyTest.cs" />
