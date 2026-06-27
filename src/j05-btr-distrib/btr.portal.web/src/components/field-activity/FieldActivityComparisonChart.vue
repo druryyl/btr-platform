@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import type { ActiveElement, ChartEvent } from 'chart.js'
 import { computed } from 'vue'
 import Card from 'primevue/card'
 import Chart from 'primevue/chart'
@@ -46,7 +47,7 @@ function formatValue(value: number): string {
 const chartOptions = computed(() =>
   createChartOptions({
     indexAxis: 'y' as const,
-    onClick: (_event, elements, chart) => {
+    onClick: (_event: ChartEvent, elements: ActiveElement[]) => {
       if (!elements.length) return
       const index = elements[0].index
       const item = props.items[index]

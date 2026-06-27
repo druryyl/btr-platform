@@ -22,6 +22,7 @@ namespace btr.test.ReportingContext
             var customerWorker = new StubCustomerWorker();
             var salesmanWorker = new StubSalesmanWorker();
             var collectionWorker = new StubCollectionWorker();
+            var fieldActivityWorker = new StubFieldActivityWorker();
             var locationWorker = new StubLocationWorker();
             var worker = new RefreshAllDashboardSnapshotsWorker(
                 piutangWorker,
@@ -33,6 +34,7 @@ namespace btr.test.ReportingContext
                 customerWorker,
                 salesmanWorker,
                 collectionWorker,
+                fieldActivityWorker,
                 locationWorker);
 
             var request = new RefreshAllDashboardSnapshotsRequest
@@ -51,6 +53,7 @@ namespace btr.test.ReportingContext
             customerWorker.WasCalled.Should().BeTrue();
             salesmanWorker.WasCalled.Should().BeTrue();
             collectionWorker.WasCalled.Should().BeTrue();
+            fieldActivityWorker.WasCalled.Should().BeTrue();
             locationWorker.WasCalled.Should().BeTrue();
             piutangWorker.CallOrder.Should().BeLessThan(inventoryWorker.CallOrder);
             inventoryWorker.CallOrder.Should().BeLessThan(inventoryRiskWorker.CallOrder);
@@ -60,8 +63,9 @@ namespace btr.test.ReportingContext
             purchasingManagementWorker.CallOrder.Should().BeLessThan(customerWorker.CallOrder);
             customerWorker.CallOrder.Should().BeLessThan(salesmanWorker.CallOrder);
             salesmanWorker.CallOrder.Should().BeLessThan(collectionWorker.CallOrder);
-            collectionWorker.CallOrder.Should().BeLessThan(locationWorker.CallOrder);
-            request.Result.Domains.Should().HaveCount(10);
+            collectionWorker.CallOrder.Should().BeLessThan(fieldActivityWorker.CallOrder);
+            fieldActivityWorker.CallOrder.Should().BeLessThan(locationWorker.CallOrder);
+            request.Result.Domains.Should().HaveCount(11);
             request.Result.Domains[0].Domain.Should().Be("Piutang");
             request.Result.Domains[1].Domain.Should().Be("Inventory");
             request.Result.Domains[2].Domain.Should().Be("InventoryRisk");
@@ -71,7 +75,8 @@ namespace btr.test.ReportingContext
             request.Result.Domains[6].Domain.Should().Be("Customer");
             request.Result.Domains[7].Domain.Should().Be("Salesman");
             request.Result.Domains[8].Domain.Should().Be("Collection");
-            request.Result.Domains[9].Domain.Should().Be("Location");
+            request.Result.Domains[9].Domain.Should().Be("FieldActivity");
+            request.Result.Domains[10].Domain.Should().Be("Location");
         }
 
         [Fact]
@@ -87,6 +92,7 @@ namespace btr.test.ReportingContext
                 new StubCustomerWorker(),
                 new StubSalesmanWorker(),
                 new StubCollectionWorker(),
+                new StubFieldActivityWorker(),
                 new StubLocationWorker());
 
             Action act = () => worker.Execute(new RefreshAllDashboardSnapshotsRequest());
@@ -261,6 +267,24 @@ namespace btr.test.ReportingContext
                 {
                     RefreshLogId = StubRefreshLogId,
                     DurationMs = 700
+                };
+            }
+        }
+
+        private sealed class StubFieldActivityWorker : IRefreshDashboardFieldActivitySnapshotWorker
+        {
+            public bool WasCalled { get; private set; }
+
+            public int CallOrder { get; private set; }
+
+            public void Execute(RefreshDashboardFieldActivitySnapshotRequest request)
+            {
+                WasCalled = true;
+                CallOrder = ++_callSequence;
+                request.Result = new RefreshDashboardFieldActivitySnapshotResult
+                {
+                    RefreshLogId = StubRefreshLogId,
+                    DurationMs = 725
                 };
             }
         }
