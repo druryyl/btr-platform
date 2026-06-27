@@ -27,51 +27,52 @@ namespace btr.infrastructure.FinanceContext.PiutangAgg
         {
             const string sql = @"
             SELECT
-                CAST(aa.LunasDate AS DATE) AS LunasDate,
-                ISNULL(cc.SalesPersonId, '') AS SalesPersonId,
-                ISNULL(cc.SalesPersonName, '') AS SalesName,
-                SUM(ISNULL(ff.BayarTunai, 0)) AS BayarTunai,
-                SUM(ISNULL(gg.BayarGiro, 0)) AS BayarGiro,
+                daily.LunasDate,
+                daily.SalesPersonId,
+                daily.SalesName,
+                SUM(daily.BayarTunai) AS BayarTunai,
+                SUM(daily.BayarGiro) AS BayarGiro,
                 SUM(ISNULL(hh.Retur, 0)) AS Retur,
                 SUM(ISNULL(ii.Potongan, 0)) AS Potongan,
                 SUM(ISNULL(jj.MateraiAdmin, 0)) AS MateraiAdmin,
-                SUM(ISNULL(ff.BayarTunai, 0) + ISNULL(gg.BayarGiro,0)) AS TotalBayar
-
-            FROM 
-                BTR_PiutangLunas aa
+                SUM(daily.BayarTunai + daily.BayarGiro) AS TotalBayar
+            FROM (
+                SELECT
+                    CAST(aa.LunasDate AS DATE) AS LunasDate,
+                    ISNULL(cc.SalesPersonId, '') AS SalesPersonId,
+                    ISNULL(cc.SalesPersonName, '') AS SalesName,
+                    aa.PiutangId,
+                    SUM(CASE WHEN aa.JenisLunas = 0 THEN aa.Nilai ELSE 0 END) AS BayarTunai,
+                    SUM(CASE WHEN aa.JenisLunas = 1 THEN aa.Nilai ELSE 0 END) AS BayarGiro
+                FROM BTR_PiutangLunas aa
                 LEFT JOIN BTR_Faktur bb ON aa.PiutangId = bb.FakturId
                 LEFT JOIN BTR_SalesPerson cc ON bb.SalesPersonId = cc.SalesPersonId
-                LEFT JOIN (
-                    SELECT  PiutangId, SUM(aa1.Nilai) BayarTunai
-                    FROM BTR_PiutangLunas aa1
-                    WHERE aa1.JenisLunas = 0 
-                        AND aa1.LunasDate BETWEEN @Tgl1 AND @Tgl2
-                    GROUP BY PiutangId) ff ON aa.PiutangId = ff.PiutangId
-                LEFT JOIN (
-                    SELECT  PiutangId, SUM(aa1.Nilai) BayarGiro
-                    FROM BTR_PiutangLunas aa1
-                    WHERE aa1.JenisLunas = 1 
-                        AND aa1.LunasDate BETWEEN @Tgl1 AND @Tgl2
-                     GROUP BY PiutangId) gg ON aa.PiutangId = gg.PiutangId
-                LEFT JOIN (
-                    SELECT  PiutangId, SUM(aa1.NilaiPlus - aa1.NilaiMinus) Retur
-                    FROM BTR_PiutangElement aa1
-                    WHERE aa1.ElementName = 'Retur' 
-                    GROUP BY PiutangId) hh ON aa.PiutangId = hh.PiutangId
-                LEFT JOIN (
-                    SELECT  PiutangId, SUM(aa1.NilaiPlus - aa1.NilaiMinus) Potongan
-                    FROM BTR_PiutangElement aa1
-                    WHERE aa1.ElementName = 'Potongan' 
-                    GROUP BY PiutangId) ii ON aa.PiutangId = ii.PiutangId
-                LEFT JOIN (
-                    SELECT  PiutangId, SUM(aa1.NilaiPlus - aa1.NilaiMinus) MateraiAdmin
-                    FROM BTR_PiutangElement aa1
-                    WHERE aa1.ElementName = 'Materai' OR aa1.ElementName = 'Admin' 
-                    GROUP BY PiutangId) jj ON aa.PiutangId = jj.PiutangId
-             WHERE
-                 aa.LunasDate BETWEEN @Tgl1 AND @Tgl2
+                WHERE aa.LunasDate BETWEEN @Tgl1 AND @Tgl2
+                GROUP BY
+                    CAST(aa.LunasDate AS DATE),
+                    cc.SalesPersonId,
+                    cc.SalesPersonName,
+                    aa.PiutangId
+            ) daily
+            LEFT JOIN (
+                SELECT PiutangId, SUM(aa1.NilaiPlus - aa1.NilaiMinus) Retur
+                FROM BTR_PiutangElement aa1
+                WHERE aa1.ElementName = 'Retur'
+                GROUP BY PiutangId) hh ON daily.PiutangId = hh.PiutangId
+            LEFT JOIN (
+                SELECT PiutangId, SUM(aa1.NilaiPlus - aa1.NilaiMinus) Potongan
+                FROM BTR_PiutangElement aa1
+                WHERE aa1.ElementName = 'Potongan'
+                GROUP BY PiutangId) ii ON daily.PiutangId = ii.PiutangId
+            LEFT JOIN (
+                SELECT PiutangId, SUM(aa1.NilaiPlus - aa1.NilaiMinus) MateraiAdmin
+                FROM BTR_PiutangElement aa1
+                WHERE aa1.ElementName = 'Materai' OR aa1.ElementName = 'Admin'
+                GROUP BY PiutangId) jj ON daily.PiutangId = jj.PiutangId
             GROUP BY
-                CAST(aa.LunasDate AS DATE), cc.SalesPersonId, cc.SalesPersonName ";
+                daily.LunasDate,
+                daily.SalesPersonId,
+                daily.SalesName ";
 
             //  parameter
             var dp = new DynamicParameters();
