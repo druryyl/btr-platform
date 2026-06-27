@@ -104,7 +104,6 @@ namespace btr.distrib.SalesContext.FakturInfoRpt
                 tableRange.Style.Font.SetFontName("Calibri");
                 tableRange.Style.Font.SetFontSize(10);
                 ws.Range($"C1:F{excelDs.Count+3}").Style.Alignment.SetHorizontal(XLAlignmentHorizontalValues.Center);
-                ws.Range($"S1:S{excelDs.Count + 3}").Style.Alignment.SetHorizontal(XLAlignmentHorizontalValues.Center);
 
                 // style header row
                 headerRange.Style.Font.SetBold();
@@ -113,10 +112,10 @@ namespace btr.distrib.SalesContext.FakturInfoRpt
                 headerRange.Style.Alignment.SetVertical(XLAlignmentVerticalValues.Center);
 
                 //  hide columns O (P in closedxml 1-based index)
-                ws.Column("R").Hide();
+                ws.Column("T").Hide();
 
                 //  set format number
-                ws.Range(ws.Cell($"N{4}"), ws.Cell($"Q{excelDs.Count + 3}"))
+                ws.Range(ws.Cell($"P{4}"), ws.Cell($"S{excelDs.Count + 3}"))
                     .Style.NumberFormat.Format = "#,##0";
                 ws.Range(ws.Cell($"A{4}"), ws.Cell($"A{excelDs.Count + 3}"))
                     .Style.NumberFormat.Format = "#,##0";
@@ -133,11 +132,11 @@ namespace btr.distrib.SalesContext.FakturInfoRpt
                 //  replace status TRUE dengan string "YA""
                 for (var i = 0; i < excelDs.Count; i++)
                 {
-                    var cellValue = ws.Cell($"S{i + 4}").Value.ToString();
+                    var cellValue = ws.Cell($"U{i + 4}").Value.ToString();
                     if (cellValue == "TRUE")
-                        ws.Cell($"S{i + 4}").Value = "YA";
+                        ws.Cell($"U{i + 4}").Value = "YA";
                     else
-                        ws.Cell($"S{i + 4}").Value = "";
+                        ws.Cell($"U{i + 4}").Value = "";
                 }
                 ws.Columns().AdjustToContents();
                 tableRange.Style.Font.SetFontSize(10);

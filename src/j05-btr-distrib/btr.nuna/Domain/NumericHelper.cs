@@ -139,22 +139,22 @@ namespace btr.nuna.Domain
             {
                 // Only one separator exists
                 char sep = hasDot ? '.' : ',';
-                int index = input.IndexOf(sep);
-                bool appearsOnce = input.IndexOf(sep) == input.LastIndexOf(sep);
-                bool exactlyThreeAfter = (input.Length - index - 1) == 3;
+                return input.Replace(sep.ToString(), "");
+                //int index = input.IndexOf(sep);
+                //bool appearsOnce = input.IndexOf(sep) == input.LastIndexOf(sep);
+                //bool exactlyThreeAfter = (input.Length - index - 1) == 3;
 
-                // Treat as GROUPING separator if it appears once and has exactly 3 digits after
-                if (appearsOnce && exactlyThreeAfter)
-                {
-                    // e.g. "89.000" or "89,000" -> "89000"
-                    return input.Replace(sep.ToString(), "");
-                }
-                else
-                {
-                    // Treat as DECIMAL separator
-                    // e.g. "3,14" or "3.14" -> "3.14"
-                    return input.Replace(sep, '.');
-                }
+                //// Treat as GROUPING separator if it appears once and has exactly 3 digits after
+                //if (appearsOnce && exactlyThreeAfter)
+                //{
+                //    // e.g. "89.000" or "89,000" -> "89000"
+                //}
+                //else
+                //{
+                //    // Treat as DECIMAL separator
+                //    // e.g. "3,14" or "3.14" -> "3.14"
+                //    return input.Replace(sep, '.');
+                //}
             }
 
             return input; // no separators, return as-is

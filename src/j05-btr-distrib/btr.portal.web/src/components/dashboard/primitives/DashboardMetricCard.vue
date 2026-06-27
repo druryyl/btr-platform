@@ -1,5 +1,11 @@
 <script lang="ts">
-export type KpiGroup = 'execution' | 'productivity' | 'quality' | 'issues'
+export type KpiGroup =
+  | 'execution'   // blue  — Active Salesmen, Execution %, Orders, Order Value
+  | 'activity'    // green — Planned, Actual
+  | 'productivity'// purple— Effective Calls, Effective Call Rate
+  | 'monitoring'  // orange— GPS Valid Rate
+  | 'risk'        // red   — Missed Visit
+  | 'caution'     // amber — Unplanned Visit
 export type KpiChipStatus = 'healthy' | 'warning' | 'critical' | 'unknown' | 'stable'
 export type ProgressStatus = 'healthy' | 'warning' | 'critical' | 'unknown'
 </script>
@@ -62,16 +68,24 @@ withDefaults(
   --dm-color: #2563eb;
 }
 
+.dm-card--activity {
+  --dm-color: #16a34a;
+}
+
 .dm-card--productivity {
   --dm-color: #7c3aed;
 }
 
-.dm-card--quality {
-  --dm-color: #15803d;
+.dm-card--monitoring {
+  --dm-color: #ea580c;
 }
 
-.dm-card--issues {
-  --dm-color: #ea580c;
+.dm-card--risk {
+  --dm-color: #dc2626;
+}
+
+.dm-card--caution {
+  --dm-color: #ca8a04;
 }
 
 /* ── Card shell ─────────────────────────────────── */
@@ -150,17 +164,21 @@ withDefaults(
 
 /* ── KPI value ──────────────────────────────────── */
 .dm-card__value {
-  font-size: 1.625rem;
+  font-size: 1.5rem;
   font-weight: 800;
   line-height: 1.15;
   letter-spacing: -0.03em;
   font-variant-numeric: tabular-nums;
   color: var(--p-text-color);
   margin-top: 0.125rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
 }
 
 .dm-card--large .dm-card__value {
-  font-size: 1.875rem;
+  font-size: 1.75rem;
 }
 
 /* ── Loading state ──────────────────────────────── */
