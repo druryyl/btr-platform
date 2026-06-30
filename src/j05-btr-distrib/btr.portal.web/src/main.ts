@@ -9,6 +9,7 @@ import { useAuthStore } from '@/stores/authStore'
 import 'primeicons/primeicons.css'
 import './styles/main.css'
 import './styles/dashboard-tokens.css'
+import './styles/investigation-workspace-tokens.css'
 
 const app = createApp(App)
 const pinia = createPinia()

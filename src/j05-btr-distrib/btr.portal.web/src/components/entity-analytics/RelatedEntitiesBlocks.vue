@@ -1,9 +1,14 @@
 <script setup lang="ts">
 import { RouterLink } from 'vue-router'
-import type { ProfileRelationshipBlock } from '@/models/entityAnalytics'
+import type { ProfileRelationshipBlock, ProfileRelatedEntityRow } from '@/models/entityAnalytics'
 
 defineProps<{
   blocks: ProfileRelationshipBlock[]
+  workspaceMode?: boolean
+}>()
+
+const emit = defineEmits<{
+  navigate: [row: ProfileRelatedEntityRow]
 }>()
 
 function formatMetric(value: number | null | undefined): string {
@@ -15,6 +20,12 @@ function formatMetric(value: number | null | undefined): string {
     currency: 'IDR',
     maximumFractionDigits: 0,
   }).format(value)
+}
+
+function barWidth(value: number | null | undefined, block: ProfileRelationshipBlock): string {
+  if (value == null) return '0%'
+  const max = Math.max(...block.Rows.map((r) => r.MetricValue ?? 0), 1)
+  return `${Math.round((value / max) * 100)}%`
 }
 </script>
 
@@ -35,7 +46,7 @@ function formatMetric(value: number | null | undefined): string {
             <tr>
               <th v-if="block.Rows.length > 1">#</th>
               <th>{{ block.TargetEntityType }}</th>
-              <th v-if="block.Rows.some((row) => row.MetricValue != null)">MTD Omzet</th>
+              <th v-if="block.Rows.some((row) => row.MetricValue != null)" class="iw-numeric">Value</th>
             </tr>
           </thead>
           <tbody>
@@ -45,8 +56,16 @@ function formatMetric(value: number | null | undefined): string {
             >
               <td v-if="block.Rows.length > 1">{{ row.Rank }}</td>
               <td>
+                <button
+                  v-if="workspaceMode"
+                  type="button"
+                  class="related-entities-blocks__link related-entities-blocks__button"
+                  @click="emit('navigate', row)"
+                >
+                  {{ row.TargetEntityName || row.DisplayName || row.TargetEntityCode }}
+                </button>
                 <RouterLink
-                  v-if="row.ProfileRoute"
+                  v-else-if="row.ProfileRoute"
                   :to="row.ProfileRoute"
                   class="related-entities-blocks__link"
                 >
@@ -54,8 +73,12 @@ function formatMetric(value: number | null | undefined): string {
                 </RouterLink>
                 <span v-else>{{ row.TargetEntityName || row.DisplayName || row.TargetEntityCode }}</span>
               </td>
-              <td v-if="block.Rows.some((r) => r.MetricValue != null)">
-                {{ formatMetric(row.MetricValue) }}
+              <td v-if="block.Rows.some((r) => r.MetricValue != null)" class="iw-numeric related-entities-blocks__value-cell">
+                <span>{{ formatMetric(row.MetricValue) }}</span>
+                <span
+                  class="related-entities-blocks__bar"
+                  :style="{ width: barWidth(row.MetricValue, block) }"
+                />
               </td>
             </tr>
           </tbody>
@@ -107,5 +130,27 @@ function formatMetric(value: number | null | undefined): string {
 
 .related-entities-blocks__link:hover {
   text-decoration: underline;
+}
+
+.related-entities-blocks__button {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  font: inherit;
+  text-align: left;
+}
+
+.related-entities-blocks__value-cell {
+  position: relative;
+  min-width: 8rem;
+}
+
+.related-entities-blocks__bar {
+  display: block;
+  height: 4px;
+  margin-top: 0.25rem;
+  background: rgba(59, 130, 246, 0.35);
+  border-radius: 2px;
 }
 </style>

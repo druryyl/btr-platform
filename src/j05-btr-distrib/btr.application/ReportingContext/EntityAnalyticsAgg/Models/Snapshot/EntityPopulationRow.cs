@@ -6,6 +6,8 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Models.Snapshot
 
         public string EntityCode { get; set; }
 
+        public string DisplayName { get; set; }
+
         public bool IsActive { get; set; }
 
         public string DimensionValue { get; set; }

@@ -208,6 +208,7 @@
     <Compile Include="ReportingContext\EntityRankingEngineTest.cs" />
     <Compile Include="ReportingContext\EntityRadarCalculatorTest.cs" />
     <Compile Include="ReportingContext\EntityRadarEngineTest.cs" />
+    <Compile Include="ReportingContext\EntityPopulationMapEngineTest.cs" />
     <Compile Include="ReportingContext\EntitySignatureDimensionIntegrityTest.cs" />
     <Compile Include="ReportingContext\PeerGroupResolverTest.cs" />
     <Compile Include="ReportingContext\EntityAttentionEngineTest.cs" />

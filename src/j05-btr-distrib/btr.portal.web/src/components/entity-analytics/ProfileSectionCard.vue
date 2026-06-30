@@ -2,7 +2,7 @@
 import Card from 'primevue/card'
 
 defineProps<{
-  title: string
+  title?: string
   isAvailable?: boolean
   unavailableReason?: string | null
   loading?: boolean
@@ -11,7 +11,7 @@ defineProps<{
 
 <template>
   <Card class="profile-section">
-    <template #title>{{ title }}</template>
+    <template v-if="title" #title>{{ title }}</template>
     <template #content>
       <div v-if="loading" class="profile-section__empty">Loading…</div>
       <div v-else-if="isAvailable === false" class="profile-section__empty">

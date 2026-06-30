@@ -1161,6 +1161,7 @@ CREATE TABLE BTRPD_CustomerTopOmzet
     CustomerName       VARCHAR(50)   NOT NULL CONSTRAINT DF_BTRPD_CustomerTopOmzet_CustomerName DEFAULT(''),
     OmzetAmount        DECIMAL(18,2) NOT NULL CONSTRAINT DF_BTRPD_CustomerTopOmzet_OmzetAmount DEFAULT(0),
     PercentOfTotal     DECIMAL(9,4)  NULL,
+    CustomerId         VARCHAR(13)    NOT NULL CONSTRAINT DF_BTRPD_CustomerTopOmzet_CustomerId DEFAULT(''),  
 
     CONSTRAINT PK_BTRPD_CustomerTopOmzet PRIMARY KEY CLUSTERED (CustomerTopOmzetId),
     CONSTRAINT UX_BTRPD_CustomerTopOmzet_SnapshotKey_Rank UNIQUE (SnapshotKey, Rank)
@@ -1180,6 +1181,7 @@ CREATE TABLE BTRPD_CustomerTopPiutang
     CustomerName         VARCHAR(50)   NOT NULL CONSTRAINT DF_BTRPD_CustomerTopPiutang_CustomerName DEFAULT(''),
     OutstandingBalance   DECIMAL(18,2) NOT NULL CONSTRAINT DF_BTRPD_CustomerTopPiutang_OutstandingBalance DEFAULT(0),
     PercentOfTotal       DECIMAL(9,4)  NULL,
+    CustomerId           VARCHAR(13)    NOT NULL CONSTRAINT DF_BTRPD_CustomerTopPiutang_CustomerId DEFAULT(''),  
 
     CONSTRAINT PK_BTRPD_CustomerTopPiutang PRIMARY KEY CLUSTERED (CustomerTopPiutangId),
     CONSTRAINT UX_BTRPD_CustomerTopPiutang_SnapshotKey_Rank UNIQUE (SnapshotKey, Rank)
@@ -1202,7 +1204,7 @@ CREATE TABLE BTRPD_CustomerAttention
     ValueText           VARCHAR(50)   NULL,
     WilayahName         VARCHAR(30)   NOT NULL CONSTRAINT DF_BTRPD_CustomerAttention_WilayahName DEFAULT(''),
     SortOrder           INT           NOT NULL CONSTRAINT DF_BTRPD_CustomerAttention_SortOrder DEFAULT(0),
-
+    CustomerId          VARCHAR(13)   NOT NULL CONSTRAINT DF_BTRPD_CustomerAttention_CustomerId DEFAULT(''), 
     CONSTRAINT PK_BTRPD_CustomerAttention PRIMARY KEY CLUSTERED (CustomerAttentionId)
 )
 END
@@ -2286,6 +2288,7 @@ CREATE TABLE BTRPD_CustomerPortfolioPriority
     CustomerReportRoute           VARCHAR(100)   NOT NULL CONSTRAINT DF_BTRPD_CustomerPortfolioPriority_CustomerReportRoute DEFAULT(''),
     DrillDownRouteM17             VARCHAR(100)   NOT NULL CONSTRAINT DF_BTRPD_CustomerPortfolioPriority_DrillDownRouteM17 DEFAULT(''),
     DrillDownRouteM29             VARCHAR(100)   NOT NULL CONSTRAINT DF_BTRPD_CustomerPortfolioPriority_DrillDownRouteM29 DEFAULT(''),
+    CustomerId                    VARCHAR(13)    NOT NULL CONSTRAINT DF_BTRPD_CustomerPortfolioPriority_CustomerId DEFAULT(''),  
 
     CONSTRAINT PK_BTRPD_CustomerPortfolioPriority PRIMARY KEY CLUSTERED (CustomerPortfolioPriorityId)
 )
@@ -2338,7 +2341,7 @@ CREATE TABLE BTRPD_CustomerPortfolioCustomer
     DrillDownRouteM17             VARCHAR(100)   NOT NULL CONSTRAINT DF_BTRPD_CustomerPortfolioCustomer_DrillDownRouteM17 DEFAULT(''),
     DrillDownRouteM29             VARCHAR(100)   NOT NULL CONSTRAINT DF_BTRPD_CustomerPortfolioCustomer_DrillDownRouteM29 DEFAULT(''),
     ValueDisclaimer               VARCHAR(500)   NOT NULL CONSTRAINT DF_BTRPD_CustomerPortfolioCustomer_ValueDisclaimer DEFAULT(''),
-
+    CustomerId                    VARCHAR(13)    NOT NULL CONSTRAINT DF_BTRPD_CustomerPortfolioCustomer_CustomerId DEFAULT(''),  
     CONSTRAINT PK_BTRPD_CustomerPortfolioCustomer PRIMARY KEY CLUSTERED (CustomerPortfolioCustomerId)
 )
 END

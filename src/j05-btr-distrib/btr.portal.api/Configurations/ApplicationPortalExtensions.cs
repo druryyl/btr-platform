@@ -143,6 +143,8 @@ namespace btr.portal.api.Configurations
             services.AddScoped<IEntityAttentionEngine, EntityAttentionEngine>();
             services.AddScoped<IEntityRelationshipEngine, EntityRelationshipEngine>();
             services.AddScoped<IEntityComparisonEngine, EntityComparisonEngine>();
+            services.AddScoped<IEntityPopulationMapEngine, EntityPopulationMapEngine>();
+            services.AddScoped<IEntityPeerDistributionEngine, EntityPeerDistributionEngine>();
             services.AddScoped<IEntityAnalyticsMonthCloseService, EntityAnalyticsMonthCloseService>();
             services.AddSingleton(sp => new EntityAnalyticsRegistryBootstrap(
                 sp.GetRequiredService<IEntityTypeRegistry>(),

@@ -411,12 +411,14 @@
     <Compile Include="ReportingContext\CustomerReportAgg\Queries\GetCustomerReportQuery.cs" />
     <Compile Include="ReportingContext\EntityAnalyticsAgg\Contracts\IEntityAnalyticsLayerRepositories.cs" />
     <Compile Include="ReportingContext\EntityAnalyticsAgg\Contracts\IEntityAnalyticsMonthCloseService.cs" />
+    <Compile Include="ReportingContext\EntityAnalyticsAgg\Contracts\IEntityComparisonEngine.cs" />
     <Compile Include="ReportingContext\EntityAnalyticsAgg\Contracts\IEntityTrendEngine.cs" />
     <Compile Include="ReportingContext\EntityAnalyticsAgg\Contracts\IEntityRankingEngine.cs" />
     <Compile Include="ReportingContext\EntityAnalyticsAgg\Contracts\IEntityRadarEngine.cs" />
     <Compile Include="ReportingContext\EntityAnalyticsAgg\Contracts\IEntityAttentionEngine.cs" />
     <Compile Include="ReportingContext\EntityAnalyticsAgg\Contracts\IEntityRelationshipEngine.cs" />
-    <Compile Include="ReportingContext\EntityAnalyticsAgg\Contracts\IEntityComparisonEngine.cs" />
+    <Compile Include="ReportingContext\EntityAnalyticsAgg\Contracts\IEntityPopulationMapEngine.cs" />
+    <Compile Include="ReportingContext\EntityAnalyticsAgg\Contracts\IEntityPeerDistributionEngine.cs" />
     <Compile Include="ReportingContext\EntityAnalyticsAgg\Contracts\IRelationshipDefinitionRegistry.cs" />
     <Compile Include="ReportingContext\EntityAnalyticsAgg\Contracts\IAttentionSignalRegistry.cs" />
     <Compile Include="ReportingContext\EntityAnalyticsAgg\Contracts\IEntityAnalyticsProducer.cs" />
@@ -430,6 +432,7 @@
     <Compile Include="ReportingContext\EntityAnalyticsAgg\Contracts\IKpiRegistry.cs" />
     <Compile Include="ReportingContext\EntityAnalyticsAgg\Models\EntityAnalyticsConstants.cs" />
     <Compile Include="ReportingContext\EntityAnalyticsAgg\Models\EntityAnalyticsMetaKpiIds.cs" />
+    <Compile Include="ReportingContext\EntityAnalyticsAgg\Models\EntityMapPresetDefinition.cs" />
     <Compile Include="ReportingContext\EntityAnalyticsAgg\Models\AttentionSignalDefinition.cs" />
     <Compile Include="ReportingContext\EntityAnalyticsAgg\Models\EntityAttentionSignalSnapshot.cs" />
     <Compile Include="ReportingContext\EntityAnalyticsAgg\Models\EntityRelationshipSnapshot.cs" />
@@ -459,10 +462,12 @@
     <Compile Include="ReportingContext\EntityAnalyticsAgg\Models\Snapshot\EntityAnalyticsRankingRow.cs" />
     <Compile Include="ReportingContext\EntityAnalyticsAgg\Models\Snapshot\EntityAnalyticsRelationshipRow.cs" />
     <Compile Include="ReportingContext\EntityAnalyticsAgg\Options\EntityAnalyticsOptions.cs" />
+    <Compile Include="ReportingContext\EntityAnalyticsAgg\Queries\GetEntityAnalyticsSearchQuery.cs" />
     <Compile Include="ReportingContext\EntityAnalyticsAgg\Queries\GetEntityAnalyticsTypesQuery.cs" />
     <Compile Include="ReportingContext\EntityAnalyticsAgg\Queries\GetEntityPerformanceProfileQuery.cs" />
     <Compile Include="ReportingContext\EntityAnalyticsAgg\Queries\CompareEntitiesQuery.cs" />
-    <Compile Include="ReportingContext\EntityAnalyticsAgg\Queries\GetEntityAnalyticsSearchQuery.cs" />
+    <Compile Include="ReportingContext\EntityAnalyticsAgg\Queries\GetInvestigationWorkspaceQueries.cs" />
+    <Compile Include="ReportingContext\EntityAnalyticsAgg\Queries\InvestigationWorkspaceQueries.cs" />
     <Compile Include="ReportingContext\EntityAnalyticsAgg\Registrars\CustomerAttentionSignalCatalog.cs" />
     <Compile Include="ReportingContext\EntityAnalyticsAgg\Registrars\CustomerRelationshipCatalog.cs" />
     <Compile Include="ReportingContext\EntityAnalyticsAgg\Registrars\CustomerEntityAnalyticsRegistrar.cs" />
@@ -490,6 +495,7 @@
     <Compile Include="ReportingContext\EntityAnalyticsAgg\Producers\ItemEntityAnalyticsProducer.cs" />
     <Compile Include="ReportingContext\EntityAnalyticsAgg\Services\EntityAnalyticsDisplayNameResolver.cs" />
     <Compile Include="ReportingContext\EntityAnalyticsAgg\Services\EntityAnalyticsMonthCloseService.cs" />
+    <Compile Include="ReportingContext\EntityAnalyticsAgg\Services\EntityComparisonEngine.cs" />
     <Compile Include="ReportingContext\EntityAnalyticsAgg\Services\EntityTrendEngine.cs" />
     <Compile Include="ReportingContext\EntityAnalyticsAgg\Services\EntityRankingCalculator.cs" />
     <Compile Include="ReportingContext\EntityAnalyticsAgg\Services\EntityRankingEngine.cs" />
@@ -500,7 +506,9 @@
     <Compile Include="ReportingContext\EntityAnalyticsAgg\Services\EntityAttentionEngine.cs" />
     <Compile Include="ReportingContext\EntityAnalyticsAgg\Services\EntityRelationshipEngine.cs" />
     <Compile Include="ReportingContext\EntityAnalyticsAgg\Services\EntityComparisonCalculator.cs" />
-    <Compile Include="ReportingContext\EntityAnalyticsAgg\Services\EntityComparisonEngine.cs" />
+    <Compile Include="ReportingContext\EntityAnalyticsAgg\Services\EntityMapPresetRegistry.cs" />
+    <Compile Include="ReportingContext\EntityAnalyticsAgg\Services\EntityPopulationMapEngine.cs" />
+    <Compile Include="ReportingContext\EntityAnalyticsAgg\Services\EntityPeerDistributionEngine.cs" />
     <Compile Include="ReportingContext\EntityAnalyticsAgg\Services\EntityRelationshipDefinitionRegistry.cs" />
     <Compile Include="ReportingContext\EntityAnalyticsAgg\Services\EntityAttentionSignalRegistry.cs" />
     <Compile Include="ReportingContext\EntityAnalyticsAgg\Services\EntityAnalyticsDimensionLabelRegistry.cs" />

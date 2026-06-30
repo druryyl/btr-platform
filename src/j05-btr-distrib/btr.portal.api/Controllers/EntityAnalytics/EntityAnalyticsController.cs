@@ -91,6 +91,95 @@ namespace btr.portal.api.Controllers.EntityAnalytics
             }
         }
 
+        [HttpGet, Route("presets")]
+        public async Task<IHttpActionResult> GetPresets([FromUri] string entityType = null)
+        {
+            if (string.IsNullOrWhiteSpace(entityType))
+            {
+                return Content(
+                    HttpStatusCode.BadRequest,
+                    ApiResponse<MapPresetsResponse>.Error(400, "EntityType is required."));
+            }
+
+            try
+            {
+                var result = await _mediator.Send(new GetMapPresetsQuery { EntityType = entityType });
+                return Ok(ApiResponse<MapPresetsResponse>.Success(result));
+            }
+            catch (System.ArgumentException ex)
+            {
+                return Content(
+                    HttpStatusCode.BadRequest,
+                    ApiResponse<MapPresetsResponse>.Error(400, ex.Message));
+            }
+        }
+
+        [HttpGet, Route("population")]
+        public async Task<IHttpActionResult> GetPopulation(
+            [FromUri] string entityType = null,
+            [FromUri] string presetId = null,
+            [FromUri] string dimensionFilter = null,
+            [FromUri] bool? attentionOnly = null)
+        {
+            if (string.IsNullOrWhiteSpace(entityType))
+            {
+                return Content(
+                    HttpStatusCode.BadRequest,
+                    ApiResponse<PopulationMapResponseDto>.Error(400, "EntityType is required."));
+            }
+
+            try
+            {
+                var result = await _mediator.Send(new GetPopulationMapQuery
+                {
+                    EntityType = entityType,
+                    PresetId = presetId,
+                    DimensionFilter = dimensionFilter,
+                    AttentionOnly = attentionOnly
+                });
+                return Ok(ApiResponse<PopulationMapResponseDto>.Success(result));
+            }
+            catch (System.ArgumentException ex)
+            {
+                return Content(
+                    HttpStatusCode.BadRequest,
+                    ApiResponse<PopulationMapResponseDto>.Error(400, ex.Message));
+            }
+        }
+
+        [HttpGet, Route("peer-distribution")]
+        public async Task<IHttpActionResult> GetPeerDistribution(
+            [FromUri] string entityType = null,
+            [FromUri] string entityId = null,
+            [FromUri] string kpiId = null,
+            [FromUri] string dimensionFilter = null)
+        {
+            if (string.IsNullOrWhiteSpace(entityType) || string.IsNullOrWhiteSpace(entityId) || string.IsNullOrWhiteSpace(kpiId))
+            {
+                return Content(
+                    HttpStatusCode.BadRequest,
+                    ApiResponse<PeerDistributionResponseDto>.Error(400, "EntityType, EntityId, and KpiId are required."));
+            }
+
+            try
+            {
+                var result = await _mediator.Send(new GetPeerDistributionQuery
+                {
+                    EntityType = entityType,
+                    EntityId = entityId,
+                    KpiId = kpiId,
+                    DimensionFilter = dimensionFilter
+                });
+                return Ok(ApiResponse<PeerDistributionResponseDto>.Success(result));
+            }
+            catch (System.ArgumentException ex)
+            {
+                return Content(
+                    HttpStatusCode.BadRequest,
+                    ApiResponse<PeerDistributionResponseDto>.Error(400, ex.Message));
+            }
+        }
+
         [HttpGet, Route("{entityType}/{entityId}")]
         public async Task<IHttpActionResult> GetProfile(string entityType, string entityId)
         {

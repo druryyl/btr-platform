@@ -379,3 +379,87 @@ export interface ProfileEvidenceLink {
   ReportRoute: string
   FilterDimension: string
 }
+
+// --- M32R Investigation Workspace ---
+
+export interface MapPresetsResponse {
+  EntityType: string
+  Presets: MapPreset[]
+}
+
+export interface MapPreset {
+  PresetId: string
+  DisplayName: string
+  Description: string
+  AxisXKpiId: string
+  AxisYKpiId: string
+  AxisXLabel: string
+  AxisYLabel: string
+  IsDefault: boolean
+}
+
+export interface PopulationMapResponse {
+  EntityType: string
+  PresetId: string
+  PresetDisplayName: string
+  AxisXKpiId: string
+  AxisYKpiId: string
+  AxisXLabel: string
+  AxisYLabel: string
+  AxisXUnit: string | null
+  AxisYUnit: string | null
+  TotalPopulationCount: number
+  FilteredPopulationCount: number
+  ActiveFilterDescription: string | null
+  GeneratedAt: string | null
+  Points: PopulationMapPoint[]
+}
+
+export interface PopulationMapPoint {
+  EntityId: string
+  EntityCode: string
+  DisplayName: string
+  AxisX: number | null
+  AxisY: number | null
+  FormattedAxisX: string
+  FormattedAxisY: string
+  AxisXPercentile: number | null
+  AxisYPercentile: number | null
+  DimensionValue: string | null
+  IsActive: boolean
+  ActiveAttentionCount: number
+  MatchesFilter: boolean
+}
+
+export interface PeerDistributionResponse {
+  EntityType: string
+  EntityId: string
+  KpiId: string
+  KpiDisplayName: string
+  Unit: string
+  PeerGroupSize: number
+  PeerGroupRuleId: string
+  SelectedValue: number | null
+  FormattedSelectedValue: string
+  SelectedPercentile: number | null
+  PeerMin: number | null
+  PeerMax: number | null
+  FormattedPeerRange: string
+  Bins: PeerDistributionBin[]
+}
+
+export interface PeerDistributionBin {
+  BinIndex: number
+  BinStart: number
+  BinEnd: number
+  Count: number
+  Label: string
+}
+
+export interface WorkspaceSelectedEntity {
+  EntityId: string
+  EntityCode: string
+  DisplayName: string
+}
+
+export const MAX_WORKSPACE_COMPARISON = 4

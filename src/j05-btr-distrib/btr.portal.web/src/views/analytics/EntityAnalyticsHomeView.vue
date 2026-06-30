@@ -9,6 +9,7 @@ import DashboardDetailLayout from '@/components/dashboard/DashboardDetailLayout.
 import EntityPicker from '@/components/entity-analytics/EntityPicker.vue'
 import type { EntitySearchResult } from '@/models/entityAnalytics'
 import { buildCompareRoute, getEntityAnalyticsNav } from '@/navigation/entityAnalyticsNavigation'
+import { buildWorkspaceRoute } from '@/navigation/investigationWorkspaceNavigation'
 import { useEntityAnalyticsStore } from '@/stores/entityAnalyticsStore'
 
 const router = useRouter()
@@ -57,12 +58,38 @@ onMounted(() => {
     @refresh="store.loadTypes()"
   >
     <p class="entity-analytics-home__intro">
-      Search for an entity to open its Performance Profile, or compare peers side-by-side. You can
-      also reach profiles from domain dashboards — click a ranking row or use the Profile action in
-      attention lists.
+      Start with the Investigation Workspace to explore the full population, identify outliers, and
+      investigate entities in context. Legacy Performance Profile and Compare remain available below.
     </p>
 
-    <div v-if="enabledTypes.length" class="entity-analytics-home__grid">
+    <div v-if="enabledTypes.length" class="entity-analytics-home__workspace-row">
+      <Card
+        v-for="entityType in enabledTypes"
+        :key="`ws-${entityType.EntityType}`"
+        class="entity-analytics-home__workspace-card"
+      >
+        <template #title>{{ entityType.DisplayName }} Investigation</template>
+        <template #content>
+          <p class="entity-analytics-home__workspace-copy">
+            Open the {{ entityType.DisplayName }} Population Map to discover and investigate entities.
+          </p>
+          <RouterLink
+            v-slot="{ navigate }"
+            :to="buildWorkspaceRoute(entityType.EntityType)"
+            custom
+          >
+            <Button
+              label="Open Investigation Workspace"
+              icon="pi pi-map"
+              @click="navigate"
+            />
+          </RouterLink>
+        </template>
+      </Card>
+    </div>
+
+    <h2 v-if="enabledTypes.length" class="entity-analytics-home__legacy-title">Legacy entry points</h2>
+    <div v-if="enabledTypes.length" class="entity-analytics-home__grid entity-analytics-home__grid--legacy">
       <Card
         v-for="entityType in enabledTypes"
         :key="entityType.EntityType"
@@ -139,6 +166,25 @@ onMounted(() => {
   margin: 0 0 1.5rem;
   color: var(--p-text-muted-color);
   max-width: 48rem;
+}
+
+.entity-analytics-home__workspace-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr));
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.entity-analytics-home__workspace-copy {
+  margin: 0 0 1rem;
+  color: var(--p-text-muted-color);
+  font-size: 0.875rem;
+}
+
+.entity-analytics-home__legacy-title {
+  margin: 0 0 1rem;
+  font-size: 1rem;
+  font-weight: 600;
 }
 
 .entity-analytics-home__grid {

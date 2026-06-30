@@ -34,7 +34,7 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Contracts
 
         DateTime? GetLatestGeneratedAt(string entityType, string entityId);
 
-
+        DateTime? GetLatestGeneratedAtForEntityType(string entityType);
 
         bool HasAnyCurrentMetrics(string entityType);
 

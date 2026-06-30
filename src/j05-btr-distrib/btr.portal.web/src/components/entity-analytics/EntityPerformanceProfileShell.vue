@@ -15,6 +15,7 @@ import ProfileRelatedEntitiesSection from '@/components/entity-analytics/Profile
 import ProfileEvidenceSection from '@/components/entity-analytics/ProfileEvidenceSection.vue'
 import type { EntityPerformanceProfileResponse } from '@/models/entityAnalytics'
 import { buildCompareRoute, getEntityAnalyticsNav } from '@/navigation/entityAnalyticsNavigation'
+import { buildWorkspaceRoute } from '@/navigation/investigationWorkspaceNavigation'
 
 const props = defineProps<{
   profile: EntityPerformanceProfileResponse | null
@@ -53,6 +54,13 @@ const compareLabel = computed(() => {
   if (!navConfig.value) return null
   return `Compare ${navConfig.value.pluralLabel}`
 })
+
+const workspaceRoute = computed(() => {
+  if (!resolvedEntityType.value || !resolvedEntityId.value) return null
+  return buildWorkspaceRoute(resolvedEntityType.value, {
+    entityIds: [resolvedEntityId.value],
+  })
+})
 </script>
 
 <template>
@@ -65,6 +73,20 @@ const compareLabel = computed(() => {
     @refresh="emit('refresh')"
   >
     <template #header-actions>
+      <RouterLink
+        v-if="workspaceRoute"
+        v-slot="{ navigate }"
+        :to="workspaceRoute"
+        custom
+      >
+        <Button
+          label="Investigation Workspace"
+          icon="pi pi-map"
+          outlined
+          severity="secondary"
+          @click="navigate"
+        />
+      </RouterLink>
       <RouterLink
         v-if="compareRoute && compareLabel"
         v-slot="{ navigate }"

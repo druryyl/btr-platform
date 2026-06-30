@@ -150,6 +150,11 @@ const router = createRouter({
           component: () => import('@/views/reports/CustomerReportView.vue'),
         },
         {
+          path: 'analytics/:entityType/workspace',
+          name: 'entity-analytics-workspace',
+          component: () => import('@/views/analytics/InvestigationWorkspaceView.vue'),
+        },
+        {
           path: 'analytics',
           name: 'entity-analytics-home',
           component: () => import('@/views/analytics/EntityAnalyticsHomeView.vue'),

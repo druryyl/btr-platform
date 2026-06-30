@@ -95,6 +95,15 @@ namespace btr.test.ReportingContext
 
         public abstract DateTime? GetLatestGeneratedAt(string entityType, string entityId);
 
+        public virtual DateTime? GetLatestGeneratedAtForEntityType(string entityType)
+        {
+            return CurrentRows
+                .Where(r => string.Equals(r.EntityType, entityType, StringComparison.OrdinalIgnoreCase))
+                .Select(r => (DateTime?)r.GeneratedAt)
+                .DefaultIfEmpty()
+                .Max();
+        }
+
         public abstract bool HasAnyCurrentMetrics(string entityType);
 
         public IReadOnlyList<EntityAnalyticsMonthlyRow> GetHistory(
@@ -718,6 +727,8 @@ namespace btr.test.ReportingContext
                     continue;
 
                 var entityCode = group.Select(r => r.EntityCode).FirstOrDefault(c => !string.IsNullOrWhiteSpace(c)) ?? group.Key;
+                var displayName = group.FirstOrDefault(r =>
+                    string.Equals(r.KpiId, EntityAnalyticsMetaKpiIds.DisplayName, StringComparison.OrdinalIgnoreCase))?.TextValue;
                 string dimensionValue = null;
                 if (!string.IsNullOrWhiteSpace(dimensionKpiId))
                 {
@@ -729,6 +740,7 @@ namespace btr.test.ReportingContext
                 {
                     EntityId = group.Key,
                     EntityCode = entityCode,
+                    DisplayName = displayName,
                     IsActive = true,
                     DimensionValue = dimensionValue
                 });

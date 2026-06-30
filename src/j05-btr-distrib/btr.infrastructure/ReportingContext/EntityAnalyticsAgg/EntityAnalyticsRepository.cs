@@ -255,6 +255,24 @@ WHERE SnapshotKey = @SnapshotKey
             }
         }
 
+        public DateTime? GetLatestGeneratedAtForEntityType(string entityType)
+        {
+            const string sql = @"
+SELECT MAX(GeneratedAt)
+FROM BTRPD_EntityAnalytics_Current
+WHERE SnapshotKey = @SnapshotKey
+  AND EntityType = @EntityType";
+
+            using (var conn = new SqlConnection(ConnStringHelper.Get(_opt)))
+            {
+                return conn.QueryFirstOrDefault<DateTime?>(sql, new
+                {
+                    SnapshotKey = EntityAnalyticsConstants.CurrentSnapshotKey,
+                    EntityType = entityType
+                });
+            }
+        }
+
         public bool HasAnyCurrentMetrics(string entityType)
         {
             // Any L0 row means the dashboard worker produced a snapshot for this entity type.
@@ -1673,7 +1691,8 @@ WHERE m.EntityType = @EntityType
 SELECT c.EntityId,
        c.EntityCode,
        CASE WHEN COALESCE(active.NumericValue, 1) > 0 THEN 1 ELSE 0 END AS IsActive,
-       NULL AS DimensionValue
+       NULL AS DimensionValue,
+       dn.TextValue AS DisplayName
 FROM (
     SELECT DISTINCT EntityId, EntityCode
     FROM BTRPD_EntityAnalytics_Current
@@ -1684,12 +1703,18 @@ LEFT JOIN BTRPD_EntityAnalytics_Current active
    AND active.EntityType = @EntityType
    AND active.EntityId = c.EntityId
    AND active.KpiId = @IsActiveKpiId
+LEFT JOIN BTRPD_EntityAnalytics_Current dn
+    ON dn.SnapshotKey = @SnapshotKey
+   AND dn.EntityType = @EntityType
+   AND dn.EntityId = c.EntityId
+   AND dn.KpiId = @DisplayNameKpiId
 WHERE COALESCE(active.NumericValue, 1) > 0"
                 : @"
 SELECT c.EntityId,
        c.EntityCode,
        CASE WHEN COALESCE(active.NumericValue, 1) > 0 THEN 1 ELSE 0 END AS IsActive,
-       dim.TextValue AS DimensionValue
+       dim.TextValue AS DimensionValue,
+       dn.TextValue AS DisplayName
 FROM (
     SELECT DISTINCT EntityId, EntityCode, EntityType
     FROM BTRPD_EntityAnalytics_Current
@@ -1705,6 +1730,11 @@ LEFT JOIN BTRPD_EntityAnalytics_Current dim
    AND dim.EntityType = c.EntityType
    AND dim.EntityId = c.EntityId
    AND dim.KpiId = @DimensionKpiId
+LEFT JOIN BTRPD_EntityAnalytics_Current dn
+    ON dn.SnapshotKey = @SnapshotKey
+   AND dn.EntityType = c.EntityType
+   AND dn.EntityId = c.EntityId
+   AND dn.KpiId = @DisplayNameKpiId
 WHERE COALESCE(active.NumericValue, 1) > 0";
 
             using (var conn = new SqlConnection(ConnStringHelper.Get(_opt)))
@@ -1714,6 +1744,7 @@ WHERE COALESCE(active.NumericValue, 1) > 0";
                     SnapshotKey = EntityAnalyticsConstants.CurrentSnapshotKey,
                     EntityType = entityType,
                     IsActiveKpiId = EntityAnalyticsMetaKpiIds.IsActive,
+                    DisplayNameKpiId = EntityAnalyticsMetaKpiIds.DisplayName,
                     DimensionKpiId = dimensionKpiId
                 }).ToList();
             }
