@@ -46,7 +46,7 @@ namespace btr.application.SalesContext.FakturAgg.Workers
         IFakturBuilder FakturPajak(string noSeriFakturPajak);
         IFakturBuilder FpKeluaran(string fpKeluaranId);
 
-        IFakturBuilder Void(IUserKey userKey);
+        IFakturBuilder Void(IUserKey userKey, int voidReasonCode, string voidReasonNote);
         IFakturBuilder ReActivate(IUserKey userKey);
         IFakturBuilder User(IUserKey user);
         IFakturBuilder Cash(decimal cash);
@@ -283,10 +283,14 @@ namespace btr.application.SalesContext.FakturAgg.Workers
         #endregion
 
         #region STATE
-        public IFakturBuilder Void(IUserKey userKey)
+        public IFakturBuilder Void(IUserKey userKey, int voidReasonCode, string voidReasonNote)
         {
             _aggRoot.VoidDate = _dateTime.Now;
             _aggRoot.UserIdVoid = userKey.UserId;
+            _aggRoot.VoidReasonCode = voidReasonCode;
+            _aggRoot.VoidReasonNote = voidReasonNote?.Length > 200
+                ? voidReasonNote.Substring(0, 200)
+                : voidReasonNote ?? string.Empty;
             _aggRoot.FakturCodeOri = _aggRoot.FakturCode;
             _aggRoot.FakturCode = string.Empty;
             _fakturCodeOpenDal.Insert(_aggRoot.FakturCodeOri);
@@ -298,6 +302,8 @@ namespace btr.application.SalesContext.FakturAgg.Workers
         {
             _aggRoot.VoidDate = new DateTime(3000, 1, 1);
             _aggRoot.UserIdVoid = string.Empty;
+            _aggRoot.VoidReasonCode = 0;
+            _aggRoot.VoidReasonNote = string.Empty;
             return this;
         }
 

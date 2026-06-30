@@ -6,18 +6,23 @@ using btr.domain.FinanceContext.PiutangAgg;
 using btr.domain.SalesContext.FakturAgg;
 using btr.domain.SupportContext.UserAgg;
 using btr.nuna.Application;
+using System;
 
 namespace btr.application.SalesContext.FakturAgg.UseCases
 {
     public class VoidFakturRequest : IFakturKey, IUserKey
     {
-        public VoidFakturRequest(string fakturId, string userId)
+        public VoidFakturRequest(string fakturId, string userId, int voidReasonCode, string voidReasonNote = "")
         {
             FakturId = fakturId;
             UserId = userId;
+            VoidReasonCode = voidReasonCode;
+            VoidReasonNote = voidReasonNote ?? string.Empty;
         }
         public string FakturId { get; set; }
         public string UserId { get; set; }
+        public int VoidReasonCode { get; set; }
+        public string VoidReasonNote { get; set; }
     }
 
     public interface IVoidFakturWorker : INunaServiceVoid<VoidFakturRequest>
@@ -50,10 +55,13 @@ namespace btr.application.SalesContext.FakturAgg.UseCases
 
         public void Execute(VoidFakturRequest req)
         {
+            if (!FakturVoidReason.IsValid(req.VoidReasonCode))
+                throw new ArgumentException("Alasan void wajib dipilih.");
+
             //   void faktur
             var faktur = _fakturBuilder
                 .Load(req)
-                .Void((IUserKey)req)
+                .Void((IUserKey)req, req.VoidReasonCode, req.VoidReasonNote ?? string.Empty)
                 .Build();
             
             //  unpost faktur control

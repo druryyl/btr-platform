@@ -394,15 +394,6 @@ namespace btr.distrib.SalesContext.FakturControlAgg
                     FakturGrid.CancelEdit();
                     return true; 
                 }
-            if (columnIndex == colPost)
-                if (isPosted)
-                {
-                    if (MessageBox.Show("Batal Faktur?", "Control", MessageBoxButtons.OKCancel) == DialogResult.Cancel)
-                    {
-                        FakturGrid.CancelEdit();
-                        return true;
-                    }
-                }
 
             //  Un-Kembali
             if (columnIndex == colKembali)
@@ -460,8 +451,18 @@ namespace btr.distrib.SalesContext.FakturControlAgg
             {
                 //  void faktur
                 case StatusFakturEnum.Posted:
-                    var voidFakturRequest = new VoidFakturRequest(fakturKey.FakturId, userKey.UserId);
-                    _voidFakturWorker.Execute(voidFakturRequest);
+                    using (var dlg = new FakturVoidReasonForm())
+                    {
+                        if (dlg.ShowDialog() != DialogResult.OK)
+                        {
+                            FakturGrid.CancelEdit();
+                            return;
+                        }
+
+                        var voidFakturRequest = new VoidFakturRequest(
+                            fakturKey.FakturId, userKey.UserId, dlg.VoidReasonCode, dlg.VoidReasonNote);
+                        _voidFakturWorker.Execute(voidFakturRequest);
+                    }
                     break;
 
                 //  batal kirim

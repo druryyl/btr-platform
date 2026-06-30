@@ -30,7 +30,7 @@ namespace btr.infrastructure.SalesContext.FakturAgg
                 Total, Discount, Dpp, Tax, GrandTotal, 
                 TotalKlaim, DiscountKlaim, DppKlaim, TaxKlaim, GrandTotalKlaim, 
                 UangMuka, KurangBayar, NoFakturPajak, FpKeluaranId,     
-                CreateTime, LastUpdate, UserId, VoidDate, UserIdVoid, Note, IsHasKlaim)
+                CreateTime, LastUpdate, UserId, VoidDate, UserIdVoid, VoidReasonCode, VoidReasonNote, Note, IsHasKlaim)
             VALUES(
                 @FakturId, @FakturDate, @FakturCode, @FakturCodeOri, 
                 @OrderId, @SalesPersonId, @CustomerId, @HargaTypeId,
@@ -38,7 +38,7 @@ namespace btr.infrastructure.SalesContext.FakturAgg
                 @Total, @Discount, @Dpp, @Tax, @GrandTotal, 
                 @TotalKlaim, @DiscountKlaim, @DppKlaim, @TaxKlaim, @GrandTotalKlaim, 
                 @UangMuka, @KurangBayar, @NoFakturPajak, @FpKeluaranId,     
-                @CreateTime, @LastUpdate, @UserId, @VoidDate, @UserIdVoid, @Note, @IsHasKlaim) ";
+                @CreateTime, @LastUpdate, @UserId, @VoidDate, @UserIdVoid, @VoidReasonCode, @VoidReasonNote, @Note, @IsHasKlaim) ";
 
             var dp = new DynamicParameters();
 
@@ -80,6 +80,8 @@ namespace btr.infrastructure.SalesContext.FakturAgg
             dp.AddParam("@UserId", model.UserId, SqlDbType.VarChar);
             dp.AddParam("@VoidDate", model.VoidDate, SqlDbType.DateTime);
             dp.AddParam("@UserIdVoid", model.UserIdVoid, SqlDbType.VarChar);
+            dp.AddParam("@VoidReasonCode", model.VoidReasonCode, SqlDbType.Int);
+            dp.AddParam("@VoidReasonNote", model.VoidReasonNote, SqlDbType.VarChar);
             
             dp.AddParam("@Note", model.Note, SqlDbType.VarChar);
             dp.AddParam("@IsHasKlaim", model.IsHasKlaim, SqlDbType.Bit);
@@ -131,6 +133,8 @@ namespace btr.infrastructure.SalesContext.FakturAgg
                 UserId = @UserId,
                 VoidDate = @VoidDate,
                 UserIdVoid = @UserIdVoid,
+                VoidReasonCode = @VoidReasonCode,
+                VoidReasonNote = @VoidReasonNote,
                 Note = @Note,
                 IsHasKlaim = @IsHasKlaim
             WHERE
@@ -176,6 +180,8 @@ namespace btr.infrastructure.SalesContext.FakturAgg
             dp.AddParam("@UserId", model.UserId, SqlDbType.VarChar);
             dp.AddParam("@VoidDate", model.VoidDate, SqlDbType.DateTime);
             dp.AddParam("@UserIdVoid", model.UserIdVoid, SqlDbType.VarChar);
+            dp.AddParam("@VoidReasonCode", model.VoidReasonCode, SqlDbType.Int);
+            dp.AddParam("@VoidReasonNote", model.VoidReasonNote, SqlDbType.VarChar);
 
             dp.AddParam("@Note", model.Note, SqlDbType.VarChar);
             dp.AddParam("@IsHasKlaim", model.IsHasKlaim, SqlDbType.Bit);
@@ -213,7 +219,7 @@ namespace btr.infrastructure.SalesContext.FakturAgg
                 aa.Total, aa.Discount, aa.Dpp, aa.Tax, aa.GrandTotal, 
                 aa.TotalKlaim, aa.DiscountKlaim, aa.DppKlaim, aa.TaxKlaim, aa.GrandTotalKlaim, 
                 aa.UangMuka, aa.KurangBayar, aa.NoFakturPajak, aa.FpKeluaranId,
-                aa.CreateTime, aa.LastUpdate, aa.UserId, aa.VoidDate, aa.UserIdVoid, aa.Note, aa.IsHasKlaim,
+                aa.CreateTime, aa.LastUpdate, aa.UserId, aa.VoidDate, aa.UserIdVoid, aa.VoidReasonCode, aa.VoidReasonNote, aa.Note, aa.IsHasKlaim,
                 ISNULL(bb.SalesPersonName, '') AS SalesPersonName,
                 ISNULL(cc.CustomerName, '') AS CustomerName,
                 ISNULL(cc.CustomerCode, '') AS CustomerCode,
@@ -253,7 +259,7 @@ namespace btr.infrastructure.SalesContext.FakturAgg
                 aa.Total, aa.Discount, aa.Dpp, aa.Tax, aa.GrandTotal, 
                 aa.TotalKlaim, aa.DiscountKlaim, aa.DppKlaim, aa.TaxKlaim, aa.GrandTotalKlaim, 
                 aa.UangMuka, aa.KurangBayar, aa.NoFakturPajak, aa.FpKeluaranId,
-                aa.CreateTime, aa.LastUpdate, aa.UserId, aa.VoidDate, aa.UserIdVoid, aa.Note, aa.IsHasKlaim,
+                aa.CreateTime, aa.LastUpdate, aa.UserId, aa.VoidDate, aa.UserIdVoid, aa.VoidReasonCode, aa.VoidReasonNote, aa.Note, aa.IsHasKlaim,
                 ISNULL(bb.SalesPersonName, '') AS SalesPersonName,
                 ISNULL(cc.CustomerName, '') AS CustomerName,
                 ISNULL(cc.CustomerCode, '') AS CustomerCode,
@@ -339,7 +345,7 @@ namespace btr.infrastructure.SalesContext.FakturAgg
                 aa.Total, aa.Discount, aa.Dpp, aa.Tax, aa.GrandTotal, 
                 aa.TotalKlaim, aa.DiscountKlaim, aa.DppKlaim, aa.TaxKlaim, aa.GrandTotalKlaim, 
                 aa.UangMuka, aa.KurangBayar, aa.NoFakturPajak, aa.FpKeluaranId,
-                aa.CreateTime, aa.LastUpdate, aa.UserId, aa.VoidDate, aa.UserIdVoid, aa.Note,
+                aa.CreateTime, aa.LastUpdate, aa.UserId, aa.VoidDate, aa.UserIdVoid, aa.VoidReasonCode, aa.VoidReasonNote, aa.Note,
                 ISNULL(bb.SalesPersonName, '') AS SalesPersonName,
                 ISNULL(cc.CustomerName, '') AS CustomerName,
                 ISNULL(cc.CustomerCode, '') AS CustomerCode,
