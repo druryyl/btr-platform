@@ -2,8 +2,8 @@
   --iw-stage-gap: 2.5rem;
   --iw-panel-gap: 1.25rem;
   --iw-inner-gap: 0.75rem;
-  --iw-map-min-height-discovery: calc(100vh - 14rem);
-  --iw-map-min-height-investigation: 22rem;
+  --iw-map-min-height-discovery: calc(100vh - 11rem);
+  --iw-map-min-height-investigation: max(28rem, min(52vh, calc(100vh - 18rem)));
   --iw-bg-canvas: #f4f5f7;
   --iw-map-plot-bg: #e8ebf0;
   --iw-text-primary: #1e293b;
@@ -59,6 +59,7 @@
 
 .iw-map-shell {
   position: relative;
+  flex: 1;
   border-radius: 0.5rem;
   background: var(--iw-bg-canvas);
   border: 1px solid #e2e8f0;
@@ -158,10 +159,4 @@
   font-size: 0.75rem;
   line-height: 1.4;
   box-shadow: 0 4px 12px rgba(15, 23, 42, 0.2);
-}
-
-.iw-tooltip strong {
-  display: block;
-  margin-bottom: 0.25rem;
-  font-size: 0.8125rem;
 }

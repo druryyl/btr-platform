@@ -35,7 +35,6 @@ const router = useRouter()
 const workspace = useInvestigationWorkspaceStore()
 const analyticsStore = useEntityAnalyticsStore()
 
-const mapRef = ref<InstanceType<typeof PopulationMapCanvas> | null>(null)
 const searchHighlightIds = ref<string[]>([])
 const limitDialogVisible = ref(false)
 const limitDialogPoint = ref<PopulationMapPoint | null>(null)
@@ -150,8 +149,6 @@ function onKeydown(event: KeyboardEvent) {
     clearSelection()
   } else if (event.key === 'f' || event.key === 'F') {
     // filter panel is always visible in toolbar
-  } else if (event.key === 'z' || event.key === 'Z') {
-    mapRef.value?.resetZoom()
   } else if (event.key === 'c' || event.key === 'C') {
     clearFilters()
   } else if (event.key === 'Backspace' && workspace.selectedEntityIds.length) {
@@ -235,14 +232,6 @@ watch(
             size="small"
             @click="clearSelection"
           />
-          <Button
-            v-if="workspace.selectedEntityIds.length"
-            label="Locate selected"
-            text
-            size="small"
-            @click="mapRef?.locateSelected()"
-          />
-          <Button label="Reset zoom" text size="small" @click="mapRef?.resetZoom()" />
         </div>
 
         <ScopeIndicator
@@ -255,7 +244,6 @@ watch(
           :class="isInvestigation ? 'iw-map-shell--investigation' : 'iw-map-shell--discovery'"
         >
           <PopulationMapCanvas
-            ref="mapRef"
             :population="workspace.population"
             :selected-entity-ids="workspace.selectedEntityIds"
             :search-highlight-ids="searchHighlightIds"

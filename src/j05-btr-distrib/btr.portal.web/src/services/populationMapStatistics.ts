@@ -1,0 +1,21 @@
+/** @deprecated Import from populationStatisticsEngine instead. */
+export {
+  analyzePopulationMap,
+  buildConfidenceBands,
+  businessToVisual,
+  classifyByResidualMagnitude,
+  computeAnalyzedPoints,
+  extractVisualPairs as extractAxisPairs,
+  fitTheilSenRegression,
+  formatStatisticalClass,
+  resolveDeviationLabel,
+  type AnalyzedPoint,
+  type AxisPair,
+  type BandPolyline,
+  type ConfidenceBandSet,
+  type DeviationLabel,
+  type PopulationMapAnalysis,
+  type RobustRegressionModel,
+  type StatisticalClass,
+  type VisualAxisPair,
+} from '@/services/populationStatisticsEngine'
