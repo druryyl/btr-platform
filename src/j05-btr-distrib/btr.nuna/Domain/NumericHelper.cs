@@ -139,7 +139,14 @@ namespace btr.nuna.Domain
             {
                 // Only one separator exists
                 char sep = hasDot ? '.' : ',';
-                return input.Replace(sep.ToString(), "");
+                var symbolPos = input.IndexOf(sep);
+                var resultStr = "";
+                if (symbolPos <=2)
+                    resultStr = input.Replace(sep.ToString(), ".");
+                else
+                    resultStr = input.Replace(sep.ToString(), "");
+                return resultStr;
+
                 //int index = input.IndexOf(sep);
                 //bool appearsOnce = input.IndexOf(sep) == input.LastIndexOf(sep);
                 //bool exactlyThreeAfter = (input.Length - index - 1) == 3;

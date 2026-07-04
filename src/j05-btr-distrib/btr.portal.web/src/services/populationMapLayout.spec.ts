@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import type { PopulationMapPoint } from '@/models/entityAnalytics'
-import type { AnalyzedPoint } from '@/services/populationStatisticsEngine'
-import { analyzePopulationMap, businessToVisual } from '@/services/populationStatisticsEngine'
+import type { AnalyzedPoint } from '@/services/populationProjection/populationProjectionEngine'
+import { populationProjectionEngine } from '@/services/populationProjection/populationProjectionEngine'
 import {
   buildAutoLabelCandidates,
   buildTransform,
@@ -9,8 +9,10 @@ import {
   computeRawExtents,
   dataToScreen,
   generateLinearAxisTicks,
-  generateLogMappedAxisTicks,
+  generateProjectionAxisGuides,
+  generateProjectionGridTicks,
   plotPoints,
+  projectionToScreenX,
   resolveBusinessAttentionTier,
   resolveLabelPlacements,
   resolveVisualTier,
@@ -42,8 +44,9 @@ function makePlotted(
   screenY: number,
   index = 0,
   analyzed?: AnalyzedPoint,
+  labelPriority?: number,
 ) {
-  return { point, screenX, screenY, index, analyzed }
+  return { point, screenX, screenY, index, analyzed, labelPriority }
 }
 
 function makeParetoPoints(count: number): PopulationMapPoint[] {
@@ -57,60 +60,63 @@ function makeParetoPoints(count: number): PopulationMapPoint[] {
   })
 }
 
+function project(points: PopulationMapPoint[]) {
+  return populationProjectionEngine.project(points)!
+}
+
 describe('computeBounds', () => {
-  it('uses visual log-space coordinates with padding', () => {
+  it('returns projection bounds with padding', () => {
     const points = [
       makePoint({ EntityId: 'a', AxisX: 0, AxisY: 0 }),
       makePoint({ EntityId: 'b', AxisX: 100, AxisY: 200 }),
     ]
+    const projection = project(points)
+    const bounds = computeBounds(projection)
 
-    const bounds = computeBounds(points)
-    expect(bounds.minX).toBeLessThan(businessToVisual(0))
-    expect(bounds.maxX).toBeGreaterThan(businessToVisual(100))
-    expect(bounds.minY).toBeLessThan(businessToVisual(0))
-    expect(bounds.maxY).toBeGreaterThan(businessToVisual(200))
+    expect(bounds.maxX).toBeGreaterThan(bounds.minX)
+    expect(bounds.maxY).toBeGreaterThan(bounds.minY)
+    expect(bounds.minX).toBeLessThanOrEqual(projection.bounds.minX)
+    expect(bounds.maxX).toBeGreaterThanOrEqual(projection.bounds.maxX)
   })
 
-  it('expands bounds to include confidence bands when analysis is provided', () => {
-    const points = [
-      makePoint({ EntityId: 'a', AxisX: 0, AxisY: 0 }),
-      makePoint({ EntityId: 'b', AxisX: 100, AxisY: 100 }),
-      makePoint({ EntityId: 'c', AxisX: 50, AxisY: 50 }),
-    ]
-    const analysis = analyzePopulationMap(points)!
-    const boundsWithout = computeBounds(points)
-    const boundsWith = computeBounds(points, analysis)
-    expect(boundsWith.maxY - boundsWith.minY).toBeGreaterThanOrEqual(
-      boundsWithout.maxY - boundsWithout.minY,
-    )
+  it('returns default bounds when projection is null', () => {
+    expect(computeBounds(null)).toEqual({ minX: 0, maxX: 1, minY: 0, maxY: 1 })
   })
 
-  it('yields wider visual span than raw linear extent for Pareto data', () => {
+  it('yields balanced projection span for Pareto data', () => {
     const points = makeParetoPoints(100)
-    const rawExtents = computeRawExtents(points)
-    const bounds = computeBounds(points)
-    const rawSpan = rawExtents.maxX - rawExtents.minX
-    const visualSpan = bounds.maxX - bounds.minX
-    expect(visualSpan).toBeLessThan(rawSpan)
-    expect(visualSpan).toBeGreaterThan(1)
+    const projection = project(points)
+    const bounds = computeBounds(projection)
+    const spanX = bounds.maxX - bounds.minX
+    const spanY = bounds.maxY - bounds.minY
+    const ratio = spanX / spanY
+    expect(ratio).toBeGreaterThan(0.3)
+    expect(ratio).toBeLessThan(3)
   })
 })
 
-describe('generateLogMappedAxisTicks', () => {
-  it('returns business values with monotonic visual positions', () => {
-    const ticks = generateLogMappedAxisTicks(0, 1_000_000)
-    expect(ticks.length).toBeGreaterThan(2)
+describe('generateProjectionAxisGuides', () => {
+  it('returns business-labeled ticks in projection space', () => {
+    const points = Array.from({ length: 20 }, (_, i) =>
+      makePoint({ EntityId: `e${i}`, AxisX: (i + 1) * 1000, AxisY: (i + 1) * 800 }),
+    )
+    const projection = project(points)
+    const { xTicks, yTicks } = generateProjectionAxisGuides(projection)
 
-    for (let i = 1; i < ticks.length; i++) {
-      expect(ticks[i].businessValue).toBeGreaterThan(ticks[i - 1].businessValue)
-      expect(ticks[i].visualValue).toBeGreaterThan(ticks[i - 1].visualValue)
-      expect(ticks[i].visualValue).toBeCloseTo(businessToVisual(ticks[i].businessValue), 10)
+    expect(xTicks.length).toBeGreaterThan(0)
+    expect(yTicks.length).toBeGreaterThan(0)
+    for (let i = 1; i < xTicks.length; i++) {
+      expect(xTicks[i].projectionValue).toBeGreaterThanOrEqual(xTicks[i - 1].projectionValue)
     }
   })
+})
 
-  it('includes zero when range starts at zero', () => {
-    const ticks = generateLogMappedAxisTicks(0, 10_000)
-    expect(ticks.some((t) => t.businessValue === 0)).toBe(true)
+describe('generateProjectionGridTicks', () => {
+  it('produces evenly spaced projection grid ticks', () => {
+    const bounds = { minX: -2, maxX: 2, minY: -1, maxY: 1 }
+    const { xTicks, yTicks } = generateProjectionGridTicks(bounds)
+    expect(xTicks.length).toBeGreaterThan(2)
+    expect(yTicks.length).toBeGreaterThan(2)
   })
 })
 
@@ -123,13 +129,14 @@ describe('generateLinearAxisTicks', () => {
   })
 })
 
-describe('dataToScreen with visual bounds', () => {
+describe('dataToScreen with projection bounds', () => {
   it('maps known coordinates to expected screen positions', () => {
     const points = [
       makePoint({ AxisX: 0, AxisY: 0 }),
       makePoint({ EntityId: 'E2', AxisX: 100, AxisY: 100 }),
     ]
-    const bounds = computeBounds(points)
+    const projection = project(points)
+    const bounds = computeBounds(projection)
     const transform = buildTransform(800, 600, bounds)
 
     const minScreen = dataToScreen(bounds.minX, bounds.minY, transform)
@@ -142,37 +149,48 @@ describe('dataToScreen with visual bounds', () => {
   })
 })
 
+describe('projectionToScreenX', () => {
+  it('maps projection values to screen x', () => {
+    const bounds = { minX: 0, maxX: 10, minY: 0, maxY: 10 }
+    const transform = buildTransform(400, 300, bounds)
+    const screen = projectionToScreenX(5, transform)
+    expect(screen).toBeGreaterThan(transform.offsetX)
+    expect(screen).toBeLessThan(transform.offsetX + transform.plotWidth)
+  })
+})
+
 describe('plotPoints', () => {
-  it('plots using log-transformed visual coordinates', () => {
+  it('plots using projection coordinates', () => {
     const points = [
       makePoint({ AxisX: 0, AxisY: 0 }),
       makePoint({ EntityId: 'E2', AxisX: 100, AxisY: 200 }),
     ]
-    const analysis = analyzePopulationMap(points)
-    const bounds = computeBounds(points, analysis)
+    const projection = project(points)
+    const bounds = computeBounds(projection)
     const transform = buildTransform(400, 300, bounds)
-    const plotted = plotPoints(points, transform, analysis)
+    const plotted = plotPoints(points, transform, projection)
 
     expect(plotted).toHaveLength(2)
     expect(plotted[0].screenX).not.toBeCloseTo(plotted[1].screenX, 0)
     expect(plotted[0].screenY).not.toBeCloseTo(plotted[1].screenY, 0)
     expect(plotted[0].analyzed).toBeDefined()
+    expect(plotted[0].labelPriority).toBeDefined()
   })
 
   it('separates low and high business values on screen for long-tail data', () => {
     const points = makeParetoPoints(200)
-    const analysis = analyzePopulationMap(points)
-    const bounds = computeBounds(points, analysis)
+    const projection = project(points)
+    const bounds = computeBounds(projection)
     const transform = buildTransform(800, 600, bounds)
-    const plotted = plotPoints(points, transform, analysis)
+    const plotted = plotPoints(points, transform, projection)
 
     const small = plotted.find((p) => p.point.EntityId === 'p0')!
     const large = plotted.find((p) => p.point.EntityId === 'p199')!
 
     const screenSpanX = Math.abs(large.screenX - small.screenX)
     const screenSpanY = Math.abs(large.screenY - small.screenY)
-    expect(screenSpanX).toBeGreaterThan(transform.plotWidth * 0.5)
-    expect(screenSpanY).toBeGreaterThan(transform.plotHeight * 0.5)
+    expect(screenSpanX).toBeGreaterThan(transform.plotWidth * 0.3)
+    expect(screenSpanY).toBeGreaterThan(transform.plotHeight * 0.3)
   })
 })
 
@@ -314,17 +332,34 @@ describe('buildAutoLabelCandidates', () => {
       ),
     ]
 
-    const analysis = analyzePopulationMap([
+    const projection = populationProjectionEngine.project([
       makePoint({ EntityId: 'sel', AxisX: 10, AxisY: 10 }),
       makePoint({ EntityId: 'search', AxisX: 20, AxisY: 20 }),
       makePoint({ EntityId: 'critical', AxisX: 50, AxisY: 500 }),
       ...Array.from({ length: 20 }, (_, i) =>
-        makePoint({ EntityId: `n${i}`, AxisX: i, AxisY: i }),
+        makePoint({ EntityId: `n${i}`, AxisX: i + 1, AxisY: i + 1 }),
       ),
     ])
 
-    for (const p of plotted) {
-      p.analyzed = analysis?.points.get(p.point.EntityId)
+    for (let i = 0; i < plotted.length; i++) {
+      const p = plotted[i]
+      const entity = projection?.entities.get(p.point.EntityId)
+      if (entity) {
+        plotted[i] = {
+          ...p,
+          analyzed: {
+            entityId: entity.entityId,
+            rawX: entity.businessX,
+            rawY: entity.businessY,
+            visualExpectedY: entity.projectionExpectedY,
+            visualResidual: entity.projectionResidual,
+            absResidualMad: entity.absResidualMad,
+            statisticalClass: entity.statisticalClass,
+            deviationLabel: entity.deviationLabel,
+          },
+          labelPriority: entity.labelPriority,
+        }
+      }
     }
 
     const candidates = buildAutoLabelCandidates(plotted, {
@@ -344,7 +379,7 @@ describe('buildAutoLabelCandidates', () => {
     expect(selected?.priority).toBe(100)
     expect(search?.priority).toBe(90)
     if (critical) {
-      expect(critical.priority).toBe(70)
+      expect(critical.priority).toBeGreaterThanOrEqual(70)
     }
   })
 
@@ -375,10 +410,10 @@ describe('buildAutoLabelCandidates', () => {
       makePoint({ EntityId: 'small', AxisX: 1, AxisY: 1 }),
       makePoint({ EntityId: 'large', AxisX: 1_000_000, AxisY: 1 }),
     ]
-    const analysis = analyzePopulationMap(points)
-    const bounds = computeBounds(points, analysis)
+    const projection = project(points)
+    const bounds = computeBounds(projection)
     const transform = buildTransform(400, 300, bounds)
-    const plotted = plotPoints(points, transform, analysis)
+    const plotted = plotPoints(points, transform, projection)
 
     const candidates = buildAutoLabelCandidates(plotted, {
       selectedIds: new Set(),

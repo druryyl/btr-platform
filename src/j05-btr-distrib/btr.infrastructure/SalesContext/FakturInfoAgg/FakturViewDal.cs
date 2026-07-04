@@ -36,7 +36,14 @@ namespace btr.infrastructure.SalesContext.FakturInfoAgg
                     ISNULL(ee.SalesPersonName, '') SalesPersonName,
                     ISNULL(ff.WarehouseName, '') AS WarehouseName,
                     ISNULL(gg.StatusFaktur,0) AS StatusFaktur,
-                    ISNULL(hh.KlasifikasiName, '') AS KlasifikasiName   
+                    ISNULL(hh.KlasifikasiName, '') AS KlasifikasiName,
+                    CASE aa.VoidReasonCode
+                        WHEN 1 THEN 'Salah Input'
+                        WHEN 2 THEN 'Revisi'
+                        WHEN 3 THEN 'Customer Reject'
+                        ELSE ''
+                    END AS VoidReason,
+                    ISNULL(aa.VoidReasonNote, '') AS VoidReasonNote
                 FROM
                     BTR_Faktur aa
                     LEFT JOIN BTR_User bb ON aa.UserId = bb.UserId
@@ -77,7 +84,14 @@ namespace btr.infrastructure.SalesContext.FakturInfoAgg
                     ISNULL(ee.SalesPersonName, '') SalesPersonName,
                     ISNULL(ff.WarehouseName, '') AS WarehouseName,
                     ISNULL(gg.StatusFaktur,0) AS StatusFaktur,
-                    ISNULL(hh.KlasifikasiName, '') AS KlasifikasiName
+                    ISNULL(hh.KlasifikasiName, '') AS KlasifikasiName,
+                    CASE aa.VoidReasonCode
+                        WHEN 1 THEN 'Salah Input'
+                        WHEN 2 THEN 'Revisi'
+                        WHEN 3 THEN 'Customer Reject'
+                        ELSE ''
+                    END AS VoidReason,
+                    ISNULL(aa.VoidReasonNote, '') AS VoidReasonNote
                 FROM
                     BTR_Faktur aa
                     LEFT JOIN BTR_User bb ON aa.UserId = bb.UserId

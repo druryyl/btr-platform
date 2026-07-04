@@ -39,15 +39,15 @@ import {
   buildSpatialIndex,
   buildTransform,
   computeBounds,
-  computeRawExtents,
   dataToScreen,
   findNearestPoint,
   formatAxisTickValue,
-  generateLogMappedAxisTicks,
+  generateProjectionAxisGuides,
+  generateProjectionGridTicks,
   measureLabel,
   plotPoints,
-  rawToScreenXFromBusiness,
-  rawToScreenYFromBusiness,
+  projectionToScreenX,
+  projectionToScreenY,
   resolveBusinessAttentionTier,
   resolveLabelPlacements,
   resolveVisualTier,
@@ -57,7 +57,11 @@ import {
   type SpatialIndex,
   type VisualPointTier,
 } from '@/services/populationMapLayout'
-import { analyzePopulationMap, type BandPolyline } from '@/services/populationStatisticsEngine'
+import {
+  populationProjectionEngine,
+  projectedEntityToAnalyzed,
+  type BandPolyline,
+} from '@/services/populationProjection/populationProjectionEngine'
 import PopulationMapTooltip from '@/components/entity-analytics/workspace/PopulationMapTooltip.vue'
 
 const props = defineProps<{
@@ -87,13 +91,14 @@ const visiblePoints = computed(() =>
 
 const searchSet = computed(() => new Set(props.searchHighlightIds ?? []))
 
-const mapAnalysis = computed(() =>
-  visiblePoints.value.length ? analyzePopulationMap(visiblePoints.value) : null,
+const mapProjection = computed(() =>
+  visiblePoints.value.length ? populationProjectionEngine.project(visiblePoints.value) : null,
 )
 
 const hoveredAnalyzed = computed(() => {
-  if (!hovered.value || !mapAnalysis.value) return null
-  return mapAnalysis.value.points.get(hovered.value.EntityId) ?? null
+  if (!hovered.value || !mapProjection.value) return null
+  const projected = mapProjection.value.entities.get(hovered.value.EntityId)
+  return projected ? projectedEntityToAnalyzed(projected) : null
 })
 
 let plottedCache: PlottedPoint[] = []
@@ -303,10 +308,10 @@ function drawBandPolygon(
 }
 
 function drawConfidenceBands(ctx: CanvasRenderingContext2D, transform: MapTransform) {
-  const analysis = mapAnalysis.value
-  if (!analysis) return
+  const projection = mapProjection.value
+  if (!projection) return
 
-  const { bandGeometry } = analysis
+  const { bandGeometry } = projection
   const { offsetX, offsetY, plotWidth, plotHeight } = transform
 
   ctx.save()
@@ -336,16 +341,16 @@ function drawConfidenceBands(ctx: CanvasRenderingContext2D, transform: MapTransf
 }
 
 function drawRegressionLine(ctx: CanvasRenderingContext2D, transform: MapTransform) {
-  const analysis = mapAnalysis.value
-  if (!analysis) return
+  const projection = mapProjection.value
+  if (!projection) return
 
   const { offsetX, offsetY, plotWidth, plotHeight, bounds } = transform
-  const { model } = analysis
+  const { regression } = projection
 
   const xStart = bounds.minX
   const xEnd = bounds.maxX
-  const yStart = model.predictY(xStart)
-  const yEnd = model.predictY(xEnd)
+  const yStart = regression.predictY(xStart)
+  const yEnd = regression.predictY(xEnd)
 
   const start = dataToScreen(xStart, yStart, transform)
   const end = dataToScreen(xEnd, yEnd, transform)
@@ -369,12 +374,14 @@ function drawRegressionLine(ctx: CanvasRenderingContext2D, transform: MapTransfo
 function drawAxes(
   ctx: CanvasRenderingContext2D,
   transform: MapTransform,
-  rawExtents: ReturnType<typeof computeRawExtents>,
   height: number,
 ) {
-  const { offsetX, offsetY, plotWidth, plotHeight } = transform
-  const xTicks = generateLogMappedAxisTicks(rawExtents.minX, rawExtents.maxX)
-  const yTicks = generateLogMappedAxisTicks(rawExtents.minY, rawExtents.maxY)
+  const projection = mapProjection.value
+  if (!projection) return
+
+  const { offsetX, offsetY, plotWidth, plotHeight, bounds } = transform
+  const gridTicks = generateProjectionGridTicks(bounds)
+  const { xTicks, yTicks } = generateProjectionAxisGuides(projection)
 
   ctx.strokeStyle = WORKSPACE_MAP_GRID_LINE
   ctx.lineWidth = 1
@@ -382,27 +389,37 @@ function drawAxes(
   ctx.font = '500 10px system-ui, sans-serif'
   ctx.fillStyle = WORKSPACE_MAP_TICK_COLOR
 
-  for (const tick of xTicks) {
-    const x = rawToScreenXFromBusiness(tick.businessValue, transform)
+  for (const tick of gridTicks.xTicks) {
+    const x = projectionToScreenX(tick, transform)
     if (x < offsetX || x > offsetX + plotWidth) continue
 
     ctx.beginPath()
     ctx.moveTo(x, offsetY)
     ctx.lineTo(x, offsetY + plotHeight)
     ctx.stroke()
-
-    const label = formatAxisTickValue(tick.businessValue, props.population?.AxisXUnit)
-    ctx.fillText(label, x + 3, offsetY + plotHeight + 14)
   }
 
-  for (const tick of yTicks) {
-    const y = rawToScreenYFromBusiness(tick.businessValue, transform)
+  for (const tick of gridTicks.yTicks) {
+    const y = projectionToScreenY(tick, transform)
     if (y < offsetY || y > offsetY + plotHeight) continue
 
     ctx.beginPath()
     ctx.moveTo(offsetX, y)
     ctx.lineTo(offsetX + plotWidth, y)
     ctx.stroke()
+  }
+
+  for (const tick of xTicks) {
+    const x = projectionToScreenX(tick.projectionValue, transform)
+    if (x < offsetX || x > offsetX + plotWidth) continue
+
+    const label = formatAxisTickValue(tick.businessValue, props.population?.AxisXUnit)
+    ctx.fillText(label, x + 3, offsetY + plotHeight + 14)
+  }
+
+  for (const tick of yTicks) {
+    const y = projectionToScreenY(tick.projectionValue, transform)
+    if (y < offsetY || y > offsetY + plotHeight) continue
 
     const label = formatAxisTickValue(tick.businessValue, props.population?.AxisYUnit)
     const labelWidth = ctx.measureText(label).width
@@ -449,14 +466,14 @@ function drawRegionLabelPill(
 }
 
 function drawRegionLabels(ctx: CanvasRenderingContext2D, transform: MapTransform) {
-  const analysis = mapAnalysis.value
-  if (!analysis) return
+  const projection = mapProjection.value
+  if (!projection) return
 
   const { offsetX, offsetY, plotWidth, plotHeight } = transform
   const pad = 10
   const midX = offsetX + plotWidth * 0.72
 
-  const centerMid = analysis.bandGeometry.center[Math.floor(analysis.bandGeometry.center.length / 2)]
+  const centerMid = projection.bandGeometry.center[Math.floor(projection.bandGeometry.center.length / 2)]
   if (centerMid) {
     const screen = dataToScreen(centerMid.x, centerMid.y, transform)
     drawRegionLabelPill(ctx, 'Expected', screen.x - 30, screen.y - 10)
@@ -602,16 +619,15 @@ function draw() {
   const height = canvas.height / dpr
   ctx.clearRect(0, 0, width, height)
 
-  const analysis = mapAnalysis.value
-  const rawExtents = computeRawExtents(visiblePoints.value)
-  const bounds = computeBounds(visiblePoints.value, analysis)
+  const projection = mapProjection.value
+  const bounds = computeBounds(projection)
   const transform = buildTransform(width, height, bounds)
-  plottedCache = plotPoints(visiblePoints.value, transform, analysis)
+  plottedCache = plotPoints(visiblePoints.value, transform, projection)
   spatialIndexCache = buildSpatialIndex(plottedCache)
 
   drawPlotBackground(ctx, transform)
   drawConfidenceBands(ctx, transform)
-  drawAxes(ctx, transform, rawExtents, height)
+  drawAxes(ctx, transform, height)
   drawRegressionLine(ctx, transform)
   drawRegionLabels(ctx, transform)
   drawBatchedTierPoints(ctx, 'normal')

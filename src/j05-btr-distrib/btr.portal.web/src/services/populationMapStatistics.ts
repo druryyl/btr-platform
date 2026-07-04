@@ -1,21 +1,18 @@
-/** @deprecated Import from populationStatisticsEngine instead. */
+/** @deprecated Import from populationProjection/populationProjectionEngine instead. */
 export {
   analyzePopulationMap,
-  buildConfidenceBands,
   businessToVisual,
   classifyByResidualMagnitude,
-  computeAnalyzedPoints,
-  extractVisualPairs as extractAxisPairs,
   fitTheilSenRegression,
   formatStatisticalClass,
+  populationProjectionEngine,
+  projectedEntityToAnalyzed,
   resolveDeviationLabel,
   type AnalyzedPoint,
-  type AxisPair,
   type BandPolyline,
   type ConfidenceBandSet,
   type DeviationLabel,
   type PopulationMapAnalysis,
   type RobustRegressionModel,
   type StatisticalClass,
-  type VisualAxisPair,
-} from '@/services/populationStatisticsEngine'
+} from '@/services/populationProjection/populationProjectionEngine'

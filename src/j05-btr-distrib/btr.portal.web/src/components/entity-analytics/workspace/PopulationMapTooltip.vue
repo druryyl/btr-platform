@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { PopulationMapPoint, PopulationMapResponse } from '@/models/entityAnalytics'
-import type { AnalyzedPoint } from '@/services/populationStatisticsEngine'
-import { formatStatisticalClass } from '@/services/populationStatisticsEngine'
+import type { AnalyzedPoint } from '@/services/populationProjection/populationProjectionEngine'
+import { formatStatisticalClass } from '@/services/populationProjection/populationProjectionEngine'
 import { resolveBusinessAttentionTier } from '@/services/populationMapLayout'
 
 defineProps<{

@@ -1,6 +1,6 @@
 import type { PopulationMapPoint } from '@/models/entityAnalytics'
-import type { AnalyzedPoint, PopulationMapAnalysis, StatisticalClass } from '@/services/populationStatisticsEngine'
-import { businessToVisual } from '@/services/populationStatisticsEngine'
+import type { AnalyzedPoint, PopulationProjectionResult, StatisticalClass } from '@/services/populationProjection/populationProjectionEngine'
+import { projectedEntityToAnalyzed } from '@/services/populationProjection/populationProjectionEngine'
 import { formatNumber } from '@/services/formatters'
 
 export interface MapBounds {
@@ -48,6 +48,7 @@ export interface PlottedPoint {
   screenY: number
   index: number
   analyzed?: AnalyzedPoint
+  labelPriority?: number
 }
 
 /** Tunable by Product without changing classification logic. */
@@ -279,51 +280,12 @@ export function computeRawExtents(points: PopulationMapPoint[]): RawExtents {
 }
 
 export function computeBounds(
-  points: PopulationMapPoint[],
-  analysis?: PopulationMapAnalysis | null,
+  projection?: PopulationProjectionResult | null,
 ): MapBounds {
-  const values = points.filter((p) => p.AxisX != null && p.AxisY != null)
-  if (!values.length) {
+  if (!projection) {
     return { minX: 0, maxX: 1, minY: 0, maxY: 1 }
   }
-
-  let minX = Infinity
-  let maxX = -Infinity
-  let minY = Infinity
-  let maxY = -Infinity
-
-  for (const p of values) {
-    const visualX = businessToVisual(p.AxisX!)
-    const visualY = businessToVisual(p.AxisY!)
-    minX = Math.min(minX, visualX)
-    maxX = Math.max(maxX, visualX)
-    minY = Math.min(minY, visualY)
-    maxY = Math.max(maxY, visualY)
-  }
-
-  if (analysis) {
-    const { bandGeometry, mad, model } = analysis
-    for (const pt of bandGeometry.upper2) {
-      minY = Math.min(minY, pt.y)
-      maxY = Math.max(maxY, pt.y)
-    }
-    for (const pt of bandGeometry.lower2) {
-      minY = Math.min(minY, pt.y)
-      maxY = Math.max(maxY, pt.y)
-    }
-    minY = Math.min(minY, model.predictY(minX) - 2 * mad)
-    maxY = Math.max(maxY, model.predictY(maxX) + 2 * mad)
-  }
-
-  const padX = (maxX - minX) * 0.05 || 0.1
-  const padY = (maxY - minY) * 0.05 || 0.1
-
-  return {
-    minX: minX - padX,
-    maxX: maxX + padX,
-    minY: minY - padY,
-    maxY: maxY + padY,
-  }
+  return projection.bounds
 }
 
 function niceStep(span: number, targetTicks: number): number {
@@ -361,63 +323,56 @@ export function generateLinearAxisTicks(min: number, max: number, targetTicks = 
   return ticks
 }
 
+export interface ProjectionAxisTick {
+  businessValue: number
+  projectionValue: number
+}
+
+export function generateProjectionAxisGuides(
+  projection: PopulationProjectionResult,
+): { xTicks: ProjectionAxisTick[]; yTicks: ProjectionAxisTick[] } {
+  const xTicks = projection.axisGuides
+    .filter((g) => g.axis === 'x')
+    .map((g) => ({ businessValue: g.businessValue, projectionValue: g.projectionValue }))
+    .sort((a, b) => a.projectionValue - b.projectionValue)
+
+  const yTicks = projection.axisGuides
+    .filter((g) => g.axis === 'y')
+    .map((g) => ({ businessValue: g.businessValue, projectionValue: g.projectionValue }))
+    .sort((a, b) => a.projectionValue - b.projectionValue)
+
+  return { xTicks, yTicks }
+}
+
+export function generateProjectionGridTicks(
+  bounds: MapBounds,
+  targetTicks = 6,
+): { xTicks: number[]; yTicks: number[] } {
+  return {
+    xTicks: generateLinearAxisTicks(bounds.minX, bounds.maxX, targetTicks),
+    yTicks: generateLinearAxisTicks(bounds.minY, bounds.maxY, targetTicks),
+  }
+}
+
+/** @deprecated Use generateProjectionAxisGuides */
 export interface LogMappedAxisTick {
   businessValue: number
   visualValue: number
 }
 
-function generateNiceBusinessTicks(rawMin: number, rawMax: number, targetTicks: number): number[] {
-  const min = Math.max(rawMin, 0)
-  const max = Math.max(rawMax, min)
-
-  if (min === max) {
-    return min === 0 ? [0, 1] : [min, min * 2]
-  }
-
-  const candidates: number[] = []
-
-  if (min === 0) {
-    candidates.push(0)
-  }
-
-  const logMin = Math.log10(Math.max(min, 1))
-  const logMax = Math.log10(Math.max(max, 1))
-  const startExp = Math.floor(logMin) - 1
-  const endExp = Math.ceil(logMax) + 1
-
-  for (let exp = startExp; exp <= endExp; exp++) {
-    for (const mult of [1, 2, 5]) {
-      const tick = mult * Math.pow(10, exp)
-      if (tick >= min && tick <= max) {
-        candidates.push(tick)
-      }
-    }
-  }
-
-  if (candidates.length < 2) {
-    return generateLinearAxisTicks(min, max, targetTicks)
-  }
-
-  const unique = [...new Set(candidates)].sort((a, b) => a - b)
-
-  if (unique.length <= targetTicks + 2) {
-    return unique
-  }
-
-  const step = Math.ceil(unique.length / targetTicks)
-  return unique.filter((_, index) => index % step === 0 || index === unique.length - 1)
-}
-
+/** @deprecated Use generateProjectionAxisGuides */
 export function generateLogMappedAxisTicks(
   rawMin: number,
   rawMax: number,
   targetTicks = 6,
 ): LogMappedAxisTick[] {
-  const businessTicks = generateNiceBusinessTicks(rawMin, rawMax, targetTicks)
-  return businessTicks.map((businessValue) => ({
-    businessValue,
-    visualValue: businessToVisual(businessValue),
-  }))
+  const min = Math.max(rawMin, 0)
+  const max = Math.max(rawMax, min)
+  if (min === max) {
+    return [{ businessValue: min, visualValue: min }]
+  }
+  const ticks = generateLinearAxisTicks(min, max, targetTicks)
+  return ticks.map((businessValue) => ({ businessValue, visualValue: businessValue }))
 }
 
 export function formatAxisTickValue(value: number, unit: string | null | undefined): string {
@@ -481,28 +436,47 @@ export function rawToScreenY(rawY: number, transform: MapTransform): number {
   return dataToScreen(transform.bounds.minX, rawY, transform).y
 }
 
-export function rawToScreenXFromBusiness(rawTick: number, transform: MapTransform): number {
-  return dataToScreen(businessToVisual(rawTick), transform.bounds.minY, transform).x
+export function projectionToScreenX(projectionValue: number, transform: MapTransform): number {
+  return dataToScreen(projectionValue, transform.bounds.minY, transform).x
 }
 
+export function projectionToScreenY(projectionValue: number, transform: MapTransform): number {
+  return dataToScreen(transform.bounds.minX, projectionValue, transform).y
+}
+
+/** @deprecated Use projectionToScreenX */
+export function rawToScreenXFromBusiness(rawTick: number, transform: MapTransform): number {
+  return projectionToScreenX(rawTick, transform)
+}
+
+/** @deprecated Use projectionToScreenY */
 export function rawToScreenYFromBusiness(rawTick: number, transform: MapTransform): number {
-  return dataToScreen(transform.bounds.minX, businessToVisual(rawTick), transform).y
+  return projectionToScreenY(rawTick, transform)
 }
 
 export function plotPoints(
   points: PopulationMapPoint[],
   transform: MapTransform,
-  analysis?: PopulationMapAnalysis | null,
+  projection?: PopulationProjectionResult | null,
 ): PlottedPoint[] {
   const result: PlottedPoint[] = []
   for (let index = 0; index < points.length; index++) {
     const point = points[index]
     if (point.AxisX == null || point.AxisY == null) continue
-    const visualX = businessToVisual(point.AxisX)
-    const visualY = businessToVisual(point.AxisY)
-    const { x, y } = dataToScreen(visualX, visualY, transform)
-    const analyzed = analysis?.points.get(point.EntityId)
-    result.push({ point, screenX: x, screenY: y, index, analyzed })
+
+    const projected = projection?.entities.get(point.EntityId)
+    if (!projected) continue
+
+    const { x, y } = dataToScreen(projected.projectionX, projected.projectionY, transform)
+    const analyzed: AnalyzedPoint = projectedEntityToAnalyzed(projected)
+    result.push({
+      point,
+      screenX: x,
+      screenY: y,
+      index,
+      analyzed,
+      labelPriority: projected.labelPriority,
+    })
   }
   return result
 }
@@ -617,11 +591,11 @@ export function buildAutoLabelCandidates(
   const attention = plotted.filter((p) => p.analyzed?.statisticalClass === 'attention')
 
   for (const plot of critical.slice(0, criticalCap)) {
-    add(plot, 70)
+    add(plot, Math.max(plot.labelPriority ?? 0, 70))
   }
 
   for (const plot of attention.slice(0, attentionCap)) {
-    add(plot, 60)
+    add(plot, Math.max(plot.labelPriority ?? 0, 60))
   }
 
   const byX = [...plotted]

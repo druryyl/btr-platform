@@ -24,5 +24,7 @@ namespace btr.application.SalesContext.FakturInfo
         public decimal GrandTotal { get; set; }
         public int StatusFaktur { get; set; }
         public bool Kembali => StatusFaktur == 2 ? true : false;
+        public string VoidReason { get; set; }
+        public string VoidReasonNote { get; set; }
     }
 }
