@@ -22,6 +22,8 @@ namespace btr.application.SalesContext.FakturBrgInfo
         public decimal DiscRp { get; set; }
         public decimal PpnRp { get; set; }
         public decimal Total { get; set; }
+        public string VoidReason { get; set; }
+        public string VoidReasonNote { get; set; }
 
     }
 }

@@ -179,7 +179,9 @@ namespace btr.distrib.SalesContext.FakturInfoRpt
                 MessageBox.Show(@"Periode informasi maximal 3 bulan");
                 return;
             }
-            var listFaktur = _fakturBrgViewDal.ListData(periode)?.ToList() ?? new List<FakturBrgView>();
+            var listFaktur = FakturTerhapusCheck.Checked == false
+                ? _fakturBrgViewDal.ListData(periode)?.ToList() ?? new List<FakturBrgView>()
+                : _fakturBrgViewDal.ListTerhapus(periode)?.ToList() ?? new List<FakturBrgView>();
             listFaktur = listFaktur
                 .OrderBy(x => x.FakturDate.Date)
                 .ThenBy(x => x.FakturCode)

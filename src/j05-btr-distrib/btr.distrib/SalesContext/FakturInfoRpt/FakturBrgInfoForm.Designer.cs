@@ -29,6 +29,7 @@
         private void InitializeComponent()
         {
             this.panel1 = new System.Windows.Forms.Panel();
+            this.FakturTerhapusCheck = new System.Windows.Forms.CheckBox();
             this.ExcelButton = new System.Windows.Forms.Button();
             this.ProsesButton = new System.Windows.Forms.Button();
             this.CustomerText = new System.Windows.Forms.TextBox();
@@ -44,6 +45,7 @@
             this.panel1.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
             this.panel1.BackColor = System.Drawing.Color.PowderBlue;
+            this.panel1.Controls.Add(this.FakturTerhapusCheck);
             this.panel1.Controls.Add(this.ExcelButton);
             this.panel1.Controls.Add(this.ProsesButton);
             this.panel1.Controls.Add(this.CustomerText);
@@ -54,6 +56,16 @@
             this.panel1.Name = "panel1";
             this.panel1.Size = new System.Drawing.Size(787, 34);
             this.panel1.TabIndex = 2;
+            // 
+            // FakturTerhapusCheck
+            // 
+            this.FakturTerhapusCheck.AutoSize = true;
+            this.FakturTerhapusCheck.Location = new System.Drawing.Point(788, 10);
+            this.FakturTerhapusCheck.Name = "FakturTerhapusCheck";
+            this.FakturTerhapusCheck.Size = new System.Drawing.Size(108, 17);
+            this.FakturTerhapusCheck.TabIndex = 5;
+            this.FakturTerhapusCheck.Text = "Faktur Terhapus";
+            this.FakturTerhapusCheck.UseVisualStyleBackColor = true;
             // 
             // ExcelButton
             // 
@@ -143,5 +155,6 @@
         private System.Windows.Forms.DateTimePicker Tgl2Date;
         private System.Windows.Forms.DateTimePicker Tgl1Date;
         private Syncfusion.Windows.Forms.Grid.Grouping.GridGroupingControl InfoGrid;
+        private System.Windows.Forms.CheckBox FakturTerhapusCheck;
     }
 }
