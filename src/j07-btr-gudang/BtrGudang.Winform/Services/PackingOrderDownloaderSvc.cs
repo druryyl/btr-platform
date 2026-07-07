@@ -68,6 +68,48 @@ namespace BtrGudang.Winform.Services
 
             return (true, responseStr, lastTimestamp, listPackingOrder);
         }
+
+        public async Task<(bool, string, IEnumerable<PackingOrderModel>)> ExecutePending(string warehouseCode, int pageSize)
+        {
+            var baseUrl = _btradeCloudOpt.BaseUrl;
+            var endpoint = $"{baseUrl}/api/PackingOrder/pending/{{warehouseCode}}/{{pageSize}}";
+            var client = new RestClient(endpoint);
+
+            var request = new RestRequest()
+                .AddUrlSegment("warehouseCode", warehouseCode)
+                .AddUrlSegment("pageSize", pageSize);
+            var response = await client.ExecuteGetAsync(request);
+
+            if (!response.IsSuccessful)
+            {
+                return (false, response.ErrorMessage ?? response.StatusDescription, null);
+            }
+
+            var options = new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true
+            };
+            var apiResponse = JsonSerializer.Deserialize<ApiResponse<PackingOrderPendingResponse>>(response.Content, options);
+
+            if (apiResponse == null)
+            {
+                return (false, "Failed to deserialize API response", null);
+            }
+
+            if (apiResponse.Status?.ToLower() != "success")
+            {
+                return (false, $"API returned non-success status: {apiResponse.Status}", null);
+            }
+
+            var respData = apiResponse.Data;
+            var listData = respData?.ListData ?? Enumerable.Empty<PackingOrderDownloadTrsResponse>();
+            var listPackingOrder = listData.Select(x => x.ToModel());
+            var responseStr = "Downloaded Pending Packing Order:\r";
+            responseStr += string.Join("\r",
+                listData.Select(x => $"{x.FakturCode} - {x.FakturDate} - {x.CustomerName}"));
+
+            return (true, responseStr, listPackingOrder);
+        }
     }
 
     public class PackingOrderDownloadCmd
@@ -80,6 +122,11 @@ namespace BtrGudang.Winform.Services
     public class PackingOrderDownloadResponse
     {
         public string LastTimestamp { get; set; }
+        public IEnumerable<PackingOrderDownloadTrsResponse> ListData { get; set; }
+    }
+
+    public class PackingOrderPendingResponse
+    {
         public IEnumerable<PackingOrderDownloadTrsResponse> ListData { get; set; }
     }
 

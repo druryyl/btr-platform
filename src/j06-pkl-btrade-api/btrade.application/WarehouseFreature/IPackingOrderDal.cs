@@ -16,6 +16,7 @@ namespace btrade.application.WarehouseFreature
         IGetData<PackingOrderModel, IPackingOrderKey>,
         IListData<PackingOrderView, DateTime, string>
     {
+        IEnumerable<PackingOrderView> ListPendingData(string depoId, int pageSize);
     }
 
     public class PackingOrderView : IPackingOrderKey

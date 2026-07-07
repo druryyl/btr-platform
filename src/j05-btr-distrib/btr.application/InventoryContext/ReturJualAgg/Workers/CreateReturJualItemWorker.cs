@@ -217,11 +217,11 @@ namespace btr.application.InventoryContext.ReturJualAgg.Workers
                 : ParsingHrg(inputStr.HrgInputStr, brg);
 
             //      qtyInput
-            if (inputStr.HrgInputStr.IsNullOrEmpty())
-                inputStr.HrgInputStr = "0;0";
+            if (inputStr.QtyInputStr.IsNullOrEmpty())
+                inputStr.QtyInputStr = "0;0";
             inputStr.QtyInputStr = ParsingQty(inputStr.QtyInputStr, brg);
 
-            //      discInput
+            //      discInput 
             if (inputStr.DiscInputStr.IsNullOrEmpty())
                 inputStr.DiscInputStr = "0;0;0;0";
             inputStr.DiscInputStr = ParsingDisc(inputStr.DiscInputStr);

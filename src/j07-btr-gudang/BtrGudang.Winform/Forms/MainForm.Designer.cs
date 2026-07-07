@@ -31,6 +31,7 @@
             this.menuStrip1 = new System.Windows.Forms.MenuStrip();
             this.packingOrderToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.PT1DownloadPackingOrderMenu = new System.Windows.Forms.ToolStripMenuItem();
+            this.PT3DownloadPendingFakturMenu = new System.Windows.Forms.ToolStripMenuItem();
             this.pT2InfoPackingOrderToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.toolStripMenuItem1 = new System.Windows.Forms.ToolStripSeparator();
             this.PK1PrintPackingOrderMenu = new System.Windows.Forms.ToolStripMenuItem();
@@ -51,6 +52,7 @@
             // 
             this.packingOrderToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.PT1DownloadPackingOrderMenu,
+            this.PT3DownloadPendingFakturMenu,
             this.pT2InfoPackingOrderToolStripMenuItem,
             this.toolStripMenuItem1,
             this.PK1PrintPackingOrderMenu});
@@ -64,6 +66,13 @@
             this.PT1DownloadPackingOrderMenu.Size = new System.Drawing.Size(217, 22);
             this.PT1DownloadPackingOrderMenu.Text = "DL1 - Downloader...";
             this.PT1DownloadPackingOrderMenu.Click += new System.EventHandler(this.PT1DownloadPackingOrderMenu_Click);
+            // 
+            // PT3DownloadPendingFakturMenu
+            // 
+            this.PT3DownloadPendingFakturMenu.Name = "PT3DownloadPendingFakturMenu";
+            this.PT3DownloadPendingFakturMenu.Size = new System.Drawing.Size(217, 22);
+            this.PT3DownloadPendingFakturMenu.Text = "DL3 - Download Pending Faktur...";
+            this.PT3DownloadPendingFakturMenu.Click += new System.EventHandler(this.PT3DownloadPendingFakturMenu_Click);
             // 
             // pT2InfoPackingOrderToolStripMenuItem
             // 
@@ -110,6 +119,7 @@
         private System.Windows.Forms.MenuStrip menuStrip1;
         private System.Windows.Forms.ToolStripMenuItem packingOrderToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem PT1DownloadPackingOrderMenu;
+        private System.Windows.Forms.ToolStripMenuItem PT3DownloadPendingFakturMenu;
         private System.Windows.Forms.ToolStripMenuItem pT2InfoPackingOrderToolStripMenuItem;
         private System.Windows.Forms.ToolStripSeparator toolStripMenuItem1;
         private System.Windows.Forms.ToolStripMenuItem PK1PrintPackingOrderMenu;

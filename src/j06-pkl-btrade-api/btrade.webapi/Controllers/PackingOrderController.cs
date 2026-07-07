@@ -17,6 +17,15 @@ namespace btrade.webapi.Controllers
         }
 
         [HttpGet]
+        [Route("pending/{warehouseCode}/{pageSize}")]
+        public async Task<IActionResult> DownloadPending(string warehouseCode, int pageSize)
+        {
+            var query = new WrhDownloadPendingPackingOrderCmd(warehouseCode, pageSize);
+            var response = await _mediator.Send(query);
+            return Ok(new JSendOk(response));
+        }
+
+        [HttpGet]
         [Route("{startTimestamp}/{warehouseCode}/{pageSize}")]
         public async Task<IActionResult> Download(string startTimestamp, string warehouseCode, int pageSize)
         {

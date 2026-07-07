@@ -62,6 +62,7 @@ namespace BtrGudang.Winform
             // Register forms
             services.AddSingleton<IFormFactory, FormFactory>();
             services.AddTransient<DL1DownloaderForm>();
+            services.AddTransient<DL3PendingDownloaderForm>();
             services.AddTransient<DL2DownloadPackingOrderInfoForm>();
             services.AddTransient<PK1PrintPackingOrderForm>();
             services.AddTransient<MainForm>();

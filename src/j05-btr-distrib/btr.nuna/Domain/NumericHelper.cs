@@ -139,9 +139,10 @@ namespace btr.nuna.Domain
             {
                 // Only one separator exists
                 char sep = hasDot ? '.' : ',';
-                var symbolPos = input.IndexOf(sep);
+                var symbolPos = input.LastIndexOf(sep);
+                int lengthAfterLastComma = input.Length - symbolPos - 1;
                 var resultStr = "";
-                if (symbolPos <=2)
+                if (lengthAfterLastComma <= 2)
                     resultStr = input.Replace(sep.ToString(), ".");
                 else
                     resultStr = input.Replace(sep.ToString(), "");

@@ -52,6 +52,17 @@ namespace BtrGudang.Winform
             form.Show();
         }
 
+        private void PT3DownloadPendingFakturMenu_Click(object sender, EventArgs e)
+        {
+            if (BringMdiChildToFrontIfLoaded<DL3PendingDownloaderForm>())
+                return;
+
+            var form = _formFactory.CreateForm<DL3PendingDownloaderForm>();
+            form.StartPosition = FormStartPosition.CenterScreen;
+            form.MdiParent = this;
+            form.Show();
+        }
+
 
         private void pT2InfoPackingOrderToolStripMenuItem_Click(object sender, EventArgs e)
         {

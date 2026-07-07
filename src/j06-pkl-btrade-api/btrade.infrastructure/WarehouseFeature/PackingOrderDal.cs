@@ -186,4 +186,30 @@ public class PackingOrderDal : IPackingOrderDal
         using var conn = new SqlConnection(ConnStringHelper.Get(_opt));
         return conn.Read<PackingOrderView>(sql, dp);
     }
+
+    public IEnumerable<PackingOrderView> ListPendingData(string depoId, int pageSize)
+    {
+        const string sql = @"
+            SELECT TOP (@PageSize)
+                aa.PackingOrderId, aa.PackingOrderDate, 
+                aa.CustomerId, aa.CustomerCode, aa.CustomerName, aa.Alamat, aa.NoTelp,
+                aa.Latitude, aa.Longitude, aa.Accuracy,
+                aa.FakturId, aa.FakturCode, aa.FakturDate, aa.AdminName, aa.GrandTotal,
+                aa.DriverId, aa.DriverName, aa.WarehouseDesc, aa.OfficeCode, bb.UpdateTimestamp, aa.Note
+            FROM 
+                BTRADE_PackingOrder aa
+                INNER JOIN BTRADE_PackingOrderDepo bb ON aa.PackingOrderId = bb.PackingOrderId
+            WHERE 
+                bb.DepoId = @DepoId
+                AND bb.DownloadTimestamp = '3000-01-01'
+            ORDER BY bb.UpdateTimestamp ASC
+            ";
+
+        var dp = new DynamicParameters();
+        dp.AddParam("@DepoId", depoId, SqlDbType.VarChar);
+        dp.AddParam("@PageSize", pageSize, SqlDbType.Int);
+
+        using var conn = new SqlConnection(ConnStringHelper.Get(_opt));
+        return conn.Read<PackingOrderView>(sql, dp);
+    }
 }
