@@ -75,7 +75,7 @@ public class PackingOrderDepoDal : IPackingOrderDepoDal
                 UpdateTimestamp, DownloadTimestamp  
             FROM BTRADE_PackingOrderDepo
             WHERE PackingOrderId = @PackingOrderId
-            ORDER BY NoUrut
+            --ORDER BY NoUrut
             ";
 
         var dp = new DynamicParameters();
