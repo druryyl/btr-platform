@@ -29,9 +29,12 @@ namespace j07_btrade_sync.Repository
                     LEFT JOIN BTR_BrgSatuan cc ON aa.BrgId = cc.BrgId AND cc.Conversion > 1
                     LEFT JOIN BTR_BrgSatuan dd ON aa.BrgId = dd.BrgId AND dd.Conversion = 1
                     LEFT JOIN (
-                        SELECT BrgId, SUM(Qty) AS Stok
-                        FROM BTR_StokBalanceWarehouse
+                        SELECT aa.BrgId, SUM(aa.Qty) AS Stok
+                        FROM BTR_StokBalanceWarehouse aa
+                        INNER JOIN BTR_Warehouse bb ON aa.WarehouseId = bb.WarehouseId
+                        WHERE bb.IsAktif = 1
                         GROUP BY BrgId
+
                     ) ee ON aa.BrgId = ee.BrgId
                     LEFT JOIN (
                         SELECT BrgId, Harga AS HrgSat
