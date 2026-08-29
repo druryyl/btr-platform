@@ -4,6 +4,7 @@
 
 # --- Monorepo / local-only ---
 .DS_Store
+/tmp/
 Thumbs.db
 Desktop.ini
 *.bak

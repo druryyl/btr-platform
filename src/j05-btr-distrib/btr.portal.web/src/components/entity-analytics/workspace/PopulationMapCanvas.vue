@@ -84,12 +84,21 @@ const tooltipPos = ref({ x: 0, y: 0 })
 
 const colorMap = computed(() => buildEntityColorMap(props.selectedEntityIds))
 const selectedSet = computed(() => new Set(props.selectedEntityIds))
+const searchSet = computed(() => new Set(props.searchHighlightIds ?? []))
 
 const visiblePoints = computed(() =>
   (props.population?.Points ?? []).filter((p) => p.AxisX != null && p.AxisY != null),
 )
 
-const searchSet = computed(() => new Set(props.searchHighlightIds ?? []))
+const renderablePoints = computed(() =>
+  visiblePoints.value.filter(
+    (p) =>
+      p.MatchesFilter
+      && (searchSet.value.size === 0
+        || selectedSet.value.has(p.EntityId)
+        || searchSet.value.has(p.EntityId)),
+  ),
+)
 
 const mapProjection = computed(() =>
   visiblePoints.value.length ? populationProjectionEngine.project(visiblePoints.value) : null,
@@ -166,20 +175,13 @@ function getPointFlags(point: PopulationMapPoint): PointDrawFlags {
 }
 
 function getEffectiveAlpha(
-  point: PopulationMapPoint,
   flags: PointDrawFlags,
   baseOpacity: number,
 ): number {
   let alpha = baseOpacity
 
-  if (flags.hasSearch && !flags.isSearchMatch && !flags.isSelected) {
-    alpha = Math.min(alpha, 0.2)
-  } else if (flags.dimPopulation && !flags.isSelected) {
+  if (flags.dimPopulation && !flags.isSelected) {
     alpha = Math.min(alpha, 0.4)
-  }
-
-  if (!point.MatchesFilter && !flags.isSelected) {
-    alpha = Math.min(alpha, 0.25)
   }
 
   return alpha
@@ -187,11 +189,10 @@ function getEffectiveAlpha(
 
 function applyPointAlpha(
   ctx: CanvasRenderingContext2D,
-  point: PopulationMapPoint,
   flags: PointDrawFlags,
   baseOpacity: number,
 ) {
-  ctx.globalAlpha = getEffectiveAlpha(point, flags, baseOpacity)
+  ctx.globalAlpha = getEffectiveAlpha(flags, baseOpacity)
 }
 
 function drawFilledCircle(
@@ -216,7 +217,7 @@ function drawBatchedTierPoints(ctx: CanvasRenderingContext2D, tier: VisualPointT
     if (flags.isSelected || flags.isSearchMatch) continue
     if (getVisualTier(item) !== tier) continue
 
-    const alphaKey = Math.round(getEffectiveAlpha(item.point, flags, style.opacity) * 1000)
+    const alphaKey = Math.round(getEffectiveAlpha(flags, style.opacity) * 1000)
     const bucket = buckets.get(alphaKey) ?? []
     bucket.push(item)
     buckets.set(alphaKey, bucket)
@@ -242,7 +243,7 @@ function drawTieredPoint(
   flags: PointDrawFlags,
 ) {
   const style = TIER_STYLES[tier]
-  applyPointAlpha(ctx, item.point, flags, style.opacity)
+  applyPointAlpha(ctx, flags, style.opacity)
   drawFilledCircle(ctx, item.screenX, item.screenY, style.radius, style.color)
   ctx.globalAlpha = 1
 }
@@ -622,8 +623,13 @@ function draw() {
   const projection = mapProjection.value
   const bounds = computeBounds(projection)
   const transform = buildTransform(width, height, bounds)
-  plottedCache = plotPoints(visiblePoints.value, transform, projection)
+  plottedCache = plotPoints(renderablePoints.value, transform, projection)
   spatialIndexCache = buildSpatialIndex(plottedCache)
+
+  if (hovered.value && !plottedCache.some((p) => p.point.EntityId === hovered.value?.EntityId)) {
+    hovered.value = null
+    emit('hover', null)
+  }
 
   drawPlotBackground(ctx, transform)
   drawConfidenceBands(ctx, transform)
