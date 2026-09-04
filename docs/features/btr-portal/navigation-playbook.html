@@ -1,0 +1,2135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>BTR Owner Navigation Playbook</title>
+  <style>
+:root {
+  --navy: #163A70;
+  --navy-2: #0E2C56;
+  --ink: #172337;
+  --muted: #5B6B7C;
+  --line: #D7E0E9;
+  --paper: #FFFFFF;
+  --canvas: #EEF2F6;
+  --soft: #F6F8FA;
+  --orange: #E07A1F;
+  --green: #2F7D4A;
+  --green-bg: #E8F4EC;
+  --amber: #B7791F;
+  --amber-bg: #FFF7EC;
+  --red: #B4453A;
+  --red-bg: #F8EBE9;
+  --gold: #C9A227;
+  --toc-w: 18.5rem;
+  --radius: 12px;
+  --shadow: 0 8px 28px rgba(22, 58, 112, .08);
+  font-family: "Segoe UI", Calibri, Aptos, Arial, sans-serif;
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  margin: 0;
+  background: var(--canvas);
+  color: var(--ink);
+  line-height: 1.55;
+  font-size: 16px;
+}
+a { color: var(--navy); }
+.skip { position: absolute; left: -999px; top: 0; }
+.skip:focus { left: 8px; top: 8px; background: #fff; padding: 8px; z-index: 40; }
+.wrap { display: grid; grid-template-columns: 1fr; min-height: 100vh; }
+
+nav.toc {
+  background: var(--navy-2);
+  color: #E8EEF6;
+  padding: 1.25rem 1rem 2rem;
+}
+nav.toc a { color: #D5E2F4; text-decoration: none; }
+nav.toc a:hover, nav.toc a:focus { color: #fff; text-decoration: underline; }
+nav.toc h2 {
+  margin: 1rem 0 .5rem;
+  font-size: .72rem;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: var(--gold);
+}
+.toc-brand { font-weight: 700; font-size: 1.05rem; color: #fff; margin: 0 0 .2rem; }
+.toc-meta { font-size: .8rem; color: #9BB0C9; margin: 0 0 1rem; }
+.toc-search, .toc-btn {
+  width: 100%;
+  padding: .45rem .6rem;
+  border: 0;
+  border-radius: 6px;
+  margin-bottom: .45rem;
+  font: inherit;
+}
+.toc-btn {
+  background: rgba(255,255,255,.12);
+  color: #fff;
+  cursor: pointer;
+  text-align: left;
+  font-size: .82rem;
+}
+.toc-btn:hover { background: rgba(255,255,255,.2); }
+.toc details { margin: .1rem 0; }
+.toc summary {
+  cursor: pointer;
+  font-weight: 600;
+  font-size: .88rem;
+  color: #fff;
+  padding: .22rem 0;
+}
+.toc ul { list-style: none; margin: .15rem 0 .5rem; padding: 0 0 0 .15rem; }
+.toc li { margin: .16rem 0; font-size: .8rem; line-height: 1.35; }
+.toc .sub { color: #F3D48A; font-size: .75rem; font-weight: 700; margin: .45rem 0 .15rem; }
+
+main { min-width: 0; }
+.page { max-width: 56rem; margin: 0 auto; padding: 1.25rem 1rem 3rem; }
+
+header.cover {
+  background: linear-gradient(165deg, var(--navy-2), var(--navy));
+  color: #fff;
+  padding: 2rem 1.25rem 1.6rem;
+  border-radius: 0 0 18px 18px;
+  margin: 0 0 1.25rem;
+}
+header.cover .kicker {
+  color: var(--gold);
+  font-size: .72rem;
+  font-weight: 800;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+}
+header.cover h1 { margin: .45rem 0 .55rem; font-size: 1.75rem; line-height: 1.15; }
+header.cover .lead { color: #D5E2F4; margin: 0 0 1.1rem; font-size: .98rem; }
+.meta-grid { display: grid; grid-template-columns: 1fr; gap: .65rem; }
+.meta {
+  background: rgba(255,255,255,.08);
+  border: 1px solid rgba(255,255,255,.12);
+  border-radius: 10px;
+  padding: .7rem .85rem;
+}
+.meta dt { font-size: .7rem; letter-spacing: .08em; text-transform: uppercase; color: #F3D48A; margin: 0 0 .15rem; }
+.meta dd { margin: 0; font-size: .95rem; }
+
+h2.sec {
+  font-size: 1.45rem;
+  color: var(--navy);
+  margin: 2.2rem 0 .45rem;
+  padding-top: .5rem;
+}
+h2.sec .num {
+  display: inline-block;
+  min-width: 1.8rem;
+  color: var(--gold);
+  font-size: 1.05rem;
+}
+.card {
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 1rem 1.1rem;
+  margin: .75rem 0 1rem;
+  box-shadow: var(--shadow);
+}
+.card p { margin: .4rem 0; }
+.card ul, .card ol { margin: .35rem 0; padding-left: 1.2rem; }
+.card li { margin: .28rem 0; }
+.note {
+  font-size: .9rem;
+  color: var(--muted);
+  border-left: 3px solid var(--orange);
+  padding: .1rem 0 .1rem .7rem;
+  margin: .7rem 0 0;
+}
+
+/* Owner workflow diagram */
+.workflow {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0;
+  margin: 1rem 0 .2rem;
+}
+.wf-node {
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: .7rem .9rem;
+  text-align: center;
+  box-shadow: var(--shadow);
+}
+.wf-node strong {
+  display: block;
+  font-size: .68rem;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--orange);
+  margin-bottom: .15rem;
+}
+.wf-node span { color: var(--muted); font-size: .88rem; }
+.wf-arrow { text-align: center; color: var(--navy); font-weight: 700; line-height: 1.5; font-size: 1.05rem; }
+
+.journey {
+  background: var(--navy-2);
+  color: #E8EEF6;
+  border-radius: var(--radius);
+  padding: 1rem 1.1rem;
+  margin: .9rem 0;
+}
+.journey h3 { margin: 0 0 .6rem; color: var(--gold); font-size: .95rem; }
+.journey .row { margin: .35rem 0; font-size: .92rem; }
+.journey a { color: #F3D48A; }
+
+/* EQ cards */
+.eq {
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  margin: .85rem 0 1.1rem;
+  box-shadow: var(--shadow);
+  overflow: hidden;
+  break-inside: avoid;
+  page-break-inside: avoid;
+}
+.eq-head {
+  background: linear-gradient(90deg, var(--navy-2), var(--navy));
+  color: #fff;
+  padding: .95rem 1.05rem .85rem;
+}
+.eq-head .code {
+  font-size: .68rem;
+  font-weight: 800;
+  letter-spacing: .08em;
+  color: var(--gold);
+}
+.eq-head h3 { margin: .2rem 0 0; font-size: 1.2rem; line-height: 1.25; }
+.eq-body { padding: .85rem 1.05rem 1.05rem; }
+.eq-body h4, .pb-body h4, .inv h4 {
+  margin: .85rem 0 .3rem;
+  font-size: .72rem;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--orange);
+}
+.eq-body h4:first-child { margin-top: .15rem; }
+.open-box {
+  background: #E8EEF6;
+  border-radius: 10px;
+  padding: .75rem .85rem;
+  margin: .45rem 0 .7rem;
+}
+.open-box .dash { font-weight: 700; color: var(--navy-2); font-size: 1.02rem; }
+.open-box .path { margin: .15rem 0 0; color: var(--muted); font-size: .88rem; }
+.chips { display: flex; flex-wrap: wrap; gap: .35rem; margin: .35rem 0; }
+.chips a, .chips span {
+  background: #E8EEF6;
+  color: var(--navy-2);
+  border-radius: 999px;
+  padding: .18rem .55rem;
+  font-size: .8rem;
+  text-decoration: none;
+}
+
+/* MQ playbooks */
+.playbook {
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  margin: .7rem 0 1rem;
+  box-shadow: var(--shadow);
+  break-inside: avoid;
+  page-break-inside: avoid;
+}
+.playbook > details > summary {
+  cursor: pointer;
+  list-style: none;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: .5rem .75rem;
+  align-items: start;
+  padding: .9rem 1rem;
+}
+.playbook > details > summary::-webkit-details-marker { display: none; }
+.playbook .code {
+  font-size: .68rem;
+  font-weight: 800;
+  letter-spacing: .04em;
+  color: var(--navy);
+  background: #E8EEF6;
+  border-radius: 999px;
+  padding: .2rem .55rem;
+  white-space: nowrap;
+  margin-top: .2rem;
+}
+.playbook h3 { margin: 0; font-size: 1.08rem; color: var(--navy-2); line-height: 1.3; }
+.playbook .hint { font-size: .8rem; color: var(--muted); margin: .15rem 0 0; }
+.pb-body { padding: 0 1rem 1.05rem; border-top: 1px solid var(--line); }
+.look-grid { display: grid; grid-template-columns: 1fr; gap: .55rem; }
+.look {
+  background: var(--soft);
+  border-radius: 8px;
+  padding: .65rem .75rem;
+}
+.look strong { display: block; font-size: .78rem; color: var(--navy); margin-bottom: .15rem; }
+.signals { display: grid; grid-template-columns: 1fr; gap: .55rem; margin: .4rem 0; }
+.sig { border-radius: 8px; padding: .65rem .75rem; font-size: .92rem; }
+.sig strong { display: block; font-size: .78rem; margin-bottom: .12rem; }
+.sig.ok { background: var(--green-bg); }
+.sig.ok strong { color: var(--green); }
+.sig.warn { background: var(--amber-bg); }
+.sig.warn strong { color: var(--amber); }
+.sig.crit { background: var(--red-bg); }
+.sig.crit strong { color: var(--red); }
+.action-list { margin: .25rem 0; padding-left: 1.15rem; }
+.action-list li { margin: .3rem 0; }
+.ev-list { display: flex; flex-wrap: wrap; gap: .35rem; margin: .3rem 0; }
+.ev-list span {
+  background: var(--soft);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: .28rem .55rem;
+  font-size: .82rem;
+}
+.chain { margin: .5rem 0 .15rem; }
+.chain .node {
+  background: var(--soft);
+  border-left: 3px solid var(--navy);
+  border-radius: 0 8px 8px 0;
+  padding: .45rem .7rem;
+  font-size: .92rem;
+}
+.chain .node em { color: var(--muted); font-style: normal; font-size: .78rem; display: block; }
+.chain .arr { color: var(--navy); font-weight: 700; padding: .1rem 0 .1rem .55rem; font-size: .9rem; }
+
+.eq-group {
+  margin: 1.4rem 0 .4rem;
+  font-size: 1.05rem;
+  color: var(--navy-2);
+}
+.eq-group a { text-decoration: none; }
+
+/* Investigation guides */
+.inv {
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 1rem 1.05rem;
+  margin: .75rem 0 1rem;
+  box-shadow: var(--shadow);
+  break-inside: avoid;
+  page-break-inside: avoid;
+}
+.inv h3 { margin: 0 0 .35rem; color: var(--navy-2); font-size: 1.12rem; }
+.inv .when { color: var(--muted); font-size: .9rem; margin: 0 0 .7rem; }
+
+/* Quick reference */
+.table-wrap { overflow-x: auto; margin: .6rem 0 1rem; border: 1px solid var(--line); border-radius: var(--radius); background: var(--paper); box-shadow: var(--shadow); }
+table.qr {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: .86rem;
+  min-width: 52rem;
+}
+table.qr th {
+  background: var(--navy-2);
+  color: #fff;
+  text-align: left;
+  padding: .65rem .7rem;
+  font-size: .72rem;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  position: sticky;
+  top: 0;
+}
+table.qr td {
+  padding: .55rem .7rem;
+  border-top: 1px solid var(--line);
+  vertical-align: top;
+}
+table.qr tr:nth-child(even) td { background: var(--soft); }
+table.qr td:first-child { font-weight: 650; color: var(--navy-2); }
+
+/* Checklist */
+.check-grid { display: grid; grid-template-columns: 1fr; gap: .75rem; }
+.check {
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: .9rem 1rem;
+  box-shadow: var(--shadow);
+}
+.check h3 { margin: 0 0 .5rem; color: var(--navy); font-size: 1.05rem; }
+.check label {
+  display: flex;
+  gap: .55rem;
+  align-items: flex-start;
+  margin: .4rem 0;
+  font-size: .92rem;
+  cursor: pointer;
+}
+.check input { margin-top: .28rem; }
+.check small { display: block; color: var(--muted); font-size: .78rem; }
+
+footer.doc {
+  max-width: 56rem;
+  margin: 0 auto;
+  padding: 1rem 1rem 2.5rem;
+  color: var(--muted);
+  font-size: .82rem;
+}
+
+.workflow { max-width: 28rem; margin-left: auto; margin-right: auto; }
+@media (min-width: 720px) {
+  .signals { grid-template-columns: 1fr 1fr 1fr; }
+  .look-grid { grid-template-columns: 1fr 1fr; }
+  .meta-grid { grid-template-columns: 1fr 1fr; }
+  .check-grid { grid-template-columns: 1fr 1fr 1fr; }
+  header.cover { padding: 2.6rem 2rem 2rem; border-radius: 0 0 24px 24px; }
+  header.cover h1 { font-size: 2.15rem; }
+  .page { padding: 1.5rem 1.25rem 3.5rem; }
+}
+@media (min-width: 1100px) {
+  .wrap { grid-template-columns: var(--toc-w) 1fr; }
+  nav.toc {
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    overflow: auto;
+    padding: 1.4rem 1.1rem 2rem;
+  }
+}
+@media print {
+  body { background: #fff; font-size: 10.5pt; }
+  nav.toc { display: none; }
+  .toc-search, .toc-btn { display: none; }
+  header.cover { break-after: page; color: #000; background: #fff; border: 1px solid #ccc; }
+  header.cover .lead, header.cover .kicker, .meta dt { color: #333; }
+  .eq, .playbook, .inv, .card, .check { box-shadow: none; }
+  details { display: block; }
+  details > *:not(summary) { display: block !important; }
+  .playbook > details > summary { cursor: default; }
+  .workflow { flex-direction: column; }
+  .wf-arrow { transform: none; }
+  table.qr { font-size: 8.5pt; min-width: 0; }
+  a { color: #000; text-decoration: none; }
+  .eq-head { background: #163A70; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+}
+  </style>
+</head>
+<body>
+  <a class="skip" href="#cover">Skip to content</a>
+  <div class="wrap">
+    <nav class="toc" aria-label="Table of contents">
+      <p class="toc-brand">Owner Navigation Playbook</p>
+      <p class="toc-meta">BTR Portal · CV. Bintang Timur Rahayu</p>
+      <label class="skip" for="tocFilter">Filter</label>
+      <input class="toc-search" id="tocFilter" type="search" placeholder="Find a question…" oninput="filterToc(this.value)">
+      <button class="toc-btn" type="button" onclick="setDetails(true)">Expand all playbooks</button>
+      <button class="toc-btn" type="button" onclick="setDetails(false)">Collapse playbooks</button>
+      <h2>On this page</h2>
+      <ul>
+        <li><a href="#cover">Cover</a></li>
+        <li><a href="#s1">1. Introduction</a></li>
+        <li><a href="#s2">2. How To Read The Portal</a></li>
+        <li><a href="#s3">3. Executive Questions</a></li>
+      </ul>
+      <details open>
+        <summary>Executive Center</summary>
+        <ul>
+          <li><a href="#eq-001">EQ-001 · Business healthy?</a></li>
+          <li><a href="#eq-002">EQ-002 · Biggest risk?</a></li>
+          <li><a href="#eq-003">EQ-003 · Immediate attention?</a></li>
+          <li><a href="#eq-004">EQ-004 · Cash flow healthy?</a></li>
+          <li><a href="#eq-005">EQ-005 · Growth sustainable?</a></li>
+          <li><a href="#eq-006">EQ-006 · Working capital?</a></li>
+          <li><a href="#eq-007">EQ-007 · Overly dependent?</a></li>
+          <li><a href="#eq-008">EQ-008 · Problem next?</a></li>
+        </ul>
+      </details>
+      <details open>
+        <summary>4. Management Playbooks</summary>
+        <ul>
+          <li class="sub">Risk</li>
+          <li><a href="#mq-001">MQ-001 · Risky customers</a></li>
+          <li><a href="#mq-002">MQ-002 · Unhealthy inventory</a></li>
+          <li><a href="#mq-003">MQ-003 · Overdue / dormant books</a></li>
+          <li><a href="#mq-004">MQ-004 · Principal buying risk</a></li>
+          <li class="sub">Today</li>
+          <li><a href="#mq-005">MQ-005 · Contact today</a></li>
+          <li><a href="#mq-006">MQ-006 · Buy, delay, transfer, clear</a></li>
+          <li class="sub">Cash</li>
+          <li><a href="#mq-007">MQ-007 · Receivables</a></li>
+          <li><a href="#mq-008">MQ-008 · Collect vs bill</a></li>
+          <li class="sub">Growth</li>
+          <li><a href="#mq-009">MQ-009 · Underperforming salespeople</a></li>
+          <li><a href="#mq-010">MQ-010 · Declining customers</a></li>
+          <li class="sub">Capital &amp; dependence</li>
+          <li><a href="#mq-011">MQ-011 · Warehouse capital</a></li>
+          <li><a href="#mq-012">MQ-012 · Dominant customers</a></li>
+          <li><a href="#mq-013">MQ-013 · Dominant suppliers</a></li>
+          <li><a href="#mq-014">MQ-014 · Few salespeople</a></li>
+          <li class="sub">Next problem</li>
+          <li><a href="#mq-015">MQ-015 · Credit policy</a></li>
+          <li><a href="#mq-016">MQ-016 · Purchases posted?</a></li>
+        </ul>
+      </details>
+      <ul>
+        <li><a href="#s5">5. Investigation Playbooks</a></li>
+        <li><a href="#s6">6. Owner Quick Reference</a></li>
+        <li><a href="#s7">7. Business Health Checklist</a></li>
+      </ul>
+    </nav>
+
+    <main>
+      <header class="cover" id="cover">
+        <div class="kicker">Owner Playbook · BTR Portal</div>
+        <h1>Where to look. What it means. What to do next.</h1>
+        <p class="lead">This is the owner’s guide to BTR Portal. Start from a business concern — not from a dashboard list. Each path tells you where to go, what to look at, how to read it, where evidence lives, and what decision is usually made.</p>
+        <div class="meta-grid">
+          <div class="meta"><dt>For</dt><dd>Owner, Director, General Manager, Business Leader</dd></div>
+          <div class="meta"><dt>Company</dt><dd>CV. Bintang Timur Rahayu (BTR)</dd></div>
+          <div class="meta"><dt>How to start</dt><dd>Open EQ-001 every morning. Follow the weakest signal into a Management Playbook.</dd></div>
+          <div class="meta"><dt>Date</dt><dd>2 September 2026</dd></div>
+        </div>
+      </header>
+
+      <div class="page">
+
+        <!-- SECTION 1 -->
+        <h2 class="sec" id="s1"><span class="num">1</span> Introduction</h2>
+        <section class="card">
+          <p><strong>What this playbook is.</strong> A practical map from a business concern to a decision. It packages the questions BTR Portal can already answer. It does not add new KPIs, new screens, or new business theory.</p>
+          <p><strong>How to use it.</strong> Bring one concern. Find the matching Executive Question. Open the Management Playbook underneath. Follow Open → Look At → If You See This → Evidence → Then Do This. Stop when you can name the action.</p>
+          <p><strong>How the portal should be used.</strong> The portal is for judgment. Open it to see which area is weakest, then drill until names appear — customers, salespeople, SKUs, Principals. Do not start from a menu of dashboards and hope the right number appears.</p>
+          <p><strong>How evidence supports decisions.</strong> A KPI tells you the size of the problem. Evidence names who or what owns it: attention lists, rankings, performance profiles, and portal reports (Sales, Piutang, Customer, Inventory, Purchasing). Decide only after the names are on the table.</p>
+          <p class="note">Start from EQ-001. Do not start from a dashboard list.</p>
+        </section>
+
+        <!-- SECTION 2 -->
+        <h2 class="sec" id="s2"><span class="num">2</span> How To Read The Portal</h2>
+        <section class="card">
+          <p>Use the same six steps every time. The portal answers questions. It does not replace the decision.</p>
+          <div class="workflow" aria-label="Owner workflow">
+            <div class="wf-node"><strong>1. Question</strong><span>What concerns you?</span></div>
+            <div class="wf-arrow" aria-hidden="true">↓</div>
+            <div class="wf-node"><strong>2. Dashboard</strong><span>Open this page</span></div>
+            <div class="wf-arrow" aria-hidden="true">↓</div>
+            <div class="wf-node"><strong>3. KPI</strong><span>Look at this first</span></div>
+            <div class="wf-arrow" aria-hidden="true">↓</div>
+            <div class="wf-node"><strong>4. Interpretation</strong><span>Healthy, warning, or critical?</span></div>
+            <div class="wf-arrow" aria-hidden="true">↓</div>
+            <div class="wf-node"><strong>5. Evidence</strong><span>Name who owns it</span></div>
+            <div class="wf-arrow" aria-hidden="true">↓</div>
+            <div class="wf-node"><strong>6. Decision</strong><span>Act, wait, or assign</span></div>
+          </div>
+          <p class="note">If totals still look fine, skip to EQ-008. Signals form before overdue, dormant, dead stock, and Plafond breaches show up in the month-end story.</p>
+        </section>
+
+        <div class="journey">
+          <h3>Morning path</h3>
+          <div class="row">Open the portal → <a href="#eq-001">EQ-001 Is the business healthy?</a></div>
+          <div class="row">Risk stands out → <a href="#eq-002">EQ-002</a></div>
+          <div class="row">Something must be done today → <a href="#eq-003">EQ-003</a></div>
+          <div class="row">Cash feels tight → <a href="#eq-004">EQ-004</a></div>
+          <div class="row">Sales feel weak → <a href="#eq-005">EQ-005</a></div>
+          <div class="row">Warehouse capital feels stuck → <a href="#eq-006">EQ-006</a></div>
+          <div class="row">A few names run the business → <a href="#eq-007">EQ-007</a></div>
+          <div class="row">Signals are forming, totals still look fine → <a href="#eq-008">EQ-008</a></div>
+        </div>
+
+        <!-- SECTION 3 -->
+        <h2 class="sec" id="s3"><span class="num">3</span> Executive Questions</h2>
+        <section class="card">
+          <p>This is the Executive Navigation Center. EQ-001 is the morning router. EQ-002 through EQ-008 are the investigation doors. Management playbooks sit under those doors.</p>
+        </section>
+
+        <article class="eq" id="eq-001">
+          <div class="eq-head"><div class="code">EQ-001</div><h3>Is the business healthy?</h3></div>
+          <div class="eq-body">
+            <h4>Why This Matters</h4>
+            <p>The owner needs one morning judgment before opening any other screen. Customer quality, sales delivery, cash conversion, and warehouse capital can move in different directions on the same day.</p>
+            <h4>Related Management Questions</h4>
+            <p>All of them — through the door that stands out:</p>
+            <div class="chips">
+              <a href="#mq-001">MQ-001</a><a href="#mq-002">MQ-002</a><a href="#mq-003">MQ-003</a><a href="#mq-004">MQ-004</a>
+              <a href="#mq-005">MQ-005</a><a href="#mq-006">MQ-006</a>
+              <a href="#mq-007">MQ-007</a><a href="#mq-008">MQ-008</a>
+              <a href="#mq-009">MQ-009</a><a href="#mq-010">MQ-010</a>
+              <a href="#mq-011">MQ-011</a>
+              <a href="#mq-012">MQ-012</a><a href="#mq-013">MQ-013</a><a href="#mq-014">MQ-014</a>
+              <a href="#mq-015">MQ-015</a><a href="#mq-016">MQ-016</a>
+            </div>
+            <h4>Start Here</h4>
+            <div class="open-box">
+              <div class="dash">Management Attention Center</div>
+              <p class="path">Menu Executive → Management Attention Center</p>
+            </div>
+            <p>Read first: Domain Summaries; Achievement %; Total Piutang, Overdue Customer, &gt; 90 Day Amount; Pending Posting, Top Principal %; Total Inventory Value, Top Category %, Top Supplier %; Portfolio Healthy %, Customers At Risk, Strategic At Risk.</p>
+            <p>Then, if needed: Portfolio Health Score on Customer Portfolio or Customer Risk Forecast; Recovery vs Billing % on Collection Dashboard; Inventory Health Score on Inventory Forecast Dashboard.</p>
+            <h4>Typical Decisions</h4>
+            <ul>
+              <li>Open the weakest of EQ-002 through EQ-008.</li>
+              <li>Do not assign work until the largest problem is named.</li>
+            </ul>
+          </div>
+        </article>
+
+        <article class="eq" id="eq-002">
+          <div class="eq-head"><div class="code">EQ-002</div><h3>Where is my biggest risk?</h3></div>
+          <div class="eq-body">
+            <h4>Why This Matters</h4>
+            <p>Attention is scarce. Overdue customers, stuck stock, weak sales books, and Principal dependence can all look urgent. See which problem is largest before assigning work.</p>
+            <h4>Related Management Questions</h4>
+            <div class="chips">
+              <a href="#mq-001">MQ-001 Which customers are becoming risky?</a>
+              <a href="#mq-002">MQ-002 Which inventory is unhealthy?</a>
+              <a href="#mq-003">MQ-003 Which salespeople carry overdue or dormant books?</a>
+              <a href="#mq-004">MQ-004 Which principals are a buying or stock risk?</a>
+            </div>
+            <h4>Start Here</h4>
+            <div class="open-box">
+              <div class="dash">Management Attention Center, then the largest of the four playbooks</div>
+              <p class="path">Compare Customers At Risk, At-Risk Inventory %, High Overdue Exposure, and Inventory Cross-Risk / Principal Dependency. Investigate the largest first.</p>
+            </div>
+            <h4>Typical Decisions</h4>
+            <ul>
+              <li>Put collection, purchasing, or sales time on the largest problem — not on four problems at once.</li>
+              <li>Use Alert Center as a shortcut when exceptions are already flashing.</li>
+            </ul>
+          </div>
+        </article>
+
+        <article class="eq" id="eq-003">
+          <div class="eq-head"><div class="code">EQ-003</div><h3>What needs immediate attention?</h3></div>
+          <div class="eq-body">
+            <h4>Why This Matters</h4>
+            <p>Monthly totals do not tell the owner what must happen before the day ends. Today’s work is contacts, buying, delaying, or clearing.</p>
+            <h4>Related Management Questions</h4>
+            <div class="chips">
+              <a href="#mq-005">MQ-005 Who should be contacted today?</a>
+              <a href="#mq-006">MQ-006 What should we buy, delay, transfer, or clear today?</a>
+            </div>
+            <h4>Start Here</h4>
+            <div class="open-box">
+              <div class="dash">Collection Optimization Dashboard and / or Inventory Optimization Dashboard</div>
+              <p class="path">Menu Customers → Collection Optimization · Menu Inventory → Inventory Optimization</p>
+            </div>
+            <h4>Typical Decisions</h4>
+            <ul>
+              <li>Run today’s contact list by type — collect, remind, review credit, recover sales, or escalate.</li>
+              <li>Buy holes, delay piles, transfer, or clear — as separate actions, not one mixed shopping list.</li>
+            </ul>
+          </div>
+        </article>
+
+        <article class="eq" id="eq-004">
+          <div class="eq-head"><div class="code">EQ-004</div><h3>Is cash flow healthy?</h3></div>
+          <div class="eq-body">
+            <h4>Why This Matters</h4>
+            <p>Invoiced omzet is not cash. If billing outruns collection, the next purchase cycle is funded with delayed money.</p>
+            <h4>Related Management Questions</h4>
+            <div class="chips">
+              <a href="#mq-007">MQ-007 Which receivables require attention?</a>
+              <a href="#mq-008">MQ-008 Are we collecting as fast as we are billing?</a>
+            </div>
+            <h4>Start Here</h4>
+            <div class="open-box">
+              <div class="dash">Collection Dashboard, then Cash Flow Forecast Dashboard</div>
+              <p class="path">Menu Finance → Collection · then Cash Flow Forecast. Start with Recovery vs Billing %.</p>
+            </div>
+            <h4>Typical Decisions</h4>
+            <ul>
+              <li>Increase collection effort on named overdue accounts.</li>
+              <li>Slow new credit, or accept this month’s cash finish and plan from Expected / Worst Cash.</li>
+            </ul>
+          </div>
+        </article>
+
+        <article class="eq" id="eq-005">
+          <div class="eq-head"><div class="code">EQ-005</div><h3>Is growth sustainable?</h3></div>
+          <div class="eq-body">
+            <h4>Why This Matters</h4>
+            <p>A month can hit target on a few names while the rest of the book goes quiet. The owner needs to know whether growth will still be there after this month.</p>
+            <h4>Related Management Questions</h4>
+            <div class="chips">
+              <a href="#mq-009">MQ-009 Which salespeople are underperforming?</a>
+              <a href="#mq-010">MQ-010 Which customers are declining?</a>
+            </div>
+            <h4>Start Here</h4>
+            <div class="open-box">
+              <div class="dash">Salesman Performance, then Customer Portfolio Dashboard</div>
+              <p class="path">Menu Sales Force → Salesmen · Menu Customers → Customer Portfolio. Start with Below Target Count and Declining Count.</p>
+            </div>
+            <h4>Typical Decisions</h4>
+            <ul>
+              <li>Reallocate sales time, set missing targets, or coach named people.</li>
+              <li>Recover declining customers — or stop covering accounts that will not return.</li>
+            </ul>
+          </div>
+        </article>
+
+        <article class="eq" id="eq-006">
+          <div class="eq-head"><div class="code">EQ-006</div><h3>Is working capital healthy?</h3></div>
+          <div class="eq-body">
+            <h4>Why This Matters</h4>
+            <p>Cash sitting in dead stock and cash missing from empty selling SKUs are the same owner problem: money that cannot fund the next cycle in the right place.</p>
+            <h4>Related Management Questions</h4>
+            <div class="chips">
+              <a href="#mq-011">MQ-011 Is warehouse capital trapped or about to run out?</a>
+            </div>
+            <h4>Start Here</h4>
+            <div class="open-box">
+              <div class="dash">Slow Moving &amp; Dead Stock Dashboard and Inventory Forecast Dashboard</div>
+              <p class="path">Menu Inventory → Inventory Risk, then Inventory Forecast. Look at Dead Stock Value and Stock-Out Risk Items together.</p>
+            </div>
+            <h4>Typical Decisions</h4>
+            <ul>
+              <li>Accelerate liquidation on idle stock, and buy only the holes.</li>
+              <li>Do not fund a full restock while dead stock is still the larger pile.</li>
+            </ul>
+          </div>
+        </article>
+
+        <article class="eq" id="eq-007">
+          <div class="eq-head"><div class="code">EQ-007</div><h3>Are we overly dependent on specific customers, suppliers, or salespeople?</h3></div>
+          <div class="eq-body">
+            <h4>Why This Matters</h4>
+            <p>A book, a sales force, or a warehouse can look healthy in total and still be one relationship away from a shock.</p>
+            <h4>Related Management Questions</h4>
+            <div class="chips">
+              <a href="#mq-012">MQ-012 Which customers dominate omzet or piutang?</a>
+              <a href="#mq-013">MQ-013 Which suppliers are becoming dominant?</a>
+              <a href="#mq-014">MQ-014 Are we too dependent on a few salespeople?</a>
+            </div>
+            <h4>Start Here</h4>
+            <div class="open-box">
+              <div class="dash">Customer Analytics, Purchasing Management, and Salesman Performance</div>
+              <p class="path">Compare Top Omzet / Piutang Customer %, Top Principal %, and Top Omzet Salesman %.</p>
+            </div>
+            <h4>Typical Decisions</h4>
+            <ul>
+              <li>Protect key accounts, reduce exposure, or broaden the book.</li>
+              <li>Diversify supplier exposure — or treat the dependence as chosen strategy.</li>
+              <li>Protect key people and rebuild coverage across the team.</li>
+            </ul>
+          </div>
+        </article>
+
+        <article class="eq" id="eq-008">
+          <div class="eq-head"><div class="code">EQ-008</div><h3>What is likely to become a problem next?</h3></div>
+          <div class="eq-body">
+            <h4>Why This Matters</h4>
+            <p>Overdue, dormant, dead stock, and Plafond breaches appear after the damage. The owner wants the signals that are forming now.</p>
+            <h4>Related Management Questions</h4>
+            <div class="chips">
+              <a href="#mq-015">MQ-015 Is credit policy being respected?</a>
+              <a href="#mq-016">MQ-016 Are purchased goods posted, or stuck in backlog?</a>
+            </div>
+            <h4>Start Here</h4>
+            <div class="open-box">
+              <div class="dash">Customer Analytics, then Purchasing Management Dashboard</div>
+              <p class="path">Menu Customers → Customers (Plafond Breach, Suspended + Sales) · Menu Purchasing → Purchasing (Pending Posting, Purchasing Pace).</p>
+            </div>
+            <h4>Typical Decisions</h4>
+            <ul>
+              <li>Review customer credit, restrict supply, or stop billing suspended accounts — while the failure is still preventable.</li>
+              <li>Post existing purchases first; resume buying only if selling SKUs are at stock-out risk.</li>
+            </ul>
+          </div>
+        </article>
+
+        <!-- SECTION 4 -->
+        <h2 class="sec" id="s4"><span class="num">4</span> Management Playbooks</h2>
+        <section class="card">
+          <p>This is the working section. One chapter per Management Question. Open the chapter that matches the concern. Follow the same path every time: Open This → Look At → If You See This → Then Do This → Need More Evidence?</p>
+        </section>
+
+        <h3 class="eq-group">Under <a href="#eq-002">EQ-002 · Where is my biggest risk?</a></h3>
+
+        <!-- MQ-001 -->
+        <article class="playbook" id="mq-001">
+          <details>
+            <summary>
+              <span class="code">MQ-001</span>
+              <div>
+                <h3>Which customers are becoming risky?</h3>
+                <p class="hint">Open Customer Risk Forecast · Look at Customers At Risk</p>
+              </div>
+            </summary>
+            <div class="pb-body">
+              <h4>Why Owner Asks This</h4>
+              <p>Collection time and credit attention should go to accounts that are weakening, not only to accounts that are already overdue.</p>
+              <p class="note">Typical trigger: collection slowing, cash flow pressure, portfolio health weakening, or customer complaints about supply holds.</p>
+              <h4>Open This</h4>
+              <div class="open-box">
+                <div class="dash">Customer Risk Forecast Dashboard</div>
+                <p class="path">Menu Customers → Customer Risk Forecast</p>
+              </div>
+              <p>Also visible as Customers At Risk on Management Attention Center and Customer Portfolio Dashboard. Start on Customer Risk Forecast because categories and signal families live there.</p>
+              <h4>Look At</h4>
+              <div class="look-grid">
+                <div class="look"><strong>Primary KPI</strong>Customers At Risk</div>
+                <div class="look"><strong>Supporting KPI</strong>Portfolio Health Score; Healthy / Watch / Attention / High Risk (and High / Critical Customers); Strategic At Risk; Payment Delay; Credit Limit; Inactivity; Purchase Decline; Elevated Risk Receivable</div>
+              </div>
+              <h4>If You See This</h4>
+              <div class="signals">
+                <div class="sig ok"><strong>Healthy</strong>Most of the book sits in Healthy. Customers At Risk and Strategic At Risk are not the story of the day. Signal families are quiet.</div>
+                <div class="sig warn"><strong>Warning</strong>Watch and Attention are filling. Payment Delay, Inactivity, or Purchase Decline is rising while totals still look manageable. Strategic customers appear in the at-risk count.</div>
+                <div class="sig crit"><strong>Critical</strong>High Risk / Critical Customers and Elevated Risk Receivable are material versus Total Piutang. Strategic At Risk is no longer a small exception.</div>
+              </div>
+              <p class="note">Do not invent numeric cut-offs. Use the risk categories and signal families the page already shows.</p>
+              <h4>Then Do This</h4>
+              <ul class="action-list">
+                <li>Increase collection effort on the named accounts.</li>
+                <li>Review customer credit.</li>
+                <li>Recover sales on declining or inactive names.</li>
+                <li>Restrict supply where credit or overdue is already chronic.</li>
+              </ul>
+              <h4>Need More Evidence?</h4>
+              <div class="ev-list">
+                <span>Customer Risk Attention List</span>
+                <span>Top Customers by Risk Priority</span>
+                <span>Customer Performance Profile</span>
+                <span>Customer Report</span>
+                <span>Piutang Report</span>
+                <span>Sales Report</span>
+              </div>
+              <h4>Investigation Flow</h4>
+              <div class="chain">
+                <div class="node">Which customers are becoming risky?<em>Question</em></div>
+                <div class="arr">↓</div>
+                <div class="node">Customer Risk Forecast Dashboard<em>Dashboard</em></div>
+                <div class="arr">↓</div>
+                <div class="node">Customers At Risk<em>KPI</em></div>
+                <div class="arr">↓</div>
+                <div class="node">Customer Risk Attention List → Customer Performance Profile → Piutang Report / Sales Report<em>Evidence</em></div>
+                <div class="arr">↓</div>
+                <div class="node">Collect, restrict supply, or recover sales<em>Decision</em></div>
+              </div>
+            </div>
+          </details>
+        </article>
+
+        <!-- MQ-002 -->
+        <article class="playbook" id="mq-002">
+          <details>
+            <summary>
+              <span class="code">MQ-002</span>
+              <div>
+                <h3>Which inventory is unhealthy?</h3>
+                <p class="hint">Open Slow Moving &amp; Dead Stock · Look at At-Risk Inventory %</p>
+              </div>
+            </summary>
+            <div class="pb-body">
+              <h4>Why Owner Asks This</h4>
+              <p>Stuck stock is trapped cash. See the unhealthy share before releasing more purchase cash.</p>
+              <p class="note">Typical trigger: inventory increasing, warehouse feels full, purchasing asking to buy more, or sales flat while stock rises.</p>
+              <h4>Open This</h4>
+              <div class="open-box">
+                <div class="dash">Slow Moving &amp; Dead Stock Dashboard</div>
+                <p class="path">Menu Inventory → Inventory Risk</p>
+              </div>
+              <p>Alert Center Inventory Risk Summary is a shortcut to the same problem: Dead Stock, Slow Moving, Never Sold, At-Risk Inventory.</p>
+              <h4>Look At</h4>
+              <div class="look-grid">
+                <div class="look"><strong>Primary KPI</strong>At-Risk Inventory %</div>
+                <div class="look"><strong>Supporting KPI</strong>Dead Stock Item Count and Value; Slow Moving Item Count and Value; Inventory Aging Distribution; Category Risk Exposure; Supplier Risk Exposure</div>
+              </div>
+              <h4>If You See This</h4>
+              <div class="signals">
+                <div class="sig ok"><strong>Healthy</strong>At-Risk Inventory % is not the dominant share. Aging sits in Active. Dead Stock and Slow Moving are small in both count and value.</div>
+                <div class="sig warn"><strong>Warning</strong>Slow Moving Value is rising. Category or Supplier Risk Exposure is concentrating in a few names. Never Sold appears in aging or on Alert Center.</div>
+                <div class="sig crit"><strong>Critical</strong>Dead Stock Value and At-Risk Inventory % dominate warehouse capital. The same suppliers or categories own the sick stock.</div>
+              </div>
+              <h4>Then Do This</h4>
+              <ul class="action-list">
+                <li>Reduce purchasing on unhealthy lines.</li>
+                <li>Accelerate inventory liquidation / clearance.</li>
+                <li>Stop replenishing dead or slow movers.</li>
+              </ul>
+              <h4>Need More Evidence?</h4>
+              <div class="ev-list">
+                <span>Inventory Attention List</span>
+                <span>Top 10 Dead Stock by Value</span>
+                <span>Top 10 Slow Moving by Value</span>
+                <span>Item Performance Profile</span>
+                <span>Inventory Report</span>
+                <span>Inventory Dashboard</span>
+              </div>
+              <h4>Investigation Flow</h4>
+              <div class="chain">
+                <div class="node">Which inventory is unhealthy?<em>Question</em></div>
+                <div class="arr">↓</div>
+                <div class="node">Slow Moving &amp; Dead Stock Dashboard<em>Dashboard</em></div>
+                <div class="arr">↓</div>
+                <div class="node">At-Risk Inventory %<em>KPI</em></div>
+                <div class="arr">↓</div>
+                <div class="node">Inventory Attention List → Item Performance Profile → Inventory Report<em>Evidence</em></div>
+                <div class="arr">↓</div>
+                <div class="node">Delay buy, clear, or review purchasing<em>Decision</em></div>
+              </div>
+            </div>
+          </details>
+        </article>
+
+        <!-- MQ-003 -->
+        <article class="playbook" id="mq-003">
+          <details>
+            <summary>
+              <span class="code">MQ-003</span>
+              <div>
+                <h3>Which salespeople are carrying overdue or dormant books?</h3>
+                <p class="hint">Open Salesman Performance · Look at High Overdue Exposure</p>
+              </div>
+            </summary>
+            <div class="pb-body">
+              <h4>Why Owner Asks This</h4>
+              <p>A salesperson’s omzet can look strong while the owned book is late or going quiet. Those books become next month’s collection problem.</p>
+              <p class="note">Typical trigger: collection slowing on certain routes, dormant customers rising, or high omzet names with high piutang.</p>
+              <h4>Open This</h4>
+              <div class="open-box">
+                <div class="dash">Salesman Performance</div>
+                <p class="path">Menu Sales Force → Salesmen</p>
+              </div>
+              <h4>Look At</h4>
+              <div class="look-grid">
+                <div class="look"><strong>Primary KPI</strong>High Overdue Exposure</div>
+                <div class="look"><strong>Supporting KPI</strong>High Piutang Exposure; Dormant Portfolio; Top Omzet Salesman %; Top Piutang Salesman %; Top 10 Overdue Salesmen (on Collection Dashboard)</div>
+              </div>
+              <h4>If You See This</h4>
+              <div class="signals">
+                <div class="sig ok"><strong>Healthy</strong>Collection Exposure is quiet. Dormant Portfolio is not filling the attention list. Overdue is not concentrated in a few books.</div>
+                <div class="sig warn"><strong>Warning</strong>High Piutang Exposure without High Overdue Exposure — large outstanding that may not yet be late. Dormant Portfolio is rising on otherwise busy salesmen.</div>
+                <div class="sig crit"><strong>Critical</strong>High Overdue Exposure on named salesmen. Stars on Top 10 Omzet also appear on Top 10 Piutang or Top 10 Overdue Salesmen.</div>
+              </div>
+              <h4>Then Do This</h4>
+              <ul class="action-list">
+                <li>Reallocate sales time toward collection and recovery on the named books.</li>
+                <li>Joint Sales–Finance review of those books.</li>
+                <li>Do not treat high omzet as healthy if the same book is overdue or dormant.</li>
+              </ul>
+              <h4>Need More Evidence?</h4>
+              <div class="ev-list">
+                <span>Salesman Attention List</span>
+                <span>Top 10 Piutang ranking</span>
+                <span>Salesman Performance Profile</span>
+                <span>Salesman Detail drawer</span>
+                <span>Top 10 Overdue Salesmen</span>
+                <span>Piutang Report</span>
+                <span>Piutang Dashboard</span>
+              </div>
+              <h4>Investigation Flow</h4>
+              <div class="chain">
+                <div class="node">Which salespeople are carrying overdue or dormant books?<em>Question</em></div>
+                <div class="arr">↓</div>
+                <div class="node">Salesman Performance<em>Dashboard</em></div>
+                <div class="arr">↓</div>
+                <div class="node">High Overdue Exposure<em>KPI</em></div>
+                <div class="arr">↓</div>
+                <div class="node">Salesman Attention List → Salesman Performance Profile → Piutang Report<em>Evidence</em></div>
+                <div class="arr">↓</div>
+                <div class="node">Joint review of the named books<em>Decision</em></div>
+              </div>
+            </div>
+          </details>
+        </article>
+
+        <!-- MQ-004 -->
+        <article class="playbook" id="mq-004">
+          <details>
+            <summary>
+              <span class="code">MQ-004</span>
+              <div>
+                <h3>Which principals are becoming a buying or stock risk?</h3>
+                <p class="hint">Open Purchasing Management · Look at Inventory Cross-Risk</p>
+              </div>
+            </summary>
+            <div class="pb-body">
+              <h4>Why Owner Asks This</h4>
+              <p>Continuing to buy a Principal whose goods are already aging compounds trapped capital.</p>
+              <p class="note">Typical trigger: inventory increasing on one Principal, supplier dependency growing, or purchasing still placing orders on slow lines.</p>
+              <h4>Open This</h4>
+              <div class="open-box">
+                <div class="dash">Purchasing Management Dashboard</div>
+                <p class="path">Menu Purchasing → Purchasing · then Slow Moving &amp; Dead Stock for Supplier Risk Exposure</p>
+              </div>
+              <p>Start with the Inventory Cross-Risk and Principal Dependency attention cards.</p>
+              <h4>Look At</h4>
+              <div class="look-grid">
+                <div class="look"><strong>Primary KPI</strong>Inventory Cross-Risk</div>
+                <div class="look"><strong>Supporting KPI</strong>Principal Dependency; Top Principal %; Top 10 Principals; Principal Exposure Comparison; Supplier Risk Exposure; Grand Total Purchase</div>
+              </div>
+              <h4>If You See This</h4>
+              <div class="signals">
+                <div class="sig ok"><strong>Healthy</strong>Inventory Cross-Risk is quiet. Purchasing spend and warehouse risk are not the same names. Principal Dependency is not concentrating spend and stock together.</div>
+                <div class="sig warn"><strong>Warning</strong>Top 10 Principals and Principal Exposure Comparison show spend concentration. Supplier Risk Exposure is rising on those same names.</div>
+                <div class="sig crit"><strong>Critical</strong>Compound Dependency appears on Purchasing Attention List. The Principal that takes purchase cash also holds sick stock, and purchasing is still feeding it.</div>
+              </div>
+              <h4>Then Do This</h4>
+              <ul class="action-list">
+                <li>Reduce purchasing from that Principal.</li>
+                <li>Delay buy on aging lines.</li>
+                <li>Keep buying only if the dependence is chosen strategy.</li>
+              </ul>
+              <h4>Need More Evidence?</h4>
+              <div class="ev-list">
+                <span>Purchasing Attention List</span>
+                <span>Top 10 Principals</span>
+                <span>Principal Exposure Comparison</span>
+                <span>Supplier Performance Profile</span>
+                <span>Inventory Attention List</span>
+                <span>Purchasing Report</span>
+                <span>Inventory Report</span>
+              </div>
+              <h4>Investigation Flow</h4>
+              <div class="chain">
+                <div class="node">Which principals are becoming a buying or stock risk?<em>Question</em></div>
+                <div class="arr">↓</div>
+                <div class="node">Purchasing Management Dashboard<em>Dashboard</em></div>
+                <div class="arr">↓</div>
+                <div class="node">Inventory Cross-Risk<em>KPI</em></div>
+                <div class="arr">↓</div>
+                <div class="node">Purchasing Attention List → Supplier Performance Profile → Purchasing Report / Inventory Report<em>Evidence</em></div>
+                <div class="arr">↓</div>
+                <div class="node">Delay buy, review Principal, or accept as strategy<em>Decision</em></div>
+              </div>
+            </div>
+          </details>
+        </article>
+
+        <h3 class="eq-group">Under <a href="#eq-003">EQ-003 · What needs immediate attention?</a></h3>
+
+        <!-- MQ-005 -->
+        <article class="playbook" id="mq-005">
+          <details>
+            <summary>
+              <span class="code">MQ-005</span>
+              <div>
+                <h3>Who should be contacted today?</h3>
+                <p class="hint">Open Collection Optimization · Look at Actions Today</p>
+              </div>
+            </summary>
+            <div class="pb-body">
+              <h4>Why Owner Asks This</h4>
+              <p>Not every weak account needs the same work. Mixing collection, reminders, credit review, and sales recovery on one undifferentiated list wastes the day.</p>
+              <p class="note">Typical trigger: start of day, collection slowing, or cash flow pressure.</p>
+              <h4>Open This</h4>
+              <div class="open-box">
+                <div class="dash">Collection Optimization Dashboard</div>
+                <p class="path">Menu Customers → Collection Optimization</p>
+              </div>
+              <h4>Look At</h4>
+              <div class="look-grid">
+                <div class="look"><strong>Primary KPI</strong>Actions Today</div>
+                <div class="look"><strong>Supporting KPI</strong>Immediate Collection; Proactive Reminders; Credit Review; Sales Recovery; Collection Impact; Overdue Exposure; Due Within 7 Days; Recovery vs Billing. Management Escalation lives on Specialized Queues.</div>
+              </div>
+              <h4>If You See This</h4>
+              <div class="signals">
+                <div class="sig ok"><strong>Healthy</strong>Actions Today is a short, typed list. Immediate Collection is not crowding out everything else. Due Within 7 Days is workable.</div>
+                <div class="sig warn"><strong>Warning</strong>Actions Today is large and mixed. Due Within 7 Days is rising while Recovery vs Billing is already weak.</div>
+                <div class="sig crit"><strong>Critical</strong>Immediate Collection and Management Escalation dominate. Overdue Exposure and Due Within 7 Days sit together with a large Collection Impact that will be missed if the day is not run by type.</div>
+              </div>
+              <h4>Then Do This</h4>
+              <ul class="action-list">
+                <li>Run today’s list by contact type.</li>
+                <li>Increase collection effort on named Immediate Collection accounts.</li>
+                <li>Send credit-review names to credit, not to collectors.</li>
+                <li>Send sales-recovery names to sales, not to collectors.</li>
+              </ul>
+              <h4>Need More Evidence?</h4>
+              <div class="ev-list">
+                <span>Today's Collection Priorities</span>
+                <span>Specialized Queues</span>
+                <span>Top Impact Opportunities</span>
+                <span>Customer Performance Profile</span>
+                <span>Piutang Report</span>
+                <span>Sales Report</span>
+              </div>
+              <p class="note">Separate cash due within 7 days from legacy debt. Legacy sits on Collection Dashboard — Legacy Debt Count.</p>
+              <h4>Investigation Flow</h4>
+              <div class="chain">
+                <div class="node">Who should be contacted today?<em>Question</em></div>
+                <div class="arr">↓</div>
+                <div class="node">Collection Optimization Dashboard<em>Dashboard</em></div>
+                <div class="arr">↓</div>
+                <div class="node">Actions Today<em>KPI</em></div>
+                <div class="arr">↓</div>
+                <div class="node">Today's Collection Priorities → Piutang Report / Customer Performance Profile<em>Evidence</em></div>
+                <div class="arr">↓</div>
+                <div class="node">Run today’s list by type<em>Decision</em></div>
+              </div>
+            </div>
+          </details>
+        </article>
+
+        <!-- MQ-006 -->
+        <article class="playbook" id="mq-006">
+          <details>
+            <summary>
+              <span class="code">MQ-006</span>
+              <div>
+                <h3>What should we buy, delay, transfer, or clear today?</h3>
+                <p class="hint">Open Inventory Optimization · Look at Critical Actions</p>
+              </div>
+            </summary>
+            <div class="pb-body">
+              <h4>Why Owner Asks This</h4>
+              <p>Holes and excess often exist at the same time. Buying everything that feels empty while slow movers age traps cash.</p>
+              <p class="note">Typical trigger: warehouse asking what to buy, inventory increasing, or selling items running out.</p>
+              <h4>Open This</h4>
+              <div class="open-box">
+                <div class="dash">Inventory Optimization Dashboard</div>
+                <p class="path">Menu Inventory → Inventory Optimization</p>
+              </div>
+              <h4>Look At</h4>
+              <div class="look-grid">
+                <div class="look"><strong>Primary KPI</strong>Critical Actions</div>
+                <div class="look"><strong>Supporting KPI</strong>Recommended Purchase Budget; Deferrable Spend; Purchase Now; Delay; Transfer; Clearance Review; Inventory Health Score. Review Stock-Out Risk Items on Inventory Forecast Dashboard.</div>
+              </div>
+              <h4>If You See This</h4>
+              <div class="signals">
+                <div class="sig ok"><strong>Healthy</strong>Critical Actions is small. Purchase Now is about holes, not piles. Deferrable Spend is available to fund those holes.</div>
+                <div class="sig warn"><strong>Warning</strong>Purchase Now and Delay both large — holes and piles in the same week. Transfer recommendations appear (location, not true shortage).</div>
+                <div class="sig crit"><strong>Critical</strong>Clearance Review / Dead Stock Recovery is large while Recommended Purchase Budget is also large. Buying would add capital on top of idle stock.</div>
+              </div>
+              <h4>Then Do This</h4>
+              <ul class="action-list">
+                <li>Buy holes only.</li>
+                <li>Delay piles.</li>
+                <li>Transfer between warehouses when location is the problem.</li>
+                <li>Clear dead stock as a separate action from buying.</li>
+              </ul>
+              <h4>Need More Evidence?</h4>
+              <div class="ev-list">
+                <span>Top Optimization Actions</span>
+                <span>Recommended Reorder List</span>
+                <span>Warehouse Rebalancing</span>
+                <span>Overstock &amp; Delay Purchasing</span>
+                <span>Dead Stock Recovery</span>
+                <span>Item Performance Profile</span>
+                <span>Inventory Forecast Dashboard</span>
+                <span>Inventory Report</span>
+                <span>Purchasing Report</span>
+              </div>
+              <h4>Investigation Flow</h4>
+              <div class="chain">
+                <div class="node">What should we buy, delay, transfer, or clear today?<em>Question</em></div>
+                <div class="arr">↓</div>
+                <div class="node">Inventory Optimization Dashboard<em>Dashboard</em></div>
+                <div class="arr">↓</div>
+                <div class="node">Critical Actions<em>KPI</em></div>
+                <div class="arr">↓</div>
+                <div class="node">Action tables → Item Performance Profile → Inventory Report / Purchasing Report<em>Evidence</em></div>
+                <div class="arr">↓</div>
+                <div class="node">Buy holes, delay piles, transfer, or clear<em>Decision</em></div>
+              </div>
+            </div>
+          </details>
+        </article>
+
+        <h3 class="eq-group">Under <a href="#eq-004">EQ-004 · Is cash flow healthy?</a></h3>
+
+        <!-- MQ-007 -->
+        <article class="playbook" id="mq-007">
+          <details>
+            <summary>
+              <span class="code">MQ-007</span>
+              <div>
+                <h3>Which receivables require attention?</h3>
+                <p class="hint">Open Piutang Dashboard · Look at Overdue Piutang</p>
+              </div>
+            </summary>
+            <div class="pb-body">
+              <h4>Why Owner Asks This</h4>
+              <p>Total piutang is scale. Overdue is urgency. Names are what collectors can work.</p>
+              <p class="note">Typical trigger: cash flow pressure, collection slowing, or piutang growing.</p>
+              <h4>Open This</h4>
+              <div class="open-box">
+                <div class="dash">Piutang Dashboard</div>
+                <p class="path">Menu Finance → Piutang · then Collection Dashboard for overdue concentration, salesmen, wilayah, and legacy debt</p>
+              </div>
+              <h4>Look At</h4>
+              <div class="look-grid">
+                <div class="look"><strong>Primary KPI</strong>Overdue Piutang (Overdue Exposure)</div>
+                <div class="look"><strong>Supporting KPI</strong>Total Piutang; Overdue Customer; Piutang &gt; 90 Hari; Aging Distribution; Top 10 Customer %; Legacy Debt Count; Overdue Concentration %; Top 10 Overdue Customers / Salesmen / Wilayah</div>
+              </div>
+              <h4>If You See This</h4>
+              <div class="signals">
+                <div class="sig ok"><strong>Healthy</strong>Overdue Piutang is small versus Total Piutang. Aging sits in Current / early buckets. Piutang &gt; 90 Hari is not the book.</div>
+                <div class="sig warn"><strong>Warning</strong>Overdue Customer count is rising. Aging is moving into 61–90. Overdue Concentration % shows a few names carrying the overdue.</div>
+                <div class="sig crit"><strong>Critical</strong>Piutang &gt; 90 Hari and Legacy Debt Count are material. Top 10 Overdue Customers / Salesmen / Wilayah show the overdue is named — not “everywhere.”</div>
+              </div>
+              <h4>Then Do This</h4>
+              <ul class="action-list">
+                <li>Increase collection effort on named overdue accounts.</li>
+                <li>Restrict supply if aging is chronic.</li>
+                <li>Assign collectors by salesman or wilayah when concentration is obvious.</li>
+              </ul>
+              <h4>Need More Evidence?</h4>
+              <div class="ev-list">
+                <span>Top 20 Outstanding Customers — Aging Breakdown</span>
+                <span>Collection Attention List</span>
+                <span>Top 10 Overdue Customers / Salesmen</span>
+                <span>Customer Performance Profile</span>
+                <span>Piutang Report</span>
+              </div>
+              <p class="note">Top 10 Overdue Wilayah has no row drill-down. Use it as a pointer, then Collection Dashboard or Piutang Report for names.</p>
+              <h4>Investigation Flow</h4>
+              <div class="chain">
+                <div class="node">Which receivables require attention?<em>Question</em></div>
+                <div class="arr">↓</div>
+                <div class="node">Piutang Dashboard<em>Dashboard</em></div>
+                <div class="arr">↓</div>
+                <div class="node">Overdue Piutang<em>KPI</em></div>
+                <div class="arr">↓</div>
+                <div class="node">Piutang Report / Collection Attention List / Customer Performance Profile<em>Evidence</em></div>
+                <div class="arr">↓</div>
+                <div class="node">Collect named accounts or restrict supply<em>Decision</em></div>
+              </div>
+            </div>
+          </details>
+        </article>
+
+        <!-- MQ-008 -->
+        <article class="playbook" id="mq-008">
+          <details>
+            <summary>
+              <span class="code">MQ-008</span>
+              <div>
+                <h3>Are we collecting as fast as we are billing?</h3>
+                <p class="hint">Open Collection Dashboard · Look at Recovery vs Billing %</p>
+              </div>
+            </summary>
+            <div class="pb-body">
+              <h4>Why Owner Asks This</h4>
+              <p>If new Faktur keep outrunning cash in, the book grows even when collectors are busy.</p>
+              <p class="note">Typical trigger: cash flow pressure, omzet looks strong but cash is tight, or month-end cash worry.</p>
+              <h4>Open This</h4>
+              <div class="open-box">
+                <div class="dash">Collection Dashboard</div>
+                <p class="path">Menu Finance → Collection · then Cash Flow Forecast Dashboard for pace, gap, and month-end scenarios</p>
+              </div>
+              <h4>Look At</h4>
+              <div class="look-grid">
+                <div class="look"><strong>Primary KPI</strong>Recovery vs Billing %</div>
+                <div class="look"><strong>Supporting KPI</strong>Cash Collected MTD; Collection Gap; Required Daily Collection; Daily Cash Collection Average; Expected Cash Collection; Best / Expected / Worst Cash; Remaining Collection Target; Remaining Calendar Days</div>
+              </div>
+              <h4>If You See This</h4>
+              <div class="signals">
+                <div class="sig ok"><strong>Healthy</strong>Cash is keeping up with billing. Required Daily Collection is close to Daily Cash Collection Average. Remaining Calendar Days can still close Remaining Collection Target.</div>
+                <div class="sig warn"><strong>Warning</strong>Cash Collected MTD is busy but Recovery vs Billing % is slipping. Collection Gap is opening. Forecast Confidence on Cash Flow Forecast is not high.</div>
+                <div class="sig crit"><strong>Critical</strong>Recovery vs Billing Forecast and Worst Cash show the month will not close. Required Daily Collection is far above current pace with few Remaining Calendar Days.</div>
+              </div>
+              <h4>Then Do This</h4>
+              <ul class="action-list">
+                <li>Push collection this week.</li>
+                <li>Slow new credit.</li>
+                <li>Accept this month’s cash finish and plan next month from Expected / Worst Cash.</li>
+              </ul>
+              <h4>Need More Evidence?</h4>
+              <div class="ev-list">
+                <span>Collection Attention List</span>
+                <span>Recovery Summary</span>
+                <span>Daily Collection Pace</span>
+                <span>Cash Forecast vs Billing</span>
+                <span>Top Collection Risks</span>
+                <span>Piutang Report</span>
+                <span>Collection Optimization Dashboard</span>
+              </div>
+              <h4>Investigation Flow</h4>
+              <div class="chain">
+                <div class="node">Are we collecting as fast as we are billing?<em>Question</em></div>
+                <div class="arr">↓</div>
+                <div class="node">Collection Dashboard → Cash Flow Forecast Dashboard<em>Dashboard</em></div>
+                <div class="arr">↓</div>
+                <div class="node">Recovery vs Billing %<em>KPI</em></div>
+                <div class="arr">↓</div>
+                <div class="node">Collection Attention List → Piutang Report / Top Collection Risks<em>Evidence</em></div>
+                <div class="arr">↓</div>
+                <div class="node">Push collection, slow credit, or accept the finish<em>Decision</em></div>
+              </div>
+            </div>
+          </details>
+        </article>
+
+        <h3 class="eq-group">Under <a href="#eq-005">EQ-005 · Is growth sustainable?</a></h3>
+
+        <!-- MQ-009 -->
+        <article class="playbook" id="mq-009">
+          <details>
+            <summary>
+              <span class="code">MQ-009</span>
+              <div>
+                <h3>Which salespeople are underperforming?</h3>
+                <p class="hint">Open Salesman Performance · Look at Below Target</p>
+              </div>
+            </summary>
+            <div class="pb-body">
+              <h4>Why Owner Asks This</h4>
+              <p>Company omzet can be carried by a few names. “Below target” and “no target” are different failures. Coaching the wrong cause wastes the week.</p>
+              <p class="note">Typical trigger: sales decline, target gap widening, or a few people carrying the month.</p>
+              <h4>Open This</h4>
+              <div class="open-box">
+                <div class="dash">Salesman Performance</div>
+                <p class="path">Menu Sales Force → Salesmen · then Sales Dashboard, Salesman Detail, Sales Force Overview, and Salesman Field Activity</p>
+              </div>
+              <h4>Look At</h4>
+              <div class="look-grid">
+                <div class="look"><strong>Primary KPI</strong>Below Target</div>
+                <div class="look"><strong>Supporting KPI</strong>Missing Target Setup; Achievement %; Total Achievement vs Total Target; Visit Execution %; Missed Visit; Effective Call Rate; GPS Valid Rate; Orders; Order Value</div>
+              </div>
+              <h4>If You See This</h4>
+              <div class="signals">
+                <div class="sig ok"><strong>Healthy</strong>Below Target is not the team story. Achievement % is on plan. Execution % and Effective Call Rate show visits that produce orders.</div>
+                <div class="sig warn"><strong>Warning</strong>Missing Target Setup is not zero — some people cannot be judged as “below target.” Execution % is weak. Orders exist but Order Value / company Achievement % is still short.</div>
+                <div class="sig crit"><strong>Critical</strong>Below Target is widespread while Top 10 Omzet is a few names. GPS Valid Rate is below the on-screen target. Effective Call Rate is low despite Actual visits — check-ins are not credible selling.</div>
+              </div>
+              <h4>Then Do This</h4>
+              <ul class="action-list">
+                <li>Set missing targets.</li>
+                <li>Fix coverage (missed / unplanned visits).</li>
+                <li>Fix conversion (effective calls → orders).</li>
+                <li>Coach named people.</li>
+                <li>Reallocate sales resources toward people who still have a book.</li>
+              </ul>
+              <h4>Need More Evidence?</h4>
+              <div class="ev-list">
+                <span>Salesman Attention List</span>
+                <span>Salesman Performance Profile</span>
+                <span>Salesman Detail drawer</span>
+                <span>Sales Report</span>
+                <span>Sales Force Overview</span>
+                <span>Salesman Field Activity</span>
+                <span>Sales Forecast Dashboard</span>
+              </div>
+              <h4>Investigation Flow</h4>
+              <div class="chain">
+                <div class="node">Which salespeople are underperforming?<em>Question</em></div>
+                <div class="arr">↓</div>
+                <div class="node">Salesman Performance<em>Dashboard</em></div>
+                <div class="arr">↓</div>
+                <div class="node">Below Target<em>KPI</em></div>
+                <div class="arr">↓</div>
+                <div class="node">Salesman Performance Profile / Salesman Field Activity / Sales Report<em>Evidence</em></div>
+                <div class="arr">↓</div>
+                <div class="node">Set targets, fix coverage, fix conversion, or coach named people<em>Decision</em></div>
+              </div>
+            </div>
+          </details>
+        </article>
+
+        <!-- MQ-010 -->
+        <article class="playbook" id="mq-010">
+          <details>
+            <summary>
+              <span class="code">MQ-010</span>
+              <div>
+                <h3>Which customers are declining?</h3>
+                <p class="hint">Open Customer Portfolio · Look at Declining</p>
+              </div>
+            </summary>
+            <div class="pb-body">
+              <h4>Why Owner Asks This</h4>
+              <p>A customer who is still current but buying less is next month’s dormant account. Recovery is cheaper than winning a new name.</p>
+              <p class="note">Typical trigger: sales decline, book feels quieter, or strategic accounts buying less.</p>
+              <h4>Open This</h4>
+              <div class="open-box">
+                <div class="dash">Customer Portfolio Dashboard</div>
+                <p class="path">Menu Customers → Customer Portfolio · then Customer Analytics and Customer Risk Forecast</p>
+              </div>
+              <h4>Look At</h4>
+              <div class="look-grid">
+                <div class="look"><strong>Primary KPI</strong>Declining</div>
+                <div class="look"><strong>Supporting KPI</strong>Dormant; Never Purchased; Purchase Decline; Inactivity; Strategic Customers; Strategic At Risk; Total MTD Omzet; Dormant Customers (90-day) on Customer Analytics</div>
+              </div>
+              <h4>If You See This</h4>
+              <div class="signals">
+                <div class="sig ok"><strong>Healthy</strong>Lifecycle mix is not filling Declining and Dormant. Strategic At Risk is quiet. Active this month is the bulk of the book.</div>
+                <div class="sig warn"><strong>Warning</strong>Declining is rising before Dormant (90-day). Purchase Decline and Inactivity signals appear. Strategic customers are in the declining set.</div>
+                <div class="sig crit"><strong>Critical</strong>Dormant and Never Purchased dominate lifecycle. Strategic At Risk is no longer an exception. The book is quieter even if Total MTD Omzet is still carried by Top 10 MTD Omzet Concentration.</div>
+              </div>
+              <h4>Then Do This</h4>
+              <ul class="action-list">
+                <li>Increase sales focus on declining names.</li>
+                <li>Protect strategic accounts that are slipping.</li>
+                <li>Stop covering accounts that will not return.</li>
+              </ul>
+              <h4>Need More Evidence?</h4>
+              <div class="ev-list">
+                <span>Lifecycle Distribution</span>
+                <span>Portfolio Priority Queue</span>
+                <span>Customers by Portfolio Action</span>
+                <span>Customer Attention List</span>
+                <span>Customer Risk Attention List</span>
+                <span>Customer Performance Profile</span>
+                <span>Customer Report</span>
+                <span>Sales Report</span>
+              </div>
+              <h4>Investigation Flow</h4>
+              <div class="chain">
+                <div class="node">Which customers are declining?<em>Question</em></div>
+                <div class="arr">↓</div>
+                <div class="node">Customer Portfolio Dashboard<em>Dashboard</em></div>
+                <div class="arr">↓</div>
+                <div class="node">Declining<em>KPI</em></div>
+                <div class="arr">↓</div>
+                <div class="node">Portfolio Priority Queue → Customer Performance Profile → Sales Report<em>Evidence</em></div>
+                <div class="arr">↓</div>
+                <div class="node">Recover, protect, or stop covering<em>Decision</em></div>
+              </div>
+            </div>
+          </details>
+        </article>
+
+        <h3 class="eq-group">Under <a href="#eq-006">EQ-006 · Is working capital healthy?</a></h3>
+
+        <!-- MQ-011 -->
+        <article class="playbook" id="mq-011">
+          <details>
+            <summary>
+              <span class="code">MQ-011</span>
+              <div>
+                <h3>Is warehouse capital trapped or about to run out?</h3>
+                <p class="hint">Open Inventory Risk + Inventory Forecast · Look at Dead Stock Value and Stock-Out Risk Items</p>
+              </div>
+            </summary>
+            <div class="pb-body">
+              <h4>Why Owner Asks This</h4>
+              <p>The company can be overstocked on what does not sell and understocked on what does. Those two conditions need opposite actions in the same week.</p>
+              <p class="note">Typical trigger: inventory increasing, warehouse “full” while selling items run out, or sales lost to empty shelves.</p>
+              <h4>Open This</h4>
+              <div class="open-box">
+                <div class="dash">Slow Moving &amp; Dead Stock Dashboard and Inventory Forecast Dashboard</div>
+                <p class="path">Menu Inventory → Inventory Risk, then Inventory Forecast · then Inventory Optimization and Branch / Warehouse Performance if one location holds the idle stock</p>
+              </div>
+              <h4>Look At</h4>
+              <div class="look-grid">
+                <div class="look"><strong>Primary KPI</strong>Dead Stock Value and Stock-Out Risk Items</div>
+                <div class="look"><strong>Supporting KPI</strong>Slow Moving Value; At-Risk Inventory %; Overstock Value; Understock Value; Inventory Health Score; Recommended Purchase Budget; Deferrable Spend; Top Warehouse At-Risk %; Inactive Warehouse With Stock</div>
+              </div>
+              <h4>If You See This</h4>
+              <div class="signals">
+                <div class="sig ok"><strong>Healthy</strong>Dead Stock Value is not trapping capital. Stock-Out Risk Items is small. Overstock Value and Understock Value are not both large.</div>
+                <div class="sig warn"><strong>Warning</strong>Overstock Value and Understock Value exist together. Top Warehouse At-Risk % shows one warehouse holding the idle stock. Inactive Warehouse With Stock is not zero.</div>
+                <div class="sig crit"><strong>Critical</strong>Dead Stock Value is large and Stock-Out Risk Items is large. Recommended Purchase Budget would buy holes while Deferrable Spend / clearance is still sitting in piles.</div>
+              </div>
+              <h4>Then Do This</h4>
+              <ul class="action-list">
+                <li>Clear or delay piles.</li>
+                <li>Buy holes only.</li>
+                <li>Transfer if location is the problem.</li>
+                <li>Do not fund a full restock while dead stock is still the larger pile.</li>
+              </ul>
+              <h4>Need More Evidence?</h4>
+              <div class="ev-list">
+                <span>Inventory Attention List</span>
+                <span>Top 10 Dead / Slow Moving</span>
+                <span>Top Inventory Risks</span>
+                <span>Purchasing Recommendations</span>
+                <span>Warehouse Rebalancing</span>
+                <span>Dead Stock Recovery</span>
+                <span>Location Attention List</span>
+                <span>Item Performance Profile</span>
+                <span>Inventory Report</span>
+              </div>
+              <h4>Investigation Flow</h4>
+              <div class="chain">
+                <div class="node">Is warehouse capital trapped or about to run out?<em>Question</em></div>
+                <div class="arr">↓</div>
+                <div class="node">Slow Moving &amp; Dead Stock + Inventory Forecast<em>Dashboard</em></div>
+                <div class="arr">↓</div>
+                <div class="node">Dead Stock Value / Stock-Out Risk Items<em>KPI</em></div>
+                <div class="arr">↓</div>
+                <div class="node">Item Performance Profile / Inventory Report / Warehouse Rebalancing<em>Evidence</em></div>
+                <div class="arr">↓</div>
+                <div class="node">Clear piles, buy holes, or transfer<em>Decision</em></div>
+              </div>
+            </div>
+          </details>
+        </article>
+
+        <h3 class="eq-group">Under <a href="#eq-007">EQ-007 · Are we overly dependent?</a></h3>
+
+        <!-- MQ-012 -->
+        <article class="playbook" id="mq-012">
+          <details>
+            <summary>
+              <span class="code">MQ-012</span>
+              <div>
+                <h3>Which customers dominate omzet or piutang?</h3>
+                <p class="hint">Open Customer Analytics · Look at Top Omzet Customer % and Top Piutang Customer %</p>
+              </div>
+            </summary>
+            <div class="pb-body">
+              <h4>Why Owner Asks This</h4>
+              <p>Growth or cash sitting with a shrinking set of names is concentration risk. Losing one name would change the month.</p>
+              <p class="note">Typical trigger: one customer dominates the conversation, fear of losing a key account, or piutang looks large because of a few names.</p>
+              <h4>Open This</h4>
+              <div class="open-box">
+                <div class="dash">Customer Analytics</div>
+                <p class="path">Menu Customers → Customers · also Piutang Dashboard, Customer Portfolio Dashboard, and Management Attention Center (Top 5 Customers)</p>
+              </div>
+              <h4>Look At</h4>
+              <div class="look-grid">
+                <div class="look"><strong>Primary KPI</strong>Top Omzet Customer % and Top Piutang Customer %</div>
+                <div class="look"><strong>Supporting KPI</strong>Top 10 Customer %; Top 20 Customer %; Top 10 by Omzet; Top 10 by Piutang; Top 5 Customers; Strategic Customers; Customers At Risk on the same names</div>
+              </div>
+              <h4>If You See This</h4>
+              <div class="signals">
+                <div class="sig ok"><strong>Healthy</strong>Top Omzet Customer % and Top Piutang Customer % are not the whole month. Strategic Customers are a chosen set, not an accidental monopoly.</div>
+                <div class="sig warn"><strong>Warning</strong>Top 10 Customer % of piutang is high. Top 10 by Omzet is a short list. The same names appear on both omzet and piutang rankings.</div>
+                <div class="sig crit"><strong>Critical</strong>Top 5 Customers or Top 10 Open Piutang Concentration is the book. Those same names are already on Customer Risk Forecast.</div>
+              </div>
+              <h4>Then Do This</h4>
+              <ul class="action-list">
+                <li>Protect key accounts.</li>
+                <li>Reduce exposure on names that already combine concentration and risk.</li>
+                <li>Broaden the book.</li>
+              </ul>
+              <h4>Need More Evidence?</h4>
+              <div class="ev-list">
+                <span>Top 10 by Omzet / Piutang</span>
+                <span>Customer Performance Profile</span>
+                <span>Customer Report</span>
+                <span>Compare Customers</span>
+                <span>Piutang Report</span>
+                <span>Sales Report</span>
+              </div>
+              <h4>Investigation Flow</h4>
+              <div class="chain">
+                <div class="node">Which customers dominate omzet or piutang?<em>Question</em></div>
+                <div class="arr">↓</div>
+                <div class="node">Customer Analytics<em>Dashboard</em></div>
+                <div class="arr">↓</div>
+                <div class="node">Top Omzet Customer % / Top Piutang Customer %<em>KPI</em></div>
+                <div class="arr">↓</div>
+                <div class="node">Customer Performance Profile → Sales Report / Piutang Report<em>Evidence</em></div>
+                <div class="arr">↓</div>
+                <div class="node">Protect, reduce exposure, or broaden the book<em>Decision</em></div>
+              </div>
+            </div>
+          </details>
+        </article>
+
+        <!-- MQ-013 -->
+        <article class="playbook" id="mq-013">
+          <details>
+            <summary>
+              <span class="code">MQ-013</span>
+              <div>
+                <h3>Which suppliers are becoming dominant?</h3>
+                <p class="hint">Open Purchasing Management · Look at Top Principal % and Top 10 Principals</p>
+              </div>
+            </summary>
+            <div class="pb-body">
+              <h4>Why Owner Asks This</h4>
+              <p>A Principal can take this month’s purchase cash, already hold the warehouse, and own the sick stock. Those are three different kinds of dependence.</p>
+              <p class="note">Typical trigger: supplier dependency growing, one Principal dominates purchasing talk, or stock and risk sitting with the same name.</p>
+              <h4>Open This</h4>
+              <div class="open-box">
+                <div class="dash">Purchasing Management Dashboard</div>
+                <p class="path">Menu Purchasing → Purchasing · also Management Attention Center (Top Principal %) and Inventory Dashboard (Top 10 Suppliers)</p>
+              </div>
+              <h4>Look At</h4>
+              <div class="look-grid">
+                <div class="look"><strong>Primary KPI</strong>Top Principal % and Top 10 Principals</div>
+                <div class="look"><strong>Supporting KPI</strong>Principal Dependency; Principal Exposure Comparison; Grand Total Purchase; Top Supplier %; Inventory by Supplier; Compound Dependency</div>
+              </div>
+              <h4>If You See This</h4>
+              <div class="signals">
+                <div class="sig ok"><strong>Healthy</strong>Purchase cash is spread across Top 10 Principals. Warehouse Top 10 Suppliers is a different mix. Compound Dependency is quiet.</div>
+                <div class="sig warn"><strong>Warning</strong>One Principal takes most Grand Total Purchase or most warehouse value — but not both yet.</div>
+                <div class="sig crit"><strong>Critical</strong>Compound Dependency: spend and stock on the same Principal, and Supplier Risk Exposure shows that Principal also owns sick stock.</div>
+              </div>
+              <h4>Then Do This</h4>
+              <ul class="action-list">
+                <li>Diversify supplier exposure.</li>
+                <li>Delay buy on the dominant Principal’s slow lines.</li>
+                <li>Treat the dependence as chosen strategy — and stop pretending it is accidental.</li>
+              </ul>
+              <h4>Need More Evidence?</h4>
+              <div class="ev-list">
+                <span>Purchasing Attention List</span>
+                <span>Principal Exposure Comparison</span>
+                <span>Supplier Performance Profile</span>
+                <span>Top 10 Principals</span>
+                <span>Inventory Dashboard Top 10 Suppliers</span>
+                <span>Purchasing Report</span>
+                <span>Inventory Report</span>
+                <span>Compare Suppliers</span>
+              </div>
+              <h4>Investigation Flow</h4>
+              <div class="chain">
+                <div class="node">Which suppliers are becoming dominant?<em>Question</em></div>
+                <div class="arr">↓</div>
+                <div class="node">Purchasing Management Dashboard<em>Dashboard</em></div>
+                <div class="arr">↓</div>
+                <div class="node">Top Principal % / Top 10 Principals<em>KPI</em></div>
+                <div class="arr">↓</div>
+                <div class="node">Supplier Performance Profile → Purchasing Report / Inventory Report<em>Evidence</em></div>
+                <div class="arr">↓</div>
+                <div class="node">Diversify, delay buy, or accept as strategy<em>Decision</em></div>
+              </div>
+            </div>
+          </details>
+        </article>
+
+        <!-- MQ-014 -->
+        <article class="playbook" id="mq-014">
+          <details>
+            <summary>
+              <span class="code">MQ-014</span>
+              <div>
+                <h3>Are we too dependent on a few salespeople?</h3>
+                <p class="hint">Open Salesman Performance · Look at Top Omzet Salesman %</p>
+              </div>
+            </summary>
+            <div class="pb-body">
+              <h4>Why Owner Asks This</h4>
+              <p>If one or two people produce most omzet, next month’s plan is a people risk, not a market risk.</p>
+              <p class="note">Typical trigger: sales decline if one person is absent, a star salesperson dominates results, or the active force feels thin.</p>
+              <h4>Open This</h4>
+              <div class="open-box">
+                <div class="dash">Salesman Performance</div>
+                <p class="path">Menu Sales Force → Salesmen · also Sales Dashboard (Top 10 Salesman) and Sales Force Overview (Active Salesmen)</p>
+              </div>
+              <h4>Look At</h4>
+              <div class="look-grid">
+                <div class="look"><strong>Primary KPI</strong>Top Omzet Salesman %</div>
+                <div class="look"><strong>Supporting KPI</strong>Top 10 Omzet; Active Salesmen; Below Target; High Overdue Exposure; Top Piutang Salesman %</div>
+              </div>
+              <h4>If You See This</h4>
+              <div class="signals">
+                <div class="sig ok"><strong>Healthy</strong>Top Omzet Salesman % is not the whole company. Active Salesmen is a real team. Below Target is not “everyone except the stars.”</div>
+                <div class="sig warn"><strong>Warning</strong>Top 10 Omzet is steep. Active Salesmen is thin. The rest of the team is Below Target.</div>
+                <div class="sig crit"><strong>Critical</strong>Stars carry omzet and High Overdue Exposure or Top Piutang Salesman %. Losing one person would hit both sales and collection.</div>
+              </div>
+              <h4>Then Do This</h4>
+              <ul class="action-list">
+                <li>Protect key people.</li>
+                <li>Rebuild coverage across the team.</li>
+                <li>Reallocate sales resources so next month is not a single-person plan.</li>
+              </ul>
+              <h4>Need More Evidence?</h4>
+              <div class="ev-list">
+                <span>Top 10 Omzet</span>
+                <span>Salesman Performance Profile</span>
+                <span>Salesman Attention List</span>
+                <span>Sales Report</span>
+                <span>Sales Force Overview</span>
+                <span>Compare Salesmen</span>
+              </div>
+              <h4>Investigation Flow</h4>
+              <div class="chain">
+                <div class="node">Are we too dependent on a few salespeople?<em>Question</em></div>
+                <div class="arr">↓</div>
+                <div class="node">Salesman Performance<em>Dashboard</em></div>
+                <div class="arr">↓</div>
+                <div class="node">Top Omzet Salesman %<em>KPI</em></div>
+                <div class="arr">↓</div>
+                <div class="node">Salesman Performance Profile / Sales Report / Sales Force Overview<em>Evidence</em></div>
+                <div class="arr">↓</div>
+                <div class="node">Protect key people and rebuild team coverage<em>Decision</em></div>
+              </div>
+            </div>
+          </details>
+        </article>
+
+        <h3 class="eq-group">Under <a href="#eq-008">EQ-008 · What is likely to become a problem next?</a></h3>
+
+        <!-- MQ-015 -->
+        <article class="playbook" id="mq-015">
+          <details>
+            <summary>
+              <span class="code">MQ-015</span>
+              <div>
+                <h3>Is credit policy being respected?</h3>
+                <p class="hint">Open Customer Analytics · Look at Plafond Breach and Credit Limit</p>
+              </div>
+            </summary>
+            <div class="pb-body">
+              <h4>Why Owner Asks This</h4>
+              <p>Plafond and hold rules only protect cash if they are observed. A credit-limit signal is still preventable. A breach, or a suspended account still being billed, is already a failure.</p>
+              <p class="note">Typical trigger: cash flow pressure, customers buying above comfort, or collection slowing on large accounts.</p>
+              <h4>Open This</h4>
+              <div class="open-box">
+                <div class="dash">Customer Analytics</div>
+                <p class="path">Menu Customers → Customers · then Customer Risk Forecast Dashboard for Credit Limit and Collection Risk</p>
+              </div>
+              <h4>Look At</h4>
+              <div class="look-grid">
+                <div class="look"><strong>Primary KPI</strong>Credit Limit and Plafond Breach</div>
+                <div class="look"><strong>Supporting KPI</strong>Suspended + Sales; Payment Delay; Collection Risk; Customers Forecasted At Risk; Customer Attention List filtered to Plafond Breach</div>
+              </div>
+              <h4>If You See This</h4>
+              <div class="signals">
+                <div class="sig ok"><strong>Healthy</strong>Credit card on Customer Analytics is quiet. Credit Limit signals are Watch-level, not breaches. Suspended + Sales is zero.</div>
+                <div class="sig warn"><strong>Warning</strong>Credit Limit signal count is rising (approaching Plafond). Payment Delay appears on the same names.</div>
+                <div class="sig crit"><strong>Critical</strong>Plafond Breach is not empty. Suspended + Sales shows suspended accounts still being billed. Collection Risk / Critical Category is already on those names.</div>
+              </div>
+              <h4>Then Do This</h4>
+              <ul class="action-list">
+                <li>Review customer credit.</li>
+                <li>Restrict supply.</li>
+                <li>Stop billing suspended accounts.</li>
+              </ul>
+              <h4>Need More Evidence?</h4>
+              <div class="ev-list">
+                <span>Customer Attention List</span>
+                <span>Customer Risk Attention List</span>
+                <span>Customer Performance Profile</span>
+                <span>Sales Report</span>
+                <span>Piutang Report</span>
+              </div>
+              <h4>Investigation Flow</h4>
+              <div class="chain">
+                <div class="node">Is credit policy being respected?<em>Question</em></div>
+                <div class="arr">↓</div>
+                <div class="node">Customer Analytics<em>Dashboard</em></div>
+                <div class="arr">↓</div>
+                <div class="node">Plafond Breach / Credit Limit<em>KPI</em></div>
+                <div class="arr">↓</div>
+                <div class="node">Customer Attention List → Customer Performance Profile → Sales Report<em>Evidence</em></div>
+                <div class="arr">↓</div>
+                <div class="node">Review credit, restrict supply, or stop billing<em>Decision</em></div>
+              </div>
+            </div>
+          </details>
+        </article>
+
+        <!-- MQ-016 -->
+        <article class="playbook" id="mq-016">
+          <details>
+            <summary>
+              <span class="code">MQ-016</span>
+              <div>
+                <h3>Are purchased goods posted, or stuck in backlog?</h3>
+                <p class="hint">Open Purchasing Management · Look at Pending Posting Value and Posted %</p>
+              </div>
+            </summary>
+            <div class="pb-body">
+              <h4>Why Owner Asks This</h4>
+              <p>Unposted purchases mean the company has already spent or committed without gaining sellable stock. Quiet purchasing late in the month can be a freeze or a stall.</p>
+              <p class="note">Typical trigger: warehouse waiting for stock that was already bought, purchasing gone quiet, or selling SKUs at risk of running out.</p>
+              <h4>Open This</h4>
+              <div class="open-box">
+                <div class="dash">Purchasing Management Dashboard</div>
+                <p class="path">Menu Purchasing → Purchasing · also Management Attention Center (Pending Posting) and Inventory Forecast for Stock-Out Risk Items</p>
+              </div>
+              <h4>Look At</h4>
+              <div class="look-grid">
+                <div class="look"><strong>Primary KPI</strong>Pending Posting Value and Posted %</div>
+                <div class="look"><strong>Supporting KPI</strong>Qualified Backlog; Grand Total Purchase; Purchasing Pace; Stock-Out Risk Items on Inventory Forecast</div>
+              </div>
+              <h4>If You See This</h4>
+              <div class="signals">
+                <div class="sig ok"><strong>Healthy</strong>Posted % is the bulk of invoices. Pending Posting Value and Qualified Backlog are small. Purchasing Pace is not an inactivity story while sales still have cover.</div>
+                <div class="sig warn"><strong>Warning</strong>Pending Posting Value is material. Qualified Backlog is aging. Purchasing Pace shows the month going quiet after mid-month.</div>
+                <div class="sig crit"><strong>Critical</strong>Unposted value is large and Stock-Out Risk Items is rising — money is committed but not sellable, while holes appear. Or purchasing is quiet while holes are already on Inventory Forecast.</div>
+              </div>
+              <h4>Then Do This</h4>
+              <ul class="action-list">
+                <li>Post existing invoices first.</li>
+                <li>Declare a freeze if inactivity is intentional.</li>
+                <li>Resume buying only the holes if Stock-Out Risk Items requires it.</li>
+              </ul>
+              <h4>Need More Evidence?</h4>
+              <div class="ev-list">
+                <span>Purchasing Attention List</span>
+                <span>Posting Status Breakdown</span>
+                <span>Purchasing Report</span>
+                <span>Inventory Forecast</span>
+                <span>Supplier Performance Profile</span>
+              </div>
+              <h4>Investigation Flow</h4>
+              <div class="chain">
+                <div class="node">Are purchased goods posted, or stuck in backlog?<em>Question</em></div>
+                <div class="arr">↓</div>
+                <div class="node">Purchasing Management Dashboard<em>Dashboard</em></div>
+                <div class="arr">↓</div>
+                <div class="node">Pending Posting Value / Posted %<em>KPI</em></div>
+                <div class="arr">↓</div>
+                <div class="node">Purchasing Attention List → Purchasing Report / Inventory Forecast<em>Evidence</em></div>
+                <div class="arr">↓</div>
+                <div class="node">Post first, declare a freeze, or resume buying the holes<em>Decision</em></div>
+              </div>
+            </div>
+          </details>
+        </article>
+
+        <!-- SECTION 5 -->
+        <h2 class="sec" id="s5"><span class="num">5</span> Investigation Playbooks</h2>
+        <section class="card">
+          <p>Use these when the concern is a problem area, not a single question. Details live in the Management Playbooks above.</p>
+        </section>
+
+        <article class="inv" id="inv-customer">
+          <h3>Customer Investigation</h3>
+          <p class="when">Use when EQ-002 or EQ-008 points at customers, or EQ-001 shows Customers At Risk / Strategic At Risk.</p>
+          <div class="chain">
+            <div class="node">Customers are weakening<em>Problem</em></div>
+            <div class="arr">↓</div>
+            <div class="node">Customer Risk Forecast Dashboard<em>Dashboard</em></div>
+            <div class="arr">↓</div>
+            <div class="node">Customer Risk Attention List → Customer Performance Profile → Piutang Report / Sales Report<em>Evidence</em></div>
+            <div class="arr">↓</div>
+            <div class="node">Collect, restrict supply, recover sales, or review credit<em>Decision</em></div>
+          </div>
+          <p>Then open <a href="#mq-005">MQ-005</a> for today’s calls. Related: <a href="#mq-001">MQ-001</a>, <a href="#mq-015">MQ-015</a>.</p>
+        </article>
+
+        <article class="inv" id="inv-inventory">
+          <h3>Inventory Investigation</h3>
+          <p class="when">Use when EQ-002 or EQ-006 points at warehouse capital, or Alert Center shows Dead Stock / Slow Moving / Never Sold.</p>
+          <div class="chain">
+            <div class="node">Stock is stuck or holes are appearing<em>Problem</em></div>
+            <div class="arr">↓</div>
+            <div class="node">Slow Moving &amp; Dead Stock Dashboard<em>Dashboard</em></div>
+            <div class="arr">↓</div>
+            <div class="node">Inventory Attention List → Item Performance Profile → Inventory Report<em>Evidence</em></div>
+            <div class="arr">↓</div>
+            <div class="node">Then Inventory Forecast and Inventory Optimization<em>Next page</em></div>
+            <div class="arr">↓</div>
+            <div class="node">Stop feeding sick stock; clear piles; buy holes only<em>Decision</em></div>
+          </div>
+          <p>Related: <a href="#mq-002">MQ-002</a>, <a href="#mq-011">MQ-011</a>, <a href="#mq-006">MQ-006</a>.</p>
+        </article>
+
+        <article class="inv" id="inv-sales">
+          <h3>Sales Investigation</h3>
+          <p class="when">Use when EQ-005 or EQ-002 points at people, or EQ-007 points at salesman concentration.</p>
+          <div class="chain">
+            <div class="node">Sales feel weak, or a few people run the month<em>Problem</em></div>
+            <div class="arr">↓</div>
+            <div class="node">Salesman Performance<em>Dashboard</em></div>
+            <div class="arr">↓</div>
+            <div class="node">Salesman Performance Profile / Salesman Detail / Sales Force Overview → Salesman Field Activity / Sales Report<em>Evidence</em></div>
+            <div class="arr">↓</div>
+            <div class="node">Coach, fix coverage or conversion, joint-collect overdue books, or rebuild team coverage<em>Decision</em></div>
+          </div>
+          <p>Related: <a href="#mq-009">MQ-009</a>, <a href="#mq-003">MQ-003</a>, <a href="#mq-014">MQ-014</a>.</p>
+        </article>
+
+        <article class="inv" id="inv-supplier">
+          <h3>Supplier Investigation</h3>
+          <p class="when">Use when EQ-007 or EQ-002 points at Principals.</p>
+          <div class="chain">
+            <div class="node">One Principal is running purchasing or the warehouse<em>Problem</em></div>
+            <div class="arr">↓</div>
+            <div class="node">Purchasing Management Dashboard<em>Dashboard</em></div>
+            <div class="arr">↓</div>
+            <div class="node">Supplier Risk Exposure → Supplier Performance Profile → Purchasing Report / Inventory Report<em>Evidence</em></div>
+            <div class="arr">↓</div>
+            <div class="node">Diversify, delay buy, or accept as strategy<em>Decision</em></div>
+          </div>
+          <p>Related: <a href="#mq-013">MQ-013</a>, <a href="#mq-004">MQ-004</a>.</p>
+        </article>
+
+        <article class="inv" id="inv-cash">
+          <h3>Cash Flow Investigation</h3>
+          <p class="when">Use when EQ-004 and EQ-006 both feel tight — cash is in the book or in the warehouse, not in the next cycle.</p>
+          <div class="chain">
+            <div class="node">Cash feels trapped<em>Problem</em></div>
+            <div class="arr">↓</div>
+            <div class="node">Collection Dashboard + Cash Flow Forecast Dashboard<em>Dashboard</em></div>
+            <div class="arr">↓</div>
+            <div class="node">Piutang Report / Collection Attention List<em>Evidence (cash)</em></div>
+            <div class="arr">↓</div>
+            <div class="node">Slow Moving &amp; Dead Stock + Inventory Forecast<em>Dashboard (warehouse)</em></div>
+            <div class="arr">↓</div>
+            <div class="node">Inventory Report / optimization action tables<em>Evidence (stock)</em></div>
+            <div class="arr">↓</div>
+            <div class="node">Collect named overdue; do not buy piles; post unposted purchases before new spend<em>Decision</em></div>
+          </div>
+          <p>Related: <a href="#mq-007">MQ-007</a>, <a href="#mq-008">MQ-008</a>, <a href="#mq-011">MQ-011</a>, <a href="#mq-016">MQ-016</a>.</p>
+        </article>
+
+        <article class="inv" id="inv-today">
+          <h3>Today’s Action Investigation</h3>
+          <p class="when">Use when EQ-003 is the door.</p>
+          <div class="chain">
+            <div class="node">Something must be done today<em>Problem</em></div>
+            <div class="arr">↓</div>
+            <div class="node">Collection Optimization and / or Inventory Optimization<em>Dashboard</em></div>
+            <div class="arr">↓</div>
+            <div class="node">Typed queues and action tables → Piutang Report / Inventory Report / Purchasing Report<em>Evidence</em></div>
+            <div class="arr">↓</div>
+            <div class="node">Call by type; buy holes; delay piles; transfer; clear<em>Decision</em></div>
+          </div>
+          <p>Related: <a href="#mq-005">MQ-005</a>, <a href="#mq-006">MQ-006</a>.</p>
+        </article>
+
+        <article class="inv" id="inv-credit">
+          <h3>Credit &amp; Next-Problem Investigation</h3>
+          <p class="when">Use when EQ-008 is the door and totals still look fine.</p>
+          <div class="chain">
+            <div class="node">Signals are forming<em>Problem</em></div>
+            <div class="arr">↓</div>
+            <div class="node">Customer Analytics, then Purchasing Management<em>Dashboard</em></div>
+            <div class="arr">↓</div>
+            <div class="node">Customer Attention List / Purchasing Attention List / reports<em>Evidence</em></div>
+            <div class="arr">↓</div>
+            <div class="node">Stop preventable credit failure; post backlog before it becomes a stock-out<em>Decision</em></div>
+          </div>
+          <p>Related: <a href="#mq-015">MQ-015</a>, <a href="#mq-016">MQ-016</a>.</p>
+        </article>
+
+        <!-- SECTION 6 -->
+        <h2 class="sec" id="s6"><span class="num">6</span> Owner Quick Reference</h2>
+        <section class="card">
+          <p>The most useful page. Find the concern in the first column. Open the page. Look at the KPI. Pull evidence before you decide.</p>
+        </section>
+        <div class="table-wrap">
+          <table class="qr">
+            <thead>
+              <tr>
+                <th>I Want To Know</th>
+                <th>Open This</th>
+                <th>Look At</th>
+                <th>Need More Evidence?</th>
+                <th>Typical Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Is the business healthy?</td>
+                <td>Management Attention Center</td>
+                <td>Domain Summaries; Achievement %; Customers At Risk; Pending Posting; Total Inventory Value</td>
+                <td>Domain dashboard named on the row; Alert Center</td>
+                <td>Open the weakest of EQ-002–EQ-008</td>
+              </tr>
+              <tr>
+                <td>Where is my biggest risk?</td>
+                <td>Management Attention Center, then the largest of the four MQ dashboards</td>
+                <td>Customers At Risk vs At-Risk Inventory % vs High Overdue Exposure vs Inventory Cross-Risk</td>
+                <td>Alert Center; then the matching playbook evidence</td>
+                <td>Assign work to the largest problem first</td>
+              </tr>
+              <tr>
+                <td>Which customers are risky?</td>
+                <td>Customer Risk Forecast Dashboard</td>
+                <td>Customers At Risk</td>
+                <td>Customer Risk Attention List; Customer Performance Profile</td>
+                <td>Review credit; collect; restrict supply</td>
+              </tr>
+              <tr>
+                <td>Why is this customer risky?</td>
+                <td>Customer Risk Forecast Dashboard</td>
+                <td>Payment Delay; Credit Limit; Inactivity; Purchase Decline</td>
+                <td>Customer Performance Profile; Piutang Report; Sales Report</td>
+                <td>Collect, restrict supply, or recover sales</td>
+              </tr>
+              <tr>
+                <td>Which inventory is unhealthy?</td>
+                <td>Slow Moving &amp; Dead Stock Dashboard</td>
+                <td>At-Risk Inventory %</td>
+                <td>Inventory Attention List; Item Performance Profile; Inventory Report</td>
+                <td>Reduce purchasing; clear stock</td>
+              </tr>
+              <tr>
+                <td>Which SKUs are dead or slow?</td>
+                <td>Slow Moving &amp; Dead Stock Dashboard</td>
+                <td>Dead Stock Value; Slow Moving Value</td>
+                <td>Top 10 Dead / Slow Moving; Item Performance Profile</td>
+                <td>Delay buy, clear, or review purchasing</td>
+              </tr>
+              <tr>
+                <td>Which salespeople carry overdue or dormant books?</td>
+                <td>Salesman Performance</td>
+                <td>High Overdue Exposure; Dormant Portfolio</td>
+                <td>Salesman Attention List; Salesman Performance Profile; Piutang Report</td>
+                <td>Joint Sales–Finance review of named books</td>
+              </tr>
+              <tr>
+                <td>Which principals are a buying or stock risk?</td>
+                <td>Purchasing Management Dashboard</td>
+                <td>Inventory Cross-Risk; Principal Dependency</td>
+                <td>Purchasing Attention List; Supplier Performance Profile; Inventory Report</td>
+                <td>Delay buy, review Principal, or accept as strategy</td>
+              </tr>
+              <tr>
+                <td>Who should be contacted today?</td>
+                <td>Collection Optimization Dashboard</td>
+                <td>Actions Today</td>
+                <td>Today's Collection Priorities; Specialized Queues; Piutang Report</td>
+                <td>Run today’s list by contact type</td>
+              </tr>
+              <tr>
+                <td>What should we buy, delay, transfer, or clear today?</td>
+                <td>Inventory Optimization Dashboard</td>
+                <td>Critical Actions</td>
+                <td>Action tables; Item Performance Profile; Inventory Report; Purchasing Report</td>
+                <td>Buy holes; delay piles; transfer; clear</td>
+              </tr>
+              <tr>
+                <td>Which receivables need attention?</td>
+                <td>Piutang Dashboard</td>
+                <td>Overdue Piutang</td>
+                <td>Top 20 Outstanding Customers; Piutang Report; Collection Attention List</td>
+                <td>Collect named accounts or restrict supply</td>
+              </tr>
+              <tr>
+                <td>Are we collecting as fast as we bill?</td>
+                <td>Collection Dashboard, then Cash Flow Forecast Dashboard</td>
+                <td>Recovery vs Billing %</td>
+                <td>Collection Attention List; Piutang Report; Top Collection Risks</td>
+                <td>Push collection, slow credit, or accept the finish</td>
+              </tr>
+              <tr>
+                <td>Will this month’s cash close?</td>
+                <td>Cash Flow Forecast Dashboard</td>
+                <td>Required Daily Collection; Expected Cash Collection</td>
+                <td>Piutang Report; Collection Dashboard</td>
+                <td>Push collection or plan from Expected / Worst Cash</td>
+              </tr>
+              <tr>
+                <td>Which salespeople are underperforming?</td>
+                <td>Salesman Performance</td>
+                <td>Below Target</td>
+                <td>Salesman Attention List; Salesman Detail drawer; Salesman Field Activity; Sales Report</td>
+                <td>Set targets, fix coverage, fix conversion, or coach</td>
+              </tr>
+              <tr>
+                <td>Did the field team cover the route?</td>
+                <td>Sales Force Overview, then Salesman Field Activity</td>
+                <td>Execution %; Missed Visit; Effective Call Rate; GPS Valid Rate</td>
+                <td>Field table; missed visits; visit timeline</td>
+                <td>Fix coverage or conversion</td>
+              </tr>
+              <tr>
+                <td>Which customers are declining?</td>
+                <td>Customer Portfolio Dashboard</td>
+                <td>Declining</td>
+                <td>Portfolio Priority Queue; Customer Performance Profile; Sales Report</td>
+                <td>Recover, protect, or stop covering</td>
+              </tr>
+              <tr>
+                <td>Is warehouse capital trapped or about to run out?</td>
+                <td>Slow Moving &amp; Dead Stock Dashboard and Inventory Forecast Dashboard</td>
+                <td>Dead Stock Value; Stock-Out Risk Items</td>
+                <td>Inventory Attention List; Warehouse Rebalancing; Inventory Report</td>
+                <td>Clear piles, buy holes, or transfer</td>
+              </tr>
+              <tr>
+                <td>Which warehouse holds idle stock?</td>
+                <td>Branch / Warehouse Performance Dashboard</td>
+                <td>Top Warehouse At-Risk %; Inactive Warehouse With Stock</td>
+                <td>Top 10 Warehouse by At-Risk Value; Inventory Report</td>
+                <td>Transfer if location is the problem</td>
+              </tr>
+              <tr>
+                <td>Which customers dominate omzet or piutang?</td>
+                <td>Customer Analytics</td>
+                <td>Top Omzet Customer %; Top Piutang Customer %</td>
+                <td>Top 10 rankings; Customer Performance Profile; Customer Report</td>
+                <td>Protect, reduce exposure, or broaden the book</td>
+              </tr>
+              <tr>
+                <td>Which suppliers are becoming dominant?</td>
+                <td>Purchasing Management Dashboard</td>
+                <td>Top Principal %; Top 10 Principals</td>
+                <td>Principal Exposure Comparison; Supplier Performance Profile; Purchasing Report</td>
+                <td>Diversify, delay buy, or accept as strategy</td>
+              </tr>
+              <tr>
+                <td>Are we too dependent on a few salespeople?</td>
+                <td>Salesman Performance</td>
+                <td>Top Omzet Salesman %</td>
+                <td>Top 10 Omzet; Salesman Performance Profile; Sales Report</td>
+                <td>Protect key people and rebuild team coverage</td>
+              </tr>
+              <tr>
+                <td>Is credit policy being respected?</td>
+                <td>Customer Analytics</td>
+                <td>Plafond Breach; Suspended + Sales</td>
+                <td>Customer Attention List; Customer Performance Profile; Sales Report</td>
+                <td>Review credit, restrict supply, or stop billing</td>
+              </tr>
+              <tr>
+                <td>Are purchases posted or stuck?</td>
+                <td>Purchasing Management Dashboard</td>
+                <td>Pending Posting Value; Posted %</td>
+                <td>Purchasing Attention List; Purchasing Report</td>
+                <td>Post first, freeze, or buy holes only</td>
+              </tr>
+              <tr>
+                <td>What needs attention right now (exceptions)?</td>
+                <td>Alert Center</td>
+                <td>Top Critical Alerts; Inventory Risk Summary</td>
+                <td>Investigate → related report; View Dashboard → domain dashboard</td>
+                <td>Open the named playbook and act on names</td>
+              </tr>
+              <tr>
+                <td>I have a name (customer, salesman, supplier, item)</td>
+                <td>Entity Analytics</td>
+                <td>Open Profile / Investigation / Compare</td>
+                <td>Performance Profile; Investigation Workspace; profile Evidence → related report</td>
+                <td>Decide on that name, not on the total</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- SECTION 7 -->
+        <h2 class="sec" id="s7"><span class="num">7</span> Business Health Checklist</h2>
+        <section class="card">
+          <p>Use existing Executive and Management Questions as a rhythm. Check the box only after you have opened the page and named the next action.</p>
+        </section>
+        <div class="check-grid">
+          <section class="check">
+            <h3>Daily</h3>
+            <label><input type="checkbox"><span>Is the business healthy? <small>EQ-001 · Management Attention Center</small></span></label>
+            <label><input type="checkbox"><span>What needs immediate attention? <small>EQ-003</small></span></label>
+            <label><input type="checkbox"><span>Who should be contacted today? <small>MQ-005 · Actions Today</small></span></label>
+            <label><input type="checkbox"><span>What should we buy, delay, transfer, or clear today? <small>MQ-006 · Critical Actions</small></span></label>
+          </section>
+          <section class="check">
+            <h3>Weekly</h3>
+            <label><input type="checkbox"><span>Where is my biggest risk? <small>EQ-002 · compare the four starting KPIs</small></span></label>
+            <label><input type="checkbox"><span>Which customers are becoming risky? <small>MQ-001</small></span></label>
+            <label><input type="checkbox"><span>Which inventory is unhealthy? <small>MQ-002</small></span></label>
+            <label><input type="checkbox"><span>Which salespeople are carrying overdue or dormant books? <small>MQ-003</small></span></label>
+            <label><input type="checkbox"><span>Which receivables require attention? <small>MQ-007</small></span></label>
+            <label><input type="checkbox"><span>Are we collecting as fast as we are billing? <small>MQ-008</small></span></label>
+            <label><input type="checkbox"><span>Which salespeople are underperforming? <small>MQ-009</small></span></label>
+          </section>
+          <section class="check">
+            <h3>Monthly</h3>
+            <label><input type="checkbox"><span>Is cash flow healthy? <small>EQ-004</small></span></label>
+            <label><input type="checkbox"><span>Is growth sustainable? <small>EQ-005</small></span></label>
+            <label><input type="checkbox"><span>Is working capital healthy? <small>EQ-006 · MQ-011</small></span></label>
+            <label><input type="checkbox"><span>Are we overly dependent? <small>EQ-007 · MQ-012, MQ-013, MQ-014</small></span></label>
+            <label><input type="checkbox"><span>Which principals are becoming a buying or stock risk? <small>MQ-004</small></span></label>
+            <label><input type="checkbox"><span>Which customers are declining? <small>MQ-010</small></span></label>
+            <label><input type="checkbox"><span>What is likely to become a problem next? <small>EQ-008 · MQ-015, MQ-016</small></span></label>
+          </section>
+        </div>
+
+      </div>
+      <footer class="doc">
+        <p>BTR Owner Navigation Playbook · CV. Bintang Timur Rahayu · 2 September 2026</p>
+        <p>Sources of truth: business-question-catalog-v3.md and question-navigation-map.md. This playbook does not add KPIs, dashboards, or business concerns.</p>
+      </footer>
+    </main>
+  </div>
+  <script>
+    function filterToc(q) {
+      q = (q || "").toLowerCase().trim();
+      document.querySelectorAll("nav.toc li").forEach(function (li) {
+        var a = li.querySelector("a");
+        if (!a) return;
+        li.style.display = !q || a.textContent.toLowerCase().indexOf(q) !== -1 ? "" : "none";
+      });
+    }
+    function setDetails(open) {
+      document.querySelectorAll("article.playbook details").forEach(function (d) {
+        d.open = open;
+      });
+    }
+    window.addEventListener("beforeprint", function () { setDetails(true); });
+  </script>
+</body>
+</html>

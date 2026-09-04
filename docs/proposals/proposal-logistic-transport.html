@@ -1,0 +1,2021 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Proposal Mobile-based Logistic Transport System — CV. Bintang Timur Rahayu</title>
+  <style>
+    :root {
+      --navy: #163A70;
+      --navy-2: #0E2C56;
+      --green: #2F9E61;
+      --green-soft: #E9F6EF;
+      --orange: #F28C28;
+      --orange-soft: #FFF2E5;
+      --ink: #172337;
+      --muted: #617083;
+      --line: #D7E0E9;
+      --paper: #FFFFFF;
+      --canvas: #E9EEF3;
+      --soft: #F6F8FA;
+      --red: #C75151;
+      --red-soft: #FBECEC;
+      --purple: #725C9D;
+      --purple-soft: #F1EDF8;
+    }
+
+    * { box-sizing: border-box; }
+
+    @page { size: A4 portrait; margin: 0; }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      background: var(--canvas);
+      color: var(--ink);
+      font-family: Inter, "Aptos", "Segoe UI", Arial, sans-serif;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }
+
+    body { padding: 10mm 0; }
+
+    .page {
+      position: relative;
+      width: 210mm;
+      height: 297mm;
+      margin: 0 auto 10mm;
+      padding: 17mm 17mm 15mm;
+      overflow: hidden;
+      background: var(--paper);
+      page-break-after: always;
+      break-after: page;
+      box-shadow: 0 10px 34px rgba(22, 58, 112, .12);
+    }
+
+    .page:last-child { page-break-after: auto; break-after: auto; }
+
+    @media print {
+      body { padding: 0; background: #fff; }
+      .page { margin: 0; box-shadow: none; }
+    }
+
+    h1, h2, h3, h4 {
+      margin: 0;
+      color: var(--navy);
+      font-family: Montserrat, "Aptos Display", "Segoe UI", Arial, sans-serif;
+      letter-spacing: -.02em;
+    }
+
+    h1 { font-size: 30pt; line-height: 1.04; }
+    h2 { font-size: 23pt; line-height: 1.08; }
+    h3 { font-size: 12.5pt; line-height: 1.2; }
+    h4 { font-size: 9.5pt; line-height: 1.25; letter-spacing: .01em; }
+
+    p {
+      margin: 0;
+      font-size: 9.4pt;
+      line-height: 1.52;
+      color: #334155;
+    }
+
+    ul, ol {
+      margin: 0;
+      padding-left: 5mm;
+      font-size: 8.9pt;
+      line-height: 1.45;
+      color: #334155;
+    }
+
+    li + li { margin-top: 1.5mm; }
+
+    .num {
+      font-family: "IBM Plex Sans", "Aptos", "Segoe UI", Arial, sans-serif;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .kicker {
+      display: inline-flex;
+      align-items: center;
+      gap: 2.5mm;
+      margin-bottom: 4mm;
+      color: var(--orange);
+      font-family: Montserrat, "Aptos Display", sans-serif;
+      font-size: 7.5pt;
+      font-weight: 800;
+      letter-spacing: .14em;
+      text-transform: uppercase;
+    }
+
+    .kicker::before {
+      content: "";
+      width: 9mm;
+      height: 1.5mm;
+      background: var(--orange);
+      border-radius: 2mm;
+    }
+
+    .lead {
+      margin-top: 4mm;
+      max-width: 150mm;
+      color: #3E4D60;
+      font-size: 10.5pt;
+      line-height: 1.52;
+    }
+
+    .section-head {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 10mm;
+      margin-bottom: 8mm;
+    }
+
+    .section-head .head-copy { max-width: 145mm; }
+
+    .section-mark {
+      width: 16mm;
+      height: 16mm;
+      border: 1.2mm solid var(--line);
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      color: var(--navy);
+      font-family: "IBM Plex Sans", sans-serif;
+      font-size: 8.5pt;
+      font-weight: 700;
+      flex: 0 0 auto;
+    }
+
+    .footer {
+      position: absolute;
+      left: 17mm;
+      right: 17mm;
+      bottom: 7mm;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding-top: 2.7mm;
+      border-top: .3mm solid var(--line);
+      color: #8190A1;
+      font-size: 6.6pt;
+      letter-spacing: .03em;
+    }
+
+    .footer .page-number {
+      color: var(--navy);
+      font-family: "IBM Plex Sans", sans-serif;
+      font-weight: 700;
+    }
+
+    .icon {
+      width: 6mm;
+      height: 6mm;
+      color: currentColor;
+      stroke: currentColor;
+      fill: none;
+      stroke-width: 1.8;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      flex: 0 0 auto;
+    }
+
+    .icon.sm { width: 4.5mm; height: 4.5mm; }
+    .icon.lg { width: 10mm; height: 10mm; }
+
+    .icon-box {
+      width: 12mm;
+      height: 12mm;
+      display: grid;
+      place-items: center;
+      border-radius: 4mm;
+      background: #E9EFF8;
+      color: var(--navy);
+      flex: 0 0 auto;
+    }
+
+    .icon-box.green { background: var(--green-soft); color: var(--green); }
+    .icon-box.orange { background: var(--orange-soft); color: var(--orange); }
+    .icon-box.red { background: var(--red-soft); color: var(--red); }
+    .icon-box.purple { background: var(--purple-soft); color: var(--purple); }
+
+    .tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 1.7mm;
+      min-height: 7mm;
+      padding: 1.3mm 3mm;
+      border-radius: 10mm;
+      background: #E9EFF8;
+      color: var(--navy);
+      font-size: 7.4pt;
+      font-weight: 750;
+    }
+
+    .tag.green { background: var(--green-soft); color: #237A4A; }
+    .tag.orange { background: var(--orange-soft); color: #AD5C0D; }
+    .tag.red { background: var(--red-soft); color: #A23E3E; }
+    .tag.gray { background: #EEF2F6; color: #566579; }
+
+    .card {
+      padding: 5mm;
+      border: .35mm solid var(--line);
+      border-radius: 4mm;
+      background: #fff;
+    }
+
+    .card.soft { background: var(--soft); border-color: transparent; }
+    .card.navy { background: var(--navy); color: white; border-color: var(--navy); }
+    .card.green-soft { background: var(--green-soft); border-color: #C8E9D7; }
+    .card.orange-soft { background: var(--orange-soft); border-color: #F8D7B6; }
+
+    .card h3 { margin-bottom: 2.5mm; }
+    .card p + p { margin-top: 2mm; }
+
+    .takeaway {
+      display: flex;
+      align-items: flex-start;
+      gap: 3.5mm;
+      padding: 4.5mm 5mm;
+      border-left: 1.4mm solid var(--orange);
+      background: var(--soft);
+      border-radius: 0 3mm 3mm 0;
+    }
+
+    .takeaway strong {
+      display: block;
+      margin-bottom: 1.2mm;
+      color: var(--navy);
+      font-family: Montserrat, sans-serif;
+      font-size: 9.2pt;
+    }
+
+    .takeaway p { font-size: 8.7pt; line-height: 1.45; }
+
+    .micro-label {
+      color: var(--muted);
+      font-size: 6.7pt;
+      font-weight: 700;
+      letter-spacing: .09em;
+      text-transform: uppercase;
+    }
+
+    .small { font-size: 7.8pt; line-height: 1.42; }
+    .muted { color: var(--muted); }
+    .orange { color: var(--orange); }
+    .green { color: var(--green); }
+    .navy { color: var(--navy); }
+    .white { color: #fff; }
+    .mt-2 { margin-top: 2mm; }
+    .mt-3 { margin-top: 3mm; }
+    .mt-4 { margin-top: 4mm; }
+    .mt-5 { margin-top: 5mm; }
+    .mt-6 { margin-top: 6mm; }
+    .mt-8 { margin-top: 8mm; }
+
+    /* Cover */
+    .cover {
+      padding: 0;
+      display: grid;
+      grid-template-columns: 45% 55%;
+      background: #fff;
+    }
+
+    .cover-copy {
+      position: relative;
+      padding: 23mm 12mm 18mm 18mm;
+      z-index: 2;
+    }
+
+    .cover-copy::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 10mm;
+      height: 100%;
+      background: var(--orange);
+    }
+
+    .cover-client {
+      display: inline-block;
+      padding: 2.4mm 4mm;
+      border: .35mm solid #B8C8DB;
+      border-radius: 2.5mm;
+      color: var(--navy);
+      font-size: 7.5pt;
+      font-weight: 800;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+    }
+
+    .cover h1 { margin-top: 18mm; max-width: 82mm; }
+
+    .cover-subtitle {
+      margin-top: 5mm;
+      max-width: 78mm;
+      color: #45556B;
+      font-size: 10.5pt;
+      line-height: 1.5;
+    }
+
+    .domain-stack {
+      display: grid;
+      gap: 2.2mm;
+      margin-top: 11mm;
+    }
+
+    .domain-row {
+      display: flex;
+      align-items: center;
+      gap: 3mm;
+      color: var(--navy);
+      font-size: 8.2pt;
+      font-weight: 700;
+    }
+
+    .domain-row .dot {
+      width: 3mm;
+      height: 3mm;
+      border-radius: 50%;
+      background: var(--green);
+      box-shadow: 0 0 0 1.4mm var(--green-soft);
+    }
+
+    .cover-meta {
+      position: absolute;
+      left: 18mm;
+      bottom: 18mm;
+      right: 10mm;
+      padding-top: 6mm;
+      border-top: .35mm solid var(--line);
+    }
+
+    .cover-meta .prepared { margin-top: 5mm; }
+    .cover-name { color: var(--navy); font-size: 9.2pt; font-weight: 800; }
+    .tagline { margin-top: 2mm; color: var(--green); font-size: 8pt; font-weight: 700; }
+
+    .cover-visual {
+      position: relative;
+      overflow: hidden;
+      background: var(--navy);
+    }
+
+    .cover-visual::before,
+    .cover-visual::after {
+      content: "";
+      position: absolute;
+      border-radius: 50%;
+      border: .4mm solid rgba(255,255,255,.15);
+    }
+
+    .cover-visual::before { width: 150mm; height: 150mm; right: -78mm; top: -34mm; }
+    .cover-visual::after { width: 95mm; height: 95mm; left: -48mm; bottom: -25mm; }
+
+    .cover-diagram {
+      position: absolute;
+      inset: 27mm 10mm 24mm 11mm;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+
+    .cover-visual-label {
+      color: #A8C0DF;
+      font-size: 7pt;
+      font-weight: 800;
+      letter-spacing: .14em;
+      text-transform: uppercase;
+    }
+
+    .cover-route {
+      position: relative;
+      height: 155mm;
+      margin-top: 5mm;
+    }
+
+    .route-line {
+      position: absolute;
+      inset: 16mm 7mm 21mm 8mm;
+      width: calc(100% - 15mm);
+      height: calc(100% - 37mm);
+    }
+
+    .route-node {
+      position: absolute;
+      width: 43mm;
+      padding: 4mm;
+      border: .35mm solid rgba(255,255,255,.25);
+      border-radius: 4mm;
+      background: rgba(255,255,255,.08);
+      color: white;
+    }
+
+    .route-node.one { left: 0; top: 3mm; }
+    .route-node.two { right: 0; top: 57mm; }
+    .route-node.three { left: 7mm; bottom: 0; }
+
+    .route-node h4 { margin-top: 2.5mm; color: white; font-size: 9pt; }
+    .route-node p { margin-top: 1.2mm; color: #CBDAEC; font-size: 7.1pt; line-height: 1.4; }
+    .route-node .icon-box { background: rgba(255,255,255,.12); color: #fff; }
+
+    .cover-truck {
+      position: absolute;
+      right: 16mm;
+      bottom: 16mm;
+      color: var(--orange);
+    }
+
+    /* General grids */
+    .grid-2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6mm; }
+    .grid-3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4mm; }
+    .grid-4 { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 3.5mm; }
+    .split-58 { display: grid; grid-template-columns: 58% 42%; gap: 7mm; }
+    .split-42 { display: grid; grid-template-columns: 42% 58%; gap: 7mm; }
+    .split-45 { display: grid; grid-template-columns: 45% 55%; gap: 7mm; }
+
+    /* Summary */
+    .summary-statement {
+      padding: 6mm;
+      border-radius: 5mm;
+      background: var(--navy);
+    }
+
+    .summary-statement h3 { color: white; font-size: 15pt; line-height: 1.2; }
+    .summary-statement p { margin-top: 3mm; color: #D8E4F2; font-size: 8.8pt; }
+
+    .domain-card {
+      position: relative;
+      min-height: 48mm;
+      padding: 5mm;
+      border: .35mm solid var(--line);
+      border-radius: 4mm;
+      background: #fff;
+    }
+
+    .domain-card::after {
+      content: attr(data-step);
+      position: absolute;
+      right: 4mm;
+      top: 3mm;
+      color: #E6ECF3;
+      font-family: "IBM Plex Sans", sans-serif;
+      font-size: 25pt;
+      font-weight: 800;
+    }
+
+    .domain-card h3 { margin: 4mm 0 2mm; font-size: 11pt; }
+    .domain-card p { position: relative; font-size: 7.7pt; line-height: 1.42; z-index: 1; }
+    .domain-card .result { margin-top: 3mm; color: var(--green); font-weight: 750; }
+
+    /* Background */
+    .scatter {
+      position: relative;
+      min-height: 100mm;
+      border-radius: 6mm;
+      background: var(--soft);
+      overflow: hidden;
+    }
+
+    .scatter-center {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      width: 50mm;
+      transform: translate(-50%, -50%);
+      padding: 6mm 4mm;
+      text-align: center;
+      border-radius: 50%;
+      background: var(--navy);
+      color: white;
+      box-shadow: 0 0 0 5mm rgba(22,58,112,.08);
+    }
+
+    .scatter-center strong { display: block; font-family: Montserrat, sans-serif; font-size: 11pt; }
+    .scatter-center span { display: block; margin-top: 1mm; color: #C9D9EC; font-size: 7.2pt; }
+
+    .scatter-item {
+      position: absolute;
+      display: flex;
+      align-items: center;
+      gap: 3mm;
+      width: 57mm;
+      padding: 4mm;
+      border: .35mm solid var(--line);
+      border-radius: 4mm;
+      background: #fff;
+      box-shadow: 0 3mm 8mm rgba(35,53,79,.06);
+    }
+
+    .scatter-item strong { display: block; color: var(--navy); font-size: 8.5pt; }
+    .scatter-item span { display: block; margin-top: 1mm; color: var(--muted); font-size: 6.7pt; line-height: 1.35; }
+    .scatter-item.a { left: 8mm; top: 10mm; }
+    .scatter-item.b { right: 8mm; top: 10mm; }
+    .scatter-item.c { left: 10mm; bottom: 10mm; }
+    .scatter-item.d { right: 10mm; bottom: 10mm; }
+
+    .impact-card { min-height: 40mm; }
+    .impact-card h3 { margin-top: 3mm; font-size: 10.5pt; }
+
+    /* Philosophy */
+    .philosophy-panel {
+      position: relative;
+      min-height: 184mm;
+      padding: 14mm 10mm;
+      overflow: hidden;
+      border-radius: 6mm;
+      background: var(--navy);
+    }
+
+    .philosophy-panel::after {
+      content: "“";
+      position: absolute;
+      right: 5mm;
+      bottom: -24mm;
+      color: rgba(255,255,255,.07);
+      font-family: Georgia, serif;
+      font-size: 160pt;
+      line-height: 1;
+    }
+
+    .philosophy-panel h2 { color: white; font-size: 28pt; line-height: 1.14; }
+    .philosophy-panel .line { width: 18mm; height: 1.5mm; margin: 8mm 0; border-radius: 2mm; background: var(--orange); }
+    .philosophy-panel p { max-width: 60mm; color: #D5E2F1; font-size: 10pt; }
+
+    .method-grid { display: grid; grid-template-rows: repeat(4, 1fr); gap: 4mm; }
+    .method-card { display: flex; gap: 4mm; min-height: 41mm; align-items: flex-start; }
+    .method-card h3 { margin-top: 1mm; font-size: 10.2pt; }
+    .method-card p { margin-top: 2mm; font-size: 7.8pt; }
+
+    /* Solution hub */
+    .hub {
+      position: relative;
+      min-height: 168mm;
+      border-radius: 6mm;
+      background: var(--soft);
+      overflow: hidden;
+    }
+
+    .hub-center {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      width: 57mm;
+      height: 57mm;
+      transform: translate(-50%, -50%);
+      display: grid;
+      place-items: center;
+      padding: 7mm;
+      text-align: center;
+      border-radius: 50%;
+      background: var(--navy);
+      color: white;
+      box-shadow: 0 0 0 6mm #E8EEF6;
+      z-index: 2;
+    }
+
+    .hub-center strong { display: block; font-family: Montserrat, sans-serif; font-size: 15pt; }
+    .hub-center span { display: block; margin-top: 1mm; color: #C9D9EC; font-size: 7pt; }
+
+    .hub-card {
+      position: absolute;
+      width: 61mm;
+      min-height: 54mm;
+      padding: 5mm;
+      border-radius: 4mm;
+      background: white;
+      border: .35mm solid var(--line);
+      z-index: 3;
+    }
+
+    .hub-card.one { left: 8mm; top: 12mm; }
+    .hub-card.two { right: 8mm; top: 12mm; }
+    .hub-card.three { left: 50%; bottom: 11mm; transform: translateX(-50%); }
+    .hub-card h3 { margin: 3mm 0 2mm; font-size: 10pt; }
+    .hub-card p { font-size: 7.4pt; line-height: 1.4; }
+    .hub-card .output { margin-top: 2.5mm; color: var(--green); font-size: 7pt; font-weight: 750; }
+
+    .hub-lines {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 1;
+    }
+
+    /* Workflow */
+    .lane {
+      display: grid;
+      grid-template-columns: 34mm 1fr;
+      min-height: 53mm;
+      border: .35mm solid var(--line);
+      border-radius: 4mm;
+      overflow: hidden;
+    }
+
+    .lane + .lane { margin-top: 4mm; }
+    .lane-label {
+      padding: 5mm 4mm;
+      background: #E9EFF8;
+      color: var(--navy);
+    }
+    .lane-label.green-bg { background: var(--green-soft); color: #237A4A; }
+    .lane-label.orange-bg { background: var(--orange-soft); color: #AD5C0D; }
+    .lane-label h3 { margin-top: 3mm; color: currentColor; font-size: 9.5pt; }
+    .lane-label p { margin-top: 2mm; color: currentColor; font-size: 6.7pt; line-height: 1.35; opacity: .8; }
+
+    .lane-steps {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 0;
+      padding: 5mm 3mm;
+      background: #fff;
+    }
+
+    .lane-step {
+      position: relative;
+      padding: 0 3mm;
+      border-right: .3mm solid var(--line);
+    }
+
+    .lane-step:last-child { border-right: 0; }
+    .lane-step .step-no {
+      display: grid;
+      place-items: center;
+      width: 6mm;
+      height: 6mm;
+      margin-bottom: 2mm;
+      border-radius: 50%;
+      background: var(--navy);
+      color: white;
+      font-family: "IBM Plex Sans", sans-serif;
+      font-size: 6.8pt;
+      font-weight: 700;
+    }
+    .lane-step strong { display: block; color: var(--navy); font-size: 7.5pt; line-height: 1.3; }
+    .lane-step span { display: block; margin-top: 1mm; color: var(--muted); font-size: 6.5pt; line-height: 1.35; }
+
+    /* Planner UI */
+    .planner-board {
+      border: .35mm solid #C5D2E1;
+      border-radius: 4mm;
+      overflow: hidden;
+      background: white;
+      box-shadow: 0 3mm 10mm rgba(22,58,112,.08);
+    }
+
+    .planner-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 4mm 5mm;
+      background: var(--navy);
+      color: white;
+    }
+
+    .planner-top strong { font-size: 8.8pt; }
+    .planner-top span { font-size: 6.6pt; color: #C9D9EC; }
+
+    .planner-content {
+      display: grid;
+      grid-template-columns: 43% 57%;
+      min-height: 111mm;
+    }
+
+    .invoice-list { padding: 4mm; background: var(--soft); border-right: .35mm solid var(--line); }
+    .invoice-mini {
+      display: flex;
+      gap: 2.5mm;
+      align-items: center;
+      padding: 3mm;
+      margin-top: 2.5mm;
+      border: .3mm solid var(--line);
+      border-radius: 2.5mm;
+      background: white;
+    }
+    .invoice-mini:first-of-type { margin-top: 3mm; }
+    .check {
+      width: 4mm; height: 4mm; border-radius: 1mm;
+      border: .35mm solid #A9B8C9; background: #fff;
+    }
+    .check.on { border-color: var(--green); background: var(--green); box-shadow: inset 0 0 0 1mm #fff; }
+    .invoice-mini strong { display: block; color: var(--navy); font-size: 6.8pt; }
+    .invoice-mini span { display: block; margin-top: .6mm; color: var(--muted); font-size: 5.8pt; }
+
+    .shipment-sheet { padding: 5mm; }
+    .shipment-id {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-bottom: 3mm;
+      border-bottom: .3mm solid var(--line);
+    }
+    .shipment-id strong { color: var(--navy); font-size: 10pt; }
+    .field-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 3mm; margin-top: 4mm; }
+    .field {
+      padding: 3mm;
+      border: .3mm solid var(--line);
+      border-radius: 2.5mm;
+      background: #fff;
+    }
+    .field label { display: block; color: var(--muted); font-size: 5.7pt; text-transform: uppercase; letter-spacing: .05em; }
+    .field strong { display: block; margin-top: 1mm; color: var(--ink); font-size: 7pt; }
+    .sequence { margin-top: 4mm; }
+    .sequence-row {
+      display: grid;
+      grid-template-columns: 6mm 1fr auto;
+      align-items: center;
+      gap: 2mm;
+      padding: 2mm 0;
+      border-bottom: .25mm solid #E9EEF3;
+    }
+    .sequence-no {
+      display: grid; place-items: center; width: 5mm; height: 5mm;
+      border-radius: 50%; background: #E9EFF8; color: var(--navy);
+      font-size: 6pt; font-weight: 800;
+    }
+    .sequence-row strong { font-size: 6.5pt; color: var(--ink); }
+    .sequence-row span { font-size: 5.7pt; color: var(--muted); }
+    .primary-button {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 2mm;
+      min-height: 9mm;
+      margin-top: 4mm;
+      border-radius: 2.5mm;
+      background: var(--green);
+      color: white;
+      font-size: 7pt;
+      font-weight: 800;
+    }
+
+    /* Phone */
+    .phone {
+      position: relative;
+      width: 50mm;
+      height: 99mm;
+      padding: 3mm;
+      border: 1.3mm solid #182231;
+      border-radius: 8mm;
+      background: #182231;
+      box-shadow: 0 3mm 10mm rgba(28,41,58,.15);
+    }
+    .phone::before {
+      content: "";
+      position: absolute;
+      top: 1.5mm;
+      left: 50%;
+      width: 14mm;
+      height: 1.7mm;
+      transform: translateX(-50%);
+      border-radius: 3mm;
+      background: #3E4856;
+      z-index: 3;
+    }
+    .phone-screen {
+      height: 100%;
+      overflow: hidden;
+      border-radius: 5mm;
+      background: #F7F9FB;
+    }
+    .phone-status {
+      height: 6mm;
+      padding: 2mm 3mm 0;
+      background: var(--navy-2);
+      color: white;
+      font-size: 5.2pt;
+      display: flex;
+      justify-content: space-between;
+    }
+    .phone-appbar {
+      min-height: 12mm;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 2mm 3mm;
+      background: var(--navy);
+      color: white;
+    }
+    .phone-appbar strong { font-size: 7.2pt; }
+    .phone-body { padding: 3mm; }
+    .phone-title { color: var(--navy); font-size: 8pt; font-weight: 800; }
+    .phone-sub { margin-top: 1mm; color: var(--muted); font-size: 5.8pt; }
+    .phone-card {
+      padding: 2.8mm;
+      margin-top: 2.5mm;
+      border: .28mm solid var(--line);
+      border-radius: 2.5mm;
+      background: white;
+    }
+    .phone-card.selected { border-color: #78A3D8; box-shadow: inset 0 0 0 .3mm #DCE9F8; }
+    .phone-card strong { display: block; color: var(--navy); font-size: 6.8pt; }
+    .phone-card span { display: block; margin-top: .7mm; color: var(--muted); font-size: 5.5pt; line-height: 1.3; }
+    .phone-metrics { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5mm; margin-top: 2.5mm; }
+    .phone-metric { padding: 2mm 1mm; text-align: center; border-radius: 1.8mm; background: #EDF2F7; }
+    .phone-metric strong { display: block; color: var(--navy); font-family: "IBM Plex Sans", sans-serif; font-size: 7pt; }
+    .phone-metric span { display: block; margin-top: .5mm; color: var(--muted); font-size: 4.8pt; }
+    .phone-button {
+      padding: 2.8mm;
+      margin-top: 3mm;
+      text-align: center;
+      border-radius: 2mm;
+      background: var(--green);
+      color: white;
+      font-size: 6.3pt;
+      font-weight: 800;
+      text-transform: uppercase;
+    }
+    .phone-button.navy-btn { background: var(--navy); }
+    .phone-stop {
+      display: grid;
+      grid-template-columns: 6mm 1fr auto;
+      align-items: center;
+      gap: 2mm;
+      padding: 2mm 0;
+      border-bottom: .25mm solid #E4EAF0;
+    }
+    .phone-stop:last-child { border-bottom: 0; }
+    .phone-stop .stop-no { display: grid; place-items: center; width: 5mm; height: 5mm; border-radius: 50%; background: #E9EFF8; color: var(--navy); font-size: 5.5pt; font-weight: 800; }
+    .phone-stop strong { display: block; color: var(--ink); font-size: 6pt; }
+    .phone-stop span { display: block; margin-top: .4mm; color: var(--muted); font-size: 4.8pt; }
+    .phone-stop em { color: var(--green); font-size: 5pt; font-style: normal; font-weight: 700; }
+    .result-option {
+      display: flex;
+      align-items: center;
+      gap: 2mm;
+      padding: 2.6mm;
+      margin-top: 2mm;
+      border: .3mm solid var(--line);
+      border-radius: 2.5mm;
+      background: white;
+    }
+    .result-option.active { border-color: var(--green); background: var(--green-soft); }
+    .result-option strong { font-size: 6.2pt; color: var(--ink); }
+    .result-dot { width: 4mm; height: 4mm; border-radius: 50%; background: #CBD5E1; }
+    .result-dot.green-dot { background: var(--green); }
+    .result-dot.orange-dot { background: var(--orange); }
+    .result-dot.red-dot { background: var(--red); }
+    .result-dot.purple-dot { background: var(--purple); }
+    .note-field {
+      min-height: 14mm;
+      padding: 2.5mm;
+      margin-top: 2.5mm;
+      border: .3mm solid var(--line);
+      border-radius: 2.5mm;
+      background: white;
+      color: var(--muted);
+      font-size: 5.4pt;
+    }
+
+    /* Status lifecycle */
+    .status-track {
+      position: relative;
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 0;
+      padding: 8mm 2mm 4mm;
+      border-radius: 5mm;
+      background: var(--soft);
+    }
+    .status-track::before {
+      content: "";
+      position: absolute;
+      left: 12%;
+      right: 12%;
+      top: 16mm;
+      height: .7mm;
+      background: #B9C8D9;
+    }
+    .status-node { position: relative; text-align: center; z-index: 1; }
+    .status-dot {
+      display: grid;
+      place-items: center;
+      width: 10mm;
+      height: 10mm;
+      margin: 3mm auto 2mm;
+      border: 1.2mm solid var(--soft);
+      border-radius: 50%;
+      background: var(--navy);
+      color: white;
+      box-shadow: 0 0 0 .5mm #B9C8D9;
+      font-size: 5.8pt;
+      font-weight: 800;
+    }
+    .status-node:last-child .status-dot { background: var(--green); box-shadow: 0 0 0 .5mm #A8D8BE; }
+    .status-node strong { display: block; color: var(--navy); font-size: 6.8pt; }
+    .status-node span { display: block; margin-top: .7mm; color: var(--muted); font-size: 5.5pt; line-height: 1.3; }
+
+    .execution-layout { display: grid; grid-template-columns: 56mm 1fr; gap: 8mm; align-items: center; }
+    .execution-copy { display: grid; grid-template-columns: repeat(2, 1fr); gap: 4mm; }
+    .execution-copy .card { min-height: 61mm; }
+
+    /* Delivery */
+    .result-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 4mm; }
+    .result-card { min-height: 49mm; }
+    .result-card h3 { margin: 3mm 0 1.5mm; font-size: 10pt; }
+    .result-card p { font-size: 7.4pt; }
+    .delivery-layout { display: grid; grid-template-columns: 1fr 55mm; gap: 8mm; align-items: center; }
+
+    /* Phone trio */
+    .phone-trio {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 5mm;
+    }
+    .phone-unit { width: 53mm; text-align: center; }
+    .phone-unit .phone { width: 47mm; height: 98mm; margin: 0 auto; }
+    .phone-unit h3 { margin-top: 4mm; font-size: 9pt; }
+    .phone-unit p { margin-top: 1.5mm; font-size: 6.9pt; line-height: 1.38; }
+    .phone-unit .action { margin-top: 2mm; color: var(--green); font-size: 6.8pt; font-weight: 750; }
+
+    .ui-principles {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 3mm;
+      margin-top: 6mm;
+      padding: 4mm;
+      border-radius: 4mm;
+      background: var(--soft);
+    }
+    .ui-principle { display: flex; align-items: center; gap: 2mm; }
+    .ui-principle span { color: #45556B; font-size: 6.5pt; line-height: 1.3; }
+
+    /* Benefits */
+    .compare {
+      display: grid;
+      grid-template-columns: 1fr 8mm 1fr;
+      gap: 2mm;
+      align-items: stretch;
+    }
+    .compare-col {
+      padding: 5mm;
+      border: .35mm solid var(--line);
+      border-radius: 4mm;
+    }
+    .compare-col.before { background: #F7F8FA; }
+    .compare-col.after { background: var(--green-soft); border-color: #C8E9D7; }
+    .compare-arrow { display: grid; place-items: center; color: var(--orange); font-size: 20pt; font-weight: 300; }
+    .compare-row { display: flex; gap: 2.5mm; padding: 3mm 0; border-bottom: .25mm solid rgba(117,135,155,.22); }
+    .compare-row:last-child { border-bottom: 0; }
+    .compare-row .bullet { width: 4mm; height: 4mm; margin-top: .5mm; border-radius: 50%; background: #A9B4C0; flex: 0 0 auto; }
+    .after .compare-row .bullet { background: var(--green); }
+    .compare-row p { font-size: 7.2pt; line-height: 1.38; }
+    .metric-card { min-height: 41mm; }
+    .metric-card .metric-no { color: var(--orange); font-family: "IBM Plex Sans", sans-serif; font-size: 17pt; font-weight: 800; }
+    .metric-card h3 { margin-top: 1mm; font-size: 9.2pt; }
+    .metric-card p { margin-top: 1.5mm; font-size: 6.7pt; }
+
+    /* Scope */
+    .scope-panel {
+      min-height: 170mm;
+      padding: 6mm;
+      border-radius: 5mm;
+      border: .35mm solid var(--line);
+    }
+    .scope-panel.in { background: #F3FAF6; border-color: #C6E7D4; }
+    .scope-panel.out { background: #F7F8FA; }
+    .scope-panel h3 { display: flex; align-items: center; gap: 3mm; font-size: 12pt; }
+    .scope-group { margin-top: 5mm; padding-top: 4mm; border-top: .3mm solid rgba(126,145,166,.25); }
+    .scope-group h4 { margin-bottom: 2mm; color: var(--navy); }
+    .scope-group ul { font-size: 7.4pt; line-height: 1.4; }
+    .boundary-tags { display: flex; flex-wrap: wrap; gap: 2mm; margin-top: 5mm; }
+
+    /* Timeline */
+    .timeline {
+      position: relative;
+      margin-top: 3mm;
+      padding-left: 13mm;
+    }
+    .timeline::before {
+      content: "";
+      position: absolute;
+      left: 4.5mm;
+      top: 5mm;
+      bottom: 5mm;
+      width: .7mm;
+      background: #C1CEDD;
+    }
+    .timeline-item {
+      position: relative;
+      display: grid;
+      grid-template-columns: 32mm 1fr;
+      gap: 5mm;
+      min-height: 27mm;
+      padding: 3.3mm 5mm;
+      margin-bottom: 2.5mm;
+      border: .35mm solid var(--line);
+      border-radius: 4mm;
+      background: #fff;
+    }
+    .timeline-item::before {
+      content: "";
+      position: absolute;
+      left: -10.6mm;
+      top: 8mm;
+      width: 6mm;
+      height: 6mm;
+      border: 1.2mm solid white;
+      border-radius: 50%;
+      background: var(--navy);
+      box-shadow: 0 0 0 .5mm #B8C7D8;
+    }
+    .timeline-item.deploy::before { background: var(--green); }
+    .timeline-period {
+      color: var(--orange);
+      font-family: "IBM Plex Sans", sans-serif;
+      font-size: 9pt;
+      font-weight: 800;
+    }
+    .timeline-item h3 { font-size: 9.5pt; }
+    .timeline-item p { margin-top: 1.5mm; font-size: 7.2pt; line-height: 1.4; }
+
+    .timeline-band {
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      gap: 4mm;
+      margin-top: 5mm;
+    }
+    .timeline-stat {
+      display: flex;
+      align-items: center;
+      gap: 4mm;
+      padding: 5mm;
+      border-radius: 4mm;
+      background: var(--navy);
+      color: white;
+    }
+    .timeline-stat.green-bg { background: var(--green); }
+    .timeline-stat strong { display: block; color: white; font-family: "IBM Plex Sans", sans-serif; font-size: 17pt; }
+    .timeline-stat span { display: block; color: rgba(255,255,255,.8); font-size: 6.5pt; }
+
+    /* Investment */
+    .investment-amount {
+      padding: 12mm 8mm;
+      border-radius: 6mm;
+      background: var(--navy);
+      color: white;
+    }
+    .investment-amount .label { color: #BFD0E4; font-size: 7pt; font-weight: 750; letter-spacing: .1em; text-transform: uppercase; }
+    .investment-amount .amount { margin-top: 5mm; color: white; font-family: "IBM Plex Sans", sans-serif; font-size: 27pt; font-weight: 800; line-height: 1; letter-spacing: -.03em; }
+    .investment-amount p { margin-top: 5mm; color: #D3E0EF; font-size: 8pt; }
+    .inclusion-list { display: grid; gap: 3mm; }
+    .inclusion-item { display: flex; gap: 3mm; align-items: flex-start; }
+    .inclusion-item span { color: #3D4C60; font-size: 7.6pt; line-height: 1.4; }
+    .commercial-note { padding: 5mm; border-radius: 4mm; background: var(--orange-soft); border: .35mm solid #F6D3AF; }
+
+    /* Support */
+    .warranty-panel {
+      position: relative;
+      min-height: 181mm;
+      padding: 13mm 8mm 8mm;
+      overflow: hidden;
+      border-radius: 6mm;
+      background: var(--navy);
+      color: white;
+    }
+    .warranty-panel .months { color: white; font-family: "IBM Plex Sans", sans-serif; font-size: 42pt; font-weight: 800; line-height: .95; }
+    .warranty-panel h3 { margin-top: 3mm; color: white; font-size: 14pt; }
+    .warranty-panel p { margin-top: 6mm; color: #D2E0EF; font-size: 8.2pt; }
+    .warranty-panel .icon { position: absolute; right: -11mm; bottom: -10mm; width: 72mm; height: 72mm; color: rgba(255,255,255,.06); stroke-width: .8; }
+    .support-list { display: grid; grid-template-rows: repeat(3, 1fr); gap: 4mm; }
+    .support-card { min-height: 51mm; }
+    .support-card h3 { margin-top: 3mm; font-size: 10.5pt; }
+    .support-card p { margin-top: 2mm; font-size: 7.4pt; }
+    .contact-card { margin-top: 5mm; display: flex; align-items: center; justify-content: space-between; gap: 5mm; }
+    .contact-card strong { color: var(--navy); font-size: 9pt; }
+    .contact-card span { color: var(--green); font-size: 7pt; font-weight: 700; }
+
+    /* Closing */
+    .closing {
+      padding: 0;
+      display: grid;
+      grid-template-rows: 61% 39%;
+      background: white;
+    }
+    .closing-top {
+      position: relative;
+      padding: 25mm 20mm 13mm;
+      overflow: hidden;
+      background: var(--navy);
+    }
+    .closing-top::after {
+      content: "";
+      position: absolute;
+      width: 105mm;
+      height: 105mm;
+      right: -55mm;
+      top: -35mm;
+      border: .5mm solid rgba(255,255,255,.16);
+      border-radius: 50%;
+    }
+    .closing-top .kicker { color: #F7B878; }
+    .closing-top .kicker::before { background: var(--orange); }
+    .closing-top h2 { max-width: 151mm; color: white; font-size: 29pt; line-height: 1.16; }
+    .closing-top p { max-width: 142mm; margin-top: 8mm; color: #D2E0EF; font-size: 10.2pt; }
+    .closing-bottom { padding: 12mm 20mm 14mm; }
+    .approval-steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4mm; }
+    .approval-step { padding: 4.5mm; border-radius: 4mm; background: var(--soft); }
+    .approval-step .step-no { color: var(--orange); font-family: "IBM Plex Sans", sans-serif; font-size: 16pt; font-weight: 800; }
+    .approval-step strong { display: block; margin-top: 1mm; color: var(--navy); font-size: 8pt; }
+    .approval-step p { margin-top: 1mm; font-size: 6.6pt; line-height: 1.35; }
+    .closing-signature { display: flex; justify-content: space-between; align-items: flex-end; margin-top: 10mm; padding-top: 5mm; border-top: .35mm solid var(--line); }
+    .closing-signature strong { display: block; color: var(--navy); font-size: 9pt; }
+    .closing-signature span { display: block; margin-top: 1mm; color: var(--muted); font-size: 6.8pt; }
+    .closing-signature .tagline-end { color: var(--green); font-size: 7.5pt; font-weight: 800; text-align: right; }
+  </style>
+</head>
+<body>
+  <svg width="0" height="0" style="position:absolute">
+    <symbol id="i-clipboard" viewBox="0 0 24 24"><rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4V2h6v2M8 9h8M8 13h8M8 17h5"/></symbol>
+    <symbol id="i-truck" viewBox="0 0 24 24"><path d="M3 6h11v10H3zM14 10h4l3 3v3h-7z"/><circle cx="7" cy="18" r="2"/><circle cx="18" cy="18" r="2"/></symbol>
+    <symbol id="i-pin" viewBox="0 0 24 24"><path d="M20 10c0 5-8 11-8 11S4 15 4 10a8 8 0 1 1 16 0z"/><circle cx="12" cy="10" r="2.5"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="m8 12 3 3 5-6"/></symbol>
+    <symbol id="i-message" viewBox="0 0 24 24"><path d="M4 5h16v11H8l-4 4z"/><path d="M8 9h8M8 12h5"/></symbol>
+    <symbol id="i-phone" viewBox="0 0 24 24"><path d="M7 3h3l2 5-2 2c1.5 3 2.5 4 5 5l2-2 4 2v3c0 2-1 3-3 3C10 20 4 14 3 6c0-2 1-3 4-3z"/></symbol>
+    <symbol id="i-note" viewBox="0 0 24 24"><path d="M5 3h14v18H5zM8 8h8M8 12h8M8 16h5"/></symbol>
+    <symbol id="i-eye" viewBox="0 0 24 24"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></symbol>
+    <symbol id="i-user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c1-5 4-7 8-7s7 2 8 7"/></symbol>
+    <symbol id="i-calendar" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M7 3v4M17 3v4M3 10h18"/></symbol>
+    <symbol id="i-invoice" viewBox="0 0 24 24"><path d="M6 2h9l4 4v16H6zM15 2v5h4M9 11h6M9 15h6M9 19h4"/></symbol>
+    <symbol id="i-route" viewBox="0 0 24 24"><circle cx="6" cy="18" r="2"/><circle cx="18" cy="6" r="2"/><path d="M8 18h3c6 0 1-12 5-12"/></symbol>
+    <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 2 20 5v6c0 5-3 9-8 11-5-2-8-6-8-11V5z"/><path d="m8 12 3 3 5-6"/></symbol>
+    <symbol id="i-headset" viewBox="0 0 24 24"><path d="M4 13v-2a8 8 0 0 1 16 0v2M4 13h4v7H6a2 2 0 0 1-2-2zM20 13h-4v7h2a2 2 0 0 0 2-2zM16 20c0 2-2 2-4 2"/></symbol>
+    <symbol id="i-discuss" viewBox="0 0 24 24"><path d="M3 4h14v11H8l-5 4z"/><path d="M17 8h4v11l-4-3h-5"/></symbol>
+    <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v6l4 2"/></symbol>
+    <symbol id="i-alert" viewBox="0 0 24 24"><path d="m12 3 10 18H2z"/><path d="M12 9v5M12 18h.01"/></symbol>
+    <symbol id="i-layers" viewBox="0 0 24 24"><path d="m12 3 9 5-9 5-9-5z"/><path d="m3 12 9 5 9-5M3 16l9 5 9-5"/></symbol>
+  </svg>
+
+  <!-- 01 Cover -->
+  <section class="page cover">
+    <div class="cover-copy">
+      <div class="cover-client">CV. Bintang Timur Rahayu</div>
+      <h1>Mobile-based Logistic Transport System</h1>
+      <p class="cover-subtitle">Proposal peningkatan operasional distribusi yang mengikuti cara kerja BTR.</p>
+      <div class="domain-stack">
+        <div class="domain-row"><span class="dot"></span><span>Shipment Planning</span></div>
+        <div class="domain-row"><span class="dot"></span><span>Transport Execution</span></div>
+        <div class="domain-row"><span class="dot"></span><span>Delivery Execution</span></div>
+      </div>
+      <div class="cover-meta">
+        <span class="micro-label">Disiapkan oleh</span>
+        <div class="prepared">
+          <div class="cover-name">Drury Yudis Lumenta</div>
+          <div class="tagline">Pragmatis. Realistis. Berorientasi Hasil.</div>
+        </div>
+        <p class="small muted mt-5 num">Juli 2026</p>
+      </div>
+    </div>
+    <div class="cover-visual">
+      <div class="cover-diagram">
+        <div class="cover-visual-label">Satu alur kerja operasional</div>
+        <div class="cover-route">
+          <svg class="route-line" viewBox="0 0 300 410" preserveAspectRatio="none" aria-hidden="true">
+            <path d="M40 25 C260 80 30 190 255 250 C330 275 205 350 90 385" fill="none" stroke="rgba(255,255,255,.35)" stroke-width="3" stroke-dasharray="8 8"/>
+          </svg>
+          <div class="route-node one">
+            <div class="icon-box"><svg class="icon"><use href="#i-clipboard"/></svg></div>
+            <h4>Rencana disiapkan</h4>
+            <p>Faktur, kendaraan, driver, tanggal, dan urutan pelanggan.</p>
+          </div>
+          <div class="route-node two">
+            <div class="icon-box"><svg class="icon"><use href="#i-truck"/></svg></div>
+            <h4>Perjalanan dijalankan</h4>
+            <p>Driver bekerja terhadap Shipment yang sama.</p>
+          </div>
+          <div class="route-node three">
+            <div class="icon-box"><svg class="icon"><use href="#i-check"/></svg></div>
+            <h4>Hasil dicatat</h4>
+            <p>Setiap pelanggan memiliki status dan catatan yang jelas.</p>
+          </div>
+        </div>
+      </div>
+      <svg class="icon cover-truck" style="width:22mm;height:22mm"><use href="#i-truck"/></svg>
+    </div>
+  </section>
+
+  <!-- 02 Executive Summary -->
+  <section class="page">
+    <div class="section-head">
+      <div class="head-copy">
+        <div class="kicker">Executive Summary</div>
+        <h2>Satu rencana kerja untuk seluruh proses pengiriman</h2>
+        <p class="lead">Perubahan yang dituju bukan memperbesar sistem, melainkan memperjelas siapa melakukan apa, kapan, dan bagaimana hasilnya dicatat.</p>
+      </div>
+      <div class="section-mark num">02</div>
+    </div>
+    <div class="split-58">
+      <div>
+        <p>Perencanaan shipment masih banyak bergantung pada koordinasi manual. Saat kendaraan sudah berjalan, progres sering perlu ditanyakan melalui telepon atau WhatsApp. Setelah sampai di pelanggan, hasil pengiriman belum selalu dicatat dengan bentuk dan waktu yang konsisten.</p>
+        <p class="mt-4">Usulan ini menambahkan satu alat kerja operasional ke ekosistem BTR yang sudah digunakan. Fokusnya hanya pada aktivitas yang langsung memengaruhi kelancaran distribusi.</p>
+        <div class="summary-statement mt-6">
+          <span class="micro-label" style="color:#9DB8D8">Dasar keputusan</span>
+          <h3 class="mt-3">Setujui alur inti. Nilai hasilnya dari pekerjaan yang benar-benar berkurang.</h3>
+          <p>Tidak ada penggantian sistem utama dan tidak ada perluasan ke gudang, finance, inventory, atau modul lain.</p>
+        </div>
+        <div class="takeaway mt-6">
+          <div class="icon-box orange"><svg class="icon"><use href="#i-check"/></svg></div>
+          <div>
+            <strong>Rekomendasi</strong>
+            <p>Menyetujui implementasi terfokus untuk Shipment Planning, Transport Execution, dan Delivery Execution.</p>
+          </div>
+        </div>
+      </div>
+      <div style="display:grid;gap:3mm">
+        <div class="domain-card" data-step="01">
+          <div class="icon-box"><svg class="icon"><use href="#i-clipboard"/></svg></div>
+          <h3>Shipment Planning</h3>
+          <p>Faktur, tanggal, kendaraan, driver, prioritas, dan urutan pelanggan berada dalam satu rencana.</p>
+          <p class="result">Hasil: siap dijalankan</p>
+        </div>
+        <div class="domain-card" data-step="02">
+          <div class="icon-box green"><svg class="icon"><use href="#i-truck"/></svg></div>
+          <h3>Transport Execution</h3>
+          <p>Driver menjalankan Shipment dan memperbarui tahap perjalanan sebagai bagian dari pekerjaan.</p>
+          <p class="result">Hasil: progres terlihat</p>
+        </div>
+        <div class="domain-card" data-step="03">
+          <div class="icon-box orange"><svg class="icon"><use href="#i-check"/></svg></div>
+          <h3>Delivery Execution</h3>
+          <p>Setiap kunjungan memiliki hasil seragam dan catatan pengecualian yang diperlukan.</p>
+          <p class="result">Hasil: tindak lanjut jelas</p>
+        </div>
+      </div>
+    </div>
+    <div class="footer"><span>Mobile-based Logistic Transport System · CV. Bintang Timur Rahayu</span><span class="page-number">02</span></div>
+  </section>
+
+  <!-- 03 Operational Background -->
+  <section class="page">
+    <div class="section-head">
+      <div class="head-copy">
+        <div class="kicker">Operational Background</div>
+        <h2>Ketika informasi tersebar, keputusan ikut menunggu</h2>
+        <p class="lead">Satu perjalanan melibatkan beberapa peran dan dokumen. Beban muncul saat informasi berpindah melalui percakapan serta catatan yang terpisah.</p>
+      </div>
+      <div class="section-mark num">03</div>
+    </div>
+    <div class="scatter">
+      <div class="scatter-item a">
+        <div class="icon-box"><svg class="icon"><use href="#i-phone"/></svg></div>
+        <div><strong>Telepon</strong><span>Menanyakan kendaraan, driver, dan progres.</span></div>
+      </div>
+      <div class="scatter-item b">
+        <div class="icon-box green"><svg class="icon"><use href="#i-message"/></svg></div>
+        <div><strong>WhatsApp</strong><span>Penugasan dan perubahan tersimpan di percakapan.</span></div>
+      </div>
+      <div class="scatter-item c">
+        <div class="icon-box orange"><svg class="icon"><use href="#i-note"/></svg></div>
+        <div><strong>Catatan manual</strong><span>Hasil kunjungan disusun kembali setelah perjalanan.</span></div>
+      </div>
+      <div class="scatter-item d">
+        <div class="icon-box red"><svg class="icon"><use href="#i-alert"/></svg></div>
+        <div><strong>Pengecualian</strong><span>Gagal, sebagian, dan retur terlambat dipilah.</span></div>
+      </div>
+      <div class="scatter-center">
+        <svg class="icon lg" style="margin:auto"><use href="#i-truck"/></svg>
+        <strong>1 Shipment</strong>
+        <span>banyak sumber informasi</span>
+      </div>
+    </div>
+    <div class="grid-3 mt-6">
+      <div class="card impact-card">
+        <div class="icon-box"><svg class="icon"><use href="#i-clock"/></svg></div>
+        <h3>Waktu koordinasi bertambah</h3>
+        <p>Pertanyaan yang sama perlu dijawab kepada beberapa pihak.</p>
+      </div>
+      <div class="card impact-card">
+        <div class="icon-box orange"><svg class="icon"><use href="#i-layers"/></svg></div>
+        <h3>Status tidak seragam</h3>
+        <p>Istilah “jalan”, “sampai”, dan “selesai” dapat memiliki arti berbeda.</p>
+      </div>
+      <div class="card impact-card">
+        <div class="icon-box red"><svg class="icon"><use href="#i-alert"/></svg></div>
+        <h3>Tindak lanjut menunggu</h3>
+        <p>Masalah baru dipilah setelah informasi lengkap kembali ke kantor.</p>
+      </div>
+    </div>
+    <div class="takeaway mt-6">
+      <div class="icon-box orange"><svg class="icon"><use href="#i-eye"/></svg></div>
+      <div><strong>Bukan masalah orang</strong><p>Yang dibutuhkan bukan lebih banyak komunikasi. Yang dibutuhkan adalah satu rencana kerja yang sama.</p></div>
+    </div>
+    <div class="footer"><span>Mobile-based Logistic Transport System · CV. Bintang Timur Rahayu</span><span class="page-number">03</span></div>
+  </section>
+
+  <!-- 04 Philosophy -->
+  <section class="page">
+    <div class="section-head">
+      <div class="head-copy">
+        <div class="kicker">Prinsip Kerja</div>
+        <h2>Rancangan dimulai dari pekerjaan yang nyata</h2>
+      </div>
+      <div class="section-mark num">04</div>
+    </div>
+    <div class="split-45">
+      <div class="philosophy-panel">
+        <h2>Sistem mengikuti pekerjaan.<br><span style="color:#F7B878">Bukan sebaliknya.</span></h2>
+        <div class="line"></div>
+        <p>Istilah, urutan langkah, dan informasi yang tampil mengikuti kebutuhan planner dan driver pada saat bekerja.</p>
+      </div>
+      <div class="method-grid">
+        <div class="card method-card">
+          <div class="icon-box"><svg class="icon"><use href="#i-eye"/></svg></div>
+          <div><span class="micro-label">01 · Amati</span><h3>Mulai dari pekerjaan aktual</h3><p>Peran, status, dan pengecualian dikonfirmasi bersama pengguna sebelum penerapan.</p></div>
+        </div>
+        <div class="card method-card">
+          <div class="icon-box green"><svg class="icon"><use href="#i-route"/></svg></div>
+          <div><span class="micro-label">02 · Sederhanakan</span><h3>Ringankan aktivitas harian</h3><p>Satu layar diarahkan pada satu tugas, dengan pilihan terbatas dan pengetikan minimum.</p></div>
+        </div>
+        <div class="card method-card">
+          <div class="icon-box orange"><svg class="icon"><use href="#i-clock"/></svg></div>
+          <div><span class="micro-label">03 · Ukur</span><h3>Lihat perubahan yang terjadi</h3><p>Nilai waktu planning, jumlah konfirmasi status, dan kecepatan hasil kunjungan tersedia.</p></div>
+        </div>
+        <div class="card method-card">
+          <div class="icon-box purple"><svg class="icon"><use href="#i-layers"/></svg></div>
+          <div><span class="micro-label">04 · Bertahap</span><h3>Tumbuh sesuai kebutuhan</h3><p>Fase awal tetap fokus. Fungsi baru dibahas setelah alur inti digunakan dan dinilai.</p></div>
+        </div>
+      </div>
+    </div>
+    <div class="takeaway mt-6">
+      <div class="icon-box orange"><svg class="icon"><use href="#i-check"/></svg></div>
+      <div><strong>Ukuran keberhasilan</strong><p>Bukan banyaknya menu, melainkan pekerjaan yang menjadi lebih jelas dan lebih ringan.</p></div>
+    </div>
+    <div class="footer"><span>Mobile-based Logistic Transport System · CV. Bintang Timur Rahayu</span><span class="page-number">04</span></div>
+  </section>
+
+  <!-- 05 Proposed Solution -->
+  <section class="page">
+    <div class="section-head">
+      <div class="head-copy">
+        <div class="kicker">Proposed Solution</div>
+        <h2>Tiga aktivitas. Satu pusat koordinasi.</h2>
+        <p class="lead">Shipment menjadi satu misi pengiriman yang menghubungkan rencana, perjalanan, dan hasil kunjungan.</p>
+      </div>
+      <div class="section-mark num">05</div>
+    </div>
+    <div class="hub">
+      <svg class="hub-lines" viewBox="0 0 1000 700" preserveAspectRatio="none" aria-hidden="true">
+        <path d="M335 180 C420 240 445 285 500 350" fill="none" stroke="#B7C7D9" stroke-width="5" stroke-dasharray="14 10"/>
+        <path d="M665 180 C580 240 555 285 500 350" fill="none" stroke="#B7C7D9" stroke-width="5" stroke-dasharray="14 10"/>
+        <path d="M500 470 C500 510 500 535 500 580" fill="none" stroke="#B7C7D9" stroke-width="5" stroke-dasharray="14 10"/>
+      </svg>
+      <div class="hub-card one">
+        <div class="icon-box"><svg class="icon"><use href="#i-clipboard"/></svg></div>
+        <h3>Shipment Planning</h3>
+        <p>Pilih Faktur, tanggal, kendaraan, driver, prioritas, dan urutan pelanggan.</p>
+        <div class="output">Output · Rencana siap dijalankan</div>
+      </div>
+      <div class="hub-card two">
+        <div class="icon-box green"><svg class="icon"><use href="#i-truck"/></svg></div>
+        <h3>Transport Execution</h3>
+        <p>Jalankan Shipment dan perbarui tahap perjalanan sampai selesai.</p>
+        <div class="output">Output · Progres perjalanan</div>
+      </div>
+      <div class="hub-center">
+        <div>
+          <svg class="icon lg" style="margin:auto"><use href="#i-layers"/></svg>
+          <strong>SHIPMENT</strong>
+          <span>pusat koordinasi operasional</span>
+        </div>
+      </div>
+      <div class="hub-card three">
+        <div class="icon-box orange"><svg class="icon"><use href="#i-check"/></svg></div>
+        <h3>Delivery Execution</h3>
+        <p>Catat hasil setiap pelanggan, waktu, dan pengecualian yang perlu ditindaklanjuti.</p>
+        <div class="output">Output · Hasil kunjungan konsisten</div>
+      </div>
+    </div>
+    <div class="takeaway mt-6">
+      <div class="icon-box"><svg class="icon"><use href="#i-layers"/></svg></div>
+      <div><strong>Fondasi tetap sama</strong><p>Ekosistem BTR tetap menjadi dasar data operasional. Aplikasi memperluas alur ke tempat pekerjaan transport dijalankan.</p></div>
+    </div>
+    <div class="footer"><span>Mobile-based Logistic Transport System · CV. Bintang Timur Rahayu</span><span class="page-number">05</span></div>
+  </section>
+
+  <!-- 06 Workflow -->
+  <section class="page">
+    <div class="section-head">
+      <div class="head-copy">
+        <div class="kicker">Operational Workflow</div>
+        <h2>Dari Faktur siap dikirim sampai Shipment selesai</h2>
+        <p class="lead">Setiap pihak mengetahui kapan tanggung jawabnya dimulai, apa yang perlu dicatat, dan kapan pekerjaan dinyatakan selesai.</p>
+      </div>
+      <div class="section-mark num">06</div>
+    </div>
+    <div class="lane">
+      <div class="lane-label">
+        <div class="icon-box"><svg class="icon"><use href="#i-clipboard"/></svg></div>
+        <h3>Logistics Planner</h3>
+        <p>Menyiapkan rencana sebelum keberangkatan.</p>
+      </div>
+      <div class="lane-steps">
+        <div class="lane-step"><div class="step-no">1</div><strong>Pilih Faktur</strong><span>Tentukan dokumen yang akan dikirim.</span></div>
+        <div class="lane-step"><div class="step-no">2</div><strong>Bentuk Shipment</strong><span>Kelompokkan untuk satu perjalanan.</span></div>
+        <div class="lane-step"><div class="step-no">3</div><strong>Tetapkan penugasan</strong><span>Tanggal, kendaraan, dan driver.</span></div>
+        <div class="lane-step"><div class="step-no">4</div><strong>Susun urutan</strong><span>Tandai Shipment siap dijalankan.</span></div>
+      </div>
+    </div>
+    <div class="lane">
+      <div class="lane-label green-bg">
+        <div class="icon-box green"><svg class="icon"><use href="#i-truck"/></svg></div>
+        <h3>Driver / Helper</h3>
+        <p>Menjalankan dan mencatat hasil pekerjaan.</p>
+      </div>
+      <div class="lane-steps">
+        <div class="lane-step"><div class="step-no">5</div><strong>Buka penugasan</strong><span>Periksa Shipment hari ini.</span></div>
+        <div class="lane-step"><div class="step-no">6</div><strong>Mulai perjalanan</strong><span>Jalankan urutan kunjungan.</span></div>
+        <div class="lane-step"><div class="step-no">7</div><strong>Catat hasil</strong><span>Pilih hasil untuk setiap pelanggan.</span></div>
+        <div class="lane-step"><div class="step-no">8</div><strong>Selesaikan</strong><span>Pastikan seluruh kunjungan lengkap.</span></div>
+      </div>
+    </div>
+    <div class="lane">
+      <div class="lane-label orange-bg">
+        <div class="icon-box orange"><svg class="icon"><use href="#i-eye"/></svg></div>
+        <h3>Supervisor / Owner</h3>
+        <p>Melihat status dan memprioritaskan tindak lanjut.</p>
+      </div>
+      <div class="lane-steps">
+        <div class="lane-step"><div class="step-no">A</div><strong>Lihat status</strong><span>Planned sampai Completed.</span></div>
+        <div class="lane-step"><div class="step-no">B</div><strong>Lihat progres</strong><span>Kunjungan selesai dan tersisa.</span></div>
+        <div class="lane-step"><div class="step-no">C</div><strong>Pilah kendala</strong><span>Partial, Failed, dan Returned.</span></div>
+        <div class="lane-step"><div class="step-no">D</div><strong>Tentukan tindakan</strong><span>Gunakan catatan hasil sebagai dasar.</span></div>
+      </div>
+    </div>
+    <div class="takeaway mt-6">
+      <div class="icon-box orange"><svg class="icon"><use href="#i-route"/></svg></div>
+      <div><strong>Pembagian kerja yang sederhana</strong><p>Rencana dibuat planner. Rencana dijalankan driver. Hasil digunakan supervisor untuk mengambil tindakan.</p></div>
+    </div>
+    <div class="footer"><span>Mobile-based Logistic Transport System · CV. Bintang Timur Rahayu</span><span class="page-number">06</span></div>
+  </section>
+
+  <!-- 07 Shipment Planning -->
+  <section class="page">
+    <div class="section-head">
+      <div class="head-copy">
+        <div class="kicker">01 · Shipment Planning</div>
+        <h2>Rencana selesai sebelum kendaraan berangkat</h2>
+        <p class="lead">Planner menjawab satu pertanyaan: “Besok kendaraan mana mengirim Faktur yang mana?”</p>
+      </div>
+      <div class="section-mark num">07</div>
+    </div>
+    <div class="planner-board">
+      <div class="planner-top">
+        <strong>Perencanaan Shipment</strong>
+        <span>Contoh tampilan konseptual</span>
+      </div>
+      <div class="planner-content">
+        <div class="invoice-list">
+          <span class="micro-label">Faktur siap direncanakan</span>
+          <div class="invoice-mini"><span class="check on"></span><div><strong>FK-2608-0142</strong><span>CV Maju Bersama · Prioritas</span></div></div>
+          <div class="invoice-mini"><span class="check on"></span><div><strong>FK-2608-0145</strong><span>Toko Cemerlang</span></div></div>
+          <div class="invoice-mini"><span class="check on"></span><div><strong>FK-2608-0148</strong><span>UD Sinar Abadi</span></div></div>
+          <div class="invoice-mini"><span class="check"></span><div><strong>FK-2608-0151</strong><span>PT Karya Niaga</span></div></div>
+          <div class="invoice-mini"><span class="check"></span><div><strong>FK-2608-0156</strong><span>Toko Harapan</span></div></div>
+          <div class="card green-soft mt-4" style="padding:3mm">
+            <strong class="navy" style="font-size:7pt">12 Faktur dipilih</strong>
+            <p style="font-size:5.8pt;margin-top:1mm">Dikelompokkan ke satu rencana pengiriman.</p>
+          </div>
+        </div>
+        <div class="shipment-sheet">
+          <div class="shipment-id">
+            <div><span class="micro-label">Shipment</span><strong class="num">SP-2608-017</strong></div>
+            <span class="tag green">Ready</span>
+          </div>
+          <div class="field-grid">
+            <div class="field"><label>Tanggal</label><strong class="num">5 Agustus 2026</strong></div>
+            <div class="field"><label>Prioritas</label><strong>Normal</strong></div>
+            <div class="field"><label>Driver</label><strong>Budi Santoso</strong></div>
+            <div class="field"><label>Kendaraan</label><strong class="num">DB 8123 AB</strong></div>
+          </div>
+          <div class="sequence">
+            <span class="micro-label">Urutan pelanggan</span>
+            <div class="sequence-row"><span class="sequence-no">1</span><strong>CV Maju Bersama</strong><span>3 Faktur</span></div>
+            <div class="sequence-row"><span class="sequence-no">2</span><strong>Toko Cemerlang</strong><span>2 Faktur</span></div>
+            <div class="sequence-row"><span class="sequence-no">3</span><strong>UD Sinar Abadi</strong><span>2 Faktur</span></div>
+            <div class="sequence-row"><span class="sequence-no">4</span><strong>PT Karya Niaga</strong><span>3 Faktur</span></div>
+            <div class="sequence-row"><span class="sequence-no">5</span><strong>Toko Harapan</strong><span>2 Faktur</span></div>
+          </div>
+          <div class="primary-button"><svg class="icon sm"><use href="#i-check"/></svg> TANDAI SIAP DIJALANKAN</div>
+        </div>
+      </div>
+    </div>
+    <div class="grid-3 mt-6">
+      <div class="card soft"><span class="micro-label">Penugasan</span><h3 class="mt-2" style="font-size:9pt">Siapa dan kendaraan mana</h3></div>
+      <div class="card soft"><span class="micro-label">Muatan dokumen</span><h3 class="mt-2" style="font-size:9pt">Faktur dalam perjalanan</h3></div>
+      <div class="card soft"><span class="micro-label">Urutan kerja</span><h3 class="mt-2" style="font-size:9pt">Pelanggan yang didahulukan</h3></div>
+    </div>
+    <div class="takeaway mt-5">
+      <div class="icon-box orange"><svg class="icon"><use href="#i-user"/></svg></div>
+      <div><strong>Driver menerima rencana yang sudah siap</strong><p>Driver tidak perlu menyusun kembali penugasan di lapangan.</p></div>
+    </div>
+    <div class="footer"><span>Mobile-based Logistic Transport System · CV. Bintang Timur Rahayu</span><span class="page-number">07</span></div>
+  </section>
+
+  <!-- 08 Transport Execution -->
+  <section class="page">
+    <div class="section-head">
+      <div class="head-copy">
+        <div class="kicker">02 · Transport Execution</div>
+        <h2>Status perjalanan yang memiliki arti yang sama</h2>
+        <p class="lead">Progres terlihat dari status kerja yang diperbarui driver, bukan dari laporan tambahan setelah perjalanan selesai.</p>
+      </div>
+      <div class="section-mark num">08</div>
+    </div>
+    <div class="status-track">
+      <div class="status-node"><span class="micro-label">Rencana</span><div class="status-dot">01</div><strong>Planned</strong><span>Masih disusun</span></div>
+      <div class="status-node"><span class="micro-label">Siap</span><div class="status-dot">02</div><strong>Ready</strong><span>Penugasan lengkap</span></div>
+      <div class="status-node"><span class="micro-label">Berangkat</span><div class="status-dot">03</div><strong>Departed</strong><span>Perjalanan dimulai</span></div>
+      <div class="status-node"><span class="micro-label">Kunjungan</span><div class="status-dot">04</div><strong>In Delivery</strong><span>Pengiriman berjalan</span></div>
+      <div class="status-node"><span class="micro-label">Selesai</span><div class="status-dot">05</div><strong>Completed</strong><span>Semua hasil lengkap</span></div>
+    </div>
+    <div class="execution-layout mt-8">
+      <div class="phone" style="height:116mm">
+        <div class="phone-screen">
+          <div class="phone-status"><span class="num">08.02</span><span>● ● ●</span></div>
+          <div class="phone-appbar"><strong>Shipment Hari Ini</strong><span>⋮</span></div>
+          <div class="phone-body">
+            <div class="phone-title">Selamat pagi, Budi</div>
+            <div class="phone-sub">Rabu, 5 Agustus 2026</div>
+            <div class="phone-card selected">
+              <div style="display:flex;justify-content:space-between"><strong class="num">SP-2608-017</strong><span class="tag green" style="min-height:5mm;padding:1mm 2mm;font-size:5pt">READY</span></div>
+              <span>DB 8123 AB · 5 pelanggan</span>
+              <div class="phone-metrics"><div class="phone-metric"><strong>12</strong><span>Faktur</span></div><div class="phone-metric"><strong>5</strong><span>Pelanggan</span></div><div class="phone-metric"><strong>0/5</strong><span>Selesai</span></div></div>
+            </div>
+            <div class="phone-card">
+              <strong>Urutan kunjungan</strong>
+              <div class="phone-stop"><span class="stop-no">1</span><div><strong>CV Maju Bersama</strong><span>3 Faktur</span></div><em>Berikutnya</em></div>
+              <div class="phone-stop"><span class="stop-no">2</span><div><strong>Toko Cemerlang</strong><span>2 Faktur</span></div><em></em></div>
+            </div>
+            <div class="phone-button">Mulai Perjalanan</div>
+          </div>
+        </div>
+      </div>
+      <div class="execution-copy">
+        <div class="card">
+          <div class="icon-box green"><svg class="icon"><use href="#i-user"/></svg></div>
+          <h3 class="mt-3">Driver melihat</h3>
+          <ul class="mt-3">
+            <li>Shipment yang ditugaskan;</li>
+            <li>ringkasan kendaraan dan pelanggan;</li>
+            <li>urutan kunjungan;</li>
+            <li>satu tindakan utama sesuai tahap.</li>
+          </ul>
+        </div>
+        <div class="card">
+          <div class="icon-box"><svg class="icon"><use href="#i-eye"/></svg></div>
+          <h3 class="mt-3">Kantor mengetahui</h3>
+          <ul class="mt-3">
+            <li>Shipment belum siap atau sudah berangkat;</li>
+            <li>pengiriman sedang berjalan;</li>
+            <li>kunjungan selesai dan tersisa;</li>
+            <li>waktu mulai dan selesai.</li>
+          </ul>
+        </div>
+        <div class="card orange-soft" style="grid-column:1/-1;min-height:auto">
+          <div style="display:flex;gap:3mm;align-items:flex-start">
+            <div class="icon-box orange"><svg class="icon"><use href="#i-alert"/></svg></div>
+            <div><h3>Batas fase pertama</h3><p class="mt-2">Tidak mencakup pelacakan GPS dan tidak mengubah urutan pelanggan secara otomatis.</p></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="footer"><span>Mobile-based Logistic Transport System · CV. Bintang Timur Rahayu</span><span class="page-number">08</span></div>
+  </section>
+
+  <!-- 09 Delivery Execution -->
+  <section class="page">
+    <div class="section-head">
+      <div class="head-copy">
+        <div class="kicker">03 · Delivery Execution</div>
+        <h2>Setiap kunjungan berakhir dengan hasil yang jelas</h2>
+        <p class="lead">Driver memilih hasil yang tepat dan menulis catatan hanya untuk kondisi yang perlu diketahui kantor.</p>
+      </div>
+      <div class="section-mark num">09</div>
+    </div>
+    <div class="delivery-layout">
+      <div>
+        <div class="result-grid">
+          <div class="card result-card green-soft">
+            <div class="icon-box green"><svg class="icon"><use href="#i-check"/></svg></div>
+            <h3>Delivered</h3>
+            <p>Barang diterima sesuai pengiriman.</p>
+          </div>
+          <div class="card result-card orange-soft">
+            <div class="icon-box orange"><svg class="icon"><use href="#i-layers"/></svg></div>
+            <h3>Partially Delivered</h3>
+            <p>Sebagian diterima; kondisi dijelaskan melalui catatan singkat.</p>
+          </div>
+          <div class="card result-card" style="background:var(--red-soft);border-color:#F0CACA">
+            <div class="icon-box red"><svg class="icon"><use href="#i-alert"/></svg></div>
+            <h3>Failed</h3>
+            <p>Pengiriman tidak berhasil, misalnya pelanggan tutup atau menolak.</p>
+          </div>
+          <div class="card result-card" style="background:var(--purple-soft);border-color:#DED5ED">
+            <div class="icon-box purple"><svg class="icon"><use href="#i-route"/></svg></div>
+            <h3>Returned</h3>
+            <p>Barang dibawa kembali dan alasan dicatat.</p>
+          </div>
+        </div>
+        <div class="card soft mt-5">
+          <div style="display:flex;gap:3mm;align-items:flex-start">
+            <div class="icon-box"><svg class="icon"><use href="#i-clock"/></svg></div>
+            <div><h3 style="font-size:9.5pt">Informasi pendukung</h3><p class="mt-2 small">Waktu tiba, waktu selesai, dan catatan driver membuat supervisor dapat memisahkan pekerjaan selesai dari pekerjaan yang perlu ditindaklanjuti.</p></div>
+          </div>
+        </div>
+        <div class="card orange-soft mt-4">
+          <span class="micro-label">Fokus fase ini</span>
+          <p class="mt-2 small">Tidak memasukkan foto bukti, tanda tangan digital, atau proses penagihan. Tujuannya adalah memastikan hasil operasional tercatat dengan benar.</p>
+        </div>
+      </div>
+      <div class="phone" style="width:52mm;height:114mm">
+        <div class="phone-screen">
+          <div class="phone-status"><span class="num">10.45</span><span>● ● ●</span></div>
+          <div class="phone-appbar"><strong>Hasil Pengiriman</strong><span>⋮</span></div>
+          <div class="phone-body">
+            <div class="phone-title">CV Maju Bersama</div>
+            <div class="phone-sub">Kunjungan 1 dari 5 · 3 Faktur</div>
+            <div class="result-option active"><span class="result-dot green-dot"></span><strong>Delivered</strong></div>
+            <div class="result-option"><span class="result-dot orange-dot"></span><strong>Partially Delivered</strong></div>
+            <div class="result-option"><span class="result-dot red-dot"></span><strong>Failed</strong></div>
+            <div class="result-option"><span class="result-dot purple-dot"></span><strong>Returned</strong></div>
+            <div class="note-field">Catatan pengiriman (bila diperlukan)</div>
+            <div class="phone-button">Simpan Hasil</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="takeaway mt-6">
+      <div class="icon-box orange"><svg class="icon"><use href="#i-check"/></svg></div>
+      <div><strong>Hasil siap dipilah</strong><p>Setiap pelanggan memiliki status yang sama formatnya, sehingga kantor tidak perlu menyusun ulang laporan driver.</p></div>
+    </div>
+    <div class="footer"><span>Mobile-based Logistic Transport System · CV. Bintang Timur Rahayu</span><span class="page-number">09</span></div>
+  </section>
+
+  <!-- 10 Mobile Application -->
+  <section class="page">
+    <div class="section-head">
+      <div class="head-copy">
+        <div class="kicker">Mobile Application Overview</div>
+        <h2>Satu layar, satu tujuan, satu tindakan utama</h2>
+        <p class="lead">Aplikasi Android diperlakukan sebagai alat kerja lapangan. Informasi yang tidak diperlukan driver tidak ditampilkan.</p>
+      </div>
+      <div class="section-mark num">10</div>
+    </div>
+    <div class="phone-trio">
+      <div class="phone-unit">
+        <div class="phone">
+          <div class="phone-screen">
+            <div class="phone-status"><span class="num">08.02</span><span>● ● ●</span></div>
+            <div class="phone-appbar"><strong>Shipment Hari Ini</strong><span>⋮</span></div>
+            <div class="phone-body">
+              <div class="phone-card selected">
+                <div style="display:flex;justify-content:space-between"><strong class="num">SP-2608-017</strong><span class="tag green" style="min-height:4.5mm;padding:.7mm 1.6mm;font-size:4.5pt">READY</span></div>
+                <span>5 pelanggan · 12 Faktur</span>
+              </div>
+              <div class="phone-card"><strong class="num">SP-2608-018</strong><span>4 pelanggan · 9 Faktur</span></div>
+              <div class="phone-card"><strong class="num">SP-2608-019</strong><span>3 pelanggan · 7 Faktur</span></div>
+              <div class="phone-button navy-btn">Buka Shipment</div>
+            </div>
+          </div>
+        </div>
+        <h3>1. Shipment Hari Ini</h3>
+        <p>Penugasan relevan untuk hari tersebut mudah dipindai.</p>
+        <div class="action">Tindakan: buka Shipment</div>
+      </div>
+      <div class="phone-unit">
+        <div class="phone">
+          <div class="phone-screen">
+            <div class="phone-status"><span class="num">08.05</span><span>● ● ●</span></div>
+            <div class="phone-appbar"><strong class="num">SP-2608-017</strong><span>⋮</span></div>
+            <div class="phone-body">
+              <div class="phone-card">
+                <strong>DB 8123 AB · Budi Santoso</strong>
+                <span>5 pelanggan · 12 Faktur</span>
+              </div>
+              <div class="phone-stop"><span class="stop-no">1</span><div><strong>CV Maju Bersama</strong><span>3 Faktur</span></div><em>Berikutnya</em></div>
+              <div class="phone-stop"><span class="stop-no">2</span><div><strong>Toko Cemerlang</strong><span>2 Faktur</span></div><em></em></div>
+              <div class="phone-stop"><span class="stop-no">3</span><div><strong>UD Sinar Abadi</strong><span>2 Faktur</span></div><em></em></div>
+              <div class="phone-button">Mulai Perjalanan</div>
+            </div>
+          </div>
+        </div>
+        <h3>2. Detail Shipment</h3>
+        <p>Penugasan dan urutan pelanggan diperiksa sebelum mulai.</p>
+        <div class="action">Tindakan: mulai perjalanan</div>
+      </div>
+      <div class="phone-unit">
+        <div class="phone">
+          <div class="phone-screen">
+            <div class="phone-status"><span class="num">10.45</span><span>● ● ●</span></div>
+            <div class="phone-appbar"><strong>Hasil Pengiriman</strong><span>⋮</span></div>
+            <div class="phone-body">
+              <div class="phone-title">CV Maju Bersama</div>
+              <div class="phone-sub">Kunjungan 1 dari 5</div>
+              <div class="result-option active"><span class="result-dot green-dot"></span><strong>Delivered</strong></div>
+              <div class="result-option"><span class="result-dot orange-dot"></span><strong>Partially Delivered</strong></div>
+              <div class="result-option"><span class="result-dot red-dot"></span><strong>Failed</strong></div>
+              <div class="result-option"><span class="result-dot purple-dot"></span><strong>Returned</strong></div>
+              <div class="phone-button">Simpan Hasil</div>
+            </div>
+          </div>
+        </div>
+        <h3>3. Hasil Pengiriman</h3>
+        <p>Pilih hasil dan tambah catatan hanya bila diperlukan.</p>
+        <div class="action">Tindakan: simpan hasil</div>
+      </div>
+    </div>
+    <div class="ui-principles">
+      <div class="ui-principle"><div class="icon-box" style="width:8mm;height:8mm"><svg class="icon sm"><use href="#i-check"/></svg></div><span>Istilah operasional</span></div>
+      <div class="ui-principle"><div class="icon-box green" style="width:8mm;height:8mm"><svg class="icon sm"><use href="#i-user"/></svg></div><span>Tombol besar dan jelas</span></div>
+      <div class="ui-principle"><div class="icon-box orange" style="width:8mm;height:8mm"><svg class="icon sm"><use href="#i-note"/></svg></div><span>Pengetikan minimum</span></div>
+      <div class="ui-principle"><div class="icon-box" style="width:8mm;height:8mm"><svg class="icon sm"><use href="#i-route"/></svg></div><span>Urutan mengikuti pekerjaan</span></div>
+      <div class="ui-principle"><div class="icon-box green" style="width:8mm;height:8mm"><svg class="icon sm"><use href="#i-eye"/></svg></div><span>Informasi secukupnya</span></div>
+      <div class="ui-principle"><div class="icon-box orange" style="width:8mm;height:8mm"><svg class="icon sm"><use href="#i-layers"/></svg></div><span>Tidak ada menu bertingkat</span></div>
+    </div>
+    <div class="footer"><span>Mobile-based Logistic Transport System · CV. Bintang Timur Rahayu</span><span class="page-number">10</span></div>
+  </section>
+
+  <!-- 11 Business Benefits -->
+  <section class="page">
+    <div class="section-head">
+      <div class="head-copy">
+        <div class="kicker">Business Benefits</div>
+        <h2>Nilai muncul dari pekerjaan yang tidak perlu diulang</h2>
+        <p class="lead">Manfaat dinilai dari perubahan yang dapat diamati, bukan dari angka produktivitas yang diasumsikan.</p>
+      </div>
+      <div class="section-mark num">11</div>
+    </div>
+    <div class="compare">
+      <div class="compare-col before">
+        <span class="tag gray">Sebelum</span>
+        <div class="compare-row"><span class="bullet"></span><p>Penugasan dijelaskan melalui beberapa percakapan.</p></div>
+        <div class="compare-row"><span class="bullet"></span><p>Supervisor menanyakan progres kepada driver.</p></div>
+        <div class="compare-row"><span class="bullet"></span><p>Hasil kunjungan disampaikan dengan bentuk berbeda.</p></div>
+        <div class="compare-row"><span class="bullet"></span><p>Kendala dipilah setelah laporan terkumpul.</p></div>
+      </div>
+      <div class="compare-arrow">→</div>
+      <div class="compare-col after">
+        <span class="tag green">Setelah</span>
+        <div class="compare-row"><span class="bullet"></span><p>Satu Shipment memuat penugasan lengkap.</p></div>
+        <div class="compare-row"><span class="bullet"></span><p>Tahap terlihat setelah driver memperbarui pekerjaan.</p></div>
+        <div class="compare-row"><span class="bullet"></span><p>Hasil dipilih dari status yang seragam.</p></div>
+        <div class="compare-row"><span class="bullet"></span><p>Partial, Failed, dan Returned langsung terpisah.</p></div>
+      </div>
+    </div>
+    <div class="mt-7">
+      <span class="micro-label">Indikator pilot</span>
+      <h3 class="mt-2" style="font-size:13pt">Empat perubahan yang layak diukur</h3>
+    </div>
+    <div class="grid-4 mt-4">
+      <div class="card metric-card"><div class="metric-no">01</div><h3>Waktu planning</h3><p>Durasi menyusun satu Shipment.</p></div>
+      <div class="card metric-card"><div class="metric-no">02</div><h3>Permintaan status</h3><p>Jumlah telepon atau WhatsApp untuk progres.</p></div>
+      <div class="card metric-card"><div class="metric-no">03</div><h3>Waktu hasil tersedia</h3><p>Dari kunjungan selesai sampai terlihat kantor.</p></div>
+      <div class="card metric-card"><div class="metric-no">04</div><h3>Kelengkapan hasil</h3><p>Kunjungan dengan status dan catatan yang cukup.</p></div>
+    </div>
+    <div class="takeaway mt-7">
+      <div class="icon-box orange"><svg class="icon"><use href="#i-clock"/></svg></div>
+      <div><strong>Tidak ada angka yang dibuat di depan</strong><p>Baseline dicatat saat awal implementasi, lalu dibandingkan dengan hasil penggunaan pada pekerjaan yang sebanding.</p></div>
+    </div>
+    <div class="footer"><span>Mobile-based Logistic Transport System · CV. Bintang Timur Rahayu</span><span class="page-number">11</span></div>
+  </section>
+
+  <!-- 12 Scope -->
+  <section class="page">
+    <div class="section-head">
+      <div class="head-copy">
+        <div class="kicker">Scope of Work</div>
+        <h2>Fokus pada pekerjaan transportasi distribusi</h2>
+        <p class="lead">Batas yang jelas membuat implementasi lebih cepat, mudah diuji, dan tidak mengganggu domain bisnis lain.</p>
+      </div>
+      <div class="section-mark num">12</div>
+    </div>
+    <div class="grid-2">
+      <div class="scope-panel in">
+        <h3><div class="icon-box green"><svg class="icon"><use href="#i-check"/></svg></div>Termasuk fase ini</h3>
+        <div class="scope-group">
+          <h4>Shipment Planning</h4>
+          <ul><li>Pemilihan Faktur dan pembentukan Shipment</li><li>Tanggal, kendaraan, driver, prioritas, dan urutan pelanggan</li><li>Ringkasan atau manifest pengiriman</li></ul>
+        </div>
+        <div class="scope-group">
+          <h4>Transport Execution</h4>
+          <ul><li>Daftar penugasan driver</li><li>Mulai dan selesai perjalanan</li><li>Lifecycle Shipment serta progres kunjungan</li></ul>
+        </div>
+        <div class="scope-group">
+          <h4>Delivery Execution</h4>
+          <ul><li>Delivered, Partially Delivered, Failed, Returned</li><li>Waktu, catatan, dan ringkasan Shipment selesai</li></ul>
+        </div>
+        <div class="scope-group">
+          <h4>Implementasi</h4>
+          <ul><li>Penyesuaian istilah dan langkah kerja</li><li>Aplikasi Android untuk aktivitas lapangan</li><li>Panduan singkat dan pendampingan awal</li></ul>
+        </div>
+      </div>
+      <div class="scope-panel out">
+        <h3><div class="icon-box orange"><svg class="icon"><use href="#i-layers"/></svg></div>Di luar fase ini</h3>
+        <p class="small muted mt-5">Area berikut tidak dimasukkan agar proyek tetap fokus dan manfaat fase pertama dapat dinilai secara langsung.</p>
+        <div class="boundary-tags">
+          <span class="tag gray">Warehouse Management</span>
+          <span class="tag gray">Picking</span>
+          <span class="tag gray">Packing</span>
+          <span class="tag gray">Stok Opname</span>
+          <span class="tag gray">Inventory</span>
+          <span class="tag gray">Purchasing</span>
+          <span class="tag gray">Finance</span>
+          <span class="tag gray">Collection</span>
+          <span class="tag gray">CRM</span>
+          <span class="tag gray">Fleet Maintenance</span>
+          <span class="tag gray">GPS Tracking</span>
+          <span class="tag gray">Route Optimization</span>
+          <span class="tag gray">Foto / Tanda Tangan POD</span>
+          <span class="tag gray">Analitik Prediktif</span>
+        </div>
+        <div class="card orange-soft mt-7">
+          <div class="icon-box orange"><svg class="icon"><use href="#i-shield"/></svg></div>
+          <h3 class="mt-3" style="font-size:10pt">Batas ruang lingkup adalah kontrol risiko</h3>
+          <p class="mt-2 small">Tambahan kebutuhan tetap dapat dibahas setelah alur inti digunakan. Penambahannya tidak otomatis menjadi bagian dari proyek ini.</p>
+        </div>
+      </div>
+    </div>
+    <div class="takeaway mt-5">
+      <div class="icon-box green"><svg class="icon"><use href="#i-check"/></svg></div>
+      <div><strong>Fase kecil, hasil mudah dinilai</strong><p>Keputusan lanjutan dibuat berdasarkan pengalaman penggunaan, bukan asumsi saat proposal.</p></div>
+    </div>
+    <div class="footer"><span>Mobile-based Logistic Transport System · CV. Bintang Timur Rahayu</span><span class="page-number">12</span></div>
+  </section>
+
+  <!-- 13 Timeline -->
+  <section class="page">
+    <div class="section-head">
+      <div class="head-copy">
+        <div class="kicker">Project Timeline</div>
+        <h2>Implementasi singkat dengan checkpoint yang jelas</h2>
+        <p class="lead">Estimasi dibuat realistis: sekitar satu minggu pengembangan, kemudian dua sampai tiga hari deployment dan implementasi.</p>
+      </div>
+      <div class="section-mark num">13</div>
+    </div>
+    <div class="timeline">
+      <div class="timeline-item">
+        <div class="timeline-period num">Hari 1</div>
+        <div><h3>Konfirmasi pekerjaan aktual</h3><p>Pastikan peran, status, istilah, data penugasan, dan pengecualian pengiriman.</p></div>
+      </div>
+      <div class="timeline-item">
+        <div class="timeline-period num">Hari 2–4</div>
+        <div><h3>Penyelesaian alur inti</h3><p>Shipment Planning, Transport Execution, Delivery Execution, dan tampilan Android.</p></div>
+      </div>
+      <div class="timeline-item">
+        <div class="timeline-period num">Hari 5</div>
+        <div><h3>Review alur dan persiapan</h3><p>Uji skenario kerja, sederhanakan langkah yang membingungkan, dan siapkan penggunaan awal.</p></div>
+      </div>
+      <div class="timeline-item deploy">
+        <div class="timeline-period num">Deploy · Hari 1</div>
+        <div><h3>Persiapan penggunaan</h3><p>Siapkan pengguna awal, kendaraan, driver, dan contoh Shipment.</p></div>
+      </div>
+      <div class="timeline-item deploy">
+        <div class="timeline-period num">Deploy · Hari 2–3</div>
+        <div><h3>Pendampingan dan evaluasi awal</h3><p>Jalankan pekerjaan nyata, selesaikan catatan pengguna, dan tinjau indikator pilot.</p></div>
+      </div>
+    </div>
+    <div class="timeline-band">
+      <div class="timeline-stat">
+        <div class="icon-box" style="background:rgba(255,255,255,.12);color:#fff"><svg class="icon"><use href="#i-calendar"/></svg></div>
+        <div><strong>± 1 minggu</strong><span>Development</span></div>
+      </div>
+      <div class="timeline-stat green-bg">
+        <div class="icon-box" style="background:rgba(255,255,255,.12);color:#fff"><svg class="icon"><use href="#i-truck"/></svg></div>
+        <div><strong>2–3 hari</strong><span>Deployment & implementation</span></div>
+      </div>
+    </div>
+    <div class="takeaway mt-5">
+      <div class="icon-box orange"><svg class="icon"><use href="#i-alert"/></svg></div>
+      <div><strong>Prasyarat estimasi</strong><p>Data awal tersedia dan review dilakukan sesuai jadwal. Perubahan di luar tiga domain dibahas terpisah.</p></div>
+    </div>
+    <div class="footer"><span>Mobile-based Logistic Transport System · CV. Bintang Timur Rahayu</span><span class="page-number">13</span></div>
+  </section>
+
+  <!-- 14 Investment -->
+  <section class="page">
+    <div class="section-head">
+      <div class="head-copy">
+        <div class="kicker">Investment</div>
+        <h2>Investasi pada proses yang berulang setiap hari</h2>
+        <p class="lead">Nilai ditempatkan pada ruang lingkup yang fokus, waktu implementasi yang singkat, dan perubahan kerja yang dapat diamati.</p>
+      </div>
+      <div class="section-mark num">14</div>
+    </div>
+    <div class="grid-2">
+      <div>
+        <div class="investment-amount">
+          <div class="label">Estimasi investasi proyek</div>
+          <div class="amount num">Rp 5.000.000<br><span style="font-size:15pt;color:#AFC5DF">sampai</span><br>Rp 6.000.000</div>
+          <p>Nilai final dikonfirmasi setelah ruang lingkup, data awal, dan skenario penggunaan disepakati.</p>
+        </div>
+        <div class="commercial-note mt-5">
+          <span class="micro-label">Catatan komersial</span>
+          <p class="mt-2 small">Ketentuan pembayaran dan tanggal mulai disepakati pada saat persetujuan proyek.</p>
+        </div>
+      </div>
+      <div>
+        <span class="micro-label">Estimasi mencakup</span>
+        <div class="inclusion-list mt-4">
+          <div class="inclusion-item"><svg class="icon sm green"><use href="#i-check"/></svg><span>Pengembangan tiga domain yang disepakati</span></div>
+          <div class="inclusion-item"><svg class="icon sm green"><use href="#i-check"/></svg><span>Tampilan operasional planner dan aplikasi Android driver</span></div>
+          <div class="inclusion-item"><svg class="icon sm green"><use href="#i-check"/></svg><span>Penyesuaian istilah serta alur kerja BTR</span></div>
+          <div class="inclusion-item"><svg class="icon sm green"><use href="#i-check"/></svg><span>Deployment dan implementasi awal</span></div>
+          <div class="inclusion-item"><svg class="icon sm green"><use href="#i-check"/></svg><span>Panduan singkat pengguna</span></div>
+          <div class="inclusion-item"><svg class="icon sm green"><use href="#i-check"/></svg><span>Warranty selama 3 bulan</span></div>
+        </div>
+        <div class="card soft mt-7">
+          <span class="micro-label">Tidak termasuk</span>
+          <ul class="mt-3">
+            <li>perangkat Android dan biaya konektivitas;</li>
+            <li>fungsi yang dinyatakan di luar fase ini;</li>
+            <li>tambahan kebutuhan setelah persetujuan ruang lingkup.</li>
+          </ul>
+        </div>
+        <div class="card green-soft mt-5">
+          <div class="icon-box green"><svg class="icon"><use href="#i-clock"/></svg></div>
+          <h3 class="mt-3">Cara menilai kelayakan</h3>
+          <p class="mt-2 small">Bandingkan investasi dengan koordinasi berulang, waktu penyusunan Shipment, dan keterlambatan hasil pengiriman yang terjadi setiap hari.</p>
+        </div>
+      </div>
+    </div>
+    <div class="takeaway mt-8">
+      <div class="icon-box orange"><svg class="icon"><use href="#i-check"/></svg></div>
+      <div><strong>Keputusan yang proporsional</strong><p>Ruang lingkup kecil menjaga biaya tetap terukur dan mengurangi risiko implementasi.</p></div>
+    </div>
+    <div class="footer"><span>Mobile-based Logistic Transport System · CV. Bintang Timur Rahayu</span><span class="page-number">14</span></div>
+  </section>
+
+  <!-- 15 Warranty & Support -->
+  <section class="page">
+    <div class="section-head">
+      <div class="head-copy">
+        <div class="kicker">Warranty & Support</div>
+        <h2>Dukungan setelah aplikasi mulai digunakan</h2>
+        <p class="lead">Penggunaan awal didampingi, sementara batas antara perbaikan dan penambahan kebutuhan tetap transparan.</p>
+      </div>
+      <div class="section-mark num">15</div>
+    </div>
+    <div class="split-45">
+      <div class="warranty-panel">
+        <span class="micro-label" style="color:#AFC5DF">Warranty</span>
+        <div class="months num mt-5">3</div>
+        <h3>bulan</h3>
+        <p>Warranty mencakup perbaikan kendala fungsi pada ruang lingkup yang disepakati. Temuan dicatat, diperiksa, dan diselesaikan sesuai dampaknya terhadap pekerjaan operasional.</p>
+        <p>Perubahan kebutuhan atau capability baru dibahas terpisah agar biaya dan waktunya tetap jelas.</p>
+        <svg class="icon"><use href="#i-shield"/></svg>
+      </div>
+      <div class="support-list">
+        <div class="card support-card">
+          <div class="icon-box"><svg class="icon"><use href="#i-headset"/></svg></div>
+          <h3>Remote Support</h3>
+          <p>Bantuan jarak jauh untuk kendala penggunaan, pemeriksaan alur, dan arahan penyelesaian.</p>
+        </div>
+        <div class="card support-card">
+          <div class="icon-box green"><svg class="icon"><use href="#i-phone"/></svg></div>
+          <h3>On-call Support</h3>
+          <p>Dukungan ketika terdapat kendala yang perlu ditangani selama operasional berjalan.</p>
+        </div>
+        <div class="card support-card">
+          <div class="icon-box orange"><svg class="icon"><use href="#i-discuss"/></svg></div>
+          <h3>Development Discussion</h3>
+          <p>Diskusi kebutuhan lanjutan berdasarkan pengalaman penggunaan, tanpa otomatis memperluas proyek ini.</p>
+        </div>
+      </div>
+    </div>
+    <div class="contact-card card soft">
+      <div><span class="micro-label">Kontak profesional</span><strong class="mt-2" style="display:block">Drury Yudis Lumenta</strong></div>
+      <span>Pragmatis. Realistis. Berorientasi Hasil.</span>
+    </div>
+    <div class="footer"><span>Mobile-based Logistic Transport System · CV. Bintang Timur Rahayu</span><span class="page-number">15</span></div>
+  </section>
+
+  <!-- 16 Closing -->
+  <section class="page closing">
+    <div class="closing-top">
+      <div class="kicker">Closing</div>
+      <h2>Perbaikan operasional tidak selalu dimulai dengan sistem yang lebih besar.</h2>
+      <p>Sering kali cukup dimulai dari satu proses yang dibuat lebih sederhana, lebih jelas, dan lebih mudah dijalankan setiap hari.</p>
+      <div style="display:flex;gap:7mm;align-items:center;margin-top:14mm;color:#F7B878">
+        <svg class="icon lg"><use href="#i-invoice"/></svg><span style="font-size:15pt">→</span>
+        <svg class="icon lg"><use href="#i-clipboard"/></svg><span style="font-size:15pt">→</span>
+        <svg class="icon lg"><use href="#i-truck"/></svg><span style="font-size:15pt">→</span>
+        <svg class="icon lg"><use href="#i-check"/></svg>
+      </div>
+    </div>
+    <div class="closing-bottom">
+      <span class="micro-label">Langkah persetujuan</span>
+      <div class="approval-steps mt-4">
+        <div class="approval-step"><div class="step-no">01</div><strong>Tetapkan ruang lingkup</strong><p>Tiga domain menjadi fokus fase pertama.</p></div>
+        <div class="approval-step"><div class="step-no">02</div><strong>Pilih pengguna awal</strong><p>Tentukan planner, driver, dan contoh pekerjaan.</p></div>
+        <div class="approval-step"><div class="step-no">03</div><strong>Tentukan tanggal mulai</strong><p>Siapkan data awal dan jadwal review.</p></div>
+      </div>
+      <div class="closing-signature">
+        <div><span>Disiapkan untuk CV. Bintang Timur Rahayu</span><strong>Drury Yudis Lumenta</strong></div>
+        <div class="tagline-end">Pragmatis. Realistis.<br>Berorientasi Hasil.</div>
+      </div>
+    </div>
+  </section>
+</body>
+</html>

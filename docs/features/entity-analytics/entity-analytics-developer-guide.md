@@ -10,6 +10,8 @@
 
 **Roadmap SSOT:** [entity-analytics-roadmap-authoritative.md](../../work/btr-portal/entity-analytics/entity-analytics-roadmap-authoritative.md)
 
+**Peer Position binning:** [peer-position-distribution.md](peer-position-distribution.md)
+
 
 
 ---

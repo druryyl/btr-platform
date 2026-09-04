@@ -3,7 +3,7 @@
 **Audience:** Product Owner, Business Owner, Analysts, Future Agents  
 **Purpose:** Authoritative business-domain reference for BTR Portal — what it is, what business problems it solves, what metrics and analytics concepts exist, and how management uses the system for decision making.
 
-**Related docs:** Foundation — `docs/foundation/PRODUCT.md`, `DOMAIN.md`, `WORKFLOW.md`, `LANDSCAPE.md`. Operational usage — [btr-portal-operational.md](./btr-portal-operational.md). **KPI catalog (SSOT)** — [btr-portal-kpi-catalog.md](./btr-portal-kpi-catalog.md). Technical architecture — [btr-portal-architecture.md](./btr-portal-architecture.md).
+**Related docs:** Foundation — `docs/foundation/PRODUCT.md`, `DOMAIN.md`, `WORKFLOW.md`, `LANDSCAPE.md`. Operational usage — [btr-portal-operational.md](./btr-portal-operational.md). **KPI catalog (SSOT)** — [btr-portal-kpi-catalog.md](./btr-portal-kpi-catalog.md). **Navigation assets (what screens exist)** — [navigation-assets.md](./navigation-assets.md). Technical architecture — [btr-portal-architecture.md](./btr-portal-architecture.md).
 
 This document describes **business meaning only**. It does not describe APIs, databases, frameworks, or implementation.
 

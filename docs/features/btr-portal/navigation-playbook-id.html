@@ -1,0 +1,2135 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Panduan Navigasi Owner BTR</title>
+  <style>
+:root {
+  --navy: #163A70;
+  --navy-2: #0E2C56;
+  --ink: #172337;
+  --muted: #5B6B7C;
+  --line: #D7E0E9;
+  --paper: #FFFFFF;
+  --canvas: #EEF2F6;
+  --soft: #F6F8FA;
+  --orange: #E07A1F;
+  --green: #2F7D4A;
+  --green-bg: #E8F4EC;
+  --amber: #B7791F;
+  --amber-bg: #FFF7EC;
+  --red: #B4453A;
+  --red-bg: #F8EBE9;
+  --gold: #C9A227;
+  --toc-w: 18.5rem;
+  --radius: 12px;
+  --shadow: 0 8px 28px rgba(22, 58, 112, .08);
+  font-family: "Segoe UI", Calibri, Aptos, Arial, sans-serif;
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  margin: 0;
+  background: var(--canvas);
+  color: var(--ink);
+  line-height: 1.55;
+  font-size: 16px;
+}
+a { color: var(--navy); }
+.skip { position: absolute; left: -999px; top: 0; }
+.skip:focus { left: 8px; top: 8px; background: #fff; padding: 8px; z-index: 40; }
+.wrap { display: grid; grid-template-columns: 1fr; min-height: 100vh; }
+
+nav.toc {
+  background: var(--navy-2);
+  color: #E8EEF6;
+  padding: 1.25rem 1rem 2rem;
+}
+nav.toc a { color: #D5E2F4; text-decoration: none; }
+nav.toc a:hover, nav.toc a:focus { color: #fff; text-decoration: underline; }
+nav.toc h2 {
+  margin: 1rem 0 .5rem;
+  font-size: .72rem;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: var(--gold);
+}
+.toc-brand { font-weight: 700; font-size: 1.05rem; color: #fff; margin: 0 0 .2rem; }
+.toc-meta { font-size: .8rem; color: #9BB0C9; margin: 0 0 1rem; }
+.toc-search, .toc-btn {
+  width: 100%;
+  padding: .45rem .6rem;
+  border: 0;
+  border-radius: 6px;
+  margin-bottom: .45rem;
+  font: inherit;
+}
+.toc-btn {
+  background: rgba(255,255,255,.12);
+  color: #fff;
+  cursor: pointer;
+  text-align: left;
+  font-size: .82rem;
+}
+.toc-btn:hover { background: rgba(255,255,255,.2); }
+.toc details { margin: .1rem 0; }
+.toc summary {
+  cursor: pointer;
+  font-weight: 600;
+  font-size: .88rem;
+  color: #fff;
+  padding: .22rem 0;
+}
+.toc ul { list-style: none; margin: .15rem 0 .5rem; padding: 0 0 0 .15rem; }
+.toc li { margin: .16rem 0; font-size: .8rem; line-height: 1.35; }
+.toc .sub { color: #F3D48A; font-size: .75rem; font-weight: 700; margin: .45rem 0 .15rem; }
+
+main { min-width: 0; }
+.page { max-width: 56rem; margin: 0 auto; padding: 1.25rem 1rem 3rem; }
+
+header.cover {
+  background: linear-gradient(165deg, var(--navy-2), var(--navy));
+  color: #fff;
+  padding: 2rem 1.25rem 1.6rem;
+  border-radius: 0 0 18px 18px;
+  margin: 0 0 1.25rem;
+}
+header.cover .kicker {
+  color: var(--gold);
+  font-size: .72rem;
+  font-weight: 800;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+}
+header.cover h1 { margin: .45rem 0 .55rem; font-size: 1.75rem; line-height: 1.15; }
+header.cover .lead { color: #D5E2F4; margin: 0 0 1.1rem; font-size: .98rem; }
+.meta-grid { display: grid; grid-template-columns: 1fr; gap: .65rem; }
+.meta {
+  background: rgba(255,255,255,.08);
+  border: 1px solid rgba(255,255,255,.12);
+  border-radius: 10px;
+  padding: .7rem .85rem;
+}
+.meta dt { font-size: .7rem; letter-spacing: .08em; text-transform: uppercase; color: #F3D48A; margin: 0 0 .15rem; }
+.meta dd { margin: 0; font-size: .95rem; }
+
+h2.sec {
+  font-size: 1.45rem;
+  color: var(--navy);
+  margin: 2.2rem 0 .45rem;
+  padding-top: .5rem;
+}
+h2.sec .num {
+  display: inline-block;
+  min-width: 1.8rem;
+  color: var(--gold);
+  font-size: 1.05rem;
+}
+.card {
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 1rem 1.1rem;
+  margin: .75rem 0 1rem;
+  box-shadow: var(--shadow);
+}
+.card p { margin: .4rem 0; }
+.card ul, .card ol { margin: .35rem 0; padding-left: 1.2rem; }
+.card li { margin: .28rem 0; }
+.note {
+  font-size: .9rem;
+  color: var(--muted);
+  border-left: 3px solid var(--orange);
+  padding: .1rem 0 .1rem .7rem;
+  margin: .7rem 0 0;
+}
+
+/* Owner workflow diagram */
+.workflow {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0;
+  margin: 1rem 0 .2rem;
+}
+.wf-node {
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: .7rem .9rem;
+  text-align: center;
+  box-shadow: var(--shadow);
+}
+.wf-node strong {
+  display: block;
+  font-size: .68rem;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--orange);
+  margin-bottom: .15rem;
+}
+.wf-node span { color: var(--muted); font-size: .88rem; }
+.wf-arrow { text-align: center; color: var(--navy); font-weight: 700; line-height: 1.5; font-size: 1.05rem; }
+
+.journey {
+  background: var(--navy-2);
+  color: #E8EEF6;
+  border-radius: var(--radius);
+  padding: 1rem 1.1rem;
+  margin: .9rem 0;
+}
+.journey h3 { margin: 0 0 .6rem; color: var(--gold); font-size: .95rem; }
+.journey .row { margin: .35rem 0; font-size: .92rem; }
+.journey a { color: #F3D48A; }
+
+/* EQ cards */
+.eq {
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  margin: .85rem 0 1.1rem;
+  box-shadow: var(--shadow);
+  overflow: hidden;
+  break-inside: avoid;
+  page-break-inside: avoid;
+}
+.eq-head {
+  background: linear-gradient(90deg, var(--navy-2), var(--navy));
+  color: #fff;
+  padding: .95rem 1.05rem .85rem;
+}
+.eq-head .code {
+  font-size: .68rem;
+  font-weight: 800;
+  letter-spacing: .08em;
+  color: var(--gold);
+}
+.eq-head h3 { margin: .2rem 0 0; font-size: 1.2rem; line-height: 1.25; }
+.eq-body { padding: .85rem 1.05rem 1.05rem; }
+.eq-body h4, .pb-body h4, .inv h4 {
+  margin: .85rem 0 .3rem;
+  font-size: .72rem;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--orange);
+}
+.eq-body h4:first-child { margin-top: .15rem; }
+.open-box {
+  background: #E8EEF6;
+  border-radius: 10px;
+  padding: .75rem .85rem;
+  margin: .45rem 0 .7rem;
+}
+.open-box .dash { font-weight: 700; color: var(--navy-2); font-size: 1.02rem; }
+.open-box .path { margin: .15rem 0 0; color: var(--muted); font-size: .88rem; }
+.chips { display: flex; flex-wrap: wrap; gap: .35rem; margin: .35rem 0; }
+.chips a, .chips span {
+  background: #E8EEF6;
+  color: var(--navy-2);
+  border-radius: 999px;
+  padding: .18rem .55rem;
+  font-size: .8rem;
+  text-decoration: none;
+}
+
+/* MQ playbooks */
+.playbook {
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  margin: .7rem 0 1rem;
+  box-shadow: var(--shadow);
+  break-inside: avoid;
+  page-break-inside: avoid;
+}
+.playbook > details > summary {
+  cursor: pointer;
+  list-style: none;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: .5rem .75rem;
+  align-items: start;
+  padding: .9rem 1rem;
+}
+.playbook > details > summary::-webkit-details-marker { display: none; }
+.playbook .code {
+  font-size: .68rem;
+  font-weight: 800;
+  letter-spacing: .04em;
+  color: var(--navy);
+  background: #E8EEF6;
+  border-radius: 999px;
+  padding: .2rem .55rem;
+  white-space: nowrap;
+  margin-top: .2rem;
+}
+.playbook h3 { margin: 0; font-size: 1.08rem; color: var(--navy-2); line-height: 1.3; }
+.playbook .hint { font-size: .8rem; color: var(--muted); margin: .15rem 0 0; }
+.pb-body { padding: 0 1rem 1.05rem; border-top: 1px solid var(--line); }
+.look-grid { display: grid; grid-template-columns: 1fr; gap: .55rem; }
+.look {
+  background: var(--soft);
+  border-radius: 8px;
+  padding: .65rem .75rem;
+}
+.look strong { display: block; font-size: .78rem; color: var(--navy); margin-bottom: .15rem; }
+.signals { display: grid; grid-template-columns: 1fr; gap: .55rem; margin: .4rem 0; }
+.sig { border-radius: 8px; padding: .65rem .75rem; font-size: .92rem; }
+.sig strong { display: block; font-size: .78rem; margin-bottom: .12rem; }
+.sig.ok { background: var(--green-bg); }
+.sig.ok strong { color: var(--green); }
+.sig.warn { background: var(--amber-bg); }
+.sig.warn strong { color: var(--amber); }
+.sig.crit { background: var(--red-bg); }
+.sig.crit strong { color: var(--red); }
+.action-list { margin: .25rem 0; padding-left: 1.15rem; }
+.action-list li { margin: .3rem 0; }
+.ev-list { display: flex; flex-wrap: wrap; gap: .35rem; margin: .3rem 0; }
+.ev-list span {
+  background: var(--soft);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: .28rem .55rem;
+  font-size: .82rem;
+}
+.chain { margin: .5rem 0 .15rem; }
+.chain .node {
+  background: var(--soft);
+  border-left: 3px solid var(--navy);
+  border-radius: 0 8px 8px 0;
+  padding: .45rem .7rem;
+  font-size: .92rem;
+}
+.chain .node em { color: var(--muted); font-style: normal; font-size: .78rem; display: block; }
+.chain .arr { color: var(--navy); font-weight: 700; padding: .1rem 0 .1rem .55rem; font-size: .9rem; }
+
+.eq-group {
+  margin: 1.4rem 0 .4rem;
+  font-size: 1.05rem;
+  color: var(--navy-2);
+}
+.eq-group a { text-decoration: none; }
+
+/* Investigation guides */
+.inv {
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 1rem 1.05rem;
+  margin: .75rem 0 1rem;
+  box-shadow: var(--shadow);
+  break-inside: avoid;
+  page-break-inside: avoid;
+}
+.inv h3 { margin: 0 0 .35rem; color: var(--navy-2); font-size: 1.12rem; }
+.inv .when { color: var(--muted); font-size: .9rem; margin: 0 0 .7rem; }
+
+/* Quick reference */
+.table-wrap { overflow-x: auto; margin: .6rem 0 1rem; border: 1px solid var(--line); border-radius: var(--radius); background: var(--paper); box-shadow: var(--shadow); }
+table.qr {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: .86rem;
+  min-width: 52rem;
+}
+table.qr th {
+  background: var(--navy-2);
+  color: #fff;
+  text-align: left;
+  padding: .65rem .7rem;
+  font-size: .72rem;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  position: sticky;
+  top: 0;
+}
+table.qr td {
+  padding: .55rem .7rem;
+  border-top: 1px solid var(--line);
+  vertical-align: top;
+}
+table.qr tr:nth-child(even) td { background: var(--soft); }
+table.qr td:first-child { font-weight: 650; color: var(--navy-2); }
+
+/* Checklist */
+.check-grid { display: grid; grid-template-columns: 1fr; gap: .75rem; }
+.check {
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: .9rem 1rem;
+  box-shadow: var(--shadow);
+}
+.check h3 { margin: 0 0 .5rem; color: var(--navy); font-size: 1.05rem; }
+.check label {
+  display: flex;
+  gap: .55rem;
+  align-items: flex-start;
+  margin: .4rem 0;
+  font-size: .92rem;
+  cursor: pointer;
+}
+.check input { margin-top: .28rem; }
+.check small { display: block; color: var(--muted); font-size: .78rem; }
+
+footer.doc {
+  max-width: 56rem;
+  margin: 0 auto;
+  padding: 1rem 1rem 2.5rem;
+  color: var(--muted);
+  font-size: .82rem;
+}
+
+.workflow { max-width: 28rem; margin-left: auto; margin-right: auto; }
+@media (min-width: 720px) {
+  .signals { grid-template-columns: 1fr 1fr 1fr; }
+  .look-grid { grid-template-columns: 1fr 1fr; }
+  .meta-grid { grid-template-columns: 1fr 1fr; }
+  .check-grid { grid-template-columns: 1fr 1fr 1fr; }
+  header.cover { padding: 2.6rem 2rem 2rem; border-radius: 0 0 24px 24px; }
+  header.cover h1 { font-size: 2.15rem; }
+  .page { padding: 1.5rem 1.25rem 3.5rem; }
+}
+@media (min-width: 1100px) {
+  .wrap { grid-template-columns: var(--toc-w) 1fr; }
+  nav.toc {
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    overflow: auto;
+    padding: 1.4rem 1.1rem 2rem;
+  }
+}
+@media print {
+  body { background: #fff; font-size: 10.5pt; }
+  nav.toc { display: none; }
+  .toc-search, .toc-btn { display: none; }
+  header.cover { break-after: page; color: #000; background: #fff; border: 1px solid #ccc; }
+  header.cover .lead, header.cover .kicker, .meta dt { color: #333; }
+  .eq, .playbook, .inv, .card, .check { box-shadow: none; }
+  details { display: block; }
+  details > *:not(summary) { display: block !important; }
+  .playbook > details > summary { cursor: default; }
+  .workflow { flex-direction: column; }
+  .wf-arrow { transform: none; }
+  table.qr { font-size: 8.5pt; min-width: 0; }
+  a { color: #000; text-decoration: none; }
+  .eq-head { background: #163A70; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+}
+  </style>
+</head>
+<body>
+  <a class="skip" href="#cover">Lewati ke konten</a>
+  <div class="wrap">
+    <nav class="toc" aria-label="Daftar isi">
+      <p class="toc-brand">Panduan Navigasi Owner</p>
+      <p class="toc-meta">BTR Portal · CV. Bintang Timur Rahayu</p>
+      <label class="skip" for="tocFilter">Filter</label>
+      <input class="toc-search" id="tocFilter" type="search" placeholder="Cari pertanyaan…" oninput="filterToc(this.value)">
+      <button class="toc-btn" type="button" onclick="setDetails(true)">Buka semua playbook</button>
+      <button class="toc-btn" type="button" onclick="setDetails(false)">Tutup semua playbook</button>
+      <h2>Di halaman ini</h2>
+      <ul>
+        <li><a href="#cover">Sampul</a></li>
+        <li><a href="#s1">1. Pendahuluan</a></li>
+        <li><a href="#s2">2. Cara Membaca Portal</a></li>
+        <li><a href="#s3">3. Pertanyaan Eksekutif</a></li>
+      </ul>
+      <details open>
+        <summary>Pusat Eksekutif</summary>
+        <ul>
+          <li><a href="#eq-001">EQ-001 · Bisnis sehat?</a></li>
+          <li><a href="#eq-002">EQ-002 · Risiko terbesar?</a></li>
+          <li><a href="#eq-003">EQ-003 · Perlu perhatian segera?</a></li>
+          <li><a href="#eq-004">EQ-004 · Arus kas sehat?</a></li>
+          <li><a href="#eq-005">EQ-005 · Pertumbuhan berkelanjutan?</a></li>
+          <li><a href="#eq-006">EQ-006 · Modal kerja sehat?</a></li>
+          <li><a href="#eq-007">EQ-007 · Terlalu bergantung?</a></li>
+          <li><a href="#eq-008">EQ-008 · Masalah berikutnya?</a></li>
+        </ul>
+      </details>
+      <details open>
+        <summary>4. Management Playbook</summary>
+        <ul>
+          <li class="sub">Risiko</li>
+          <li><a href="#mq-001">MQ-001 · Customer berisiko</a></li>
+          <li><a href="#mq-002">MQ-002 · Inventory tidak sehat</a></li>
+          <li><a href="#mq-003">MQ-003 · Piutang jatuh tempo / portofolio dormant</a></li>
+          <li><a href="#mq-004">MQ-004 · Risiko pembelian Principal</a></li>
+          <li class="sub">Hari ini</li>
+          <li><a href="#mq-005">MQ-005 · Hubungi hari ini</a></li>
+          <li><a href="#mq-006">MQ-006 · Beli, tunda, transfer, likuidasi</a></li>
+          <li class="sub">Kas</li>
+          <li><a href="#mq-007">MQ-007 · Piutang</a></li>
+          <li><a href="#mq-008">MQ-008 · Collection vs penagihan</a></li>
+          <li class="sub">Pertumbuhan</li>
+          <li><a href="#mq-009">MQ-009 · Salesman berkinerja rendah</a></li>
+          <li><a href="#mq-010">MQ-010 · Customer menurun</a></li>
+          <li class="sub">Modal &amp; ketergantungan</li>
+          <li><a href="#mq-011">MQ-011 · Modal warehouse</a></li>
+          <li><a href="#mq-012">MQ-012 · Customer dominan</a></li>
+          <li><a href="#mq-013">MQ-013 · Supplier dominan</a></li>
+          <li><a href="#mq-014">MQ-014 · Terlalu sedikit salesman</a></li>
+          <li class="sub">Masalah berikutnya</li>
+          <li><a href="#mq-015">MQ-015 · Kebijakan kredit</a></li>
+          <li><a href="#mq-016">MQ-016 · Pembelian sudah diposting?</a></li>
+        </ul>
+      </details>
+      <ul>
+        <li><a href="#s5">5. Investigation Playbook</a></li>
+        <li><a href="#s6">6. Referensi Cepat Owner</a></li>
+        <li><a href="#s7">7. Checklist Kesehatan Bisnis</a></li>
+      </ul>
+    </nav>
+
+    <main>
+      <header class="cover" id="cover">
+        <div class="kicker">Playbook Owner · BTR Portal</div>
+        <h1>Di mana melihatnya. Apa artinya. Apa langkah berikutnya.</h1>
+        <p class="lead">Ini adalah panduan Owner untuk BTR Portal. Mulailah dari kekhawatiran bisnis, bukan dari daftar dashboard. Setiap alur menjelaskan ke mana harus membuka halaman, apa yang perlu dilihat, cara membacanya, di mana buktinya berada, dan keputusan yang biasanya diambil.</p>
+        <div class="meta-grid">
+          <div class="meta"><dt>Untuk</dt><dd>Owner, Direktur, General Manager, Pemimpin Bisnis</dd></div>
+          <div class="meta"><dt>Perusahaan</dt><dd>CV. Bintang Timur Rahayu (BTR)</dd></div>
+          <div class="meta"><dt>Cara memulai</dt><dd>Buka EQ-001 setiap pagi. Ikuti sinyal terlemah menuju Management Playbook yang sesuai.</dd></div>
+          <div class="meta"><dt>Tanggal</dt><dd>2 September 2026</dd></div>
+        </div>
+      </header>
+
+      <div class="page">
+
+        <!-- SECTION 1 -->
+        <h2 class="sec" id="s1"><span class="num">1</span> Pendahuluan</h2>
+        <section class="card">
+          <p><strong>Apa isi playbook ini.</strong> Peta praktis dari kekhawatiran bisnis menuju keputusan. Playbook ini merangkum pertanyaan yang sudah dapat dijawab oleh BTR Portal. Tidak ada KPI, layar, atau teori bisnis baru yang ditambahkan.</p>
+          <p><strong>Cara menggunakannya.</strong> Mulai dari satu kekhawatiran. Temukan Executive Question yang sesuai. Buka Management Playbook di bawahnya. Ikuti alur Buka → Lihat → Jika Menemukan Ini → Bukti → Lakukan Ini. Berhenti setelah Anda dapat menyebutkan tindakannya.</p>
+          <p><strong>Cara menggunakan portal.</strong> Portal digunakan untuk menilai kondisi bisnis. Buka portal untuk melihat area yang paling lemah, lalu telusuri sampai nama-nama muncul—customer, salesman, SKU, atau Principal. Jangan memulai dari menu dashboard dan berharap angka yang tepat muncul dengan sendirinya.</p>
+          <p><strong>Cara bukti mendukung keputusan.</strong> KPI menunjukkan besarnya masalah. Bukti menunjukkan siapa atau apa yang menjadi sumbernya: attention list, ranking, profil kinerja, dan laporan portal (Sales, Piutang, Customer, Inventory, Purchasing). Ambil keputusan setelah nama-nama yang terkait terlihat.</p>
+          <p class="note">Mulai dari EQ-001. Jangan mulai dari daftar dashboard.</p>
+        </section>
+
+        <!-- SECTION 2 -->
+        <h2 class="sec" id="s2"><span class="num">2</span> Cara Membaca Portal</h2>
+        <section class="card">
+          <p>Gunakan enam langkah yang sama setiap kali. Portal menjawab pertanyaan; portal tidak menggantikan keputusan.</p>
+          <div class="workflow" aria-label="Alur kerja Owner">
+            <div class="wf-node"><strong>1. Pertanyaan</strong><span>Apa yang Anda khawatirkan?</span></div>
+            <div class="wf-arrow" aria-hidden="true">↓</div>
+            <div class="wf-node"><strong>2. Dashboard</strong><span>Buka halaman ini</span></div>
+            <div class="wf-arrow" aria-hidden="true">↓</div>
+            <div class="wf-node"><strong>3. KPI</strong><span>Lihat ini terlebih dahulu</span></div>
+            <div class="wf-arrow" aria-hidden="true">↓</div>
+            <div class="wf-node"><strong>4. Interpretasi</strong><span>Sehat, waspada, atau kritis?</span></div>
+            <div class="wf-arrow" aria-hidden="true">↓</div>
+            <div class="wf-node"><strong>5. Bukti</strong><span>Identifikasi pihak yang bertanggung jawab</span></div>
+            <div class="wf-arrow" aria-hidden="true">↓</div>
+            <div class="wf-node"><strong>6. Keputusan</strong><span>Tindak lanjuti, tunggu, atau delegasikan</span></div>
+          </div>
+          <p class="note">Jika total masih terlihat baik, lanjutkan ke EQ-008. Sinyal masalah terbentuk sebelum overdue, dormant, dead stock, dan pelanggaran Plafond terlihat dalam kondisi akhir bulan.</p>
+        </section>
+
+        <div class="journey">
+          <h3>Alur pagi</h3>
+          <div class="row">Buka portal → <a href="#eq-001">EQ-001 Apakah bisnis sehat?</a></div>
+          <div class="row">Risiko paling menonjol → <a href="#eq-002">EQ-002</a></div>
+          <div class="row">Ada yang harus dilakukan hari ini → <a href="#eq-003">EQ-003</a></div>
+          <div class="row">Kas terasa ketat → <a href="#eq-004">EQ-004</a></div>
+          <div class="row">Sales terasa lemah → <a href="#eq-005">EQ-005</a></div>
+          <div class="row">Modal di warehouse terasa tertahan → <a href="#eq-006">EQ-006</a></div>
+          <div class="row">Beberapa nama menggerakkan bisnis → <a href="#eq-007">EQ-007</a></div>
+          <div class="row">Sinyal mulai terbentuk, total masih terlihat baik → <a href="#eq-008">EQ-008</a></div>
+        </div>
+
+        <!-- SECTION 3 -->
+        <h2 class="sec" id="s3"><span class="num">3</span> Pertanyaan Eksekutif</h2>
+        <section class="card">
+          <p>Ini adalah Executive Navigation Center. EQ-001 menjadi titik awal setiap pagi. EQ-002 hingga EQ-008 adalah pintu investigasi. Management Playbook berada di bawah pintu-pintu tersebut.</p>
+        </section>
+
+        <article class="eq" id="eq-001">
+          <div class="eq-head"><div class="code">EQ-001</div><h3>Apakah bisnis sehat?</h3></div>
+          <div class="eq-body">
+            <h4>Mengapa Ini Penting</h4>
+            <p>Owner membutuhkan satu penilaian pada pagi hari sebelum membuka layar lain. Kualitas customer, pencapaian sales, konversi kas, dan modal warehouse dapat bergerak ke arah yang berbeda pada hari yang sama.</p>
+            <h4>Management Question Terkait</h4>
+            <p>Semuanya—melalui pintu yang paling menonjol:</p>
+            <div class="chips">
+              <a href="#mq-001">MQ-001</a><a href="#mq-002">MQ-002</a><a href="#mq-003">MQ-003</a><a href="#mq-004">MQ-004</a>
+              <a href="#mq-005">MQ-005</a><a href="#mq-006">MQ-006</a>
+              <a href="#mq-007">MQ-007</a><a href="#mq-008">MQ-008</a>
+              <a href="#mq-009">MQ-009</a><a href="#mq-010">MQ-010</a>
+              <a href="#mq-011">MQ-011</a>
+              <a href="#mq-012">MQ-012</a><a href="#mq-013">MQ-013</a><a href="#mq-014">MQ-014</a>
+              <a href="#mq-015">MQ-015</a><a href="#mq-016">MQ-016</a>
+            </div>
+            <h4>Mulai Di Sini</h4>
+            <div class="open-box">
+              <div class="dash">Management Attention Center</div>
+              <p class="path">Menu Executive → Management Attention Center</p>
+            </div>
+            <p>Baca terlebih dahulu: Domain Summaries; Achievement %; Total Piutang, Overdue Customer, &gt; 90 Day Amount; Pending Posting, Top Principal %; Total Inventory Value, Top Category %, Top Supplier %; Portfolio Healthy %, Customers At Risk, Strategic At Risk.</p>
+            <p>Kemudian, bila diperlukan: Portfolio Health Score pada Customer Portfolio atau Customer Risk Forecast; Recovery vs Billing % pada Collection Dashboard; Inventory Health Score pada Inventory Forecast Dashboard.</p>
+            <h4>Keputusan yang Biasanya Diambil</h4>
+            <ul>
+              <li>Buka EQ-002 hingga EQ-008 yang menunjukkan kondisi paling lemah.</li>
+              <li>Jangan menugaskan pekerjaan sebelum masalah terbesar dapat diidentifikasi.</li>
+            </ul>
+          </div>
+        </article>
+
+        <article class="eq" id="eq-002">
+          <div class="eq-head"><div class="code">EQ-002</div><h3>Di mana risiko terbesar saya?</h3></div>
+          <div class="eq-body">
+            <h4>Mengapa Ini Penting</h4>
+            <p>Perhatian manajemen terbatas. Customer overdue, stok yang tertahan, portofolio sales yang lemah, dan ketergantungan pada Principal dapat sama-sama terlihat mendesak. Tentukan masalah terbesar sebelum menugaskan pekerjaan.</p>
+            <h4>Management Question Terkait</h4>
+            <div class="chips">
+              <a href="#mq-001">MQ-001 Customer mana yang mulai berisiko?</a>
+              <a href="#mq-002">MQ-002 Inventory mana yang tidak sehat?</a>
+              <a href="#mq-003">MQ-003 Salesman mana yang membawa portofolio overdue atau dormant?</a>
+              <a href="#mq-004">MQ-004 Principal mana yang menjadi risiko pembelian atau stok?</a>
+            </div>
+            <h4>Mulai Di Sini</h4>
+            <div class="open-box">
+              <div class="dash">Management Attention Center, kemudian playbook terbesar dari empat pilihan</div>
+              <p class="path">Bandingkan Customers At Risk, At-Risk Inventory %, High Overdue Exposure, dan Inventory Cross-Risk / Principal Dependency. Investigasi yang terbesar terlebih dahulu.</p>
+            </div>
+            <h4>Keputusan yang Biasanya Diambil</h4>
+            <ul>
+              <li>Arahkan waktu collection, purchasing, atau sales ke masalah terbesar—bukan ke empat masalah sekaligus.</li>
+              <li>Gunakan Alert Center sebagai jalan pintas ketika pengecualian sudah muncul.</li>
+            </ul>
+          </div>
+        </article>
+
+        <article class="eq" id="eq-003">
+          <div class="eq-head"><div class="code">EQ-003</div><h3>Apa yang perlu segera diperhatikan?</h3></div>
+          <div class="eq-body">
+            <h4>Mengapa Ini Penting</h4>
+            <p>Total bulanan tidak memberi tahu Owner apa yang harus selesai sebelum hari berakhir. Pekerjaan hari ini adalah menghubungi, membeli, menunda, atau melikuidasi.</p>
+            <h4>Management Question Terkait</h4>
+            <div class="chips">
+              <a href="#mq-005">MQ-005 Siapa yang harus dihubungi hari ini?</a>
+              <a href="#mq-006">MQ-006 Apa yang harus dibeli, ditunda, ditransfer, atau dilikuidasi hari ini?</a>
+            </div>
+            <h4>Mulai Di Sini</h4>
+            <div class="open-box">
+              <div class="dash">Collection Optimization Dashboard dan/atau Inventory Optimization Dashboard</div>
+              <p class="path">Menu Customers → Collection Optimization · Menu Inventory → Inventory Optimization</p>
+            </div>
+            <h4>Keputusan yang Biasanya Diambil</h4>
+            <ul>
+              <li>Jalankan daftar kontak hari ini berdasarkan jenisnya—collect, mengingatkan, meninjau kredit, memulihkan sales, atau melakukan eskalasi.</li>
+              <li>Beli item yang kosong, tunda tumpukan stok, transfer, atau likuidasi—sebagai tindakan terpisah, bukan satu daftar pembelian campuran.</li>
+            </ul>
+          </div>
+        </article>
+
+        <article class="eq" id="eq-004">
+          <div class="eq-head"><div class="code">EQ-004</div><h3>Apakah arus kas sehat?</h3></div>
+          <div class="eq-body">
+            <h4>Mengapa Ini Penting</h4>
+            <p>Omzet yang sudah difaktur bukanlah kas. Jika penagihan lebih cepat daripada collection, siklus pembelian berikutnya dibiayai oleh uang yang belum diterima.</p>
+            <h4>Management Question Terkait</h4>
+            <div class="chips">
+              <a href="#mq-007">MQ-007 Piutang mana yang perlu diperhatikan?</a>
+              <a href="#mq-008">MQ-008 Apakah collection kita secepat penagihan?</a>
+            </div>
+            <h4>Mulai Di Sini</h4>
+            <div class="open-box">
+              <div class="dash">Collection Dashboard, kemudian Cash Flow Forecast Dashboard</div>
+              <p class="path">Menu Finance → Collection · kemudian Cash Flow Forecast. Mulai dengan Recovery vs Billing %.</p>
+            </div>
+            <h4>Keputusan yang Biasanya Diambil</h4>
+            <ul>
+              <li>Tingkatkan upaya collection pada akun overdue yang sudah teridentifikasi.</li>
+              <li>Perketat pemberian kredit baru, atau terima hasil kas bulan ini dan susun rencana berdasarkan Expected / Worst Cash.</li>
+            </ul>
+          </div>
+        </article>
+
+        <article class="eq" id="eq-005">
+          <div class="eq-head"><div class="code">EQ-005</div><h3>Apakah pertumbuhan berkelanjutan?</h3></div>
+          <div class="eq-body">
+            <h4>Mengapa Ini Penting</h4>
+            <p>Satu bulan dapat mencapai target karena beberapa nama, sementara customer lainnya mulai tidak aktif. Owner perlu mengetahui apakah pertumbuhan akan tetap ada setelah bulan ini.</p>
+            <h4>Management Question Terkait</h4>
+            <div class="chips">
+              <a href="#mq-009">MQ-009 Salesman mana yang berkinerja rendah?</a>
+              <a href="#mq-010">MQ-010 Customer mana yang menurun?</a>
+            </div>
+            <h4>Mulai Di Sini</h4>
+            <div class="open-box">
+              <div class="dash">Salesman Performance, kemudian Customer Portfolio Dashboard</div>
+              <p class="path">Menu Sales Force → Salesmen · Menu Customers → Customer Portfolio. Mulai dengan Below Target Count dan Declining Count.</p>
+            </div>
+            <h4>Keputusan yang Biasanya Diambil</h4>
+            <ul>
+              <li>Alokasikan ulang waktu sales, tetapkan target yang belum ada, atau lakukan coaching pada orang yang sudah teridentifikasi.</li>
+              <li>Pulihkan customer yang menurun—atau hentikan cakupan untuk akun yang tidak akan kembali.</li>
+            </ul>
+          </div>
+        </article>
+
+        <article class="eq" id="eq-006">
+          <div class="eq-head"><div class="code">EQ-006</div><h3>Apakah modal kerja sehat?</h3></div>
+          <div class="eq-body">
+            <h4>Mengapa Ini Penting</h4>
+            <p>Kas yang tertahan dalam dead stock dan kas yang dibutuhkan untuk SKU penjualan yang kosong adalah masalah yang sama bagi Owner: dana tidak tersedia di tempat yang tepat untuk membiayai siklus berikutnya.</p>
+            <h4>Management Question Terkait</h4>
+            <div class="chips">
+              <a href="#mq-011">MQ-011 Apakah modal warehouse tertahan atau akan segera habis?</a>
+            </div>
+            <h4>Mulai Di Sini</h4>
+            <div class="open-box">
+              <div class="dash">Slow Moving &amp; Dead Stock Dashboard dan Inventory Forecast Dashboard</div>
+              <p class="path">Menu Inventory → Inventory Risk, kemudian Inventory Forecast. Lihat Dead Stock Value dan Stock-Out Risk Items secara bersamaan.</p>
+            </div>
+            <h4>Keputusan yang Biasanya Diambil</h4>
+            <ul>
+              <li>Percepat likuidasi stok yang menganggur, dan beli hanya item yang kosong.</li>
+              <li>Jangan membiayai restock penuh selama dead stock masih menjadi tumpukan yang lebih besar.</li>
+            </ul>
+          </div>
+        </article>
+
+        <article class="eq" id="eq-007">
+          <div class="eq-head"><div class="code">EQ-007</div><h3>Apakah kita terlalu bergantung pada customer, supplier, atau salesman tertentu?</h3></div>
+          <div class="eq-body">
+            <h4>Mengapa Ini Penting</h4>
+            <p>Portofolio, sales force, atau warehouse dapat terlihat sehat secara total, tetapi tetap rentan terhadap guncangan akibat satu hubungan bisnis.</p>
+            <h4>Management Question Terkait</h4>
+            <div class="chips">
+              <a href="#mq-012">MQ-012 Customer mana yang mendominasi omzet atau piutang?</a>
+              <a href="#mq-013">MQ-013 Supplier mana yang mulai dominan?</a>
+              <a href="#mq-014">MQ-014 Apakah kita terlalu bergantung pada beberapa salesman?</a>
+            </div>
+            <h4>Mulai Di Sini</h4>
+            <div class="open-box">
+              <div class="dash">Customer Analytics, Purchasing Management, dan Salesman Performance</div>
+              <p class="path">Bandingkan Top Omzet / Piutang Customer %, Top Principal %, dan Top Omzet Salesman %.</p>
+            </div>
+            <h4>Keputusan yang Biasanya Diambil</h4>
+            <ul>
+              <li>Lindungi akun utama, kurangi eksposur, atau perluas portofolio.</li>
+              <li>Diversifikasikan eksposur supplier—atau perlakukan ketergantungan tersebut sebagai strategi yang memang dipilih.</li>
+              <li>Lindungi orang-orang kunci dan bangun kembali cakupan di seluruh tim.</li>
+            </ul>
+          </div>
+        </article>
+
+        <article class="eq" id="eq-008">
+          <div class="eq-head"><div class="code">EQ-008</div><h3>Apa yang kemungkinan menjadi masalah berikutnya?</h3></div>
+          <div class="eq-body">
+            <h4>Mengapa Ini Penting</h4>
+            <p>Overdue, dormant, dead stock, dan pelanggaran Plafond terlihat setelah kerusakan terjadi. Owner membutuhkan sinyal yang sedang terbentuk sekarang.</p>
+            <h4>Management Question Terkait</h4>
+            <div class="chips">
+              <a href="#mq-015">MQ-015 Apakah kebijakan kredit dipatuhi?</a>
+              <a href="#mq-016">MQ-016 Apakah barang yang dibeli sudah diposting atau masih tertahan di backlog?</a>
+            </div>
+            <h4>Mulai Di Sini</h4>
+            <div class="open-box">
+              <div class="dash">Customer Analytics, kemudian Purchasing Management Dashboard</div>
+              <p class="path">Menu Customers → Customers (Plafond Breach, Suspended + Sales) · Menu Purchasing → Purchasing (Pending Posting, Purchasing Pace).</p>
+            </div>
+            <h4>Keputusan yang Biasanya Diambil</h4>
+            <ul>
+              <li>Tinjau kredit customer, batasi pasokan, atau hentikan penagihan akun yang ditangguhkan—selagi kegagalan masih dapat dicegah.</li>
+              <li>Posting pembelian yang sudah ada terlebih dahulu; lanjutkan pembelian hanya jika SKU penjualan berisiko stock-out.</li>
+            </ul>
+          </div>
+        </article>
+
+        <!-- SECTION 4 -->
+        <h2 class="sec" id="s4"><span class="num">4</span> Management Playbook</h2>
+        <section class="card">
+          <p>Ini adalah bagian untuk bekerja. Satu bab untuk setiap Management Question. Buka bab yang sesuai dengan kekhawatiran Anda. Ikuti alur yang sama setiap kali: Buka Ini → Lihat → Jika Menemukan Ini → Lakukan Ini → Perlu Bukti Lebih Lanjut?</p>
+        </section>
+
+        <h3 class="eq-group">Di bawah <a href="#eq-002">EQ-002 · Di mana risiko terbesar saya?</a></h3>
+
+        <!-- MQ-001 -->
+        <article class="playbook" id="mq-001">
+          <details>
+            <summary>
+              <span class="code">MQ-001</span>
+              <div>
+                <h3>Customer mana yang mulai berisiko?</h3>
+                <p class="hint">Buka Customer Risk Forecast · Lihat Customers At Risk</p>
+              </div>
+            </summary>
+            <div class="pb-body">
+              <h4>Mengapa Owner Menanyakan Ini</h4>
+              <p>Waktu collection dan perhatian kredit harus diarahkan ke akun yang mulai melemah, bukan hanya akun yang sudah overdue.</p>
+              <p class="note">Pemicu umum: collection melambat, tekanan arus kas, kesehatan portofolio menurun, atau customer mengeluhkan penahanan pasokan.</p>
+              <h4>Buka Ini</h4>
+              <div class="open-box">
+                <div class="dash">Customer Risk Forecast Dashboard</div>
+                <p class="path">Menu Customers → Customer Risk Forecast</p>
+              </div>
+              <p>Juga tersedia sebagai Customers At Risk di Management Attention Center dan Customer Portfolio Dashboard. Mulai dari Customer Risk Forecast karena kategori dan kelompok sinyal tersedia di sana.</p>
+              <h4>Lihat</h4>
+              <div class="look-grid">
+                <div class="look"><strong>KPI Utama</strong>Customers At Risk</div>
+                <div class="look"><strong>KPI Pendukung</strong>Portfolio Health Score; Healthy / Watch / Attention / High Risk (serta High / Critical Customers); Strategic At Risk; Payment Delay; Credit Limit; Inactivity; Purchase Decline; Elevated Risk Receivable</div>
+              </div>
+              <h4>Jika Menemukan Ini</h4>
+              <div class="signals">
+                <div class="sig ok"><strong>Sehat</strong>Sebagian besar portofolio berada dalam kondisi Healthy. Customers At Risk dan Strategic At Risk bukan isu utama hari ini. Kelompok sinyal juga tenang.</div>
+                <div class="sig warn"><strong>Waspada</strong>Watch dan Attention mulai bertambah. Payment Delay, Inactivity, atau Purchase Decline meningkat ketika total masih terlihat terkendali. Customer strategis mulai masuk hitungan berisiko.</div>
+                <div class="sig crit"><strong>Kritis</strong>High Risk / Critical Customers dan Elevated Risk Receivable sudah material dibandingkan Total Piutang. Strategic At Risk bukan lagi pengecualian kecil.</div>
+              </div>
+              <p class="note">Jangan membuat batas angka sendiri. Gunakan kategori risiko dan kelompok sinyal yang sudah ditampilkan halaman.</p>
+              <h4>Lakukan Ini</h4>
+              <ul class="action-list">
+                <li>Tingkatkan upaya collection pada akun yang sudah teridentifikasi.</li>
+                <li>Tinjau kredit customer.</li>
+                <li>Pulihkan sales pada nama yang menurun atau tidak aktif.</li>
+                <li>Batasi pasokan jika masalah kredit atau overdue sudah kronis.</li>
+              </ul>
+              <h4>Perlu Bukti Lebih Lanjut?</h4>
+              <div class="ev-list">
+                <span>Customer Risk Attention List</span>
+                <span>Customer Teratas berdasarkan Prioritas Risiko</span>
+                <span>Customer Performance Profile</span>
+                <span>Customer Report</span>
+                <span>Piutang Report</span>
+                <span>Sales Report</span>
+              </div>
+              <h4>Alur Investigasi</h4>
+              <div class="chain">
+                <div class="node">Customer mana yang mulai berisiko?<em>Pertanyaan</em></div>
+                <div class="arr">↓</div>
+                <div class="node">Customer Risk Forecast Dashboard<em>Dashboard</em></div>
+                <div class="arr">↓</div>
+                <div class="node">Customers At Risk<em>KPI</em></div>
+                <div class="arr">↓</div>
+                <div class="node">Customer Risk Attention List → Customer Performance Profile → Piutang Report / Sales Report<em>Bukti</em></div>
+                <div class="arr">↓</div>
+                <div class="node">Lakukan collection, batasi pasokan, atau pulihkan sales<em>Keputusan</em></div>
+              </div>
+            </div>
+          </details>
+        </article>
+
+        <!-- MQ-002 -->
+        <article class="playbook" id="mq-002">
+          <details>
+            <summary>
+              <span class="code">MQ-002</span>
+              <div>
+                <h3>Inventory mana yang tidak sehat?</h3>
+                <p class="hint">Buka Slow Moving &amp; Dead Stock · Lihat At-Risk Inventory %</p>
+              </div>
+            </summary>
+            <div class="pb-body">
+              <h4>Mengapa Owner Menanyakan Ini</h4>
+              <p>Stok yang tertahan adalah kas yang terperangkap. Lihat porsinya yang tidak sehat sebelum mengeluarkan dana pembelian lagi.</p>
+              <p class="note">Pemicu umum: inventory meningkat, warehouse terasa penuh, purchasing meminta pembelian tambahan, atau sales datar saat stok bertambah.</p>
+              <h4>Buka Ini</h4>
+              <div class="open-box">
+                <div class="dash">Slow Moving &amp; Dead Stock Dashboard</div>
+                <p class="path">Menu Inventory → Inventory Risk</p>
+              </div>
+              <p>Inventory Risk Summary di Alert Center adalah jalan pintas ke masalah yang sama: Dead Stock, Slow Moving, Never Sold, At-Risk Inventory.</p>
+              <h4>Lihat</h4>
+              <div class="look-grid">
+                <div class="look"><strong>KPI Utama</strong>At-Risk Inventory %</div>
+                <div class="look"><strong>KPI Pendukung</strong>Dead Stock Item Count and Value; Slow Moving Item Count and Value; Inventory Aging Distribution; Category Risk Exposure; Supplier Risk Exposure</div>
+              </div>
+              <h4>Jika Menemukan Ini</h4>
+              <div class="signals">
+                <div class="sig ok"><strong>Sehat</strong>At-Risk Inventory % bukan porsi dominan. Aging berada pada Active. Dead Stock dan Slow Moving kecil, baik dari sisi jumlah maupun nilai.</div>
+                <div class="sig warn"><strong>Waspada</strong>Slow Moving Value meningkat. Category atau Supplier Risk Exposure terkonsentrasi pada beberapa nama. Never Sold muncul dalam aging atau di Alert Center.</div>
+                <div class="sig crit"><strong>Kritis</strong>Dead Stock Value dan At-Risk Inventory % mendominasi modal warehouse. Supplier atau kategori yang sama memiliki stok bermasalah tersebut.</div>
+              </div>
+              <h4>Lakukan Ini</h4>
+              <ul class="action-list">
+                <li>Kurangi pembelian untuk lini yang tidak sehat.</li>
+                <li>Percepat likuidasi / clearance inventory.</li>
+                <li>Hentikan replenishment untuk item dead atau slow moving.</li>
+              </ul>
+              <h4>Perlu Bukti Lebih Lanjut?</h4>
+              <div class="ev-list">
+                <span>Inventory Attention List</span>
+                <span>Top 10 Dead Stock by Value</span>
+                <span>Top 10 Slow Moving by Value</span>
+                <span>Item Performance Profile</span>
+                <span>Inventory Report</span>
+                <span>Inventory Dashboard</span>
+              </div>
+              <h4>Alur Investigasi</h4>
+              <div class="chain">
+                <div class="node">Inventory mana yang tidak sehat?<em>Pertanyaan</em></div>
+                <div class="arr">↓</div>
+                <div class="node">Slow Moving &amp; Dead Stock Dashboard<em>Dashboard</em></div>
+                <div class="arr">↓</div>
+                <div class="node">At-Risk Inventory %<em>KPI</em></div>
+                <div class="arr">↓</div>
+                <div class="node">Inventory Attention List → Item Performance Profile → Inventory Report<em>Bukti</em></div>
+                <div class="arr">↓</div>
+                <div class="node">Tunda pembelian, lakukan clearance, atau tinjau purchasing<em>Keputusan</em></div>
+              </div>
+            </div>
+          </details>
+        </article>
+
+        <!-- MQ-003 -->
+        <article class="playbook" id="mq-003">
+          <details>
+            <summary>
+              <span class="code">MQ-003</span>
+              <div>
+                <h3>Salesman mana yang membawa portofolio overdue atau dormant?</h3>
+                <p class="hint">Buka Salesman Performance · Lihat High Overdue Exposure</p>
+              </div>
+            </summary>
+            <div class="pb-body">
+              <h4>Mengapa Owner Menanyakan Ini</h4>
+              <p>Omzet seorang salesman dapat terlihat kuat sementara portofolio yang dikelolanya mulai overdue atau tidak aktif. Portofolio tersebut akan menjadi masalah collection bulan depan.</p>
+              <p class="note">Pemicu umum: collection melambat di rute tertentu, customer dormant bertambah, atau nama dengan omzet tinggi juga memiliki piutang tinggi.</p>
+              <h4>Buka Ini</h4>
+              <div class="open-box">
+                <div class="dash">Salesman Performance</div>
+                <p class="path">Menu Sales Force → Salesmen</p>
+              </div>
+              <h4>Lihat</h4>
+              <div class="look-grid">
+                <div class="look"><strong>KPI Utama</strong>High Overdue Exposure</div>
+                <div class="look"><strong>KPI Pendukung</strong>High Piutang Exposure; Dormant Portfolio; Top Omzet Salesman %; Top Piutang Salesman %; Top 10 Overdue Salesmen (di Collection Dashboard)</div>
+              </div>
+              <h4>Jika Menemukan Ini</h4>
+              <div class="signals">
+                <div class="sig ok"><strong>Sehat</strong>Collection Exposure tenang. Dormant Portfolio tidak memenuhi attention list. Overdue tidak terkonsentrasi pada beberapa portofolio.</div>
+                <div class="sig warn"><strong>Waspada</strong>High Piutang Exposure tanpa High Overdue Exposure—saldo outstanding besar yang mungkin belum overdue. Dormant Portfolio meningkat pada salesman yang sebenarnya masih aktif.</div>
+                <div class="sig crit"><strong>Kritis</strong>High Overdue Exposure muncul pada salesman tertentu. Nama-nama di Top 10 Omzet juga muncul di Top 10 Piutang atau Top 10 Overdue Salesmen.</div>
+              </div>
+              <h4>Lakukan Ini</h4>
+              <ul class="action-list">
+                <li>Alokasikan ulang waktu sales untuk collection dan pemulihan portofolio yang sudah teridentifikasi.</li>
+                <li>Lakukan review bersama Sales–Finance atas portofolio tersebut.</li>
+                <li>Jangan menganggap omzet tinggi sebagai kondisi sehat jika portofolio yang sama overdue atau dormant.</li>
+              </ul>
+              <h4>Perlu Bukti Lebih Lanjut?</h4>
+              <div class="ev-list">
+                <span>Salesman Attention List</span>
+                <span>Ranking Top 10 Piutang</span>
+                <span>Salesman Performance Profile</span>
+                <span>Salesman Detail drawer</span>
+                <span>Top 10 Overdue Salesmen</span>
+                <span>Piutang Report</span>
+                <span>Piutang Dashboard</span>
+              </div>
+              <h4>Alur Investigasi</h4>
+              <div class="chain">
+                <div class="node">Salesman mana yang membawa portofolio overdue atau dormant?<em>Pertanyaan</em></div>
+                <div class="arr">↓</div>
+                <div class="node">Salesman Performance<em>Dashboard</em></div>
+                <div class="arr">↓</div>
+                <div class="node">High Overdue Exposure<em>KPI</em></div>
+                <div class="arr">↓</div>
+                <div class="node">Salesman Attention List → Salesman Performance Profile → Piutang Report<em>Bukti</em></div>
+                <div class="arr">↓</div>
+                <div class="node">Review bersama atas portofolio yang sudah teridentifikasi<em>Keputusan</em></div>
+              </div>
+            </div>
+          </details>
+        </article>
+
+        <!-- MQ-004 -->
+        <article class="playbook" id="mq-004">
+          <details>
+            <summary>
+              <span class="code">MQ-004</span>
+              <div>
+                <h3>Principal mana yang mulai menjadi risiko pembelian atau stok?</h3>
+                <p class="hint">Buka Purchasing Management · Lihat Inventory Cross-Risk</p>
+              </div>
+            </summary>
+            <div class="pb-body">
+              <h4>Mengapa Owner Menanyakan Ini</h4>
+              <p>Terus membeli dari Principal yang barangnya sudah menua akan memperbesar modal yang terperangkap.</p>
+              <p class="note">Pemicu umum: inventory pada satu Principal meningkat, ketergantungan supplier bertambah, atau purchasing masih membuat pesanan untuk lini slow moving.</p>
+              <h4>Buka Ini</h4>
+              <div class="open-box">
+                <div class="dash">Purchasing Management Dashboard</div>
+                <p class="path">Menu Purchasing → Purchasing · kemudian Slow Moving &amp; Dead Stock untuk Supplier Risk Exposure</p>
+              </div>
+              <p>Mulai dari kartu perhatian Inventory Cross-Risk dan Principal Dependency.</p>
+              <h4>Lihat</h4>
+              <div class="look-grid">
+                <div class="look"><strong>KPI Utama</strong>Inventory Cross-Risk</div>
+                <div class="look"><strong>KPI Pendukung</strong>Principal Dependency; Top Principal %; Top 10 Principals; Principal Exposure Comparison; Supplier Risk Exposure; Grand Total Purchase</div>
+              </div>
+              <h4>Jika Menemukan Ini</h4>
+              <div class="signals">
+                <div class="sig ok"><strong>Sehat</strong>Inventory Cross-Risk tenang. Nama yang menyerap belanja purchasing berbeda dari nama yang menanggung risiko warehouse. Principal Dependency tidak mengonsentrasikan belanja dan stok pada nama yang sama.</div>
+                <div class="sig warn"><strong>Waspada</strong>Top 10 Principals dan Principal Exposure Comparison menunjukkan konsentrasi belanja. Supplier Risk Exposure meningkat pada nama-nama yang sama.</div>
+                <div class="sig crit"><strong>Kritis</strong>Compound Dependency muncul di Purchasing Attention List. Principal yang menyerap kas pembelian juga menyimpan stok bermasalah, sementara purchasing masih terus memasoknya.</div>
+              </div>
+              <h4>Lakukan Ini</h4>
+              <ul class="action-list">
+                <li>Kurangi pembelian dari Principal tersebut.</li>
+                <li>Tunda pembelian untuk lini yang menua.</li>
+                <li>Lanjutkan pembelian hanya jika ketergantungan tersebut memang strategi yang dipilih.</li>
+              </ul>
+              <h4>Perlu Bukti Lebih Lanjut?</h4>
+              <div class="ev-list">
+                <span>Purchasing Attention List</span>
+                <span>Top 10 Principals</span>
+                <span>Principal Exposure Comparison</span>
+                <span>Supplier Performance Profile</span>
+                <span>Inventory Attention List</span>
+                <span>Purchasing Report</span>
+                <span>Inventory Report</span>
+              </div>
+              <h4>Alur Investigasi</h4>
+              <div class="chain">
+                <div class="node">Principal mana yang mulai menjadi risiko pembelian atau stok?<em>Pertanyaan</em></div>
+                <div class="arr">↓</div>
+                <div class="node">Purchasing Management Dashboard<em>Dashboard</em></div>
+                <div class="arr">↓</div>
+                <div class="node">Inventory Cross-Risk<em>KPI</em></div>
+                <div class="arr">↓</div>
+                <div class="node">Purchasing Attention List → Supplier Performance Profile → Purchasing Report / Inventory Report<em>Bukti</em></div>
+                <div class="arr">↓</div>
+                <div class="node">Tunda pembelian, tinjau Principal, atau terima sebagai strategi<em>Keputusan</em></div>
+              </div>
+            </div>
+          </details>
+        </article>
+
+        <h3 class="eq-group">Di bawah <a href="#eq-003">EQ-003 · Apa yang perlu segera diperhatikan?</a></h3>
+
+        <!-- MQ-005 -->
+        <article class="playbook" id="mq-005">
+          <details>
+            <summary>
+              <span class="code">MQ-005</span>
+              <div>
+                <h3>Siapa yang harus dihubungi hari ini?</h3>
+                <p class="hint">Buka Collection Optimization · Lihat Actions Today</p>
+              </div>
+            </summary>
+            <div class="pb-body">
+              <h4>Mengapa Owner Menanyakan Ini</h4>
+              <p>Tidak semua akun yang lemah membutuhkan tindakan yang sama. Mencampur collection, pengingat, review kredit, dan pemulihan sales dalam satu daftar tanpa klasifikasi akan membuang waktu.</p>
+              <p class="note">Pemicu umum: awal hari, collection melambat, atau tekanan arus kas.</p>
+              <h4>Buka Ini</h4>
+              <div class="open-box">
+                <div class="dash">Collection Optimization Dashboard</div>
+                <p class="path">Menu Customers → Collection Optimization</p>
+              </div>
+              <h4>Lihat</h4>
+              <div class="look-grid">
+                <div class="look"><strong>KPI Utama</strong>Actions Today</div>
+                <div class="look"><strong>KPI Pendukung</strong>Immediate Collection; Proactive Reminders; Credit Review; Sales Recovery; Collection Impact; Overdue Exposure; Due Within 7 Days; Recovery vs Billing. Management Escalation tersedia di Specialized Queues.</div>
+              </div>
+              <h4>Jika Menemukan Ini</h4>
+              <div class="signals">
+                <div class="sig ok"><strong>Sehat</strong>Actions Today adalah daftar singkat yang sudah dikelompokkan. Immediate Collection tidak mengambil porsi semua tindakan lain. Due Within 7 Days masih dapat ditangani.</div>
+                <div class="sig warn"><strong>Waspada</strong>Actions Today besar dan bercampur. Due Within 7 Days meningkat sementara Recovery vs Billing sudah lemah.</div>
+                <div class="sig crit"><strong>Kritis</strong>Immediate Collection dan Management Escalation mendominasi. Overdue Exposure dan Due Within 7 Days muncul bersamaan dengan Collection Impact yang besar dan akan terlewat jika pekerjaan hari ini tidak dijalankan berdasarkan jenis.</div>
+              </div>
+              <h4>Lakukan Ini</h4>
+              <ul class="action-list">
+                <li>Jalankan daftar hari ini berdasarkan jenis kontak.</li>
+                <li>Tingkatkan upaya collection pada akun Immediate Collection yang sudah teridentifikasi.</li>
+                <li>Kirim nama yang perlu review kredit kepada tim kredit, bukan collector.</li>
+                <li>Kirim nama yang perlu pemulihan sales kepada tim sales, bukan collector.</li>
+              </ul>
+              <h4>Perlu Bukti Lebih Lanjut?</h4>
+              <div class="ev-list">
+                <span>Today's Collection Priorities</span>
+                <span>Specialized Queues</span>
+                <span>Peluang dengan Dampak Terbesar</span>
+                <span>Customer Performance Profile</span>
+                <span>Piutang Report</span>
+                <span>Sales Report</span>
+              </div>
+              <p class="note">Pisahkan kas yang jatuh tempo dalam 7 hari dari utang lama. Utang lama terlihat di Collection Dashboard—Legacy Debt Count.</p>
+              <h4>Alur Investigasi</h4>
+              <div class="chain">
+                <div class="node">Siapa yang harus dihubungi hari ini?<em>Pertanyaan</em></div>
+                <div class="arr">↓</div>
+                <div class="node">Collection Optimization Dashboard<em>Dashboard</em></div>
+                <div class="arr">↓</div>
+                <div class="node">Actions Today<em>KPI</em></div>
+                <div class="arr">↓</div>
+                <div class="node">Today's Collection Priorities → Piutang Report / Customer Performance Profile<em>Bukti</em></div>
+                <div class="arr">↓</div>
+                <div class="node">Jalankan daftar hari ini berdasarkan jenis<em>Keputusan</em></div>
+              </div>
+            </div>
+          </details>
+        </article>
+
+        <!-- MQ-006 -->
+        <article class="playbook" id="mq-006">
+          <details>
+            <summary>
+              <span class="code">MQ-006</span>
+              <div>
+                <h3>Apa yang harus dibeli, ditunda, ditransfer, atau dilikuidasi hari ini?</h3>
+                <p class="hint">Buka Inventory Optimization · Lihat Critical Actions</p>
+              </div>
+            </summary>
+            <div class="pb-body">
+              <h4>Mengapa Owner Menanyakan Ini</h4>
+              <p>Kekosongan dan kelebihan stok sering terjadi bersamaan. Membeli semua item yang terlihat kosong sementara item slow moving menua akan menjebak kas.</p>
+              <p class="note">Pemicu umum: warehouse menanyakan apa yang harus dibeli, inventory meningkat, atau item yang laku mulai habis.</p>
+              <h4>Buka Ini</h4>
+              <div class="open-box">
+                <div class="dash">Inventory Optimization Dashboard</div>
+                <p class="path">Menu Inventory → Inventory Optimization</p>
+              </div>
+              <h4>Lihat</h4>
+              <div class="look-grid">
+                <div class="look"><strong>KPI Utama</strong>Critical Actions</div>
+                <div class="look"><strong>KPI Pendukung</strong>Recommended Purchase Budget; Deferrable Spend; Purchase Now; Delay; Transfer; Clearance Review; Inventory Health Score. Tinjau Stock-Out Risk Items di Inventory Forecast Dashboard.</div>
+              </div>
+              <h4>Jika Menemukan Ini</h4>
+              <div class="signals">
+                <div class="sig ok"><strong>Sehat</strong>Critical Actions sedikit. Purchase Now berisi item yang kosong, bukan tumpukan stok. Deferrable Spend tersedia untuk membiayai kekosongan tersebut.</div>
+                <div class="sig warn"><strong>Waspada</strong>Purchase Now dan Delay sama-sama besar—kekosongan dan tumpukan stok muncul pada minggu yang sama. Rekomendasi transfer muncul, yang menunjukkan masalah lokasi, bukan kekurangan sebenarnya.</div>
+                <div class="sig crit"><strong>Kritis</strong>Clearance Review / Dead Stock Recovery besar sementara Recommended Purchase Budget juga besar. Membeli lagi akan menambah modal di atas stok yang menganggur.</div>
+              </div>
+              <h4>Lakukan Ini</h4>
+              <ul class="action-list">
+                <li>Beli hanya item yang kosong.</li>
+                <li>Tunda tumpukan stok.</li>
+                <li>Transfer antar-warehouse jika masalahnya adalah lokasi.</li>
+                <li>Lakukan clearance dead stock sebagai tindakan terpisah dari pembelian.</li>
+              </ul>
+              <h4>Perlu Bukti Lebih Lanjut?</h4>
+              <div class="ev-list">
+                <span>Tindakan Optimasi Teratas</span>
+                <span>Recommended Reorder List</span>
+                <span>Warehouse Rebalancing</span>
+                <span>Overstock &amp; Delay Purchasing</span>
+                <span>Dead Stock Recovery</span>
+                <span>Item Performance Profile</span>
+                <span>Inventory Forecast Dashboard</span>
+                <span>Inventory Report</span>
+                <span>Purchasing Report</span>
+              </div>
+              <h4>Alur Investigasi</h4>
+              <div class="chain">
+                <div class="node">Apa yang harus dibeli, ditunda, ditransfer, atau dilikuidasi hari ini?<em>Pertanyaan</em></div>
+                <div class="arr">↓</div>
+                <div class="node">Inventory Optimization Dashboard<em>Dashboard</em></div>
+                <div class="arr">↓</div>
+                <div class="node">Critical Actions<em>KPI</em></div>
+                <div class="arr">↓</div>
+                <div class="node">Tabel tindakan → Item Performance Profile → Inventory Report / Purchasing Report<em>Bukti</em></div>
+                <div class="arr">↓</div>
+                <div class="node">Beli item yang kosong, tunda tumpukan stok, transfer, atau likuidasi<em>Keputusan</em></div>
+              </div>
+            </div>
+          </details>
+        </article>
+
+        <h3 class="eq-group">Di bawah <a href="#eq-004">EQ-004 · Apakah arus kas sehat?</a></h3>
+
+        <!-- MQ-007 -->
+        <article class="playbook" id="mq-007">
+          <details>
+            <summary>
+              <span class="code">MQ-007</span>
+              <div>
+                <h3>Piutang mana yang perlu diperhatikan?</h3>
+                <p class="hint">Buka Piutang Dashboard · Lihat Overdue Piutang</p>
+              </div>
+            </summary>
+            <div class="pb-body">
+              <h4>Mengapa Owner Menanyakan Ini</h4>
+              <p>Total piutang menunjukkan skala. Overdue menunjukkan urgensi. Nama akun adalah dasar kerja collector.</p>
+              <p class="note">Pemicu umum: tekanan arus kas, collection melambat, atau piutang bertambah.</p>
+              <h4>Buka Ini</h4>
+              <div class="open-box">
+                <div class="dash">Piutang Dashboard</div>
+                <p class="path">Menu Finance → Piutang · kemudian Collection Dashboard untuk konsentrasi overdue, salesman, wilayah, dan utang lama</p>
+              </div>
+              <h4>Lihat</h4>
+              <div class="look-grid">
+                <div class="look"><strong>KPI Utama</strong>Overdue Piutang (Overdue Exposure)</div>
+                <div class="look"><strong>KPI Pendukung</strong>Total Piutang; Overdue Customer; Piutang &gt; 90 Hari; Aging Distribution; Top 10 Customer %; Legacy Debt Count; Overdue Concentration %; Top 10 Overdue Customers / Salesmen / Wilayah</div>
+              </div>
+              <h4>Jika Menemukan Ini</h4>
+              <div class="signals">
+                <div class="sig ok"><strong>Sehat</strong>Overdue Piutang kecil dibandingkan Total Piutang. Aging berada pada Current / bucket awal. Piutang &gt; 90 Hari bukan bagian dominan portofolio.</div>
+                <div class="sig warn"><strong>Waspada</strong>Jumlah Overdue Customer meningkat. Aging bergeser ke 61–90. Overdue Concentration % menunjukkan overdue ditanggung oleh beberapa nama.</div>
+                <div class="sig crit"><strong>Kritis</strong>Piutang &gt; 90 Hari dan Legacy Debt Count sudah material. Top 10 Overdue Customers / Salesmen / Wilayah menunjukkan bahwa overdue berasal dari nama tertentu—bukan tersebar “di mana-mana”.</div>
+              </div>
+              <h4>Lakukan Ini</h4>
+              <ul class="action-list">
+                <li>Tingkatkan upaya collection pada akun overdue yang sudah teridentifikasi.</li>
+                <li>Batasi pasokan jika aging sudah kronis.</li>
+                <li>Tugaskan collector berdasarkan salesman atau wilayah ketika konsentrasi terlihat jelas.</li>
+              </ul>
+              <h4>Perlu Bukti Lebih Lanjut?</h4>
+              <div class="ev-list">
+                <span>Top 20 Outstanding Customers — Aging Breakdown</span>
+                <span>Collection Attention List</span>
+                <span>Top 10 Overdue Customers / Salesmen</span>
+                <span>Customer Performance Profile</span>
+                <span>Piutang Report</span>
+              </div>
+              <p class="note">Top 10 Overdue Wilayah tidak memiliki drill-down per baris. Gunakan sebagai petunjuk, lalu buka Collection Dashboard atau Piutang Report untuk melihat nama.</p>
+              <h4>Alur Investigasi</h4>
+              <div class="chain">
+                <div class="node">Piutang mana yang perlu diperhatikan?<em>Pertanyaan</em></div>
+                <div class="arr">↓</div>
+                <div class="node">Piutang Dashboard<em>Dashboard</em></div>
+                <div class="arr">↓</div>
+                <div class="node">Overdue Piutang<em>KPI</em></div>
+                <div class="arr">↓</div>
+                <div class="node">Piutang Report / Collection Attention List / Customer Performance Profile<em>Bukti</em></div>
+                <div class="arr">↓</div>
+                <div class="node">Lakukan collection pada akun yang teridentifikasi atau batasi pasokan<em>Keputusan</em></div>
+              </div>
+            </div>
+          </details>
+        </article>
+
+        <!-- MQ-008 -->
+        <article class="playbook" id="mq-008">
+          <details>
+            <summary>
+              <span class="code">MQ-008</span>
+              <div>
+                <h3>Apakah collection kita secepat penagihan?</h3>
+                <p class="hint">Buka Collection Dashboard · Lihat Recovery vs Billing %</p>
+              </div>
+            </summary>
+            <div class="pb-body">
+              <h4>Mengapa Owner Menanyakan Ini</h4>
+              <p>Jika Faktur baru terus lebih cepat daripada kas yang masuk, piutang akan bertambah meskipun collector sibuk.</p>
+              <p class="note">Pemicu umum: tekanan arus kas, omzet terlihat kuat tetapi kas ketat, atau kekhawatiran kas menjelang akhir bulan.</p>
+              <h4>Buka Ini</h4>
+              <div class="open-box">
+                <div class="dash">Collection Dashboard</div>
+                <p class="path">Menu Finance → Collection · kemudian Cash Flow Forecast Dashboard untuk melihat laju, kesenjangan, dan skenario akhir bulan</p>
+              </div>
+              <h4>Lihat</h4>
+              <div class="look-grid">
+                <div class="look"><strong>KPI Utama</strong>Recovery vs Billing %</div>
+                <div class="look"><strong>KPI Pendukung</strong>Cash Collected MTD; Collection Gap; Required Daily Collection; Daily Cash Collection Average; Expected Cash Collection; Best / Expected / Worst Cash; Remaining Collection Target; Remaining Calendar Days</div>
+              </div>
+              <h4>Jika Menemukan Ini</h4>
+              <div class="signals">
+                <div class="sig ok"><strong>Sehat</strong>Kas masih sejalan dengan penagihan. Required Daily Collection mendekati Daily Cash Collection Average. Remaining Calendar Days masih cukup untuk mencapai Remaining Collection Target.</div>
+                <div class="sig warn"><strong>Waspada</strong>Cash Collected MTD terlihat aktif, tetapi Recovery vs Billing % menurun. Collection Gap mulai terbuka. Forecast Confidence pada Cash Flow Forecast belum tinggi.</div>
+                <div class="sig crit"><strong>Kritis</strong>Recovery vs Billing Forecast dan Worst Cash menunjukkan bulan ini tidak akan ditutup sesuai rencana. Required Daily Collection jauh di atas laju saat ini, sementara Remaining Calendar Days tinggal sedikit.</div>
+              </div>
+              <h4>Lakukan Ini</h4>
+              <ul class="action-list">
+                <li>Dorong collection minggu ini.</li>
+                <li>Perketat kredit baru.</li>
+                <li>Terima hasil kas bulan ini dan susun rencana bulan depan berdasarkan Expected / Worst Cash.</li>
+              </ul>
+              <h4>Perlu Bukti Lebih Lanjut?</h4>
+              <div class="ev-list">
+                <span>Collection Attention List</span>
+                <span>Recovery Summary</span>
+                <span>Daily Collection Pace</span>
+                <span>Cash Forecast vs Billing</span>
+                <span>Risiko Collection Teratas</span>
+                <span>Piutang Report</span>
+                <span>Collection Optimization Dashboard</span>
+              </div>
+              <h4>Alur Investigasi</h4>
+              <div class="chain">
+                <div class="node">Apakah collection kita secepat penagihan?<em>Pertanyaan</em></div>
+                <div class="arr">↓</div>
+                <div class="node">Collection Dashboard → Cash Flow Forecast Dashboard<em>Dashboard</em></div>
+                <div class="arr">↓</div>
+                <div class="node">Recovery vs Billing %<em>KPI</em></div>
+                <div class="arr">↓</div>
+                <div class="node">Collection Attention List → Piutang Report / Risiko Collection Teratas<em>Bukti</em></div>
+                <div class="arr">↓</div>
+                <div class="node">Dorong collection, perketat kredit, atau terima hasil akhir<em>Keputusan</em></div>
+              </div>
+            </div>
+          </details>
+        </article>
+
+        <h3 class="eq-group">Di bawah <a href="#eq-005">EQ-005 · Apakah pertumbuhan berkelanjutan?</a></h3>
+
+        <!-- MQ-009 -->
+        <article class="playbook" id="mq-009">
+          <details>
+            <summary>
+              <span class="code">MQ-009</span>
+              <div>
+                <h3>Salesman mana yang berkinerja rendah?</h3>
+                <p class="hint">Buka Salesman Performance · Lihat Below Target</p>
+              </div>
+            </summary>
+            <div class="pb-body">
+              <h4>Mengapa Owner Menanyakan Ini</h4>
+              <p>Omzet perusahaan dapat ditopang oleh beberapa nama. “Below target” dan “no target” adalah dua masalah yang berbeda. Coaching dengan diagnosis yang salah akan membuang waktu satu minggu.</p>
+              <p class="note">Pemicu umum: sales menurun, kesenjangan target melebar, atau beberapa orang menopang hasil bulan ini.</p>
+              <h4>Buka Ini</h4>
+              <div class="open-box">
+                <div class="dash">Salesman Performance</div>
+                <p class="path">Menu Sales Force → Salesmen · kemudian Sales Dashboard, Salesman Detail, Sales Force Overview, dan Salesman Field Activity</p>
+              </div>
+              <h4>Lihat</h4>
+              <div class="look-grid">
+                <div class="look"><strong>KPI Utama</strong>Below Target</div>
+                <div class="look"><strong>KPI Pendukung</strong>Missing Target Setup; Achievement %; Total Achievement vs Total Target; Visit Execution %; Missed Visit; Effective Call Rate; GPS Valid Rate; Orders; Order Value</div>
+              </div>
+              <h4>Jika Menemukan Ini</h4>
+              <div class="signals">
+                <div class="sig ok"><strong>Sehat</strong>Below Target bukan gambaran seluruh tim. Achievement % sesuai rencana. Execution % dan Effective Call Rate menunjukkan kunjungan yang menghasilkan order.</div>
+                <div class="sig warn"><strong>Waspada</strong>Missing Target Setup tidak nol—sebagian orang belum dapat dinilai sebagai “below target”. Execution % lemah. Order ada, tetapi Order Value / Achievement % perusahaan masih kurang.</div>
+                <div class="sig crit"><strong>Kritis</strong>Below Target tersebar luas sementara Top 10 Omzet hanya diisi beberapa nama. GPS Valid Rate berada di bawah target yang tampil di layar. Effective Call Rate rendah meskipun Actual visits tinggi—check-in tersebut tidak menunjukkan aktivitas sales yang kredibel.</div>
+              </div>
+              <h4>Lakukan Ini</h4>
+              <ul class="action-list">
+                <li>Tetapkan target yang belum ada.</li>
+                <li>Perbaiki coverage (kunjungan yang terlewat / tidak direncanakan).</li>
+                <li>Perbaiki konversi (effective calls → order).</li>
+                <li>Lakukan coaching pada orang yang sudah teridentifikasi.</li>
+                <li>Alokasikan ulang sumber daya sales kepada orang yang masih memiliki portofolio.</li>
+              </ul>
+              <h4>Perlu Bukti Lebih Lanjut?</h4>
+              <div class="ev-list">
+                <span>Salesman Attention List</span>
+                <span>Salesman Performance Profile</span>
+                <span>Salesman Detail drawer</span>
+                <span>Sales Report</span>
+                <span>Sales Force Overview</span>
+                <span>Salesman Field Activity</span>
+                <span>Sales Forecast Dashboard</span>
+              </div>
+              <h4>Alur Investigasi</h4>
+              <div class="chain">
+                <div class="node">Salesman mana yang berkinerja rendah?<em>Pertanyaan</em></div>
+                <div class="arr">↓</div>
+                <div class="node">Salesman Performance<em>Dashboard</em></div>
+                <div class="arr">↓</div>
+                <div class="node">Below Target<em>KPI</em></div>
+                <div class="arr">↓</div>
+                <div class="node">Salesman Performance Profile / Salesman Field Activity / Sales Report<em>Bukti</em></div>
+                <div class="arr">↓</div>
+                <div class="node">Tetapkan target, perbaiki coverage, perbaiki konversi, atau lakukan coaching<em>Keputusan</em></div>
+              </div>
+            </div>
+          </details>
+        </article>
+
+        <!-- MQ-010 -->
+        <article class="playbook" id="mq-010">
+          <details>
+            <summary>
+              <span class="code">MQ-010</span>
+              <div>
+                <h3>Customer mana yang menurun?</h3>
+                <p class="hint">Buka Customer Portfolio · Lihat Declining</p>
+              </div>
+            </summary>
+            <div class="pb-body">
+              <h4>Mengapa Owner Menanyakan Ini</h4>
+              <p>Customer yang masih current tetapi membeli lebih sedikit akan menjadi akun dormant bulan depan. Memulihkannya lebih murah daripada mendapatkan customer baru.</p>
+              <p class="note">Pemicu umum: sales menurun, portofolio terasa lebih sepi, atau akun strategis membeli lebih sedikit.</p>
+              <h4>Buka Ini</h4>
+              <div class="open-box">
+                <div class="dash">Customer Portfolio Dashboard</div>
+                <p class="path">Menu Customers → Customer Portfolio · kemudian Customer Analytics dan Customer Risk Forecast</p>
+              </div>
+              <h4>Lihat</h4>
+              <div class="look-grid">
+                <div class="look"><strong>KPI Utama</strong>Declining</div>
+                <div class="look"><strong>KPI Pendukung</strong>Dormant; Never Purchased; Purchase Decline; Inactivity; Strategic Customers; Strategic At Risk; Total MTD Omzet; Dormant Customers (90-day) di Customer Analytics</div>
+              </div>
+              <h4>Jika Menemukan Ini</h4>
+              <div class="signals">
+                <div class="sig ok"><strong>Sehat</strong>Komposisi lifecycle tidak didominasi Declining dan Dormant. Strategic At Risk tenang. Active this month mencakup sebagian besar portofolio.</div>
+                <div class="sig warn"><strong>Waspada</strong>Declining meningkat sebelum Dormant (90-day). Sinyal Purchase Decline dan Inactivity muncul. Customer strategis masuk dalam kelompok declining.</div>
+                <div class="sig crit"><strong>Kritis</strong>Dormant dan Never Purchased mendominasi lifecycle. Strategic At Risk bukan lagi pengecualian. Portofolio semakin sepi meskipun Total MTD Omzet masih ditopang oleh Top 10 MTD Omzet Concentration.</div>
+              </div>
+              <h4>Lakukan Ini</h4>
+              <ul class="action-list">
+                <li>Tingkatkan fokus sales pada nama yang menurun.</li>
+                <li>Lindungi akun strategis yang mulai menurun.</li>
+                <li>Hentikan cakupan untuk akun yang tidak akan kembali.</li>
+              </ul>
+              <h4>Perlu Bukti Lebih Lanjut?</h4>
+              <div class="ev-list">
+                <span>Lifecycle Distribution</span>
+                <span>Portfolio Priority Queue</span>
+                <span>Customers by Portfolio Action</span>
+                <span>Customer Attention List</span>
+                <span>Customer Risk Attention List</span>
+                <span>Customer Performance Profile</span>
+                <span>Customer Report</span>
+                <span>Sales Report</span>
+              </div>
+              <h4>Alur Investigasi</h4>
+              <div class="chain">
+                <div class="node">Customer mana yang menurun?<em>Pertanyaan</em></div>
+                <div class="arr">↓</div>
+                <div class="node">Customer Portfolio Dashboard<em>Dashboard</em></div>
+                <div class="arr">↓</div>
+                <div class="node">Declining<em>KPI</em></div>
+                <div class="arr">↓</div>
+                <div class="node">Portfolio Priority Queue → Customer Performance Profile → Sales Report<em>Bukti</em></div>
+                <div class="arr">↓</div>
+                <div class="node">Pulihkan, lindungi, atau hentikan cakupan<em>Keputusan</em></div>
+              </div>
+            </div>
+          </details>
+        </article>
+
+        <h3 class="eq-group">Di bawah <a href="#eq-006">EQ-006 · Apakah modal kerja sehat?</a></h3>
+
+        <!-- MQ-011 -->
+        <article class="playbook" id="mq-011">
+          <details>
+            <summary>
+              <span class="code">MQ-011</span>
+              <div>
+                <h3>Apakah modal warehouse tertahan atau akan segera habis?</h3>
+                <p class="hint">Buka Inventory Risk + Inventory Forecast · Lihat Dead Stock Value dan Stock-Out Risk Items</p>
+              </div>
+            </summary>
+            <div class="pb-body">
+              <h4>Mengapa Owner Menanyakan Ini</h4>
+              <p>Perusahaan dapat kelebihan stok pada item yang tidak laku dan kekurangan stok pada item yang laku. Kedua kondisi tersebut membutuhkan tindakan yang berlawanan pada minggu yang sama.</p>
+              <p class="note">Pemicu umum: inventory meningkat, warehouse “penuh” tetapi item yang laku habis, atau sales hilang karena rak kosong.</p>
+              <h4>Buka Ini</h4>
+              <div class="open-box">
+                <div class="dash">Slow Moving &amp; Dead Stock Dashboard dan Inventory Forecast Dashboard</div>
+                <p class="path">Menu Inventory → Inventory Risk, kemudian Inventory Forecast · lalu Inventory Optimization dan Branch / Warehouse Performance jika satu lokasi menyimpan stok yang menganggur</p>
+              </div>
+              <h4>Lihat</h4>
+              <div class="look-grid">
+                <div class="look"><strong>KPI Utama</strong>Dead Stock Value dan Stock-Out Risk Items</div>
+                <div class="look"><strong>KPI Pendukung</strong>Slow Moving Value; At-Risk Inventory %; Overstock Value; Understock Value; Inventory Health Score; Recommended Purchase Budget; Deferrable Spend; Top Warehouse At-Risk %; Inactive Warehouse With Stock</div>
+              </div>
+              <h4>Jika Menemukan Ini</h4>
+              <div class="signals">
+                <div class="sig ok"><strong>Sehat</strong>Dead Stock Value tidak menjebak modal. Stock-Out Risk Items sedikit. Overstock Value dan Understock Value tidak sama-sama besar.</div>
+                <div class="sig warn"><strong>Waspada</strong>Overstock Value dan Understock Value muncul bersamaan. Top Warehouse At-Risk % menunjukkan satu warehouse menyimpan stok yang menganggur. Inactive Warehouse With Stock tidak nol.</div>
+                <div class="sig crit"><strong>Kritis</strong>Dead Stock Value dan Stock-Out Risk Items sama-sama besar. Recommended Purchase Budget akan membeli item yang kosong sementara Deferrable Spend / clearance masih tertahan dalam tumpukan stok.</div>
+              </div>
+              <h4>Lakukan Ini</h4>
+              <ul class="action-list">
+                <li>Likuidasi atau tunda tumpukan stok.</li>
+                <li>Beli hanya item yang kosong.</li>
+                <li>Lakukan transfer jika masalahnya adalah lokasi.</li>
+                <li>Jangan membiayai restock penuh selama dead stock masih menjadi tumpukan yang lebih besar.</li>
+              </ul>
+              <h4>Perlu Bukti Lebih Lanjut?</h4>
+              <div class="ev-list">
+                <span>Inventory Attention List</span>
+                <span>Top 10 Dead / Slow Moving</span>
+                <span>Top Inventory Risks</span>
+                <span>Purchasing Recommendations</span>
+                <span>Warehouse Rebalancing</span>
+                <span>Dead Stock Recovery</span>
+                <span>Location Attention List</span>
+                <span>Item Performance Profile</span>
+                <span>Inventory Report</span>
+              </div>
+              <h4>Alur Investigasi</h4>
+              <div class="chain">
+                <div class="node">Apakah modal warehouse tertahan atau akan segera habis?<em>Pertanyaan</em></div>
+                <div class="arr">↓</div>
+                <div class="node">Slow Moving &amp; Dead Stock + Inventory Forecast<em>Dashboard</em></div>
+                <div class="arr">↓</div>
+                <div class="node">Dead Stock Value / Stock-Out Risk Items<em>KPI</em></div>
+                <div class="arr">↓</div>
+                <div class="node">Item Performance Profile / Inventory Report / Warehouse Rebalancing<em>Bukti</em></div>
+                <div class="arr">↓</div>
+                <div class="node">Likuidasi tumpukan stok, beli item yang kosong, atau transfer<em>Keputusan</em></div>
+              </div>
+            </div>
+          </details>
+        </article>
+
+        <h3 class="eq-group">Di bawah <a href="#eq-007">EQ-007 · Apakah kita terlalu bergantung?</a></h3>
+
+        <!-- MQ-012 -->
+        <article class="playbook" id="mq-012">
+          <details>
+            <summary>
+              <span class="code">MQ-012</span>
+              <div>
+                <h3>Customer mana yang mendominasi omzet atau piutang?</h3>
+                <p class="hint">Buka Customer Analytics · Lihat Top Omzet Customer % dan Top Piutang Customer %</p>
+              </div>
+            </summary>
+            <div class="pb-body">
+              <h4>Mengapa Owner Menanyakan Ini</h4>
+              <p>Pertumbuhan atau kas yang bergantung pada semakin sedikit nama merupakan risiko konsentrasi. Kehilangan satu nama dapat mengubah hasil bulan ini.</p>
+              <p class="note">Pemicu umum: satu customer mendominasi pembahasan, kekhawatiran kehilangan akun utama, atau piutang terlihat besar karena beberapa nama.</p>
+              <h4>Buka Ini</h4>
+              <div class="open-box">
+                <div class="dash">Customer Analytics</div>
+                <p class="path">Menu Customers → Customers · juga Piutang Dashboard, Customer Portfolio Dashboard, dan Management Attention Center (Top 5 Customers)</p>
+              </div>
+              <h4>Lihat</h4>
+              <div class="look-grid">
+                <div class="look"><strong>KPI Utama</strong>Top Omzet Customer % dan Top Piutang Customer %</div>
+                <div class="look"><strong>KPI Pendukung</strong>Top 10 Customer %; Top 20 Customer %; Top 10 by Omzet; Top 10 by Piutang; Top 5 Customers; Strategic Customers; Customers At Risk pada nama-nama yang sama</div>
+              </div>
+              <h4>Jika Menemukan Ini</h4>
+              <div class="signals">
+                <div class="sig ok"><strong>Sehat</strong>Top Omzet Customer % dan Top Piutang Customer % tidak mewakili keseluruhan bulan. Strategic Customers adalah kelompok yang dipilih, bukan monopoli yang terbentuk tanpa disengaja.</div>
+                <div class="sig warn"><strong>Waspada</strong>Top 10 Customer % dari piutang tinggi. Top 10 by Omzet hanya berisi sedikit nama. Nama-nama yang sama muncul dalam ranking omzet dan piutang.</div>
+                <div class="sig crit"><strong>Kritis</strong>Top 5 Customers atau Top 10 Open Piutang Concentration mencakup sebagian besar portofolio. Nama-nama yang sama sudah muncul di Customer Risk Forecast.</div>
+              </div>
+              <h4>Lakukan Ini</h4>
+              <ul class="action-list">
+                <li>Lindungi akun utama.</li>
+                <li>Kurangi eksposur pada nama yang sudah menggabungkan konsentrasi dan risiko.</li>
+                <li>Perluas portofolio.</li>
+              </ul>
+              <h4>Perlu Bukti Lebih Lanjut?</h4>
+              <div class="ev-list">
+                <span>Top 10 by Omzet / Piutang</span>
+                <span>Customer Performance Profile</span>
+                <span>Customer Report</span>
+                <span>Compare Customers</span>
+                <span>Piutang Report</span>
+                <span>Sales Report</span>
+              </div>
+              <h4>Alur Investigasi</h4>
+              <div class="chain">
+                <div class="node">Customer mana yang mendominasi omzet atau piutang?<em>Pertanyaan</em></div>
+                <div class="arr">↓</div>
+                <div class="node">Customer Analytics<em>Dashboard</em></div>
+                <div class="arr">↓</div>
+                <div class="node">Top Omzet Customer % / Top Piutang Customer %<em>KPI</em></div>
+                <div class="arr">↓</div>
+                <div class="node">Customer Performance Profile → Sales Report / Piutang Report<em>Bukti</em></div>
+                <div class="arr">↓</div>
+                <div class="node">Lindungi, kurangi eksposur, atau perluas portofolio<em>Keputusan</em></div>
+              </div>
+            </div>
+          </details>
+        </article>
+
+        <!-- MQ-013 -->
+        <article class="playbook" id="mq-013">
+          <details>
+            <summary>
+              <span class="code">MQ-013</span>
+              <div>
+                <h3>Supplier mana yang mulai dominan?</h3>
+                <p class="hint">Buka Purchasing Management · Lihat Top Principal % dan Top 10 Principals</p>
+              </div>
+            </summary>
+            <div class="pb-body">
+              <h4>Mengapa Owner Menanyakan Ini</h4>
+              <p>Satu Principal dapat menyerap kas pembelian bulan ini, menguasai warehouse, dan memiliki stok bermasalah. Ketiganya merupakan bentuk ketergantungan yang berbeda.</p>
+              <p class="note">Pemicu umum: ketergantungan supplier meningkat, satu Principal mendominasi pembahasan purchasing, atau stok dan risiko berada pada nama yang sama.</p>
+              <h4>Buka Ini</h4>
+              <div class="open-box">
+                <div class="dash">Purchasing Management Dashboard</div>
+                <p class="path">Menu Purchasing → Purchasing · juga Management Attention Center (Top Principal %) dan Inventory Dashboard (Top 10 Suppliers)</p>
+              </div>
+              <h4>Lihat</h4>
+              <div class="look-grid">
+                <div class="look"><strong>KPI Utama</strong>Top Principal % dan Top 10 Principals</div>
+                <div class="look"><strong>KPI Pendukung</strong>Principal Dependency; Principal Exposure Comparison; Grand Total Purchase; Top Supplier %; Inventory by Supplier; Compound Dependency</div>
+              </div>
+              <h4>Jika Menemukan Ini</h4>
+              <div class="signals">
+                <div class="sig ok"><strong>Sehat</strong>Kas pembelian tersebar di Top 10 Principals. Komposisi Warehouse Top 10 Suppliers berbeda. Compound Dependency tenang.</div>
+                <div class="sig warn"><strong>Waspada</strong>Satu Principal menyerap sebagian besar Grand Total Purchase atau nilai warehouse—tetapi belum keduanya.</div>
+                <div class="sig crit"><strong>Kritis</strong>Compound Dependency: belanja dan stok berada pada Principal yang sama, dan Supplier Risk Exposure menunjukkan Principal tersebut juga memiliki stok bermasalah.</div>
+              </div>
+              <h4>Lakukan Ini</h4>
+              <ul class="action-list">
+                <li>Diversifikasikan eksposur supplier.</li>
+                <li>Tunda pembelian untuk lini slow moving milik Principal yang dominan.</li>
+                <li>Perlakukan ketergantungan tersebut sebagai strategi yang dipilih—dan jangan menganggapnya terjadi secara kebetulan.</li>
+              </ul>
+              <h4>Perlu Bukti Lebih Lanjut?</h4>
+              <div class="ev-list">
+                <span>Purchasing Attention List</span>
+                <span>Principal Exposure Comparison</span>
+                <span>Supplier Performance Profile</span>
+                <span>Top 10 Principals</span>
+                <span>Inventory Dashboard Top 10 Suppliers</span>
+                <span>Purchasing Report</span>
+                <span>Inventory Report</span>
+                <span>Compare Suppliers</span>
+              </div>
+              <h4>Alur Investigasi</h4>
+              <div class="chain">
+                <div class="node">Supplier mana yang mulai dominan?<em>Pertanyaan</em></div>
+                <div class="arr">↓</div>
+                <div class="node">Purchasing Management Dashboard<em>Dashboard</em></div>
+                <div class="arr">↓</div>
+                <div class="node">Top Principal % / Top 10 Principals<em>KPI</em></div>
+                <div class="arr">↓</div>
+                <div class="node">Supplier Performance Profile → Purchasing Report / Inventory Report<em>Bukti</em></div>
+                <div class="arr">↓</div>
+                <div class="node">Diversifikasikan, tunda pembelian, atau terima sebagai strategi<em>Keputusan</em></div>
+              </div>
+            </div>
+          </details>
+        </article>
+
+        <!-- MQ-014 -->
+        <article class="playbook" id="mq-014">
+          <details>
+            <summary>
+              <span class="code">MQ-014</span>
+              <div>
+                <h3>Apakah kita terlalu bergantung pada beberapa salesman?</h3>
+                <p class="hint">Buka Salesman Performance · Lihat Top Omzet Salesman %</p>
+              </div>
+            </summary>
+            <div class="pb-body">
+              <h4>Mengapa Owner Menanyakan Ini</h4>
+              <p>Jika satu atau dua orang menghasilkan sebagian besar omzet, rencana bulan depan menghadapi risiko ketergantungan pada orang, bukan risiko pasar.</p>
+              <p class="note">Pemicu umum: sales menurun ketika satu orang tidak hadir, seorang salesman bintang mendominasi hasil, atau tim aktif terasa terlalu kecil.</p>
+              <h4>Buka Ini</h4>
+              <div class="open-box">
+                <div class="dash">Salesman Performance</div>
+                <p class="path">Menu Sales Force → Salesmen · juga Sales Dashboard (Top 10 Salesman) dan Sales Force Overview (Active Salesmen)</p>
+              </div>
+              <h4>Lihat</h4>
+              <div class="look-grid">
+                <div class="look"><strong>KPI Utama</strong>Top Omzet Salesman %</div>
+                <div class="look"><strong>KPI Pendukung</strong>Top 10 Omzet; Active Salesmen; Below Target; High Overdue Exposure; Top Piutang Salesman %</div>
+              </div>
+              <h4>Jika Menemukan Ini</h4>
+              <div class="signals">
+                <div class="sig ok"><strong>Sehat</strong>Top Omzet Salesman % tidak mewakili seluruh perusahaan. Active Salesmen menunjukkan tim yang nyata. Below Target bukan berarti “semua orang kecuali para bintang”.</div>
+                <div class="sig warn"><strong>Waspada</strong>Top 10 Omzet sangat terkonsentrasi. Active Salesmen sedikit. Anggota tim lainnya berada dalam Below Target.</div>
+                <div class="sig crit"><strong>Kritis</strong>Para salesman bintang menopang omzet dan memiliki High Overdue Exposure atau Top Piutang Salesman % tinggi. Kehilangan satu orang akan berdampak pada sales dan collection.</div>
+              </div>
+              <h4>Lakukan Ini</h4>
+              <ul class="action-list">
+                <li>Lindungi orang-orang kunci.</li>
+                <li>Bangun kembali coverage di seluruh tim.</li>
+                <li>Alokasikan ulang sumber daya sales agar rencana bulan depan tidak bergantung pada satu orang.</li>
+              </ul>
+              <h4>Perlu Bukti Lebih Lanjut?</h4>
+              <div class="ev-list">
+                <span>Top 10 Omzet</span>
+                <span>Salesman Performance Profile</span>
+                <span>Salesman Attention List</span>
+                <span>Sales Report</span>
+                <span>Sales Force Overview</span>
+                <span>Compare Salesmen</span>
+              </div>
+              <h4>Alur Investigasi</h4>
+              <div class="chain">
+                <div class="node">Apakah kita terlalu bergantung pada beberapa salesman?<em>Pertanyaan</em></div>
+                <div class="arr">↓</div>
+                <div class="node">Salesman Performance<em>Dashboard</em></div>
+                <div class="arr">↓</div>
+                <div class="node">Top Omzet Salesman %<em>KPI</em></div>
+                <div class="arr">↓</div>
+                <div class="node">Salesman Performance Profile / Sales Report / Sales Force Overview<em>Bukti</em></div>
+                <div class="arr">↓</div>
+                <div class="node">Lindungi orang-orang kunci dan bangun kembali coverage tim<em>Keputusan</em></div>
+              </div>
+            </div>
+          </details>
+        </article>
+
+        <h3 class="eq-group">Di bawah <a href="#eq-008">EQ-008 · Apa yang kemungkinan menjadi masalah berikutnya?</a></h3>
+
+        <!-- MQ-015 -->
+        <article class="playbook" id="mq-015">
+          <details>
+            <summary>
+              <span class="code">MQ-015</span>
+              <div>
+                <h3>Apakah kebijakan kredit dipatuhi?</h3>
+                <p class="hint">Buka Customer Analytics · Lihat Plafond Breach dan Credit Limit</p>
+              </div>
+            </summary>
+            <div class="pb-body">
+              <h4>Mengapa Owner Menanyakan Ini</h4>
+              <p>Aturan Plafond dan hold hanya melindungi kas jika dipatuhi. Sinyal credit limit masih dapat dicegah. Pelanggaran, atau akun suspended yang masih ditagih, sudah merupakan kegagalan.</p>
+              <p class="note">Pemicu umum: tekanan arus kas, customer membeli melebihi batas nyaman, atau collection melambat pada akun besar.</p>
+              <h4>Buka Ini</h4>
+              <div class="open-box">
+                <div class="dash">Customer Analytics</div>
+                <p class="path">Menu Customers → Customers · kemudian Customer Risk Forecast Dashboard untuk Credit Limit dan Collection Risk</p>
+              </div>
+              <h4>Lihat</h4>
+              <div class="look-grid">
+                <div class="look"><strong>KPI Utama</strong>Credit Limit dan Plafond Breach</div>
+                <div class="look"><strong>KPI Pendukung</strong>Suspended + Sales; Payment Delay; Collection Risk; Customers Forecasted At Risk; Customer Attention List yang difilter ke Plafond Breach</div>
+              </div>
+              <h4>Jika Menemukan Ini</h4>
+              <div class="signals">
+                <div class="sig ok"><strong>Sehat</strong>Kartu kredit di Customer Analytics tenang. Sinyal Credit Limit masih pada level Watch, bukan pelanggaran. Suspended + Sales bernilai nol.</div>
+                <div class="sig warn"><strong>Waspada</strong>Jumlah sinyal Credit Limit meningkat (mendekati Plafond). Payment Delay muncul pada nama-nama yang sama.</div>
+                <div class="sig crit"><strong>Kritis</strong>Plafond Breach tidak kosong. Suspended + Sales menunjukkan akun suspended masih ditagih. Collection Risk / Critical Category sudah muncul pada nama-nama tersebut.</div>
+              </div>
+              <h4>Lakukan Ini</h4>
+              <ul class="action-list">
+                <li>Tinjau kredit customer.</li>
+                <li>Batasi pasokan.</li>
+                <li>Hentikan penagihan akun suspended.</li>
+              </ul>
+              <h4>Perlu Bukti Lebih Lanjut?</h4>
+              <div class="ev-list">
+                <span>Customer Attention List</span>
+                <span>Customer Risk Attention List</span>
+                <span>Customer Performance Profile</span>
+                <span>Sales Report</span>
+                <span>Piutang Report</span>
+              </div>
+              <h4>Alur Investigasi</h4>
+              <div class="chain">
+                <div class="node">Apakah kebijakan kredit dipatuhi?<em>Pertanyaan</em></div>
+                <div class="arr">↓</div>
+                <div class="node">Customer Analytics<em>Dashboard</em></div>
+                <div class="arr">↓</div>
+                <div class="node">Plafond Breach / Credit Limit<em>KPI</em></div>
+                <div class="arr">↓</div>
+                <div class="node">Customer Attention List → Customer Performance Profile → Sales Report<em>Bukti</em></div>
+                <div class="arr">↓</div>
+                <div class="node">Tinjau kredit, batasi pasokan, atau hentikan penagihan<em>Keputusan</em></div>
+              </div>
+            </div>
+          </details>
+        </article>
+
+        <!-- MQ-016 -->
+        <article class="playbook" id="mq-016">
+          <details>
+            <summary>
+              <span class="code">MQ-016</span>
+              <div>
+                <h3>Apakah barang yang dibeli sudah diposting atau masih tertahan di backlog?</h3>
+                <p class="hint">Buka Purchasing Management · Lihat Pending Posting Value dan Posted %</p>
+              </div>
+            </summary>
+            <div class="pb-body">
+              <h4>Mengapa Owner Menanyakan Ini</h4>
+              <p>Pembelian yang belum diposting berarti perusahaan sudah mengeluarkan atau berkomitmen atas dana tanpa memperoleh stok yang dapat dijual. Purchasing yang sepi di akhir bulan dapat berarti pembekuan atau proses yang macet.</p>
+              <p class="note">Pemicu umum: warehouse menunggu stok yang sudah dibeli, purchasing menjadi sepi, atau SKU penjualan berisiko habis.</p>
+              <h4>Buka Ini</h4>
+              <div class="open-box">
+                <div class="dash">Purchasing Management Dashboard</div>
+                <p class="path">Menu Purchasing → Purchasing · juga Management Attention Center (Pending Posting) dan Inventory Forecast untuk Stock-Out Risk Items</p>
+              </div>
+              <h4>Lihat</h4>
+              <div class="look-grid">
+                <div class="look"><strong>KPI Utama</strong>Pending Posting Value dan Posted %</div>
+                <div class="look"><strong>KPI Pendukung</strong>Qualified Backlog; Grand Total Purchase; Purchasing Pace; Stock-Out Risk Items di Inventory Forecast</div>
+              </div>
+              <h4>Jika Menemukan Ini</h4>
+              <div class="signals">
+                <div class="sig ok"><strong>Sehat</strong>Posted % mencakup sebagian besar faktur. Pending Posting Value dan Qualified Backlog kecil. Purchasing Pace tidak menunjukkan masalah inactivity selama sales masih memiliki persediaan yang cukup.</div>
+                <div class="sig warn"><strong>Waspada</strong>Pending Posting Value sudah material. Qualified Backlog menua. Purchasing Pace menunjukkan aktivitas bulan ini mereda setelah pertengahan bulan.</div>
+                <div class="sig crit"><strong>Kritis</strong>Nilai yang belum diposting besar dan Stock-Out Risk Items meningkat—dana sudah terikat tetapi belum menjadi stok yang dapat dijual, sementara kekosongan mulai muncul. Atau purchasing sepi ketika kekosongan sudah terlihat di Inventory Forecast.</div>
+              </div>
+              <h4>Lakukan Ini</h4>
+              <ul class="action-list">
+                <li>Posting faktur yang sudah ada terlebih dahulu.</li>
+                <li>Tetapkan pembekuan jika inactivity memang disengaja.</li>
+                <li>Lanjutkan pembelian hanya untuk item yang kosong jika Stock-Out Risk Items mengharuskannya.</li>
+              </ul>
+              <h4>Perlu Bukti Lebih Lanjut?</h4>
+              <div class="ev-list">
+                <span>Purchasing Attention List</span>
+                <span>Posting Status Breakdown</span>
+                <span>Purchasing Report</span>
+                <span>Inventory Forecast</span>
+                <span>Supplier Performance Profile</span>
+              </div>
+              <h4>Alur Investigasi</h4>
+              <div class="chain">
+                <div class="node">Apakah barang yang dibeli sudah diposting atau masih tertahan di backlog?<em>Pertanyaan</em></div>
+                <div class="arr">↓</div>
+                <div class="node">Purchasing Management Dashboard<em>Dashboard</em></div>
+                <div class="arr">↓</div>
+                <div class="node">Pending Posting Value / Posted %<em>KPI</em></div>
+                <div class="arr">↓</div>
+                <div class="node">Purchasing Attention List → Purchasing Report / Inventory Forecast<em>Bukti</em></div>
+                <div class="arr">↓</div>
+                <div class="node">Posting terlebih dahulu, tetapkan pembekuan, atau lanjutkan pembelian item yang kosong<em>Keputusan</em></div>
+              </div>
+            </div>
+          </details>
+        </article>
+
+        <!-- SECTION 5 -->
+        <h2 class="sec" id="s5"><span class="num">5</span> Investigation Playbook</h2>
+        <section class="card">
+          <p>Gunakan bagian ini ketika kekhawatirannya adalah suatu area masalah, bukan satu pertanyaan. Detailnya tersedia dalam Management Playbook di atas.</p>
+        </section>
+
+        <article class="inv" id="inv-customer">
+          <h3>Investigasi Customer</h3>
+          <p class="when">Gunakan ketika EQ-002 atau EQ-008 mengarah ke customer, atau EQ-001 menunjukkan Customers At Risk / Strategic At Risk.</p>
+          <div class="chain">
+            <div class="node">Customer mulai melemah<em>Masalah</em></div>
+            <div class="arr">↓</div>
+            <div class="node">Customer Risk Forecast Dashboard<em>Dashboard</em></div>
+            <div class="arr">↓</div>
+            <div class="node">Customer Risk Attention List → Customer Performance Profile → Piutang Report / Sales Report<em>Bukti</em></div>
+            <div class="arr">↓</div>
+            <div class="node">Lakukan collection, batasi pasokan, pulihkan sales, atau tinjau kredit<em>Keputusan</em></div>
+          </div>
+          <p>Kemudian buka <a href="#mq-005">MQ-005</a> untuk kontak hari ini. Terkait: <a href="#mq-001">MQ-001</a>, <a href="#mq-015">MQ-015</a>.</p>
+        </article>
+
+        <article class="inv" id="inv-inventory">
+          <h3>Investigasi Inventory</h3>
+          <p class="when">Gunakan ketika EQ-002 atau EQ-006 mengarah ke modal warehouse, atau Alert Center menunjukkan Dead Stock / Slow Moving / Never Sold.</p>
+          <div class="chain">
+            <div class="node">Stok tertahan atau kekosongan mulai muncul<em>Masalah</em></div>
+            <div class="arr">↓</div>
+            <div class="node">Slow Moving &amp; Dead Stock Dashboard<em>Dashboard</em></div>
+            <div class="arr">↓</div>
+            <div class="node">Inventory Attention List → Item Performance Profile → Inventory Report<em>Bukti</em></div>
+            <div class="arr">↓</div>
+            <div class="node">Lanjutkan ke Inventory Forecast dan Inventory Optimization<em>Halaman berikutnya</em></div>
+            <div class="arr">↓</div>
+            <div class="node">Hentikan penambahan stok bermasalah; likuidasi tumpukan; beli hanya item yang kosong<em>Keputusan</em></div>
+          </div>
+          <p>Terkait: <a href="#mq-002">MQ-002</a>, <a href="#mq-011">MQ-011</a>, <a href="#mq-006">MQ-006</a>.</p>
+        </article>
+
+        <article class="inv" id="inv-sales">
+          <h3>Investigasi Sales</h3>
+          <p class="when">Gunakan ketika EQ-005 atau EQ-002 mengarah ke orang, atau EQ-007 mengarah ke konsentrasi salesman.</p>
+          <div class="chain">
+            <div class="node">Sales terasa lemah, atau beberapa orang menopang hasil bulan ini<em>Masalah</em></div>
+            <div class="arr">↓</div>
+            <div class="node">Salesman Performance<em>Dashboard</em></div>
+            <div class="arr">↓</div>
+            <div class="node">Salesman Performance Profile / Salesman Detail / Sales Force Overview → Salesman Field Activity / Sales Report<em>Bukti</em></div>
+            <div class="arr">↓</div>
+            <div class="node">Lakukan coaching, perbaiki coverage atau konversi, lakukan collection overdue bersama, atau bangun kembali coverage tim<em>Keputusan</em></div>
+          </div>
+          <p>Terkait: <a href="#mq-009">MQ-009</a>, <a href="#mq-003">MQ-003</a>, <a href="#mq-014">MQ-014</a>.</p>
+        </article>
+
+        <article class="inv" id="inv-supplier">
+          <h3>Investigasi Supplier</h3>
+          <p class="when">Gunakan ketika EQ-007 atau EQ-002 mengarah ke Principal.</p>
+          <div class="chain">
+            <div class="node">Satu Principal mengendalikan purchasing atau warehouse<em>Masalah</em></div>
+            <div class="arr">↓</div>
+            <div class="node">Purchasing Management Dashboard<em>Dashboard</em></div>
+            <div class="arr">↓</div>
+            <div class="node">Supplier Risk Exposure → Supplier Performance Profile → Purchasing Report / Inventory Report<em>Bukti</em></div>
+            <div class="arr">↓</div>
+            <div class="node">Diversifikasikan, tunda pembelian, atau terima sebagai strategi<em>Keputusan</em></div>
+          </div>
+          <p>Terkait: <a href="#mq-013">MQ-013</a>, <a href="#mq-004">MQ-004</a>.</p>
+        </article>
+
+        <article class="inv" id="inv-cash">
+          <h3>Investigasi Arus Kas</h3>
+          <p class="when">Gunakan ketika EQ-004 dan EQ-006 sama-sama terasa ketat—kas tertahan di portofolio atau warehouse, bukan tersedia untuk siklus berikutnya.</p>
+          <div class="chain">
+            <div class="node">Kas terasa terperangkap<em>Masalah</em></div>
+            <div class="arr">↓</div>
+            <div class="node">Collection Dashboard + Cash Flow Forecast Dashboard<em>Dashboard</em></div>
+            <div class="arr">↓</div>
+            <div class="node">Piutang Report / Collection Attention List<em>Bukti (kas)</em></div>
+            <div class="arr">↓</div>
+            <div class="node">Slow Moving &amp; Dead Stock + Inventory Forecast<em>Dashboard (warehouse)</em></div>
+            <div class="arr">↓</div>
+            <div class="node">Inventory Report / tabel tindakan optimasi<em>Bukti (stok)</em></div>
+            <div class="arr">↓</div>
+            <div class="node">Lakukan collection pada overdue yang teridentifikasi; jangan membeli tumpukan stok; posting pembelian yang belum diposting sebelum pengeluaran baru<em>Keputusan</em></div>
+          </div>
+          <p>Terkait: <a href="#mq-007">MQ-007</a>, <a href="#mq-008">MQ-008</a>, <a href="#mq-011">MQ-011</a>, <a href="#mq-016">MQ-016</a>.</p>
+        </article>
+
+        <article class="inv" id="inv-today">
+          <h3>Investigasi Tindakan Hari Ini</h3>
+          <p class="when">Gunakan ketika EQ-003 menjadi pintunya.</p>
+          <div class="chain">
+            <div class="node">Ada yang harus dilakukan hari ini<em>Masalah</em></div>
+            <div class="arr">↓</div>
+            <div class="node">Collection Optimization dan/atau Inventory Optimization<em>Dashboard</em></div>
+            <div class="arr">↓</div>
+            <div class="node">Queue dan tabel tindakan berdasarkan jenis → Piutang Report / Inventory Report / Purchasing Report<em>Bukti</em></div>
+            <div class="arr">↓</div>
+            <div class="node">Hubungi berdasarkan jenis; beli item yang kosong; tunda tumpukan stok; transfer; likuidasi<em>Keputusan</em></div>
+          </div>
+          <p>Terkait: <a href="#mq-005">MQ-005</a>, <a href="#mq-006">MQ-006</a>.</p>
+        </article>
+
+        <article class="inv" id="inv-credit">
+          <h3>Investigasi Kredit &amp; Masalah Berikutnya</h3>
+          <p class="when">Gunakan ketika EQ-008 menjadi pintunya dan total masih terlihat baik.</p>
+          <div class="chain">
+            <div class="node">Sinyal mulai terbentuk<em>Masalah</em></div>
+            <div class="arr">↓</div>
+            <div class="node">Customer Analytics, kemudian Purchasing Management<em>Dashboard</em></div>
+            <div class="arr">↓</div>
+            <div class="node">Customer Attention List / Purchasing Attention List / laporan<em>Bukti</em></div>
+            <div class="arr">↓</div>
+            <div class="node">Hentikan kegagalan kredit yang masih dapat dicegah; posting backlog sebelum berubah menjadi stock-out<em>Keputusan</em></div>
+          </div>
+          <p>Terkait: <a href="#mq-015">MQ-015</a>, <a href="#mq-016">MQ-016</a>.</p>
+        </article>
+
+        <!-- SECTION 6 -->
+        <h2 class="sec" id="s6"><span class="num">6</span> Referensi Cepat Owner</h2>
+        <section class="card">
+          <p>Ini adalah halaman yang paling berguna. Temukan kekhawatiran pada kolom pertama. Buka halamannya. Lihat KPI. Kumpulkan bukti sebelum mengambil keputusan.</p>
+        </section>
+        <div class="table-wrap">
+          <table class="qr">
+            <thead>
+              <tr>
+                <th>Yang Ingin Saya Ketahui</th>
+                <th>Buka Ini</th>
+                <th>Lihat</th>
+                <th>Perlu Bukti Lebih Lanjut?</th>
+                <th>Tindakan yang Biasanya Diambil</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Apakah bisnis sehat?</td>
+                <td>Management Attention Center</td>
+                <td>Domain Summaries; Achievement %; Customers At Risk; Pending Posting; Total Inventory Value</td>
+                <td>Dashboard domain yang disebutkan pada baris tersebut; Alert Center</td>
+                <td>Buka EQ-002–EQ-008 yang paling lemah</td>
+              </tr>
+              <tr>
+                <td>Di mana risiko terbesar saya?</td>
+                <td>Management Attention Center, kemudian dashboard MQ terbesar dari empat pilihan</td>
+                <td>Customers At Risk vs At-Risk Inventory % vs High Overdue Exposure vs Inventory Cross-Risk</td>
+                <td>Alert Center; kemudian bukti dari playbook yang sesuai</td>
+                <td>Tugaskan pekerjaan pada masalah terbesar terlebih dahulu</td>
+              </tr>
+              <tr>
+                <td>Customer mana yang berisiko?</td>
+                <td>Customer Risk Forecast Dashboard</td>
+                <td>Customers At Risk</td>
+                <td>Customer Risk Attention List; Customer Performance Profile</td>
+                <td>Tinjau kredit; lakukan collection; batasi pasokan</td>
+              </tr>
+              <tr>
+                <td>Mengapa customer ini berisiko?</td>
+                <td>Customer Risk Forecast Dashboard</td>
+                <td>Payment Delay; Credit Limit; Inactivity; Purchase Decline</td>
+                <td>Customer Performance Profile; Piutang Report; Sales Report</td>
+                <td>Lakukan collection, batasi pasokan, atau pulihkan sales</td>
+              </tr>
+              <tr>
+                <td>Inventory mana yang tidak sehat?</td>
+                <td>Slow Moving &amp; Dead Stock Dashboard</td>
+                <td>At-Risk Inventory %</td>
+                <td>Inventory Attention List; Item Performance Profile; Inventory Report</td>
+                <td>Kurangi pembelian; lakukan clearance stok</td>
+              </tr>
+              <tr>
+                <td>SKU mana yang dead atau slow moving?</td>
+                <td>Slow Moving &amp; Dead Stock Dashboard</td>
+                <td>Dead Stock Value; Slow Moving Value</td>
+                <td>Top 10 Dead / Slow Moving; Item Performance Profile</td>
+                <td>Tunda pembelian, lakukan clearance, atau tinjau purchasing</td>
+              </tr>
+              <tr>
+                <td>Salesman mana yang membawa portofolio overdue atau dormant?</td>
+                <td>Salesman Performance</td>
+                <td>High Overdue Exposure; Dormant Portfolio</td>
+                <td>Salesman Attention List; Salesman Performance Profile; Piutang Report</td>
+                <td>Review bersama Sales–Finance atas portofolio yang teridentifikasi</td>
+              </tr>
+              <tr>
+                <td>Principal mana yang menjadi risiko pembelian atau stok?</td>
+                <td>Purchasing Management Dashboard</td>
+                <td>Inventory Cross-Risk; Principal Dependency</td>
+                <td>Purchasing Attention List; Supplier Performance Profile; Inventory Report</td>
+                <td>Tunda pembelian, tinjau Principal, atau terima sebagai strategi</td>
+              </tr>
+              <tr>
+                <td>Siapa yang harus dihubungi hari ini?</td>
+                <td>Collection Optimization Dashboard</td>
+                <td>Actions Today</td>
+                <td>Today's Collection Priorities; Specialized Queues; Piutang Report</td>
+                <td>Jalankan daftar hari ini berdasarkan jenis kontak</td>
+              </tr>
+              <tr>
+                <td>Apa yang harus dibeli, ditunda, ditransfer, atau dilikuidasi hari ini?</td>
+                <td>Inventory Optimization Dashboard</td>
+                <td>Critical Actions</td>
+                <td>Action tables; Item Performance Profile; Inventory Report; Purchasing Report</td>
+                <td>Beli item yang kosong; tunda tumpukan stok; transfer; likuidasi</td>
+              </tr>
+              <tr>
+                <td>Piutang mana yang perlu diperhatikan?</td>
+                <td>Piutang Dashboard</td>
+                <td>Overdue Piutang</td>
+                <td>Top 20 Outstanding Customers; Piutang Report; Collection Attention List</td>
+                <td>Lakukan collection pada akun yang teridentifikasi atau batasi pasokan</td>
+              </tr>
+              <tr>
+                <td>Apakah collection kita secepat penagihan?</td>
+                <td>Collection Dashboard, kemudian Cash Flow Forecast Dashboard</td>
+                <td>Recovery vs Billing %</td>
+                <td>Collection Attention List; Piutang Report; Risiko Collection Teratas</td>
+                <td>Dorong collection, perketat kredit, atau terima hasil akhir</td>
+              </tr>
+              <tr>
+                <td>Apakah kas bulan ini akan tercapai?</td>
+                <td>Cash Flow Forecast Dashboard</td>
+                <td>Required Daily Collection; Expected Cash Collection</td>
+                <td>Piutang Report; Collection Dashboard</td>
+                <td>Dorong collection atau susun rencana berdasarkan Expected / Worst Cash</td>
+              </tr>
+              <tr>
+                <td>Salesman mana yang berkinerja rendah?</td>
+                <td>Salesman Performance</td>
+                <td>Below Target</td>
+                <td>Salesman Attention List; Salesman Detail drawer; Salesman Field Activity; Sales Report</td>
+                <td>Tetapkan target, perbaiki coverage, perbaiki konversi, atau lakukan coaching</td>
+              </tr>
+              <tr>
+                <td>Apakah tim lapangan mencakup rute?</td>
+                <td>Sales Force Overview, kemudian Salesman Field Activity</td>
+                <td>Execution %; Missed Visit; Effective Call Rate; GPS Valid Rate</td>
+                <td>Field table; missed visits; visit timeline</td>
+                <td>Perbaiki coverage atau konversi</td>
+              </tr>
+              <tr>
+                <td>Customer mana yang menurun?</td>
+                <td>Customer Portfolio Dashboard</td>
+                <td>Declining</td>
+                <td>Portfolio Priority Queue; Customer Performance Profile; Sales Report</td>
+                <td>Pulihkan, lindungi, atau hentikan cakupan</td>
+              </tr>
+              <tr>
+                <td>Apakah modal warehouse tertahan atau akan segera habis?</td>
+                <td>Slow Moving &amp; Dead Stock Dashboard dan Inventory Forecast Dashboard</td>
+                <td>Dead Stock Value; Stock-Out Risk Items</td>
+                <td>Inventory Attention List; Warehouse Rebalancing; Inventory Report</td>
+                <td>Likuidasi tumpukan stok, beli item yang kosong, atau transfer</td>
+              </tr>
+              <tr>
+                <td>Warehouse mana yang menyimpan stok menganggur?</td>
+                <td>Branch / Warehouse Performance Dashboard</td>
+                <td>Top Warehouse At-Risk %; Inactive Warehouse With Stock</td>
+                <td>Top 10 Warehouse by At-Risk Value; Inventory Report</td>
+                <td>Transfer jika masalahnya adalah lokasi</td>
+              </tr>
+              <tr>
+                <td>Customer mana yang mendominasi omzet atau piutang?</td>
+                <td>Customer Analytics</td>
+                <td>Top Omzet Customer %; Top Piutang Customer %</td>
+                <td>Ranking Top 10; Customer Performance Profile; Customer Report</td>
+                <td>Lindungi, kurangi eksposur, atau perluas portofolio</td>
+              </tr>
+              <tr>
+                <td>Supplier mana yang mulai dominan?</td>
+                <td>Purchasing Management Dashboard</td>
+                <td>Top Principal %; Top 10 Principals</td>
+                <td>Principal Exposure Comparison; Supplier Performance Profile; Purchasing Report</td>
+                <td>Diversifikasikan, tunda pembelian, atau terima sebagai strategi</td>
+              </tr>
+              <tr>
+                <td>Apakah kita terlalu bergantung pada beberapa salesman?</td>
+                <td>Salesman Performance</td>
+                <td>Top Omzet Salesman %</td>
+                <td>Top 10 Omzet; Salesman Performance Profile; Sales Report</td>
+                <td>Lindungi orang-orang kunci dan bangun kembali coverage tim</td>
+              </tr>
+              <tr>
+                <td>Apakah kebijakan kredit dipatuhi?</td>
+                <td>Customer Analytics</td>
+                <td>Plafond Breach; Suspended + Sales</td>
+                <td>Customer Attention List; Customer Performance Profile; Sales Report</td>
+                <td>Tinjau kredit, batasi pasokan, atau hentikan penagihan</td>
+              </tr>
+              <tr>
+                <td>Apakah pembelian sudah diposting atau masih tertahan?</td>
+                <td>Purchasing Management Dashboard</td>
+                <td>Pending Posting Value; Posted %</td>
+                <td>Purchasing Attention List; Purchasing Report</td>
+                <td>Posting terlebih dahulu, tetapkan pembekuan, atau beli hanya item yang kosong</td>
+              </tr>
+              <tr>
+                <td>Apa yang perlu diperhatikan sekarang (pengecualian)?</td>
+                <td>Alert Center</td>
+                <td>Top Critical Alerts; Inventory Risk Summary</td>
+                <td>Investigasi → laporan terkait; View Dashboard → dashboard domain</td>
+                <td>Buka playbook yang sesuai dan tindak lanjuti nama-nama yang teridentifikasi</td>
+              </tr>
+              <tr>
+                <td>Saya memiliki satu nama (customer, salesman, supplier, item)</td>
+                <td>Entity Analytics</td>
+                <td>Buka Profil / Investigasi / Bandingkan</td>
+                <td>Performance Profile; Investigation Workspace; Bukti profil → laporan terkait</td>
+                <td>Ambil keputusan berdasarkan nama tersebut, bukan totalnya</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- SECTION 7 -->
+        <h2 class="sec" id="s7"><span class="num">7</span> Checklist Kesehatan Bisnis</h2>
+        <section class="card">
+          <p>Gunakan Executive Question dan Management Question yang ada sebagai ritme kerja. Centang kotak hanya setelah membuka halaman dan menyebutkan tindakan berikutnya.</p>
+        </section>
+        <div class="check-grid">
+          <section class="check">
+            <h3>Harian</h3>
+            <label><input type="checkbox"><span>Apakah bisnis sehat? <small>EQ-001 · Management Attention Center</small></span></label>
+            <label><input type="checkbox"><span>Apa yang perlu segera diperhatikan? <small>EQ-003</small></span></label>
+            <label><input type="checkbox"><span>Siapa yang harus dihubungi hari ini? <small>MQ-005 · Actions Today</small></span></label>
+            <label><input type="checkbox"><span>Apa yang harus dibeli, ditunda, ditransfer, atau dilikuidasi hari ini? <small>MQ-006 · Critical Actions</small></span></label>
+          </section>
+          <section class="check">
+            <h3>Mingguan</h3>
+            <label><input type="checkbox"><span>Di mana risiko terbesar saya? <small>EQ-002 · bandingkan empat KPI awal</small></span></label>
+            <label><input type="checkbox"><span>Customer mana yang mulai berisiko? <small>MQ-001</small></span></label>
+            <label><input type="checkbox"><span>Inventory mana yang tidak sehat? <small>MQ-002</small></span></label>
+            <label><input type="checkbox"><span>Salesman mana yang membawa portofolio overdue atau dormant? <small>MQ-003</small></span></label>
+            <label><input type="checkbox"><span>Piutang mana yang perlu diperhatikan? <small>MQ-007</small></span></label>
+            <label><input type="checkbox"><span>Apakah collection kita secepat penagihan? <small>MQ-008</small></span></label>
+            <label><input type="checkbox"><span>Salesman mana yang berkinerja rendah? <small>MQ-009</small></span></label>
+          </section>
+          <section class="check">
+            <h3>Bulanan</h3>
+            <label><input type="checkbox"><span>Apakah arus kas sehat? <small>EQ-004</small></span></label>
+            <label><input type="checkbox"><span>Apakah pertumbuhan berkelanjutan? <small>EQ-005</small></span></label>
+            <label><input type="checkbox"><span>Apakah modal kerja sehat? <small>EQ-006 · MQ-011</small></span></label>
+            <label><input type="checkbox"><span>Apakah kita terlalu bergantung? <small>EQ-007 · MQ-012, MQ-013, MQ-014</small></span></label>
+            <label><input type="checkbox"><span>Principal mana yang mulai menjadi risiko pembelian atau stok? <small>MQ-004</small></span></label>
+            <label><input type="checkbox"><span>Customer mana yang menurun? <small>MQ-010</small></span></label>
+            <label><input type="checkbox"><span>Apa yang kemungkinan menjadi masalah berikutnya? <small>EQ-008 · MQ-015, MQ-016</small></span></label>
+          </section>
+        </div>
+
+      </div>
+      <footer class="doc">
+        <p>Panduan Navigasi Owner BTR · CV. Bintang Timur Rahayu · 2 September 2026</p>
+        <p>Sumber kebenaran: business-question-catalog-v3.md dan question-navigation-map.md. Playbook ini tidak menambahkan KPI, dashboard, atau kekhawatiran bisnis.</p>
+      </footer>
+    </main>
+  </div>
+  <script>
+    function filterToc(q) {
+      q = (q || "").toLowerCase().trim();
+      document.querySelectorAll("nav.toc li").forEach(function (li) {
+        var a = li.querySelector("a");
+        if (!a) return;
+        li.style.display = !q || a.textContent.toLowerCase().indexOf(q) !== -1 ? "" : "none";
+      });
+    }
+    function setDetails(open) {
+      document.querySelectorAll("article.playbook details").forEach(function (d) {
+        d.open = open;
+      });
+    }
+    window.addEventListener("beforeprint", function () { setDetails(true); });
+  </script>
+</body>
+</html>

@@ -508,6 +508,7 @@
     <Compile Include="ReportingContext\EntityAnalyticsAgg\Services\EntityComparisonCalculator.cs" />
     <Compile Include="ReportingContext\EntityAnalyticsAgg\Services\EntityMapPresetRegistry.cs" />
     <Compile Include="ReportingContext\EntityAnalyticsAgg\Services\EntityPopulationMapEngine.cs" />
+    <Compile Include="ReportingContext\EntityAnalyticsAgg\Services\EntityPeerDistributionBinBuilder.cs" />
     <Compile Include="ReportingContext\EntityAnalyticsAgg\Services\EntityPeerDistributionEngine.cs" />
     <Compile Include="ReportingContext\EntityAnalyticsAgg\Services\EntityRelationshipDefinitionRegistry.cs" />
     <Compile Include="ReportingContext\EntityAnalyticsAgg\Services\EntityAttentionSignalRegistry.cs" />
