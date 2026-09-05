@@ -2,6 +2,7 @@
 import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import DashboardDetailLayout from '@/components/dashboard/DashboardDetailLayout.vue'
+import CompactValue from '@/components/dashboard/primitives/CompactValue.vue'
 import PlatformSnapshotHealthBanners from '@/components/platform/PlatformSnapshotHealthBanners.vue'
 import CollectionAttentionCardGroup from '@/components/dashboard/CollectionAttentionCardGroup.vue'
 import CollectionRecoverySummary from '@/components/dashboard/CollectionRecoverySummary.vue'
@@ -9,7 +10,7 @@ import CollectionAgingRiskSummary from '@/components/dashboard/CollectionAgingRi
 import CollectionAttentionList from '@/components/dashboard/CollectionAttentionList.vue'
 import CollectionNavigationSection from '@/components/dashboard/CollectionNavigationSection.vue'
 import Top10RankingTable from '@/components/dashboard/Top10RankingTable.vue'
-import { formatCurrency, formatNumber, formatPercent } from '@/services/formatters'
+import { formatCurrency, formatCurrencyCompact, formatNumber, formatPercent } from '@/services/formatters'
 import type { DashboardCollectionRankingRow } from '@/models/dashboard'
 import { COLLECTION_ATTENTION_SIGNAL_ALL } from '@/services/collectionAttentionSignals'
 import { resolveInvestigationSourceLabel } from '@/services/investigationSourceLabels'
@@ -117,14 +118,20 @@ onMounted(() => {
         >
           <div class="metric">
             <span class="metric__label">Overdue Exposure</span>
-            <span class="metric__value">
-              {{ cards ? formatCurrency(cards.OverdueExposure) : '—' }}
+            <span
+              class="metric__value"
+              :title="cards ? formatCurrency(cards.OverdueExposure) : undefined"
+            >
+              <CompactValue :value="cards ? formatCurrencyCompact(cards.OverdueExposure) : '—'" />
             </span>
           </div>
           <div class="metric">
             <span class="metric__label">&gt;90d Exposure</span>
-            <span class="metric__value">
-              {{ cards ? formatCurrency(cards.AgingOver90Exposure) : '—' }}
+            <span
+              class="metric__value"
+              :title="cards ? formatCurrency(cards.AgingOver90Exposure) : undefined"
+            >
+              <CompactValue :value="cards ? formatCurrencyCompact(cards.AgingOver90Exposure) : '—'" />
             </span>
           </div>
           <div class="metric">
@@ -146,8 +153,11 @@ onMounted(() => {
         >
           <div class="metric">
             <span class="metric__label">Cash Collected MTD</span>
-            <span class="metric__value">
-              {{ cards ? formatCurrency(cards.CashCollectedMtd) : '—' }}
+            <span
+              class="metric__value"
+              :title="cards ? formatCurrency(cards.CashCollectedMtd) : undefined"
+            >
+              <CompactValue :value="cards ? formatCurrencyCompact(cards.CashCollectedMtd) : '—'" />
             </span>
           </div>
           <div class="metric">

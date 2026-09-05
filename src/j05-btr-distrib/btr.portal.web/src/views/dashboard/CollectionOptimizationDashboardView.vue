@@ -11,7 +11,7 @@ import CollectionOptimizationPriorityTable from '@/components/dashboard/collecti
 import CollectionOptimizationQueueTabs from '@/components/dashboard/collection-optimization/CollectionOptimizationQueueTabs.vue'
 import CollectionOptimizationImpactTable from '@/components/dashboard/collection-optimization/CollectionOptimizationImpactTable.vue'
 import type { SalesForecastKpiMetric } from '@/components/dashboard/SalesForecastKpiRow.vue'
-import { formatCurrency, formatPercent } from '@/services/formatters'
+import { formatCurrency, formatCurrencyCompact, formatPercent } from '@/services/formatters'
 import { useDashboardStore } from '@/stores/dashboardStore'
 
 const dashboard = useDashboardStore()
@@ -32,7 +32,11 @@ const workloadMetrics = computed((): SalesForecastKpiMetric[] => {
     { label: 'Proactive Reminders', value: String(data.ProactiveReminderCount) },
     { label: 'Credit Review', value: String(data.CreditReviewCount) },
     { label: 'Sales Recovery', value: String(data.SalesRecoveryCount) },
-    { label: 'Collection Impact', value: formatCurrency(data.CollectionImpactTotal) },
+    {
+      label: 'Collection Impact',
+      value: formatCurrencyCompact(data.CollectionImpactTotal),
+      title: formatCurrency(data.CollectionImpactTotal),
+    },
   ]
 })
 
@@ -41,8 +45,16 @@ const contextMetrics = computed((): SalesForecastKpiMetric[] => {
   if (!data) return []
 
   return [
-    { label: 'Overdue Exposure', value: formatCurrency(data.OverdueExposure) },
-    { label: 'Due Within 7 Days', value: formatCurrency(data.DueWithin7Days) },
+    {
+      label: 'Overdue Exposure',
+      value: formatCurrencyCompact(data.OverdueExposure),
+      title: formatCurrency(data.OverdueExposure),
+    },
+    {
+      label: 'Due Within 7 Days',
+      value: formatCurrencyCompact(data.DueWithin7Days),
+      title: formatCurrency(data.DueWithin7Days),
+    },
     {
       label: 'Recovery vs Billing',
       value: formatPercent(data.RecoveryVsBillingPercent),

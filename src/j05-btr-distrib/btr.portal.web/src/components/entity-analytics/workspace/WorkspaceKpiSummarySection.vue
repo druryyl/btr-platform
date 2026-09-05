@@ -1,7 +1,10 @@
 <script setup lang="ts">
 import KpiCard from '@/components/KpiCard.vue'
-import type { EntityPerformanceProfileResponse } from '@/models/entityAnalytics'
+import CompactValue from '@/components/dashboard/primitives/CompactValue.vue'
+import type { EntityPerformanceProfileResponse, KpiEnvelope } from '@/models/entityAnalytics'
 import { buildEntityColorMap } from '@/composables/useComparisonColors'
+import { formatCurrencyCompact } from '@/services/formatters'
+import { isIdrAxisUnit } from '@/services/populationProjection/robustStats'
 
 const props = defineProps<{
   profiles: Record<string, EntityPerformanceProfileResponse>
@@ -14,6 +17,17 @@ const colors = () => buildEntityColorMap(props.entityIds)
 function headlineKpis(profile: EntityPerformanceProfileResponse) {
   const groups = profile.KpiSummary?.Categories ?? []
   return groups.flatMap((g) => g.Kpis).slice(0, 8)
+}
+
+function displayKpi(kpi: KpiEnvelope): { display: string; full: string | null } {
+  const fallback = kpi.FormattedValue || kpi.TextValue || ''
+  if (kpi.Value != null && isIdrAxisUnit(kpi.Unit)) {
+    return {
+      display: formatCurrencyCompact(kpi.Value),
+      full: kpi.FormattedValue || null,
+    }
+  }
+  return { display: fallback, full: null }
 }
 </script>
 
@@ -31,7 +45,12 @@ function headlineKpis(profile: EntityPerformanceProfileResponse) {
         :key="`${entityId}-${kpi.KpiId}`"
       >
         <KpiCard :title="kpi.DisplayName || kpi.KpiId">
-          <div class="iw-kpi-value">{{ kpi.FormattedValue || '—' }}</div>
+          <div
+            class="iw-kpi-value"
+            :title="displayKpi(kpi).full ?? undefined"
+          >
+            <CompactValue :value="displayKpi(kpi).display" />
+          </div>
           <div v-if="kpi.PeriodLabel" class="iw-meta">{{ kpi.PeriodLabel }}</div>
         </KpiCard>
       </div>

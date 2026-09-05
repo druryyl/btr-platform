@@ -9,7 +9,7 @@ import CashFlowForecastVsBillingChart from '@/components/dashboard/CashFlowForec
 import CashFlowKpiGrid from '@/components/dashboard/CashFlowKpiGrid.vue'
 import type { SalesForecastKpiMetric } from '@/components/dashboard/SalesForecastKpiRow.vue'
 import CashFlowRecoveryTrendChart from '@/components/dashboard/CashFlowRecoveryTrendChart.vue'
-import { formatCurrency, formatPercent } from '@/services/formatters'
+import { formatCurrency, formatCurrencyCompact, formatPercent } from '@/services/formatters'
 import { useDashboardStore } from '@/stores/dashboardStore'
 
 const dashboard = useDashboardStore()
@@ -39,11 +39,20 @@ const cashPositionMetrics = computed((): SalesForecastKpiMetric[] => {
   if (!data) return []
 
   return [
-    { label: 'Cash Collected MTD', value: formatCurrency(data.CashCollectedMtd) },
-    { label: 'Expected Cash Collection', value: formatCurrency(data.ExpectedCashCollection) },
+    {
+      label: 'Cash Collected MTD',
+      value: formatCurrencyCompact(data.CashCollectedMtd),
+      title: formatCurrency(data.CashCollectedMtd),
+    },
+    {
+      label: 'Expected Cash Collection',
+      value: formatCurrencyCompact(data.ExpectedCashCollection),
+      title: formatCurrency(data.ExpectedCashCollection),
+    },
     {
       label: 'Projected Month-End Collection',
-      value: formatCurrency(data.ExpectedCashCollection),
+      value: formatCurrencyCompact(data.ExpectedCashCollection),
+      title: formatCurrency(data.ExpectedCashCollection),
     },
     {
       label: 'Collection Forecast %',
@@ -67,19 +76,25 @@ const paceTargetMetrics = computed((): SalesForecastKpiMetric[] => {
   return [
     {
       label: 'Daily Cash Collection Average',
-      value: formatCurrency(data.DailyCashCollectionAverage),
+      value: formatCurrencyCompact(data.DailyCashCollectionAverage),
+      title: formatCurrency(data.DailyCashCollectionAverage),
     },
     {
       label: 'Required Daily Collection',
       value:
         data.RequiredDailyCollection != null
-          ? formatCurrency(data.RequiredDailyCollection)
+          ? formatCurrencyCompact(data.RequiredDailyCollection)
           : '—',
+      title:
+        data.RequiredDailyCollection != null
+          ? formatCurrency(data.RequiredDailyCollection)
+          : undefined,
       severity: requiredSeverity,
     },
     {
       label: 'Remaining Collection Target',
-      value: formatCurrency(data.RemainingCollectionTarget),
+      value: formatCurrencyCompact(data.RemainingCollectionTarget),
+      title: formatCurrency(data.RemainingCollectionTarget),
       severity: data.RemainingCollectionTarget > 0 ? 'warning' : 'success',
     },
     {
@@ -122,7 +137,8 @@ const recoveryScenarioMetrics = computed((): SalesForecastKpiMetric[] => {
     },
     {
       label: 'Best / Exp / Worst Cash',
-      value: `${formatCurrency(data.BestCaseCash)} / ${formatCurrency(data.ExpectedCashCollection)} / ${formatCurrency(data.WorstCaseCash)}`,
+      value: `${formatCurrencyCompact(data.BestCaseCash)} / ${formatCurrencyCompact(data.ExpectedCashCollection)} / ${formatCurrencyCompact(data.WorstCaseCash)}`,
+      title: `${formatCurrency(data.BestCaseCash)} / ${formatCurrency(data.ExpectedCashCollection)} / ${formatCurrency(data.WorstCaseCash)}`,
     },
     {
       label: 'Forecast Confidence',
@@ -139,17 +155,24 @@ const receivableContextMetrics = computed((): SalesForecastKpiMetric[] => {
   return [
     {
       label: 'Outstanding Due Remaining',
-      value: formatCurrency(data.OutstandingDueRemaining),
+      value: formatCurrencyCompact(data.OutstandingDueRemaining),
+      title: formatCurrency(data.OutstandingDueRemaining),
     },
-    { label: 'Overdue Outstanding', value: formatCurrency(data.OverdueOutstanding) },
+    {
+      label: 'Overdue Outstanding',
+      value: formatCurrencyCompact(data.OverdueOutstanding),
+      title: formatCurrency(data.OverdueOutstanding),
+    },
     {
       label: 'Collection Gap',
-      value: formatCurrency(data.CollectionGap),
+      value: formatCurrencyCompact(data.CollectionGap),
+      title: formatCurrency(data.CollectionGap),
       severity: data.CollectionGap > 0 ? 'warning' : 'success',
     },
     {
       label: 'Forecast Variance (Cash)',
-      value: formatCurrency(data.ForecastVarianceCash),
+      value: formatCurrencyCompact(data.ForecastVarianceCash),
+      title: formatCurrency(data.ForecastVarianceCash),
     },
   ]
 })

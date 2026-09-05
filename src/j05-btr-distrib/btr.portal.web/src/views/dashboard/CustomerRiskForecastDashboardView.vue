@@ -12,7 +12,7 @@ import CustomerRiskForecastSignalMixChart from '@/components/dashboard/CustomerR
 import CustomerRiskForecastSummary from '@/components/dashboard/CustomerRiskForecastSummary.vue'
 import CustomerRiskForecastWilayahChart from '@/components/dashboard/CustomerRiskForecastWilayahChart.vue'
 import type { SalesForecastKpiMetric } from '@/components/dashboard/SalesForecastKpiRow.vue'
-import { formatCurrency, formatPercent } from '@/services/formatters'
+import { formatCurrency, formatCurrencyCompact, formatPercent } from '@/services/formatters'
 import { useDashboardStore } from '@/stores/dashboardStore'
 
 const dashboard = useDashboardStore()
@@ -63,14 +63,19 @@ const exposureMetrics = computed((): SalesForecastKpiMetric[] => {
   return [
     {
       label: 'Elevated Risk Receivable',
-      value: formatCurrency(data.ElevatedRiskReceivable),
+      value: formatCurrencyCompact(data.ElevatedRiskReceivable),
+      title: formatCurrency(data.ElevatedRiskReceivable),
       severity: data.ElevatedRiskReceivable > 0 ? 'warning' : 'success',
     },
     {
       label: 'Elevated Risk %',
       value: formatPercent(data.ElevatedRiskReceivablePercent),
     },
-    { label: 'Total Piutang', value: formatCurrency(data.TotalPiutang) },
+    {
+      label: 'Total Piutang',
+      value: formatCurrencyCompact(data.TotalPiutang),
+      title: formatCurrency(data.TotalPiutang),
+    },
     {
       label: 'High / Critical Customers',
       value: `${data.HighRiskCustomerCount} / ${data.CriticalCustomerCount}`,

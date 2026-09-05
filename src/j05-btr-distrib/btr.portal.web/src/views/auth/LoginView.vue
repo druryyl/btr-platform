@@ -120,7 +120,12 @@ async function onSubmit(): Promise<void> {
   justify-content: center;
   padding: 1.5rem;
   background:
-    linear-gradient(180deg, var(--p-primary-50) 0%, var(--p-surface-50) 45%, var(--p-surface-100) 100%);
+    linear-gradient(
+      180deg,
+      var(--portal-login-bg-top) 0%,
+      var(--portal-login-bg-mid) 42%,
+      var(--portal-login-bg-bottom) 100%
+    );
 }
 
 .login-card {

@@ -10,6 +10,8 @@ import { useAuthStore } from '@/stores/authStore'
 
 import { usePresentationStore } from '@/stores/presentationStore'
 
+import { useUiStore } from '@/stores/uiStore'
+
 import PortalMenuLabel from '@/components/navigation/PortalMenuLabel.vue'
 
 import { portalMenuGroups } from '@/navigation/portalMenuRegistry'
@@ -17,6 +19,8 @@ import { portalMenuGroups } from '@/navigation/portalMenuRegistry'
 
 
 const auth = useAuthStore()
+
+const ui = useUiStore()
 
 const presentation = usePresentationStore()
 
@@ -65,6 +69,30 @@ function logout(): void {
   <div class="layout">
 
     <header class="layout__header">
+
+      <button
+
+        v-tooltip.bottom="ui.isSidebarCollapsed ? 'Expand menu' : 'Collapse menu'"
+
+        type="button"
+
+        class="layout__collapse-toggle"
+
+        :aria-expanded="!ui.isSidebarCollapsed"
+
+        aria-controls="portal-nav"
+
+        aria-label="Toggle navigation menu"
+
+        @click="ui.toggleSidebar()"
+
+      >
+
+        <i class="pi pi-bars" aria-hidden="true" />
+
+      </button>
+
+
 
       <div class="layout__brand">
 
@@ -126,6 +154,8 @@ function logout(): void {
 
           outlined
 
+          class="layout__logout"
+
           @click="logout"
 
         />
@@ -138,7 +168,17 @@ function logout(): void {
 
     <div class="layout__body">
 
-      <aside class="layout__sidebar">
+      <aside
+
+        id="portal-nav"
+
+        class="layout__sidebar"
+
+        :class="{ 'layout__sidebar--collapsed': ui.isSidebarCollapsed }"
+
+        aria-label="Main navigation"
+
+      >
 
         <nav class="layout__nav" aria-label="Main navigation">
 
@@ -161,6 +201,8 @@ function logout(): void {
                 <RouterLink
 
                   :to="{ name: item.routeName }"
+
+                  v-tooltip="ui.isSidebarCollapsed ? item.label : null"
 
                   class="layout__nav-link"
 
@@ -228,9 +270,57 @@ function logout(): void {
 
   padding: 1rem 1.5rem;
 
-  background: var(--p-surface-0);
+  background: var(--portal-header-bg);
 
-  border-bottom: 1px solid var(--p-surface-200);
+  color: var(--portal-nav-text);
+
+  border-bottom: 1px solid var(--portal-nav-border);
+
+}
+
+
+
+.layout__collapse-toggle {
+
+  display: inline-flex;
+
+  align-items: center;
+
+  justify-content: center;
+
+  width: 2.5rem;
+
+  height: 2.5rem;
+
+  border: 1px solid transparent;
+
+  border-radius: var(--p-content-border-radius);
+
+  background: transparent;
+
+  color: var(--portal-nav-text);
+
+  cursor: pointer;
+
+  flex-shrink: 0;
+
+  transition: background-color 0.15s ease, color 0.15s ease;
+
+}
+
+.layout__collapse-toggle:hover {
+
+  background: var(--portal-nav-bg-elevated);
+
+  color: var(--portal-nav-text);
+
+}
+
+.layout__collapse-toggle:focus-visible {
+
+  outline: 2px solid var(--portal-nav-active-accent);
+
+  outline-offset: 2px;
 
 }
 
@@ -252,7 +342,7 @@ function logout(): void {
 
   font-size: 1.75rem;
 
-  color: var(--p-primary-color);
+  color: var(--portal-nav-brand);
 
 }
 
@@ -264,7 +354,7 @@ function logout(): void {
 
   font-weight: 700;
 
-  color: var(--p-text-color);
+  color: var(--portal-nav-text);
 
 }
 
@@ -274,7 +364,7 @@ function logout(): void {
 
   font-size: 0.85rem;
 
-  color: var(--p-text-muted-color);
+  color: var(--portal-nav-muted);
 
 }
 
@@ -286,11 +376,11 @@ function logout(): void {
 
   padding: 0.375rem 0.75rem;
 
-  border: 1px solid var(--p-primary-200);
+  border: 1px solid var(--portal-nav-border);
 
   border-radius: var(--p-content-border-radius);
 
-  background: var(--p-surface-100);
+  background: var(--portal-nav-bg-elevated);
 
   text-align: right;
 
@@ -308,7 +398,7 @@ function logout(): void {
 
   text-transform: uppercase;
 
-  color: var(--p-primary-700);
+  color: var(--portal-nav-active-accent);
 
 }
 
@@ -318,7 +408,7 @@ function logout(): void {
 
   font-size: 0.85rem;
 
-  color: var(--p-text-muted-color);
+  color: var(--portal-nav-muted);
 
 }
 
@@ -331,6 +421,28 @@ function logout(): void {
   align-items: center;
 
   gap: 1rem;
+
+}
+
+
+
+.layout__logout.layout__logout {
+
+  color: var(--portal-nav-text);
+
+  background: transparent;
+
+  border-color: var(--portal-nav-muted);
+
+}
+
+.layout__logout.layout__logout:hover {
+
+  color: var(--portal-nav-text);
+
+  background: var(--portal-nav-bg-elevated);
+
+  border-color: var(--portal-nav-text);
 
 }
 
@@ -354,6 +466,8 @@ function logout(): void {
 
   font-weight: 600;
 
+  color: var(--portal-nav-text);
+
 }
 
 
@@ -362,7 +476,7 @@ function logout(): void {
 
   font-size: 0.85rem;
 
-  color: var(--p-text-muted-color);
+  color: var(--portal-nav-muted);
 
 }
 
@@ -388,11 +502,45 @@ function logout(): void {
 
   padding: 1rem;
 
+  overflow-x: hidden;
+
   overflow-y: auto;
 
   background: var(--portal-nav-bg);
 
   border-right: 1px solid var(--portal-nav-border);
+
+  transition: width 0.2s ease, padding 0.2s ease;
+
+}
+
+.layout__sidebar--collapsed {
+
+  width: 64px;
+
+  padding: 1rem 0.5rem;
+
+}
+
+.layout__sidebar--collapsed .layout__nav-heading {
+
+  display: none;
+
+}
+
+.layout__sidebar--collapsed :deep(.portal-menu-label) {
+
+  display: none;
+
+}
+
+.layout__sidebar--collapsed .layout__nav-link {
+
+  justify-content: center;
+
+  gap: 0;
+
+  padding: 0.625rem 0;
 
 }
 
@@ -472,9 +620,17 @@ function logout(): void {
 
   background: var(--portal-nav-bg-active);
 
-  color: var(--brand-gold-100);
+  color: var(--portal-nav-text-active);
 
   box-shadow: inset 3px 0 0 var(--portal-nav-active-accent);
+
+}
+
+.layout__nav-link--active:hover {
+
+  background: var(--portal-nav-bg-active);
+
+  color: var(--portal-nav-text-active);
 
 }
 
@@ -482,7 +638,13 @@ function logout(): void {
 
 .layout__nav-link--active :deep(.portal-menu-label__code) {
 
-  color: var(--brand-gold-100);
+  color: var(--portal-nav-text-active);
+
+}
+
+.layout__nav-link--active :deep(.portal-menu-label__separator) {
+
+  color: var(--portal-nav-text-active);
 
 }
 
@@ -514,7 +676,7 @@ function logout(): void {
 
 .layout__nav-link--active .layout__nav-icon {
 
-  color: var(--brand-gold-500);
+  color: var(--portal-nav-text-active);
 
 }
 
@@ -533,6 +695,14 @@ function logout(): void {
 
 
 @media (max-width: 768px) {
+
+  .layout__collapse-toggle {
+
+    display: none;
+
+  }
+
+
 
   .layout__header {
 
@@ -562,13 +732,44 @@ function logout(): void {
 
 
 
-  .layout__sidebar {
+  .layout__sidebar,
+  .layout__sidebar--collapsed {
 
     width: 100%;
+
+    padding: 1rem;
 
     border-right: none;
 
     border-bottom: 1px solid var(--portal-nav-border);
+
+  }
+
+
+
+  .layout__sidebar--collapsed .layout__nav-heading {
+
+    display: block;
+
+  }
+
+
+
+  .layout__sidebar--collapsed :deep(.portal-menu-label) {
+
+    display: inline-flex;
+
+  }
+
+
+
+  .layout__sidebar--collapsed .layout__nav-link {
+
+    justify-content: flex-start;
+
+    gap: 0.625rem;
+
+    padding: 0.625rem 0.75rem;
 
   }
 

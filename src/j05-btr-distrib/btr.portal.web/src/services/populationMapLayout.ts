@@ -530,8 +530,9 @@ export function formatAxisTickValue(
   const normalizedUnit = unit?.trim().toLowerCase() ?? ''
 
   if (normalizedUnit.includes('idr') || normalizedUnit === 'rp') {
-    if (value >= 1_000_000_000) return `${value / 1_000_000_000}B`
-    if (value >= 1_000_000) return `${value / 1_000_000}M`
+    if (value >= 1_000_000_000_000) return `${value / 1_000_000_000_000}T`
+    if (value >= 1_000_000_000) return `${value / 1_000_000_000}M`
+    if (value >= 1_000_000) return `${value / 1_000_000}J`
     if (value >= 1_000) return `${value / 1_000}K`
     return formatNumber(value)
   }

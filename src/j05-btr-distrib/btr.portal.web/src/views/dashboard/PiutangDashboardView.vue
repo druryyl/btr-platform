@@ -5,7 +5,7 @@ import DashboardDetailLayout from '@/components/dashboard/DashboardDetailLayout.
 import DashboardMetric from '@/components/dashboard/primitives/DashboardMetric.vue'
 import AgingPieChart from '@/components/dashboard/AgingPieChart.vue'
 import PiutangCustomerRiskTable from '@/components/dashboard/PiutangCustomerRiskTable.vue'
-import { formatCurrency, formatNumber, formatPercent } from '@/services/formatters'
+import { formatCurrency, formatCurrencyCompact, formatNumber, formatPercent } from '@/services/formatters'
 import type { DashboardPiutangTopCustomerRiskRow } from '@/models/dashboard'
 import { resolveInvestigationSourceLabel } from '@/services/investigationSourceLabels'
 import { navigateToInvestigation } from '@/services/navigateToInvestigation'
@@ -42,7 +42,8 @@ onMounted(() => {
     <div class="piutang-dashboard__kpi-row" data-domain="finance">
       <DashboardMetric
         label="Total Piutang"
-        :value="dashboard.piutang ? formatCurrency(dashboard.piutang.TotalPiutang) : '—'"
+        :value="dashboard.piutang ? formatCurrencyCompact(dashboard.piutang.TotalPiutang) : '—'"
+        :title="dashboard.piutang ? formatCurrency(dashboard.piutang.TotalPiutang) : undefined"
         :empty="!dashboard.piutang"
       />
       <DashboardMetric
@@ -57,13 +58,15 @@ onMounted(() => {
       />
       <DashboardMetric
         label="Overdue Piutang"
-        :value="dashboard.piutang ? formatCurrency(dashboard.piutang.OverduePiutang) : '—'"
+        :value="dashboard.piutang ? formatCurrencyCompact(dashboard.piutang.OverduePiutang) : '—'"
+        :title="dashboard.piutang ? formatCurrency(dashboard.piutang.OverduePiutang) : undefined"
         :empty="!dashboard.piutang"
       />
       <div class="piutang-kpi-aging">
         <DashboardMetric
           label="Piutang > 90 Hari"
-          :value="dashboard.piutang ? formatCurrency(dashboard.piutang.AgingOver90Amount) : '—'"
+          :value="dashboard.piutang ? formatCurrencyCompact(dashboard.piutang.AgingOver90Amount) : '—'"
+          :title="dashboard.piutang ? formatCurrency(dashboard.piutang.AgingOver90Amount) : undefined"
           :empty="!dashboard.piutang"
         />
         <span

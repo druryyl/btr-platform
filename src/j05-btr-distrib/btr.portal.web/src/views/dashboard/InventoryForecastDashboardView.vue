@@ -10,7 +10,7 @@ import InventoryForecastSummary from '@/components/dashboard/InventoryForecastSu
 import InventoryPurchaseRecommendationsTable from '@/components/dashboard/InventoryPurchaseRecommendationsTable.vue'
 import InventoryRiskHeatSummary from '@/components/dashboard/InventoryRiskHeatSummary.vue'
 import type { SalesForecastKpiMetric } from '@/components/dashboard/SalesForecastKpiRow.vue'
-import { formatCurrency, formatNumber, formatPercent } from '@/services/formatters'
+import { formatCurrency, formatCurrencyCompact, formatNumber, formatPercent } from '@/services/formatters'
 import { useDashboardStore } from '@/stores/dashboardStore'
 
 const dashboard = useDashboardStore()
@@ -33,8 +33,16 @@ const positionMetrics = computed((): SalesForecastKpiMetric[] => {
   if (!data) return []
 
   return [
-    { label: 'Current Inventory Value', value: formatCurrency(data.CurrentInventoryValue) },
-    { label: 'Projected Inventory Value @ H', value: formatCurrency(data.ProjectedInventoryValue) },
+    {
+      label: 'Current Inventory Value',
+      value: formatCurrencyCompact(data.CurrentInventoryValue),
+      title: formatCurrency(data.CurrentInventoryValue),
+    },
+    {
+      label: 'Projected Inventory Value @ H',
+      value: formatCurrencyCompact(data.ProjectedInventoryValue),
+      title: formatCurrency(data.ProjectedInventoryValue),
+    },
     {
       label: 'Avg Days of Supply',
       value: data.WeightedAverageDaysOfSupply != null ? data.WeightedAverageDaysOfSupply.toFixed(1) : '—',
@@ -59,12 +67,14 @@ const riskExposureMetrics = computed((): SalesForecastKpiMetric[] => {
     },
     {
       label: 'Overstock Value',
-      value: formatCurrency(data.OverstockValue),
+      value: formatCurrencyCompact(data.OverstockValue),
+      title: formatCurrency(data.OverstockValue),
       severity: data.OverstockValue > 0 ? 'warning' : 'normal',
     },
     {
       label: 'Understock Value',
-      value: formatCurrency(data.UnderstockValue),
+      value: formatCurrencyCompact(data.UnderstockValue),
+      title: formatCurrency(data.UnderstockValue),
       severity: data.UnderstockValue > 0 ? 'critical' : 'success',
     },
     {
@@ -79,9 +89,21 @@ const scenarioMetrics = computed((): SalesForecastKpiMetric[] => {
   if (!data) return []
 
   return [
-    { label: 'Best Case Projected', value: formatCurrency(data.BestCaseProjectedValue) },
-    { label: 'Expected Projected', value: formatCurrency(data.ProjectedInventoryValue) },
-    { label: 'Worst Case Projected', value: formatCurrency(data.WorstCaseProjectedValue) },
+    {
+      label: 'Best Case Projected',
+      value: formatCurrencyCompact(data.BestCaseProjectedValue),
+      title: formatCurrency(data.BestCaseProjectedValue),
+    },
+    {
+      label: 'Expected Projected',
+      value: formatCurrencyCompact(data.ProjectedInventoryValue),
+      title: formatCurrency(data.ProjectedInventoryValue),
+    },
+    {
+      label: 'Worst Case Projected',
+      value: formatCurrencyCompact(data.WorstCaseProjectedValue),
+      title: formatCurrency(data.WorstCaseProjectedValue),
+    },
     {
       label: 'Forecast Confidence',
       value: data.ForecastConfidence,

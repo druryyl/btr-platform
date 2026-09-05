@@ -58,7 +58,7 @@ The Dashboard has two levels:
 ### Executive Page Sections
 
 1. **Attention Cards** — Sales (Achievement % band), Piutang (overdue, > 90 day exposure), Purchasing (pending posting), Inventory (value and concentration).
-2. **Critical Exposure Lists** — Top 5 Customers, Categories, Suppliers, Principals.
+2. **Critical Exposure Lists** — Top 5 Customers (ranked by outstanding balance), Top 5 Categories (ranked by inventory value), Top 5 **Inventory** Suppliers (ranked by inventory value), Top 5 **Purchasing** Principals (ranked by month-to-date purchase amount).
 3. **Domain Summaries** — Compact summary with link to each domain dashboard.
 
 **Navigation path:** Executive → Domain Dashboard → Report. No direct report links on the executive page. For customer-specific attention, use **Dashboard → Customers** (M17).

@@ -13,7 +13,7 @@ import InventoryHorizontalBarChart from '@/components/dashboard/InventoryHorizon
 import InventoryRiskAttentionList from '@/components/dashboard/InventoryRiskAttentionList.vue'
 import InventoryRiskNavigationSection from '@/components/dashboard/InventoryRiskNavigationSection.vue'
 import Top10RankingTable from '@/components/dashboard/Top10RankingTable.vue'
-import { formatCurrency, formatNumber, formatPercent } from '@/services/formatters'
+import { formatCurrency, formatCurrencyCompact, formatNumber, formatPercent } from '@/services/formatters'
 import { PROFILE_ROW_CLICK_HINT } from '@/navigation/entityAnalyticsNavigation'
 import { INVENTORY_RISK_ATTENTION_SIGNAL_ALL } from '@/services/inventoryRiskAttentionSignals'
 import { resolveInvestigationSourceLabel } from '@/services/investigationSourceLabels'
@@ -185,7 +185,8 @@ onMounted(() => {
         >
           <DashboardMetric
             label="Dead Stock Value"
-            :value="cards ? formatCurrency(cards.DeadStockValue) : '—'"
+            :value="cards ? formatCurrencyCompact(cards.DeadStockValue) : '—'"
+            :title="cards ? formatCurrency(cards.DeadStockValue) : undefined"
             :empty="!cards"
           />
         </KpiCard>
@@ -213,7 +214,8 @@ onMounted(() => {
         >
           <DashboardMetric
             label="Slow Moving Value"
-            :value="cards ? formatCurrency(cards.SlowMovingValue) : '—'"
+            :value="cards ? formatCurrencyCompact(cards.SlowMovingValue) : '—'"
+            :title="cards ? formatCurrency(cards.SlowMovingValue) : undefined"
             :empty="!cards"
           />
         </KpiCard>

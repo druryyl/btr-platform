@@ -803,6 +803,8 @@ Share inventory value pada supplier/principal #1.
 
 - EX01 - Executive
 
+**UI Display (Management Attention Center):** amount column labeled *Outstanding Balance*.
+
 ---
 
 ### WHAT
@@ -833,6 +835,8 @@ Ranking Top 5 customer by outstanding balance untuk executive priority.
 **Location**
 
 - EX01 - Executive
+
+**UI Display (Management Attention Center):** amount column labeled *Inventory Value*.
 
 ---
 
@@ -865,6 +869,8 @@ Ranking Top 5 category by inventory value untuk executive priority.
 
 - EX01 - Executive
 
+**UI Display (Management Attention Center):** Top 5 Inventory Supplier — amount column labeled *Inventory Value*.
+
 ---
 
 ### WHAT
@@ -895,6 +901,8 @@ Ranking Top 5 supplier by inventory value untuk executive priority.
 **Location**
 
 - EX01 - Executive
+
+**UI Display (Management Attention Center):** Top 5 Purchasing Principal — amount column labeled *Purchase Amount*.
 
 ---
 

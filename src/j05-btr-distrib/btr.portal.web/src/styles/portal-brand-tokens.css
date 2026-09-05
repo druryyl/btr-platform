@@ -10,16 +10,20 @@
   --brand-gold-600: #c9a227;
   --brand-gold-ink: #3f2e0a;
 
-  /* Dark nav */
-  --portal-nav-bg: #1a050a;
-  --portal-nav-bg-elevated: #2a0a12;
-  --portal-nav-bg-active: #3d1220;
+  /* Dark nav — burgundy shell chrome */
+  --portal-nav-bg: #4a0e1c;
+  --portal-nav-bg-elevated: #5c1224;
+  --portal-nav-bg-active: #fbf5f6;
   --portal-nav-border: #4a0e1c;
   --portal-nav-text: #f7f0dc;
+  --portal-nav-text-active: #6b0f1a;
   --portal-nav-muted: #c4a8b0;
-  --portal-nav-icon: #e5c5cd;
+  --portal-nav-icon: #f7f0dc;
   --portal-nav-active-accent: #d4af37;
   --portal-nav-brand: #d4af37;
+
+  /* Header chrome — same burgundy family as the nav shell */
+  --portal-header-bg: #4a0e1c;
 
   /* Light canvas */
   --portal-canvas: #fbf7f5;
@@ -27,4 +31,9 @@
   --portal-border: #e8dfe2;
   --portal-text: #1f1218;
   --portal-text-muted: #6b5a61;
+
+  /* Login page background — deep burgundy to warm cream */
+  --portal-login-bg-top: #4a0e1c;
+  --portal-login-bg-mid: #6b0f1a;
+  --portal-login-bg-bottom: #f7f0dc;
 }
