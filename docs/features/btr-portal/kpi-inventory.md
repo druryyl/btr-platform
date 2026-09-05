@@ -458,6 +458,10 @@ Total KPI: 31
 - IN-KPI-021 — Recommended Purchase Qty (Indicative)
   Sources:
   - IN04 - Inventory Optimization
+- IN-KPI-028 — Recommended Purchase Value (Item)
+  Sources:
+  - IN03 - Inventory Forecast
+  - Entity Analytics — Replenishment Risk Map
 - IN-KPI-022 — Critical Actions Count
   Sources:
   - IN04 - Inventory Optimization

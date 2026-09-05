@@ -1,6 +1,7 @@
 import type {
   IPopulationProjectionStrategy,
   PopulationEntityInput,
+  PopulationProjectionOptions,
   PopulationProjectionResult,
 } from '@/services/populationProjection/types'
 
@@ -8,7 +9,10 @@ import type {
 export class LinearProjectionStrategy implements IPopulationProjectionStrategy {
   readonly id = 'linear'
 
-  project(_entities: PopulationEntityInput[]): PopulationProjectionResult | null {
+  project(
+    _entities: PopulationEntityInput[],
+    _options?: PopulationProjectionOptions,
+  ): PopulationProjectionResult | null {
     throw new Error('LinearProjectionStrategy is not yet implemented')
   }
 }

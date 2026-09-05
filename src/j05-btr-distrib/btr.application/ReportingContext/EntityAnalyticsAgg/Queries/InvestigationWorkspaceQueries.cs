@@ -72,6 +72,10 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Queries
         public int ActiveAttentionCount { get; set; }
 
         public bool MatchesFilter { get; set; }
+
+        public string SupplementaryLabel { get; set; }
+
+        public string FormattedSupplementaryValue { get; set; }
     }
 
     public class PeerDistributionRequest
@@ -83,6 +87,28 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Queries
         public string KpiId { get; set; }
 
         public string DimensionFilter { get; set; }
+
+        public string PeerGroupRuleId { get; set; }
+    }
+
+    public class PeerGroupRuleDto
+    {
+        public string RuleId { get; set; }
+
+        public string DisplayLabel { get; set; }
+
+        public string DimensionLabel { get; set; }
+
+        public bool IsDefault { get; set; }
+    }
+
+    public class PeerGroupRulesResponseDto
+    {
+        public string EntityType { get; set; }
+
+        public string DefaultRuleId { get; set; }
+
+        public List<PeerGroupRuleDto> Rules { get; set; } = new List<PeerGroupRuleDto>();
     }
 
     public class PeerDistributionResponseDto
@@ -100,6 +126,10 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Queries
         public int PeerGroupSize { get; set; }
 
         public string PeerGroupRuleId { get; set; }
+
+        public string PeerGroupDimensionValue { get; set; }
+
+        public string FormattedPeerGroupLabel { get; set; }
 
         public decimal? SelectedValue { get; set; }
 

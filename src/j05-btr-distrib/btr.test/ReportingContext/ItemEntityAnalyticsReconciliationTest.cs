@@ -37,6 +37,7 @@ namespace btr.test.ReportingContext
                 DaysSinceLastFaktur = 120,
                 DaysOfSupply = 32.5m,
                 RecommendedPurchaseQty = 15m,
+                RecommendedPurchaseValue = 30_882.35m,
                 DistinctCustomerCount = 2,
                 IsTrendEligible = true,
                 IsActive = false
@@ -89,6 +90,7 @@ namespace btr.test.ReportingContext
             metrics.Single(r => r.KpiId == EntityAnalyticsMetaKpiIds.DaysSinceLastFaktur).NumericValue.Should().Be(120m);
             metrics.Single(r => r.KpiId == "IN-KPI-020").NumericValue.Should().Be(32.5m);
             metrics.Single(r => r.KpiId == "IN-KPI-021").NumericValue.Should().Be(15m);
+            metrics.Single(r => r.KpiId == "IN-KPI-028").NumericValue.Should().Be(30_882.35m);
             metrics.Single(r => r.KpiId == EntityAnalyticsMetaKpiIds.MovementClass).TextValue
                 .Should().Be(DashboardInventoryRiskAggregator.SignalSlowMoving);
 
@@ -107,7 +109,7 @@ namespace btr.test.ReportingContext
                 DisplayName = "Item",
                 KpiPackId = ItemEntityAnalyticsRegistrar.KpiPackId,
                 RelationshipPackId = ItemRelationshipCatalog.PackId,
-                PeerGroupRuleId = PeerGroupResolver.ItemCategory
+                PeerGroupRuleId = PeerGroupResolver.ItemPrincipal
             });
 
             var registry = new EntityAnalyticsKpiRegistry(entityTypes);

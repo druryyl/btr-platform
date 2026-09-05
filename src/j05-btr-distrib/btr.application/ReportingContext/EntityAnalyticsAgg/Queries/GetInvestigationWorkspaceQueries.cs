@@ -111,6 +111,8 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Queries
         public string KpiId { get; set; }
 
         public string DimensionFilter { get; set; }
+
+        public string PeerGroupRuleId { get; set; }
     }
 
     public class GetPeerDistributionHandler : IRequestHandler<GetPeerDistributionQuery, PeerDistributionResponseDto>
@@ -131,10 +133,54 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Queries
                 EntityType = request.EntityType,
                 EntityId = request.EntityId,
                 KpiId = request.KpiId,
-                DimensionFilter = request.DimensionFilter
+                DimensionFilter = request.DimensionFilter,
+                PeerGroupRuleId = request.PeerGroupRuleId
             });
 
             return Task.FromResult(result);
+        }
+    }
+
+    public class GetPeerGroupRulesQuery : IRequest<PeerGroupRulesResponseDto>
+    {
+        public string EntityType { get; set; }
+    }
+
+    public class GetPeerGroupRulesHandler : IRequestHandler<GetPeerGroupRulesQuery, PeerGroupRulesResponseDto>
+    {
+        private readonly IEntityTypeRegistry _entityTypes;
+
+        public GetPeerGroupRulesHandler(IEntityTypeRegistry entityTypes)
+        {
+            _entityTypes = entityTypes;
+        }
+
+        public Task<PeerGroupRulesResponseDto> Handle(
+            GetPeerGroupRulesQuery request,
+            CancellationToken cancellationToken)
+        {
+            if (string.IsNullOrWhiteSpace(request.EntityType))
+                throw new ArgumentException("EntityType is required.");
+
+            if (!_entityTypes.TryGet(request.EntityType, out _))
+                throw new ArgumentException($"Unknown entity type: {request.EntityType}");
+
+            var rules = PeerGroupRuleCatalog.GetRulesForEntityType(request.EntityType);
+            var defaultRuleId = PeerGroupRuleCatalog.GetDefaultRuleId(request.EntityType, _entityTypes);
+
+            return Task.FromResult(new PeerGroupRulesResponseDto
+            {
+                EntityType = request.EntityType,
+                DefaultRuleId = defaultRuleId,
+                Rules = rules.Select(r => new PeerGroupRuleDto
+                {
+                    RuleId = r.RuleId,
+                    DisplayLabel = r.DisplayLabel,
+                    DimensionLabel = r.DimensionLabel,
+                    IsDefault = string.Equals(r.RuleId, defaultRuleId, StringComparison.OrdinalIgnoreCase)
+                        || (string.IsNullOrWhiteSpace(defaultRuleId) && r.IsDefault)
+                }).ToList()
+            });
         }
     }
 }

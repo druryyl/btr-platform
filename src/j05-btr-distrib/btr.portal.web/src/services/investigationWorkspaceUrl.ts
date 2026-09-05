@@ -6,6 +6,7 @@ export interface WorkspaceUrlState {
   entityIds?: string[]
   dimensionFilter?: string | null
   attentionOnly?: boolean
+  peerGroupRuleId?: string | null
 }
 
 function readQueryValue(value: LocationQueryValue | LocationQueryValue[] | undefined): string | null {
@@ -29,6 +30,7 @@ export function parseWorkspaceUrlState(
     entityIds,
     dimensionFilter: readQueryValue(query.filter),
     attentionOnly: attentionRaw === '1' || attentionRaw === 'true',
+    peerGroupRuleId: readQueryValue(query.peerGroup),
   }
 }
 
@@ -38,6 +40,7 @@ export function buildWorkspaceQuery(state: WorkspaceUrlState): Record<string, st
   if (state.entityIds?.length) query.entities = state.entityIds.join(',')
   if (state.dimensionFilter) query.filter = state.dimensionFilter
   if (state.attentionOnly) query.attentionOnly = '1'
+  if (state.peerGroupRuleId) query.peerGroup = state.peerGroupRuleId
   return query
 }
 

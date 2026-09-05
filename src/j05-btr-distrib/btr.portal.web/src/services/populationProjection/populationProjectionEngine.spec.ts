@@ -5,6 +5,8 @@ import {
   businessToVisual,
   classifyByResidualMagnitude,
   fitTheilSenRegression,
+  IDR_PROJECTION_FLOOR,
+  DAYS_PROJECTION_CAP,
   populationProjectionEngine,
   projectedEntityToAnalyzed,
   resolveDeviationLabel,
@@ -190,6 +192,100 @@ describe('populationProjectionEngine', () => {
     expect(analyzed.rawX).toBe(50)
     expect(analyzed.rawY).toBe(100)
     expect(analyzed.statisticalClass).toBe(entity.statisticalClass)
+  })
+
+  it('applies IDR projection floor so tiny Y values share floor log projection', () => {
+    const points = [
+      ...Array.from({ length: 20 }, (_, i) =>
+        makePoint({
+          EntityId: `zero${i}`,
+          AxisX: 50_000_000 + i * 1_000_000,
+          AxisY: i % 2 === 0 ? 0 : 500,
+        }),
+      ),
+      makePoint({ EntityId: 'atFloor', AxisX: 70_000_000, AxisY: IDR_PROJECTION_FLOOR }),
+      makePoint({ EntityId: 'mid', AxisX: 80_000_000, AxisY: 50_000_000 }),
+      makePoint({ EntityId: 'high', AxisX: 120_000_000, AxisY: 500_000_000 }),
+    ]
+
+    const withFloor = populationProjectionEngine.project(points, {
+      axisXUnit: 'IDR',
+      axisYUnit: 'IDR',
+    })!
+    const withoutFloor = populationProjectionEngine.project(points)!
+
+    const zeroEntity = withFloor.entities.get('zero0')!
+    const floorEntity = withFloor.entities.get('atFloor')!
+    expect(zeroEntity.businessY).toBe(0)
+    expect(floorEntity.businessY).toBe(IDR_PROJECTION_FLOOR)
+
+    // All sub-floor Y values project like the explicit floor peer in the same population
+    for (const [id, entity] of withFloor.entities) {
+      if (id.startsWith('zero')) {
+        expect(entity.projectionY).toBeCloseTo(floorEntity.projectionY, 8)
+      }
+    }
+
+    // Without floor, zeros sit lower in projection space than the floor peer
+    const unflooredZero = withoutFloor.entities.get('zero0')!
+    const unflooredFloor = withoutFloor.entities.get('atFloor')!
+    expect(unflooredZero.projectionY).toBeLessThan(unflooredFloor.projectionY)
+  })
+
+  it('does not apply IDR floor when axis unit is Days', () => {
+    const points = [
+      makePoint({ EntityId: 'a', AxisX: 1_000_000, AxisY: 0 }),
+      makePoint({ EntityId: 'b', AxisX: 2_000_000, AxisY: 30 }),
+      makePoint({ EntityId: 'c', AxisX: 3_000_000, AxisY: 400 }),
+    ]
+    const daysY = populationProjectionEngine.project(points, {
+      axisXUnit: 'IDR',
+      axisYUnit: 'Days',
+    })!
+    const idrY = populationProjectionEngine.project(points, {
+      axisXUnit: 'IDR',
+      axisYUnit: 'IDR',
+    })!
+
+    expect(daysY.entities.get('a')!.businessY).toBe(0)
+    expect(daysY.entities.get('a')!.projectionY).not.toBeCloseTo(
+      idrY.entities.get('a')!.projectionY,
+      2,
+    )
+  })
+
+  it('applies Days projection cap so values above 365 share cap projection', () => {
+    const points = [
+      ...Array.from({ length: 18 }, (_, i) =>
+        makePoint({
+          EntityId: `mid${i}`,
+          AxisX: 10_000_000 + i * 500_000,
+          AxisY: 20 + i * 2,
+        }),
+      ),
+      makePoint({ EntityId: 'low', AxisX: 20_000_000, AxisY: 30 }),
+      makePoint({ EntityId: 'atCap', AxisX: 25_000_000, AxisY: DAYS_PROJECTION_CAP }),
+      makePoint({ EntityId: 'over', AxisX: 30_000_000, AxisY: 400 }),
+      makePoint({ EntityId: 'extreme', AxisX: 40_000_000, AxisY: 10_000 }),
+    ]
+
+    const result = populationProjectionEngine.project(points, {
+      axisXUnit: 'IDR',
+      axisYUnit: 'Days',
+    })!
+
+    const low = result.entities.get('low')!
+    const atCap = result.entities.get('atCap')!
+    const over = result.entities.get('over')!
+    const extreme = result.entities.get('extreme')!
+
+    expect(over.businessY).toBe(400)
+    expect(extreme.businessY).toBe(10_000)
+    expect(atCap.businessY).toBe(DAYS_PROJECTION_CAP)
+
+    expect(over.projectionY).toBeCloseTo(atCap.projectionY, 8)
+    expect(extreme.projectionY).toBeCloseTo(atCap.projectionY, 8)
+    expect(low.projectionY).toBeLessThan(atCap.projectionY)
   })
 })
 

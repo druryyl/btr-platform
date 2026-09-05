@@ -1,16 +1,20 @@
 import { computed, ref, shallowRef } from 'vue'
 import { defineStore } from 'pinia'
+import axios from 'axios'
 import {
   fetchEntityCompare,
   fetchEntityProfile,
   fetchMapPresets,
+  fetchPeerGroupRules,
   fetchPopulationMap,
+  POPULATION_MAP_TIMEOUT_MS,
 } from '@/api/entityAnalyticsApi'
 import { getApiErrorMessage } from '@/api/httpClient'
 import type {
   EntityCompareResponse,
   EntityPerformanceProfileResponse,
   MapPreset,
+  PeerGroupRule,
   PopulationMapPoint,
   PopulationMapResponse,
   WorkspaceSelectedEntity,
@@ -25,6 +29,7 @@ export interface WorkspaceHistoryEntry {
   selectedEntityIds: string[]
   dimensionFilter: string | null
   attentionOnly: boolean
+  peerGroupRuleId: string | null
 }
 
 export const useInvestigationWorkspaceStore = defineStore('investigationWorkspace', () => {
@@ -33,8 +38,10 @@ export const useInvestigationWorkspaceStore = defineStore('investigationWorkspac
   const dimensionFilter = ref<string | null>(null)
   const attentionOnly = ref(false)
   const selectedEntityIds = ref<string[]>([])
+  const peerGroupRuleId = ref<string | null>(null)
 
   const presets = ref<MapPreset[]>([])
+  const peerGroupRules = ref<PeerGroupRule[]>([])
   const population = shallowRef<PopulationMapResponse | null>(null)
   const profiles = ref<Record<string, EntityPerformanceProfileResponse>>({})
   const compareBundle = ref<EntityCompareResponse | null>(null)
@@ -46,6 +53,10 @@ export const useInvestigationWorkspaceStore = defineStore('investigationWorkspac
 
   const historyStack = ref<WorkspaceHistoryEntry[]>([])
   const undoStack = ref<WorkspaceHistoryEntry[]>([])
+
+  /** Monotonic id so stale population responses never overwrite newer state. */
+  let populationRequestId = 0
+  let populationAbort: AbortController | null = null
 
   const expandedPanels = ref({
     peerPosition: true,
@@ -89,6 +100,11 @@ export const useInvestigationWorkspaceStore = defineStore('investigationWorkspac
     return `Showing ${total} active ${label.toLowerCase()}s`
   })
 
+  const showPeerGroupSelector = computed(
+    () => (entityType.value === 'Customer' || entityType.value === 'Item')
+      && peerGroupRules.value.length > 1,
+  )
+
   function snapshotState(): WorkspaceHistoryEntry {
     return {
       entityType: entityType.value,
@@ -96,6 +112,7 @@ export const useInvestigationWorkspaceStore = defineStore('investigationWorkspac
       selectedEntityIds: [...selectedEntityIds.value],
       dimensionFilter: dimensionFilter.value,
       attentionOnly: attentionOnly.value,
+      peerGroupRuleId: peerGroupRuleId.value,
     }
   }
 
@@ -110,6 +127,7 @@ export const useInvestigationWorkspaceStore = defineStore('investigationWorkspac
     selectedEntityIds.value = [...entry.selectedEntityIds]
     dimensionFilter.value = entry.dimensionFilter
     attentionOnly.value = entry.attentionOnly
+    peerGroupRuleId.value = entry.peerGroupRuleId ?? null
   }
 
   async function loadPresets(type = entityType.value) {
@@ -131,25 +149,66 @@ export const useInvestigationWorkspaceStore = defineStore('investigationWorkspac
     }
   }
 
+  async function loadPeerGroupRules(type = entityType.value) {
+    try {
+      const response = await fetchPeerGroupRules(type)
+      peerGroupRules.value = response.Rules ?? []
+      if (
+        peerGroupRuleId.value
+        && !peerGroupRules.value.some((r) => r.RuleId === peerGroupRuleId.value)
+      ) {
+        peerGroupRuleId.value = null
+      }
+      if (!peerGroupRuleId.value && peerGroupRules.value.length > 1) {
+        peerGroupRuleId.value = response.DefaultRuleId
+          ?? peerGroupRules.value.find((r) => r.IsDefault)?.RuleId
+          ?? peerGroupRules.value[0]?.RuleId
+          ?? null
+      }
+      if (peerGroupRules.value.length <= 1) {
+        peerGroupRuleId.value = null
+      }
+    } catch {
+      peerGroupRules.value = []
+      peerGroupRuleId.value = null
+    }
+  }
+
   async function loadPopulation() {
     if (!entityType.value) return
+
+    const requestId = ++populationRequestId
+    populationAbort?.abort()
+    populationAbort = new AbortController()
+    const { signal } = populationAbort
+
     loadingPopulation.value = true
     error.value = null
     try {
-      population.value = await fetchPopulationMap({
+      const result = await fetchPopulationMap({
         entityType: entityType.value,
         presetId: presetId.value ?? undefined,
         dimensionFilter: dimensionFilter.value ?? undefined,
         attentionOnly: attentionOnly.value || undefined,
+        signal,
+        timeoutMs: POPULATION_MAP_TIMEOUT_MS,
       })
-      if (population.value?.PresetId) {
-        presetId.value = population.value.PresetId
+      if (requestId !== populationRequestId) return
+      population.value = result
+      if (result?.PresetId) {
+        presetId.value = result.PresetId
       }
     } catch (err) {
+      if (requestId !== populationRequestId) return
+      if (axios.isAxiosError(err) && err.code === 'ERR_CANCELED') {
+        return
+      }
       error.value = getApiErrorMessage(err, 'Failed to load population map')
       population.value = null
     } finally {
-      loadingPopulation.value = false
+      if (requestId === populationRequestId) {
+        loadingPopulation.value = false
+      }
     }
   }
 
@@ -191,9 +250,11 @@ export const useInvestigationWorkspaceStore = defineStore('investigationWorkspac
     if (initial?.presetId !== undefined) presetId.value = initial.presetId
     if (initial?.dimensionFilter !== undefined) dimensionFilter.value = initial.dimensionFilter
     if (initial?.attentionOnly !== undefined) attentionOnly.value = initial.attentionOnly
+    if (initial?.peerGroupRuleId !== undefined) peerGroupRuleId.value = initial.peerGroupRuleId
     if (initial?.selectedEntityIds) selectedEntityIds.value = [...initial.selectedEntityIds]
 
     await loadPresets(type)
+    await loadPeerGroupRules(type)
     await loadPopulation()
     if (selectedEntityIds.value.length) {
       await loadProfilesForSelection()
@@ -207,7 +268,9 @@ export const useInvestigationWorkspaceStore = defineStore('investigationWorkspac
     profiles.value = {}
     dimensionFilter.value = null
     attentionOnly.value = false
+    peerGroupRuleId.value = null
     await loadPresets(type)
+    await loadPeerGroupRules(type)
     await loadPopulation()
   }
 
@@ -228,6 +291,12 @@ export const useInvestigationWorkspaceStore = defineStore('investigationWorkspac
     pushUndo()
     attentionOnly.value = value
     await loadPopulation()
+  }
+
+  function setPeerGroupRuleId(value: string | null) {
+    if (peerGroupRuleId.value === value) return
+    pushUndo()
+    peerGroupRuleId.value = value
   }
 
   async function clearFilters() {
@@ -273,6 +342,7 @@ export const useInvestigationWorkspaceStore = defineStore('investigationWorkspac
     const previous = undoStack.value.pop()
     if (!previous) return
     applySnapshot(previous)
+    void loadPeerGroupRules(entityType.value)
     void loadPopulation()
     if (selectedEntityIds.value.length) void loadProfilesForSelection()
     else profiles.value = {}
@@ -296,8 +366,10 @@ export const useInvestigationWorkspaceStore = defineStore('investigationWorkspac
     presetId,
     dimensionFilter,
     attentionOnly,
+    peerGroupRuleId,
     selectedEntityIds,
     presets,
+    peerGroupRules,
     population,
     profiles,
     compareBundle,
@@ -311,14 +383,17 @@ export const useInvestigationWorkspaceStore = defineStore('investigationWorkspac
     activePreset,
     selectedEntities,
     scopeLabel,
+    showPeerGroupSelector,
     initializeWorkspace,
     loadPresets,
+    loadPeerGroupRules,
     loadPopulation,
     loadProfilesForSelection,
     setEntityType,
     setPreset,
     setDimensionFilter,
     setAttentionOnly,
+    setPeerGroupRuleId,
     clearFilters,
     selectEntity,
     removeEntity,

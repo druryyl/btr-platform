@@ -39,7 +39,7 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Services
                 AxisXKpiId = "IN-KPI-001",
                 AxisYKpiId = "IN-KPI-020",
                 IsDefault = true,
-                FilterDimensionKpiId = EntityAnalyticsMetaKpiIds.Category
+                FilterDimensionKpiId = EntityAnalyticsMetaKpiIds.SupplierName
             },
             new EntityMapPresetDefinition
             {
@@ -47,9 +47,10 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Services
                 EntityType = EntityTypeCode.Item,
                 DisplayName = "Replenishment Risk Map",
                 Description = "Which items need purchase attention?",
-                AxisXKpiId = "IN-KPI-021",
+                AxisXKpiId = "IN-KPI-028",
                 AxisYKpiId = "IN-KPI-020",
-                FilterDimensionKpiId = EntityAnalyticsMetaKpiIds.Category
+                TooltipSupplementaryKpiId = "IN-KPI-021",
+                FilterDimensionKpiId = EntityAnalyticsMetaKpiIds.SupplierName
             },
             new EntityMapPresetDefinition
             {

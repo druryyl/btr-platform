@@ -321,6 +321,7 @@ Entity assignments and KPI identities are sourced from [`kpi-entity-classificati
 | IN-KPI-019 | Forecast Confidence (Inventory) |
 | IN-KPI-020 | Days of Supply (Item) |
 | IN-KPI-021 | Recommended Purchase Qty (Indicative) |
+| IN-KPI-028 | Recommended Purchase Value (Item) |
 | IN-KPI-022 | Critical Actions Count |
 | IN-KPI-023 | Recommended Purchase Budget |
 | IN-KPI-025 | Action Counts by Type (Purchase / Delay / Transfer / Clearance) |

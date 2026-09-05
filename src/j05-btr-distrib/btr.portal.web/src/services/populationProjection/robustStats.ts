@@ -7,9 +7,48 @@ export const BAND_SAMPLE_COUNT = 80
 export const THEIL_SEN_EXACT_MAX = 600
 export const THEIL_SEN_SUBSAMPLE_SIZE = 600
 
+/**
+ * IDR amounts below this are treated as the floor for Population Map log projection
+ * so zeros/tiny piutang do not stretch the Expected line mid-chart.
+ */
+export const IDR_PROJECTION_FLOOR = 10_000
+
+/**
+ * Days values above this are treated as the ceiling for Population Map log projection
+ * so extreme DoS (e.g. 10k days) do not stretch the scale; tooltips still show the true value.
+ */
+export const DAYS_PROJECTION_CAP = 365
+
+export function isIdrAxisUnit(unit: string | null | undefined): boolean {
+  const normalized = unit?.trim().toLowerCase() ?? ''
+  return normalized === 'idr' || normalized === 'rp' || normalized.includes('idr')
+}
+
+export function isDaysAxisUnit(unit: string | null | undefined): boolean {
+  const normalized = unit?.trim().toLowerCase() ?? ''
+  return normalized === 'days' || normalized.includes('day')
+}
+
 /** log10(max(value, 0) + 1) — safe for zero; clamps negatives before transform. */
 export function businessToLog(value: number): number {
   return Math.log10(Math.max(value, 0) + 1)
+}
+
+/**
+ * Apply unit-specific projection clamps before log:
+ * - IDR: floor at IDR_PROJECTION_FLOOR
+ * - Days: ceiling at DAYS_PROJECTION_CAP
+ * Otherwise pass through (still clamp negatives at 0).
+ */
+export function businessValueForLog(value: number, unit: string | null | undefined): number {
+  const clamped = Math.max(value, 0)
+  if (isIdrAxisUnit(unit)) {
+    return Math.max(clamped, IDR_PROJECTION_FLOOR)
+  }
+  if (isDaysAxisUnit(unit)) {
+    return Math.min(clamped, DAYS_PROJECTION_CAP)
+  }
+  return clamped
 }
 
 export function median(values: number[]): number {

@@ -39,7 +39,7 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Services
                 DisplayName = "Item",
                 KpiPackId = "item-default",
                 RelationshipPackId = "item-relationships",
-                PeerGroupRuleId = "item-category",
+                PeerGroupRuleId = "item-principal",
                 WorkerDomainHook = "InventoryRisk",
                 ProfileRouteTemplate = "/analytics/items/{id}"
             });

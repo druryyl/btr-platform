@@ -4,18 +4,28 @@ import type { AnalyzedPoint } from '@/services/populationProjection/populationPr
 import { populationProjectionEngine } from '@/services/populationProjection/populationProjectionEngine'
 import {
   buildAutoLabelCandidates,
+  buildDaysCalendarAxisTicks,
+  buildIdrNiceAxisTicks,
   buildTransform,
   computeBounds,
   computeRawExtents,
   dataToScreen,
+  DAYS_CALENDAR_EDGES,
+  DAYS_YEAR_EDGE,
+  formatAxisTickValue,
+  generateIdrNiceEdges,
   generateLinearAxisTicks,
   generateProjectionAxisGuides,
   generateProjectionGridTicks,
+  isDaysAxisUnit,
+  isIdrAxisUnit,
   plotPoints,
   projectionToScreenX,
   resolveBusinessAttentionTier,
   resolveLabelPlacements,
+  resolvePopulationAxisTicks,
   resolveVisualTier,
+  formatBinRangeLabel,
   CRITICAL_PERCENTILE_THRESHOLD,
 } from '@/services/populationMapLayout'
 
@@ -126,6 +136,127 @@ describe('generateLinearAxisTicks', () => {
     expect(ticks.length).toBeGreaterThan(2)
     expect(ticks[0]).toBeGreaterThanOrEqual(0)
     expect(ticks[ticks.length - 1]).toBeLessThanOrEqual(100)
+  })
+})
+
+describe('buildDaysCalendarAxisTicks', () => {
+  const norm = { center: 1, scale: 0.5 }
+
+  it('uses week/month ladder clipped to data range', () => {
+    const ticks = buildDaysCalendarAxisTicks(norm, 0, 100)
+    const values = ticks.map((t) => t.businessValue)
+    expect(values).toEqual([0, 7, 14, 21, 30, 60, 90])
+    expect(values).not.toContain(365)
+  })
+
+  it('includes 365 when dataMax is above one year', () => {
+    const ticks = buildDaysCalendarAxisTicks(norm, 5, 800)
+    const values = ticks.map((t) => t.businessValue)
+    expect(values[0]).toBe(0)
+    expect(values).toContain(30)
+    expect(values).toContain(365)
+    expect(values.every((v) => DAYS_CALENDAR_EDGES.includes(v as (typeof DAYS_CALENDAR_EDGES)[number]))).toBe(true)
+  })
+
+  it('projects ticks with finite projection values', () => {
+    const ticks = buildDaysCalendarAxisTicks(norm, 0, 400)
+    expect(ticks.length).toBeGreaterThan(0)
+    for (const tick of ticks) {
+      expect(Number.isFinite(tick.projectionValue)).toBe(true)
+    }
+  })
+
+  it('detects Days axis units', () => {
+    expect(isDaysAxisUnit('Days')).toBe(true)
+    expect(isDaysAxisUnit('days')).toBe(true)
+    expect(isDaysAxisUnit('IDR')).toBe(false)
+  })
+
+  it('projects 365 tick with Days cap transform', () => {
+    const ticks = buildDaysCalendarAxisTicks(norm, 0, 10_000)
+    const tick365 = ticks.find((t) => t.businessValue === 365)!
+    expect(tick365).toBeDefined()
+    // Cap does not change 365 itself; ensures finite projection aligned with DAYS_YEAR_EDGE
+    expect(DAYS_YEAR_EDGE).toBe(365)
+    expect(Number.isFinite(tick365.projectionValue)).toBe(true)
+  })
+})
+
+describe('formatAxisTickValue Days cap label', () => {
+  it('returns 365+ when value is cap and dataMax exceeds one year', () => {
+    expect(formatAxisTickValue(365, 'Days', { dataMax: 800 })).toBe('365+')
+  })
+
+  it('returns 365 when dataMax is at or below the cap', () => {
+    expect(formatAxisTickValue(365, 'Days', { dataMax: 365 })).toBe('365')
+    expect(formatAxisTickValue(365, 'Days')).toBe('365')
+  })
+})
+
+describe('buildIdrNiceAxisTicks', () => {
+  const norm = { center: 6, scale: 1 }
+
+  function isNiceIdr(value: number): boolean {
+    if (value <= 0) return false
+    const exp = Math.floor(Math.log10(value))
+    const scale = 10 ** exp
+    const mant = value / scale
+    return [1, 2, 5].some((m) => Math.abs(mant - m) < 1e-9)
+  }
+
+  it('uses 1-2-5 Rupiah edges within range', () => {
+    const edges = generateIdrNiceEdges(1_000_000, 100_000_000)
+    expect(edges).toContain(1_000_000)
+    expect(edges).toContain(2_000_000)
+    expect(edges).toContain(5_000_000)
+    expect(edges).toContain(10_000_000)
+    expect(edges).toContain(50_000_000)
+    expect(edges).toContain(100_000_000)
+    expect(edges.every(isNiceIdr)).toBe(true)
+  })
+
+  it('clips to data range and keeps a readable tick count', () => {
+    const ticks = buildIdrNiceAxisTicks(norm, 5_000_000, 800_000_000)
+    const values = ticks.map((t) => t.businessValue)
+    expect(values.every((v) => v >= 5_000_000 && v <= 800_000_000)).toBe(true)
+    expect(values.every(isNiceIdr)).toBe(true)
+    expect(ticks.length).toBeGreaterThan(2)
+    expect(ticks.length).toBeLessThanOrEqual(12)
+  })
+
+  it('projects ticks with finite projection values', () => {
+    const ticks = buildIdrNiceAxisTicks(norm, 100_000, 1_000_000_000)
+    expect(ticks.length).toBeGreaterThan(0)
+    for (const tick of ticks) {
+      expect(Number.isFinite(tick.projectionValue)).toBe(true)
+    }
+  })
+
+  it('detects IDR axis units', () => {
+    expect(isIdrAxisUnit('IDR')).toBe(true)
+    expect(isIdrAxisUnit('idr')).toBe(true)
+    expect(isIdrAxisUnit('Days')).toBe(false)
+  })
+})
+
+describe('resolvePopulationAxisTicks', () => {
+  const norm = { center: 6, scale: 1 }
+  const fallback = [{ businessValue: 42, projectionValue: 0 }]
+
+  it('returns IDR nice ticks without throwing', () => {
+    const ticks = resolvePopulationAxisTicks('IDR', norm, 1_000_000, 100_000_000, fallback)
+    expect(ticks.length).toBeGreaterThan(0)
+    expect(ticks.map((t) => t.businessValue)).toContain(1_000_000)
+    expect(ticks.map((t) => t.businessValue)).toContain(10_000_000)
+  })
+
+  it('returns Days calendar ticks for Days unit', () => {
+    const ticks = resolvePopulationAxisTicks('Days', norm, 0, 100, fallback)
+    expect(ticks.map((t) => t.businessValue)).toEqual([0, 7, 14, 21, 30, 60, 90])
+  })
+
+  it('returns fallback for other units', () => {
+    expect(resolvePopulationAxisTicks('Percent', norm, 0, 100, fallback)).toBe(fallback)
   })
 })
 
@@ -427,5 +558,14 @@ describe('buildAutoLabelCandidates', () => {
 
     expect(candidates.some((c) => c.entityId === 'large')).toBe(true)
     expect(candidates.some((c) => c.entityId === 'small')).toBe(false)
+  })
+})
+
+describe('formatBinRangeLabel', () => {
+  it('formats IDR ranges with K/M/B suffixes', () => {
+    expect(formatBinRangeLabel(0, 100_000, 'IDR')).toBe('0 – 100K')
+    expect(formatBinRangeLabel(100_000, 50_000_000, 'IDR')).toBe('100K – 50M')
+    expect(formatBinRangeLabel(50_000_000, 1_400_000_000, 'IDR')).toBe('50M – 1.4B')
+    expect(formatBinRangeLabel(500_000_000, 1_400_000_000, 'IDR', true)).toBe('500M – ~')
   })
 })

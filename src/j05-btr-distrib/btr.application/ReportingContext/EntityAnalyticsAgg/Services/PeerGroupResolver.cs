@@ -9,7 +9,9 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Services
     public static class PeerGroupResolver
     {
         public const string CustomerWilayah = "customer-wilayah";
+        public const string CustomerKlasifikasi = "customer-klasifikasi";
         public const string SalesmanAllActive = "salesman-all-active";
+        public const string ItemPrincipal = "item-principal";
         public const string ItemCategory = "item-category";
         public const string SupplierAllActive = "supplier-all-active";
 
@@ -18,8 +20,14 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Services
             if (string.Equals(peerGroupRuleId, CustomerWilayah, StringComparison.OrdinalIgnoreCase))
                 return EntityAnalyticsMetaKpiIds.Wilayah;
 
+            if (string.Equals(peerGroupRuleId, CustomerKlasifikasi, StringComparison.OrdinalIgnoreCase))
+                return EntityAnalyticsMetaKpiIds.Klasifikasi;
+
+            if (string.Equals(peerGroupRuleId, ItemPrincipal, StringComparison.OrdinalIgnoreCase))
+                return EntityAnalyticsMetaKpiIds.SupplierName;
+
             if (string.Equals(peerGroupRuleId, ItemCategory, StringComparison.OrdinalIgnoreCase))
-                return EntityAnalyticsMetaKpiIds.DimPrefix + "CATEGORY";
+                return EntityAnalyticsMetaKpiIds.Category;
 
             return null;
         }
@@ -36,6 +44,8 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Services
                 return new Dictionary<string, IReadOnlyList<string>>(StringComparer.OrdinalIgnoreCase);
 
             if (string.Equals(peerGroupRuleId, CustomerWilayah, StringComparison.OrdinalIgnoreCase)
+                || string.Equals(peerGroupRuleId, CustomerKlasifikasi, StringComparison.OrdinalIgnoreCase)
+                || string.Equals(peerGroupRuleId, ItemPrincipal, StringComparison.OrdinalIgnoreCase)
                 || string.Equals(peerGroupRuleId, ItemCategory, StringComparison.OrdinalIgnoreCase))
             {
                 return BuildDimensionGroupedIndex(activePopulation);

@@ -3,6 +3,7 @@ import type {
   IPopulationProjectionStrategy,
   PopulationEntityInput,
   PopulationMapAnalysis,
+  PopulationProjectionOptions,
   PopulationProjectionResult,
   StatisticalClass,
 } from '@/services/populationProjection/types'
@@ -32,11 +33,12 @@ export class PopulationProjectionEngine {
 
   project(
     points: PopulationMapPoint[],
+    options?: PopulationProjectionOptions,
     strategy?: IPopulationProjectionStrategy,
   ): PopulationProjectionResult | null {
     const inputs = points.map(toEntityInput)
     const activeStrategy = strategy ?? this.defaultStrategy
-    return activeStrategy.project(inputs)
+    return activeStrategy.project(inputs, options)
   }
 }
 
@@ -52,6 +54,7 @@ export {
   type PopulationEntityInput,
   type PopulationMapAnalysis,
   type PopulationProjectionMetadata,
+  type PopulationProjectionOptions,
   type PopulationProjectionResult,
   type ProjectedEntity,
   type RobustRegressionModel,
@@ -60,7 +63,13 @@ export {
   projectionResultToLegacyAnalysis,
 } from '@/services/populationProjection/types'
 
-export { businessToLog as businessToVisual } from '@/services/populationProjection/robustStats'
+export {
+  businessToLog as businessToVisual,
+  DAYS_PROJECTION_CAP,
+  IDR_PROJECTION_FLOOR,
+  isDaysAxisUnit,
+  isIdrAxisUnit,
+} from '@/services/populationProjection/robustStats'
 
 export { classifyByResidualMagnitude, fitTheilSenRegression, resolveDeviationLabel }
 

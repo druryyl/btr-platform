@@ -57,6 +57,10 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Services
             var population = _repository.GetActivePopulation(request.EntityType, dimensionKpiId);
             var axisXValues = GetKpiValueMap(request.EntityType, preset.AxisXKpiId);
             var axisYValues = GetKpiValueMap(request.EntityType, preset.AxisYKpiId);
+            var supplementaryMeta = ResolveMetadata(preset.TooltipSupplementaryKpiId);
+            var supplementaryValues = string.IsNullOrWhiteSpace(preset.TooltipSupplementaryKpiId)
+                ? new Dictionary<string, decimal?>(StringComparer.OrdinalIgnoreCase)
+                : GetKpiValueMap(request.EntityType, preset.TooltipSupplementaryKpiId);
             var attentionCounts = _repository.GetActiveAttentionCounts(request.EntityType);
             var generatedAt = _repository.GetLatestGeneratedAtForEntityType(request.EntityType);
 
@@ -71,6 +75,7 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Services
 
                 axisXValues.TryGetValue(row.EntityId, out var axisX);
                 axisYValues.TryGetValue(row.EntityId, out var axisY);
+                supplementaryValues.TryGetValue(row.EntityId, out var supplementaryValue);
                 attentionCounts.TryGetValue(row.EntityId, out var attentionCount);
 
                 var matchesFilter = MatchesFilter(
@@ -93,7 +98,11 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Services
                     DimensionValue = row.DimensionValue,
                     IsActive = row.IsActive,
                     ActiveAttentionCount = attentionCount,
-                    MatchesFilter = matchesFilter
+                    MatchesFilter = matchesFilter,
+                    SupplementaryLabel = supplementaryMeta?.DisplayName,
+                    FormattedSupplementaryValue = supplementaryMeta == null
+                        ? null
+                        : FormatValue(supplementaryValue, supplementaryMeta)
                 };
 
                 points.Add(point);

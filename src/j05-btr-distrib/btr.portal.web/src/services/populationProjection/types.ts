@@ -94,7 +94,15 @@ export interface PopulationProjectionResult {
 
 export interface IPopulationProjectionStrategy {
   readonly id: string
-  project(entities: PopulationEntityInput[]): PopulationProjectionResult | null
+  project(
+    entities: PopulationEntityInput[],
+    options?: PopulationProjectionOptions,
+  ): PopulationProjectionResult | null
+}
+
+export interface PopulationProjectionOptions {
+  axisXUnit?: string | null
+  axisYUnit?: string | null
 }
 
 /** @deprecated Use ProjectedEntity — kept for tooltip/layout compatibility during transition */

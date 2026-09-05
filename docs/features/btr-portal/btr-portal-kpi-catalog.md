@@ -345,6 +345,7 @@ Navigasi cepat ke setiap entri KPI di §6. Klik kode KPI untuk loncat ke definis
 - [IN-KPI-019 — Forecast Confidence (Inventory)](#in-kpi-019)
 - [IN-KPI-020 — Days of Supply (Item)](#in-kpi-020)
 - [IN-KPI-021 — Recommended Purchase Qty (Indicative)](#in-kpi-021)
+- [IN-KPI-028 — Recommended Purchase Value (Item)](#in-kpi-028)
 - [IN-KPI-022 — Critical Actions Count](#in-kpi-022)
 - [IN-KPI-023 — Recommended Purchase Budget](#in-kpi-023)
 - [IN-KPI-024 — Recoverable Capital](#in-kpi-024)
@@ -5825,6 +5826,40 @@ Decision support only.
 ### WHEN
 
 * IN03 → IN04 actions → PU01 posting backlog check.
+
+<a id="in-kpi-028"></a>
+## IN-KPI-028 — Recommended Purchase Value (Item)
+
+**Location**
+
+- IN03 - Inventory Forecast
+- Entity Analytics — Replenishment Risk Map (X-axis)
+
+---
+
+### WHAT
+
+Indicative recommended purchase cost per SKU in IDR.
+- Item-level counterpart to purchase qty; not portfolio Recommended Purchase Budget.
+- Audience: Inventory, Purchasing management.
+- Decision support only — not approved PO.
+
+### HOW
+
+* `Round(RecommendedPurchaseQty × UnitHpp, 2)`.
+- `UnitHpp` = implied on-hand cost (`InventoryValue / Qty`) when on-hand qty &gt; 0.
+- When on-hand qty = 0, fall back to `BTR_Brg.Hpp`.
+- Same forecast eligibility as IN-KPI-021.
+
+### WHY
+
+* Comparable purchase magnitude across mixed UoM items on population maps.
+- Supports cash-oriented replenishment triage alongside Days of Supply.
+
+### WHEN
+
+* Entity Analytics Item workspace → Replenishment Risk Map.
+* Drill to IN03 / IN04 for qty and action detail.
 
 <a id="in-kpi-022"></a>
 ## IN-KPI-022 — Critical Actions Count

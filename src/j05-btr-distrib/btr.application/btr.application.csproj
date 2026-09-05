@@ -453,6 +453,7 @@
     <Compile Include="ReportingContext\EntityAnalyticsAgg\Models\RadarValueSource.cs" />
     <Compile Include="ReportingContext\EntityAnalyticsAgg\Models\EntityAnalyticsSignatureDimensions.cs" />
     <Compile Include="ReportingContext\EntityAnalyticsAgg\Models\PeerGroupResolution.cs" />
+    <Compile Include="ReportingContext\EntityAnalyticsAgg\Models\PeerGroupRuleDefinition.cs" />
     <Compile Include="ReportingContext\EntityAnalyticsAgg\Models\Snapshot\EntityAnalyticsAttentionEventRow.cs" />
     <Compile Include="ReportingContext\EntityAnalyticsAgg\Models\Snapshot\EntityAnalyticsCurrentRow.cs" />
     <Compile Include="ReportingContext\EntityAnalyticsAgg\Models\Snapshot\EntityAnalyticsMonthlyRow.cs" />
@@ -501,6 +502,8 @@
     <Compile Include="ReportingContext\EntityAnalyticsAgg\Services\EntityRankingEngine.cs" />
     <Compile Include="ReportingContext\EntityAnalyticsAgg\Services\EntityRadarCalculator.cs" />
     <Compile Include="ReportingContext\EntityAnalyticsAgg\Services\PeerGroupResolver.cs" />
+    <Compile Include="ReportingContext\EntityAnalyticsAgg\Services\PeerGroupRuleCatalog.cs" />
+    <Compile Include="ReportingContext\EntityAnalyticsAgg\Services\PeerGroupLabelFormatter.cs" />
     <Compile Include="ReportingContext\EntityAnalyticsAgg\Services\EntityRadarEngine.cs" />
     <Compile Include="ReportingContext\EntityAnalyticsAgg\Services\EntityAttentionLifecycleCalculator.cs" />
     <Compile Include="ReportingContext\EntityAnalyticsAgg\Services\EntityAttentionEngine.cs" />

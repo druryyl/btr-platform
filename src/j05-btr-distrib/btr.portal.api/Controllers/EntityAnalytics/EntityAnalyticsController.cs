@@ -147,12 +147,36 @@ namespace btr.portal.api.Controllers.EntityAnalytics
             }
         }
 
+        [HttpGet, Route("peer-group-rules")]
+        public async Task<IHttpActionResult> GetPeerGroupRules([FromUri] string entityType = null)
+        {
+            if (string.IsNullOrWhiteSpace(entityType))
+            {
+                return Content(
+                    HttpStatusCode.BadRequest,
+                    ApiResponse<PeerGroupRulesResponseDto>.Error(400, "EntityType is required."));
+            }
+
+            try
+            {
+                var result = await _mediator.Send(new GetPeerGroupRulesQuery { EntityType = entityType });
+                return Ok(ApiResponse<PeerGroupRulesResponseDto>.Success(result));
+            }
+            catch (System.ArgumentException ex)
+            {
+                return Content(
+                    HttpStatusCode.BadRequest,
+                    ApiResponse<PeerGroupRulesResponseDto>.Error(400, ex.Message));
+            }
+        }
+
         [HttpGet, Route("peer-distribution")]
         public async Task<IHttpActionResult> GetPeerDistribution(
             [FromUri] string entityType = null,
             [FromUri] string entityId = null,
             [FromUri] string kpiId = null,
-            [FromUri] string dimensionFilter = null)
+            [FromUri] string dimensionFilter = null,
+            [FromUri] string peerGroupRuleId = null)
         {
             if (string.IsNullOrWhiteSpace(entityType) || string.IsNullOrWhiteSpace(entityId) || string.IsNullOrWhiteSpace(kpiId))
             {
@@ -168,7 +192,8 @@ namespace btr.portal.api.Controllers.EntityAnalytics
                     EntityType = entityType,
                     EntityId = entityId,
                     KpiId = kpiId,
-                    DimensionFilter = dimensionFilter
+                    DimensionFilter = dimensionFilter,
+                    PeerGroupRuleId = peerGroupRuleId
                 });
                 return Ok(ApiResponse<PeerDistributionResponseDto>.Success(result));
             }

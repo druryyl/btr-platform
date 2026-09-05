@@ -85,5 +85,33 @@ namespace btr.test.ReportingContext
 
             InventoryOptimizationPolicy.IsDoNotReorder(ctx).Should().BeTrue();
         }
+
+        [Fact]
+        public void ResolveUnitHpp_UsesImpliedCostWhenOnHandExists()
+        {
+            InventoryOptimizationPolicy.ResolveUnitHpp(100m, 250_000m, 5_000m)
+                .Should().Be(2_500m);
+        }
+
+        [Fact]
+        public void ResolveUnitHpp_FallsBackToMasterHppWhenStockOut()
+        {
+            InventoryOptimizationPolicy.ResolveUnitHpp(0m, 0m, 5_000m)
+                .Should().Be(5_000m);
+        }
+
+        [Fact]
+        public void ComputeRecommendedPurchaseValue_UsesMasterHppWhenStockOut()
+        {
+            InventoryOptimizationPolicy.ComputeRecommendedPurchaseValue(10m, 0m, 0m, 5_000m)
+                .Should().Be(50_000m);
+        }
+
+        [Fact]
+        public void ComputeRecommendedPurchaseValue_ReturnsZeroWhenQtyIsZero()
+        {
+            InventoryOptimizationPolicy.ComputeRecommendedPurchaseValue(0m, 0m, 0m, 5_000m)
+                .Should().Be(0m);
+        }
     }
 }

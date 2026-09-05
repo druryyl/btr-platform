@@ -25,6 +25,14 @@ defineProps<{
       <div class="iw-map-tooltip__value">{{ point.FormattedAxisY }}</div>
     </div>
 
+    <div
+      v-if="point.SupplementaryLabel && point.FormattedSupplementaryValue"
+      class="iw-map-tooltip__section"
+    >
+      <div class="iw-map-tooltip__label">{{ point.SupplementaryLabel }}</div>
+      <div class="iw-map-tooltip__value">{{ point.FormattedSupplementaryValue }}</div>
+    </div>
+
     <div v-if="analyzed" class="iw-map-tooltip__section">
       <div class="iw-map-tooltip__label">Classification</div>
       <div class="iw-map-tooltip__value">{{ formatStatisticalClass(analyzed.statisticalClass) }}</div>

@@ -22,6 +22,7 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Registrars
                 "IN-KPI-001",
                 "IN-KPI-020",
                 "IN-KPI-021",
+                "IN-KPI-028",
                 EntityAnalyticsRadarAxisIds.GrowthMom,
                 EntityAnalyticsRadarAxisIds.AttentionRisk,
                 EntityAnalyticsMetaKpiIds.CustomerCount,
@@ -138,6 +139,33 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Registrars
                 IntroducedVersion = "M28"
             });
 
+            kpiRegistry.RegisterMetadata(new EntityKpiMetadata
+            {
+                KpiId = "IN-KPI-028",
+                Category = EntityKpiCategory.Activity,
+                DisplayName = "Recommended Purchase Value",
+                Description = "Indicative recommended purchase cost (Recommended Purchase Qty × unit HPP; BTR_Brg.Hpp fallback when on-hand qty is zero).",
+                PeriodSemantics = "PointInTime",
+                TimeGrain = "PointInTime",
+                Unit = "IDR",
+                ValueType = "Numeric",
+                AggregationType = "LastValue",
+                Direction = "Neutral",
+                NormalizationRule = "None",
+                VisualizationType = "Card",
+                TrendEligible = true,
+                RankEligible = false,
+                RadarEligible = false,
+                DisplayPrecision = 0,
+                NullableBehavior = "ShowEmpty",
+                EvidenceRoute = "/reports/inventory",
+                EvidenceFilterDimension = "brgCode",
+                SourceDomain = "InventoryForecast",
+                ApplicableEntityTypes = new[] { EntityTypeCode.Item },
+                DefinitionVersion = 1,
+                IntroducedVersion = "M32.12"
+            });
+
             RegisterRadarAxisMetadata(kpiRegistry);
         }
 
@@ -148,7 +176,7 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Registrars
                 KpiId = EntityAnalyticsRadarAxisIds.GrowthMom,
                 Category = EntityKpiCategory.Growth,
                 DisplayName = "Growth",
-                Description = "MoM inventory value growth percentile within category peer group.",
+                Description = "MoM inventory value growth percentile within principal peer group.",
                 PeriodSemantics = "MTD",
                 TimeGrain = "Month",
                 Unit = "Percent",
@@ -175,7 +203,7 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Registrars
                 KpiId = EntityAnalyticsMetaKpiIds.CustomerCount,
                 Category = EntityKpiCategory.Portfolio,
                 DisplayName = "Market Reach",
-                Description = "Distinct MTD buyer count percentile within category peer group.",
+                Description = "Distinct MTD buyer count percentile within principal peer group.",
                 PeriodSemantics = "MTD",
                 TimeGrain = "Month",
                 Unit = "Count",
@@ -201,7 +229,7 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Registrars
                 KpiId = EntityAnalyticsRadarAxisIds.AttentionRisk,
                 Category = EntityKpiCategory.Risk,
                 DisplayName = "Attention Risk",
-                Description = "Active attention signal count percentile within category peer group (lower is better).",
+                Description = "Active attention signal count percentile within principal peer group (lower is better).",
                 PeriodSemantics = "PointInTime",
                 TimeGrain = "PointInTime",
                 Unit = "Count",
@@ -227,7 +255,7 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Registrars
                 KpiId = EntityAnalyticsMetaKpiIds.DaysSinceLastFaktur,
                 Category = EntityKpiCategory.Activity,
                 DisplayName = "Days Since Last Faktur",
-                Description = "Days since last sale percentile within category peer group (lower is better).",
+                Description = "Days since last sale percentile within principal peer group (lower is better).",
                 PeriodSemantics = "PointInTime",
                 TimeGrain = "PointInTime",
                 Unit = "Days",
@@ -253,7 +281,7 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Registrars
                 KpiId = EntityAnalyticsMetaKpiIds.QtyOnHand,
                 Category = EntityKpiCategory.Portfolio,
                 DisplayName = "Supplier Strength",
-                Description = "On-hand quantity percentile within category peer group.",
+                Description = "On-hand quantity percentile within principal peer group.",
                 PeriodSemantics = "PointInTime",
                 TimeGrain = "PointInTime",
                 Unit = "Count",

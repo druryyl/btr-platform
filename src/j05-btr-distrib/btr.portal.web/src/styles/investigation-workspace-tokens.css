@@ -91,6 +91,16 @@
   min-height: inherit;
 }
 
+.iw-map-shell--discovery .iw-map-canvas-wrap,
+.iw-map-shell--discovery .iw-map-canvas {
+  min-height: var(--iw-map-min-height-discovery);
+}
+
+.iw-map-shell--investigation .iw-map-canvas-wrap,
+.iw-map-shell--investigation .iw-map-canvas {
+  min-height: var(--iw-map-min-height-investigation);
+}
+
 .iw-map-canvas {
   display: block;
   width: 100%;
@@ -104,7 +114,38 @@
   background-size: 200% 100%;
   animation: iw-shimmer 1.2s ease-in-out infinite;
   border-radius: 0.5rem;
+  min-height: inherit;
+}
+
+.iw-map-shell--discovery .iw-skeleton {
+  min-height: var(--iw-map-min-height-discovery);
+}
+
+.iw-map-shell--investigation .iw-skeleton {
   min-height: var(--iw-map-min-height-investigation);
+}
+
+.iw-skeleton--overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  min-height: 100%;
+  pointer-events: none;
+  opacity: 0.72;
+}
+
+.iw-map-empty {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  text-align: center;
+  font-size: 0.875rem;
+  color: var(--iw-text-secondary);
+  pointer-events: none;
 }
 
 @keyframes iw-shimmer {

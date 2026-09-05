@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using btr.application.InventoryContext.StokBalanceInfo;
 using btr.application.ReportingContext.DashboardSnapshotAgg.Contracts;
 using btr.application.ReportingContext.DashboardSnapshotAgg.Models;
 using btr.application.ReportingContext.DashboardSnapshotAgg.Services;
@@ -18,7 +19,8 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.Services
             DashboardInventoryRiskAggregateResult riskAggregate,
             IEnumerable<SalesmanMtdItemRollupDto> rollupRows,
             IEnumerable<BrgLastFakturDto> lastFakturRows,
-            DateTime today)
+            DateTime today,
+            IEnumerable<StokBalanceView> stockBalanceRows = null)
         {
             var movementByBrgId = BuildMovementIndex(riskAggregate);
             var forecastByBrgId = (forecastContexts ?? Enumerable.Empty<ForecastItemContext>())
@@ -44,6 +46,8 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.Services
                 .GroupBy(x => x.BrgId.Trim(), StringComparer.OrdinalIgnoreCase)
                 .ToDictionary(g => g.Key, g => g.First(), StringComparer.OrdinalIgnoreCase);
 
+            var masterHppByBrgId = BuildMasterHppIndex(stockBalanceRows);
+
             var portfolioByBrgId = new Dictionary<string, DashboardItemPortfolioRow>(StringComparer.OrdinalIgnoreCase);
 
             foreach (var item in itemGroups ?? Enumerable.Empty<DashboardInventoryItemGroup>())
@@ -59,6 +63,7 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.Services
                     customerCountByBrgId,
                     supplierByBrgId,
                     lastFakturByBrgId,
+                    masterHppByBrgId,
                     today);
             }
 
@@ -73,6 +78,9 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.Services
                     continue;
 
                 supplierByBrgId.TryGetValue(brgId, out var supplier);
+                forecastByBrgId.TryGetValue(brgId, out var forecast);
+                var masterHpp = ResolveMasterHpp(brgId, 0m, masterHppByBrgId);
+                var recommendedPurchaseQty = forecast?.Calculation?.RecommendedPurchaseQty;
 
                 portfolioByBrgId[brgId] = new DashboardItemPortfolioRow
                 {
@@ -85,10 +93,16 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.Services
                     SupplierCode = supplier?.SupplierCode?.Trim() ?? string.Empty,
                     Qty = 0,
                     InventoryValue = 0,
+                    MasterHpp = masterHpp,
                     MovementClass = DashboardInventoryRiskAggregator.BucketActive,
                     DaysSinceLastFaktur = idleDays,
-                    DaysOfSupply = forecastByBrgId.TryGetValue(brgId, out var forecast) ? forecast.Calculation?.DaysOfSupply : null,
-                    RecommendedPurchaseQty = forecast?.Calculation?.RecommendedPurchaseQty,
+                    DaysOfSupply = forecast?.Calculation?.DaysOfSupply,
+                    RecommendedPurchaseQty = recommendedPurchaseQty,
+                    RecommendedPurchaseValue = InventoryOptimizationPolicy.ComputeRecommendedPurchaseValue(
+                        recommendedPurchaseQty,
+                        0m,
+                        0m,
+                        masterHpp),
                     DistinctCustomerCount = customerCountByBrgId.TryGetValue(brgId, out var count) ? count : 0,
                     IsTrendEligible = true,
                     IsActive = idleDays <= DashboardInventoryRiskAggregator.SlowMovingDaysThreshold
@@ -107,12 +121,15 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.Services
             IReadOnlyDictionary<string, int> customerCountByBrgId,
             IReadOnlyDictionary<string, SalesmanMtdItemRollupDto> supplierByBrgId,
             IReadOnlyDictionary<string, BrgLastFakturDto> lastFakturByBrgId,
+            IReadOnlyDictionary<string, decimal> masterHppByBrgId,
             DateTime today)
         {
             var brgId = item.BrgId.Trim();
             movementByBrgId.TryGetValue(brgId, out var movementClass);
             forecastByBrgId.TryGetValue(brgId, out var forecast);
             supplierByBrgId.TryGetValue(brgId, out var supplier);
+            var masterHpp = ResolveMasterHpp(brgId, item.MasterHpp, masterHppByBrgId);
+            var recommendedPurchaseQty = forecast?.Calculation?.RecommendedPurchaseQty;
 
             int? daysSinceLastFaktur = forecast?.DaysSinceLastFaktur;
             if (!daysSinceLastFaktur.HasValue &&
@@ -140,10 +157,16 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.Services
                 SupplierCode = supplier?.SupplierCode?.Trim() ?? string.Empty,
                 Qty = item.Qty,
                 InventoryValue = item.InventoryValue,
+                MasterHpp = masterHpp,
                 MovementClass = movementClass,
                 DaysSinceLastFaktur = daysSinceLastFaktur,
                 DaysOfSupply = forecast?.Calculation?.DaysOfSupply,
-                RecommendedPurchaseQty = forecast?.Calculation?.RecommendedPurchaseQty,
+                RecommendedPurchaseQty = recommendedPurchaseQty,
+                RecommendedPurchaseValue = InventoryOptimizationPolicy.ComputeRecommendedPurchaseValue(
+                    recommendedPurchaseQty,
+                    item.Qty,
+                    item.InventoryValue,
+                    masterHpp),
                 DistinctCustomerCount = customerCountByBrgId.TryGetValue(brgId, out var count) ? count : 0,
                 IsTrendEligible = isTrendEligible,
                 IsActive = string.Equals(
@@ -151,6 +174,32 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.Services
                     DashboardInventoryRiskAggregator.BucketActive,
                     StringComparison.OrdinalIgnoreCase)
             };
+        }
+
+        private static Dictionary<string, decimal> BuildMasterHppIndex(IEnumerable<StokBalanceView> stockBalanceRows)
+        {
+            return (stockBalanceRows ?? Enumerable.Empty<StokBalanceView>())
+                .Where(x => !string.IsNullOrWhiteSpace(x.BrgId) && x.Hpp > 0)
+                .GroupBy(x => x.BrgId.Trim(), StringComparer.OrdinalIgnoreCase)
+                .ToDictionary(g => g.Key, g => g.First().Hpp, StringComparer.OrdinalIgnoreCase);
+        }
+
+        private static decimal ResolveMasterHpp(
+            string brgId,
+            decimal itemMasterHpp,
+            IReadOnlyDictionary<string, decimal> masterHppByBrgId)
+        {
+            if (itemMasterHpp > 0)
+                return itemMasterHpp;
+
+            if (!string.IsNullOrWhiteSpace(brgId) &&
+                masterHppByBrgId.TryGetValue(brgId.Trim(), out var masterHpp) &&
+                masterHpp > 0)
+            {
+                return masterHpp;
+            }
+
+            return 0m;
         }
 
         private static Dictionary<string, string> BuildMovementIndex(DashboardInventoryRiskAggregateResult riskAggregate)

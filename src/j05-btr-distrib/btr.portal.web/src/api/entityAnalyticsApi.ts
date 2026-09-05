@@ -9,6 +9,7 @@ import type {
   EntitySearchResult,
   MapPresetsResponse,
   PeerDistributionResponse,
+  PeerGroupRulesResponse,
   PopulationMapResponse,
 } from '@/models/entityAnalytics'
 
@@ -84,11 +85,16 @@ export async function fetchMapPresets(entityType: string): Promise<MapPresetsRes
   return data.Data
 }
 
+/** Default axios timeout for population map (prevents infinite loading shimmer). */
+export const POPULATION_MAP_TIMEOUT_MS = 30_000
+
 export async function fetchPopulationMap(params: {
   entityType: string
   presetId?: string
   dimensionFilter?: string
   attentionOnly?: boolean
+  signal?: AbortSignal
+  timeoutMs?: number
 }): Promise<PopulationMapResponse> {
   const { data } = await httpClient.get<ApiResponse<PopulationMapResponse>>(
     '/api/entity-analytics/population',
@@ -99,10 +105,23 @@ export async function fetchPopulationMap(params: {
         dimensionFilter: params.dimensionFilter || undefined,
         attentionOnly: params.attentionOnly ?? undefined,
       },
+      signal: params.signal,
+      timeout: params.timeoutMs ?? POPULATION_MAP_TIMEOUT_MS,
     },
   )
   if (!isApiSuccess(data) || !data.Data) {
     throw new Error(data.Message ?? 'Failed to load population map')
+  }
+  return data.Data
+}
+
+export async function fetchPeerGroupRules(entityType: string): Promise<PeerGroupRulesResponse> {
+  const { data } = await httpClient.get<ApiResponse<PeerGroupRulesResponse>>(
+    '/api/entity-analytics/peer-group-rules',
+    { params: { entityType } },
+  )
+  if (!isApiSuccess(data) || !data.Data) {
+    throw new Error(data.Message ?? 'Failed to load peer group rules')
   }
   return data.Data
 }
@@ -112,6 +131,7 @@ export async function fetchPeerDistribution(params: {
   entityId: string
   kpiId: string
   dimensionFilter?: string
+  peerGroupRuleId?: string
 }): Promise<PeerDistributionResponse> {
   const { data } = await httpClient.get<ApiResponse<PeerDistributionResponse>>(
     '/api/entity-analytics/peer-distribution',
@@ -121,6 +141,7 @@ export async function fetchPeerDistribution(params: {
         entityId: params.entityId,
         kpiId: params.kpiId,
         dimensionFilter: params.dimensionFilter || undefined,
+        peerGroupRuleId: params.peerGroupRuleId || undefined,
       },
     },
   )

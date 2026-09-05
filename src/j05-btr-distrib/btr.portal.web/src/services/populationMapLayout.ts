@@ -1,7 +1,22 @@
 import type { PopulationMapPoint } from '@/models/entityAnalytics'
 import type { AnalyzedPoint, PopulationProjectionResult, StatisticalClass } from '@/services/populationProjection/populationProjectionEngine'
 import { projectedEntityToAnalyzed } from '@/services/populationProjection/populationProjectionEngine'
+import {
+  businessToLog,
+  businessValueForLog,
+  DAYS_PROJECTION_CAP,
+  isDaysAxisUnit,
+  isIdrAxisUnit,
+} from '@/services/populationProjection/robustStats'
 import { formatNumber } from '@/services/formatters'
+
+export { isDaysAxisUnit, isIdrAxisUnit }
+
+/** Same week/month ladder as Peer Position Days bins (backend DaysCalendarEdges). */
+export const DAYS_CALENDAR_EDGES = [0, 7, 14, 21, 30, 60, 90, 120, 180, 270, 365] as const
+
+/** One-year threshold — same as DAYS_PROJECTION_CAP / Peer Position DaysYearEdge. */
+export const DAYS_YEAR_EDGE = DAYS_PROJECTION_CAP
 
 export interface MapBounds {
   minX: number
@@ -328,6 +343,138 @@ export interface ProjectionAxisTick {
   projectionValue: number
 }
 
+const IDR_NICE_MANTISSAS_FULL = [1, 2, 5] as const
+const IDR_NICE_MANTISSAS_MEDIUM = [1, 5] as const
+const IDR_NICE_MANTISSAS_SPARSE = [1] as const
+const IDR_MAX_AXIS_TICKS = 12
+
+function chooseIdrMantissas(decadeSpan: number): readonly number[] {
+  if (decadeSpan > 6) return IDR_NICE_MANTISSAS_SPARSE
+  if (decadeSpan > 4) return IDR_NICE_MANTISSAS_MEDIUM
+  return IDR_NICE_MANTISSAS_FULL
+}
+
+/** Generate 1-2-5 × 10^n Rupiah edges within [min, max]. */
+export function generateIdrNiceEdges(dataMin: number, dataMax: number): number[] {
+  const min = Number.isFinite(dataMin) ? Math.max(0, Math.min(dataMin, dataMax)) : 0
+  const max = Number.isFinite(dataMax) ? Math.max(dataMin, dataMax) : min
+  if (max <= 0) return []
+
+  const startExp = Math.floor(Math.log10(Math.max(min, 1)))
+  const endExp = Math.ceil(Math.log10(Math.max(max, 1)))
+  const decadeSpan = Math.max(1, endExp - startExp + 1)
+  let mantissas = chooseIdrMantissas(decadeSpan)
+
+  const collect = (ms: readonly number[]): number[] => {
+    const edges: number[] = []
+    for (let e = Math.max(0, startExp - 1); e <= endExp + 1; e++) {
+      const scale = 10 ** e
+      for (const m of ms) {
+        const step = m * scale
+        if (step >= min && step <= max) edges.push(step)
+      }
+    }
+    return [...new Set(edges)].sort((a, b) => a - b)
+  }
+
+  let edges = collect(mantissas)
+  if (edges.length > IDR_MAX_AXIS_TICKS && mantissas !== IDR_NICE_MANTISSAS_MEDIUM) {
+    mantissas = IDR_NICE_MANTISSAS_MEDIUM
+    edges = collect(mantissas)
+  }
+  if (edges.length > IDR_MAX_AXIS_TICKS) {
+    edges = collect(IDR_NICE_MANTISSAS_SPARSE)
+  }
+  if (edges.length > IDR_MAX_AXIS_TICKS) {
+    const stride = Math.ceil(edges.length / IDR_MAX_AXIS_TICKS)
+    edges = edges.filter((_, i) => i % stride === 0 || i === edges.length - 1)
+  }
+
+  return edges
+}
+
+/**
+ * Build IDR axis tick labels from a 1-2-5 Rupiah ladder, projected with the same
+ * log + robust-norm transform used for scatter points (labels only; points unchanged).
+ */
+export function buildIdrNiceAxisTicks(
+  norm: { center: number; scale: number },
+  dataMin: number,
+  dataMax: number,
+): ProjectionAxisTick[] {
+  if (!Number.isFinite(norm.center) || !Number.isFinite(norm.scale)) {
+    return []
+  }
+
+  const edges = generateIdrNiceEdges(dataMin, dataMax)
+  const scale = Math.abs(norm.scale) < 1e-12 ? 1e-12 : norm.scale
+
+  return edges.map((businessValue) => {
+    const logValue = businessToLog(businessValue)
+    return {
+      businessValue,
+      projectionValue: (logValue - norm.center) / scale,
+    }
+  })
+}
+
+/**
+ * Build Days axis tick labels from the calendar ladder, projected with the same
+ * log + robust-norm transform used for scatter points (labels only; points unchanged).
+ *
+ * Includes ladder steps in [dataMin, dataMax]. Includes 0 when dataMin is near 0.
+ * Includes 365 when it falls within the data range (dataMax >= 365).
+ */
+export function buildDaysCalendarAxisTicks(
+  norm: { center: number; scale: number },
+  dataMin: number,
+  dataMax: number,
+): ProjectionAxisTick[] {
+  const min = Number.isFinite(dataMin) ? Math.max(0, Math.min(dataMin, dataMax)) : 0
+  const max = Number.isFinite(dataMax) ? Math.max(dataMin, dataMax) : min
+  if (!Number.isFinite(norm.center) || !Number.isFinite(norm.scale)) {
+    return []
+  }
+
+  const edges: number[] = []
+  for (const step of DAYS_CALENDAR_EDGES) {
+    if (step > max) break
+    if (step < min) {
+      if (step === 0 && min < 7) edges.push(0)
+      continue
+    }
+    edges.push(step)
+  }
+
+  const unique = [...new Set(edges)].sort((a, b) => a - b)
+  const scale = Math.abs(norm.scale) < 1e-12 ? 1e-12 : norm.scale
+
+  return unique.map((businessValue) => {
+    const logValue = businessToLog(businessValueForLog(businessValue, 'Days'))
+    return {
+      businessValue,
+      projectionValue: (logValue - norm.center) / scale,
+    }
+  })
+}
+
+/** Resolve axis ticks: Days calendar, IDR 1-2-5, otherwise percentile fallback. */
+export function resolvePopulationAxisTicks(
+  unit: string | null | undefined,
+  norm: { center: number; scale: number },
+  dataMin: number,
+  dataMax: number,
+  fallback: ProjectionAxisTick[],
+): ProjectionAxisTick[] {
+  if (isDaysAxisUnit(unit)) {
+    return buildDaysCalendarAxisTicks(norm, dataMin, dataMax)
+  }
+  if (isIdrAxisUnit(unit)) {
+    return buildIdrNiceAxisTicks(norm, dataMin, dataMax)
+  }
+  return fallback
+}
+
 export function generateProjectionAxisGuides(
   projection: PopulationProjectionResult,
 ): { xTicks: ProjectionAxisTick[]; yTicks: ProjectionAxisTick[] } {
@@ -375,25 +522,47 @@ export function generateLogMappedAxisTicks(
   return ticks.map((businessValue) => ({ businessValue, visualValue: businessValue }))
 }
 
-export function formatAxisTickValue(value: number, unit: string | null | undefined): string {
+export function formatAxisTickValue(
+  value: number,
+  unit: string | null | undefined,
+  options?: { dataMax?: number },
+): string {
   const normalizedUnit = unit?.trim().toLowerCase() ?? ''
 
   if (normalizedUnit.includes('idr') || normalizedUnit === 'rp') {
+    if (value >= 1_000_000_000) return `${value / 1_000_000_000}B`
     if (value >= 1_000_000) return `${value / 1_000_000}M`
     if (value >= 1_000) return `${value / 1_000}K`
     return formatNumber(value)
   }
 
   if (normalizedUnit.includes('day')) {
-    if (value === 0) return '0'
-    if (value === 1) return '1'
-    if (value >= 1_000) return `${value / 1_000}K`
-    return formatNumber(value)
+    const rounded = Math.round(value)
+    if (rounded === 0) return '0'
+    if (
+      rounded === DAYS_PROJECTION_CAP &&
+      options?.dataMax != null &&
+      options.dataMax > DAYS_PROJECTION_CAP
+    ) {
+      return `${DAYS_PROJECTION_CAP}+`
+    }
+    if (rounded >= 1_000) return `${rounded / 1_000}K`
+    return String(rounded)
   }
 
   if (value >= 1_000_000) return `${value / 1_000_000}M`
   if (value >= 1_000) return `${value / 1_000}K`
   return formatNumber(value)
+}
+
+export function formatBinRangeLabel(
+  start: number,
+  end: number,
+  unit: string | null | undefined,
+  openEnd = false,
+): string {
+  const endLabel = openEnd ? '~' : formatAxisTickValue(end, unit)
+  return `${formatAxisTickValue(start, unit)} – ${endLabel}`
 }
 
 export function buildTransform(width: number, height: number, bounds: MapBounds): MapTransform {

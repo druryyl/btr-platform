@@ -429,6 +429,8 @@ export interface PopulationMapPoint {
   IsActive: boolean
   ActiveAttentionCount: number
   MatchesFilter: boolean
+  SupplementaryLabel?: string | null
+  FormattedSupplementaryValue?: string | null
 }
 
 export interface PeerDistributionResponse {
@@ -439,6 +441,8 @@ export interface PeerDistributionResponse {
   Unit: string
   PeerGroupSize: number
   PeerGroupRuleId: string
+  PeerGroupDimensionValue: string | null
+  FormattedPeerGroupLabel: string
   SelectedValue: number | null
   FormattedSelectedValue: string
   SelectedPercentile: number | null
@@ -446,6 +450,19 @@ export interface PeerDistributionResponse {
   PeerMax: number | null
   FormattedPeerRange: string
   Bins: PeerDistributionBin[]
+}
+
+export interface PeerGroupRule {
+  RuleId: string
+  DisplayLabel: string
+  DimensionLabel: string | null
+  IsDefault: boolean
+}
+
+export interface PeerGroupRulesResponse {
+  EntityType: string
+  DefaultRuleId: string
+  Rules: PeerGroupRule[]
 }
 
 export interface PeerDistributionBin {

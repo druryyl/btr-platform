@@ -335,7 +335,7 @@ namespace btr.test.ReportingContext
                 EntityTypeCode = EntityTypeCode.Item,
                 DisplayName = "Item",
                 KpiPackId = ItemEntityAnalyticsRegistrar.KpiPackId,
-                PeerGroupRuleId = PeerGroupResolver.ItemCategory
+                PeerGroupRuleId = PeerGroupResolver.ItemPrincipal
             });
 
             var registry = new EntityAnalyticsKpiRegistry(entityTypes);

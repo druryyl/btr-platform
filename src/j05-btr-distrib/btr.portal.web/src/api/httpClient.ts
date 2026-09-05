@@ -53,6 +53,10 @@ export function getApiErrorMessage(error: unknown, fallback = 'An unexpected err
     if (error.response?.status === 401) {
       return 'Invalid credentials.'
     }
+
+    if (error.code === 'ECONNABORTED' || error.code === 'ETIMEDOUT') {
+      return 'Request timed out. Please try again.'
+    }
   }
 
   return fallback

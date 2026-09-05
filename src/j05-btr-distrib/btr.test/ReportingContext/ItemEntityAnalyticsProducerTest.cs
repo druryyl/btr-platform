@@ -35,7 +35,22 @@ namespace btr.test.ReportingContext
         }
 
         [Fact]
-        public void Produce_WritesL1MonthlyRowsForTrendEligibleKpisOnly()
+        public void Produce_MapsRecommendedPurchaseValueToL0Rows()
+        {
+            var repository = new RecordingRepository();
+            var producer = CreateProducer(repository);
+            var generatedAt = new DateTime(2026, 6, 24, 10, 0, 0);
+            var item = CreatePortfolioItem();
+            item.RecommendedPurchaseValue = 20_833.33m;
+
+            producer.Produce(CreateContext(generatedAt, item));
+
+            repository.Rows.Should().Contain(r =>
+                r.EntityId == "B001" && r.KpiId == "IN-KPI-028" && r.NumericValue == 20_833.33m);
+        }
+
+        [Fact]
+        public void Produce_WritesMonthlyRowsOnlyForTrendEligibleItems()
         {
             var repository = new RecordingRepository();
             var producer = CreateProducer(repository);
@@ -50,7 +65,7 @@ namespace btr.test.ReportingContext
 
             producer.Produce(CreateContext(generatedAt, eligible, dormant));
 
-            repository.MonthlyRows.Should().HaveCount(3);
+            repository.MonthlyRows.Should().HaveCount(4);
             repository.MonthlyRows.Should().OnlyContain(r => r.EntityId == "B001");
         }
 
@@ -101,7 +116,7 @@ namespace btr.test.ReportingContext
             new ItemEntityAnalyticsRegistrar().Register(entityTypes, registry, dimensionLabels);
 
             registry.GetPackKpiIds(ItemEntityAnalyticsRegistrar.KpiPackId)
-                .Should().Contain(new[] { "IN-KPI-001", "IN-KPI-020", "IN-KPI-021" });
+                .Should().Contain(new[] { "IN-KPI-001", "IN-KPI-020", "IN-KPI-021", "IN-KPI-028" });
 
             registry.TryGetMetadata("IN-KPI-001", out var inventoryValue).Should().BeTrue();
             inventoryValue.TrendEligible.Should().BeTrue();
@@ -117,7 +132,7 @@ namespace btr.test.ReportingContext
                 DisplayName = "Item",
                 KpiPackId = ItemEntityAnalyticsRegistrar.KpiPackId,
                 RelationshipPackId = ItemRelationshipCatalog.PackId,
-                PeerGroupRuleId = PeerGroupResolver.ItemCategory
+                PeerGroupRuleId = PeerGroupResolver.ItemPrincipal
             });
 
             var registry = new EntityAnalyticsKpiRegistry(entityTypes);
@@ -228,6 +243,7 @@ namespace btr.test.ReportingContext
                 DaysSinceLastFaktur = 200,
                 DaysOfSupply = 45m,
                 RecommendedPurchaseQty = 10m,
+                RecommendedPurchaseValue = 20_833.33m,
                 DistinctCustomerCount = 3,
                 IsTrendEligible = true,
                 IsActive = false

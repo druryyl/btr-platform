@@ -29,6 +29,7 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.Services
                     BrgName = first?.BrgName ?? string.Empty,
                     Qty = qty,
                     InventoryValue = g.Sum(x => x.Hpp * x.Qty),
+                    MasterHpp = first?.Hpp ?? 0m,
                     CategoryName = NormalizeDimensionName(g.Select(x => x.KategoriName).FirstOrDefault()),
                     SupplierName = NormalizeDimensionName(g.Select(x => x.SupplierName).FirstOrDefault())
                 }).ToList();
@@ -51,6 +52,8 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.Services
         public decimal Qty { get; set; }
 
         public decimal InventoryValue { get; set; }
+
+        public decimal MasterHpp { get; set; }
 
         public string CategoryName { get; set; }
 

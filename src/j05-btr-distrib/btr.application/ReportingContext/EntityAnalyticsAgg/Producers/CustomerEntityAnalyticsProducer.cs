@@ -734,7 +734,8 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Producers
 
             AddDimension(rows, entityId, entityCode, EntityAnalyticsMetaKpiIds.Wilayah, customer.WilayahName, generatedAt);
 
-            AddDimension(rows, entityId, entityCode, EntityAnalyticsMetaKpiIds.Klasifikasi, customer.Klasifikasi, generatedAt);
+            var klasifikasi = string.IsNullOrWhiteSpace(customer.Klasifikasi) ? "Unknown" : customer.Klasifikasi.Trim();
+            AddDimension(rows, entityId, entityCode, EntityAnalyticsMetaKpiIds.Klasifikasi, klasifikasi, generatedAt);
 
             AddDimension(rows, entityId, entityCode, EntityAnalyticsMetaKpiIds.Salesman, customer.SalesPersonName, generatedAt);
 

@@ -3,6 +3,7 @@ import type {
   IPopulationProjectionStrategy,
   MapBounds,
   PopulationEntityInput,
+  PopulationProjectionOptions,
   PopulationProjectionResult,
   ProjectedEntity,
   RegressionPair,
@@ -10,6 +11,7 @@ import type {
 import {
   buildConfidenceBands,
   businessToLog,
+  businessValueForLog,
   classifyByResidualMagnitude,
   computeLabelPriority,
   fitTheilSenRegression,
@@ -34,7 +36,10 @@ function isValidNumber(value: number | null): value is number {
   return value != null && Number.isFinite(value)
 }
 
-function validateEntities(entities: PopulationEntityInput[]): {
+function validateEntities(
+  entities: PopulationEntityInput[],
+  options?: PopulationProjectionOptions,
+): {
   valid: ValidatedEntity[]
   excludedCount: number
 } {
@@ -49,14 +54,16 @@ function validateEntities(entities: PopulationEntityInput[]): {
 
     const businessX = Math.max(entity.businessX, 0)
     const businessY = Math.max(entity.businessY, 0)
+    const logSourceX = businessValueForLog(businessX, options?.axisXUnit)
+    const logSourceY = businessValueForLog(businessY, options?.axisYUnit)
 
     valid.push({
       entityId: entity.entityId,
       label: entity.label,
       businessX,
       businessY,
-      logX: businessToLog(businessX),
-      logY: businessToLog(businessY),
+      logX: businessToLog(logSourceX),
+      logY: businessToLog(logSourceY),
     })
   }
 
@@ -69,6 +76,7 @@ function buildAxisGuides(
   normX: ReturnType<typeof robustNormalize>,
   normY: ReturnType<typeof robustNormalize>,
   axis: 'x' | 'y',
+  axisUnit?: string | null,
 ): AxisGuide[] {
   const sorted = [...businessValues].sort((a, b) => a - b)
   const guides: AxisGuide[] = []
@@ -85,12 +93,11 @@ function buildAxisGuides(
     if (index >= 0) {
       logValue = logValues[index]
     } else {
-      logValue = businessToLog(businessValue)
+      logValue = businessToLog(businessValueForLog(businessValue, axisUnit))
     }
 
     const norm = axis === 'x' ? normX : normY
-    const logVal = axis === 'x' ? logValue : logValue
-    const projectionValue = (logVal - norm.center) / norm.scale
+    const projectionValue = (logValue - norm.center) / norm.scale
 
     guides.push({ axis, businessValue: rounded, projectionValue })
   }
@@ -137,8 +144,11 @@ function computeProjectionBounds(
 export class RobustProjectionStrategy implements IPopulationProjectionStrategy {
   readonly id = 'robust'
 
-  project(entities: PopulationEntityInput[]): PopulationProjectionResult | null {
-    const { valid, excludedCount } = validateEntities(entities)
+  project(
+    entities: PopulationEntityInput[],
+    options?: PopulationProjectionOptions,
+  ): PopulationProjectionResult | null {
+    const { valid, excludedCount } = validateEntities(entities, options)
     if (!valid.length) return null
 
     const logXValues = valid.map((v) => v.logX)
@@ -197,8 +207,8 @@ export class RobustProjectionStrategy implements IPopulationProjectionStrategy {
     const businessYValues = valid.map((v) => v.businessY)
 
     const axisGuides: AxisGuide[] = [
-      ...buildAxisGuides(businessXValues, logXValues, normX, normY, 'x'),
-      ...buildAxisGuides(businessYValues, logYValues, normX, normY, 'y'),
+      ...buildAxisGuides(businessXValues, logXValues, normX, normY, 'x', options?.axisXUnit),
+      ...buildAxisGuides(businessYValues, logYValues, normX, normY, 'y', options?.axisYUnit),
     ]
 
     const entityMap = new Map<string, ProjectedEntity>()

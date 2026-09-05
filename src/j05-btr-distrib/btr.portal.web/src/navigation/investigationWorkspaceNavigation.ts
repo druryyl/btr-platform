@@ -8,6 +8,7 @@ export function buildWorkspaceRoute(
     entityIds?: string[]
     dimensionFilter?: string | null
     attentionOnly?: boolean
+    peerGroupRuleId?: string | null
   },
 ): RouteLocationRaw {
   return {
@@ -19,6 +20,7 @@ export function buildWorkspaceRoute(
       entityIds: options?.entityIds,
       dimensionFilter: options?.dimensionFilter,
       attentionOnly: options?.attentionOnly,
+      peerGroupRuleId: options?.peerGroupRuleId,
     }),
   }
 }

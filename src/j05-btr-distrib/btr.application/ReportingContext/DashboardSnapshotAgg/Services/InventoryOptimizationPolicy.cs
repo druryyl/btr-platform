@@ -325,6 +325,33 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.Services
         public static decimal ComputeUnitHpp(decimal qty, decimal inventoryValue) =>
             qty > 0 ? inventoryValue / qty : 0m;
 
+        public static decimal ResolveUnitHpp(decimal onHandQty, decimal inventoryValue, decimal masterHpp)
+        {
+            if (onHandQty > 0 && inventoryValue > 0)
+                return inventoryValue / onHandQty;
+
+            if (masterHpp > 0)
+                return masterHpp;
+
+            return 0m;
+        }
+
+        public static decimal? ComputeRecommendedPurchaseValue(
+            decimal? recommendedPurchaseQty,
+            decimal onHandQty,
+            decimal inventoryValue,
+            decimal masterHpp)
+        {
+            if (!recommendedPurchaseQty.HasValue)
+                return null;
+
+            if (recommendedPurchaseQty.Value <= 0)
+                return 0m;
+
+            var unitHpp = ResolveUnitHpp(onHandQty, inventoryValue, masterHpp);
+            return ComputePurchaseCost(recommendedPurchaseQty.Value, unitHpp);
+        }
+
         public static decimal ComputePurchaseCost(decimal qty, decimal unitHpp) =>
             Math.Round(qty * unitHpp, 2, MidpointRounding.AwayFromZero);
 

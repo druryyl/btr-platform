@@ -37,13 +37,18 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Services
             if (string.IsNullOrWhiteSpace(request.KpiId))
                 throw new ArgumentException("KpiId is required.");
 
-            if (!_entityTypes.TryGet(request.EntityType, out var registration))
+            if (!_entityTypes.TryGet(request.EntityType, out _))
                 throw new ArgumentException($"Unknown entity type: {request.EntityType}");
 
             if (!_kpiRegistry.TryGetMetadata(request.KpiId, out var metadata))
                 throw new ArgumentException($"Unknown KPI: {request.KpiId}");
 
-            var dimensionKpiId = PeerGroupResolver.ResolveDimensionKpiId(registration.PeerGroupRuleId);
+            var peerGroupRuleId = PeerGroupRuleCatalog.ResolveEffectiveRuleId(
+                request.EntityType,
+                request.PeerGroupRuleId,
+                _entityTypes);
+
+            var dimensionKpiId = PeerGroupResolver.ResolveDimensionKpiId(peerGroupRuleId);
             var population = _repository.GetActivePopulation(request.EntityType, dimensionKpiId);
             var valueRows = EntityAnalyticsMetaKpiIds.IsMetaOrDimension(request.KpiId)
                 ? _repository.GetCurrentDimensionPopulation(request.EntityType, request.KpiId)
@@ -52,10 +57,10 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Services
                 .Where(r => r.NumericValue.HasValue)
                 .ToDictionary(r => r.EntityId, r => r.NumericValue.Value, StringComparer.OrdinalIgnoreCase);
 
-            var peerGroupIndex = PeerGroupResolver.BuildPeerGroupIndex(registration.PeerGroupRuleId, population);
+            var peerGroupIndex = PeerGroupResolver.BuildPeerGroupIndex(peerGroupRuleId, population);
             var peerResolution = PeerGroupResolver.ResolveForEntity(
                 request.EntityId,
-                registration.PeerGroupRuleId,
+                peerGroupRuleId,
                 peerGroupIndex,
                 population);
 
@@ -99,7 +104,13 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Services
                 KpiDisplayName = metadata.DisplayName,
                 Unit = metadata.Unit,
                 PeerGroupSize = peerValues.Count,
-                PeerGroupRuleId = registration.PeerGroupRuleId,
+                PeerGroupRuleId = peerGroupRuleId,
+                PeerGroupDimensionValue = peerResolution.DimensionValue,
+                FormattedPeerGroupLabel = PeerGroupLabelFormatter.Format(
+                    request.EntityType,
+                    peerGroupRuleId,
+                    peerValues.Count,
+                    peerResolution.DimensionValue),
                 SelectedValue = selectedValue,
                 FormattedSelectedValue = _formatter.FormatValue(selectedValue, null, metadata),
                 SelectedPercentile = selectedRanking?.Percentile,

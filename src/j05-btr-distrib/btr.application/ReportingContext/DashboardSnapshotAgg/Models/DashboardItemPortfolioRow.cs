@@ -28,6 +28,10 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.Models
 
         public decimal? RecommendedPurchaseQty { get; set; }
 
+        public decimal MasterHpp { get; set; }
+
+        public decimal? RecommendedPurchaseValue { get; set; }
+
         public int DistinctCustomerCount { get; set; }
 
         public bool IsTrendEligible { get; set; }

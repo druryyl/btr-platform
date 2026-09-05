@@ -44,6 +44,7 @@ import {
   formatAxisTickValue,
   generateProjectionAxisGuides,
   generateProjectionGridTicks,
+  resolvePopulationAxisTicks,
   measureLabel,
   plotPoints,
   projectionToScreenX,
@@ -101,7 +102,12 @@ const renderablePoints = computed(() =>
 )
 
 const mapProjection = computed(() =>
-  visiblePoints.value.length ? populationProjectionEngine.project(visiblePoints.value) : null,
+  visiblePoints.value.length
+    ? populationProjectionEngine.project(visiblePoints.value, {
+        axisXUnit: props.population?.AxisXUnit,
+        axisYUnit: props.population?.AxisYUnit,
+      })
+    : null,
 )
 
 const hoveredAnalyzed = computed(() => {
@@ -109,6 +115,13 @@ const hoveredAnalyzed = computed(() => {
   const projected = mapProjection.value.entities.get(hovered.value.EntityId)
   return projected ? projectedEntityToAnalyzed(projected) : null
 })
+
+const showEmptyState = computed(
+  () =>
+    !props.loading
+    && props.population != null
+    && renderablePoints.value.length === 0,
+)
 
 let plottedCache: PlottedPoint[] = []
 let spatialIndexCache: SpatialIndex | null = null
@@ -382,7 +395,30 @@ function drawAxes(
 
   const { offsetX, offsetY, plotWidth, plotHeight, bounds } = transform
   const gridTicks = generateProjectionGridTicks(bounds)
-  const { xTicks, yTicks } = generateProjectionAxisGuides(projection)
+  const guides = generateProjectionAxisGuides(projection)
+
+  const entities = [...projection.entities.values()]
+  const xBusiness = entities.map((e) => e.businessX)
+  const yBusiness = entities.map((e) => e.businessY)
+  const xMin = xBusiness.length ? Math.min(...xBusiness) : 0
+  const xMax = xBusiness.length ? Math.max(...xBusiness) : 0
+  const yMin = yBusiness.length ? Math.min(...yBusiness) : 0
+  const yMax = yBusiness.length ? Math.max(...yBusiness) : 0
+
+  const xTicks = resolvePopulationAxisTicks(
+    props.population?.AxisXUnit,
+    projection.metadata.normalizationX,
+    xMin,
+    xMax,
+    guides.xTicks,
+  )
+  const yTicks = resolvePopulationAxisTicks(
+    props.population?.AxisYUnit,
+    projection.metadata.normalizationY,
+    yMin,
+    yMax,
+    guides.yTicks,
+  )
 
   ctx.strokeStyle = WORKSPACE_MAP_GRID_LINE
   ctx.lineWidth = 1
@@ -414,7 +450,9 @@ function drawAxes(
     const x = projectionToScreenX(tick.projectionValue, transform)
     if (x < offsetX || x > offsetX + plotWidth) continue
 
-    const label = formatAxisTickValue(tick.businessValue, props.population?.AxisXUnit)
+    const label = formatAxisTickValue(tick.businessValue, props.population?.AxisXUnit, {
+      dataMax: xMax,
+    })
     ctx.fillText(label, x + 3, offsetY + plotHeight + 14)
   }
 
@@ -422,7 +460,9 @@ function drawAxes(
     const y = projectionToScreenY(tick.projectionValue, transform)
     if (y < offsetY || y > offsetY + plotHeight) continue
 
-    const label = formatAxisTickValue(tick.businessValue, props.population?.AxisYUnit)
+    const label = formatAxisTickValue(tick.businessValue, props.population?.AxisYUnit, {
+      dataMax: yMax,
+    })
     const labelWidth = ctx.measureText(label).width
     ctx.fillText(label, offsetX - labelWidth - 6, y + 3)
   }
@@ -693,9 +733,18 @@ function onPointerLeave() {
 }
 
 watch(
-  () => [props.population, props.selectedEntityIds, props.investigationMode, props.searchHighlightIds],
+  () => [props.population, props.selectedEntityIds, props.investigationMode, props.searchHighlightIds, mapProjection.value],
   () => draw(),
   { deep: true },
+)
+
+watch(
+  () => props.loading,
+  (loading, wasLoading) => {
+    if (wasLoading && !loading) {
+      resizeCanvas()
+    }
+  },
 )
 
 onMounted(() => {
@@ -711,15 +760,25 @@ onUnmounted(() => {
 
 <template>
   <div ref="containerRef" class="iw-map-canvas-wrap">
-    <div v-if="loading" class="iw-skeleton" />
     <canvas
-      v-show="!loading"
       ref="canvasRef"
       class="iw-map-canvas"
       @mousemove="onPointerMove"
       @mousedown="onPointerDown"
       @mouseleave="onPointerLeave"
     />
+    <div
+      v-if="loading"
+      class="iw-skeleton iw-skeleton--overlay"
+      aria-hidden="true"
+    />
+    <div
+      v-else-if="showEmptyState"
+      class="iw-map-empty"
+      role="status"
+    >
+      No entities match the current filters
+    </div>
     <div
       v-if="hovered"
       class="iw-tooltip"

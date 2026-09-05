@@ -173,6 +173,7 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Producers
             yield return ("IN-KPI-001", item.InventoryValue);
             yield return ("IN-KPI-020", item.DaysOfSupply);
             yield return ("IN-KPI-021", item.RecommendedPurchaseQty);
+            yield return ("IN-KPI-028", item.RecommendedPurchaseValue);
         }
 
         private static Dictionary<string, HashSet<string>> BuildAttentionIndex(ItemEntityAnalyticsProduceInput input)

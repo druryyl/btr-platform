@@ -196,7 +196,8 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.UseCases
                     aggregate,
                     itemRollupRows,
                     lastFakturRows,
-                    today);
+                    today,
+                    rows);
                 var relationshipAggregate = _itemRelationshipAggregator.Aggregate(itemRollupRows, today, generatedAt);
 
                 WorkerProgressScope.Current.StepStarted($"{Domain}:Save", "Save snapshot");

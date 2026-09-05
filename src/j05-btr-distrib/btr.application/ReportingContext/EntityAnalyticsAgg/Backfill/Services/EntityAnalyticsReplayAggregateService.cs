@@ -290,7 +290,8 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Backfill.Services
                 aggregate,
                 bundle.ItemRollupRows,
                 bundle.LastFakturRows,
-                periodEnd);
+                periodEnd,
+                bundle.StokBalanceRows);
 
             var relationshipAggregate = _itemRelationshipAggregator.Aggregate(
                 bundle.ItemRollupRows,

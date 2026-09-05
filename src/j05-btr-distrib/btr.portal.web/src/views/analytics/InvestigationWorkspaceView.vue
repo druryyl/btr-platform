@@ -16,6 +16,7 @@ import EntityIdentityPanel from '@/components/entity-analytics/workspace/EntityI
 import WorkspaceKpiSummarySection from '@/components/entity-analytics/workspace/WorkspaceKpiSummarySection.vue'
 import ComparisonLegend from '@/components/entity-analytics/workspace/ComparisonLegend.vue'
 import PeerPositionPanel from '@/components/entity-analytics/workspace/PeerPositionPanel.vue'
+import PeerGroupSelector from '@/components/entity-analytics/workspace/PeerGroupSelector.vue'
 import TrajectoryPanel from '@/components/entity-analytics/workspace/TrajectoryPanel.vue'
 import SignalHistoryPanel from '@/components/entity-analytics/workspace/SignalHistoryPanel.vue'
 import PositionHistoryPanel from '@/components/entity-analytics/workspace/PositionHistoryPanel.vue'
@@ -71,6 +72,7 @@ function syncRoute() {
       entityIds: workspace.selectedEntityIds,
       dimensionFilter: workspace.dimensionFilter,
       attentionOnly: workspace.attentionOnly,
+      peerGroupRuleId: workspace.peerGroupRuleId,
     }),
   })
 }
@@ -83,6 +85,7 @@ async function bootstrap() {
     selectedEntityIds: parsed.entityIds,
     dimensionFilter: parsed.dimensionFilter,
     attentionOnly: parsed.attentionOnly,
+    peerGroupRuleId: parsed.peerGroupRuleId,
   })
 }
 
@@ -117,6 +120,11 @@ function onFilterChange(filter: string | null) {
 
 function onAttentionChange(value: boolean) {
   void workspace.setAttentionOnly(value).then(syncRoute)
+}
+
+function onPeerGroupChange(ruleId: string) {
+  workspace.setPeerGroupRuleId(ruleId)
+  syncRoute()
 }
 
 function clearFilters() {
@@ -248,7 +256,7 @@ watch(
             :selected-entity-ids="workspace.selectedEntityIds"
             :search-highlight-ids="searchHighlightIds"
             :investigation-mode="isInvestigation"
-            :loading="workspace.loadingPopulation"
+            :loading="workspace.loadingPopulation && !workspace.population"
             @select="onSelectPoint"
           />
         </div>
@@ -273,12 +281,25 @@ watch(
         </WorkspaceStageSection>
 
         <WorkspaceStageSection title="Context">
+          <div
+            v-if="workspace.showPeerGroupSelector"
+            class="iw-peer-group-toolbar"
+          >
+            <PeerGroupSelector
+              :rules="workspace.peerGroupRules"
+              :model-value="workspace.peerGroupRuleId"
+              @update:model-value="onPeerGroupChange"
+            />
+          </div>
           <PeerPositionPanel
             v-if="primaryKpiId"
             :entity-type="workspace.entityType"
+            :entities="workspace.selectedEntities"
             :entity-ids="workspace.selectedEntityIds"
+            :population-points="workspace.population?.Points ?? []"
             :kpi-id="primaryKpiId"
             :dimension-filter="workspace.dimensionFilter"
+            :peer-group-rule-id="workspace.peerGroupRuleId"
           />
           <TrajectoryPanel
             :entity-ids="workspace.selectedEntityIds"
@@ -334,5 +355,9 @@ watch(
 <style scoped>
 .iw-completeness {
   margin-top: 0.75rem;
+}
+
+.iw-peer-group-toolbar {
+  margin-bottom: 0.75rem;
 }
 </style>

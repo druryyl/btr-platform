@@ -51,11 +51,52 @@ The Days scheme:
 
 Bin edges and labels are always **business units**. IDR internal edges are on the nice ladder (including the forced high-end steps); Days edges are on the calendar ladder. The final bin may end at the observed peer max (not necessarily ladder-aligned).
 
+**Population Map:** When an axis unit is `Days`, tick labels reuse the calendar ladder (`0, 7, 14, 21, 30, 60, 90, 120, 180, 270, 365`). When an axis unit is `IDR`, tick labels use a **1-2-5 × 10^n** Rupiah ladder (K/M/B). For IDR axes, log projection also applies an **Rp 10,000 floor** (`IDR_PROJECTION_FLOOR`) so zeros and tiny amounts do not stretch the scale or float the Expected line mid-chart; tooltips still show the true business value. For Days axes, log projection also applies a **365-day ceiling** (`DAYS_PROJECTION_CAP`) so extreme values (e.g. 10k Days of Supply) do not stretch the scale; tooltips still show the true business value. The top tick shows **365+** when any peer exceeds one year.
+
 ### What does not change
 
-- Peer group resolution and dimension filters
 - Rank / percentile calculation (`SelectedPercentile`)
 - `PeerMin` / `PeerMax` and formatted peer range (raw business values)
+
+---
+
+## Customer peer group rules
+
+Investigation Workspace Peer Position lets users choose how Customer peers are formed:
+
+| Rule ID | Display | Dimension KPI | Default |
+| --- | --- | --- | --- |
+| `customer-wilayah` | Wilayah | `EA-DIM-WILAYAH` | Yes (platform registration default) |
+| `customer-klasifikasi` | Klasifikasi | `EA-DIM-KLASIFIKASI` | No |
+
+- Selector appears for **Customer** (and **Item**) in Investigation Workspace (Context stage) when multiple rules exist.
+- Selection is passed as optional `peerGroupRuleId` on `GET /api/entity-analytics/peer-distribution`.
+- Rules catalog: `GET /api/entity-analytics/peer-group-rules?entityType=Customer`.
+- URL state uses `?peerGroup=customer-klasifikasi`.
+- Profile / Compare Performance Signature (Radar) continue to use the platform default `customer-wilayah` from L5 — no runtime override.
+- Blank customer Klasifikasi is normalized to **`Unknown`** at L0 produce time so those customers still join a Klasifikasi peer group (after the next Customer analytics refresh).
+
+Population Map `dimensionFilter` remains a secondary narrowing filter within the chosen peer group; it is not the peer rule selector. When Customer peer group is **Klasifikasi**, the map Wilayah filter is not applied to Peer Position (dimensions differ).
+
+---
+
+## Item peer group rules
+
+Investigation Workspace Peer Position lets users choose how Item peers are formed:
+
+| Rule ID | Display | Dimension KPI | Default |
+| --- | --- | --- | --- |
+| `item-principal` | Principal | `EA-DIM-SUPPLIER-NAME` | Yes (platform registration default) |
+| `item-category` | Category | `EA-DIM-CATEGORY` | No |
+
+- Selector appears for **Item** in Investigation Workspace (Context stage) when multiple rules exist.
+- Selection is passed as optional `peerGroupRuleId` on `GET /api/entity-analytics/peer-distribution`.
+- Rules catalog: `GET /api/entity-analytics/peer-group-rules?entityType=Item`.
+- URL state uses `?peerGroup=item-category`.
+- Profile / Compare Performance Signature (Radar) continue to use the platform default `item-principal` from L5 — no runtime override.
+- Population Map presets (`inventory-health-map`, `replenishment-risk-map`) filter by Principal (`EA-DIM-SUPPLIER-NAME`).
+- Missing supplier names are normalized to **`Unknown`** in the item portfolio builder so those items still join a Principal peer group.
+- When Item peer group is **Category**, the map Principal filter is not applied to Peer Position (dimensions differ).
 
 ---
 
