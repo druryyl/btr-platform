@@ -1,0 +1,30 @@
+/*
+ * BTR Portal — Brand, nav, and canvas tokens
+ * Burgundy + Yellow Gold palette — see docs/BTR-Portal-Burgundy-Gold-Color-Palette.md
+ */
+
+:root {
+  /* Brand gold */
+  --brand-gold-100: #f7f0dc;
+  --brand-gold-500: #d4af37;
+  --brand-gold-600: #c9a227;
+  --brand-gold-ink: #3f2e0a;
+
+  /* Dark nav */
+  --portal-nav-bg: #1a050a;
+  --portal-nav-bg-elevated: #2a0a12;
+  --portal-nav-bg-active: #3d1220;
+  --portal-nav-border: #4a0e1c;
+  --portal-nav-text: #f7f0dc;
+  --portal-nav-muted: #c4a8b0;
+  --portal-nav-icon: #e5c5cd;
+  --portal-nav-active-accent: #d4af37;
+  --portal-nav-brand: #d4af37;
+
+  /* Light canvas */
+  --portal-canvas: #fbf7f5;
+  --portal-surface: #ffffff;
+  --portal-border: #e8dfe2;
+  --portal-text: #1f1218;
+  --portal-text-muted: #6b5a61;
+}
