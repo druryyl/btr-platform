@@ -11,7 +11,7 @@ import {
   projectedEntityToAnalyzed,
   resolveDeviationLabel,
 } from '@/services/populationProjection/populationProjectionEngine'
-import { businessToLog, robustNormalize } from '@/services/populationProjection/robustStats'
+import { businessToLog, businessToProjectedLog, robustNormalize } from '@/services/populationProjection/robustStats'
 import { robustProjectionStrategy } from '@/services/populationProjection/strategies/robustProjectionStrategy'
 
 function makePoint(overrides: Partial<PopulationMapPoint> = {}): PopulationMapPoint {
@@ -194,7 +194,7 @@ describe('populationProjectionEngine', () => {
     expect(analyzed.statisticalClass).toBe(entity.statisticalClass)
   })
 
-  it('applies IDR projection floor so tiny Y values share floor log projection', () => {
+  it('compresses sub-10K IDR values into a zero-anchored band; zero projects at the origin', () => {
     const points = [
       ...Array.from({ length: 20 }, (_, i) =>
         makePoint({
@@ -208,31 +208,27 @@ describe('populationProjectionEngine', () => {
       makePoint({ EntityId: 'high', AxisX: 120_000_000, AxisY: 500_000_000 }),
     ]
 
-    const withFloor = populationProjectionEngine.project(points, {
+    const result = populationProjectionEngine.project(points, {
       axisXUnit: 'IDR',
       axisYUnit: 'IDR',
     })!
-    const withoutFloor = populationProjectionEngine.project(points)!
 
-    const zeroEntity = withFloor.entities.get('zero0')!
-    const floorEntity = withFloor.entities.get('atFloor')!
+    const zeroEntity = result.entities.get('zero0')!
+    const floorEntity = result.entities.get('atFloor')!
+    const midEntity = result.entities.get('mid')!
+
+    // Raw business values are preserved for tooltips
     expect(zeroEntity.businessY).toBe(0)
     expect(floorEntity.businessY).toBe(IDR_PROJECTION_FLOOR)
 
-    // All sub-floor Y values project like the explicit floor peer in the same population
-    for (const [id, entity] of withFloor.entities) {
-      if (id.startsWith('zero')) {
-        expect(entity.projectionY).toBeCloseTo(floorEntity.projectionY, 8)
-      }
-    }
-
-    // Without floor, zeros sit lower in projection space than the floor peer
-    const unflooredZero = withoutFloor.entities.get('zero0')!
-    const unflooredFloor = withoutFloor.entities.get('atFloor')!
-    expect(unflooredZero.projectionY).toBeLessThan(unflooredFloor.projectionY)
+    // Zero anchors at the origin, below the floor, and well below mid range
+    expect(businessToProjectedLog(0, 'IDR')).toBe(0)
+    expect(businessToProjectedLog(IDR_PROJECTION_FLOOR, 'IDR')).toBeCloseTo(1, 8)
+    expect(zeroEntity.projectionY).toBeLessThan(floorEntity.projectionY)
+    expect(floorEntity.projectionY).toBeLessThan(midEntity.projectionY)
   })
 
-  it('does not apply IDR floor when axis unit is Days', () => {
+  it('treats a Days axis with the 365-day ceiling, distinct from IDR projection', () => {
     const points = [
       makePoint({ EntityId: 'a', AxisX: 1_000_000, AxisY: 0 }),
       makePoint({ EntityId: 'b', AxisX: 2_000_000, AxisY: 30 }),

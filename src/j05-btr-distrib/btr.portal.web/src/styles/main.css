@@ -20,7 +20,7 @@ body {
     'Segoe UI',
     sans-serif;
   color: var(--p-text-color);
-  background: var(--p-surface-50);
+  background: var(--portal-canvas);
 }
 
 h1,

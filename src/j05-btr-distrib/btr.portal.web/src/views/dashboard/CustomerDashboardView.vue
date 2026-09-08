@@ -2,6 +2,7 @@
 import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import DashboardDetailLayout from '@/components/dashboard/DashboardDetailLayout.vue'
+import CompactValue from '@/components/dashboard/primitives/CompactValue.vue'
 import PlatformSnapshotHealthBanners from '@/components/platform/PlatformSnapshotHealthBanners.vue'
 import CustomerAttentionCardGroup from '@/components/dashboard/CustomerAttentionCardGroup.vue'
 import CustomerAttentionList from '@/components/dashboard/CustomerAttentionList.vue'
@@ -10,7 +11,7 @@ import CustomerNavigationSection from '@/components/dashboard/CustomerNavigation
 import Top10RankingTable from '@/components/dashboard/Top10RankingTable.vue'
 import type { DashboardCustomerRankingRow } from '@/models/dashboard'
 import { PROFILE_ROW_CLICK_HINT } from '@/navigation/entityAnalyticsNavigation'
-import { formatCurrency, formatNumber, formatPercent } from '@/services/formatters'
+import { formatCurrency, formatCurrencyCompact, formatNumber, formatPercent } from '@/services/formatters'
 import { CUSTOMER_ATTENTION_SIGNAL_ALL } from '@/services/customerAttentionSignals'
 import { resolveInvestigationSourceLabel } from '@/services/investigationSourceLabels'
 import { navigateToInvestigation } from '@/services/navigateToInvestigation'
@@ -124,8 +125,11 @@ onMounted(() => {
           </div>
           <div class="metric">
             <span class="metric__label">&gt;90 Day Exposure</span>
-            <span class="metric__value">
-              {{ cards ? formatCurrency(cards.AgingOver90Amount) : '—' }}
+            <span
+              class="metric__value"
+              :title="cards ? formatCurrency(cards.AgingOver90Amount) : undefined"
+            >
+              <CompactValue :value="cards ? formatCurrencyCompact(cards.AgingOver90Amount) : '—'" />
             </span>
           </div>
         </CustomerAttentionCardGroup>

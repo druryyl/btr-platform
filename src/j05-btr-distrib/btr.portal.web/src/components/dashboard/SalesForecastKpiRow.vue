@@ -1,10 +1,12 @@
 <script setup lang="ts">
 import KpiChip from '@/components/dashboard/primitives/KpiChip.vue'
+import CompactValue from '@/components/dashboard/primitives/CompactValue.vue'
 
 export interface SalesForecastKpiMetric {
   label: string
   value: string
   hint?: string
+  title?: string
   severity?: 'normal' | 'warning' | 'critical' | 'success' | 'muted'
 }
 
@@ -33,7 +35,8 @@ function chipSpec(severity?: SalesForecastKpiMetric['severity']): ChipSpec | nul
         <span
           class="sfkpi-metric__value"
           :class="`sfkpi-metric__value--${metric.severity ?? 'normal'}`"
-        >{{ metric.value }}</span>
+          :title="metric.title ?? undefined"
+        ><CompactValue :value="metric.value" /></span>
         <KpiChip
           v-if="chipSpec(metric.severity)"
           :label="chipSpec(metric.severity)!.label"

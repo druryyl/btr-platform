@@ -1,15 +1,18 @@
 <script setup lang="ts">
 import { computed } from 'vue'
+import CompactValue from '@/components/dashboard/primitives/CompactValue.vue'
 
 const props = withDefaults(
   defineProps<{
     value: string
     variant?: 'primary' | 'secondary'
     empty?: boolean
+    title?: string
   }>(),
   {
     variant: 'secondary',
     empty: false,
+    title: undefined,
   },
 )
 
@@ -21,7 +24,9 @@ const valueClass = computed(() => ({
 </script>
 
 <template>
-  <span class="kpi-value" :class="valueClass">{{ value }}</span>
+  <span class="kpi-value" :class="valueClass" :title="title ?? undefined">
+    <CompactValue :value="value" />
+  </span>
 </template>
 
 <style scoped>

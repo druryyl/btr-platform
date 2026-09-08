@@ -10,7 +10,7 @@ import ExecutiveDomainSummaryRow from '@/components/dashboard/ExecutiveDomainSum
 import ExecutiveExposureSection from '@/components/dashboard/ExecutiveExposureSection.vue'
 import DashboardSectionHeader from '@/components/dashboard/primitives/DashboardSectionHeader.vue'
 import DashboardMetric from '@/components/dashboard/primitives/DashboardMetric.vue'
-import { formatCurrency, formatDateTime } from '@/services/formatters'
+import { formatCurrency, formatCurrencyCompact, formatDateTime } from '@/services/formatters'
 import {
   formatDashboardCurrency,
   formatDashboardEmpty,
@@ -106,8 +106,13 @@ onMounted(() => {
                 dashboard.executive?.Sales.IsAvailable
                   ? dashboard.executive?.Sales.TotalAchievement
                   : null,
-                formatCurrency,
+                formatCurrencyCompact,
               )
+            "
+            :title="
+              dashboard.executive?.Sales.IsAvailable
+                ? formatCurrency(dashboard.executive?.Sales.TotalAchievement)
+                : undefined
             "
             variant="secondary"
             :empty="!dashboard.executive?.Sales.IsAvailable"
@@ -130,8 +135,13 @@ onMounted(() => {
                 dashboard.executive?.Piutang.IsAvailable
                   ? dashboard.executive?.Piutang.TotalPiutang
                   : null,
-                formatCurrency,
+                formatCurrencyCompact,
               )
+            "
+            :title="
+              dashboard.executive?.Piutang.IsAvailable
+                ? formatCurrency(dashboard.executive?.Piutang.TotalPiutang)
+                : undefined
             "
             variant="primary"
             :empty="!dashboard.executive?.Piutang.IsAvailable"
@@ -150,8 +160,13 @@ onMounted(() => {
             label="> 90 Day Amount"
             :value="
               dashboard.executive?.Piutang.IsAvailable
-                ? `${formatCurrency(dashboard.executive.Piutang.AgingOver90Amount)} (${formatDashboardPercent(dashboard.executive.Piutang.AgingOver90Percent)})`
+                ? `${formatCurrencyCompact(dashboard.executive.Piutang.AgingOver90Amount)} (${formatDashboardPercent(dashboard.executive.Piutang.AgingOver90Percent)})`
                 : formatDashboardEmpty('no-data')
+            "
+            :title="
+              dashboard.executive?.Piutang.IsAvailable
+                ? formatCurrency(dashboard.executive.Piutang.AgingOver90Amount)
+                : undefined
             "
             variant="secondary"
             :empty="!dashboard.executive?.Piutang.IsAvailable"
@@ -180,8 +195,13 @@ onMounted(() => {
             label="Pending Posting"
             :value="
               dashboard.executive?.Purchasing.IsAvailable
-                ? `${dashboard.executive.Purchasing.PendingPostingInvoiceCount} invoices · ${formatCurrency(dashboard.executive.Purchasing.PendingPostingValue)}`
+                ? `${dashboard.executive.Purchasing.PendingPostingInvoiceCount} invoices · ${formatCurrencyCompact(dashboard.executive.Purchasing.PendingPostingValue)}`
                 : formatDashboardEmpty('no-data')
+            "
+            :title="
+              dashboard.executive?.Purchasing.IsAvailable
+                ? `${dashboard.executive.Purchasing.PendingPostingInvoiceCount} invoices · ${formatCurrency(dashboard.executive.Purchasing.PendingPostingValue)}`
+                : undefined
             "
             variant="primary"
             :empty="!dashboard.executive?.Purchasing.IsAvailable"
@@ -211,8 +231,13 @@ onMounted(() => {
                 dashboard.executive?.Inventory.IsAvailable
                   ? dashboard.executive?.Inventory.TotalInventoryValue
                   : null,
-                formatCurrency,
+                formatCurrencyCompact,
               )
+            "
+            :title="
+              dashboard.executive?.Inventory.IsAvailable
+                ? formatCurrency(dashboard.executive?.Inventory.TotalInventoryValue)
+                : undefined
             "
             variant="primary"
             :empty="!dashboard.executive?.Inventory.IsAvailable"
@@ -250,6 +275,7 @@ onMounted(() => {
         <ExecutiveExposureSection
           title="Top 5 Customers"
           name-header="Customer"
+          amount-header="Outstanding Balance"
           domain="customer"
           :items="dashboard.executive?.CriticalExposures.TopCustomers ?? []"
           :loading="dashboard.loading"
@@ -257,20 +283,23 @@ onMounted(() => {
         <ExecutiveExposureSection
           title="Top 5 Categories"
           name-header="Category"
+          amount-header="Inventory Value"
           domain="inventory"
           :items="dashboard.executive?.CriticalExposures.TopCategories ?? []"
           :loading="dashboard.loading"
         />
         <ExecutiveExposureSection
-          title="Top 5 Suppliers"
+          title="Top 5 Inventory Supplier"
           name-header="Supplier"
+          amount-header="Inventory Value"
           domain="purchasing"
           :items="dashboard.executive?.CriticalExposures.TopSuppliers ?? []"
           :loading="dashboard.loading"
         />
         <ExecutiveExposureSection
-          title="Top 5 Principals"
+          title="Top 5 Purchasing Principal"
           name-header="Principal"
+          amount-header="Purchase Amount"
           domain="purchasing"
           :items="dashboard.executive?.CriticalExposures.TopPrincipals ?? []"
           :loading="dashboard.loading"

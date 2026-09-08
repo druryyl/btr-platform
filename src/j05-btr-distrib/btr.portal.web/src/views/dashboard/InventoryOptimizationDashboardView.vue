@@ -13,7 +13,7 @@ import InventoryOptimizationReorderTable from '@/components/dashboard/InventoryO
 import InventoryOptimizationSummary from '@/components/dashboard/InventoryOptimizationSummary.vue'
 import InventoryOptimizationTransferTable from '@/components/dashboard/InventoryOptimizationTransferTable.vue'
 import type { SalesForecastKpiMetric } from '@/components/dashboard/SalesForecastKpiRow.vue'
-import { formatCurrency } from '@/services/formatters'
+import { formatCurrency, formatCurrencyCompact } from '@/services/formatters'
 import { useDashboardStore } from '@/stores/dashboardStore'
 
 const dashboard = useDashboardStore()
@@ -47,11 +47,13 @@ const healthBudgetMetrics = computed((): SalesForecastKpiMetric[] => {
     },
     {
       label: 'Recommended Purchase Budget',
-      value: formatCurrency(data.RecommendedPurchaseBudgetIdr),
+      value: formatCurrencyCompact(data.RecommendedPurchaseBudgetIdr),
+      title: formatCurrency(data.RecommendedPurchaseBudgetIdr),
     },
     {
       label: 'Deferrable Spend',
-      value: formatCurrency(data.DeferrableSpendIdr),
+      value: formatCurrencyCompact(data.DeferrableSpendIdr),
+      title: formatCurrency(data.DeferrableSpendIdr),
     },
   ]
 })

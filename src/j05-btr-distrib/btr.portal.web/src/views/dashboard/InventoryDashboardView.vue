@@ -5,7 +5,7 @@ import DashboardDetailLayout from '@/components/dashboard/DashboardDetailLayout.
 import DashboardMetric from '@/components/dashboard/primitives/DashboardMetric.vue'
 import InventoryHorizontalBarChart from '@/components/dashboard/InventoryHorizontalBarChart.vue'
 import Top10RankingTable from '@/components/dashboard/Top10RankingTable.vue'
-import { formatCurrency, formatNumber } from '@/services/formatters'
+import { formatCurrency, formatCurrencyCompact, formatNumber } from '@/services/formatters'
 import type { DashboardInventoryRankingItem } from '@/models/dashboard'
 import { resolveInvestigationSourceLabel } from '@/services/investigationSourceLabels'
 import { navigateToInvestigation } from '@/services/navigateToInvestigation'
@@ -57,7 +57,8 @@ onMounted(() => {
     <div class="inventory-dashboard__kpi-row" data-domain="inventory">
       <DashboardMetric
         label="Total Inventory Value"
-        :value="dashboard.inventory ? formatCurrency(dashboard.inventory.TotalInventoryValue) : '—'"
+        :value="dashboard.inventory ? formatCurrencyCompact(dashboard.inventory.TotalInventoryValue) : '—'"
+        :title="dashboard.inventory ? formatCurrency(dashboard.inventory.TotalInventoryValue) : undefined"
         :empty="!dashboard.inventory"
       />
       <DashboardMetric

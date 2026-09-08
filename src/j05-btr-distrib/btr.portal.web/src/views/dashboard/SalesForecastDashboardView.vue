@@ -9,7 +9,7 @@ import SalesForecastKpiRow from '@/components/dashboard/SalesForecastKpiRow.vue'
 import type { SalesForecastKpiMetric } from '@/components/dashboard/SalesForecastKpiRow.vue'
 import SalesForecastSummary from '@/components/dashboard/SalesForecastSummary.vue'
 import WeeklyTrendChart from '@/components/dashboard/WeeklyTrendChart.vue'
-import { formatCurrency, formatPercent } from '@/services/formatters'
+import { formatCurrency, formatCurrencyCompact, formatPercent } from '@/services/formatters'
 import { useDashboardStore } from '@/stores/dashboardStore'
 
 const dashboard = useDashboardStore()
@@ -32,12 +32,20 @@ const actualVsForecastMetrics = computed((): SalesForecastKpiMetric[] => {
   if (!data) return []
 
   return [
-    { label: 'Current Sales', value: formatCurrency(data.CurrentSales) },
+    {
+      label: 'Current Sales',
+      value: formatCurrencyCompact(data.CurrentSales),
+      title: formatCurrency(data.CurrentSales),
+    },
     {
       label: 'Current Achievement',
       value: formatPercent(data.CurrentAchievementPercent),
     },
-    { label: 'Forecast Sales', value: formatCurrency(data.ForecastSales) },
+    {
+      label: 'Forecast Sales',
+      value: formatCurrencyCompact(data.ForecastSales),
+      title: formatCurrency(data.ForecastSales),
+    },
     {
       label: 'Forecast Achievement',
       value: formatPercent(data.ForecastAchievementPercent),
@@ -57,18 +65,27 @@ const paceGapMetrics = computed((): SalesForecastKpiMetric[] => {
         : 'normal'
 
   return [
-    { label: 'Daily Average Sales', value: formatCurrency(data.DailyAverageSales) },
+    {
+      label: 'Daily Average Sales',
+      value: formatCurrencyCompact(data.DailyAverageSales),
+      title: formatCurrency(data.DailyAverageSales),
+    },
     {
       label: 'Required Daily Sales',
       value:
         data.RequiredDailySales != null
-          ? formatCurrency(data.RequiredDailySales)
+          ? formatCurrencyCompact(data.RequiredDailySales)
           : '—',
+      title:
+        data.RequiredDailySales != null
+          ? formatCurrency(data.RequiredDailySales)
+          : undefined,
       severity: requiredSeverity,
     },
     {
       label: 'Target Gap',
-      value: formatCurrency(data.TargetGap),
+      value: formatCurrencyCompact(data.TargetGap),
+      title: formatCurrency(data.TargetGap),
       severity: data.TargetGap > 0 ? 'warning' : 'success',
     },
     {
@@ -91,9 +108,21 @@ const scenarioMetrics = computed((): SalesForecastKpiMetric[] => {
         : 'warning'
 
   return [
-    { label: 'Best Case', value: formatCurrency(data.BestCaseSales) },
-    { label: 'Expected', value: formatCurrency(data.ForecastSales) },
-    { label: 'Worst Case', value: formatCurrency(data.WorstCaseSales) },
+    {
+      label: 'Best Case',
+      value: formatCurrencyCompact(data.BestCaseSales),
+      title: formatCurrency(data.BestCaseSales),
+    },
+    {
+      label: 'Expected',
+      value: formatCurrencyCompact(data.ForecastSales),
+      title: formatCurrency(data.ForecastSales),
+    },
+    {
+      label: 'Worst Case',
+      value: formatCurrencyCompact(data.WorstCaseSales),
+      title: formatCurrency(data.WorstCaseSales),
+    },
     {
       label: 'Forecast Confidence',
       value: data.ForecastConfidence,

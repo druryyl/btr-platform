@@ -17,12 +17,12 @@
   /* Domain accent colors */
   --domain-sales-color: #2563eb;
   --domain-sales-tint: #f8fbff;
-  --domain-finance-color: #dc2626;
-  --domain-finance-tint: #fff8f8;
+  --domain-finance-color: #be123c;
+  --domain-finance-tint: #fff1f2;
   --domain-collection-color: #ea580c;
   --domain-collection-tint: #fff8f3;
-  --domain-inventory-color: #16a34a;
-  --domain-inventory-tint: #f7fff7;
+  --domain-inventory-color: #0f766e;
+  --domain-inventory-tint: #f0fdfa;
   --domain-purchasing-color: #9333ea;
   --domain-purchasing-tint: #faf5ff;
   --domain-customer-color: #0891b2;
@@ -35,12 +35,12 @@
   --domain-portfolio-tint: #f0fdfa;
 
   /* KPI status colors */
-  --kpi-status-healthy-color: #15803d;
-  --kpi-status-healthy-bg: #dcfce7;
-  --kpi-status-warning-color: #c2410c;
+  --kpi-status-healthy-color: #0f766e;
+  --kpi-status-healthy-bg: #ccfbf1;
+  --kpi-status-warning-color: #b45309;
   --kpi-status-warning-bg: #ffedd5;
-  --kpi-status-critical-color: #b91c1c;
-  --kpi-status-critical-bg: #fee2e2;
+  --kpi-status-critical-color: #9f1239;
+  --kpi-status-critical-bg: #ffe4e6;
   --kpi-status-unknown-color: #64748b;
   --kpi-status-unknown-bg: #f1f5f9;
   --kpi-status-stable-color: #0369a1;
@@ -63,8 +63,8 @@
   /* Table */
   --dashboard-table-header-bg: #f8fafc;
   --dashboard-table-row-alt: #fafbfc;
-  --dashboard-table-row-hover: #f0f7ff;
-  --dashboard-table-row-top: rgb(37 99 235 / 3%);
+  --dashboard-table-row-hover: #fbf5f6;
+  --dashboard-table-row-top: rgb(107 15 26 / 4%);
 }
 
 /* Hero card KPI emphasis */

@@ -11,7 +11,7 @@ import CustomerPortfolioPriorityTable from '@/components/dashboard/customer-port
 import CustomerPortfolioActionSegments from '@/components/dashboard/customer-portfolio/CustomerPortfolioActionSegments.vue'
 import CustomerPortfolioConcentrationTables from '@/components/dashboard/customer-portfolio/CustomerPortfolioConcentrationTables.vue'
 import type { SalesForecastKpiMetric } from '@/components/dashboard/SalesForecastKpiRow.vue'
-import { formatCurrency, formatPercent } from '@/services/formatters'
+import { formatCurrency, formatCurrencyCompact, formatPercent } from '@/services/formatters'
 import {
   collectDistinctFilterValues,
   createDefaultPortfolioFilters,
@@ -88,7 +88,8 @@ const strategicMetrics = computed((): SalesForecastKpiMetric[] => {
     },
     {
       label: 'Working Capital Tied',
-      value: formatCurrency(data.WorkingCapitalTiedAmount),
+      value: formatCurrencyCompact(data.WorkingCapitalTiedAmount),
+      title: formatCurrency(data.WorkingCapitalTiedAmount),
     },
     {
       label: 'Total Customers',
@@ -113,7 +114,11 @@ const lifecycleMetrics = computed((): SalesForecastKpiMetric[] => {
       value: String(data.DecliningCount),
       severity: data.DecliningCount > 0 ? 'warning' : 'success',
     },
-    { label: 'Total MTD Omzet', value: formatCurrency(data.TotalMtdOmzet) },
+    {
+      label: 'Total MTD Omzet',
+      value: formatCurrencyCompact(data.TotalMtdOmzet),
+      title: formatCurrency(data.TotalMtdOmzet),
+    },
   ]
 })
 

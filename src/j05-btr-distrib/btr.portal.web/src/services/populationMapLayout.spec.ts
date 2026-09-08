@@ -232,6 +232,25 @@ describe('buildIdrNiceAxisTicks', () => {
     }
   })
 
+  it('anchors a 0 edge and starts the ladder at the floor when data starts at 0', () => {
+    const edges = generateIdrNiceEdges(0, 100_000_000)
+    expect(edges[0]).toBe(0)
+    expect(edges).toContain(10_000)
+    expect(edges).toContain(1_000_000)
+    expect(edges.slice(1).every((e) => e >= 10_000)).toBe(true)
+    expect(edges.slice(1).every(isNiceIdr)).toBe(true)
+  })
+
+  it('builds a 0 tick projected consistently with compressed IDR log', () => {
+    const ticks = buildIdrNiceAxisTicks(norm, 0, 100_000_000)
+    expect(ticks.length).toBeGreaterThan(1)
+    expect(ticks[0].businessValue).toBe(0)
+    expect(Number.isFinite(ticks[0].projectionValue)).toBe(true)
+    const ladder = ticks.slice(1).map((t) => t.businessValue)
+    expect(ladder.every((v) => v >= 10_000)).toBe(true)
+    expect(ladder.every(isNiceIdr)).toBe(true)
+  })
+
   it('detects IDR axis units', () => {
     expect(isIdrAxisUnit('IDR')).toBe(true)
     expect(isIdrAxisUnit('idr')).toBe(true)
@@ -562,10 +581,11 @@ describe('buildAutoLabelCandidates', () => {
 })
 
 describe('formatBinRangeLabel', () => {
-  it('formats IDR ranges with K/M/B suffixes', () => {
+  it('formats IDR ranges with K/J/M/T suffixes', () => {
     expect(formatBinRangeLabel(0, 100_000, 'IDR')).toBe('0 – 100K')
-    expect(formatBinRangeLabel(100_000, 50_000_000, 'IDR')).toBe('100K – 50M')
-    expect(formatBinRangeLabel(50_000_000, 1_400_000_000, 'IDR')).toBe('50M – 1.4B')
-    expect(formatBinRangeLabel(500_000_000, 1_400_000_000, 'IDR', true)).toBe('500M – ~')
+    expect(formatBinRangeLabel(100_000, 50_000_000, 'IDR')).toBe('100K – 50J')
+    expect(formatBinRangeLabel(50_000_000, 1_400_000_000, 'IDR')).toBe('50J – 1.4M')
+    expect(formatBinRangeLabel(500_000_000, 1_400_000_000, 'IDR', true)).toBe('500J – ~')
+    expect(formatBinRangeLabel(1_000_000_000, 2_500_000_000_000, 'IDR')).toBe('1M – 2.5T')
   })
 })

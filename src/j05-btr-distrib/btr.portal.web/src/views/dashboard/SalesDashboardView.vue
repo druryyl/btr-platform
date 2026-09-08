@@ -6,7 +6,7 @@ import DashboardMetric from '@/components/dashboard/primitives/DashboardMetric.v
 import TargetVsAchievementChart from '@/components/dashboard/TargetVsAchievementChart.vue'
 import Top10RankingTable from '@/components/dashboard/Top10RankingTable.vue'
 import WeeklyTrendChart from '@/components/dashboard/WeeklyTrendChart.vue'
-import { formatCurrency, formatPercent } from '@/services/formatters'
+import { formatCurrency, formatCurrencyCompact, formatPercent } from '@/services/formatters'
 import type { DashboardSalesRankingItem } from '@/models/dashboard'
 import { resolveInvestigationSourceLabel } from '@/services/investigationSourceLabels'
 import { navigateToInvestigation } from '@/services/navigateToInvestigation'
@@ -49,12 +49,14 @@ onMounted(() => {
     <div class="sales-dashboard__kpi-row" data-domain="sales">
       <DashboardMetric
         label="Total Target"
-        :value="dashboard.sales ? formatCurrency(dashboard.sales.TotalTarget) : '—'"
+        :value="dashboard.sales ? formatCurrencyCompact(dashboard.sales.TotalTarget) : '—'"
+        :title="dashboard.sales ? formatCurrency(dashboard.sales.TotalTarget) : undefined"
         :empty="!dashboard.sales"
       />
       <DashboardMetric
         label="Total Achievement"
-        :value="dashboard.sales ? formatCurrency(dashboard.sales.TotalAchievement) : '—'"
+        :value="dashboard.sales ? formatCurrencyCompact(dashboard.sales.TotalAchievement) : '—'"
+        :title="dashboard.sales ? formatCurrency(dashboard.sales.TotalAchievement) : undefined"
         :empty="!dashboard.sales"
       />
       <DashboardMetric

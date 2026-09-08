@@ -9,12 +9,14 @@ withDefaults(
     value: string
     variant?: 'primary' | 'secondary'
     empty?: boolean
+    title?: string
     progress?: number | null
     progressStatus?: 'healthy' | 'warning' | 'critical' | 'unknown' | null
   }>(),
   {
     variant: 'secondary',
     empty: false,
+    title: undefined,
     progress: undefined,
     progressStatus: null,
   },
@@ -24,7 +26,7 @@ withDefaults(
 <template>
   <div class="dashboard-metric">
     <MetricLabel :label="label" />
-    <KpiValue :value="value" :variant="variant" :empty="empty" />
+    <KpiValue :value="value" :variant="variant" :empty="empty" :title="title" />
     <KpiProgress
       v-if="progress !== undefined"
       :value="progress"
