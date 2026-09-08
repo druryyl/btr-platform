@@ -176,11 +176,14 @@ namespace btr.infrastructure.FinanceContext.PiutangAgg
                     aa.PiutangId IN @listPiutangId";
 
             var result = new List<PiutangModel>();
-            var batchSize = 2000;
+            const int batchSize = 100;
+            var piutangIds = filter?.Select(x => x.PiutangId).ToList() ?? new List<string>();
+            if (piutangIds.Count == 0)
+                return result;
 
             using (var conn = new SqlConnection(ConnStringHelper.Get(_opt)))
             {
-                foreach (var batch in filter.Select(x => x.PiutangId).Chunk(batchSize))
+                foreach (var batch in piutangIds.Chunk(batchSize))
                 {
                     var dp = new DynamicParameters();
                     dp.Add("@listPiutangId", batch);

@@ -2,9 +2,9 @@ import type { PopulationMapPoint } from '@/models/entityAnalytics'
 import type { AnalyzedPoint, PopulationProjectionResult, StatisticalClass } from '@/services/populationProjection/populationProjectionEngine'
 import { projectedEntityToAnalyzed } from '@/services/populationProjection/populationProjectionEngine'
 import {
-  businessToLog,
-  businessValueForLog,
+  businessToProjectedLog,
   DAYS_PROJECTION_CAP,
+  IDR_PROJECTION_FLOOR,
   isDaysAxisUnit,
   isIdrAxisUnit,
 } from '@/services/populationProjection/robustStats'
@@ -354,13 +354,18 @@ function chooseIdrMantissas(decadeSpan: number): readonly number[] {
   return IDR_NICE_MANTISSAS_FULL
 }
 
-/** Generate 1-2-5 × 10^n Rupiah edges within [min, max]. */
+/** Generate 1-2-5 × 10^n Rupiah edges within [min, max]; anchors 0 when data starts at 0. */
 export function generateIdrNiceEdges(dataMin: number, dataMax: number): number[] {
   const min = Number.isFinite(dataMin) ? Math.max(0, Math.min(dataMin, dataMax)) : 0
   const max = Number.isFinite(dataMax) ? Math.max(dataMin, dataMax) : min
   if (max <= 0) return []
 
-  const startExp = Math.floor(Math.log10(Math.max(min, 1)))
+  const hasZeroEdge = min === 0
+  // Sub-floor ladder steps collapse into the zero-anchored band; start the ladder
+  // at the floor so labels stay readable. Fall back to `min` when the whole axis
+  // sits below the floor.
+  const ladderMin = max < IDR_PROJECTION_FLOOR ? min : Math.max(min, IDR_PROJECTION_FLOOR)
+  const startExp = Math.floor(Math.log10(Math.max(ladderMin, 1)))
   const endExp = Math.ceil(Math.log10(Math.max(max, 1)))
   const decadeSpan = Math.max(1, endExp - startExp + 1)
   let mantissas = chooseIdrMantissas(decadeSpan)
@@ -371,7 +376,7 @@ export function generateIdrNiceEdges(dataMin: number, dataMax: number): number[]
       const scale = 10 ** e
       for (const m of ms) {
         const step = m * scale
-        if (step >= min && step <= max) edges.push(step)
+        if (step >= ladderMin && step <= max) edges.push(step)
       }
     }
     return [...new Set(edges)].sort((a, b) => a - b)
@@ -389,6 +394,8 @@ export function generateIdrNiceEdges(dataMin: number, dataMax: number): number[]
     const stride = Math.ceil(edges.length / IDR_MAX_AXIS_TICKS)
     edges = edges.filter((_, i) => i % stride === 0 || i === edges.length - 1)
   }
+
+  if (hasZeroEdge) edges.unshift(0)
 
   return edges
 }
@@ -410,7 +417,7 @@ export function buildIdrNiceAxisTicks(
   const scale = Math.abs(norm.scale) < 1e-12 ? 1e-12 : norm.scale
 
   return edges.map((businessValue) => {
-    const logValue = businessToLog(businessValue)
+    const logValue = businessToProjectedLog(businessValue, 'IDR')
     return {
       businessValue,
       projectionValue: (logValue - norm.center) / scale,
@@ -450,7 +457,7 @@ export function buildDaysCalendarAxisTicks(
   const scale = Math.abs(norm.scale) < 1e-12 ? 1e-12 : norm.scale
 
   return unique.map((businessValue) => {
-    const logValue = businessToLog(businessValueForLog(businessValue, 'Days'))
+    const logValue = businessToProjectedLog(businessValue, 'Days')
     return {
       businessValue,
       projectionValue: (logValue - norm.center) / scale,

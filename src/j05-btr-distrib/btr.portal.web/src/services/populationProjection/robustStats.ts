@@ -8,8 +8,9 @@ export const THEIL_SEN_EXACT_MAX = 600
 export const THEIL_SEN_SUBSAMPLE_SIZE = 600
 
 /**
- * IDR amounts below this are treated as the floor for Population Map log projection
- * so zeros/tiny piutang do not stretch the Expected line mid-chart.
+ * IDR amounts below this are treated as the floor for Population Map log projection.
+ * The 0–10K band is compressed into a tiny zero-anchored space so tiny/no-meaning
+ * piutang do not stretch the scale, while 0 itself still projects at the origin.
  */
 export const IDR_PROJECTION_FLOOR = 10_000
 
@@ -35,20 +36,28 @@ export function businessToLog(value: number): number {
 }
 
 /**
- * Apply unit-specific projection clamps before log:
- * - IDR: floor at IDR_PROJECTION_FLOOR
- * - Days: ceiling at DAYS_PROJECTION_CAP
+ * Log-space projection offset for IDR axes. Subtracting it anchors the origin at 0
+ * while the floor (Rp 10K) lands 1 log-unit above the origin — the compressed
+ * "no business value" band (0–10K) occupies just one small unit on the axis.
+ */
+export const IDR_LOG_COMPRESSION = businessToLog(IDR_PROJECTION_FLOOR) - 1
+
+/**
+ * Final log-domain projection position for a business value after unit-specific clamps:
+ * - IDR: 0 → 0 (origin); values below the floor collapse into the zero-anchored band;
+ *   above the floor, ordinary log minus a constant offset.
+ * - Days: ceiling at DAYS_PROJECTION_CAP.
  * Otherwise pass through (still clamp negatives at 0).
  */
-export function businessValueForLog(value: number, unit: string | null | undefined): number {
+export function businessToProjectedLog(value: number, unit: string | null | undefined): number {
   const clamped = Math.max(value, 0)
   if (isIdrAxisUnit(unit)) {
-    return Math.max(clamped, IDR_PROJECTION_FLOOR)
+    return Math.max(businessToLog(clamped) - IDR_LOG_COMPRESSION, 0)
   }
   if (isDaysAxisUnit(unit)) {
-    return Math.min(clamped, DAYS_PROJECTION_CAP)
+    return businessToLog(Math.min(clamped, DAYS_PROJECTION_CAP))
   }
-  return clamped
+  return businessToLog(clamped)
 }
 
 export function median(values: number[]): number {

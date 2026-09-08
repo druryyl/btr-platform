@@ -232,6 +232,25 @@ describe('buildIdrNiceAxisTicks', () => {
     }
   })
 
+  it('anchors a 0 edge and starts the ladder at the floor when data starts at 0', () => {
+    const edges = generateIdrNiceEdges(0, 100_000_000)
+    expect(edges[0]).toBe(0)
+    expect(edges).toContain(10_000)
+    expect(edges).toContain(1_000_000)
+    expect(edges.slice(1).every((e) => e >= 10_000)).toBe(true)
+    expect(edges.slice(1).every(isNiceIdr)).toBe(true)
+  })
+
+  it('builds a 0 tick projected consistently with compressed IDR log', () => {
+    const ticks = buildIdrNiceAxisTicks(norm, 0, 100_000_000)
+    expect(ticks.length).toBeGreaterThan(1)
+    expect(ticks[0].businessValue).toBe(0)
+    expect(Number.isFinite(ticks[0].projectionValue)).toBe(true)
+    const ladder = ticks.slice(1).map((t) => t.businessValue)
+    expect(ladder.every((v) => v >= 10_000)).toBe(true)
+    expect(ladder.every(isNiceIdr)).toBe(true)
+  })
+
   it('detects IDR axis units', () => {
     expect(isIdrAxisUnit('IDR')).toBe(true)
     expect(isIdrAxisUnit('idr')).toBe(true)

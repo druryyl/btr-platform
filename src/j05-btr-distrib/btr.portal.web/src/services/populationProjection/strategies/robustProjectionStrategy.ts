@@ -10,8 +10,7 @@ import type {
 } from '@/services/populationProjection/types'
 import {
   buildConfidenceBands,
-  businessToLog,
-  businessValueForLog,
+  businessToProjectedLog,
   classifyByResidualMagnitude,
   computeLabelPriority,
   fitTheilSenRegression,
@@ -54,16 +53,14 @@ function validateEntities(
 
     const businessX = Math.max(entity.businessX, 0)
     const businessY = Math.max(entity.businessY, 0)
-    const logSourceX = businessValueForLog(businessX, options?.axisXUnit)
-    const logSourceY = businessValueForLog(businessY, options?.axisYUnit)
 
     valid.push({
       entityId: entity.entityId,
       label: entity.label,
       businessX,
       businessY,
-      logX: businessToLog(logSourceX),
-      logY: businessToLog(logSourceY),
+      logX: businessToProjectedLog(businessX, options?.axisXUnit),
+      logY: businessToProjectedLog(businessY, options?.axisYUnit),
     })
   }
 
@@ -93,7 +90,7 @@ function buildAxisGuides(
     if (index >= 0) {
       logValue = logValues[index]
     } else {
-      logValue = businessToLog(businessValueForLog(businessValue, axisUnit))
+      logValue = businessToProjectedLog(businessValue, axisUnit)
     }
 
     const norm = axis === 'x' ? normX : normY
