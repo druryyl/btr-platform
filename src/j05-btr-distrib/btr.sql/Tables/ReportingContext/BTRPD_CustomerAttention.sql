@@ -10,6 +10,7 @@ CREATE TABLE BTRPD_CustomerAttention
     ValueAmount         DECIMAL(18,2) NULL,
     ValueText           VARCHAR(50)   NULL,
     WilayahName         VARCHAR(30)   NOT NULL CONSTRAINT DF_BTRPD_CustomerAttention_WilayahName DEFAULT(''),
+    LastInvoicingSalesmanName VARCHAR(50) NOT NULL CONSTRAINT DF_BTRPD_CustomerAttention_LastInvoicingSalesmanName DEFAULT(''),
     SortOrder           INT           NOT NULL CONSTRAINT DF_BTRPD_CustomerAttention_SortOrder DEFAULT(0),
 
     CONSTRAINT PK_BTRPD_CustomerAttention PRIMARY KEY CLUSTERED (CustomerAttentionId)

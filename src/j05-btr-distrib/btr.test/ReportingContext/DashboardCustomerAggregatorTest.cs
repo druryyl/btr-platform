@@ -205,6 +205,40 @@ namespace btr.test.ReportingContext
         }
 
         [Fact]
+        public void Aggregate_LastInvoicingSalesman_IsRecencyOnlyAndDoesNotChangeCustomerMeasures()
+        {
+            var result = Aggregate(
+                faktur: new[] { Faktur("C001", "Alpha", 400m) },
+                piutang: new[] { Piutang("C001", "Alpha", FixedToday.AddDays(-10), 150m) },
+                lastFaktur: new[] { LastFaktur("C001", "Alpha", FixedToday.AddDays(-91)) },
+                customers: new[] { Customer("C001", "Alpha", plafond: 100m) },
+                lastFakturWithSalesman: new[]
+                {
+                    LastFakturWithSalesman("C001", "Alpha", FixedToday.AddDays(-2), "Budi"),
+                    LastFakturWithSalesman("C001", "Alpha", FixedToday.AddDays(-20), "Older Rep"),
+                });
+
+            result.PlafondBreachCount.Should().Be(1);
+            result.OverdueCustomerCount.Should().Be(1);
+            result.ActiveCustomerCount.Should().Be(1);
+            result.DormantCustomerCount.Should().Be(0);
+            result.TotalOmzet.Should().Be(400m);
+            result.TotalPiutang.Should().Be(150m);
+
+            result.TopOmzet.Should().ContainSingle();
+            result.TopOmzet[0].LastInvoicingSalesmanName.Should().Be("Budi");
+            result.TopPiutang.Should().ContainSingle();
+            result.TopPiutang[0].LastInvoicingSalesmanName.Should().Be("Budi");
+            result.AttentionList.Should().OnlyContain(row => row.LastInvoicingSalesmanName == "Budi");
+            result.AttentionList.Should().NotContain(row =>
+                row.LastInvoicingSalesmanName.Contains("Assigned")
+                || row.LastInvoicingSalesmanName.Contains("Owner"));
+            DashboardCustomerAggregator.LastInvoicingSalesmanLabel.Should().Be("Last Invoicing Salesman");
+            DashboardCustomerAggregator.LastInvoicingSalesmanLabel.Should().NotContain("Assigned");
+            DashboardCustomerAggregator.LastInvoicingSalesmanLabel.Should().NotContain("Owner");
+        }
+
+        [Fact]
         public void Aggregate_AttentionList_MultiSignal_TwoRowsForSameCustomer()
         {
             var result = Aggregate(
@@ -225,7 +259,8 @@ namespace btr.test.ReportingContext
             IEnumerable<FakturView> faktur = null,
             IEnumerable<PiutangOpenBalanceDto> piutang = null,
             IEnumerable<CustomerLastFakturDto> lastFaktur = null,
-            IEnumerable<CustomerModel> customers = null)
+            IEnumerable<CustomerModel> customers = null,
+            IEnumerable<CustomerLastFakturWithSalesmanDto> lastFakturWithSalesman = null)
         {
             return _aggregator.Aggregate(
                 faktur ?? Array.Empty<FakturView>(),
@@ -234,7 +269,8 @@ namespace btr.test.ReportingContext
                 customers ?? Array.Empty<CustomerModel>(),
                 FixedPeriode,
                 FixedToday,
-                FixedGeneratedAt);
+                FixedGeneratedAt,
+                lastFakturWithSalesman);
         }
 
         private static FakturView Faktur(string code, string name, decimal grandTotal)
@@ -260,6 +296,21 @@ namespace btr.test.ReportingContext
                 CustomerName = name,
                 JatuhTempo = jatuhTempo,
                 KurangBayar = kurangBayar
+            };
+        }
+
+        private static CustomerLastFakturWithSalesmanDto LastFakturWithSalesman(
+            string code,
+            string name,
+            DateTime lastDate,
+            string salesPersonName)
+        {
+            return new CustomerLastFakturWithSalesmanDto
+            {
+                CustomerCode = code,
+                CustomerName = name,
+                LastFakturDate = lastDate,
+                SalesPersonName = salesPersonName
             };
         }
 

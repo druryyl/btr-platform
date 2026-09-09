@@ -204,7 +204,8 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.UseCases
                     customers,
                     periode,
                     today,
-                    generatedAt);
+                    generatedAt,
+                    lastFakturWithSalesman);
                 WorkerProgressScope.Current.StepCompleted($"{Domain}:Aggregate");
 
                 WorkerProgressScope.Current.StepStarted($"{Domain}:AggregateForecast", "Aggregate customer risk forecast");

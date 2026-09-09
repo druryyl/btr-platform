@@ -8,6 +8,7 @@ CREATE TABLE BTRPD_CustomerTopOmzet
     CustomerName       VARCHAR(50)   NOT NULL CONSTRAINT DF_BTRPD_CustomerTopOmzet_CustomerName DEFAULT(''),
     OmzetAmount        DECIMAL(18,2) NOT NULL CONSTRAINT DF_BTRPD_CustomerTopOmzet_OmzetAmount DEFAULT(0),
     PercentOfTotal     DECIMAL(9,4)  NULL,
+    LastInvoicingSalesmanName VARCHAR(50) NOT NULL CONSTRAINT DF_BTRPD_CustomerTopOmzet_LastInvoicingSalesmanName DEFAULT(''),
 
     CONSTRAINT PK_BTRPD_CustomerTopOmzet PRIMARY KEY CLUSTERED (CustomerTopOmzetId),
     CONSTRAINT UX_BTRPD_CustomerTopOmzet_SnapshotKey_Rank UNIQUE (SnapshotKey, Rank)

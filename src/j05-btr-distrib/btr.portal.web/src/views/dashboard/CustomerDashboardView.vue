@@ -12,6 +12,11 @@ import Top10RankingTable from '@/components/dashboard/Top10RankingTable.vue'
 import type { DashboardCustomerRankingRow } from '@/models/dashboard'
 import { PROFILE_ROW_CLICK_HINT } from '@/navigation/entityAnalyticsNavigation'
 import { formatCurrency, formatCurrencyCompact, formatNumber, formatPercent } from '@/services/formatters'
+import {
+  CU01_ATTRIBUTION_DISCLOSURES,
+  CU01_LAST_INVOICING_SALESMAN_LABEL,
+  CU01_LAST_INVOICING_SALESMAN_NOTE,
+} from '@/services/customerAnalyticsAttribution'
 import { CUSTOMER_ATTENTION_SIGNAL_ALL } from '@/services/customerAttentionSignals'
 import { resolveInvestigationSourceLabel } from '@/services/investigationSourceLabels'
 import { navigateToInvestigation } from '@/services/navigateToInvestigation'
@@ -25,18 +30,26 @@ const attentionSignalFilter = ref(CUSTOMER_ATTENTION_SIGNAL_ALL)
 const cards = computed(() => dashboard.customer?.AttentionCards)
 const unavailable = computed(() => dashboard.customer != null && !dashboard.customer.IsAvailable)
 
+function withLastInvoicingSalesman(rows: DashboardCustomerRankingRow[]): Record<string, unknown>[] {
+  return rows.map((row) => ({
+    ...row,
+    LastInvoicingSalesmanName: row.LastInvoicingSalesmanName?.trim() || '—',
+  }))
+}
+
 const omzetRankingRows = computed(
-  () => (dashboard.customer?.Rankings?.TopOmzet ?? []) as Record<string, unknown>[],
+  () => withLastInvoicingSalesman(dashboard.customer?.Rankings?.TopOmzet ?? []),
 )
 
 const piutangRankingRows = computed(
-  () => (dashboard.customer?.Rankings?.TopPiutang ?? []) as Record<string, unknown>[],
+  () => withLastInvoicingSalesman(dashboard.customer?.Rankings?.TopPiutang ?? []),
 )
 
 const omzetColumns = [
   { field: 'Rank', header: 'Rank' },
   { field: 'CustomerCode', header: 'Code' },
   { field: 'CustomerName', header: 'Customer' },
+  { field: 'LastInvoicingSalesmanName', header: CU01_LAST_INVOICING_SALESMAN_LABEL },
   { field: 'Amount', header: 'Omzet' },
   { field: 'PercentOfTotal', header: '% of Total' },
 ]
@@ -45,6 +58,7 @@ const piutangColumns = [
   { field: 'Rank', header: 'Rank' },
   { field: 'CustomerCode', header: 'Code' },
   { field: 'CustomerName', header: 'Customer' },
+  { field: 'LastInvoicingSalesmanName', header: CU01_LAST_INVOICING_SALESMAN_LABEL },
   { field: 'Amount', header: 'Outstanding' },
   { field: 'PercentOfTotal', header: '% of Total' },
 ]
@@ -94,6 +108,13 @@ onMounted(() => {
       v-if="dashboard.customer"
       :is-data-fresh="dashboard.customer.IsDataFresh"
     />
+
+    <section class="customer-dashboard__disclosure" aria-label="Customer attribution disclosure">
+      <h2>Attribution disclosure</h2>
+      <ul>
+        <li v-for="item in CU01_ATTRIBUTION_DISCLOSURES" :key="item">{{ item }}</li>
+      </ul>
+    </section>
 
     <nav class="customer-dashboard__section-nav" aria-label="Dashboard sections">
       <a
@@ -221,6 +242,7 @@ onMounted(() => {
 
     <section id="customer-rankings" class="customer-dashboard__section">
       <h2 class="customer-dashboard__section-title">Top Customer Rankings</h2>
+      <p class="customer-dashboard__recency-note">{{ CU01_LAST_INVOICING_SALESMAN_NOTE }}</p>
       <div class="customer-dashboard__rankings">
         <Top10RankingTable
           title="Top 10 by Omzet (current month)"
@@ -269,6 +291,32 @@ onMounted(() => {
 <style scoped>
 .customer-dashboard__banner {
   margin-bottom: 1rem;
+}
+
+.customer-dashboard__disclosure {
+  margin-bottom: 1.5rem;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--p-content-border-color);
+  border-radius: var(--p-content-border-radius);
+}
+
+.customer-dashboard__disclosure h2 {
+  margin: 0 0 0.5rem;
+  font-size: 1rem;
+}
+
+.customer-dashboard__disclosure ul {
+  margin: 0;
+  padding-left: 1.25rem;
+}
+
+.customer-dashboard__disclosure li + li {
+  margin-top: 0.25rem;
+}
+
+.customer-dashboard__recency-note {
+  margin: 0 0 0.75rem;
+  color: var(--p-text-muted-color);
 }
 
 .customer-dashboard__section-nav {

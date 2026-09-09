@@ -12,6 +12,7 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.Services
     {
         public const int TopCustomerCount = 10;
         public const int DormantDaysThreshold = 90;
+        public const string LastInvoicingSalesmanLabel = "Last Invoicing Salesman";
 
         public const string SignalOverdue = "Overdue";
         public const string SignalDormant = "Dormant";
@@ -31,7 +32,8 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.Services
             IEnumerable<CustomerModel> customers,
             Periode periode,
             DateTime today,
-            DateTime generatedAt)
+            DateTime generatedAt,
+            IEnumerable<CustomerLastFakturWithSalesmanDto> lastFakturWithSalesman = null)
         {
             if (periode is null)
                 throw new ArgumentNullException(nameof(periode));
@@ -64,8 +66,10 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.Services
                 .Where(r => ResolveAgingBucketKey(r.JatuhTempo, today) == AgingOver90BucketKey)
                 .Sum(r => r.KurangBayar);
 
-            var topOmzet = BuildTopOmzet(fakturList, totalOmzet, codeByKey, displayNames, masterByKey);
-            var topPiutang = BuildTopPiutang(outstanding, totalPiutang, codeByKey, displayNames, masterByKey);
+            var lastInvoicingSalesmanByKey = BuildLastInvoicingSalesmanLookup(lastFakturWithSalesman);
+
+            var topOmzet = BuildTopOmzet(fakturList, totalOmzet, codeByKey, displayNames, masterByKey, lastInvoicingSalesmanByKey);
+            var topPiutang = BuildTopPiutang(outstanding, totalPiutang, codeByKey, displayNames, masterByKey, lastInvoicingSalesmanByKey);
 
             var topOmzetPercent = topOmzet.Count > 0 && totalOmzet > 0
                 ? topOmzet[0].OmzetAmount / totalOmzet * 100m
@@ -86,7 +90,8 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.Services
                 masterByKey,
                 codeByKey,
                 displayNames,
-                today);
+                today,
+                lastInvoicingSalesmanByKey);
 
             var segmentation = BuildSegmentation(
                 customerList,
@@ -303,12 +308,54 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.Services
             return customer.CustomerId.Trim();
         }
 
+        private static Dictionary<string, string> BuildLastInvoicingSalesmanLookup(
+            IEnumerable<CustomerLastFakturWithSalesmanDto> rows)
+        {
+            var latest = new Dictionary<string, CustomerLastFakturWithSalesmanDto>(StringComparer.OrdinalIgnoreCase);
+            foreach (var row in rows ?? Enumerable.Empty<CustomerLastFakturWithSalesmanDto>())
+            {
+                var key = DashboardCustomerKeyResolver.ResolveCodeFirst(row.CustomerCode, row.CustomerName);
+                if (key.Length == 0)
+                    continue;
+
+                if (!latest.TryGetValue(key, out var existing)
+                    || row.LastFakturDate >= existing.LastFakturDate)
+                {
+                    latest[key] = row;
+                }
+            }
+
+            var lookup = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+            foreach (var pair in latest)
+            {
+                var name = pair.Value.SalesPersonName?.Trim() ?? string.Empty;
+                if (name.Length > 0)
+                    lookup[pair.Key] = name;
+            }
+
+            return lookup;
+        }
+
+        private static string ResolveLastInvoicingSalesman(
+            string key,
+            Dictionary<string, string> lastInvoicingSalesmanByKey)
+        {
+            if (lastInvoicingSalesmanByKey == null
+                || !lastInvoicingSalesmanByKey.TryGetValue(key, out var name))
+            {
+                return string.Empty;
+            }
+
+            return name ?? string.Empty;
+        }
+
         private static List<DashboardCustomerTopOmzetRow> BuildTopOmzet(
             List<FakturView> fakturList,
             decimal totalOmzet,
             Dictionary<string, string> codeByKey,
             Dictionary<string, string> displayNames,
-            Dictionary<string, CustomerModel> masterByKey)
+            Dictionary<string, CustomerModel> masterByKey,
+            Dictionary<string, string> lastInvoicingSalesmanByKey)
         {
             return fakturList
                 .GroupBy(r => DashboardCustomerKeyResolver.ResolveCodeFirst(r.CustomerCode, r.Customer))
@@ -329,7 +376,8 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.Services
                     CustomerCode = codeByKey.TryGetValue(x.Key, out var code) ? code : string.Empty,
                     CustomerName = x.CustomerName,
                     OmzetAmount = x.OmzetAmount,
-                    PercentOfTotal = totalOmzet > 0 ? x.OmzetAmount / totalOmzet * 100m : (decimal?)null
+                    PercentOfTotal = totalOmzet > 0 ? x.OmzetAmount / totalOmzet * 100m : (decimal?)null,
+                    LastInvoicingSalesmanName = ResolveLastInvoicingSalesman(x.Key, lastInvoicingSalesmanByKey)
                 })
                 .ToList();
         }
@@ -339,7 +387,8 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.Services
             decimal totalPiutang,
             Dictionary<string, string> codeByKey,
             Dictionary<string, string> displayNames,
-            Dictionary<string, CustomerModel> masterByKey)
+            Dictionary<string, CustomerModel> masterByKey,
+            Dictionary<string, string> lastInvoicingSalesmanByKey)
         {
             return outstanding
                 .GroupBy(r => DashboardCustomerKeyResolver.ResolveCodeFirst(r.CustomerCode, r.CustomerName))
@@ -365,7 +414,8 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.Services
                     OutstandingBalance = x.OutstandingBalance,
                     PercentOfTotal = totalPiutang > 0
                         ? x.OutstandingBalance / totalPiutang * 100m
-                        : (decimal?)null
+                        : (decimal?)null,
+                    LastInvoicingSalesmanName = ResolveLastInvoicingSalesman(x.Key, lastInvoicingSalesmanByKey)
                 })
                 .ToList();
         }
@@ -381,7 +431,8 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.Services
             Dictionary<string, CustomerModel> masterByKey,
             Dictionary<string, string> codeByKey,
             Dictionary<string, string> displayNames,
-            DateTime today)
+            DateTime today,
+            Dictionary<string, string> lastInvoicingSalesmanByKey)
         {
             var lastFakturByKey = lastFakturList
                 .GroupBy(r => DashboardCustomerKeyResolver.ResolveCodeFirst(r.CustomerCode, r.CustomerName))
@@ -410,7 +461,8 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.Services
                         SignalLabel = signalLabel,
                         ValueAmount = valueAmount,
                         ValueText = valueText,
-                        WilayahName = wilayah
+                        WilayahName = wilayah,
+                        LastInvoicingSalesmanName = ResolveLastInvoicingSalesman(key, lastInvoicingSalesmanByKey)
                     }));
             }
 

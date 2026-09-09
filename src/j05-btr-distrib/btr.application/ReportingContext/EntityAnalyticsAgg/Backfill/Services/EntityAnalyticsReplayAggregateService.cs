@@ -124,7 +124,8 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Backfill.Services
                 bundle.Customers,
                 periode,
                 periodEnd,
-                generatedAt);
+                generatedAt,
+                bundle.LastFakturWithSalesman);
 
             var forecastAggregate = _customerForecastAggregator.Aggregate(
                 bundle.PiutangRows,

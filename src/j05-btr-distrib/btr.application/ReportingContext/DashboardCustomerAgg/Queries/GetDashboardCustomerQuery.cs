@@ -79,6 +79,8 @@ namespace btr.application.ReportingContext.DashboardCustomerAgg.Queries
 
         public string WilayahName { get; set; }
 
+        public string LastInvoicingSalesmanName { get; set; }
+
         public string ReportRoute { get; set; }
 
         public string ProfileRoute { get; set; }
@@ -97,6 +99,8 @@ namespace btr.application.ReportingContext.DashboardCustomerAgg.Queries
         public string CustomerCode { get; set; }
 
         public string CustomerName { get; set; }
+
+        public string LastInvoicingSalesmanName { get; set; }
 
         public decimal Amount { get; set; }
 

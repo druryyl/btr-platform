@@ -253,6 +253,7 @@
     <None Include="Scripts\Upgrade_M14_PiutangDashboard_V2.sql" />
     <None Include="Scripts\Upgrade_M29_CustomerRiskForecast.sql" />
     <None Include="Scripts\Upgrade_M18_SalesmenPerformance_V2.sql" />
+    <None Include="Scripts\Upgrade_PCM037_Cu01LastInvoicingSalesman.sql" />
     <None Include="Scripts\Create_BTR_SalesPersonSupplier.sql" />
     <None Include="Scripts\Create_BTR_SalesPersonPrincipalTarget.sql" />
   </ItemGroup>

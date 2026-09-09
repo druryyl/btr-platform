@@ -836,6 +836,7 @@ export interface DashboardCustomerAttentionItem {
   ValueAmount: number | null
   ValueText: string | null
   WilayahName: string
+  LastInvoicingSalesmanName?: string | null
   ReportRoute: string
   ProfileRoute?: string | null
   RequiresAttention: boolean
@@ -846,6 +847,7 @@ export interface DashboardCustomerRankingRow {
   Rank: number
   CustomerCode: string
   CustomerName: string
+  LastInvoicingSalesmanName?: string | null
   Amount: number
   PercentOfTotal: number | null
   ReportRoute: string

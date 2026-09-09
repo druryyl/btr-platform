@@ -356,9 +356,13 @@ Only a review agent may set `GO` or `NO-GO`.
 
 ### PCM-037
 
-- Status: PLANNED
-- Implementation History: none
-- Review History: none
+- Status: GO
+- Implementation History:
+  - 2026-09-09: IN IMPLEMENTATION
+  - 2026-09-09: IMPLEMENTED. CU01 labels the latest-Faktur Salesman as Last Invoicing Salesman, a recency indicator, not Assigned Salesman or Owner. Customer credit, piutang, and lifecycle measures remain Customer-level. No Principal mix was added. CU02–CU05 are unchanged.
+- Review History:
+  - 2026-09-09: IN REVIEW
+  - 2026-09-09: GO. CU01 does not use Assigned Salesman or Owner for the latest-Faktur Salesman. The column and disclosure state that it is the last invoicing Salesman, a recency indicator, not the Customer owner. Customer credit, piutang, and lifecycle measures remain Customer-level. No Principal mix was added. CU02–CU05 are unchanged.
 - Remediation History: none
 
 ### PCM-038

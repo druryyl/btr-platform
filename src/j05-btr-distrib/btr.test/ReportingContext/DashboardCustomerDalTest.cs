@@ -32,6 +32,7 @@ namespace btr.test.ReportingContext
                         Rank = 1,
                         CustomerCode = "C001",
                         CustomerName = "Alpha",
+                        LastInvoicingSalesmanName = "Budi",
                         OmzetAmount = 500m,
                         PercentOfTotal = 50m
                     }
@@ -47,6 +48,7 @@ namespace btr.test.ReportingContext
             result.AttentionCards.ActiveCustomerCount.Should().Be(10);
             result.Rankings.TopOmzet.Should().HaveCount(1);
             result.Rankings.TopOmzet[0].CustomerCode.Should().Be("C001");
+            result.Rankings.TopOmzet[0].LastInvoicingSalesmanName.Should().Be("Budi");
             result.Rankings.TopOmzet[0].ReportRoute.Should().Be("/reports/sales");
             result.Navigation.SalesDashboardRoute.Should().Be("/dashboard/sales");
             result.Navigation.PiutangDashboardRoute.Should().Be("/dashboard/piutang");
