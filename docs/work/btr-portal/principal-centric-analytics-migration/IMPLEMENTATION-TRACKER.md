@@ -320,9 +320,13 @@ Only a review agent may set `GO` or `NO-GO`.
 
 ### PCM-026
 
-- Status: PLANNED
-- Implementation History: none
-- Review History: none
+- Status: GO
+- Implementation History:
+  - 2026-09-09: IN IMPLEMENTATION
+  - 2026-09-09: IMPLEMENTED. Calculated `PRN-GRW-001` Month-over-Month Growth Percentage from stored `PRN-SALES-001` month history only. Catalog registers `PRN-GRW-001` only. The writer does not write `PRN-SALES-001` or `PRN-GRW-002` and does not use Purchase-In, returns, claims, or inventory adjustments.
+- Review History:
+  - 2026-09-09: IN REVIEW
+  - 2026-09-09: GO. `PRN-GRW-001` equals (current month `PRN-SALES-001` − prior month `PRN-SALES-001`) ÷ prior month `PRN-SALES-001` when the prior month is greater than zero, otherwise null, computed from stored Sales-Out history only. The writer touches only `BTRPD_PrincipalMomGrowthKpi` and `BTRPD_PrincipalMomGrowth`, writes no `PRN-SALES-001` or `PRN-GRW-002`, and uses no Purchase-In, return, claim, or inventory source. Full `btr.application`, `btr.infrastructure`, and `btr.test` build via MSBuild. 83 ReportingContext Principal/refresh tests pass, including 5 new `PrincipalMomGrowthComposerTest` tests.
 - Remediation History: none
 
 ### PCM-027

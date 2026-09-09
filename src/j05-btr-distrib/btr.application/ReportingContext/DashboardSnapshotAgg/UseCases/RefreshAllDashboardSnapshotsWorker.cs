@@ -26,6 +26,7 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.UseCases
         private readonly IRefreshPrincipalReturnHistoryWorker _principalReturnHistoryWorker;
         private readonly IRefreshPrincipalTargetSnapshotWorker _principalTargetWorker;
         private readonly IRefreshPrincipalAchievementSnapshotWorker _principalAchievementWorker;
+        private readonly IRefreshPrincipalMomGrowthSnapshotWorker _principalMomGrowthWorker;
         private readonly IRefreshPrincipalSalesmanContributionSnapshotWorker _principalSalesmanContributionWorker;
         private readonly IRefreshCustomerPrincipalRelationshipWorker _customerPrincipalRelationshipWorker;
         private readonly IRefreshDashboardPurchasingSnapshotWorker _purchasingWorker;
@@ -50,6 +51,7 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.UseCases
             IRefreshPrincipalReturnHistoryWorker principalReturnHistoryWorker,
             IRefreshPrincipalTargetSnapshotWorker principalTargetWorker,
             IRefreshPrincipalAchievementSnapshotWorker principalAchievementWorker,
+            IRefreshPrincipalMomGrowthSnapshotWorker principalMomGrowthWorker,
             IRefreshPrincipalSalesmanContributionSnapshotWorker principalSalesmanContributionWorker,
             IRefreshCustomerPrincipalRelationshipWorker customerPrincipalRelationshipWorker,
             IRefreshDashboardPurchasingSnapshotWorker purchasingWorker,
@@ -73,6 +75,7 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.UseCases
             _principalReturnHistoryWorker = principalReturnHistoryWorker;
             _principalTargetWorker = principalTargetWorker;
             _principalAchievementWorker = principalAchievementWorker;
+            _principalMomGrowthWorker = principalMomGrowthWorker;
             _principalSalesmanContributionWorker = principalSalesmanContributionWorker;
             _customerPrincipalRelationshipWorker = customerPrincipalRelationshipWorker;
             _purchasingWorker = purchasingWorker;
@@ -258,6 +261,20 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.UseCases
                     };
                     _principalAchievementWorker.Execute(principalAchievementRequest);
                     return principalAchievementRequest.Result;
+                },
+                domainResults,
+                failures);
+
+            RunDomain(
+                PrincipalMomGrowthSnapshot.Domain,
+                () =>
+                {
+                    var principalMomGrowthRequest = new RefreshPrincipalMomGrowthSnapshotRequest
+                    {
+                        TriggeredBy = triggeredBy
+                    };
+                    _principalMomGrowthWorker.Execute(principalMomGrowthRequest);
+                    return principalMomGrowthRequest.Result;
                 },
                 domainResults,
                 failures);
@@ -525,6 +542,13 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.UseCases
                         Domain = domain,
                         RefreshLogId = principalAchievement.RefreshLogId,
                         DurationMs = principalAchievement.DurationMs
+                    };
+                case RefreshPrincipalMomGrowthSnapshotResult principalMomGrowth:
+                    return new RefreshDashboardDomainResult
+                    {
+                        Domain = domain,
+                        RefreshLogId = principalMomGrowth.RefreshLogId,
+                        DurationMs = principalMomGrowth.DurationMs
                     };
                 case RefreshPrincipalSalesmanContributionSnapshotResult principalSalesmanContribution:
                     return new RefreshDashboardDomainResult

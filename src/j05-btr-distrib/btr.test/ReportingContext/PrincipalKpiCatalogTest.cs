@@ -287,6 +287,33 @@ namespace btr.test.ReportingContext
         }
 
         [Fact]
+        public void Catalog_RegistersMomGrowth_AsSalesOutDerivedSupportingKpi()
+        {
+            PrincipalKpiCatalog.TryGet(PrincipalKpiCatalog.MomGrowthId, out var growth).Should().BeTrue();
+            growth.KpiId.Should().Be("PRN-GRW-001");
+            growth.Name.Should().Be("Month-over-Month Growth Percentage");
+            growth.Description.Should().Be("Monthly Principal growth");
+            growth.EvidenceGrain.Should().Be("PRN-SALES-001");
+            growth.Formula.Should().Be("(current month PRN-SALES-001 − prior month PRN-SALES-001) ÷ prior month PRN-SALES-001 when prior month > 0; otherwise null");
+            growth.IsAuthoritativePrincipalPerformanceKpi.Should().BeFalse();
+            growth.IsAuthoritativeRankingKpi.Should().BeFalse();
+            growth.DeductsReturns.Should().BeFalse();
+            growth.DeductsClaims.Should().BeFalse();
+            growth.DeductsInventoryAdjustments.Should().BeFalse();
+            growth.DefinitionStatements.Should().Contain(
+                "The calculation does not use Purchase-In, returns, claims, or inventory adjustments.");
+            growth.DefinitionStatements.Should().Contain(
+                "The writer does not write, overwrite, or recalculate PRN-SALES-001.");
+            growth.DefinitionStatements.Should().Contain(
+                "The writer does not write PRN-GRW-002.");
+            growth.DefinitionStatements.Should().Contain(
+                "PRN-GRW-001 is not Net Sales.");
+            growth.Name.Should().NotBe("Net Sales");
+
+            PrincipalKpiCatalog.TryGet("PRN-GRW-002", out _).Should().BeFalse();
+        }
+
+        [Fact]
         public void Catalog_DoesNotRegisterOtherPrincipalFamiliesOrWithdrawnIds()
         {
             var ids = PrincipalKpiCatalog.Entries.Select(entry => entry.KpiId).ToList();
@@ -303,6 +330,7 @@ namespace btr.test.ReportingContext
             ids.Should().Contain("PRN-RET-002");
             ids.Should().Contain("PRN-RET-003");
             ids.Should().Contain("PRN-RET-004");
+            ids.Should().Contain("PRN-GRW-001");
             ids.Should().OnlyContain(id =>
                 id == "PRN-SALES-001" ||
                 id == "PRN-TGT-001" ||
@@ -314,13 +342,15 @@ namespace btr.test.ReportingContext
                 id == "PRN-RET-001" ||
                 id == "PRN-RET-002" ||
                 id == "PRN-RET-003" ||
-                id == "PRN-RET-004");
+                id == "PRN-RET-004" ||
+                id == "PRN-GRW-001");
             ids.Should().NotContain(id => id.StartsWith("PRN-RET-") && id != "PRN-RET-001" && id != "PRN-RET-002" && id != "PRN-RET-003" && id != "PRN-RET-004");
             ids.Should().NotContain(id => id.StartsWith("PRN-TGT-") && id != "PRN-TGT-001" && id != "PRN-TGT-002" && id != "PRN-TGT-003");
             ids.Should().NotContain(id => id.StartsWith("PRN-PUR-") && id != "PRN-PUR-001");
             ids.Should().NotContain(id => id.StartsWith("PRN-INV-") && id != "PRN-INV-001" && id != "PRN-INV-002");
             ids.Should().NotContain(id => id.StartsWith("PRN-CUS-"));
-            ids.Should().NotContain(id => id.StartsWith("PRN-GRW-"));
+            ids.Should().NotContain("PRN-GRW-002");
+            ids.Should().NotContain(id => id.StartsWith("PRN-GRW-") && id != "PRN-GRW-001");
             ids.Should().NotContain(id => id.StartsWith("PR-KPI-"));
             ids.Should().NotContain(id => id.StartsWith("CP-KPI-"));
             ids.Should().NotContain("Net Sales");

@@ -32,6 +32,8 @@ namespace btr.application.ReportingContext.PrincipalAnalyticsAgg
 
         public const string ReturnPercentageId = "PRN-RET-004";
 
+        public const string MomGrowthId = "PRN-GRW-001";
+
         public const string ReturnsMustNotReduceReplaceOrRedefinePrincipalSalesOut =
             "Returns KPIs must not reduce, replace, or redefine PRN-SALES-001.";
 
@@ -69,6 +71,8 @@ namespace btr.application.ReportingContext.PrincipalAnalyticsAgg
 
         private static readonly PrincipalKpiCatalogEntry ReturnPercentageEntry = CreateReturnPercentage();
 
+        private static readonly PrincipalKpiCatalogEntry MomGrowthEntry = CreateMomGrowth();
+
         private static readonly IReadOnlyList<PrincipalKpiCatalogEntry> RegisteredEntries =
             new[]
             {
@@ -82,7 +86,8 @@ namespace btr.application.ReportingContext.PrincipalAnalyticsAgg
                 GoodReturnAmountEntry,
                 BrokenReturnAmountEntry,
                 TotalReturnAmountEntry,
-                ReturnPercentageEntry
+                ReturnPercentageEntry,
+                MomGrowthEntry
             };
 
         public static IReadOnlyList<PrincipalKpiCatalogEntry> Entries
@@ -491,6 +496,39 @@ namespace btr.application.ReportingContext.PrincipalAnalyticsAgg
                     "Returns never reduce Principal Sales-Out.",
                     "PRN-RET-004 is not the authoritative Principal ranking KPI.",
                     "The user-facing name is Return Percentage, not a deduction from Sales-Out and not Net Sales."
+                }
+            };
+        }
+
+        private static PrincipalKpiCatalogEntry CreateMomGrowth()
+        {
+            return new PrincipalKpiCatalogEntry
+            {
+                KpiId = MomGrowthId,
+                Name = "Month-over-Month Growth Percentage",
+                Description = "Monthly Principal growth",
+                EntityCategory = EntityTypeCode.Supplier,
+                EvidenceGrain = "PRN-SALES-001",
+                Formula = "(current month PRN-SALES-001 − prior month PRN-SALES-001) ÷ prior month PRN-SALES-001 when prior month > 0; otherwise null",
+                IsAuthoritativePrincipalPerformanceKpi = false,
+                IsAuthoritativeRankingKpi = false,
+                DeductsReturns = false,
+                DeductsClaims = false,
+                DeductsInventoryAdjustments = false,
+                DefinitionStatements = new[]
+                {
+                    "PRN-GRW-001 Month-over-Month Growth Percentage = (current month PRN-SALES-001 − prior month PRN-SALES-001) ÷ prior month PRN-SALES-001 when the prior month is greater than zero; otherwise null.",
+                    "Evidence grain is PRN-SALES-001.",
+                    "Growth calculations use Principal Sales-Out as the source KPI.",
+                    "The calculation uses stored Principal Sales-Out month history only.",
+                    "The calculation does not use Purchase-In, returns, claims, or inventory adjustments.",
+                    "PRN-GRW-001 is a supporting ranking KPI.",
+                    "PRN-GRW-001 is not a replacement for Principal Sales-Out.",
+                    "PRN-GRW-001 is not Net Sales.",
+                    "The writer reads stored PRN-SALES-001 history.",
+                    "The writer does not write, overwrite, or recalculate PRN-SALES-001.",
+                    "The writer does not write PRN-GRW-002.",
+                    "The user-facing name is Month-over-Month Growth Percentage, not purchase growth and not Net Sales."
                 }
             };
         }

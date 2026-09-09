@@ -651,6 +651,7 @@
     <Compile Include="ReportingContext\PrincipalAnalyticsAgg\PrincipalReturnHistory.cs" />
     <Compile Include="ReportingContext\PrincipalAnalyticsAgg\PrincipalReturnPercentageSnapshot.cs" />
     <Compile Include="ReportingContext\PrincipalAnalyticsAgg\PrincipalAchievementSnapshot.cs" />
+    <Compile Include="ReportingContext\PrincipalAnalyticsAgg\PrincipalMomGrowthSnapshot.cs" />
     <Compile Include="ReportingContext\PrincipalAnalyticsAgg\PrincipalSalesmanContributionSnapshot.cs" />
     <Compile Include="ReportingContext\PrincipalAnalyticsAgg\PrincipalInventorySnapshot.cs" />
     <Compile Include="ReportingContext\PrincipalAnalyticsAgg\PrincipalTargetSnapshot.cs" />
@@ -668,6 +669,7 @@
     <Compile Include="ReportingContext\PrincipalAnalyticsAgg\Contracts\IPrincipalReturnSnapshotDal.cs" />
     <Compile Include="ReportingContext\PrincipalAnalyticsAgg\Contracts\IPrincipalReturnPercentageSnapshotDal.cs" />
     <Compile Include="ReportingContext\PrincipalAnalyticsAgg\Contracts\IPrincipalAchievementSnapshotDal.cs" />
+    <Compile Include="ReportingContext\PrincipalAnalyticsAgg\Contracts\IPrincipalMomGrowthSnapshotDal.cs" />
     <Compile Include="ReportingContext\PrincipalAnalyticsAgg\Contracts\IPrincipalContributionEvidenceDal.cs" />
     <Compile Include="ReportingContext\PrincipalAnalyticsAgg\Contracts\IPrincipalSalesmanContributionSnapshotDal.cs" />
     <Compile Include="ReportingContext\PrincipalAnalyticsAgg\Contracts\IPrincipalInventorySnapshotDal.cs" />
@@ -682,6 +684,7 @@
     <Compile Include="ReportingContext\PrincipalAnalyticsAgg\Models\PrincipalReturnHistoryResult.cs" />
     <Compile Include="ReportingContext\PrincipalAnalyticsAgg\Models\PrincipalReturnPercentageResult.cs" />
     <Compile Include="ReportingContext\PrincipalAnalyticsAgg\Models\PrincipalAchievementResult.cs" />
+    <Compile Include="ReportingContext\PrincipalAnalyticsAgg\Models\PrincipalMomGrowthResult.cs" />
     <Compile Include="ReportingContext\PrincipalAnalyticsAgg\Models\PrincipalSalesmanContributionResult.cs" />
     <Compile Include="ReportingContext\PrincipalAnalyticsAgg\Models\PrincipalInventoryAggregateResult.cs" />
     <Compile Include="ReportingContext\PrincipalAnalyticsAgg\Models\PrincipalTargetAggregateResult.cs" />
@@ -693,6 +696,7 @@
     <Compile Include="ReportingContext\PrincipalAnalyticsAgg\Services\PrincipalReturnHistoryComposer.cs" />
     <Compile Include="ReportingContext\PrincipalAnalyticsAgg\Services\PrincipalReturnPercentageComposer.cs" />
     <Compile Include="ReportingContext\PrincipalAnalyticsAgg\Services\PrincipalAchievementComposer.cs" />
+    <Compile Include="ReportingContext\PrincipalAnalyticsAgg\Services\PrincipalMomGrowthComposer.cs" />
     <Compile Include="ReportingContext\PrincipalAnalyticsAgg\Services\PrincipalSalesmanContributionComposer.cs" />
     <Compile Include="ReportingContext\PrincipalAnalyticsAgg\Services\PrincipalInventoryAggregator.cs" />
     <Compile Include="ReportingContext\PrincipalAnalyticsAgg\Services\PrincipalTargetAggregator.cs" />
@@ -713,6 +717,8 @@
     <Compile Include="ReportingContext\PrincipalAnalyticsAgg\UseCases\RefreshPrincipalReturnPercentageSnapshotWorker.cs" />
     <Compile Include="ReportingContext\PrincipalAnalyticsAgg\UseCases\RefreshPrincipalAchievementSnapshotRequest.cs" />
     <Compile Include="ReportingContext\PrincipalAnalyticsAgg\UseCases\RefreshPrincipalAchievementSnapshotWorker.cs" />
+    <Compile Include="ReportingContext\PrincipalAnalyticsAgg\UseCases\RefreshPrincipalMomGrowthSnapshotRequest.cs" />
+    <Compile Include="ReportingContext\PrincipalAnalyticsAgg\UseCases\RefreshPrincipalMomGrowthSnapshotWorker.cs" />
     <Compile Include="ReportingContext\PrincipalAnalyticsAgg\UseCases\RefreshPrincipalSalesmanContributionSnapshotRequest.cs" />
     <Compile Include="ReportingContext\PrincipalAnalyticsAgg\UseCases\RefreshPrincipalSalesmanContributionSnapshotWorker.cs" />
     <Compile Include="ReportingContext\PrincipalAnalyticsAgg\UseCases\RefreshPrincipalInventorySnapshotRequest.cs" />
