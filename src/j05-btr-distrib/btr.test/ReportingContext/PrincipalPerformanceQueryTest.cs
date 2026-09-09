@@ -73,6 +73,168 @@ namespace btr.test.ReportingContext
         }
 
         [Fact]
+        public void Compose_AttachesStoredTargetAndAchievement_WithoutChangingSalesOut()
+        {
+            var snapshot = new PrincipalSalesOutAggregateResult
+            {
+                KpiId = PrincipalKpiCatalog.SalesOutId,
+                PeriodYear = 2026,
+                PeriodMonth = 9,
+                GeneratedAt = new DateTime(2026, 9, 9, 8, 0, 0),
+                Principals = new[]
+                {
+                    Row("SUPB", "Beta", 200m, 2),
+                    Row("SUPA", "Alpha", 900m, 1)
+                }.ToList()
+            };
+            var target = new PrincipalTargetAggregateResult
+            {
+                KpiId = PrincipalKpiCatalog.TargetId,
+                PeriodYear = 2026,
+                PeriodMonth = 9,
+                GeneratedAt = new DateTime(2026, 9, 9, 8, 0, 0),
+                Principals = new[]
+                {
+                    TargetRow("SUPA", "Alpha", 800m),
+                    TargetRow("SUPB", "Beta", 50m)
+                }.ToList()
+            };
+            var achievement = new PrincipalAchievementResult
+            {
+                AchievementAmountKpiId = PrincipalKpiCatalog.AchievementAmountId,
+                AchievementPercentageKpiId = PrincipalKpiCatalog.AchievementPercentageId,
+                SalesOutKpiId = PrincipalKpiCatalog.SalesOutId,
+                TargetKpiId = PrincipalKpiCatalog.TargetId,
+                PeriodYear = 2026,
+                PeriodMonth = 9,
+                GeneratedAt = new DateTime(2026, 9, 9, 8, 0, 0),
+                Principals = new[]
+                {
+                    AchievementRow("SUPA", 900m, 800m, 100m, 1.125000m),
+                    AchievementRow("SUPB", 200m, 50m, 150m, 4.000000m)
+                }.ToList()
+            };
+
+            var response = PrincipalPerformanceComposer.Compose(snapshot, target, achievement);
+
+            response.PrincipalSalesOutAmount.Should().Be(1100m);
+            response.Ranking.Select(row => row.SupplierId).Should().Equal("SUPA", "SUPB");
+            response.TargetKpiId.Should().Be(PrincipalKpiCatalog.TargetId);
+            response.PrincipalTargetAmount.Should().Be(850m);
+            response.AchievementAmountKpiId.Should().Be(PrincipalKpiCatalog.AchievementAmountId);
+            response.AchievementPercentageKpiId.Should().Be(PrincipalKpiCatalog.AchievementPercentageId);
+            response.AchievementAmount.Should().Be(250m);
+            response.AchievementPercentage.Should().BeApproximately(1.294118m, 0.000001m);
+            response.TargetAchievementIsAvailable.Should().BeTrue();
+            response.MissingTargetExceptionCount.Should().Be(0);
+            var alpha = response.Ranking.Single(row => row.SupplierId == "SUPA");
+            alpha.PrincipalSalesOutAmount.Should().Be(900m);
+            alpha.PrincipalTargetAmount.Should().Be(800m);
+            alpha.AchievementAmount.Should().Be(100m);
+            alpha.AchievementPercentage.Should().Be(1.125000m);
+            response.Ranking.Should().OnlyContain(row => row.KpiId == PrincipalKpiCatalog.SalesOutId);
+        }
+
+        [Fact]
+        public void Compose_KeepsSalesOutVisible_WhenTargetIsMissing()
+        {
+            var snapshot = new PrincipalSalesOutAggregateResult
+            {
+                KpiId = PrincipalKpiCatalog.SalesOutId,
+                PeriodYear = 2026,
+                PeriodMonth = 9,
+                GeneratedAt = new DateTime(2026, 9, 9, 8, 0, 0),
+                Principals = new[]
+                {
+                    Row("SUPA", "Alpha", 900m, 1),
+                    Row("SUPC", "Charlie", 300m, 2)
+                }.ToList()
+            };
+            var target = new PrincipalTargetAggregateResult
+            {
+                KpiId = PrincipalKpiCatalog.TargetId,
+                PeriodYear = 2026,
+                PeriodMonth = 9,
+                GeneratedAt = new DateTime(2026, 9, 9, 8, 0, 0),
+                Principals = new[] { TargetRow("SUPA", "Alpha", 800m) }.ToList()
+            };
+
+            var response = PrincipalPerformanceComposer.Compose(snapshot, target, null);
+
+            response.PrincipalSalesOutAmount.Should().Be(1200m);
+            response.Ranking.Should().HaveCount(2);
+            var charlie = response.Ranking.Single(row => row.SupplierId == "SUPC");
+            charlie.PrincipalSalesOutAmount.Should().Be(300m);
+            charlie.PrincipalTargetAmount.Should().BeNull();
+            charlie.AchievementAmount.Should().BeNull();
+            charlie.AchievementPercentage.Should().BeNull();
+            response.MissingTargetExceptionCount.Should().Be(1);
+            response.PrincipalTargetAmount.Should().Be(800m);
+        }
+
+        [Fact]
+        public void Compose_DoesNotAttachTargetFromADifferentPeriod()
+        {
+            var snapshot = new PrincipalSalesOutAggregateResult
+            {
+                KpiId = PrincipalKpiCatalog.SalesOutId,
+                PeriodYear = 2026,
+                PeriodMonth = 9,
+                GeneratedAt = new DateTime(2026, 9, 9, 8, 0, 0),
+                Principals = new[] { Row("SUPA", "Alpha", 100m, 1) }.ToList()
+            };
+            var target = new PrincipalTargetAggregateResult
+            {
+                KpiId = PrincipalKpiCatalog.TargetId,
+                PeriodYear = 2026,
+                PeriodMonth = 8,
+                GeneratedAt = new DateTime(2026, 8, 9, 8, 0, 0),
+                Principals = new[] { TargetRow("SUPA", "Alpha", 999m) }.ToList()
+            };
+
+            var response = PrincipalPerformanceComposer.Compose(snapshot, target, null);
+
+            response.PrincipalSalesOutAmount.Should().Be(100m);
+            response.PrincipalTargetAmount.Should().BeNull();
+            response.TargetAchievementIsAvailable.Should().BeFalse();
+            response.Ranking.Single().PrincipalTargetAmount.Should().BeNull();
+            response.Ranking.Single().PrincipalSalesOutAmount.Should().Be(100m);
+        }
+
+        private static PrincipalTargetRow TargetRow(string supplierId, string supplierName, decimal targetAmount)
+        {
+            return new PrincipalTargetRow
+            {
+                KpiId = PrincipalKpiCatalog.TargetId,
+                SupplierId = supplierId,
+                SupplierName = supplierName,
+                TargetAmount = targetAmount
+            };
+        }
+
+        private static PrincipalAchievementRow AchievementRow(
+            string supplierId,
+            decimal salesOutAmount,
+            decimal targetAmount,
+            decimal achievementAmount,
+            decimal achievementPercentage)
+        {
+            return new PrincipalAchievementRow
+            {
+                AchievementAmountKpiId = PrincipalKpiCatalog.AchievementAmountId,
+                AchievementPercentageKpiId = PrincipalKpiCatalog.AchievementPercentageId,
+                SalesOutKpiId = PrincipalKpiCatalog.SalesOutId,
+                TargetKpiId = PrincipalKpiCatalog.TargetId,
+                SupplierId = supplierId,
+                SupplierName = supplierId,
+                SalesOutAmount = salesOutAmount,
+                TargetAmount = targetAmount,
+                AchievementAmount = achievementAmount,
+                AchievementPercentage = achievementPercentage
+            };
+        }
+
+        [Fact]
         public void EvidenceComposer_UsesFakturItemSalesOut_AndKeepsPrincipalIdentity()
         {
             var response = PrincipalSalesOutEvidenceComposer.Compose(

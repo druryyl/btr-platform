@@ -170,6 +170,12 @@ export interface PrincipalPerformanceRankingItem {
   SupplierId: string
   KpiId: string
   PrincipalSalesOutAmount: number
+  TargetKpiId?: string | null
+  PrincipalTargetAmount?: number | null
+  AchievementAmountKpiId?: string | null
+  AchievementPercentageKpiId?: string | null
+  AchievementAmount?: number | null
+  AchievementPercentage?: number | null
 }
 
 export interface PrincipalPerformanceResponse {
@@ -181,6 +187,14 @@ export interface PrincipalPerformanceResponse {
   GeneratedAt: string | null
   PrincipalSalesOutAmount: number
   UnknownPrincipalExceptionCount: number
+  TargetKpiId: string
+  PrincipalTargetAmount?: number | null
+  AchievementAmountKpiId: string
+  AchievementPercentageKpiId: string
+  AchievementAmount?: number | null
+  AchievementPercentage?: number | null
+  TargetAchievementIsAvailable: boolean
+  MissingTargetExceptionCount: number
   Disclosures: string[]
   Ranking: PrincipalPerformanceRankingItem[]
 }

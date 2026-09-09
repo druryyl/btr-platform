@@ -360,9 +360,13 @@ Only a review agent may set `GO` or `NO-GO`.
 
 ### PCM-030
 
-- Status: PLANNED
-- Implementation History: none
-- Review History: none
+- Status: GO
+- Implementation History:
+  - 2026-09-10: IN IMPLEMENTATION
+  - 2026-09-10: IMPLEMENTED. SA04 reads stored `PRN-TGT-001` and stored `PRN-TGT-002`/`PRN-TGT-003` and shows them in a separate target and achievement panel. The displayed `PRN-SALES-001` ranking is unchanged. Principals sold without a target record remain in the ranking with a missing-target exception count. No return or Net Sales figure is shown.
+- Review History:
+  - 2026-09-10: IN REVIEW
+  - 2026-09-10: GO. SA04 target and achievement panel reads stored `PRN-TGT-001` and stored achievement values for the matching period. Displayed `PRN-SALES-001` ranking and totals are unchanged. No return, Net Sales, or Health Score figure is shown. Missing-target principals remain in the ranking with a visible exception count and do not lose Sales-Out. `btr.application` builds, `btr.test` builds via MSBuild, portal.web `vue-tsc + vite` builds. 7 PrincipalPerformanceQueryTest, 34 related backend, and 251 frontend tests pass.
 - Remediation History: none
 
 ### PCM-031

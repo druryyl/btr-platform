@@ -4,7 +4,7 @@ import { useRoute, useRouter } from 'vue-router'
 import DashboardDetailLayout from '@/components/dashboard/DashboardDetailLayout.vue'
 import DashboardMetric from '@/components/dashboard/primitives/DashboardMetric.vue'
 import Top10RankingTable from '@/components/dashboard/Top10RankingTable.vue'
-import { formatCurrency, formatCurrencyCompact, formatNumber } from '@/services/formatters'
+import { formatCurrency, formatCurrencyCompact, formatNumber, formatPercent } from '@/services/formatters'
 import type { PrincipalPerformanceRankingItem } from '@/models/dashboard'
 import { useDashboardStore } from '@/stores/dashboardStore'
 
@@ -24,9 +24,47 @@ const rankingColumns = [
   { field: 'PrincipalSalesOutAmount', header: 'Principal Sales-Out' },
 ]
 
+const targetRankingColumns = [
+  { field: 'Rank', header: 'Rank' },
+  { field: 'PrincipalName', header: 'Principal' },
+  { field: 'PrincipalTargetAmount', header: 'Principal Target' },
+  { field: 'AchievementAmount', header: 'Achievement Amount' },
+  { field: 'AchievementPercentage', header: 'Achievement %' },
+]
+
 const rankingRows = computed(
   () => (dashboard.principalPerformance?.Ranking ?? []) as Record<string, unknown>[],
 )
+
+const targetAchievementIsAvailable = computed(
+  () => dashboard.principalPerformance?.TargetAchievementIsAvailable === true,
+)
+
+const targetRankingRows = computed(() =>
+  ((dashboard.principalPerformance?.Ranking ?? []) as PrincipalPerformanceRankingItem[]).map(
+    (row) =>
+      ({
+        ...row,
+        AchievementPercentage:
+          row.AchievementPercentage != null ? row.AchievementPercentage * 100 : null,
+      }) as Record<string, unknown>,
+  ),
+)
+
+const achievementPercentDisplay = computed(() => {
+  const ratio = dashboard.principalPerformance?.AchievementPercentage
+  return formatPercent(ratio != null ? ratio * 100 : null)
+})
+
+const missingTargetNote = computed(() => {
+  const count = dashboard.principalPerformance?.MissingTargetExceptionCount ?? 0
+  if (!targetAchievementIsAvailable.value && count === 0) return ''
+  if (count === 0) return 'All sold Principals have a target record for the period.'
+  return (
+    `${formatNumber(count)} sold Principal${count === 1 ? '' : 's'} without a target record ` +
+    'for the period. Sales-Out is retained.'
+  )
+})
 
 const periodLabel = computed(() => {
   const page = dashboard.principalPerformance
@@ -130,6 +168,80 @@ onMounted(() => {
       empty-message="No Principal Sales-Out ranking for the current period."
       @row-click="onRankingClick"
     />
+
+    <section
+      class="principal-performance__target"
+      data-kpi="PRN-TGT-001"
+      aria-label="Principal target and achievement"
+    >
+      <div class="principal-performance__target-kpis">
+        <DashboardMetric
+          label="Principal Target"
+          :value="
+            targetAchievementIsAvailable &&
+            dashboard.principalPerformance?.PrincipalTargetAmount != null
+              ? formatCurrencyCompact(dashboard.principalPerformance.PrincipalTargetAmount)
+              : '—'
+          "
+          :title="
+            targetAchievementIsAvailable &&
+            dashboard.principalPerformance?.PrincipalTargetAmount != null
+              ? formatCurrency(dashboard.principalPerformance.PrincipalTargetAmount)
+              : undefined
+          "
+          :empty="
+            !targetAchievementIsAvailable ||
+            dashboard.principalPerformance?.PrincipalTargetAmount == null
+          "
+        />
+        <DashboardMetric
+          label="Achievement Amount"
+          :value="
+            targetAchievementIsAvailable &&
+            dashboard.principalPerformance?.AchievementAmount != null
+              ? formatCurrencyCompact(dashboard.principalPerformance.AchievementAmount)
+              : '—'
+          "
+          :title="
+            targetAchievementIsAvailable &&
+            dashboard.principalPerformance?.AchievementAmount != null
+              ? formatCurrency(dashboard.principalPerformance.AchievementAmount)
+              : undefined
+          "
+          :empty="
+            !targetAchievementIsAvailable ||
+            dashboard.principalPerformance?.AchievementAmount == null
+          "
+        />
+        <DashboardMetric
+          label="Achievement %"
+          :value="targetAchievementIsAvailable ? achievementPercentDisplay : '—'"
+          :empty="
+            !targetAchievementIsAvailable ||
+            dashboard.principalPerformance?.AchievementPercentage == null
+          "
+        />
+      </div>
+
+      <p class="principal-performance__target-note">
+        Target versus achievement from stored Principal Target and stored achievement.
+        Sales-Out shown above is unchanged.
+      </p>
+      <p v-if="missingTargetNote" class="principal-performance__target-note">
+        {{ missingTargetNote }}
+      </p>
+
+      <Top10RankingTable
+        title="Principal target and achievement"
+        :columns="targetRankingColumns"
+        :rows="targetRankingRows"
+        :loading="dashboard.loading"
+        value-field="PrincipalTargetAmount"
+        :currency-fields="['AchievementAmount']"
+        percent-field="AchievementPercentage"
+        empty-message="No Principal target and achievement for the current period."
+      />
+    </section>
   </DashboardDetailLayout>
 </template>
 
@@ -178,8 +290,33 @@ onMounted(() => {
   margin-top: 1rem;
 }
 
+.principal-performance__target {
+  margin-top: 1rem;
+  padding: 1rem;
+  background: var(--p-surface-0);
+  border: 1px solid var(--p-surface-200);
+  border-radius: var(--dashboard-radius-sm);
+  box-shadow: var(--dashboard-shadow-idle);
+}
+
+.principal-performance__target-kpis {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.principal-performance__target-note {
+  margin: 0 0 1rem;
+  color: var(--p-text-muted-color);
+}
+
 @media (max-width: 900px) {
   .principal-performance__kpi-row {
+    grid-template-columns: 1fr;
+  }
+
+  .principal-performance__target-kpis {
     grid-template-columns: 1fr;
   }
 }
