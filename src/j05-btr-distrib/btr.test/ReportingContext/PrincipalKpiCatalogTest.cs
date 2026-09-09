@@ -176,6 +176,51 @@ namespace btr.test.ReportingContext
         }
 
         [Fact]
+        public void Catalog_RegistersReturnAmountKpisOnly_AndDoesNotRegisterReturnPercentage()
+        {
+            PrincipalKpiCatalog.TryGet(PrincipalKpiCatalog.GoodReturnAmountId, out var good).Should().BeTrue();
+            good.KpiId.Should().Be("PRN-RET-001");
+            good.Name.Should().Be("Good Return Amount");
+            good.Description.Should().Be("Total Good Return value attributed to a Principal");
+            good.EvidenceGrain.Should().Be("Return Item");
+            good.Formula.Should().Contain("BAGUS");
+            good.IsAuthoritativePrincipalPerformanceKpi.Should().BeFalse();
+            good.IsAuthoritativeRankingKpi.Should().BeFalse();
+            good.DefinitionStatements.Should().Contain(
+                "PRN-RET-001 Good Return Amount = sum of line return amount where JenisRetur = BAGUS.");
+            good.DefinitionStatements.Should().Contain(
+                "This KPI writer does not write, overwrite, or recalculate PRN-SALES-001.");
+            good.DefinitionStatements.Should().Contain(
+                "This KPI writer does not write PRN-RET-004.");
+
+            PrincipalKpiCatalog.TryGet(PrincipalKpiCatalog.BrokenReturnAmountId, out var broken).Should().BeTrue();
+            broken.KpiId.Should().Be("PRN-RET-002");
+            broken.Name.Should().Be("Broken Return Amount");
+            broken.Description.Should().Be("Total Broken/Damaged Return value attributed to a Principal");
+            broken.EvidenceGrain.Should().Be("Return Item");
+            broken.Formula.Should().Contain("RUSAK");
+            broken.IsAuthoritativeRankingKpi.Should().BeFalse();
+            broken.DefinitionStatements.Should().Contain(
+                "PRN-RET-002 Broken Return Amount = sum of line return amount where JenisRetur = RUSAK.");
+            broken.DefinitionStatements.Should().Contain(
+                "This KPI writer does not write, overwrite, or recalculate PRN-SALES-001.");
+
+            PrincipalKpiCatalog.TryGet(PrincipalKpiCatalog.TotalReturnAmountId, out var total).Should().BeTrue();
+            total.KpiId.Should().Be("PRN-RET-003");
+            total.Name.Should().Be("Total Return Amount");
+            total.Description.Should().Be("Good Return + Broken Return");
+            total.EvidenceGrain.Should().Be("Return Item");
+            total.Formula.Should().Be("PRN-RET-001 + PRN-RET-002");
+            total.IsAuthoritativeRankingKpi.Should().BeFalse();
+            total.DefinitionStatements.Should().Contain(
+                "PRN-RET-003 Total Return Amount = PRN-RET-001 + PRN-RET-002.");
+            total.DefinitionStatements.Should().Contain(
+                "This KPI writer does not write PRN-RET-004.");
+
+            PrincipalKpiCatalog.TryGet("PRN-RET-004", out _).Should().BeFalse();
+        }
+
+        [Fact]
         public void Catalog_DoesNotRegisterOtherPrincipalFamiliesOrWithdrawnIds()
         {
             var ids = PrincipalKpiCatalog.Entries.Select(entry => entry.KpiId).ToList();
@@ -186,13 +231,20 @@ namespace btr.test.ReportingContext
             ids.Should().Contain("PRN-PUR-001");
             ids.Should().Contain("PRN-INV-001");
             ids.Should().Contain("PRN-INV-002");
+            ids.Should().Contain("PRN-RET-001");
+            ids.Should().Contain("PRN-RET-002");
+            ids.Should().Contain("PRN-RET-003");
             ids.Should().OnlyContain(id =>
                 id == "PRN-SALES-001" ||
                 id == "PRN-TGT-001" ||
                 id == "PRN-PUR-001" ||
                 id == "PRN-INV-001" ||
-                id == "PRN-INV-002");
-            ids.Should().NotContain(id => id.StartsWith("PRN-RET-"));
+                id == "PRN-INV-002" ||
+                id == "PRN-RET-001" ||
+                id == "PRN-RET-002" ||
+                id == "PRN-RET-003");
+            ids.Should().NotContain("PRN-RET-004");
+            ids.Should().NotContain(id => id.StartsWith("PRN-RET-") && id != "PRN-RET-001" && id != "PRN-RET-002" && id != "PRN-RET-003");
             ids.Should().NotContain("PRN-TGT-002");
             ids.Should().NotContain("PRN-TGT-003");
             ids.Should().NotContain(id => id.StartsWith("PRN-PUR-") && id != "PRN-PUR-001");

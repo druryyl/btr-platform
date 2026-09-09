@@ -110,6 +110,7 @@ namespace btr.portal.api.Configurations
             services.AddScoped<PrincipalSalesOutHistoryComposer>();
             services.AddScoped<PrincipalTargetAggregator>();
             services.AddScoped<PrincipalPurchaseInAggregator>();
+            services.AddScoped<PrincipalReturnAggregator>();
             services.AddScoped<PrincipalInventoryAggregator>();
             services.AddScoped<CustomerPrincipalRelationshipComposer>();
             services.AddScoped<DashboardSalesForecastAggregator>();

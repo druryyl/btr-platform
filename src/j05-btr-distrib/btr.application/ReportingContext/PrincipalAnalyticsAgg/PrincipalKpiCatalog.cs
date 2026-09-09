@@ -20,6 +20,12 @@ namespace btr.application.ReportingContext.PrincipalAnalyticsAgg
 
         public const string InventoryDaysId = "PRN-INV-002";
 
+        public const string GoodReturnAmountId = "PRN-RET-001";
+
+        public const string BrokenReturnAmountId = "PRN-RET-002";
+
+        public const string TotalReturnAmountId = "PRN-RET-003";
+
         public const string ReturnsMustNotReduceReplaceOrRedefinePrincipalSalesOut =
             "Returns KPIs must not reduce, replace, or redefine PRN-SALES-001.";
 
@@ -45,8 +51,24 @@ namespace btr.application.ReportingContext.PrincipalAnalyticsAgg
 
         private static readonly PrincipalKpiCatalogEntry InventoryDaysEntry = CreateInventoryDays();
 
+        private static readonly PrincipalKpiCatalogEntry GoodReturnAmountEntry = CreateGoodReturnAmount();
+
+        private static readonly PrincipalKpiCatalogEntry BrokenReturnAmountEntry = CreateBrokenReturnAmount();
+
+        private static readonly PrincipalKpiCatalogEntry TotalReturnAmountEntry = CreateTotalReturnAmount();
+
         private static readonly IReadOnlyList<PrincipalKpiCatalogEntry> RegisteredEntries =
-            new[] { SalesOutEntry, TargetEntry, PurchaseInEntry, InventoryValueEntry, InventoryDaysEntry };
+            new[]
+            {
+                SalesOutEntry,
+                TargetEntry,
+                PurchaseInEntry,
+                InventoryValueEntry,
+                InventoryDaysEntry,
+                GoodReturnAmountEntry,
+                BrokenReturnAmountEntry,
+                TotalReturnAmountEntry
+            };
 
         public static IReadOnlyList<PrincipalKpiCatalogEntry> Entries
         {
@@ -256,6 +278,108 @@ namespace btr.application.ReportingContext.PrincipalAnalyticsAgg
                     "This KPI is not composed onto Entity Analytics in the writer slice. Entity Analytics inventory pack composition is a later slice.",
                     "This writer does not change IN01-IN05 views.",
                     "The user-facing name is Inventory Days, not Principal Sales-Out."
+                }
+            };
+        }
+
+        private static PrincipalKpiCatalogEntry CreateGoodReturnAmount()
+        {
+            return new PrincipalKpiCatalogEntry
+            {
+                KpiId = GoodReturnAmountId,
+                Name = "Good Return Amount",
+                Description = "Total Good Return value attributed to a Principal",
+                EntityCategory = EntityTypeCode.Supplier,
+                EvidenceGrain = "Return Item",
+                Formula = "SUM(ReturJualItem.SubTotal - ReturJualItem.DiscRp) where JenisRetur = BAGUS",
+                IsAuthoritativePrincipalPerformanceKpi = false,
+                IsAuthoritativeRankingKpi = false,
+                DeductsReturns = false,
+                DeductsClaims = false,
+                DeductsInventoryAdjustments = false,
+                DefinitionStatements = new[]
+                {
+                    "PRN-RET-001 Good Return Amount = sum of line return amount where JenisRetur = BAGUS.",
+                    "Line return amount = ReturJualItem.SubTotal - ReturJualItem.DiscRp.",
+                    "Evidence grain is Return Item.",
+                    "Attribute each Return Item through ReturJualItem.BrgId to BTR_Brg.SupplierId.",
+                    "JenisRetur values are the existing operational values BAGUS and RUSAK only.",
+                    "Exclude PpnRp. Do not use ReturJualItem.Total or ReturJual.GrandTotal.",
+                    "Void returns are excluded using the existing void sentinel (ReturJual.VoidDate = '3000-01-01').",
+                    "Blank or unknown SupplierId is excluded. Do not create a synthetic Principal.",
+                    "Salesman on the return document is not used to reassign Faktur revenue, target, or bonus.",
+                    "Returns are independent KPIs.",
+                    "Returns never reduce Principal Sales-Out.",
+                    "PRN-RET-001 is not the authoritative Principal ranking KPI.",
+                    "This KPI writer does not write, overwrite, or recalculate PRN-SALES-001.",
+                    "This KPI writer does not write PRN-RET-004.",
+                    "The user-facing name is Good Return Amount, not Principal Sales-Out and not Net Sales."
+                }
+            };
+        }
+
+        private static PrincipalKpiCatalogEntry CreateBrokenReturnAmount()
+        {
+            return new PrincipalKpiCatalogEntry
+            {
+                KpiId = BrokenReturnAmountId,
+                Name = "Broken Return Amount",
+                Description = "Total Broken/Damaged Return value attributed to a Principal",
+                EntityCategory = EntityTypeCode.Supplier,
+                EvidenceGrain = "Return Item",
+                Formula = "SUM(ReturJualItem.SubTotal - ReturJualItem.DiscRp) where JenisRetur = RUSAK",
+                IsAuthoritativePrincipalPerformanceKpi = false,
+                IsAuthoritativeRankingKpi = false,
+                DeductsReturns = false,
+                DeductsClaims = false,
+                DeductsInventoryAdjustments = false,
+                DefinitionStatements = new[]
+                {
+                    "PRN-RET-002 Broken Return Amount = sum of line return amount where JenisRetur = RUSAK.",
+                    "Line return amount = ReturJualItem.SubTotal - ReturJualItem.DiscRp.",
+                    "Evidence grain is Return Item.",
+                    "Attribute each Return Item through ReturJualItem.BrgId to BTR_Brg.SupplierId.",
+                    "JenisRetur values are the existing operational values BAGUS and RUSAK only.",
+                    "Exclude PpnRp. Do not use ReturJualItem.Total or ReturJual.GrandTotal.",
+                    "Void returns are excluded using the existing void sentinel (ReturJual.VoidDate = '3000-01-01').",
+                    "Blank or unknown SupplierId is excluded. Do not create a synthetic Principal.",
+                    "Salesman on the return document is not used to reassign Faktur revenue, target, or bonus.",
+                    "Returns are independent KPIs.",
+                    "Returns never reduce Principal Sales-Out.",
+                    "PRN-RET-002 is not the authoritative Principal ranking KPI.",
+                    "This KPI writer does not write, overwrite, or recalculate PRN-SALES-001.",
+                    "This KPI writer does not write PRN-RET-004.",
+                    "The user-facing name is Broken Return Amount, not Principal Sales-Out and not Net Sales."
+                }
+            };
+        }
+
+        private static PrincipalKpiCatalogEntry CreateTotalReturnAmount()
+        {
+            return new PrincipalKpiCatalogEntry
+            {
+                KpiId = TotalReturnAmountId,
+                Name = "Total Return Amount",
+                Description = "Good Return + Broken Return",
+                EntityCategory = EntityTypeCode.Supplier,
+                EvidenceGrain = "Return Item",
+                Formula = "PRN-RET-001 + PRN-RET-002",
+                IsAuthoritativePrincipalPerformanceKpi = false,
+                IsAuthoritativeRankingKpi = false,
+                DeductsReturns = false,
+                DeductsClaims = false,
+                DeductsInventoryAdjustments = false,
+                DefinitionStatements = new[]
+                {
+                    "PRN-RET-003 Total Return Amount = PRN-RET-001 + PRN-RET-002.",
+                    "Evidence grain is Return Item.",
+                    "PRN-RET-003 is not calculated by deducting returns from Principal Sales-Out.",
+                    "Returns are independent KPIs.",
+                    "Returns never reduce Principal Sales-Out.",
+                    "PRN-RET-003 is not the authoritative Principal ranking KPI.",
+                    "This KPI writer does not write, overwrite, or recalculate PRN-SALES-001.",
+                    "This KPI writer does not write PRN-RET-004.",
+                    "The user-facing name is Total Return Amount, not Principal Sales-Out and not Net Sales."
                 }
             };
         }

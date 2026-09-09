@@ -286,9 +286,13 @@ Only a review agent may set `GO` or `NO-GO`.
 
 ### PCM-023
 
-- Status: PLANNED
-- Implementation History: none
-- Review History: none
+- Status: GO
+- Implementation History:
+  - 2026-09-09: IN IMPLEMENTATION
+  - 2026-09-09: IMPLEMENTED. Persisted current-month `PRN-RET-001`, `PRN-RET-002`, and `PRN-RET-003` from Return Item evidence (`ReturJualItem.SubTotal - ReturJualItem.DiscRp`, `JenisRetur` `BAGUS` and `RUSAK`). Catalog entries added. Void returns use the existing void sentinel. The writer does not write or update `PRN-SALES-001` and does not write `PRN-RET-004`.
+- Review History:
+  - 2026-09-09: IN REVIEW
+  - 2026-09-09: GO. Current snapshot stores `PRN-RET-001` and `PRN-RET-002` from Return Item evidence using `JenisRetur` `BAGUS` and `RUSAK`. `PRN-RET-003` equals their sum. Void returns use the existing void sentinel. The writer does not write or update `PRN-SALES-001` and does not write `PRN-RET-004`. Tests prove return persistence leaves a previously stored Sales-Out value unchanged.
 - Remediation History: none
 
 ### PCM-024

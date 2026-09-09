@@ -242,6 +242,16 @@ namespace btr.portal.worker
                     });
                     break;
 
+                case "PRINCIPALRETURN":
+                    RunDomain(serviceProvider, PrincipalReturnSnapshot.Domain, triggeredBy, sp =>
+                    {
+                        var worker = sp.GetRequiredService<IRefreshPrincipalReturnSnapshotWorker>();
+                        var request = new RefreshPrincipalReturnSnapshotRequest { TriggeredBy = triggeredBy };
+                        worker.Execute(request);
+                        return request.Result?.DurationMs ?? 0;
+                    });
+                    break;
+
                 case "PRNSALESOUTHISTORY":
                     RunDomain(serviceProvider, PrincipalSalesOutHistory.Domain, triggeredBy, sp =>
                     {
@@ -497,6 +507,7 @@ namespace btr.portal.worker
             {
                 "All", "Sales", "Piutang", "Inventory", "InventoryRisk",
                 PrincipalInventorySnapshot.Domain,
+                PrincipalReturnSnapshot.Domain,
                 "Purchasing",
                 PrincipalPurchaseInSnapshot.Domain,
                 "PurchasingManagement", "Customer", "Salesman", "Collection", "FieldActivity", "Location",
@@ -510,7 +521,7 @@ namespace btr.portal.worker
 
             if (!validDomains.Contains(domain))
                 throw new ArgumentException(
-                    $"Invalid --domain '{domain}'. Expected All, Sales, Piutang, Inventory, InventoryRisk, PrincipalInventory, Purchasing, PrincipalPurchaseIn, PurchasingManagement, Customer, Salesman, Collection, FieldActivity, Location, EntityAnalyticsHistoricalBackfill, or PrnCusRelationship.");
+                    $"Invalid --domain '{domain}'. Expected All, Sales, Piutang, Inventory, InventoryRisk, PrincipalInventory, PrincipalReturn, Purchasing, PrincipalPurchaseIn, PurchasingManagement, Customer, Salesman, Collection, FieldActivity, Location, EntityAnalyticsHistoricalBackfill, or PrnCusRelationship.");
 
             if (!validTriggers.Contains(triggeredBy))
                 throw new ArgumentException(
