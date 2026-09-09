@@ -320,6 +320,8 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Queries
 
         public string TargetEntityType { get; set; }
 
+        public string MetricKpiId { get; set; }
+
         public List<ProfileRelatedEntityRowDto> Rows { get; set; } = new List<ProfileRelatedEntityRowDto>();
     }
 
@@ -358,6 +360,10 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Queries
         public string ReportRoute { get; set; }
 
         public string FilterDimension { get; set; }
+
+        public string RelationshipCode { get; set; }
+
+        public string MetricKpiId { get; set; }
     }
 
     public class GetEntityPerformanceProfileHandler

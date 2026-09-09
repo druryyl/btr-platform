@@ -354,6 +354,7 @@ export interface ProfileRelationshipBlock {
   RelationshipLabel: string
   DisplayName: string
   TargetEntityType: string
+  MetricKpiId?: string | null
   Rows: ProfileRelatedEntityRow[]
 }
 
@@ -378,6 +379,8 @@ export interface ProfileEvidenceLink {
   Label: string
   ReportRoute: string
   FilterDimension: string
+  RelationshipCode?: string | null
+  MetricKpiId?: string | null
 }
 
 // --- M32R Investigation Workspace ---

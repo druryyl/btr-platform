@@ -19,9 +19,7 @@ namespace btr.infrastructure.ReportingContext.DashboardSnapshotAgg
             _opt = opt.Value;
         }
 
-        public IEnumerable<SupplierMtdItemRollupDto> ListMtdItemRollups(Periode periode)
-        {
-            const string sql = @"
+        public const string ListMtdItemRollupsSql = @"
 SELECT
     ISNULL(gg.SupplierId, '') AS SupplierId,
     ISNULL(gg.SupplierCode, '') AS SupplierCode,
@@ -34,6 +32,7 @@ SELECT
     ISNULL(aa.BrgId, '') AS BrgId,
     ISNULL(cc.BrgCode, '') AS BrgCode,
     ISNULL(cc.BrgName, '') AS BrgName,
+    ISNULL(aa.SubTotal, 0) - ISNULL(aa.DiscRp, 0) AS LineSalesOut,
     aa.Total AS LineTotal
 FROM BTR_FakturItem aa
     INNER JOIN BTR_Faktur bb ON aa.FakturId = bb.FakturId
@@ -43,6 +42,10 @@ FROM BTR_FakturItem aa
     LEFT JOIN BTR_SalesPerson sp ON bb.SalesPersonId = sp.SalesPersonId
 WHERE bb.FakturDate BETWEEN @Tgl1 AND @Tgl2
   AND bb.VoidDate = '3000-01-01'";
+
+        public IEnumerable<SupplierMtdItemRollupDto> ListMtdItemRollups(Periode periode)
+        {
+            const string sql = ListMtdItemRollupsSql;
 
             var dp = new DynamicParameters();
             dp.AddParam("@Tgl1", periode.Tgl1, SqlDbType.DateTime);

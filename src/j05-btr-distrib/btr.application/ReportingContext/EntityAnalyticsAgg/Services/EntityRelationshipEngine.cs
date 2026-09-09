@@ -159,6 +159,7 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Services
                     RelationshipLabel = definition.DisplayName,
                     DisplayName = definition.DisplayName,
                     TargetEntityType = definition.TargetEntityType,
+                    MetricKpiId = definition.MetricKpiId,
                     Rows = blockRows.Select(r => MapRow(r, definition.TargetEntityType)).ToList()
                 });
             }

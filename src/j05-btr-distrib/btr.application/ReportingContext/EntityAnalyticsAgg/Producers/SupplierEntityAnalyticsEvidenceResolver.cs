@@ -3,6 +3,7 @@ using btr.application.ReportingContext.EntityAnalyticsAgg.Contracts;
 using btr.application.ReportingContext.EntityAnalyticsAgg.Models;
 using btr.application.ReportingContext.EntityAnalyticsAgg.Queries;
 using btr.application.ReportingContext.EntityAnalyticsAgg.Registrars;
+using btr.application.ReportingContext.PrincipalAnalyticsAgg;
 
 namespace btr.application.ReportingContext.EntityAnalyticsAgg.Producers
 {
@@ -24,39 +25,90 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Producers
             }
 
             var query = $"?supplierCode={UriEncode(supplierCode)}";
-            var supplierId = identity?.EntityId;
-            if (string.IsNullOrWhiteSpace(supplierId))
-                supplierId = entityId;
-            var salesOutQuery = $"?{SupplierEntityAnalyticsRegistrar.PrincipalSalesOutEvidenceFilterDimension}={UriEncode(supplierId)}";
+            var links = new List<ProfileEvidenceLinkDto>
+            {
+                CreatePrincipalSalesOutLink(identity, entityId, null, "Faktur Item evidence")
+            };
+
+            links.Add(ResolveOmzetRelationshipEvidence(
+                SupplierRelationshipCatalog.TopCustomersByOmzet, entityId, identity));
+            links.Add(ResolveOmzetRelationshipEvidence(
+                SupplierRelationshipCatalog.TopSalesmenByOmzet, entityId, identity));
+            links.Add(ResolveOmzetRelationshipEvidence(
+                SupplierRelationshipCatalog.TopProductsByOmzet, entityId, identity));
+
+            links.Add(new ProfileEvidenceLinkDto
+            {
+                Category = "Purchasing",
+                Label = "Purchasing Report",
+                ReportRoute = "/reports/purchasing" + query,
+                FilterDimension = "supplierCode"
+            });
+            links.Add(new ProfileEvidenceLinkDto
+            {
+                Category = "Inventory",
+                Label = "Inventory Report",
+                ReportRoute = "/reports/inventory" + query,
+                FilterDimension = "supplierCode"
+            });
 
             return new ProfileEvidenceSectionDto
             {
                 IsAvailable = true,
-                Links = new List<ProfileEvidenceLinkDto>
-                {
-                    new ProfileEvidenceLinkDto
-                    {
-                        Category = "Financial",
-                        Label = "Faktur Item evidence",
-                        ReportRoute = SupplierEntityAnalyticsRegistrar.PrincipalSalesOutEvidenceRoute + salesOutQuery,
-                        FilterDimension = SupplierEntityAnalyticsRegistrar.PrincipalSalesOutEvidenceFilterDimension
-                    },
-                    new ProfileEvidenceLinkDto
-                    {
-                        Category = "Purchasing",
-                        Label = "Purchasing Report",
-                        ReportRoute = "/reports/purchasing" + query,
-                        FilterDimension = "supplierCode"
-                    },
-                    new ProfileEvidenceLinkDto
-                    {
-                        Category = "Inventory",
-                        Label = "Inventory Report",
-                        ReportRoute = "/reports/inventory" + query,
-                        FilterDimension = "supplierCode"
-                    }
-                }
+                Links = links
             };
+        }
+
+        public ProfileEvidenceLinkDto ResolveOmzetRelationshipEvidence(
+            string relationshipCode,
+            string entityId,
+            EntityIdentity identity)
+        {
+            if (!SupplierRelationshipCatalog.IsSalesOmzetRelationship(relationshipCode))
+                return null;
+
+            return CreatePrincipalSalesOutLink(
+                identity,
+                entityId,
+                relationshipCode,
+                ResolveRelationshipEvidenceLabel(relationshipCode));
+        }
+
+        private static ProfileEvidenceLinkDto CreatePrincipalSalesOutLink(
+            EntityIdentity identity,
+            string entityId,
+            string relationshipCode,
+            string label)
+        {
+            var supplierId = identity?.EntityId;
+            if (string.IsNullOrWhiteSpace(supplierId))
+                supplierId = entityId;
+
+            var route = SupplierEntityAnalyticsRegistrar.PrincipalSalesOutEvidenceRoute
+                + $"?{SupplierEntityAnalyticsRegistrar.PrincipalSalesOutEvidenceFilterDimension}={UriEncode(supplierId)}";
+            if (!string.IsNullOrWhiteSpace(relationshipCode))
+                route += "&relationshipCode=" + UriEncode(relationshipCode);
+
+            return new ProfileEvidenceLinkDto
+            {
+                Category = "Financial",
+                Label = label,
+                ReportRoute = route,
+                FilterDimension = SupplierEntityAnalyticsRegistrar.PrincipalSalesOutEvidenceFilterDimension,
+                RelationshipCode = relationshipCode,
+                MetricKpiId = PrincipalKpiCatalog.SalesOutId
+            };
+        }
+
+        private static string ResolveRelationshipEvidenceLabel(string relationshipCode)
+        {
+            if (string.Equals(relationshipCode, SupplierRelationshipCatalog.TopCustomersByOmzet, System.StringComparison.OrdinalIgnoreCase))
+                return "Top Customers omzet evidence";
+
+            if (string.Equals(relationshipCode, SupplierRelationshipCatalog.TopSalesmenByOmzet, System.StringComparison.OrdinalIgnoreCase))
+                return "Top Salesmen omzet evidence";
+
+            return "Top Products omzet evidence";
         }
 
         private static string UriEncode(string value)

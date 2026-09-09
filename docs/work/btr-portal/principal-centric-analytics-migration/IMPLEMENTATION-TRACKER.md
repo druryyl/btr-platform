@@ -217,9 +217,13 @@ Only a review agent may set `GO` or `NO-GO`.
 
 ### PCM-016
 
-- Status: PLANNED
-- Implementation History: none
-- Review History: none
+- Status: GO
+- Implementation History:
+  - 2026-09-09: IN IMPLEMENTATION
+  - 2026-09-09: IMPLEMENTED. Supplier/Principal sales omzet relationship metadata now references `PRN-SALES-001`. Relationship amounts use `SUM(FakturItem.SubTotal - FakturItem.DiscRp)`. Evidence for those relationships opens Faktur Item evidence. `PU-KPI-001` and `SF-KPI-008` definitions, and Customer top-Principal metadata, are unchanged.
+- Review History:
+  - 2026-09-09: IN REVIEW
+  - 2026-09-09: GO. `TopCustomersByOmzet`, `TopSalesmenByOmzet`, and `TopProductsByOmzet` reference `PRN-SALES-001`, not `PU-KPI-001`, `PRN-PUR-001`, or `SF-KPI-008`. Relationship amounts use `SubTotal - DiscRp`. Omzet relationship evidence opens Faktur Item evidence and is not the evidence grain for `PRN-CUS-001` or `PRN-CUS-002`. `PU-KPI-001` and `SF-KPI-008` definitions remain unchanged. Customer top-Principal metadata remains `CU-KPI-009`. No withdrawn `PR-KPI-*` or `CP-KPI-*` relationship metadata was added.
 - Remediation History: none
 
 ### PCM-017
