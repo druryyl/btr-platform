@@ -8,6 +8,7 @@ const SOURCE_LABELS: Record<string, string> = {
   '/dashboard/purchasing': 'Purchasing Dashboard',
   '/dashboard/locations': 'Location Performance',
   '/dashboard/sales': 'Sales Dashboard',
+  '/dashboard/principal-performance': 'Principal Performance',
   '/dashboard/sales-forecast': 'Sales Forecast Dashboard',
   '/dashboard/cash-flow-forecast': 'Cash Flow Forecast Dashboard',
   '/dashboard/inventory-forecast': 'Inventory Forecast Dashboard',

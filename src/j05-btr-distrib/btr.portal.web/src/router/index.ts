@@ -38,6 +38,11 @@ const router = createRouter({
               component: () => import('@/views/dashboard/PrincipalPerformanceDashboardView.vue'),
             },
             {
+              path: 'principal-performance/evidence',
+              name: 'principal-performance-evidence',
+              component: () => import('@/views/dashboard/PrincipalSalesOutEvidenceView.vue'),
+            },
+            {
               path: 'sales-forecast',
               name: 'sales-forecast-dashboard',
               component: () => import('@/views/dashboard/SalesForecastDashboardView.vue'),

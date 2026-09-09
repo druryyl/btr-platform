@@ -46,6 +46,10 @@ function isActive(routeName: string): boolean {
 
   }
 
+  if (routeName === 'principal-performance-dashboard') {
+    return route.path.startsWith('/dashboard/principal-performance')
+  }
+
   return route.name === routeName
 
 }

@@ -639,6 +639,7 @@
     <Compile Include="ReportingContext\InventoryReportAgg\Contracts\IInventoryReportDal.cs" />
     <Compile Include="ReportingContext\InventoryReportAgg\Queries\GetInventoryReportQuery.cs" />
     <Compile Include="ReportingContext\PrincipalAnalyticsAgg\PrincipalKpiCatalog.cs" />
+    <Compile Include="ReportingContext\PrincipalAnalyticsAgg\PrincipalSalesOutDisclosure.cs" />
     <Compile Include="ReportingContext\PrincipalAnalyticsAgg\PrincipalSalesOutHistory.cs" />
     <Compile Include="ReportingContext\PrincipalAnalyticsAgg\PrincipalSalesOutSnapshot.cs" />
     <Compile Include="ReportingContext\PrincipalAnalyticsAgg\PrincipalTargetSnapshot.cs" />
@@ -648,6 +649,8 @@
     <Compile Include="ReportingContext\PrincipalAnalyticsAgg\Contracts\IPrincipalSalesOutSnapshotDal.cs" />
     <Compile Include="ReportingContext\PrincipalAnalyticsAgg\Contracts\IPrincipalTargetEvidenceDal.cs" />
     <Compile Include="ReportingContext\PrincipalAnalyticsAgg\Contracts\IPrincipalTargetSnapshotDal.cs" />
+    <Compile Include="ReportingContext\PrincipalAnalyticsAgg\Queries\GetPrincipalPerformanceQuery.cs" />
+    <Compile Include="ReportingContext\PrincipalAnalyticsAgg\Queries\GetPrincipalSalesOutEvidenceQuery.cs" />
     <Compile Include="ReportingContext\PrincipalAnalyticsAgg\Models\PrincipalSalesOutAggregateResult.cs" />
     <Compile Include="ReportingContext\PrincipalAnalyticsAgg\Models\PrincipalTargetAggregateResult.cs" />
     <Compile Include="ReportingContext\PrincipalAnalyticsAgg\Models\PrincipalSalesOutHistoryResult.cs" />

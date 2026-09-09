@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Data.SqlClient;
 using System.Linq;
@@ -31,6 +32,27 @@ LEFT JOIN BTR_Supplier sup ON b.SupplierId = sup.SupplierId
 WHERE f.FakturDate BETWEEN @Tgl1 AND @Tgl2
   AND f.VoidDate = '3000-01-01'";
 
+        public const string ListFakturItemEvidenceForPrincipalSql = @"
+SELECT
+    f.FakturId,
+    ISNULL(f.FakturCode, '') AS FakturCode,
+    f.FakturDate,
+    fi.FakturItemId,
+    ISNULL(fi.BrgId, '') AS BrgId,
+    ISNULL(b.SupplierId, '') AS ItemSupplierId,
+    ISNULL(sup.SupplierId, '') AS SupplierId,
+    ISNULL(sup.SupplierName, '') AS SupplierName,
+    ISNULL(fi.SubTotal, 0) AS SubTotal,
+    ISNULL(fi.DiscRp, 0) AS DiscRp
+FROM BTR_Faktur f
+INNER JOIN BTR_FakturItem fi ON f.FakturId = fi.FakturId
+LEFT JOIN BTR_Brg b ON fi.BrgId = b.BrgId
+LEFT JOIN BTR_Supplier sup ON b.SupplierId = sup.SupplierId
+WHERE f.FakturDate BETWEEN @Tgl1 AND @Tgl2
+  AND f.VoidDate = '3000-01-01'
+  AND ISNULL(b.SupplierId, '') <> ''
+  AND ISNULL(sup.SupplierId, '') = @SupplierId";
+
         private readonly DatabaseOptions _opt;
 
         public PrincipalSalesOutEvidenceDal(IOptions<DatabaseOptions> opt)
@@ -47,6 +69,26 @@ WHERE f.FakturDate BETWEEN @Tgl1 AND @Tgl2
                     Tgl1 = periode.Tgl1,
                     Tgl2 = periode.Tgl2
                 }).ToList();
+            }
+        }
+
+        public IReadOnlyList<PrincipalSalesOutFakturItemEvidenceLine> ListFakturItemEvidenceForPrincipal(
+            Periode periode,
+            string supplierId)
+        {
+            if (periode is null)
+                throw new ArgumentNullException(nameof(periode));
+
+            using (var conn = new SqlConnection(ConnStringHelper.Get(_opt)))
+            {
+                return conn.Query<PrincipalSalesOutFakturItemEvidenceLine>(
+                    ListFakturItemEvidenceForPrincipalSql,
+                    new
+                    {
+                        Tgl1 = periode.Tgl1,
+                        Tgl2 = periode.Tgl2,
+                        SupplierId = supplierId ?? string.Empty
+                    }).ToList();
             }
         }
     }

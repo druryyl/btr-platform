@@ -13,6 +13,7 @@ import {
   fetchDashboardPiutang,
   fetchDashboardPurchasing,
   fetchDashboardSales,
+  fetchPrincipalPerformance,
   fetchDashboardSalesForecast,
   fetchDashboardCashFlowForecast,
   fetchDashboardInventoryForecast,
@@ -37,6 +38,7 @@ import type {
   DashboardPiutangResponse,
   DashboardPurchasingResponse,
   DashboardSalesResponse,
+  PrincipalPerformanceResponse,
   DashboardSalesForecastResponse,
   DashboardCashFlowForecastResponse,
   DashboardInventoryForecastResponse,
@@ -51,6 +53,7 @@ export const useDashboardStore = defineStore('dashboard', () => {
   const executive = ref<DashboardExecutiveResponse | null>(null)
   const alerts = ref<DashboardAlertCenterResponse | null>(null)
   const sales = ref<DashboardSalesResponse | null>(null)
+  const principalPerformance = ref<PrincipalPerformanceResponse | null>(null)
   const salesForecast = ref<DashboardSalesForecastResponse | null>(null)
   const cashFlowForecast = ref<DashboardCashFlowForecastResponse | null>(null)
   const inventoryForecast = ref<DashboardInventoryForecastResponse | null>(null)
@@ -130,6 +133,25 @@ export const useDashboardStore = defineStore('dashboard', () => {
       }
     } catch (err) {
       error.value = getApiErrorMessage(err, 'Failed to load dashboard data.')
+    } finally {
+      loading.value = false
+    }
+  }
+
+  async function loadPrincipalPerformance(): Promise<void> {
+    loading.value = true
+    error.value = null
+
+    try {
+      principalPerformance.value = await fetchPrincipalPerformance()
+
+      if (!principalPerformance.value.IsAvailable) {
+        setInfrastructureError(
+          'Principal Sales-Out snapshot is not yet available. Run the snapshot refresh worker.',
+        )
+      }
+    } catch (err) {
+      error.value = getApiErrorMessage(err, 'Failed to load Principal Performance.')
     } finally {
       loading.value = false
     }
@@ -396,6 +418,7 @@ export const useDashboardStore = defineStore('dashboard', () => {
     executive.value = null
     alerts.value = null
     sales.value = null
+    principalPerformance.value = null
     salesForecast.value = null
     cashFlowForecast.value = null
     inventoryForecast.value = null
@@ -420,6 +443,7 @@ export const useDashboardStore = defineStore('dashboard', () => {
     executive,
     alerts,
     sales,
+    principalPerformance,
     salesForecast,
     cashFlowForecast,
     inventoryForecast,
@@ -441,6 +465,7 @@ export const useDashboardStore = defineStore('dashboard', () => {
     loadExecutive,
     loadAlerts,
     loadSales,
+    loadPrincipalPerformance,
     loadSalesForecast,
     loadCashFlowForecast,
     loadInventoryForecast,

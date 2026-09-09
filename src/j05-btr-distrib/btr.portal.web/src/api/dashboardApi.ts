@@ -15,6 +15,8 @@ import type {
   DashboardPiutangResponse,
   DashboardPurchasingResponse,
   DashboardSalesResponse,
+  PrincipalPerformanceResponse,
+  PrincipalSalesOutEvidenceResponse,
   DashboardSalesForecastResponse,
   DashboardCashFlowForecastResponse,
   DashboardInventoryForecastResponse,
@@ -39,6 +41,33 @@ export async function fetchDashboardExecutive(): Promise<DashboardExecutiveRespo
 
   if (!isApiSuccess(data) || !data.Data) {
     throw new Error(data.Message ?? 'Failed to load executive dashboard.')
+  }
+
+  return data.Data
+}
+
+export async function fetchPrincipalPerformance(): Promise<PrincipalPerformanceResponse> {
+  const { data } = await httpClient.get<ApiResponse<PrincipalPerformanceResponse>>(
+    '/api/dashboard/principal-performance',
+  )
+
+  if (!isApiSuccess(data) || !data.Data) {
+    throw new Error(data.Message ?? 'Failed to load Principal Performance.')
+  }
+
+  return data.Data
+}
+
+export async function fetchPrincipalSalesOutEvidence(
+  supplierId: string,
+): Promise<PrincipalSalesOutEvidenceResponse> {
+  const { data } = await httpClient.get<ApiResponse<PrincipalSalesOutEvidenceResponse>>(
+    '/api/dashboard/principal-performance/evidence',
+    { params: { supplierId } },
+  )
+
+  if (!isApiSuccess(data) || !data.Data) {
+    throw new Error(data.Message ?? 'Failed to load Principal Sales-Out evidence.')
   }
 
   return data.Data

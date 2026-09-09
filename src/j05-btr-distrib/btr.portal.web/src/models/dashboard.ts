@@ -124,6 +124,51 @@ export interface DashboardSalesRankingItem {
   Investigation?: InvestigationMetadata | null
 }
 
+export interface PrincipalPerformanceRankingItem {
+  Rank: number
+  PrincipalName: string
+  SupplierId: string
+  KpiId: string
+  PrincipalSalesOutAmount: number
+}
+
+export interface PrincipalPerformanceResponse {
+  IsAvailable: boolean
+  KpiId: string
+  KpiName: string
+  PeriodYear: number
+  PeriodMonth: number
+  GeneratedAt: string | null
+  PrincipalSalesOutAmount: number
+  UnknownPrincipalExceptionCount: number
+  Disclosures: string[]
+  Ranking: PrincipalPerformanceRankingItem[]
+}
+
+export interface PrincipalSalesOutEvidenceItem {
+  FakturId: string
+  FakturCode: string
+  FakturDate: string
+  FakturItemId: string
+  BrgId: string
+  SupplierId: string
+  KpiId: string
+  PrincipalSalesOutAmount: number
+}
+
+export interface PrincipalSalesOutEvidenceResponse {
+  IsAvailable: boolean
+  KpiId: string
+  KpiName: string
+  SupplierId: string
+  PrincipalName: string
+  PeriodYear: number
+  PeriodMonth: number
+  PrincipalSalesOutAmount: number
+  Disclosures: string[]
+  Lines: PrincipalSalesOutEvidenceItem[]
+}
+
 export interface DashboardSalesResponse {
   TotalOmzet: number
   CompletedOmzet: number

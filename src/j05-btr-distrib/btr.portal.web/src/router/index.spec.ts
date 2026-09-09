@@ -20,6 +20,11 @@ function createTestRouter(base = '/') {
                 component: { template: '<div />' },
               },
               {
+                path: 'principal-performance/evidence',
+                name: 'principal-performance-evidence',
+                component: { template: '<div />' },
+              },
+              {
                 path: 'sales-forecast',
                 name: 'sales-forecast-dashboard',
                 component: { template: '<div />' },
@@ -134,6 +139,12 @@ describe('dashboard route matching', () => {
     const router = createTestRouter()
     const resolved = router.resolve('/dashboard/principal-performance')
     expect(resolved.name).toBe('principal-performance-dashboard')
+  })
+
+  it('resolves /dashboard/principal-performance/evidence to principal-performance-evidence', () => {
+    const router = createTestRouter()
+    const resolved = router.resolve('/dashboard/principal-performance/evidence')
+    expect(resolved.name).toBe('principal-performance-evidence')
   })
 
   it('resolves /dashboard/sales-forecast to sales-forecast-dashboard', () => {
