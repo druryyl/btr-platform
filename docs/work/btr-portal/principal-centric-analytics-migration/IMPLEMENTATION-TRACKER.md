@@ -409,16 +409,24 @@ Only a review agent may set `GO` or `NO-GO`.
 
 ### PCM-038
 
-- Status: PLANNED
-- Implementation History: none
-- Review History: none
+- Status: GO
+- Implementation History:
+  - 2026-09-09: IN IMPLEMENTATION
+  - 2026-09-09: IMPLEMENTED. CU02 labels the latest current-month invoice Salesman as Last Invoicing Salesman, a recency indicator, not the Customer owner. The low-recovery explanation uses invoice attribution, not Assigned Salesman. Customer risk, credit, piutang, and decline measures remain Customer-level. Principal-specific decline was not added. Other Customer pages are unchanged.
+- Review History:
+  - 2026-09-09: IN REVIEW
+  - 2026-09-09: GO. CU02 does not present one Salesman as the Customer owner. The column, recency note, and disclosure state that the displayed Salesman is the last invoicing Salesman on the current-month invoice, not Assigned Salesman or Owner. The low-recovery explanation uses invoice attribution. Customer risk, credit, piutang, and decline measures remain Customer-level. Principal-specific decline was not added. Other Customer pages are unchanged. `customerAnalyticsAttribution.spec.ts`: 4 passed. `CustomerRiskSignalBuilderTest`: 6 passed.
 - Remediation History: none
 
 ### PCM-039
 
-- Status: PLANNED
-- Implementation History: none
-- Review History: none
+- Status: GO
+- Implementation History:
+  - 2026-09-09: IN IMPLEMENTATION
+  - 2026-09-09: IMPLEMENTED. CU03 labels Salesman routing as operational Action Route and Routed Salesman, not Customer ownership. Collection queues remain Customer-level. No Principal collection impact was added. CU01, CU02, CU04, and CU05 are unchanged.
+- Review History:
+  - 2026-09-09: IN REVIEW
+  - 2026-09-09: GO. CU03 describes Salesman routing as operational Action Route and Routed Salesman, not Customer ownership. Collection queues remain Customer-level. No Principal collection impact was added. CU01, CU02, CU04, and CU05 are unchanged. `collectionOptimizationRouting.spec.ts`: 3 passed.
 - Remediation History: none
 
 ### PCM-040

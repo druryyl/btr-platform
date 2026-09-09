@@ -12,6 +12,7 @@ import CustomerRiskForecastSignalMixChart from '@/components/dashboard/CustomerR
 import CustomerRiskForecastSummary from '@/components/dashboard/CustomerRiskForecastSummary.vue'
 import CustomerRiskForecastWilayahChart from '@/components/dashboard/CustomerRiskForecastWilayahChart.vue'
 import type { SalesForecastKpiMetric } from '@/components/dashboard/SalesForecastKpiRow.vue'
+import { CU02_ATTRIBUTION_DISCLOSURES } from '@/services/customerAnalyticsAttribution'
 import { formatCurrency, formatCurrencyCompact, formatPercent } from '@/services/formatters'
 import { useDashboardStore } from '@/stores/dashboardStore'
 
@@ -158,6 +159,13 @@ onMounted(() => {
     :generated-at="forecast?.GeneratedAt ?? null"
     @refresh="dashboard.loadCustomerRiskForecast()"
   >
+    <section class="customer-risk-forecast-dashboard__disclosure" aria-label="Customer attribution disclosure">
+      <h2>Attribution disclosure</h2>
+      <ul>
+        <li v-for="item in CU02_ATTRIBUTION_DISCLOSURES" :key="item">{{ item }}</li>
+      </ul>
+    </section>
+
     <p v-if="forecast?.IsAvailable" class="customer-risk-forecast-dashboard__meta">
       Horizon: {{ kpi?.HorizonDays ?? '—' }} days from
       {{ new Date(forecast.BusinessDate).toLocaleDateString('id-ID') }}
@@ -251,6 +259,27 @@ onMounted(() => {
 </template>
 
 <style scoped>
+.customer-risk-forecast-dashboard__disclosure {
+  margin-bottom: 1.5rem;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--p-content-border-color);
+  border-radius: var(--p-content-border-radius);
+}
+
+.customer-risk-forecast-dashboard__disclosure h2 {
+  margin: 0 0 0.5rem;
+  font-size: 1rem;
+}
+
+.customer-risk-forecast-dashboard__disclosure ul {
+  margin: 0;
+  padding-left: 1.25rem;
+}
+
+.customer-risk-forecast-dashboard__disclosure li + li {
+  margin-top: 0.25rem;
+}
+
 .customer-risk-forecast-dashboard__meta {
   margin: 0 0 1rem;
   color: var(--p-text-muted-color);

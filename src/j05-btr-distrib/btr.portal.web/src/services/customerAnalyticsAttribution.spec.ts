@@ -3,6 +3,11 @@ import {
   CU01_ATTRIBUTION_DISCLOSURES,
   CU01_LAST_INVOICING_SALESMAN_LABEL,
   CU01_LAST_INVOICING_SALESMAN_NOTE,
+  CU02_ATTRIBUTION_DISCLOSURES,
+  CU02_LAST_INVOICING_SALESMAN_LABEL,
+  CU02_LAST_INVOICING_SALESMAN_NOTE,
+  CU02_LOW_RECOVERY_EXPLANATION,
+  correctCu02AttributionText,
   isForbiddenCustomerOwnerLabel,
 } from '@/services/customerAnalyticsAttribution'
 
@@ -29,5 +34,34 @@ describe('CU01 ownership labels', () => {
     expect(text.toLowerCase()).toContain('does not recompute relationships from raw transactions')
     expect(text.toLowerCase()).toContain('no pre-purchase assigned principal')
     expect(CU01_ATTRIBUTION_DISCLOSURES.some((item) => /assigned salesman/i.test(item) && !/does not label/i.test(item))).toBe(false)
+  })
+})
+
+describe('CU02 ownership labels', () => {
+  it('labels the latest current-month invoice Salesman as last invoicing recency, not the Customer owner', () => {
+    expect(CU02_LAST_INVOICING_SALESMAN_LABEL).toBe('Last Invoicing Salesman')
+    expect(CU02_LAST_INVOICING_SALESMAN_LABEL).not.toMatch(/assigned salesman/i)
+    expect(isForbiddenCustomerOwnerLabel(CU02_LAST_INVOICING_SALESMAN_LABEL)).toBe(false)
+    expect(CU02_LAST_INVOICING_SALESMAN_NOTE.toLowerCase()).toContain('last invoicing salesman')
+    expect(CU02_LAST_INVOICING_SALESMAN_NOTE.toLowerCase()).toContain('not the customer owner')
+    expect(CU02_LAST_INVOICING_SALESMAN_NOTE.toLowerCase()).toContain('recency indicator')
+  })
+
+  it('keeps risk measures Customer-level and does not present one Salesman as owner', () => {
+    const text = CU02_ATTRIBUTION_DISCLOSURES.join(' ')
+    expect(text.toLowerCase()).toContain('not the customer owner')
+    expect(text.toLowerCase()).toContain('does not present')
+    expect(text.toLowerCase()).toContain('customer-level')
+    expect(text.toLowerCase()).toContain('principal-specific decline is not shown')
+    expect(CU02_ATTRIBUTION_DISCLOSURES.some((item) => /assigned salesman/i.test(item) && !/does not present/i.test(item))).toBe(false)
+    expect(CU02_LOW_RECOVERY_EXPLANATION.toLowerCase()).toContain('last invoicing salesman')
+    expect(CU02_LOW_RECOVERY_EXPLANATION.toLowerCase()).toContain('invoice attribution')
+    expect(CU02_LOW_RECOVERY_EXPLANATION.toLowerCase()).not.toContain('assigned salesman')
+    expect(correctCu02AttributionText('Assigned salesman has low recovery vs billing and customer is overdue.')).toBe(
+      CU02_LOW_RECOVERY_EXPLANATION,
+    )
+    expect(correctCu02AttributionText('Chronic overdue exposure with no recent payment.')).toBe(
+      'Chronic overdue exposure with no recent payment.',
+    )
   })
 })

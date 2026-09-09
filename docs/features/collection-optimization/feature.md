@@ -32,7 +32,7 @@ This is a **read-only**, **deterministic**, **explainable** optimization layer �
 
 Ten categories with precedence (COL-OPT-CAT-01 through COL-OPT-CAT-10):
 
-| Category | Typical owner | Meaning |
+| Category | Operational route | Meaning |
 | -------- | ------------- | ------- |
 | ImmediateCollection | Collection | Overdue with high severity |
 | EscalateManagement | Management | Critical risk requiring leadership review |
@@ -44,6 +44,8 @@ Ten categories with precedence (COL-OPT-CAT-01 through COL-OPT-CAT-10):
 | RelationshipMonitor | Sales/Collection | Strategic watch customer |
 | DeferCollection | — | Healthy, no near-term urgency |
 | NoActionToday | — | No actionable signals |
+
+The operational route is who handles today's collection action. It is not Customer account ownership. Collection queues remain Customer-level. No Principal collection impact is shown.
 
 ---
 

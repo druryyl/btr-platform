@@ -10,6 +10,10 @@ import {
   actionCategoryBadgeSeverity,
   actionOwnerBadgeSeverity,
 } from '@/services/collectionOptimizationSignals'
+import {
+  CU03_ACTION_ROUTE_LABEL,
+  CU03_ACTION_ROUTE_NOTE,
+} from '@/services/collectionOptimizationRouting'
 
 defineProps<{
   rows: DashboardCollectionOptimizationPriorityItem[]
@@ -21,7 +25,10 @@ const expandedRows = ref<DashboardCollectionOptimizationPriorityItem[]>([])
 
 <template>
   <Card class="collection-optimization-priority-table">
-    <template #title>Today's Collection Priorities</template>
+    <template #title>
+      <span>Today's Collection Priorities</span>
+      <p class="collection-optimization-priority-table__note">{{ CU03_ACTION_ROUTE_NOTE }}</p>
+    </template>
     <template #content>
       <DataTable
         v-model:expandedRows="expandedRows"
@@ -47,7 +54,7 @@ const expandedRows = ref<DashboardCollectionOptimizationPriorityItem[]>([])
           <template #body="{ data }">{{ formatCurrency(data.CollectionImpactAmount) }}</template>
         </Column>
         <Column field="M29Category" header="Risk" />
-        <Column field="ActionOwner" header="Owner">
+        <Column field="ActionOwner" :header="CU03_ACTION_ROUTE_LABEL">
           <template #body="{ data }">
             <Tag
               v-if="data.ActionOwner"
@@ -70,6 +77,14 @@ const expandedRows = ref<DashboardCollectionOptimizationPriorityItem[]>([])
 </template>
 
 <style scoped>
+.collection-optimization-priority-table__note {
+  margin: 0.5rem 0 0;
+  font-size: 0.875rem;
+  font-weight: 400;
+  line-height: 1.5;
+  color: var(--p-text-muted-color);
+}
+
 .collection-optimization-priority-table__detail {
   padding: 0.5rem 1rem 1rem;
   font-size: 0.9rem;

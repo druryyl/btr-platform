@@ -9,6 +9,10 @@ import { RouterLink } from 'vue-router'
 import { formatCurrency, formatPercent } from '@/services/formatters'
 import type { DashboardCustomerRiskForecastCustomerItem } from '@/models/dashboard'
 import { categoryBadgeSeverity } from '@/services/customerRiskForecastSignals'
+import {
+  CU02_LAST_INVOICING_SALESMAN_LABEL,
+  CU02_LAST_INVOICING_SALESMAN_NOTE,
+} from '@/services/customerAnalyticsAttribution'
 
 const props = defineProps<{
   customers: DashboardCustomerRiskForecastCustomerItem[]
@@ -25,6 +29,9 @@ const rows = computed(() => props.customers ?? [])
         <i class="pi pi-users" aria-hidden="true" />
         <span>Top Customers by Risk Priority</span>
       </div>
+      <p class="customer-risk-forecast-customers-table__note">
+        {{ CU02_LAST_INVOICING_SALESMAN_NOTE }}
+      </p>
     </template>
 
     <template #content>
@@ -54,7 +61,7 @@ const rows = computed(() => props.customers ?? [])
           <Column field="CustomerCode" header="Code" />
           <Column field="CustomerName" header="Customer" />
           <Column field="WilayahName" header="Wilayah" />
-          <Column field="SalesPersonName" header="Salesman" />
+          <Column field="SalesPersonName" :header="CU02_LAST_INVOICING_SALESMAN_LABEL" />
           <Column header="Open Balance" body-class="dash-numeric" header-class="dash-numeric">
             <template #body="{ data }">
               {{ formatCurrency(data.OpenBalance) }}
@@ -127,6 +134,13 @@ const rows = computed(() => props.customers ?? [])
   display: flex;
   align-items: center;
   gap: 0.5rem;
+}
+
+.customer-risk-forecast-customers-table__note {
+  margin: 0.5rem 0 0;
+  color: var(--p-text-muted-color);
+  font-size: 0.875rem;
+  font-weight: 400;
 }
 
 .customer-risk-forecast-customers-table__loading {

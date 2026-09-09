@@ -13,6 +13,10 @@ import {
   COLLECTION_OPTIMIZATION_QUEUE_LABELS,
   filterQueuesByKey,
 } from '@/services/collectionOptimizationSignals'
+import {
+  CU03_ACTION_ROUTE_LABEL,
+  CU03_ACTION_ROUTE_NOTE,
+} from '@/services/collectionOptimizationRouting'
 
 const props = defineProps<{
   queues: DashboardCollectionOptimizationQueueItem[]
@@ -33,7 +37,10 @@ const filteredRows = computed(() => filterQueuesByKey(props.queues ?? [], active
   <Card class="collection-optimization-queue-tabs">
     <template #title>
       <div class="collection-optimization-queue-tabs__header">
-        <span>Specialized Queues</span>
+        <div>
+          <span>Specialized Queues</span>
+          <p class="collection-optimization-queue-tabs__note">{{ CU03_ACTION_ROUTE_NOTE }}</p>
+        </div>
         <SelectButton
           v-model="activeQueue"
           :options="queueOptions"
@@ -58,7 +65,7 @@ const filteredRows = computed(() => filterQueuesByKey(props.queues ?? [], active
           <template #body="{ data }">{{ formatCurrency(data.CollectionImpactAmount) }}</template>
         </Column>
         <Column field="M29Category" header="Risk" />
-        <Column field="ActionOwner" header="Owner" />
+        <Column field="ActionOwner" :header="CU03_ACTION_ROUTE_LABEL" />
         <Column field="QueueReasonText" header="Reason" />
       </DataTable>
     </template>
@@ -66,6 +73,14 @@ const filteredRows = computed(() => filterQueuesByKey(props.queues ?? [], active
 </template>
 
 <style scoped>
+.collection-optimization-queue-tabs__note {
+  margin: 0.35rem 0 0;
+  font-size: 0.875rem;
+  font-weight: 400;
+  line-height: 1.5;
+  color: var(--p-text-muted-color);
+}
+
 .collection-optimization-queue-tabs__header {
   display: flex;
   flex-direction: column;
