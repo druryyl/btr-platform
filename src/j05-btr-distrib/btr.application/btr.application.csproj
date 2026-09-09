@@ -648,6 +648,7 @@
     <Compile Include="ReportingContext\PrincipalAnalyticsAgg\PrincipalSalesOutSnapshot.cs" />
     <Compile Include="ReportingContext\PrincipalAnalyticsAgg\PrincipalPurchaseInSnapshot.cs" />
     <Compile Include="ReportingContext\PrincipalAnalyticsAgg\PrincipalReturnSnapshot.cs" />
+    <Compile Include="ReportingContext\PrincipalAnalyticsAgg\PrincipalReturnHistory.cs" />
     <Compile Include="ReportingContext\PrincipalAnalyticsAgg\PrincipalReturnPercentageSnapshot.cs" />
     <Compile Include="ReportingContext\PrincipalAnalyticsAgg\PrincipalInventorySnapshot.cs" />
     <Compile Include="ReportingContext\PrincipalAnalyticsAgg\PrincipalTargetSnapshot.cs" />
@@ -660,6 +661,8 @@
     <Compile Include="ReportingContext\PrincipalAnalyticsAgg\Contracts\IPrincipalPurchaseInEvidenceDal.cs" />
     <Compile Include="ReportingContext\PrincipalAnalyticsAgg\Contracts\IPrincipalPurchaseInSnapshotDal.cs" />
     <Compile Include="ReportingContext\PrincipalAnalyticsAgg\Contracts\IPrincipalReturnEvidenceDal.cs" />
+    <Compile Include="ReportingContext\PrincipalAnalyticsAgg\Contracts\IPrincipalReturnHistoryDal.cs" />
+    <Compile Include="ReportingContext\PrincipalAnalyticsAgg\Contracts\IPrincipalReturnHistoryEvidenceDal.cs" />
     <Compile Include="ReportingContext\PrincipalAnalyticsAgg\Contracts\IPrincipalReturnSnapshotDal.cs" />
     <Compile Include="ReportingContext\PrincipalAnalyticsAgg\Contracts\IPrincipalReturnPercentageSnapshotDal.cs" />
     <Compile Include="ReportingContext\PrincipalAnalyticsAgg\Contracts\IPrincipalInventorySnapshotDal.cs" />
@@ -671,6 +674,7 @@
     <Compile Include="ReportingContext\PrincipalAnalyticsAgg\Models\PrincipalSalesOutAggregateResult.cs" />
     <Compile Include="ReportingContext\PrincipalAnalyticsAgg\Models\PrincipalPurchaseInAggregateResult.cs" />
     <Compile Include="ReportingContext\PrincipalAnalyticsAgg\Models\PrincipalReturnAggregateResult.cs" />
+    <Compile Include="ReportingContext\PrincipalAnalyticsAgg\Models\PrincipalReturnHistoryResult.cs" />
     <Compile Include="ReportingContext\PrincipalAnalyticsAgg\Models\PrincipalReturnPercentageResult.cs" />
     <Compile Include="ReportingContext\PrincipalAnalyticsAgg\Models\PrincipalInventoryAggregateResult.cs" />
     <Compile Include="ReportingContext\PrincipalAnalyticsAgg\Models\PrincipalTargetAggregateResult.cs" />
@@ -679,6 +683,7 @@
     <Compile Include="ReportingContext\PrincipalAnalyticsAgg\Services\PrincipalSalesOutAggregator.cs" />
     <Compile Include="ReportingContext\PrincipalAnalyticsAgg\Services\PrincipalPurchaseInAggregator.cs" />
     <Compile Include="ReportingContext\PrincipalAnalyticsAgg\Services\PrincipalReturnAggregator.cs" />
+    <Compile Include="ReportingContext\PrincipalAnalyticsAgg\Services\PrincipalReturnHistoryComposer.cs" />
     <Compile Include="ReportingContext\PrincipalAnalyticsAgg\Services\PrincipalReturnPercentageComposer.cs" />
     <Compile Include="ReportingContext\PrincipalAnalyticsAgg\Services\PrincipalInventoryAggregator.cs" />
     <Compile Include="ReportingContext\PrincipalAnalyticsAgg\Services\PrincipalTargetAggregator.cs" />
@@ -691,6 +696,8 @@
     <Compile Include="ReportingContext\PrincipalAnalyticsAgg\UseCases\RefreshPrincipalSalesOutSnapshotWorker.cs" />
     <Compile Include="ReportingContext\PrincipalAnalyticsAgg\UseCases\RefreshPrincipalPurchaseInSnapshotRequest.cs" />
     <Compile Include="ReportingContext\PrincipalAnalyticsAgg\UseCases\RefreshPrincipalPurchaseInSnapshotWorker.cs" />
+    <Compile Include="ReportingContext\PrincipalAnalyticsAgg\UseCases\RefreshPrincipalReturnHistoryRequest.cs" />
+    <Compile Include="ReportingContext\PrincipalAnalyticsAgg\UseCases\RefreshPrincipalReturnHistoryWorker.cs" />
     <Compile Include="ReportingContext\PrincipalAnalyticsAgg\UseCases\RefreshPrincipalReturnSnapshotRequest.cs" />
     <Compile Include="ReportingContext\PrincipalAnalyticsAgg\UseCases\RefreshPrincipalReturnSnapshotWorker.cs" />
     <Compile Include="ReportingContext\PrincipalAnalyticsAgg\UseCases\RefreshPrincipalReturnPercentageSnapshotRequest.cs" />

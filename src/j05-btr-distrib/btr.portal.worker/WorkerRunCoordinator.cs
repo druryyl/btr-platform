@@ -272,6 +272,16 @@ namespace btr.portal.worker
                     });
                     break;
 
+                case "PRNRETURNHISTORY":
+                    RunDomain(serviceProvider, PrincipalReturnHistory.Domain, triggeredBy, sp =>
+                    {
+                        var worker = sp.GetRequiredService<IRefreshPrincipalReturnHistoryWorker>();
+                        var request = new RefreshPrincipalReturnHistoryRequest { TriggeredBy = triggeredBy };
+                        worker.Execute(request);
+                        return request.Result?.DurationMs ?? 0;
+                    });
+                    break;
+
                 case "PRINCIPALTARGET":
                     RunDomain(serviceProvider, PrincipalTargetSnapshot.Domain, triggeredBy, sp =>
                     {
@@ -522,7 +532,8 @@ namespace btr.portal.worker
                 "Purchasing",
                 PrincipalPurchaseInSnapshot.Domain,
                 "PurchasingManagement", "Customer", "Salesman", "Collection", "FieldActivity", "Location",
-                "EntityAnalyticsHistoricalBackfill", CustomerPrincipalRelationship.Domain
+                "EntityAnalyticsHistoricalBackfill", CustomerPrincipalRelationship.Domain,
+                PrincipalReturnHistory.Domain
             };
 
             var validTriggers = new HashSet<string>(StringComparer.OrdinalIgnoreCase)

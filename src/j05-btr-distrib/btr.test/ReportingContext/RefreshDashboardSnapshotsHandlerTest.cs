@@ -68,7 +68,7 @@ namespace btr.test.ReportingContext
                 default).GetAwaiter().GetResult();
 
             act.Should().Throw<ArgumentException>()
-                .WithMessage("*Domain must be All, Piutang, Inventory, InventoryRisk, PrincipalInventory, Sales, PrincipalSalesOut, PrincipalReturn, PrnReturnPercentage, PrnSalesOutHistory, PrincipalTarget, PrnCusRelationship, Purchasing, PrincipalPurchaseIn, PurchasingManagement, Customer, Salesman, Collection, FieldActivity, or Location*");
+                .WithMessage("*Domain must be All, Piutang, Inventory, InventoryRisk, PrincipalInventory, Sales, PrincipalSalesOut, PrincipalReturn, PrnReturnPercentage, PrnSalesOutHistory, PrnReturnHistory, PrincipalTarget, PrnCusRelationship, Purchasing, PrincipalPurchaseIn, PurchasingManagement, Customer, Salesman, Collection, FieldActivity, or Location*");
         }
 
         [Fact]
@@ -133,6 +133,7 @@ namespace btr.test.ReportingContext
             StubPrincipalReturnWorker principalReturnWorker = null,
             StubPrincipalReturnPercentageWorker principalReturnPercentageWorker = null,
             StubPrincipalSalesOutHistoryWorker principalSalesOutHistoryWorker = null,
+            StubPrincipalReturnHistoryWorker principalReturnHistoryWorker = null,
             StubPrincipalTargetWorker principalTargetWorker = null,
             StubCustomerPrincipalRelationshipWorker customerPrincipalRelationshipWorker = null,
             StubPurchasingWorker purchasingWorker = null,
@@ -155,6 +156,7 @@ namespace btr.test.ReportingContext
                 principalReturnWorker ?? new StubPrincipalReturnWorker(),
                 principalReturnPercentageWorker ?? new StubPrincipalReturnPercentageWorker(),
                 principalSalesOutHistoryWorker ?? new StubPrincipalSalesOutHistoryWorker(),
+                principalReturnHistoryWorker ?? new StubPrincipalReturnHistoryWorker(),
                 principalTargetWorker ?? new StubPrincipalTargetWorker(),
                 customerPrincipalRelationshipWorker ?? new StubCustomerPrincipalRelationshipWorker(),
                 purchasingWorker ?? new StubPurchasingWorker(),
@@ -230,6 +232,13 @@ namespace btr.test.ReportingContext
         private sealed class StubPrincipalSalesOutHistoryWorker : IRefreshPrincipalSalesOutHistoryWorker
         {
             public void Execute(RefreshPrincipalSalesOutHistoryRequest request)
+            {
+            }
+        }
+
+        private sealed class StubPrincipalReturnHistoryWorker : IRefreshPrincipalReturnHistoryWorker
+        {
+            public void Execute(RefreshPrincipalReturnHistoryRequest request)
             {
             }
         }

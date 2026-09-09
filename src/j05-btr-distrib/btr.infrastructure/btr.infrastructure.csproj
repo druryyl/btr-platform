@@ -189,6 +189,8 @@
     <Compile Include="ReportingContext\PrincipalAnalyticsAgg\PrincipalPurchaseInEvidenceDal.cs" />
     <Compile Include="ReportingContext\PrincipalAnalyticsAgg\PrincipalPurchaseInSnapshotDal.cs" />
     <Compile Include="ReportingContext\PrincipalAnalyticsAgg\PrincipalReturnEvidenceDal.cs" />
+    <Compile Include="ReportingContext\PrincipalAnalyticsAgg\PrincipalReturnHistoryDal.cs" />
+    <Compile Include="ReportingContext\PrincipalAnalyticsAgg\PrincipalReturnHistoryEvidenceDal.cs" />
     <Compile Include="ReportingContext\PrincipalAnalyticsAgg\PrincipalReturnSnapshotDal.cs" />
     <Compile Include="ReportingContext\PrincipalAnalyticsAgg\PrincipalReturnPercentageSnapshotDal.cs" />
     <Compile Include="ReportingContext\PrincipalAnalyticsAgg\PrincipalInventorySnapshotDal.cs" />

@@ -309,9 +309,13 @@ Only a review agent may set `GO` or `NO-GO`.
 
 ### PCM-025
 
-- Status: PLANNED
-- Implementation History: none
-- Review History: none
+- Status: GO
+- Implementation History:
+  - 2026-09-09: IN IMPLEMENTATION
+  - 2026-09-09: IMPLEMENTED. Persisted Principal × year × month `PRN-RET-001`, `PRN-RET-002`, and `PRN-RET-003` history from Return Item evidence using Item-master attribution. Current-month history rows are replaced by the current PCM-023 snapshot. No `PRN-SALES-001` history is stored or overwritten and no growth KPI is calculated.
+- Review History:
+  - 2026-09-09: IN REVIEW
+  - 2026-09-09: GO. History rows store return amounts only from Return Item evidence and do not store or overwrite `PRN-SALES-001` history. Current-month history equals the current PCM-023 snapshot for the same Principal and month. No growth KPI is calculated. Returns remain independent under GR-001. `btr.application` and `btr.infrastructure` build. 47 Principal tests pass, including 4 new `PrincipalReturnHistoryComposerTest` tests.
 - Remediation History: none
 
 ### PCM-026
