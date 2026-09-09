@@ -230,6 +230,14 @@ namespace btr.test.ReportingContext
             {
                 return _lines;
             }
+
+            public IReadOnlyList<PrincipalReturnItemEvidenceLine> ListReturnItemEvidenceForPrincipal(
+                int year,
+                int month,
+                string supplierId)
+            {
+                return new List<PrincipalReturnItemEvidenceLine>();
+            }
         }
 
         private sealed class StubRefreshLogDal : IDashboardSnapshotRefreshLogDal

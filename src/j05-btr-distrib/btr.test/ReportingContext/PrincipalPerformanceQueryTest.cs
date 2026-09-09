@@ -271,6 +271,152 @@ namespace btr.test.ReportingContext
             PrincipalSalesOutEvidenceDal.ListFakturItemEvidenceForPrincipalSql.Should().NotContain("Purchasing");
         }
 
+        [Fact]
+        public void Compose_AttachesStoredReturns_WithoutChangingSalesOut()
+        {
+            var snapshot = new PrincipalSalesOutAggregateResult
+            {
+                KpiId = PrincipalKpiCatalog.SalesOutId,
+                PeriodYear = 2026,
+                PeriodMonth = 9,
+                GeneratedAt = new DateTime(2026, 9, 9, 8, 0, 0),
+                Principals = new[]
+                {
+                    Row("SUPA", "Alpha", 1000m, 1),
+                    Row("SUPB", "Beta", 500m, 2)
+                }.ToList()
+            };
+            var returns = new PrincipalReturnAggregateResult
+            {
+                GoodReturnKpiId = PrincipalKpiCatalog.GoodReturnAmountId,
+                BrokenReturnKpiId = PrincipalKpiCatalog.BrokenReturnAmountId,
+                TotalReturnKpiId = PrincipalKpiCatalog.TotalReturnAmountId,
+                PeriodYear = 2026,
+                PeriodMonth = 9,
+                GeneratedAt = new DateTime(2026, 9, 9, 8, 0, 0),
+                Principals = new[]
+                {
+                    ReturnRow("SUPA", "Alpha", 80m, 20m, 100m),
+                    ReturnRow("SUPB", "Beta", 10m, 5m, 15m)
+                }.ToList()
+            };
+            var percentages = new PrincipalReturnPercentageResult
+            {
+                ReturnPercentageKpiId = PrincipalKpiCatalog.ReturnPercentageId,
+                SalesOutKpiId = PrincipalKpiCatalog.SalesOutId,
+                TotalReturnKpiId = PrincipalKpiCatalog.TotalReturnAmountId,
+                PeriodYear = 2026,
+                PeriodMonth = 9,
+                GeneratedAt = new DateTime(2026, 9, 9, 8, 0, 0),
+                Principals = new[]
+                {
+                    PercentageRow("SUPA", "Alpha", 100m, 1000m, 0.100000m),
+                    PercentageRow("SUPB", "Beta", 15m, 500m, 0.030000m)
+                }.ToList()
+            };
+
+            var response = PrincipalPerformanceComposer.Compose(snapshot, null, null, returns, percentages);
+
+            response.PrincipalSalesOutAmount.Should().Be(1500m);
+            response.Ranking.Select(row => row.SupplierId).Should().Equal("SUPA", "SUPB");
+            response.GoodReturnAmountKpiId.Should().Be(PrincipalKpiCatalog.GoodReturnAmountId);
+            response.BrokenReturnAmountKpiId.Should().Be(PrincipalKpiCatalog.BrokenReturnAmountId);
+            response.TotalReturnAmountKpiId.Should().Be(PrincipalKpiCatalog.TotalReturnAmountId);
+            response.ReturnPercentageKpiId.Should().Be(PrincipalKpiCatalog.ReturnPercentageId);
+            response.GoodReturnAmount.Should().Be(90m);
+            response.BrokenReturnAmount.Should().Be(25m);
+            response.TotalReturnAmount.Should().Be(115m);
+            response.ReturnPercentage.Should().BeApproximately(0.076667m, 0.000001m);
+            response.ReturnIsAvailable.Should().BeTrue();
+            var alpha = response.Ranking.Single(row => row.SupplierId == "SUPA");
+            alpha.PrincipalSalesOutAmount.Should().Be(1000m);
+            alpha.GoodReturnAmount.Should().Be(80m);
+            alpha.BrokenReturnAmount.Should().Be(20m);
+            alpha.TotalReturnAmount.Should().Be(100m);
+            alpha.ReturnPercentage.Should().Be(0.100000m);
+            alpha.GoodReturnAmountKpiId.Should().Be(PrincipalKpiCatalog.GoodReturnAmountId);
+            alpha.ReturnPercentageKpiId.Should().Be(PrincipalKpiCatalog.ReturnPercentageId);
+            response.Ranking.Should().OnlyContain(row => row.KpiId == PrincipalKpiCatalog.SalesOutId);
+        }
+
+        [Fact]
+        public void Compose_DoesNotAttachReturnsFromADifferentPeriod()
+        {
+            var snapshot = new PrincipalSalesOutAggregateResult
+            {
+                KpiId = PrincipalKpiCatalog.SalesOutId,
+                PeriodYear = 2026,
+                PeriodMonth = 9,
+                GeneratedAt = new DateTime(2026, 9, 9, 8, 0, 0),
+                Principals = new[] { Row("SUPA", "Alpha", 100m, 1) }.ToList()
+            };
+            var returns = new PrincipalReturnAggregateResult
+            {
+                GoodReturnKpiId = PrincipalKpiCatalog.GoodReturnAmountId,
+                BrokenReturnKpiId = PrincipalKpiCatalog.BrokenReturnAmountId,
+                TotalReturnKpiId = PrincipalKpiCatalog.TotalReturnAmountId,
+                PeriodYear = 2026,
+                PeriodMonth = 8,
+                GeneratedAt = new DateTime(2026, 8, 9, 8, 0, 0),
+                Principals = new[] { ReturnRow("SUPA", "Alpha", 50m, 50m, 100m) }.ToList()
+            };
+
+            var response = PrincipalPerformanceComposer.Compose(snapshot, null, null, returns, null);
+
+            response.PrincipalSalesOutAmount.Should().Be(100m);
+            response.ReturnIsAvailable.Should().BeFalse();
+            response.GoodReturnAmount.Should().BeNull();
+            response.TotalReturnAmount.Should().BeNull();
+            response.ReturnPercentage.Should().BeNull();
+            response.Ranking.Single().GoodReturnAmount.Should().BeNull();
+            response.Ranking.Single().PrincipalSalesOutAmount.Should().Be(100m);
+        }
+
+        [Fact]
+        public void ReturnEvidenceComposer_UsesReturnItemAmounts_AndKeepsPrincipalIdentity()
+        {
+            var response = PrincipalReturnEvidenceComposer.Compose(
+                "SUPA",
+                2026,
+                9,
+                new[]
+                {
+                    ReturnLine("R002", "RC002", "L002", "SUPA", "Alpha", "RUSAK", 200m, 20m, new DateTime(2026, 9, 3)),
+                    ReturnLine("R001", "RC001", "L001", "SUPA", "Alpha", "BAGUS", 1000m, 100m, new DateTime(2026, 9, 2)),
+                    ReturnLine("R003", "RC003", "L003", "SUPB", "Beta", "BAGUS", 500m, 0m, new DateTime(2026, 9, 4))
+                });
+
+            response.GoodReturnAmountKpiId.Should().Be(PrincipalKpiCatalog.GoodReturnAmountId);
+            response.BrokenReturnAmountKpiId.Should().Be(PrincipalKpiCatalog.BrokenReturnAmountId);
+            response.TotalReturnAmountKpiId.Should().Be(PrincipalKpiCatalog.TotalReturnAmountId);
+            response.ReturnPercentageKpiId.Should().Be(PrincipalKpiCatalog.ReturnPercentageId);
+            response.PrincipalName.Should().Be("Alpha");
+            response.Lines.Should().HaveCount(2);
+            response.Lines.Select(line => line.ReturJualItemId).Should().Equal("L001", "L002");
+            response.GoodReturnAmount.Should().Be(900m);
+            response.BrokenReturnAmount.Should().Be(180m);
+            response.TotalReturnAmount.Should().Be(1080m);
+            response.Lines.Should().OnlyContain(line => line.SupplierId == "SUPA");
+        }
+
+        [Fact]
+        public void ReturnEvidenceSql_ReadsReturnItem_NotSalesOut()
+        {
+            PrincipalReturnEvidenceDal.ListReturnItemEvidenceForPrincipalSql.Should().Contain("BTR_ReturJualItem");
+            PrincipalReturnEvidenceDal.ListReturnItemEvidenceForPrincipalSql.Should().Contain("BTR_ReturJual");
+            PrincipalReturnEvidenceDal.ListReturnItemEvidenceForPrincipalSql.Should().Contain("ri.SubTotal");
+            PrincipalReturnEvidenceDal.ListReturnItemEvidenceForPrincipalSql.Should().Contain("ri.DiscRp");
+            PrincipalReturnEvidenceDal.ListReturnItemEvidenceForPrincipalSql.Should().Contain("VoidDate = '3000-01-01'");
+            PrincipalReturnEvidenceDal.ListReturnItemEvidenceForPrincipalSql.Should().Contain("BAGUS");
+            PrincipalReturnEvidenceDal.ListReturnItemEvidenceForPrincipalSql.Should().Contain("RUSAK");
+            PrincipalReturnEvidenceDal.ListReturnItemEvidenceForPrincipalSql.Should().Contain("b.SupplierId");
+            PrincipalReturnEvidenceDal.ListReturnItemEvidenceForPrincipalSql.Should().NotContain("BTR_Faktur");
+            PrincipalReturnEvidenceDal.ListReturnItemEvidenceForPrincipalSql.Should().NotContain("BTRPD_PrincipalSalesOut");
+            PrincipalReturnEvidenceDal.ListReturnItemEvidenceForPrincipalSql.Should().NotContain("PRN-SALES-001");
+            PrincipalReturnEvidenceDal.ListReturnItemEvidenceForPrincipalSql.Should().NotContain("GrandTotal");
+            PrincipalReturnEvidenceDal.ListReturnItemEvidenceForPrincipalSql.Should().NotContain("SalesOutAmount");
+        }
+
         private static PrincipalSalesOutRow Row(
             string supplierId,
             string supplierName,
@@ -304,6 +450,75 @@ namespace btr.test.ReportingContext
                 FakturDate = fakturDate,
                 FakturItemId = fakturItemId,
                 BrgId = "BRG1",
+                ItemSupplierId = supplierId,
+                SupplierId = supplierId,
+                SupplierName = supplierName,
+                SubTotal = subTotal,
+                DiscRp = discRp
+            };
+        }
+
+        private static PrincipalReturnRow ReturnRow(
+            string supplierId,
+            string supplierName,
+            decimal goodReturnAmount,
+            decimal brokenReturnAmount,
+            decimal totalReturnAmount)
+        {
+            return new PrincipalReturnRow
+            {
+                GoodReturnKpiId = PrincipalKpiCatalog.GoodReturnAmountId,
+                BrokenReturnKpiId = PrincipalKpiCatalog.BrokenReturnAmountId,
+                TotalReturnKpiId = PrincipalKpiCatalog.TotalReturnAmountId,
+                SupplierId = supplierId,
+                SupplierName = supplierName,
+                GoodReturnAmount = goodReturnAmount,
+                BrokenReturnAmount = brokenReturnAmount,
+                TotalReturnAmount = totalReturnAmount,
+                LineCount = 1
+            };
+        }
+
+        private static PrincipalReturnPercentageRow PercentageRow(
+            string supplierId,
+            string supplierName,
+            decimal totalReturnAmount,
+            decimal salesOutAmount,
+            decimal? returnPercentage)
+        {
+            return new PrincipalReturnPercentageRow
+            {
+                ReturnPercentageKpiId = PrincipalKpiCatalog.ReturnPercentageId,
+                SalesOutKpiId = PrincipalKpiCatalog.SalesOutId,
+                TotalReturnKpiId = PrincipalKpiCatalog.TotalReturnAmountId,
+                SupplierId = supplierId,
+                SupplierName = supplierName,
+                TotalReturnAmount = totalReturnAmount,
+                SalesOutAmount = salesOutAmount,
+                ReturnPercentage = returnPercentage
+            };
+        }
+
+        private static PrincipalReturnItemEvidenceLine ReturnLine(
+            string returJualId,
+            string returJualCode,
+            string returJualItemId,
+            string supplierId,
+            string supplierName,
+            string jenisRetur,
+            decimal subTotal,
+            decimal discRp,
+            DateTime returJualDate)
+        {
+            return new PrincipalReturnItemEvidenceLine
+            {
+                ReturJualId = returJualId,
+                ReturJualCode = returJualCode,
+                ReturJualDate = returJualDate,
+                ReturJualItemId = returJualItemId,
+                BrgId = "BRG1",
+                BrgCode = "BRG1",
+                JenisRetur = jenisRetur,
                 ItemSupplierId = supplierId,
                 SupplierId = supplierId,
                 SupplierName = supplierName,

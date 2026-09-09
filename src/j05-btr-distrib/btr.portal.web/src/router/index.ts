@@ -43,6 +43,11 @@ const router = createRouter({
               component: () => import('@/views/dashboard/PrincipalSalesOutEvidenceView.vue'),
             },
             {
+              path: 'principal-performance/return-evidence',
+              name: 'principal-performance-return-evidence',
+              component: () => import('@/views/dashboard/PrincipalReturnEvidenceView.vue'),
+            },
+            {
               path: 'sales-forecast',
               name: 'sales-forecast-dashboard',
               component: () => import('@/views/dashboard/SalesForecastDashboardView.vue'),

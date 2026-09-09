@@ -176,6 +176,14 @@ export interface PrincipalPerformanceRankingItem {
   AchievementPercentageKpiId?: string | null
   AchievementAmount?: number | null
   AchievementPercentage?: number | null
+  GoodReturnAmountKpiId?: string | null
+  BrokenReturnAmountKpiId?: string | null
+  TotalReturnAmountKpiId?: string | null
+  ReturnPercentageKpiId?: string | null
+  GoodReturnAmount?: number | null
+  BrokenReturnAmount?: number | null
+  TotalReturnAmount?: number | null
+  ReturnPercentage?: number | null
 }
 
 export interface PrincipalPerformanceResponse {
@@ -195,8 +203,47 @@ export interface PrincipalPerformanceResponse {
   AchievementPercentage?: number | null
   TargetAchievementIsAvailable: boolean
   MissingTargetExceptionCount: number
+  GoodReturnAmountKpiId: string
+  BrokenReturnAmountKpiId: string
+  TotalReturnAmountKpiId: string
+  ReturnPercentageKpiId: string
+  GoodReturnAmount?: number | null
+  BrokenReturnAmount?: number | null
+  TotalReturnAmount?: number | null
+  ReturnPercentage?: number | null
+  ReturnIsAvailable: boolean
   Disclosures: string[]
   Ranking: PrincipalPerformanceRankingItem[]
+}
+
+export interface PrincipalReturnEvidenceItem {
+  ReturJualId: string
+  ReturJualCode: string
+  ReturJualDate: string
+  ReturJualItemId: string
+  BrgId: string
+  JenisRetur: string
+  SupplierId: string
+  KpiId: string
+  ReturnAmount: number
+}
+
+export interface PrincipalReturnEvidenceResponse {
+  IsAvailable: boolean
+  GoodReturnAmountKpiId: string
+  BrokenReturnAmountKpiId: string
+  TotalReturnAmountKpiId: string
+  ReturnPercentageKpiId: string
+  SupplierId: string
+  PrincipalName: string
+  PeriodYear: number
+  PeriodMonth: number
+  GoodReturnAmount: number
+  BrokenReturnAmount: number
+  TotalReturnAmount: number
+  ReturnPercentage?: number | null
+  Disclosures: string[]
+  Lines: PrincipalReturnEvidenceItem[]
 }
 
 export interface PrincipalSalesOutEvidenceItem {

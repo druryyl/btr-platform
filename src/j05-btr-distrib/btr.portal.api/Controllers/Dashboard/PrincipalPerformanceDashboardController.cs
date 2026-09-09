@@ -33,5 +33,15 @@ namespace btr.portal.api.Controllers.Dashboard
             });
             return Ok(ApiResponse<PrincipalSalesOutEvidenceResponse>.Success(result));
         }
+
+        [HttpGet, Route("return-evidence")]
+        public async Task<IHttpActionResult> GetReturnEvidence([FromUri] string supplierId = null)
+        {
+            var result = await _mediator.Send(new GetPrincipalReturnEvidenceQuery
+            {
+                SupplierId = supplierId
+            });
+            return Ok(ApiResponse<PrincipalReturnEvidenceResponse>.Success(result));
+        }
     }
 }

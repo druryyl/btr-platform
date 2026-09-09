@@ -371,9 +371,13 @@ Only a review agent may set `GO` or `NO-GO`.
 
 ### PCM-031
 
-- Status: PLANNED
-- Implementation History: none
-- Review History: none
+- Status: GO
+- Implementation History:
+  - 2026-09-10: IN IMPLEMENTATION
+  - 2026-09-10: IMPLEMENTED. SA04 reads stored `PRN-RET-001`, `PRN-RET-002`, `PRN-RET-003`, and `PRN-RET-004` for the matching period into a separate returns panel with Return Item drill-down. Displayed `PRN-SALES-001` ranking and totals are unchanged. Return Percentage is labeled as a quality ratio, not Net Sales.
+- Review History:
+  - 2026-09-10: IN REVIEW
+  - 2026-09-10: GO. SA04 returns panel reads stored return snapshots for the matching period only and leaves the `PRN-SALES-001` ranking and totals unchanged. Return Percentage is labeled as a quality ratio, not a deduction and not Net Sales. Return Item drill-down opens Return Item evidence at Return Item grain. `btr.application`, `btr.infrastructure`, and `btr.test` build via MSBuild. 71 ReportingContext Principal tests pass, including 4 new `PrincipalPerformanceQueryTest` returns tests. Portal.web `vite` builds. 252 frontend tests pass, including the new return-evidence route test.
 - Remediation History: none
 
 ### PCM-032

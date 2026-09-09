@@ -47,6 +47,24 @@ namespace btr.application.ReportingContext.PrincipalAnalyticsAgg.Queries
 
         public int MissingTargetExceptionCount { get; set; }
 
+        public string GoodReturnAmountKpiId { get; set; }
+
+        public string BrokenReturnAmountKpiId { get; set; }
+
+        public string TotalReturnAmountKpiId { get; set; }
+
+        public string ReturnPercentageKpiId { get; set; }
+
+        public decimal? GoodReturnAmount { get; set; }
+
+        public decimal? BrokenReturnAmount { get; set; }
+
+        public decimal? TotalReturnAmount { get; set; }
+
+        public decimal? ReturnPercentage { get; set; }
+
+        public bool ReturnIsAvailable { get; set; }
+
         public IList<string> Disclosures { get; set; }
             = new List<string>();
 
@@ -77,6 +95,22 @@ namespace btr.application.ReportingContext.PrincipalAnalyticsAgg.Queries
         public decimal? AchievementAmount { get; set; }
 
         public decimal? AchievementPercentage { get; set; }
+
+        public string GoodReturnAmountKpiId { get; set; }
+
+        public string BrokenReturnAmountKpiId { get; set; }
+
+        public string TotalReturnAmountKpiId { get; set; }
+
+        public string ReturnPercentageKpiId { get; set; }
+
+        public decimal? GoodReturnAmount { get; set; }
+
+        public decimal? BrokenReturnAmount { get; set; }
+
+        public decimal? TotalReturnAmount { get; set; }
+
+        public decimal? ReturnPercentage { get; set; }
     }
 
     public class GetPrincipalPerformanceHandler
@@ -85,15 +119,21 @@ namespace btr.application.ReportingContext.PrincipalAnalyticsAgg.Queries
         private readonly IPrincipalSalesOutSnapshotDal _snapshotDal;
         private readonly IPrincipalTargetSnapshotDal _targetSnapshotDal;
         private readonly IPrincipalAchievementSnapshotDal _achievementSnapshotDal;
+        private readonly IPrincipalReturnSnapshotDal _returnSnapshotDal;
+        private readonly IPrincipalReturnPercentageSnapshotDal _returnPercentageSnapshotDal;
 
         public GetPrincipalPerformanceHandler(
             IPrincipalSalesOutSnapshotDal snapshotDal,
             IPrincipalTargetSnapshotDal targetSnapshotDal,
-            IPrincipalAchievementSnapshotDal achievementSnapshotDal)
+            IPrincipalAchievementSnapshotDal achievementSnapshotDal,
+            IPrincipalReturnSnapshotDal returnSnapshotDal,
+            IPrincipalReturnPercentageSnapshotDal returnPercentageSnapshotDal)
         {
             _snapshotDal = snapshotDal;
             _targetSnapshotDal = targetSnapshotDal;
             _achievementSnapshotDal = achievementSnapshotDal;
+            _returnSnapshotDal = returnSnapshotDal;
+            _returnPercentageSnapshotDal = returnPercentageSnapshotDal;
         }
 
         public Task<PrincipalPerformanceResponse> Handle(
@@ -103,7 +143,9 @@ namespace btr.application.ReportingContext.PrincipalAnalyticsAgg.Queries
             return Task.FromResult(PrincipalPerformanceComposer.Compose(
                 _snapshotDal.GetCurrent(),
                 _targetSnapshotDal.GetCurrent(),
-                _achievementSnapshotDal.GetCurrent()));
+                _achievementSnapshotDal.GetCurrent(),
+                _returnSnapshotDal.GetCurrent(),
+                _returnPercentageSnapshotDal.GetCurrent()));
         }
     }
 
@@ -119,6 +161,16 @@ namespace btr.application.ReportingContext.PrincipalAnalyticsAgg.Queries
             PrincipalTargetAggregateResult target,
             PrincipalAchievementResult achievement)
         {
+            return Compose(snapshot, target, achievement, null, null);
+        }
+
+        public static PrincipalPerformanceResponse Compose(
+            PrincipalSalesOutAggregateResult snapshot,
+            PrincipalTargetAggregateResult target,
+            PrincipalAchievementResult achievement,
+            PrincipalReturnAggregateResult returns,
+            PrincipalReturnPercentageResult returnPercentage)
+        {
             var response = new PrincipalPerformanceResponse
             {
                 KpiId = PrincipalKpiCatalog.SalesOutId,
@@ -126,6 +178,10 @@ namespace btr.application.ReportingContext.PrincipalAnalyticsAgg.Queries
                 TargetKpiId = PrincipalKpiCatalog.TargetId,
                 AchievementAmountKpiId = PrincipalKpiCatalog.AchievementAmountId,
                 AchievementPercentageKpiId = PrincipalKpiCatalog.AchievementPercentageId,
+                GoodReturnAmountKpiId = PrincipalKpiCatalog.GoodReturnAmountId,
+                BrokenReturnAmountKpiId = PrincipalKpiCatalog.BrokenReturnAmountId,
+                TotalReturnAmountKpiId = PrincipalKpiCatalog.TotalReturnAmountId,
+                ReturnPercentageKpiId = PrincipalKpiCatalog.ReturnPercentageId,
                 Disclosures = PrincipalSalesOutDisclosure.Statements.ToList()
             };
 
@@ -156,7 +212,130 @@ namespace btr.application.ReportingContext.PrincipalAnalyticsAgg.Queries
             response.Ranking = ranking;
 
             AttachStoredTargetAndAchievement(response, snapshot, target, achievement);
+            AttachStoredReturns(response, snapshot, returns, returnPercentage);
             return response;
+        }
+
+        private static void AttachStoredReturns(
+            PrincipalPerformanceResponse response,
+            PrincipalSalesOutAggregateResult snapshot,
+            PrincipalReturnAggregateResult returns,
+            PrincipalReturnPercentageResult returnPercentage)
+        {
+            var returnsBySupplier = IndexMatchingReturns(returns, snapshot.PeriodYear, snapshot.PeriodMonth);
+            var percentagesBySupplier = IndexMatchingReturnPercentages(returnPercentage, snapshot.PeriodYear, snapshot.PeriodMonth);
+
+            if (returnsBySupplier.Count == 0 && percentagesBySupplier.Count == 0)
+                return;
+
+            response.ReturnIsAvailable = true;
+
+            if (returnsBySupplier.Count > 0)
+            {
+                response.GoodReturnAmount = returnsBySupplier.Values.Sum(row => row.GoodReturnAmount);
+                response.BrokenReturnAmount = returnsBySupplier.Values.Sum(row => row.BrokenReturnAmount);
+                response.TotalReturnAmount = returnsBySupplier.Values.Sum(row => row.TotalReturnAmount);
+            }
+
+            foreach (var item in response.Ranking)
+            {
+                if (string.IsNullOrWhiteSpace(item.SupplierId))
+                    continue;
+
+                var key = item.SupplierId.Trim();
+                if (returnsBySupplier.TryGetValue(key, out var returnRow))
+                {
+                    item.GoodReturnAmountKpiId = PrincipalKpiCatalog.GoodReturnAmountId;
+                    item.BrokenReturnAmountKpiId = PrincipalKpiCatalog.BrokenReturnAmountId;
+                    item.TotalReturnAmountKpiId = PrincipalKpiCatalog.TotalReturnAmountId;
+                    item.GoodReturnAmount = returnRow.GoodReturnAmount;
+                    item.BrokenReturnAmount = returnRow.BrokenReturnAmount;
+                    item.TotalReturnAmount = returnRow.TotalReturnAmount;
+                }
+
+                if (percentagesBySupplier.TryGetValue(key, out var percentageRow))
+                {
+                    item.ReturnPercentageKpiId = PrincipalKpiCatalog.ReturnPercentageId;
+                    item.ReturnPercentage = percentageRow.ReturnPercentage;
+                }
+            }
+
+            var totalPercentage = CalculateTotalReturnPercentage(response.TotalReturnAmount, response.PrincipalSalesOutAmount);
+            response.ReturnPercentage = totalPercentage;
+        }
+
+        private static Dictionary<string, PrincipalReturnRow> IndexMatchingReturns(
+            PrincipalReturnAggregateResult returns,
+            int periodYear,
+            int periodMonth)
+        {
+            var returnsBySupplier = new Dictionary<string, PrincipalReturnRow>(StringComparer.OrdinalIgnoreCase);
+            if (returns is null)
+                return returnsBySupplier;
+
+            if (!string.Equals(returns.TotalReturnKpiId, PrincipalKpiCatalog.TotalReturnAmountId, StringComparison.Ordinal))
+                return returnsBySupplier;
+
+            if (returns.PeriodYear != periodYear || returns.PeriodMonth != periodMonth)
+                return returnsBySupplier;
+
+            foreach (var row in returns.Principals ?? new List<PrincipalReturnRow>())
+            {
+                if (row is null)
+                    continue;
+
+                var supplierId = (row.SupplierId ?? string.Empty).Trim();
+                if (supplierId.Length == 0 || returnsBySupplier.ContainsKey(supplierId))
+                    continue;
+
+                returnsBySupplier[supplierId] = row;
+            }
+
+            return returnsBySupplier;
+        }
+
+        private static Dictionary<string, PrincipalReturnPercentageRow> IndexMatchingReturnPercentages(
+            PrincipalReturnPercentageResult returnPercentage,
+            int periodYear,
+            int periodMonth)
+        {
+            var percentagesBySupplier = new Dictionary<string, PrincipalReturnPercentageRow>(StringComparer.OrdinalIgnoreCase);
+            if (returnPercentage is null)
+                return percentagesBySupplier;
+
+            if (!string.Equals(returnPercentage.ReturnPercentageKpiId, PrincipalKpiCatalog.ReturnPercentageId, StringComparison.Ordinal))
+                return percentagesBySupplier;
+
+            if (returnPercentage.PeriodYear != periodYear || returnPercentage.PeriodMonth != periodMonth)
+                return percentagesBySupplier;
+
+            foreach (var row in returnPercentage.Principals ?? new List<PrincipalReturnPercentageRow>())
+            {
+                if (row is null)
+                    continue;
+
+                var supplierId = (row.SupplierId ?? string.Empty).Trim();
+                if (supplierId.Length == 0 || percentagesBySupplier.ContainsKey(supplierId))
+                    continue;
+
+                percentagesBySupplier[supplierId] = row;
+            }
+
+            return percentagesBySupplier;
+        }
+
+        private static decimal? CalculateTotalReturnPercentage(decimal? totalReturnAmount, decimal salesOutAmount)
+        {
+            if (!totalReturnAmount.HasValue)
+                return null;
+
+            if (salesOutAmount <= 0m)
+                return null;
+
+            return Math.Round(
+                totalReturnAmount.Value / salesOutAmount,
+                PrincipalReturnPercentageSnapshot.PercentageScale,
+                MidpointRounding.AwayFromZero);
         }
 
         private static void AttachStoredTargetAndAchievement(

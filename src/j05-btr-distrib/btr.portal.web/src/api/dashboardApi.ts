@@ -16,6 +16,7 @@ import type {
   DashboardPurchasingResponse,
   DashboardSalesResponse,
   PrincipalPerformanceResponse,
+  PrincipalReturnEvidenceResponse,
   PrincipalSalesOutEvidenceResponse,
   DashboardSalesForecastResponse,
   DashboardCashFlowForecastResponse,
@@ -68,6 +69,21 @@ export async function fetchPrincipalSalesOutEvidence(
 
   if (!isApiSuccess(data) || !data.Data) {
     throw new Error(data.Message ?? 'Failed to load Principal Sales-Out evidence.')
+  }
+
+  return data.Data
+}
+
+export async function fetchPrincipalReturnEvidence(
+  supplierId: string,
+): Promise<PrincipalReturnEvidenceResponse> {
+  const { data } = await httpClient.get<ApiResponse<PrincipalReturnEvidenceResponse>>(
+    '/api/dashboard/principal-performance/return-evidence',
+    { params: { supplierId } },
+  )
+
+  if (!isApiSuccess(data) || !data.Data) {
+    throw new Error(data.Message ?? 'Failed to load Principal return evidence.')
   }
 
   return data.Data
