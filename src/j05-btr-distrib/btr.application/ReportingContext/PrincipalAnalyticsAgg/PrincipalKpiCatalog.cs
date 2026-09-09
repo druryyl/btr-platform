@@ -5,7 +5,7 @@ using btr.application.ReportingContext.EntityAnalyticsAgg.Models;
 namespace btr.application.ReportingContext.PrincipalAnalyticsAgg
 {
     /// <summary>
-    /// Working Principal KPI catalog. PCM-002 registers PRN-SALES-001 and GR-001 only.
+    /// Working Principal KPI catalog. PCM-002 registers PRN-SALES-001 and GR-001.
     /// Other registry families are added by their writer slices. Permanent catalog sync is PCM-019.
     /// </summary>
     public static class PrincipalKpiCatalog
@@ -13,6 +13,8 @@ namespace btr.application.ReportingContext.PrincipalAnalyticsAgg
         public const string SalesOutId = "PRN-SALES-001";
 
         public const string TargetId = "PRN-TGT-001";
+
+        public const string PurchaseInId = "PRN-PUR-001";
 
         public const string ReturnsMustNotReduceReplaceOrRedefinePrincipalSalesOut =
             "Returns KPIs must not reduce, replace, or redefine PRN-SALES-001.";
@@ -33,8 +35,10 @@ namespace btr.application.ReportingContext.PrincipalAnalyticsAgg
 
         private static readonly PrincipalKpiCatalogEntry TargetEntry = CreateTarget();
 
+        private static readonly PrincipalKpiCatalogEntry PurchaseInEntry = CreatePurchaseIn();
+
         private static readonly IReadOnlyList<PrincipalKpiCatalogEntry> RegisteredEntries =
-            new[] { SalesOutEntry, TargetEntry };
+            new[] { SalesOutEntry, TargetEntry, PurchaseInEntry };
 
         public static IReadOnlyList<PrincipalKpiCatalogEntry> Entries
         {
@@ -140,6 +144,43 @@ namespace btr.application.ReportingContext.PrincipalAnalyticsAgg
                     "This KPI writer does not write PRN-SALES-001, PRN-TGT-002, PRN-TGT-003, or any return KPI.",
                     "PRN-TGT-001 is not Principal Sales-Out and is not an achievement KPI.",
                     "The user-facing name is Principal Target."
+                }
+            };
+        }
+
+        private static PrincipalKpiCatalogEntry CreatePurchaseIn()
+        {
+            return new PrincipalKpiCatalogEntry
+            {
+                KpiId = PurchaseInId,
+                Name = "Purchase-In",
+                Description = "Total purchases from the Principal",
+                EntityCategory = EntityTypeCode.Supplier,
+                EvidenceGrain = "Purchase Detail",
+                Formula = "SUM(InvoiceItem.Total)",
+                IsAuthoritativePrincipalPerformanceKpi = false,
+                IsAuthoritativeRankingKpi = false,
+                DeductsReturns = false,
+                DeductsClaims = false,
+                DeductsInventoryAdjustments = false,
+                DefinitionStatements = new[]
+                {
+                    "PRN-PUR-001 Purchase-In = SUM(InvoiceItem.Total) for non-void purchase invoices attributed by Invoice.SupplierId.",
+                    "Evidence grain is Purchase Detail.",
+                    "Purchase-In remains independent from Sales-Out.",
+                    "Purchase-In is not used as the Principal ranking KPI.",
+                    "PRN-PUR-001 is not a Principal performance ranking KPI.",
+                    "The value is calculated from Purchase Detail. It is not read from Sales-Out history and is not the Purchasing Management in-memory SalesOutAmount.",
+                    "Do not use Invoice.GrandTotal. That header amount remains the existing PU-KPI-001 purchasing measure.",
+                    "Existing PU-KPI-001 remains unchanged for its current purchasing use.",
+                    "Header invoice discounts, tax, and other header adjustments are not allocated to Principals.",
+                    "Attribute each Purchase Detail line through Invoice.SupplierId. Do not attribute Purchase-In through item-master SupplierId.",
+                    "Include only non-void purchase invoices (Invoice.VoidDate = '3000-01-01', matching existing purchase evidence).",
+                    "InvoiceItem.Total is the existing Purchase Detail line total (SubTotal - DiscRp + PpnRp).",
+                    "Purchase returns are not deducted. Purchase Detail is the evidence grain.",
+                    "This KPI writer does not write, overwrite, or recalculate PRN-SALES-001.",
+                    "This KPI is not composed onto Entity Analytics in the writer slice. Entity Analytics purchase pack composition is a later slice.",
+                    "The user-facing name is Purchase-In, not Principal Sales-Out and not Principal Omzet."
                 }
             };
         }

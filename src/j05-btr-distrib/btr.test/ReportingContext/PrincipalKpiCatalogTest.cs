@@ -110,6 +110,37 @@ namespace btr.test.ReportingContext
         }
 
         [Fact]
+        public void Catalog_RegistersPurchaseInOnlyForThisFamily()
+        {
+            PrincipalKpiCatalog.TryGet(PrincipalKpiCatalog.PurchaseInId, out var entry).Should().BeTrue();
+            entry.KpiId.Should().Be("PRN-PUR-001");
+            entry.Name.Should().Be("Purchase-In");
+            entry.Description.Should().Be("Total purchases from the Principal");
+            entry.EvidenceGrain.Should().Be("Purchase Detail");
+            entry.Formula.Should().Be("SUM(InvoiceItem.Total)");
+            entry.EntityCategory.Should().Be(EntityTypeCode.Supplier);
+            entry.IsAuthoritativePrincipalPerformanceKpi.Should().BeFalse();
+            entry.IsAuthoritativeRankingKpi.Should().BeFalse();
+            entry.DeductsReturns.Should().BeFalse();
+            entry.DeductsClaims.Should().BeFalse();
+            entry.DeductsInventoryAdjustments.Should().BeFalse();
+            entry.DefinitionStatements.Should().Contain(
+                "Purchase-In remains independent from Sales-Out.");
+            entry.DefinitionStatements.Should().Contain(
+                "Purchase-In is not used as the Principal ranking KPI.");
+            entry.DefinitionStatements.Should().Contain(
+                "The value is calculated from Purchase Detail. It is not read from Sales-Out history and is not the Purchasing Management in-memory SalesOutAmount.");
+            entry.DefinitionStatements.Should().Contain(
+                "Existing PU-KPI-001 remains unchanged for its current purchasing use.");
+            entry.DefinitionStatements.Should().Contain(
+                "This KPI writer does not write, overwrite, or recalculate PRN-SALES-001.");
+            entry.DefinitionStatements.Should().Contain(
+                "This KPI is not composed onto Entity Analytics in the writer slice. Entity Analytics purchase pack composition is a later slice.");
+
+            PrincipalKpiCatalog.TryGet("PRN-PUR-002", out _).Should().BeFalse();
+        }
+
+        [Fact]
         public void Catalog_DoesNotRegisterOtherPrincipalFamiliesOrWithdrawnIds()
         {
             var ids = PrincipalKpiCatalog.Entries.Select(entry => entry.KpiId).ToList();
@@ -117,11 +148,12 @@ namespace btr.test.ReportingContext
 
             ids.Should().Contain("PRN-SALES-001");
             ids.Should().Contain("PRN-TGT-001");
-            ids.Should().OnlyContain(id => id == "PRN-SALES-001" || id == "PRN-TGT-001");
+            ids.Should().Contain("PRN-PUR-001");
+            ids.Should().OnlyContain(id => id == "PRN-SALES-001" || id == "PRN-TGT-001" || id == "PRN-PUR-001");
             ids.Should().NotContain(id => id.StartsWith("PRN-RET-"));
             ids.Should().NotContain("PRN-TGT-002");
             ids.Should().NotContain("PRN-TGT-003");
-            ids.Should().NotContain(id => id.StartsWith("PRN-PUR-"));
+            ids.Should().NotContain(id => id.StartsWith("PRN-PUR-") && id != "PRN-PUR-001");
             ids.Should().NotContain(id => id.StartsWith("PRN-INV-"));
             ids.Should().NotContain(id => id.StartsWith("PRN-CUS-"));
             ids.Should().NotContain(id => id.StartsWith("PRN-GRW-"));

@@ -23,6 +23,7 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.UseCases
         private readonly IRefreshPrincipalTargetSnapshotWorker _principalTargetWorker;
         private readonly IRefreshCustomerPrincipalRelationshipWorker _customerPrincipalRelationshipWorker;
         private readonly IRefreshDashboardPurchasingSnapshotWorker _purchasingWorker;
+        private readonly IRefreshPrincipalPurchaseInSnapshotWorker _principalPurchaseInWorker;
         private readonly IRefreshDashboardPurchasingManagementSnapshotWorker _purchasingManagementWorker;
         private readonly IRefreshDashboardCustomerSnapshotWorker _customerWorker;
         private readonly IRefreshDashboardSalesmanSnapshotWorker _salesmanWorker;
@@ -40,6 +41,7 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.UseCases
             IRefreshPrincipalTargetSnapshotWorker principalTargetWorker,
             IRefreshCustomerPrincipalRelationshipWorker customerPrincipalRelationshipWorker,
             IRefreshDashboardPurchasingSnapshotWorker purchasingWorker,
+            IRefreshPrincipalPurchaseInSnapshotWorker principalPurchaseInWorker,
             IRefreshDashboardPurchasingManagementSnapshotWorker purchasingManagementWorker,
             IRefreshDashboardCustomerSnapshotWorker customerWorker,
             IRefreshDashboardSalesmanSnapshotWorker salesmanWorker,
@@ -56,6 +58,7 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.UseCases
             _principalTargetWorker = principalTargetWorker;
             _customerPrincipalRelationshipWorker = customerPrincipalRelationshipWorker;
             _purchasingWorker = purchasingWorker;
+            _principalPurchaseInWorker = principalPurchaseInWorker;
             _purchasingManagementWorker = purchasingManagementWorker;
             _customerWorker = customerWorker;
             _salesmanWorker = salesmanWorker;
@@ -195,6 +198,20 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.UseCases
                     };
                     _purchasingWorker.Execute(purchasingRequest);
                     return purchasingRequest.Result;
+                },
+                domainResults,
+                failures);
+
+            RunDomain(
+                PrincipalPurchaseInSnapshot.Domain,
+                () =>
+                {
+                    var principalPurchaseInRequest = new RefreshPrincipalPurchaseInSnapshotRequest
+                    {
+                        TriggeredBy = triggeredBy
+                    };
+                    _principalPurchaseInWorker.Execute(principalPurchaseInRequest);
+                    return principalPurchaseInRequest.Result;
                 },
                 domainResults,
                 failures);

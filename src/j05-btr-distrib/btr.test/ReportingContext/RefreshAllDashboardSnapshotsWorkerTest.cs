@@ -23,6 +23,7 @@ namespace btr.test.ReportingContext
             var principalTargetWorker = new StubPrincipalTargetWorker();
             var customerPrincipalRelationshipWorker = new StubCustomerPrincipalRelationshipWorker();
             var purchasingWorker = new StubPurchasingWorker();
+            var principalPurchaseInWorker = new StubPrincipalPurchaseInWorker();
             var purchasingManagementWorker = new StubPurchasingManagementWorker();
             var customerWorker = new StubCustomerWorker();
             var salesmanWorker = new StubSalesmanWorker();
@@ -39,6 +40,7 @@ namespace btr.test.ReportingContext
                 principalTargetWorker,
                 customerPrincipalRelationshipWorker,
                 purchasingWorker,
+                principalPurchaseInWorker,
                 purchasingManagementWorker,
                 customerWorker,
                 salesmanWorker,
@@ -62,6 +64,7 @@ namespace btr.test.ReportingContext
             principalTargetWorker.WasCalled.Should().BeTrue();
             customerPrincipalRelationshipWorker.WasCalled.Should().BeTrue();
             purchasingWorker.WasCalled.Should().BeTrue();
+            principalPurchaseInWorker.WasCalled.Should().BeTrue();
             purchasingManagementWorker.WasCalled.Should().BeTrue();
             customerWorker.WasCalled.Should().BeTrue();
             salesmanWorker.WasCalled.Should().BeTrue();
@@ -76,13 +79,14 @@ namespace btr.test.ReportingContext
             principalSalesOutHistoryWorker.CallOrder.Should().BeLessThan(principalTargetWorker.CallOrder);
             principalTargetWorker.CallOrder.Should().BeLessThan(customerPrincipalRelationshipWorker.CallOrder);
             customerPrincipalRelationshipWorker.CallOrder.Should().BeLessThan(purchasingWorker.CallOrder);
-            purchasingWorker.CallOrder.Should().BeLessThan(purchasingManagementWorker.CallOrder);
+            purchasingWorker.CallOrder.Should().BeLessThan(principalPurchaseInWorker.CallOrder);
+            principalPurchaseInWorker.CallOrder.Should().BeLessThan(purchasingManagementWorker.CallOrder);
             purchasingManagementWorker.CallOrder.Should().BeLessThan(customerWorker.CallOrder);
             customerWorker.CallOrder.Should().BeLessThan(salesmanWorker.CallOrder);
             salesmanWorker.CallOrder.Should().BeLessThan(collectionWorker.CallOrder);
             collectionWorker.CallOrder.Should().BeLessThan(fieldActivityWorker.CallOrder);
             fieldActivityWorker.CallOrder.Should().BeLessThan(locationWorker.CallOrder);
-            request.Result.Domains.Should().HaveCount(15);
+            request.Result.Domains.Should().HaveCount(16);
             request.Result.Domains[0].Domain.Should().Be("Piutang");
             request.Result.Domains[1].Domain.Should().Be("Inventory");
             request.Result.Domains[2].Domain.Should().Be("InventoryRisk");
@@ -92,12 +96,13 @@ namespace btr.test.ReportingContext
             request.Result.Domains[6].Domain.Should().Be("PrincipalTarget");
             request.Result.Domains[7].Domain.Should().Be("PrnCusRelationship");
             request.Result.Domains[8].Domain.Should().Be("Purchasing");
-            request.Result.Domains[9].Domain.Should().Be("PurchasingManagement");
-            request.Result.Domains[10].Domain.Should().Be("Customer");
-            request.Result.Domains[11].Domain.Should().Be("Salesman");
-            request.Result.Domains[12].Domain.Should().Be("Collection");
-            request.Result.Domains[13].Domain.Should().Be("FieldActivity");
-            request.Result.Domains[14].Domain.Should().Be("Location");
+            request.Result.Domains[9].Domain.Should().Be("PrincipalPurchaseIn");
+            request.Result.Domains[10].Domain.Should().Be("PurchasingManagement");
+            request.Result.Domains[11].Domain.Should().Be("Customer");
+            request.Result.Domains[12].Domain.Should().Be("Salesman");
+            request.Result.Domains[13].Domain.Should().Be("Collection");
+            request.Result.Domains[14].Domain.Should().Be("FieldActivity");
+            request.Result.Domains[15].Domain.Should().Be("Location");
         }
 
         [Fact]
@@ -113,6 +118,7 @@ namespace btr.test.ReportingContext
                 new StubPrincipalTargetWorker(),
                 new StubCustomerPrincipalRelationshipWorker(),
                 new StubPurchasingWorker(),
+                new StubPrincipalPurchaseInWorker(),
                 new StubPurchasingManagementWorker(),
                 new StubCustomerWorker(),
                 new StubSalesmanWorker(),
@@ -238,6 +244,24 @@ namespace btr.test.ReportingContext
                 {
                     RefreshLogId = StubRefreshLogId,
                     DurationMs = 380
+                };
+            }
+        }
+
+        private sealed class StubPrincipalPurchaseInWorker : IRefreshPrincipalPurchaseInSnapshotWorker
+        {
+            public bool WasCalled { get; private set; }
+
+            public int CallOrder { get; private set; }
+
+            public void Execute(RefreshPrincipalPurchaseInSnapshotRequest request)
+            {
+                WasCalled = true;
+                CallOrder = ++_callSequence;
+                request.Result = new RefreshPrincipalPurchaseInSnapshotResult
+                {
+                    RefreshLogId = StubRefreshLogId,
+                    DurationMs = 375
                 };
             }
         }

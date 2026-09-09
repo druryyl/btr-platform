@@ -257,9 +257,13 @@ Only a review agent may set `GO` or `NO-GO`.
 
 ### PCM-020
 
-- Status: PLANNED
-- Implementation History: none
-- Review History: none
+- Status: GO
+- Implementation History:
+  - 2026-09-09: IN IMPLEMENTATION
+  - 2026-09-09: IMPLEMENTED. Persisted `PRN-PUR-001` Purchase-In from Purchase Detail (`BTR_InvoiceItem.Total` attributed by `Invoice.SupplierId`) into a Purchasing-owned current snapshot. Catalog entry added. The writer does not write `PRN-SALES-001`, does not read Sales-Out history or Purchasing Management `SalesOutAmount`, leaves `PU-KPI-001` unchanged, and does not add an Entity Analytics purchase pack.
+- Review History:
+  - 2026-09-09: IN REVIEW
+  - 2026-09-09: GO. `PRN-PUR-001` is stored from Purchase Detail and registered as Purchase-In. The writer does not write `PRN-SALES-001`, does not read Sales-Out history or Purchasing Management `SalesOutAmount`, leaves `PU-KPI-001` unchanged, and does not add an Entity Analytics purchase pack.
 - Remediation History: none
 
 ### PCM-021

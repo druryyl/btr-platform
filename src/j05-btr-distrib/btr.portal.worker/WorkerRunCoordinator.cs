@@ -272,6 +272,16 @@ namespace btr.portal.worker
                     });
                     break;
 
+                case "PRINCIPALPURCHASEIN":
+                    RunDomain(serviceProvider, PrincipalPurchaseInSnapshot.Domain, triggeredBy, sp =>
+                    {
+                        var worker = sp.GetRequiredService<IRefreshPrincipalPurchaseInSnapshotWorker>();
+                        var request = new RefreshPrincipalPurchaseInSnapshotRequest { TriggeredBy = triggeredBy };
+                        worker.Execute(request);
+                        return request.Result?.DurationMs ?? 0;
+                    });
+                    break;
+
                 case "PURCHASINGMANAGEMENT":
                     RunDomain(serviceProvider, "PurchasingManagement", triggeredBy, sp =>
                     {
@@ -476,6 +486,7 @@ namespace btr.portal.worker
             var validDomains = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
             {
                 "All", "Sales", "Piutang", "Inventory", "InventoryRisk", "Purchasing",
+                PrincipalPurchaseInSnapshot.Domain,
                 "PurchasingManagement", "Customer", "Salesman", "Collection", "FieldActivity", "Location",
                 "EntityAnalyticsHistoricalBackfill", CustomerPrincipalRelationship.Domain
             };
@@ -487,7 +498,7 @@ namespace btr.portal.worker
 
             if (!validDomains.Contains(domain))
                 throw new ArgumentException(
-                    $"Invalid --domain '{domain}'. Expected All, Sales, Piutang, Inventory, InventoryRisk, Purchasing, PurchasingManagement, Customer, Salesman, Collection, FieldActivity, Location, EntityAnalyticsHistoricalBackfill, or PrnCusRelationship.");
+                    $"Invalid --domain '{domain}'. Expected All, Sales, Piutang, Inventory, InventoryRisk, Purchasing, PrincipalPurchaseIn, PurchasingManagement, Customer, Salesman, Collection, FieldActivity, Location, EntityAnalyticsHistoricalBackfill, or PrnCusRelationship.");
 
             if (!validTriggers.Contains(triggeredBy))
                 throw new ArgumentException(

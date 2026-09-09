@@ -191,6 +191,8 @@
     <Build Include="Tables\ReportingContext\BTRPD_InventoryOptimizationPriorityDist.sql" />
     <Build Include="Tables\ReportingContext\BTRPD_InventoryOptimizationActionHeat.sql" />
     <Build Include="Tables\ReportingContext\BTRPD_SalesTopSalesman.sql" />
+    <Build Include="Tables\ReportingContext\BTRPD_PrincipalPurchaseInKpi.sql" />
+    <Build Include="Tables\ReportingContext\BTRPD_PrincipalPurchaseIn.sql" />
     <Build Include="Tables\ReportingContext\BTRPD_PurchasingKpi.sql" />
     <Build Include="Tables\ReportingContext\BTRPD_PurchasingWeekTrend.sql" />
     <Build Include="Tables\ReportingContext\BTRPD_PurchasingPostingStatus.sql" />
@@ -254,6 +256,7 @@
     <None Include="Scripts\Upgrade_M29_CustomerRiskForecast.sql" />
     <None Include="Scripts\Upgrade_M18_SalesmenPerformance_V2.sql" />
     <None Include="Scripts\Upgrade_PCM037_Cu01LastInvoicingSalesman.sql" />
+    <None Include="Scripts\Upgrade_PCM020_PrincipalPurchaseIn.sql" />
     <None Include="Scripts\Create_BTR_SalesPersonSupplier.sql" />
     <None Include="Scripts\Create_BTR_SalesPersonPrincipalTarget.sql" />
   </ItemGroup>
