@@ -334,9 +334,13 @@ Only a review agent may set `GO` or `NO-GO`.
 
 ### PCM-028
 
-- Status: PLANNED
-- Implementation History: none
-- Review History: none
+- Status: GO
+- Implementation History:
+  - 2026-09-09: IN IMPLEMENTATION
+  - 2026-09-09: IMPLEMENTED. Persisted `PRN-TGT-002` Achievement Amount (`PRN-SALES-001 − PRN-TGT-001` when target > 0 and sales present, otherwise null) and `PRN-TGT-003` Achievement Percentage (`PRN-SALES-001 ÷ PRN-TGT-001` when target > 0, otherwise null) from stored Sales-Out and stored Principal Target. Catalog registers `PRN-TGT-002` and `PRN-TGT-003` as versus-target, not a copy of Sales-Out, not Net Sales. The writer does not write, overwrite, or recalculate `PRN-SALES-001` or `PRN-TGT-001` and writes no return KPI.
+- Review History:
+  - 2026-09-09: IN REVIEW
+  - 2026-09-09: GO. Achievement snapshot stores `PRN-TGT-002` and `PRN-TGT-003` from stored `PRN-SALES-001` and `PRN-TGT-001` without writing either source. `PRN-TGT-003` is null when `PRN-TGT-001` is not greater than zero. Achievement is not labeled Net Sales. `btr.application`, `btr.infrastructure`, and `btr.test` build. 32 targeted tests pass, including 5 new `PrincipalAchievementComposerTest` tests covering versus-target composition, null rules, cross-period isolation, and source-row protection.
 - Remediation History: none
 
 ### PCM-029

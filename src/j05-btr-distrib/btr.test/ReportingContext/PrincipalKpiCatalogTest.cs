@@ -82,7 +82,7 @@ namespace btr.test.ReportingContext
         }
 
         [Fact]
-        public void Catalog_RegistersPrincipalTargetOnlyForThisFamily()
+        public void Catalog_RegistersPrincipalTargetAchievementFamily()
         {
             PrincipalKpiCatalog.TryGet(PrincipalKpiCatalog.TargetId, out var entry).Should().BeTrue();
             entry.KpiId.Should().Be("PRN-TGT-001");
@@ -105,8 +105,46 @@ namespace btr.test.ReportingContext
             entry.DefinitionStatements.Should().Contain(
                 "This KPI writer does not write PRN-SALES-001, PRN-TGT-002, PRN-TGT-003, or any return KPI.");
 
-            PrincipalKpiCatalog.TryGet("PRN-TGT-002", out _).Should().BeFalse();
-            PrincipalKpiCatalog.TryGet("PRN-TGT-003", out _).Should().BeFalse();
+            PrincipalKpiCatalog.TryGet(PrincipalKpiCatalog.AchievementAmountId, out var amount).Should().BeTrue();
+            amount.KpiId.Should().Be("PRN-TGT-002");
+            amount.Name.Should().Be("Achievement Amount");
+            amount.Description.Should().Be("Principal Sales-Out versus Target");
+            amount.EvidenceGrain.Should().Be("PRN-SALES-001 and PRN-TGT-001");
+            amount.IsAuthoritativePrincipalPerformanceKpi.Should().BeFalse();
+            amount.IsAuthoritativeRankingKpi.Should().BeFalse();
+            amount.DeductsReturns.Should().BeFalse();
+            amount.DeductsClaims.Should().BeFalse();
+            amount.DeductsInventoryAdjustments.Should().BeFalse();
+            amount.DefinitionStatements.Should().Contain(
+                "PRN-TGT-002 Achievement Amount presents stored PRN-SALES-001 versus stored PRN-TGT-001.");
+            amount.DefinitionStatements.Should().Contain(
+                "PRN-TGT-002 is not a copy of Sales-Out.");
+            amount.DefinitionStatements.Should().Contain(
+                "The writer does not write, overwrite, or recalculate PRN-SALES-001.");
+            amount.DefinitionStatements.Should().Contain(
+                "The writer does not write, overwrite, or recalculate PRN-TGT-001.");
+            amount.DefinitionStatements.Should().Contain(
+                "Achievement is not labeled Net Sales.");
+            amount.Name.Should().NotBe("Net Sales");
+
+            PrincipalKpiCatalog.TryGet(PrincipalKpiCatalog.AchievementPercentageId, out var percentage).Should().BeTrue();
+            percentage.KpiId.Should().Be("PRN-TGT-003");
+            percentage.Name.Should().Be("Achievement Percentage");
+            percentage.Description.Should().Be("Principal Sales-Out ÷ Principal Target");
+            percentage.EvidenceGrain.Should().Be("PRN-SALES-001 and PRN-TGT-001");
+            percentage.Formula.Should().Be("PRN-SALES-001 ÷ PRN-TGT-001 when PRN-TGT-001 > 0; otherwise null");
+            percentage.IsAuthoritativePrincipalPerformanceKpi.Should().BeFalse();
+            percentage.IsAuthoritativeRankingKpi.Should().BeFalse();
+            percentage.DeductsReturns.Should().BeFalse();
+            percentage.DefinitionStatements.Should().Contain(
+                "PRN-TGT-003 is null when PRN-TGT-001 is not greater than zero.");
+            percentage.DefinitionStatements.Should().Contain(
+                "The writer does not write, overwrite, or recalculate PRN-SALES-001.");
+            percentage.DefinitionStatements.Should().Contain(
+                "The writer does not write, overwrite, or recalculate PRN-TGT-001.");
+            percentage.DefinitionStatements.Should().Contain(
+                "Achievement is not labeled Net Sales.");
+            percentage.Name.Should().NotBe("Net Sales");
         }
 
         [Fact]
@@ -256,6 +294,8 @@ namespace btr.test.ReportingContext
 
             ids.Should().Contain("PRN-SALES-001");
             ids.Should().Contain("PRN-TGT-001");
+            ids.Should().Contain("PRN-TGT-002");
+            ids.Should().Contain("PRN-TGT-003");
             ids.Should().Contain("PRN-PUR-001");
             ids.Should().Contain("PRN-INV-001");
             ids.Should().Contain("PRN-INV-002");
@@ -266,6 +306,8 @@ namespace btr.test.ReportingContext
             ids.Should().OnlyContain(id =>
                 id == "PRN-SALES-001" ||
                 id == "PRN-TGT-001" ||
+                id == "PRN-TGT-002" ||
+                id == "PRN-TGT-003" ||
                 id == "PRN-PUR-001" ||
                 id == "PRN-INV-001" ||
                 id == "PRN-INV-002" ||
@@ -274,8 +316,7 @@ namespace btr.test.ReportingContext
                 id == "PRN-RET-003" ||
                 id == "PRN-RET-004");
             ids.Should().NotContain(id => id.StartsWith("PRN-RET-") && id != "PRN-RET-001" && id != "PRN-RET-002" && id != "PRN-RET-003" && id != "PRN-RET-004");
-            ids.Should().NotContain("PRN-TGT-002");
-            ids.Should().NotContain("PRN-TGT-003");
+            ids.Should().NotContain(id => id.StartsWith("PRN-TGT-") && id != "PRN-TGT-001" && id != "PRN-TGT-002" && id != "PRN-TGT-003");
             ids.Should().NotContain(id => id.StartsWith("PRN-PUR-") && id != "PRN-PUR-001");
             ids.Should().NotContain(id => id.StartsWith("PRN-INV-") && id != "PRN-INV-001" && id != "PRN-INV-002");
             ids.Should().NotContain(id => id.StartsWith("PRN-CUS-"));

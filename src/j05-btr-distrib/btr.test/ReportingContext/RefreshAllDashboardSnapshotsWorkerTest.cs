@@ -25,6 +25,7 @@ namespace btr.test.ReportingContext
             var principalSalesOutHistoryWorker = new StubPrincipalSalesOutHistoryWorker();
             var principalReturnHistoryWorker = new StubPrincipalReturnHistoryWorker();
             var principalTargetWorker = new StubPrincipalTargetWorker();
+            var principalAchievementWorker = new StubPrincipalAchievementWorker();
             var customerPrincipalRelationshipWorker = new StubCustomerPrincipalRelationshipWorker();
             var purchasingWorker = new StubPurchasingWorker();
             var principalPurchaseInWorker = new StubPrincipalPurchaseInWorker();
@@ -46,6 +47,7 @@ namespace btr.test.ReportingContext
                 principalSalesOutHistoryWorker,
                 principalReturnHistoryWorker,
                 principalTargetWorker,
+                principalAchievementWorker,
                 customerPrincipalRelationshipWorker,
                 purchasingWorker,
                 principalPurchaseInWorker,
@@ -74,6 +76,7 @@ namespace btr.test.ReportingContext
             principalSalesOutHistoryWorker.WasCalled.Should().BeTrue();
             principalReturnHistoryWorker.WasCalled.Should().BeTrue();
             principalTargetWorker.WasCalled.Should().BeTrue();
+            principalAchievementWorker.WasCalled.Should().BeTrue();
             customerPrincipalRelationshipWorker.WasCalled.Should().BeTrue();
             purchasingWorker.WasCalled.Should().BeTrue();
             principalPurchaseInWorker.WasCalled.Should().BeTrue();
@@ -93,7 +96,8 @@ namespace btr.test.ReportingContext
             principalReturnPercentageWorker.CallOrder.Should().BeLessThan(principalSalesOutHistoryWorker.CallOrder);
             principalSalesOutHistoryWorker.CallOrder.Should().BeLessThan(principalReturnHistoryWorker.CallOrder);
             principalReturnHistoryWorker.CallOrder.Should().BeLessThan(principalTargetWorker.CallOrder);
-            principalTargetWorker.CallOrder.Should().BeLessThan(customerPrincipalRelationshipWorker.CallOrder);
+            principalTargetWorker.CallOrder.Should().BeLessThan(principalAchievementWorker.CallOrder);
+            principalAchievementWorker.CallOrder.Should().BeLessThan(customerPrincipalRelationshipWorker.CallOrder);
             customerPrincipalRelationshipWorker.CallOrder.Should().BeLessThan(purchasingWorker.CallOrder);
             purchasingWorker.CallOrder.Should().BeLessThan(principalPurchaseInWorker.CallOrder);
             principalPurchaseInWorker.CallOrder.Should().BeLessThan(purchasingManagementWorker.CallOrder);
@@ -102,7 +106,7 @@ namespace btr.test.ReportingContext
             salesmanWorker.CallOrder.Should().BeLessThan(collectionWorker.CallOrder);
             collectionWorker.CallOrder.Should().BeLessThan(fieldActivityWorker.CallOrder);
             fieldActivityWorker.CallOrder.Should().BeLessThan(locationWorker.CallOrder);
-            request.Result.Domains.Should().HaveCount(20);
+            request.Result.Domains.Should().HaveCount(21);
             request.Result.Domains[0].Domain.Should().Be("Piutang");
             request.Result.Domains[1].Domain.Should().Be("Inventory");
             request.Result.Domains[2].Domain.Should().Be("InventoryRisk");
@@ -114,15 +118,16 @@ namespace btr.test.ReportingContext
             request.Result.Domains[8].Domain.Should().Be("PrnSalesOutHistory");
             request.Result.Domains[9].Domain.Should().Be("PrnReturnHistory");
             request.Result.Domains[10].Domain.Should().Be("PrincipalTarget");
-            request.Result.Domains[11].Domain.Should().Be("PrnCusRelationship");
-            request.Result.Domains[12].Domain.Should().Be("Purchasing");
-            request.Result.Domains[13].Domain.Should().Be("PrincipalPurchaseIn");
-            request.Result.Domains[14].Domain.Should().Be("PurchasingManagement");
-            request.Result.Domains[15].Domain.Should().Be("Customer");
-            request.Result.Domains[16].Domain.Should().Be("Salesman");
-            request.Result.Domains[17].Domain.Should().Be("Collection");
-            request.Result.Domains[18].Domain.Should().Be("FieldActivity");
-            request.Result.Domains[19].Domain.Should().Be("Location");
+            request.Result.Domains[11].Domain.Should().Be("PrnAchievement");
+            request.Result.Domains[12].Domain.Should().Be("PrnCusRelationship");
+            request.Result.Domains[13].Domain.Should().Be("Purchasing");
+            request.Result.Domains[14].Domain.Should().Be("PrincipalPurchaseIn");
+            request.Result.Domains[15].Domain.Should().Be("PurchasingManagement");
+            request.Result.Domains[16].Domain.Should().Be("Customer");
+            request.Result.Domains[17].Domain.Should().Be("Salesman");
+            request.Result.Domains[18].Domain.Should().Be("Collection");
+            request.Result.Domains[19].Domain.Should().Be("FieldActivity");
+            request.Result.Domains[20].Domain.Should().Be("Location");
         }
 
         [Fact]
@@ -140,6 +145,7 @@ namespace btr.test.ReportingContext
                 new StubPrincipalSalesOutHistoryWorker(),
                 new StubPrincipalReturnHistoryWorker(),
                 new StubPrincipalTargetWorker(),
+                new StubPrincipalAchievementWorker(),
                 new StubCustomerPrincipalRelationshipWorker(),
                 new StubPurchasingWorker(),
                 new StubPrincipalPurchaseInWorker(),
@@ -376,6 +382,24 @@ namespace btr.test.ReportingContext
                 {
                     RefreshLogId = StubRefreshLogId,
                     DurationMs = 365
+                };
+            }
+        }
+
+        private sealed class StubPrincipalAchievementWorker : IRefreshPrincipalAchievementSnapshotWorker
+        {
+            public bool WasCalled { get; private set; }
+
+            public int CallOrder { get; private set; }
+
+            public void Execute(RefreshPrincipalAchievementSnapshotRequest request)
+            {
+                WasCalled = true;
+                CallOrder = ++_callSequence;
+                request.Result = new RefreshPrincipalAchievementSnapshotResult
+                {
+                    RefreshLogId = StubRefreshLogId,
+                    DurationMs = 372
                 };
             }
         }

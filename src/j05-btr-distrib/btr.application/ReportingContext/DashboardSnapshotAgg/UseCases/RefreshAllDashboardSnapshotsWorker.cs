@@ -25,6 +25,7 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.UseCases
         private readonly IRefreshPrincipalSalesOutHistoryWorker _principalSalesOutHistoryWorker;
         private readonly IRefreshPrincipalReturnHistoryWorker _principalReturnHistoryWorker;
         private readonly IRefreshPrincipalTargetSnapshotWorker _principalTargetWorker;
+        private readonly IRefreshPrincipalAchievementSnapshotWorker _principalAchievementWorker;
         private readonly IRefreshCustomerPrincipalRelationshipWorker _customerPrincipalRelationshipWorker;
         private readonly IRefreshDashboardPurchasingSnapshotWorker _purchasingWorker;
         private readonly IRefreshPrincipalPurchaseInSnapshotWorker _principalPurchaseInWorker;
@@ -47,6 +48,7 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.UseCases
             IRefreshPrincipalSalesOutHistoryWorker principalSalesOutHistoryWorker,
             IRefreshPrincipalReturnHistoryWorker principalReturnHistoryWorker,
             IRefreshPrincipalTargetSnapshotWorker principalTargetWorker,
+            IRefreshPrincipalAchievementSnapshotWorker principalAchievementWorker,
             IRefreshCustomerPrincipalRelationshipWorker customerPrincipalRelationshipWorker,
             IRefreshDashboardPurchasingSnapshotWorker purchasingWorker,
             IRefreshPrincipalPurchaseInSnapshotWorker principalPurchaseInWorker,
@@ -68,6 +70,7 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.UseCases
             _principalSalesOutHistoryWorker = principalSalesOutHistoryWorker;
             _principalReturnHistoryWorker = principalReturnHistoryWorker;
             _principalTargetWorker = principalTargetWorker;
+            _principalAchievementWorker = principalAchievementWorker;
             _customerPrincipalRelationshipWorker = customerPrincipalRelationshipWorker;
             _purchasingWorker = purchasingWorker;
             _principalPurchaseInWorker = principalPurchaseInWorker;
@@ -238,6 +241,20 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.UseCases
                     };
                     _principalTargetWorker.Execute(principalTargetRequest);
                     return principalTargetRequest.Result;
+                },
+                domainResults,
+                failures);
+
+            RunDomain(
+                PrincipalAchievementSnapshot.Domain,
+                () =>
+                {
+                    var principalAchievementRequest = new RefreshPrincipalAchievementSnapshotRequest
+                    {
+                        TriggeredBy = triggeredBy
+                    };
+                    _principalAchievementWorker.Execute(principalAchievementRequest);
+                    return principalAchievementRequest.Result;
                 },
                 domainResults,
                 failures);
@@ -484,6 +501,13 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.UseCases
                         Domain = domain,
                         RefreshLogId = principalTarget.RefreshLogId,
                         DurationMs = principalTarget.DurationMs
+                    };
+                case RefreshPrincipalAchievementSnapshotResult principalAchievement:
+                    return new RefreshDashboardDomainResult
+                    {
+                        Domain = domain,
+                        RefreshLogId = principalAchievement.RefreshLogId,
+                        DurationMs = principalAchievement.DurationMs
                     };
                 case RefreshCustomerPrincipalRelationshipResult customerPrincipalRelationship:
                     return new RefreshDashboardDomainResult

@@ -14,6 +14,10 @@ namespace btr.application.ReportingContext.PrincipalAnalyticsAgg
 
         public const string TargetId = "PRN-TGT-001";
 
+        public const string AchievementAmountId = "PRN-TGT-002";
+
+        public const string AchievementPercentageId = "PRN-TGT-003";
+
         public const string PurchaseInId = "PRN-PUR-001";
 
         public const string InventoryValueId = "PRN-INV-001";
@@ -47,6 +51,10 @@ namespace btr.application.ReportingContext.PrincipalAnalyticsAgg
 
         private static readonly PrincipalKpiCatalogEntry TargetEntry = CreateTarget();
 
+        private static readonly PrincipalKpiCatalogEntry AchievementAmountEntry = CreateAchievementAmount();
+
+        private static readonly PrincipalKpiCatalogEntry AchievementPercentageEntry = CreateAchievementPercentage();
+
         private static readonly PrincipalKpiCatalogEntry PurchaseInEntry = CreatePurchaseIn();
 
         private static readonly PrincipalKpiCatalogEntry InventoryValueEntry = CreateInventoryValue();
@@ -66,6 +74,8 @@ namespace btr.application.ReportingContext.PrincipalAnalyticsAgg
             {
                 SalesOutEntry,
                 TargetEntry,
+                AchievementAmountEntry,
+                AchievementPercentageEntry,
                 PurchaseInEntry,
                 InventoryValueEntry,
                 InventoryDaysEntry,
@@ -179,6 +189,70 @@ namespace btr.application.ReportingContext.PrincipalAnalyticsAgg
                     "This KPI writer does not write PRN-SALES-001, PRN-TGT-002, PRN-TGT-003, or any return KPI.",
                     "PRN-TGT-001 is not Principal Sales-Out and is not an achievement KPI.",
                     "The user-facing name is Principal Target."
+                }
+            };
+        }
+
+        private static PrincipalKpiCatalogEntry CreateAchievementAmount()
+        {
+            return new PrincipalKpiCatalogEntry
+            {
+                KpiId = AchievementAmountId,
+                Name = "Achievement Amount",
+                Description = "Principal Sales-Out versus Target",
+                EntityCategory = EntityTypeCode.Supplier,
+                EvidenceGrain = "PRN-SALES-001 and PRN-TGT-001",
+                Formula = "PRN-SALES-001 − PRN-TGT-001 when PRN-TGT-001 > 0 and PRN-SALES-001 is present; otherwise null",
+                IsAuthoritativePrincipalPerformanceKpi = false,
+                IsAuthoritativeRankingKpi = false,
+                DeductsReturns = false,
+                DeductsClaims = false,
+                DeductsInventoryAdjustments = false,
+                DefinitionStatements = new[]
+                {
+                    "PRN-TGT-002 Achievement Amount presents stored PRN-SALES-001 versus stored PRN-TGT-001.",
+                    "PRN-TGT-002 = stored PRN-SALES-001 − stored PRN-TGT-001 when stored PRN-TGT-001 is greater than zero and stored PRN-SALES-001 is present; otherwise null.",
+                    "PRN-TGT-002 is not a copy of Sales-Out.",
+                    "PRN-TGT-002 does not deduct returns, claims, or inventory adjustments.",
+                    "PRN-TGT-002 is not Net Sales.",
+                    "The writer reads stored PRN-SALES-001 and stored PRN-TGT-001.",
+                    "The writer does not write, overwrite, or recalculate PRN-SALES-001.",
+                    "The writer does not write, overwrite, or recalculate PRN-TGT-001.",
+                    "The writer does not write any PRN-RET-* value.",
+                    "Achievement is not labeled Net Sales.",
+                    "The user-facing name is Achievement Amount, not Principal Sales-Out and not Net Sales."
+                }
+            };
+        }
+
+        private static PrincipalKpiCatalogEntry CreateAchievementPercentage()
+        {
+            return new PrincipalKpiCatalogEntry
+            {
+                KpiId = AchievementPercentageId,
+                Name = "Achievement Percentage",
+                Description = "Principal Sales-Out ÷ Principal Target",
+                EntityCategory = EntityTypeCode.Supplier,
+                EvidenceGrain = "PRN-SALES-001 and PRN-TGT-001",
+                Formula = "PRN-SALES-001 ÷ PRN-TGT-001 when PRN-TGT-001 > 0; otherwise null",
+                IsAuthoritativePrincipalPerformanceKpi = false,
+                IsAuthoritativeRankingKpi = false,
+                DeductsReturns = false,
+                DeductsClaims = false,
+                DeductsInventoryAdjustments = false,
+                DefinitionStatements = new[]
+                {
+                    "PRN-TGT-003 Achievement Percentage = stored PRN-SALES-001 ÷ stored PRN-TGT-001 when stored PRN-TGT-001 is greater than zero; otherwise null.",
+                    "PRN-TGT-003 is null when PRN-TGT-001 is not greater than zero.",
+                    "PRN-TGT-003 is a supporting ranking KPI.",
+                    "PRN-TGT-003 is not a replacement for Principal Sales-Out.",
+                    "PRN-TGT-003 does not deduct returns, claims, or inventory adjustments.",
+                    "PRN-TGT-003 is not Net Sales.",
+                    "The writer reads stored PRN-SALES-001 and stored PRN-TGT-001.",
+                    "The writer does not write, overwrite, or recalculate PRN-SALES-001.",
+                    "The writer does not write, overwrite, or recalculate PRN-TGT-001.",
+                    "Achievement is not labeled Net Sales.",
+                    "The user-facing name is Achievement Percentage, not Principal Sales-Out and not Net Sales."
                 }
             };
         }
