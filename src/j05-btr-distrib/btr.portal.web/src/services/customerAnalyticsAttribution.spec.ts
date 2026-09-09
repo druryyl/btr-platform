@@ -7,6 +7,8 @@ import {
   CU02_LAST_INVOICING_SALESMAN_LABEL,
   CU02_LAST_INVOICING_SALESMAN_NOTE,
   CU02_LOW_RECOVERY_EXPLANATION,
+  CU02_PRINCIPAL_DECLINE_KPI_ID,
+  CU02_PRINCIPAL_DECLINE_NOTE,
   CU04_ATTRIBUTION_DISCLOSURES,
   CU04_LAST_INVOICING_SALESMAN_FILTER_ALL,
   CU04_LAST_INVOICING_SALESMAN_LABEL,
@@ -61,7 +63,7 @@ describe('CU02 ownership labels', () => {
     expect(text.toLowerCase()).toContain('not the customer owner')
     expect(text.toLowerCase()).toContain('does not present')
     expect(text.toLowerCase()).toContain('customer-level')
-    expect(text.toLowerCase()).toContain('principal-specific decline is not shown')
+    expect(text.toLowerCase()).toContain('principal-specific decline reads the relationship projection only')
     expect(CU02_ATTRIBUTION_DISCLOSURES.some((item) => /assigned salesman/i.test(item) && !/does not present/i.test(item))).toBe(false)
     expect(CU02_LOW_RECOVERY_EXPLANATION.toLowerCase()).toContain('last invoicing salesman')
     expect(CU02_LOW_RECOVERY_EXPLANATION.toLowerCase()).toContain('invoice attribution')
@@ -72,6 +74,12 @@ describe('CU02 ownership labels', () => {
     expect(correctCu02AttributionText('Chronic overdue exposure with no recent payment.')).toBe(
       'Chronic overdue exposure with no recent payment.',
     )
+  })
+
+  it('shows Principal-specific decline from the relationship projection only', () => {
+    expect(CU02_PRINCIPAL_DECLINE_KPI_ID).toBe('PRN-SALES-001')
+    expect(CU02_PRINCIPAL_DECLINE_NOTE.toLowerCase()).toContain('relationship projection only')
+    expect(CU02_PRINCIPAL_DECLINE_NOTE.toLowerCase()).toContain('does not recompute relationships from raw transactions')
   })
 })
 

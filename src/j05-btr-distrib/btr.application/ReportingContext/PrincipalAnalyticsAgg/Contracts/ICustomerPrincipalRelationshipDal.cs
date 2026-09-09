@@ -9,6 +9,8 @@ namespace btr.application.ReportingContext.PrincipalAnalyticsAgg.Contracts
 
         CustomerPrincipalRelationshipResult ListPairsForCustomers(IEnumerable<string> customerIds);
 
+        CustomerPrincipalRelationshipResult ListPairsForCustomerCodes(IEnumerable<string> customerCodes);
+
         void ReplaceProjection(CustomerPrincipalRelationshipResult result, string refreshLogId);
     }
 }

@@ -32,10 +32,15 @@ export const CU02_LOW_RECOVERY_EXPLANATION =
 const CU02_LEGACY_ASSIGNED_SALESMAN_EXPLANATION =
   'Assigned salesman has low recovery vs billing and customer is overdue.'
 
+export const CU02_PRINCIPAL_DECLINE_KPI_ID = 'PRN-SALES-001'
+
+export const CU02_PRINCIPAL_DECLINE_NOTE =
+  'Principal decline or inactivity reads the Customer–Principal relationship projection only. It does not recompute relationships from raw transactions.'
+
 export const CU02_ATTRIBUTION_DISCLOSURES = [
   'The Salesman shown is the last invoicing Salesman on the current-month invoice, a recency indicator, not the Customer owner.',
   'This page does not present that Salesman as Assigned Salesman or Owner.',
-  'Customer risk, credit, piutang, and decline measures remain Customer-level. Principal-specific decline is not shown.',
+  'Customer risk, credit, piutang, and decline measures remain Customer-level. Principal-specific decline reads the relationship projection only.',
 ] as const
 
 export const CU04_LAST_INVOICING_SALESMAN_LABEL = LAST_INVOICING_SALESMAN_LABEL

@@ -1475,6 +1475,28 @@ export interface DashboardCustomerRiskForecastRecommendationItem {
   DrillDownRoute: string
 }
 
+export interface DashboardCustomerRiskForecastPrincipalDeclinePair {
+  SupplierId: string
+  PrincipalName: string
+  RelationshipStatus: string
+  KpiId: string
+  PairSalesOutAmount: number
+}
+
+export interface DashboardCustomerRiskForecastPrincipalDeclineCustomer {
+  CustomerCode: string
+  CustomerName: string
+  Principals: DashboardCustomerRiskForecastPrincipalDeclinePair[]
+}
+
+export interface DashboardCustomerRiskForecastPrincipalDecline {
+  IsAvailable: boolean
+  KpiId: string
+  Note: string
+  Disclosures: string[]
+  Customers: DashboardCustomerRiskForecastPrincipalDeclineCustomer[]
+}
+
 export interface DashboardCustomerRiskForecastResponse {
   IsAvailable: boolean
   GeneratedAt: string
@@ -1486,6 +1508,7 @@ export interface DashboardCustomerRiskForecastResponse {
   TopCustomers: DashboardCustomerRiskForecastCustomerItem[]
   AttentionList: DashboardCustomerRiskForecastAttentionItem[]
   Recommendations: DashboardCustomerRiskForecastRecommendationItem[]
+  PrincipalDecline?: DashboardCustomerRiskForecastPrincipalDecline | null
 }
 
 export interface DashboardCollectionOptimizationKpi {

@@ -189,6 +189,7 @@
     <Compile Include="ReportingContext\DashboardSalesmanKeyResolverTest.cs" />
     <Compile Include="ReportingContext\DashboardCustomerDalTest.cs" />
     <Compile Include="ReportingContext\CustomerDashboardPrincipalMixTest.cs" />
+    <Compile Include="ReportingContext\CustomerRiskForecastPrincipalDeclineTest.cs" />
     <Compile Include="ReportingContext\DashboardCustomerKeyResolverTest.cs" />
     <Compile Include="ReportingContext\DashboardCollectionAggregatorTest.cs" />
     <Compile Include="ReportingContext\DashboardLocationAggregatorTest.cs" />

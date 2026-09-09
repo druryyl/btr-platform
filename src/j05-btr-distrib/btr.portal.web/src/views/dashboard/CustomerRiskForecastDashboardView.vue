@@ -6,6 +6,7 @@ import CustomerRiskForecastAttentionList from '@/components/dashboard/CustomerRi
 import CustomerRiskForecastCategoryChart from '@/components/dashboard/CustomerRiskForecastCategoryChart.vue'
 import CustomerRiskForecastCustomersTable from '@/components/dashboard/CustomerRiskForecastCustomersTable.vue'
 import CustomerRiskForecastExposureChart from '@/components/dashboard/CustomerRiskForecastExposureChart.vue'
+import CustomerRiskForecastPrincipalDecline from '@/components/dashboard/CustomerRiskForecastPrincipalDecline.vue'
 import CustomerRiskForecastKpiGrid from '@/components/dashboard/CustomerRiskForecastKpiGrid.vue'
 import CustomerRiskForecastRecommendations from '@/components/dashboard/CustomerRiskForecastRecommendations.vue'
 import CustomerRiskForecastSignalMixChart from '@/components/dashboard/CustomerRiskForecastSignalMixChart.vue'
@@ -219,6 +220,12 @@ onMounted(() => {
       <CustomerRiskForecastCustomersTable
         class="customer-risk-forecast-dashboard__section"
         :customers="forecast?.TopCustomers ?? []"
+        :loading="dashboard.loading"
+      />
+
+      <CustomerRiskForecastPrincipalDecline
+        class="customer-risk-forecast-dashboard__section"
+        :decline="forecast?.PrincipalDecline ?? null"
         :loading="dashboard.loading"
       />
 

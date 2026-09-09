@@ -44,6 +44,14 @@ SELECT CustomerId, CustomerName, SupplierId, SupplierName,
 FROM BTRPD_CustomerPrincipalRelationship
 WHERE CustomerId IN @CustomerIds";
 
+        public const string ListPairsForCustomerCodesSql = @"
+SELECT r.CustomerId, c.CustomerCode AS CustomerCode, r.CustomerName, r.SupplierId, r.SupplierName,
+    r.FirstTransactionDate, r.LastTransactionDate, r.RelationshipStatus, r.KpiId,
+    r.SalesOutAmount, r.LineCount
+FROM BTRPD_CustomerPrincipalRelationship r
+INNER JOIN BTR_Customer c ON r.CustomerId = c.CustomerId
+WHERE c.CustomerCode IN @CustomerCodes";
+
         public const string InsertRelationshipSql = @"
 INSERT INTO BTRPD_CustomerPrincipalRelationship (
     CustomerPrincipalRelationshipId, CustomerId, CustomerName, SupplierId, SupplierName,
@@ -124,6 +132,39 @@ WHERE SnapshotKey = @SnapshotKey";
                     pairs = conn.Query<CustomerPrincipalRelationshipRow>(
                         ListPairsForCustomersSql,
                         new { CustomerIds = ids }).ToList();
+                }
+            }
+
+            return new CustomerPrincipalRelationshipResult
+            {
+                KpiId = header.KpiId,
+                AsOfDate = header.AsOfDate,
+                HistoricalLimitation = header.HistoricalLimitation,
+                GeneratedAt = header.GeneratedAt,
+                Pairs = pairs
+            };
+        }
+
+        public CustomerPrincipalRelationshipResult ListPairsForCustomerCodes(IEnumerable<string> customerCodes)
+        {
+            var header = ReadHeader();
+            if (header is null)
+                return null;
+
+            var codes = (customerCodes ?? Enumerable.Empty<string>())
+                .Where(code => !string.IsNullOrWhiteSpace(code))
+                .Select(code => code.Trim())
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .ToList();
+
+            var pairs = new List<CustomerPrincipalRelationshipRow>();
+            if (codes.Count > 0)
+            {
+                using (var conn = new SqlConnection(ConnStringHelper.Get(_opt)))
+                {
+                    pairs = conn.Query<CustomerPrincipalRelationshipRow>(
+                        ListPairsForCustomerCodesSql,
+                        new { CustomerCodes = codes }).ToList();
                 }
             }
 

@@ -190,6 +190,11 @@ namespace btr.test.ReportingContext
                 return _projection;
             }
 
+            public CustomerPrincipalRelationshipResult ListPairsForCustomerCodes(IEnumerable<string> customerCodes)
+            {
+                return _projection;
+            }
+
             public void ReplaceProjection(CustomerPrincipalRelationshipResult result, string refreshLogId)
             {
                 WriteCount++;

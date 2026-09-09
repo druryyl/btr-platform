@@ -497,9 +497,13 @@ Only a review agent may set `GO` or `NO-GO`.
 
 ### PCM-043
 
-- Status: PLANNED
-- Implementation History: none
-- Review History: none
+- Status: IMPLEMENTED
+- Implementation History:
+  - 2026-09-10: IN IMPLEMENTATION
+  - 2026-09-10: IMPLEMENTED. CU02 shows Principal decline or inactivity from stored `BTRPD_CustomerPrincipalRelationship` rows only. Pair status and pair-attributed `PRN-SALES-001` are read for the at-risk customers on the page. Customer totals, latest-Faktur Salesman, and raw transaction scans are not used. One Customer can show Active and Dormant pairs at the same time. Other Customer pages are unchanged.
+- Review History:
+  - 2026-09-10: IN REVIEW
+  - 2026-09-10: GO. CU02 Principal decline reads the relationship projection only and preserves per-pair Active/Dormant status with pair-attributed `PRN-SALES-001`. Customer totals and latest-Faktur Salesman are unchanged. Other Customer pages are unchanged. `btr.application`, `btr.infrastructure`, `btr.test` build via MSBuild; portal.web `vue-tsc + vite` builds. 5 new `CustomerRiskForecastPrincipalDeclineTest` tests pass; 54 targeted backend and 253 frontend tests pass. Full-suite failures are pre-existing on baseline.
 - Remediation History: none
 
 ### PCM-044

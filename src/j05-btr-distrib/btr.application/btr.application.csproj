@@ -620,6 +620,7 @@
     <Compile Include="ReportingContext\DashboardCashFlowForecastAgg\Contracts\IDashboardCashFlowForecastDal.cs" />
     <Compile Include="ReportingContext\DashboardCashFlowForecastAgg\Queries\GetDashboardCashFlowForecastQuery.cs" />
     <Compile Include="ReportingContext\DashboardCustomerRiskForecastAgg\Contracts\IDashboardCustomerRiskForecastDal.cs" />
+    <Compile Include="ReportingContext\DashboardCustomerRiskForecastAgg\CustomerRiskForecastPrincipalDeclineComposer.cs" />
     <Compile Include="ReportingContext\DashboardCustomerRiskForecastAgg\Queries\GetDashboardCustomerRiskForecastQuery.cs" />
     <Compile Include="ReportingContext\DashboardInventoryForecastAgg\Contracts\IDashboardInventoryForecastDal.cs" />
     <Compile Include="ReportingContext\DashboardInventoryForecastAgg\Queries\GetDashboardInventoryForecastQuery.cs" />
