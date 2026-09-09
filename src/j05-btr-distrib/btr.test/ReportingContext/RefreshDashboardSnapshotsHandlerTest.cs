@@ -68,7 +68,7 @@ namespace btr.test.ReportingContext
                 default).GetAwaiter().GetResult();
 
             act.Should().Throw<ArgumentException>()
-                .WithMessage("*Domain must be All, Piutang, Inventory, InventoryRisk, Sales, PrincipalSalesOut, Purchasing, PurchasingManagement, Customer, Salesman, Collection, FieldActivity, or Location*");
+                .WithMessage("*Domain must be All, Piutang, Inventory, InventoryRisk, Sales, PrincipalSalesOut, PrnSalesOutHistory, Purchasing, PurchasingManagement, Customer, Salesman, Collection, FieldActivity, or Location*");
         }
 
         [Fact]
@@ -129,6 +129,7 @@ namespace btr.test.ReportingContext
             StubInventoryRiskWorker inventoryRiskWorker = null,
             StubSalesWorker salesWorker = null,
             StubPrincipalSalesOutWorker principalSalesOutWorker = null,
+            StubPrincipalSalesOutHistoryWorker principalSalesOutHistoryWorker = null,
             StubPurchasingWorker purchasingWorker = null,
             StubPurchasingManagementWorker purchasingManagementWorker = null,
             StubCustomerWorker customerWorker = null,
@@ -144,6 +145,7 @@ namespace btr.test.ReportingContext
                 inventoryRiskWorker ?? new StubInventoryRiskWorker(),
                 salesWorker ?? new StubSalesWorker(),
                 principalSalesOutWorker ?? new StubPrincipalSalesOutWorker(),
+                principalSalesOutHistoryWorker ?? new StubPrincipalSalesOutHistoryWorker(),
                 purchasingWorker ?? new StubPurchasingWorker(),
                 purchasingManagementWorker ?? new StubPurchasingManagementWorker(),
                 customerWorker ?? new StubCustomerWorker(),
@@ -209,6 +211,13 @@ namespace btr.test.ReportingContext
         private sealed class StubSalesWorker : IRefreshDashboardSalesSnapshotWorker
         {
             public void Execute(RefreshDashboardSalesSnapshotRequest request)
+            {
+            }
+        }
+
+        private sealed class StubPrincipalSalesOutHistoryWorker : IRefreshPrincipalSalesOutHistoryWorker
+        {
+            public void Execute(RefreshPrincipalSalesOutHistoryRequest request)
             {
             }
         }

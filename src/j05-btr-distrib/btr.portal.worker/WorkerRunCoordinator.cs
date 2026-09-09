@@ -232,6 +232,16 @@ namespace btr.portal.worker
                     });
                     break;
 
+                case "PRNSALESOUTHISTORY":
+                    RunDomain(serviceProvider, PrincipalSalesOutHistory.Domain, triggeredBy, sp =>
+                    {
+                        var worker = sp.GetRequiredService<IRefreshPrincipalSalesOutHistoryWorker>();
+                        var request = new RefreshPrincipalSalesOutHistoryRequest { TriggeredBy = triggeredBy };
+                        worker.Execute(request);
+                        return request.Result?.DurationMs ?? 0;
+                    });
+                    break;
+
                 case "PURCHASING":
                     RunDomain(serviceProvider, "Purchasing", triggeredBy, sp =>
                     {

@@ -101,6 +101,8 @@ namespace btr.portal.api.Configurations
             services.AddScoped<IFakturPrincipalOmzetDal, FakturPrincipalOmzetDal>();
             services.AddScoped<IPrincipalSalesOutEvidenceDal, PrincipalSalesOutEvidenceDal>();
             services.AddScoped<IPrincipalSalesOutSnapshotDal, PrincipalSalesOutSnapshotDal>();
+            services.AddScoped<IPrincipalSalesOutHistoryEvidenceDal, PrincipalSalesOutHistoryEvidenceDal>();
+            services.AddScoped<IPrincipalSalesOutHistoryDal, PrincipalSalesOutHistoryDal>();
             services.AddScoped<ISalesPersonPrincipalTargetDal, SalesPersonPrincipalTargetDal>();
             services.AddScoped<ISalesOmzetTargetDal, SalesOmzetTargetDal>();
             services.AddScoped<ISalesOmzetHealthMetricsDal, SalesOmzetHealthMetricsDal>();
