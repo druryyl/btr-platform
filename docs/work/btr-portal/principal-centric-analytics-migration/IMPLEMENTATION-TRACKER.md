@@ -385,9 +385,13 @@ Only a review agent may set `GO` or `NO-GO`.
 
 ### PCM-036
 
-- Status: PLANNED
-- Implementation History: none
-- Review History: none
+- Status: GO
+- Implementation History:
+  - 2026-09-09: IN IMPLEMENTATION
+  - 2026-09-09: IMPLEMENTED. FI04 labels the Salesman column as invoice-attributed on the open Faktur, not the Customer account owner. Report measures, row fields, and summary totals are unchanged. No Principal financial column was added. FI01 and FI03 are unchanged.
+- Review History:
+  - 2026-09-09: IN REVIEW
+  - 2026-09-09: GO. FI04 describes the Salesman column as invoice-attributed on the open Faktur, not the Customer account owner. Report measures, row fields, and summary totals are unchanged. No Principal financial column was added. FI01 and FI03 are unchanged.
 - Remediation History: none
 
 ### PCM-037
