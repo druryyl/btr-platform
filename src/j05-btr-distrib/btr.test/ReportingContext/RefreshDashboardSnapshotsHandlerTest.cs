@@ -68,7 +68,7 @@ namespace btr.test.ReportingContext
                 default).GetAwaiter().GetResult();
 
             act.Should().Throw<ArgumentException>()
-                .WithMessage("*Domain must be All, Piutang, Inventory, InventoryRisk, Sales, PrincipalSalesOut, PrnSalesOutHistory, PrincipalTarget, Purchasing, PurchasingManagement, Customer, Salesman, Collection, FieldActivity, or Location*");
+                .WithMessage("*Domain must be All, Piutang, Inventory, InventoryRisk, Sales, PrincipalSalesOut, PrnSalesOutHistory, PrincipalTarget, PrnCusRelationship, Purchasing, PurchasingManagement, Customer, Salesman, Collection, FieldActivity, or Location*");
         }
 
         [Fact]
@@ -131,6 +131,7 @@ namespace btr.test.ReportingContext
             StubPrincipalSalesOutWorker principalSalesOutWorker = null,
             StubPrincipalSalesOutHistoryWorker principalSalesOutHistoryWorker = null,
             StubPrincipalTargetWorker principalTargetWorker = null,
+            StubCustomerPrincipalRelationshipWorker customerPrincipalRelationshipWorker = null,
             StubPurchasingWorker purchasingWorker = null,
             StubPurchasingManagementWorker purchasingManagementWorker = null,
             StubCustomerWorker customerWorker = null,
@@ -148,6 +149,7 @@ namespace btr.test.ReportingContext
                 principalSalesOutWorker ?? new StubPrincipalSalesOutWorker(),
                 principalSalesOutHistoryWorker ?? new StubPrincipalSalesOutHistoryWorker(),
                 principalTargetWorker ?? new StubPrincipalTargetWorker(),
+                customerPrincipalRelationshipWorker ?? new StubCustomerPrincipalRelationshipWorker(),
                 purchasingWorker ?? new StubPurchasingWorker(),
                 purchasingManagementWorker ?? new StubPurchasingManagementWorker(),
                 customerWorker ?? new StubCustomerWorker(),
@@ -227,6 +229,13 @@ namespace btr.test.ReportingContext
         private sealed class StubPrincipalTargetWorker : IRefreshPrincipalTargetSnapshotWorker
         {
             public void Execute(RefreshPrincipalTargetSnapshotRequest request)
+            {
+            }
+        }
+
+        private sealed class StubCustomerPrincipalRelationshipWorker : IRefreshCustomerPrincipalRelationshipWorker
+        {
+            public void Execute(RefreshCustomerPrincipalRelationshipRequest request)
             {
             }
         }

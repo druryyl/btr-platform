@@ -215,6 +215,7 @@
     <Compile Include="ReportingContext\PrincipalPerformanceQueryTest.cs" />
     <Compile Include="ReportingContext\SalesDashboardPrincipalContributionTest.cs" />
     <Compile Include="ReportingContext\SalesForecastPrincipalPresentationTest.cs" />
+    <Compile Include="ReportingContext\CustomerPrincipalRelationshipComposerTest.cs" />
     <Compile Include="ReportingContext\PrincipalSalesOutHistoryComposerTest.cs" />
     <Compile Include="ReportingContext\PrincipalTargetAggregatorTest.cs" />
     <Compile Include="ReportingContext\EntityRankingEngineTest.cs" />

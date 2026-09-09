@@ -184,9 +184,13 @@ Only a review agent may set `GO` or `NO-GO`.
 
 ### PCM-013
 
-- Status: PLANNED
-- Implementation History: none
-- Review History: none
+- Status: GO
+- Implementation History:
+  - 2026-09-09: IN IMPLEMENTATION
+  - 2026-09-09: IMPLEMENTED. Materialized `BTRPD_CustomerPrincipalRelationship` from all non-void Faktur Item history. Pair identity is Customer plus Supplier. Rows store first and last transaction dates, Active or Dormant status from the 6-month last-transaction rule, and pair-attributed `PRN-SALES-001`. Inactivity does not remove a pair. The projection refresh is the only path that reads historical transactions for relationship status. No consumer screen, `PRN-CUS-001`, `PRN-CUS-002`, return KPI, Entity Analytics entity type, or master assignment table was added.
+- Review History:
+  - 2026-09-09: IN REVIEW
+  - 2026-09-09: GO. The projection is `BTRPD_CustomerPrincipalRelationship`. History is retained when inactive. Active and Dormant use the inclusive 6-month last-transaction rule. Pair identity is Customer plus Supplier. Pair Sales-Out is pair-attributed `PRN-SALES-001` and does not deduct returns, claims, or inventory adjustments. The projection is not limited to Top-N MTD. No `PRN-CUS-001`, `PRN-CUS-002`, or `PRN-RET-*` value is written. No consumer screen, Entity Analytics entity type, or master assignment table was added. Tests cover retention, the 6-month rule, and the absence of consumer queries.
 - Remediation History: none
 
 ### PCM-014

@@ -252,6 +252,16 @@ namespace btr.portal.worker
                     });
                     break;
 
+                case "PRNCUSRELATIONSHIP":
+                    RunDomain(serviceProvider, CustomerPrincipalRelationship.Domain, triggeredBy, sp =>
+                    {
+                        var worker = sp.GetRequiredService<IRefreshCustomerPrincipalRelationshipWorker>();
+                        var request = new RefreshCustomerPrincipalRelationshipRequest { TriggeredBy = triggeredBy };
+                        worker.Execute(request);
+                        return request.Result?.DurationMs ?? 0;
+                    });
+                    break;
+
                 case "PURCHASING":
                     RunDomain(serviceProvider, "Purchasing", triggeredBy, sp =>
                     {
@@ -467,7 +477,7 @@ namespace btr.portal.worker
             {
                 "All", "Sales", "Piutang", "Inventory", "InventoryRisk", "Purchasing",
                 "PurchasingManagement", "Customer", "Salesman", "Collection", "FieldActivity", "Location",
-                "EntityAnalyticsHistoricalBackfill"
+                "EntityAnalyticsHistoricalBackfill", CustomerPrincipalRelationship.Domain
             };
 
             var validTriggers = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
@@ -477,7 +487,7 @@ namespace btr.portal.worker
 
             if (!validDomains.Contains(domain))
                 throw new ArgumentException(
-                    $"Invalid --domain '{domain}'. Expected All, Sales, Piutang, Inventory, InventoryRisk, Purchasing, PurchasingManagement, Customer, Salesman, Collection, FieldActivity, Location, or EntityAnalyticsHistoricalBackfill.");
+                    $"Invalid --domain '{domain}'. Expected All, Sales, Piutang, Inventory, InventoryRisk, Purchasing, PurchasingManagement, Customer, Salesman, Collection, FieldActivity, Location, EntityAnalyticsHistoricalBackfill, or PrnCusRelationship.");
 
             if (!validTriggers.Contains(triggeredBy))
                 throw new ArgumentException(
