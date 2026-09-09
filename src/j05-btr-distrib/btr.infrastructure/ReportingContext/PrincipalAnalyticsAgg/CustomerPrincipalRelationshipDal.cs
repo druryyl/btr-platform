@@ -37,6 +37,13 @@ WHEN NOT MATCHED THEN
     VALUES (
         @SnapshotKey, @KpiId, @AsOfDate, @HistoricalLimitation, @GeneratedAt, @LastRefreshLogId);";
 
+        public const string ListPairsForCustomersSql = @"
+SELECT CustomerId, CustomerName, SupplierId, SupplierName,
+    FirstTransactionDate, LastTransactionDate, RelationshipStatus, KpiId,
+    SalesOutAmount, LineCount
+FROM BTRPD_CustomerPrincipalRelationship
+WHERE CustomerId IN @CustomerIds";
+
         public const string InsertRelationshipSql = @"
 INSERT INTO BTRPD_CustomerPrincipalRelationship (
     CustomerPrincipalRelationshipId, CustomerId, CustomerName, SupplierId, SupplierName,
@@ -56,10 +63,9 @@ VALUES (
 
         public CustomerPrincipalRelationshipResult GetProjection()
         {
-            const string headerSql = @"
-SELECT SnapshotKey, KpiId, AsOfDate, HistoricalLimitation, GeneratedAt, LastRefreshLogId
-FROM BTRPD_CustomerPrincipalRelationshipKpi
-WHERE SnapshotKey = @SnapshotKey";
+            var header = ReadHeader();
+            if (header is null)
+                return null;
 
             const string pairSql = @"
 SELECT CustomerId, CustomerName, SupplierId, SupplierName,
@@ -70,13 +76,6 @@ ORDER BY CustomerId, SupplierId";
 
             using (var conn = new SqlConnection(ConnStringHelper.Get(_opt)))
             {
-                var header = conn.QueryFirstOrDefault<HeaderRow>(headerSql, new
-                {
-                    SnapshotKey = CustomerPrincipalRelationship.SnapshotKey
-                });
-                if (header is null)
-                    return null;
-
                 var pairs = conn.Query<CustomerPrincipalRelationshipRow>(pairSql).ToList();
                 return new CustomerPrincipalRelationshipResult
                 {
@@ -87,6 +86,55 @@ ORDER BY CustomerId, SupplierId";
                     Pairs = pairs
                 };
             }
+        }
+
+        private HeaderRow ReadHeader()
+        {
+            const string headerSql = @"
+SELECT SnapshotKey, KpiId, AsOfDate, HistoricalLimitation, GeneratedAt, LastRefreshLogId
+FROM BTRPD_CustomerPrincipalRelationshipKpi
+WHERE SnapshotKey = @SnapshotKey";
+
+            using (var conn = new SqlConnection(ConnStringHelper.Get(_opt)))
+            {
+                return conn.QueryFirstOrDefault<HeaderRow>(headerSql, new
+                {
+                    SnapshotKey = CustomerPrincipalRelationship.SnapshotKey
+                });
+            }
+        }
+
+        public CustomerPrincipalRelationshipResult ListPairsForCustomers(IEnumerable<string> customerIds)
+        {
+            var header = ReadHeader();
+            if (header is null)
+                return null;
+
+            var ids = (customerIds ?? Enumerable.Empty<string>())
+                .Where(id => !string.IsNullOrWhiteSpace(id))
+                .Select(id => id.Trim())
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .ToList();
+
+            var pairs = new List<CustomerPrincipalRelationshipRow>();
+            if (ids.Count > 0)
+            {
+                using (var conn = new SqlConnection(ConnStringHelper.Get(_opt)))
+                {
+                    pairs = conn.Query<CustomerPrincipalRelationshipRow>(
+                        ListPairsForCustomersSql,
+                        new { CustomerIds = ids }).ToList();
+                }
+            }
+
+            return new CustomerPrincipalRelationshipResult
+            {
+                KpiId = header.KpiId,
+                AsOfDate = header.AsOfDate,
+                HistoricalLimitation = header.HistoricalLimitation,
+                GeneratedAt = header.GeneratedAt,
+                Pairs = pairs
+            };
         }
 
         public void ReplaceProjection(CustomerPrincipalRelationshipResult result, string refreshLogId)

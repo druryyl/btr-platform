@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using btr.application.ReportingContext.DashboardCustomerAgg.Contracts;
+using btr.application.ReportingContext.PrincipalAnalyticsAgg.Contracts;
 using btr.application.ReportingContext.Shared;
 using MediatR;
 
@@ -34,6 +35,49 @@ namespace btr.application.ReportingContext.DashboardCustomerAgg.Queries
         public DashboardCustomerSegmentationSummary Segmentation { get; set; }
 
         public DashboardCustomerNavigationLinks Navigation { get; set; }
+
+        public DashboardCustomerPrincipalMix PrincipalMix { get; set; }
+            = new DashboardCustomerPrincipalMix();
+    }
+
+    public class DashboardCustomerPrincipalMix
+    {
+        public bool IsAvailable { get; set; }
+
+        public string KpiId { get; set; }
+
+        public string Note { get; set; }
+
+        public IList<string> Disclosures { get; set; }
+            = new List<string>();
+
+        public IList<DashboardCustomerPrincipalMixCustomer> Customers { get; set; }
+            = new List<DashboardCustomerPrincipalMixCustomer>();
+    }
+
+    public class DashboardCustomerPrincipalMixCustomer
+    {
+        public string CustomerId { get; set; }
+
+        public string CustomerCode { get; set; }
+
+        public string CustomerName { get; set; }
+
+        public IList<DashboardCustomerPrincipalMixItem> Principals { get; set; }
+            = new List<DashboardCustomerPrincipalMixItem>();
+    }
+
+    public class DashboardCustomerPrincipalMixItem
+    {
+        public string SupplierId { get; set; }
+
+        public string PrincipalName { get; set; }
+
+        public string KpiId { get; set; }
+
+        public decimal PairSalesOutAmount { get; set; }
+
+        public decimal? PercentOfPairSalesOut { get; set; }
     }
 
     public class DashboardCustomerAttentionCards
@@ -163,17 +207,26 @@ namespace btr.application.ReportingContext.DashboardCustomerAgg.Queries
         : IRequestHandler<GetDashboardCustomerQuery, DashboardCustomerResponse>
     {
         private readonly IDashboardCustomerDal _dal;
+        private readonly ICustomerPrincipalRelationshipDal _relationshipDal;
 
-        public GetDashboardCustomerHandler(IDashboardCustomerDal dal)
+        public GetDashboardCustomerHandler(
+            IDashboardCustomerDal dal,
+            ICustomerPrincipalRelationshipDal relationshipDal)
         {
             _dal = dal;
+            _relationshipDal = relationshipDal;
         }
 
         public Task<DashboardCustomerResponse> Handle(
             GetDashboardCustomerQuery request,
             CancellationToken cancellationToken)
         {
-            return Task.FromResult(_dal.GetSummary());
+            var response = _dal.GetSummary();
+            var customerIds = CustomerDashboardPrincipalMixComposer.CollectRankingCustomerIds(response);
+            response.PrincipalMix = CustomerDashboardPrincipalMixComposer.Compose(
+                response,
+                _relationshipDal.ListPairsForCustomers(customerIds));
+            return Task.FromResult(response);
         }
     }
 }

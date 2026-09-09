@@ -882,6 +882,29 @@ export interface DashboardCustomerNavigationLinks {
   PiutangReportRoute: string
 }
 
+export interface DashboardCustomerPrincipalMixItem {
+  SupplierId: string
+  PrincipalName: string
+  KpiId: string
+  PairSalesOutAmount: number
+  PercentOfPairSalesOut: number | null
+}
+
+export interface DashboardCustomerPrincipalMixCustomer {
+  CustomerId: string
+  CustomerCode: string
+  CustomerName: string
+  Principals: DashboardCustomerPrincipalMixItem[]
+}
+
+export interface DashboardCustomerPrincipalMix {
+  IsAvailable: boolean
+  KpiId: string
+  Note: string
+  Disclosures: string[]
+  Customers: DashboardCustomerPrincipalMixCustomer[]
+}
+
 export interface DashboardCustomerResponse {
   IsAvailable: boolean
   IsDataFresh: boolean
@@ -893,6 +916,7 @@ export interface DashboardCustomerResponse {
   Rankings: DashboardCustomerRankings | null
   Segmentation: DashboardCustomerSegmentationSummary | null
   Navigation: DashboardCustomerNavigationLinks | null
+  PrincipalMix?: DashboardCustomerPrincipalMix | null
 }
 
 export interface DashboardSalesmanFilterDefaults {

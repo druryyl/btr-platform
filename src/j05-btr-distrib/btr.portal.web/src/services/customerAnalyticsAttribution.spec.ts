@@ -17,13 +17,17 @@ describe('CU01 ownership labels', () => {
     expect(CU01_LAST_INVOICING_SALESMAN_NOTE.toLowerCase()).toContain('not the customer owner')
   })
 
-  it('keeps credit, piutang, and lifecycle at Customer level and does not add Principal mix', () => {
+  it('keeps credit, piutang, and sales at Customer level and shows Principal mix from the projection only', () => {
     const text = CU01_ATTRIBUTION_DISCLOSURES.join(' ')
     expect(text.toLowerCase()).toContain('customer-level')
     expect(text.toLowerCase()).toContain('credit')
     expect(text.toLowerCase()).toContain('piutang')
     expect(text.toLowerCase()).toContain('lifecycle')
-    expect(text.toLowerCase()).not.toContain('principal mix')
+    expect(text.toLowerCase()).toContain('not allocated to principals')
+    expect(text.toLowerCase()).toContain('principal mix')
+    expect(text.toLowerCase()).toContain('relationship projection only')
+    expect(text.toLowerCase()).toContain('does not recompute relationships from raw transactions')
+    expect(text.toLowerCase()).toContain('no pre-purchase assigned principal')
     expect(CU01_ATTRIBUTION_DISCLOSURES.some((item) => /assigned salesman/i.test(item) && !/does not label/i.test(item))).toBe(false)
   })
 })

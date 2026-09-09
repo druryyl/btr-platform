@@ -286,6 +286,7 @@
     <Compile Include="ReportingContext\DashboardInventoryRiskAgg\Contracts\IDashboardInventoryRiskDal.cs" />
     <Compile Include="ReportingContext\DashboardInventoryRiskAgg\Queries\GetDashboardInventoryRiskQuery.cs" />
     <Compile Include="ReportingContext\DashboardCustomerAgg\Contracts\IDashboardCustomerDal.cs" />
+    <Compile Include="ReportingContext\DashboardCustomerAgg\CustomerDashboardPrincipalMixComposer.cs" />
     <Compile Include="ReportingContext\DashboardCustomerAgg\Queries\GetDashboardCustomerQuery.cs" />
     <Compile Include="ReportingContext\DashboardFieldActivityAgg\Contracts\IFieldActivityCheckInDal.cs" />
     <Compile Include="ReportingContext\DashboardFieldActivityAgg\Contracts\IFieldActivityOrderDal.cs" />

@@ -195,9 +195,13 @@ Only a review agent may set `GO` or `NO-GO`.
 
 ### PCM-014
 
-- Status: PLANNED
-- Implementation History: none
-- Review History: none
+- Status: GO
+- Implementation History:
+  - 2026-09-09: IN IMPLEMENTATION
+  - 2026-09-09: IMPLEMENTED. CU01 shows Principal mix for ranking customers from `BTRPD_CustomerPrincipalRelationship` only. Pair amount is pair-attributed `PRN-SALES-001`. Customer sales, credit, and piutang remain Customer-level and are not allocated to Principals. No pre-purchase assigned Principal is shown. CU02–CU05 are unchanged.
+- Review History:
+  - 2026-09-09: IN REVIEW
+  - 2026-09-09: GO. CU01 Principal mix reads `BTRPD_CustomerPrincipalRelationship` and does not recompute relationships from raw transactions. Pair amount is stored pair-attributed `PRN-SALES-001`. Customer sales, credit, and piutang remain Customer-level and are not allocated to Principals. The mix lists only Principals on that Customer's projection. No pre-purchase assigned Principal is shown. CU02–CU05 are unchanged.
 - Remediation History: none
 
 ### PCM-015

@@ -16,6 +16,7 @@ import {
   CU01_ATTRIBUTION_DISCLOSURES,
   CU01_LAST_INVOICING_SALESMAN_LABEL,
   CU01_LAST_INVOICING_SALESMAN_NOTE,
+  CU01_PRINCIPAL_MIX_NOTE,
 } from '@/services/customerAnalyticsAttribution'
 import { CUSTOMER_ATTENTION_SIGNAL_ALL } from '@/services/customerAttentionSignals'
 import { resolveInvestigationSourceLabel } from '@/services/investigationSourceLabels'
@@ -63,10 +64,20 @@ const piutangColumns = [
   { field: 'PercentOfTotal', header: '% of Total' },
 ]
 
+const principalMix = computed(() => dashboard.customer?.PrincipalMix ?? null)
+
+const principalMixCustomers = computed(() => principalMix.value?.Customers ?? [])
+
+const principalMixDisclosures = computed(() => {
+  const disclosures = principalMix.value?.Disclosures ?? []
+  return disclosures.length > 0 ? disclosures : [CU01_PRINCIPAL_MIX_NOTE]
+})
+
 const sectionNavItems = [
   { id: 'customer-attention-cards', label: 'Attention Cards' },
   { id: 'customer-attention-list', label: 'Attention List' },
   { id: 'customer-rankings', label: 'Rankings' },
+  { id: 'customer-principal-mix', label: 'Principal mix' },
   { id: 'customer-segmentation', label: 'Segmentation' },
 ]
 
@@ -271,6 +282,66 @@ onMounted(() => {
       </div>
     </section>
 
+    <section
+      id="customer-principal-mix"
+      class="customer-dashboard__section"
+      data-kpi="PRN-SALES-001"
+      aria-label="Principal mix"
+    >
+      <h2 class="customer-dashboard__section-title">Principal mix</h2>
+      <p class="customer-dashboard__recency-note">
+        {{ principalMix?.Note || CU01_PRINCIPAL_MIX_NOTE }}
+      </p>
+      <ul class="customer-dashboard__mix-disclosures">
+        <li v-for="item in principalMixDisclosures" :key="item">{{ item }}</li>
+      </ul>
+
+      <p
+        v-if="dashboard.customer && !principalMix?.IsAvailable"
+        class="customer-dashboard__recency-note"
+      >
+        Principal mix is unavailable until the relationship projection is refreshed.
+      </p>
+      <p v-else-if="principalMixCustomers.length === 0" class="customer-dashboard__recency-note">
+        No ranking customers to show Principal mix.
+      </p>
+
+      <div
+        v-for="customer in principalMixCustomers"
+        :key="customer.CustomerId"
+        class="customer-dashboard__mix-customer"
+      >
+        <h3 class="customer-dashboard__mix-customer-title">
+          {{ customer.CustomerCode }} — {{ customer.CustomerName }}
+        </h3>
+        <p v-if="customer.Principals.length === 0" class="customer-dashboard__recency-note">
+          No Principals on this Customer's projection.
+        </p>
+        <table v-else class="customer-dashboard__mix-table">
+          <thead>
+            <tr>
+              <th>Principal</th>
+              <th>Pair Sales-Out</th>
+              <th>% of pair Sales-Out</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="principal in customer.Principals" :key="principal.SupplierId">
+              <td>{{ principal.PrincipalName || principal.SupplierId }}</td>
+              <td>{{ formatCurrency(principal.PairSalesOutAmount) }}</td>
+              <td>
+                {{
+                  principal.PercentOfPairSalesOut != null
+                    ? formatPercent(principal.PercentOfPairSalesOut)
+                    : '—'
+                }}
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
     <CustomerSegmentationSection
       id="customer-segmentation"
       class="customer-dashboard__section"
@@ -363,6 +434,37 @@ onMounted(() => {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
   gap: 1rem;
+}
+
+.customer-dashboard__mix-disclosures {
+  margin: 0 0 1rem;
+  padding-left: 1.25rem;
+}
+
+.customer-dashboard__mix-customer + .customer-dashboard__mix-customer {
+  margin-top: 1rem;
+}
+
+.customer-dashboard__mix-customer-title {
+  margin: 0 0 0.5rem;
+  font-size: 1rem;
+}
+
+.customer-dashboard__mix-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.customer-dashboard__mix-table th,
+.customer-dashboard__mix-table td {
+  padding: 0.5rem 0.75rem;
+  text-align: left;
+  border-bottom: 1px solid var(--p-content-border-color);
+}
+
+.customer-dashboard__mix-table th:nth-child(n + 2),
+.customer-dashboard__mix-table td:nth-child(n + 2) {
+  text-align: right;
 }
 
 .metric__label {
