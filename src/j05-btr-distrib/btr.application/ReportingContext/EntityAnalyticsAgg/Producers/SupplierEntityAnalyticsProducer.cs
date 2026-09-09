@@ -31,6 +31,8 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Producers
         private readonly IEntityRadarEngine _radarEngine;
         private readonly IAttentionSignalRegistry _attentionSignals;
         private readonly IPrincipalSalesOutSnapshotDal _salesOutSnapshotDal;
+        private readonly IPrincipalReturnSnapshotDal _returnSnapshotDal;
+        private readonly IPrincipalReturnPercentageSnapshotDal _returnPercentageSnapshotDal;
 
         public SupplierEntityAnalyticsProducer(
             IEntityAnalyticsRepository repository,
@@ -41,7 +43,9 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Producers
             IEntityRelationshipEngine relationshipEngine,
             IEntityRadarEngine radarEngine,
             IAttentionSignalRegistry attentionSignals,
-            IPrincipalSalesOutSnapshotDal salesOutSnapshotDal = null)
+            IPrincipalSalesOutSnapshotDal salesOutSnapshotDal = null,
+            IPrincipalReturnSnapshotDal returnSnapshotDal = null,
+            IPrincipalReturnPercentageSnapshotDal returnPercentageSnapshotDal = null)
         {
             _repository = repository;
             _kpiRegistry = kpiRegistry;
@@ -52,6 +56,8 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Producers
             _radarEngine = radarEngine;
             _attentionSignals = attentionSignals;
             _salesOutSnapshotDal = salesOutSnapshotDal;
+            _returnSnapshotDal = returnSnapshotDal;
+            _returnPercentageSnapshotDal = returnPercentageSnapshotDal;
         }
 
         public void Produce(EntityAnalyticsProduceContext context)
@@ -63,6 +69,8 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Producers
             var portfolio = input?.ManagementAggregate?.Portfolio;
             var (periodYear, periodMonth) = EntityAnalyticsProducerReplaySupport.ResolvePeriod(context);
             var salesOut = ReadOwnedSalesOut(periodYear, periodMonth);
+            var returns = ReadOwnedReturns(periodYear, periodMonth);
+            var returnPercentage = ReadOwnedReturnPercentage(periodYear, periodMonth);
 
             if (portfolio == null || portfolio.Count == 0)
             {
@@ -77,6 +85,13 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Producers
                 {
                     RetainPersistedSalesOut(retainedRows, context.GeneratedAt, salesOut);
                 }
+
+                AppendSnapshotOnlyReturns(
+                    retainedRows, retainedMonthly, periodYear, periodMonth, context.GeneratedAt, returns);
+                RetainPersistedReturns(retainedRows, context.GeneratedAt, returns);
+                AppendSnapshotOnlyReturnPercentage(
+                    retainedRows, retainedMonthly, periodYear, periodMonth, context.GeneratedAt, returnPercentage);
+                RetainPersistedReturnPercentage(retainedRows, context.GeneratedAt, returnPercentage);
 
                 EntityAnalyticsProducerReplaySupport.PersistL0(
                     _repository, context, EntityTypeCode.Supplier, retainedRows);
@@ -117,6 +132,8 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Producers
                 rows.AddRange(BuildSupplierRows(supplier, entityId, entityCode, generatedAt, attentionById));
                 monthlyRows.AddRange(BuildMonthlyRows(supplier, entityId, entityCode, periodYear, periodMonth, generatedAt));
                 ComposeSalesOut(rows, monthlyRows, entityId, entityCode, periodYear, periodMonth, generatedAt, salesOut);
+                ComposeReturns(rows, monthlyRows, entityId, entityCode, periodYear, periodMonth, generatedAt, returns);
+                ComposeReturnPercentage(rows, monthlyRows, entityId, entityCode, periodYear, periodMonth, generatedAt, returnPercentage);
                 signalsByEntity[entityId] = BuildAttentionSnapshots(
                     entityId,
                     entityCode,
@@ -126,6 +143,10 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Producers
 
             AppendSnapshotOnlySalesOut(rows, monthlyRows, periodYear, periodMonth, context.GeneratedAt, salesOut);
             RetainPersistedSalesOut(rows, context.GeneratedAt, salesOut);
+            AppendSnapshotOnlyReturns(rows, monthlyRows, periodYear, periodMonth, context.GeneratedAt, returns);
+            RetainPersistedReturns(rows, context.GeneratedAt, returns);
+            AppendSnapshotOnlyReturnPercentage(rows, monthlyRows, periodYear, periodMonth, context.GeneratedAt, returnPercentage);
+            RetainPersistedReturnPercentage(rows, context.GeneratedAt, returnPercentage);
 
             EntityAnalyticsProducerReplaySupport.PersistL0(_repository, context, EntityTypeCode.Supplier, rows);
 
@@ -275,6 +296,267 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Producers
             }
         }
 
+        private ReturnComposition ReadOwnedReturns(int periodYear, int periodMonth)
+        {
+            var existingGood = _repository.GetCurrentKpiPopulation(
+                EntityTypeCode.Supplier,
+                PrincipalKpiCatalog.GoodReturnAmountId);
+            var existingBroken = _repository.GetCurrentKpiPopulation(
+                EntityTypeCode.Supplier,
+                PrincipalKpiCatalog.BrokenReturnAmountId);
+            var existingTotal = _repository.GetCurrentKpiPopulation(
+                EntityTypeCode.Supplier,
+                PrincipalKpiCatalog.TotalReturnAmountId);
+
+            var snapshot = _returnSnapshotDal?.GetCurrent();
+            var matchesPeriod = snapshot != null
+                && snapshot.PeriodYear == periodYear
+                && snapshot.PeriodMonth == periodMonth;
+
+            var bySupplierId = new Dictionary<string, PrincipalReturnRow>(StringComparer.OrdinalIgnoreCase);
+            if (matchesPeriod)
+            {
+                foreach (var row in snapshot.Principals ?? new List<PrincipalReturnRow>())
+                {
+                    if (string.IsNullOrWhiteSpace(row.SupplierId))
+                        continue;
+
+                    bySupplierId[row.SupplierId.Trim()] = row;
+                }
+            }
+
+            return new ReturnComposition(matchesPeriod, bySupplierId, existingGood, existingBroken, existingTotal);
+        }
+
+        private ReturnPercentageComposition ReadOwnedReturnPercentage(int periodYear, int periodMonth)
+        {
+            var existing = _repository.GetCurrentKpiPopulation(
+                EntityTypeCode.Supplier,
+                PrincipalKpiCatalog.ReturnPercentageId);
+
+            var snapshot = _returnPercentageSnapshotDal?.GetCurrent();
+            var matchesPeriod = snapshot != null
+                && string.Equals(snapshot.ReturnPercentageKpiId, PrincipalKpiCatalog.ReturnPercentageId, StringComparison.OrdinalIgnoreCase)
+                && snapshot.PeriodYear == periodYear
+                && snapshot.PeriodMonth == periodMonth;
+
+            var bySupplierId = new Dictionary<string, PrincipalReturnPercentageRow>(StringComparer.OrdinalIgnoreCase);
+            if (matchesPeriod)
+            {
+                foreach (var row in snapshot.Principals ?? new List<PrincipalReturnPercentageRow>())
+                {
+                    if (string.IsNullOrWhiteSpace(row.SupplierId))
+                        continue;
+
+                    bySupplierId[row.SupplierId.Trim()] = row;
+                }
+            }
+
+            return new ReturnPercentageComposition(matchesPeriod, bySupplierId, existing);
+        }
+
+        private void ComposeReturns(
+            ICollection<EntityAnalyticsCurrentRow> rows,
+            ICollection<EntityAnalyticsMonthlyRow> monthlyRows,
+            string entityId,
+            string entityCode,
+            int periodYear,
+            int periodMonth,
+            DateTime generatedAt,
+            ReturnComposition returns)
+        {
+            if (returns.MatchesPeriod && returns.BySupplierId.TryGetValue(entityId, out var owned))
+            {
+                AddReturnRows(rows, monthlyRows, entityId, entityCode, owned, periodYear, periodMonth, generatedAt);
+                return;
+            }
+
+            if (returns.MatchesPeriod)
+                return;
+
+            var good = returns.ExistingGood.FirstOrDefault(row =>
+                string.Equals(row.EntityId, entityId, StringComparison.OrdinalIgnoreCase));
+            var broken = returns.ExistingBroken.FirstOrDefault(row =>
+                string.Equals(row.EntityId, entityId, StringComparison.OrdinalIgnoreCase));
+            var total = returns.ExistingTotal.FirstOrDefault(row =>
+                string.Equals(row.EntityId, entityId, StringComparison.OrdinalIgnoreCase));
+
+            if (good?.NumericValue == null && broken?.NumericValue == null && total?.NumericValue == null)
+                return;
+
+            AddReturnRows(rows, null, entityId, entityCode,
+                good?.NumericValue, broken?.NumericValue, total?.NumericValue,
+                0, 0, generatedAt);
+        }
+
+        private void ComposeReturnPercentage(
+            ICollection<EntityAnalyticsCurrentRow> rows,
+            ICollection<EntityAnalyticsMonthlyRow> monthlyRows,
+            string entityId,
+            string entityCode,
+            int periodYear,
+            int periodMonth,
+            DateTime generatedAt,
+            ReturnPercentageComposition percentage)
+        {
+            if (percentage.MatchesPeriod && percentage.BySupplierId.TryGetValue(entityId, out var owned))
+            {
+                AddReturnPercentageRows(rows, monthlyRows, entityId, entityCode, owned.ReturnPercentage, periodYear, periodMonth, generatedAt);
+                return;
+            }
+
+            if (percentage.MatchesPeriod)
+                return;
+
+            var persisted = percentage.Existing.FirstOrDefault(row =>
+                string.Equals(row.EntityId, entityId, StringComparison.OrdinalIgnoreCase));
+            if (persisted == null)
+                return;
+
+            AddReturnPercentageRows(rows, null, entityId, entityCode, persisted.NumericValue, 0, 0, generatedAt);
+        }
+
+        private void AppendSnapshotOnlyReturns(
+            ICollection<EntityAnalyticsCurrentRow> rows,
+            ICollection<EntityAnalyticsMonthlyRow> monthlyRows,
+            int periodYear,
+            int periodMonth,
+            DateTime generatedAt,
+            ReturnComposition returns)
+        {
+            if (!returns.MatchesPeriod)
+                return;
+
+            foreach (var owned in returns.BySupplierId.Values)
+            {
+                var entityId = owned.SupplierId.Trim();
+                if (ContainsKpi(rows, entityId, PrincipalKpiCatalog.GoodReturnAmountId)
+                    && ContainsKpi(rows, entityId, PrincipalKpiCatalog.BrokenReturnAmountId)
+                    && ContainsKpi(rows, entityId, PrincipalKpiCatalog.TotalReturnAmountId))
+                    continue;
+
+                EnsureIdentity(rows, entityId, entityId, owned.SupplierName, generatedAt);
+                AddReturnRows(rows, monthlyRows, entityId, entityId, owned, periodYear, periodMonth, generatedAt);
+            }
+        }
+
+        private void RetainPersistedReturns(
+            ICollection<EntityAnalyticsCurrentRow> rows,
+            DateTime generatedAt,
+            ReturnComposition returns)
+        {
+            if (returns.MatchesPeriod)
+                return;
+
+            var entityIds = returns.ExistingGood
+                .Concat(returns.ExistingBroken)
+                .Concat(returns.ExistingTotal)
+                .Where(row => !string.IsNullOrWhiteSpace(row.EntityId))
+                .Select(row => row.EntityId.Trim())
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .ToList();
+
+            foreach (var entityId in entityIds)
+            {
+                if (ContainsKpi(rows, entityId, PrincipalKpiCatalog.GoodReturnAmountId)
+                    && ContainsKpi(rows, entityId, PrincipalKpiCatalog.BrokenReturnAmountId)
+                    && ContainsKpi(rows, entityId, PrincipalKpiCatalog.TotalReturnAmountId))
+                    continue;
+
+                var good = returns.ExistingGood.FirstOrDefault(row =>
+                    string.Equals(row.EntityId, entityId, StringComparison.OrdinalIgnoreCase));
+                var broken = returns.ExistingBroken.FirstOrDefault(row =>
+                    string.Equals(row.EntityId, entityId, StringComparison.OrdinalIgnoreCase));
+                var total = returns.ExistingTotal.FirstOrDefault(row =>
+                    string.Equals(row.EntityId, entityId, StringComparison.OrdinalIgnoreCase));
+
+                if (good?.NumericValue == null && broken?.NumericValue == null && total?.NumericValue == null)
+                    continue;
+
+                var entityCode = good?.EntityCode ?? broken?.EntityCode ?? total?.EntityCode;
+                if (string.IsNullOrWhiteSpace(entityCode))
+                    entityCode = entityId;
+
+                CopyIdentity(rows, entityId, entityCode.Trim(), generatedAt);
+                AddReturnRows(rows, null, entityId, entityCode.Trim(),
+                    good?.NumericValue, broken?.NumericValue, total?.NumericValue,
+                    0, 0, generatedAt);
+            }
+        }
+
+        private void AppendSnapshotOnlyReturnPercentage(
+            ICollection<EntityAnalyticsCurrentRow> rows,
+            ICollection<EntityAnalyticsMonthlyRow> monthlyRows,
+            int periodYear,
+            int periodMonth,
+            DateTime generatedAt,
+            ReturnPercentageComposition percentage)
+        {
+            if (!percentage.MatchesPeriod)
+                return;
+
+            foreach (var owned in percentage.BySupplierId.Values)
+            {
+                var entityId = owned.SupplierId.Trim();
+                if (ContainsKpi(rows, entityId, PrincipalKpiCatalog.ReturnPercentageId))
+                    continue;
+
+                EnsureIdentity(rows, entityId, entityId, owned.SupplierName, generatedAt);
+                AddReturnPercentageRows(rows, monthlyRows, entityId, entityId, owned.ReturnPercentage, periodYear, periodMonth, generatedAt);
+            }
+        }
+
+        private void RetainPersistedReturnPercentage(
+            ICollection<EntityAnalyticsCurrentRow> rows,
+            DateTime generatedAt,
+            ReturnPercentageComposition percentage)
+        {
+            if (percentage.MatchesPeriod)
+                return;
+
+            foreach (var persisted in percentage.Existing)
+            {
+                if (string.IsNullOrWhiteSpace(persisted.EntityId))
+                    continue;
+
+                var entityId = persisted.EntityId.Trim();
+                if (ContainsKpi(rows, entityId, PrincipalKpiCatalog.ReturnPercentageId))
+                    continue;
+
+                var entityCode = string.IsNullOrWhiteSpace(persisted.EntityCode) ? entityId : persisted.EntityCode.Trim();
+                CopyIdentity(rows, entityId, entityCode, generatedAt);
+                AddReturnPercentageRows(rows, null, entityId, entityCode, persisted.NumericValue, 0, 0, generatedAt);
+            }
+        }
+
+        private void EnsureIdentity(
+            ICollection<EntityAnalyticsCurrentRow> rows,
+            string entityId,
+            string entityCode,
+            string displayName,
+            DateTime generatedAt)
+        {
+            if (!rows.Any(row =>
+                    string.Equals(row.EntityId, entityId, StringComparison.OrdinalIgnoreCase)
+                    && string.Equals(row.KpiId, EntityAnalyticsMetaKpiIds.DisplayName, StringComparison.OrdinalIgnoreCase)))
+            {
+                rows.Add(CreateMetaRow(
+                    entityId,
+                    entityCode,
+                    EntityAnalyticsMetaKpiIds.DisplayName,
+                    null,
+                    string.IsNullOrWhiteSpace(displayName) ? entityCode : displayName.Trim(),
+                    generatedAt));
+            }
+
+            if (!rows.Any(row =>
+                    string.Equals(row.EntityId, entityId, StringComparison.OrdinalIgnoreCase)
+                    && string.Equals(row.KpiId, EntityAnalyticsMetaKpiIds.IsActive, StringComparison.OrdinalIgnoreCase)))
+            {
+                rows.Add(CreateMetaRow(entityId, entityCode, EntityAnalyticsMetaKpiIds.IsActive, 1m, null, generatedAt));
+            }
+        }
+
         private void CopyIdentity(
             ICollection<EntityAnalyticsCurrentRow> rows,
             string entityId,
@@ -353,9 +635,101 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Producers
 
         private static bool ContainsSalesOut(IEnumerable<EntityAnalyticsCurrentRow> rows, string entityId)
         {
+            return ContainsKpi(rows, entityId, PrincipalKpiCatalog.SalesOutId);
+        }
+
+        private static bool ContainsKpi(IEnumerable<EntityAnalyticsCurrentRow> rows, string entityId, string kpiId)
+        {
             return rows.Any(row =>
                 string.Equals(row.EntityId, entityId, StringComparison.OrdinalIgnoreCase)
-                && string.Equals(row.KpiId, PrincipalKpiCatalog.SalesOutId, StringComparison.OrdinalIgnoreCase));
+                && string.Equals(row.KpiId, kpiId, StringComparison.OrdinalIgnoreCase));
+        }
+
+        private void AddReturnRows(
+            ICollection<EntityAnalyticsCurrentRow> rows,
+            ICollection<EntityAnalyticsMonthlyRow> monthlyRows,
+            string entityId,
+            string entityCode,
+            PrincipalReturnRow owned,
+            int periodYear,
+            int periodMonth,
+            DateTime generatedAt)
+        {
+            AddReturnRows(rows, monthlyRows, entityId, entityCode,
+                owned.GoodReturnAmount, owned.BrokenReturnAmount, owned.TotalReturnAmount,
+                periodYear, periodMonth, generatedAt);
+        }
+
+        private void AddReturnRows(
+            ICollection<EntityAnalyticsCurrentRow> rows,
+            ICollection<EntityAnalyticsMonthlyRow> monthlyRows,
+            string entityId,
+            string entityCode,
+            decimal? goodReturnAmount,
+            decimal? brokenReturnAmount,
+            decimal? totalReturnAmount,
+            int periodYear,
+            int periodMonth,
+            DateTime generatedAt)
+        {
+            AddKpiRow(rows, monthlyRows, entityId, entityCode,
+                PrincipalKpiCatalog.GoodReturnAmountId, goodReturnAmount, periodYear, periodMonth, generatedAt);
+            AddKpiRow(rows, monthlyRows, entityId, entityCode,
+                PrincipalKpiCatalog.BrokenReturnAmountId, brokenReturnAmount, periodYear, periodMonth, generatedAt);
+            AddKpiRow(rows, monthlyRows, entityId, entityCode,
+                PrincipalKpiCatalog.TotalReturnAmountId, totalReturnAmount, periodYear, periodMonth, generatedAt);
+        }
+
+        private void AddReturnPercentageRows(
+            ICollection<EntityAnalyticsCurrentRow> rows,
+            ICollection<EntityAnalyticsMonthlyRow> monthlyRows,
+            string entityId,
+            string entityCode,
+            decimal? returnPercentage,
+            int periodYear,
+            int periodMonth,
+            DateTime generatedAt)
+        {
+            AddKpiRow(rows, monthlyRows, entityId, entityCode,
+                PrincipalKpiCatalog.ReturnPercentageId, returnPercentage, periodYear, periodMonth, generatedAt);
+        }
+
+        private void AddKpiRow(
+            ICollection<EntityAnalyticsCurrentRow> rows,
+            ICollection<EntityAnalyticsMonthlyRow> monthlyRows,
+            string entityId,
+            string entityCode,
+            string kpiId,
+            decimal? amount,
+            int periodYear,
+            int periodMonth,
+            DateTime generatedAt)
+        {
+            if (ContainsKpi(rows, entityId, kpiId))
+                return;
+
+            rows.Add(CreateRow(entityId, entityCode, kpiId, amount, null, generatedAt));
+
+            if (monthlyRows == null || periodYear <= 0 || periodMonth <= 0)
+                return;
+
+            if (!_kpiRegistry.TryGetMetadata(kpiId, out var metadata) || !metadata.TrendEligible)
+                return;
+
+            monthlyRows.Add(new EntityAnalyticsMonthlyRow
+            {
+                EntityType = EntityTypeCode.Supplier,
+                EntityId = entityId,
+                EntityCode = entityCode,
+                PeriodYear = periodYear,
+                PeriodMonth = periodMonth,
+                KpiId = kpiId,
+                NumericValue = amount,
+                PeriodSemantics = metadata.PeriodSemantics,
+                DefinitionVersion = metadata.DefinitionVersion,
+                IsClosed = false,
+                GeneratedAt = generatedAt
+            });
         }
 
         private sealed class SalesOutComposition
@@ -373,6 +747,52 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Producers
             public bool MatchesPeriod { get; }
 
             public IReadOnlyDictionary<string, PrincipalSalesOutRow> BySupplierId { get; }
+
+            public IReadOnlyList<EntityAnalyticsPeriodMetricRow> Existing { get; }
+        }
+
+        private sealed class ReturnComposition
+        {
+            public ReturnComposition(
+                bool matchesPeriod,
+                IReadOnlyDictionary<string, PrincipalReturnRow> bySupplierId,
+                IReadOnlyList<EntityAnalyticsPeriodMetricRow> existingGood,
+                IReadOnlyList<EntityAnalyticsPeriodMetricRow> existingBroken,
+                IReadOnlyList<EntityAnalyticsPeriodMetricRow> existingTotal)
+            {
+                MatchesPeriod = matchesPeriod;
+                BySupplierId = bySupplierId ?? new Dictionary<string, PrincipalReturnRow>(StringComparer.OrdinalIgnoreCase);
+                ExistingGood = existingGood ?? Array.Empty<EntityAnalyticsPeriodMetricRow>();
+                ExistingBroken = existingBroken ?? Array.Empty<EntityAnalyticsPeriodMetricRow>();
+                ExistingTotal = existingTotal ?? Array.Empty<EntityAnalyticsPeriodMetricRow>();
+            }
+
+            public bool MatchesPeriod { get; }
+
+            public IReadOnlyDictionary<string, PrincipalReturnRow> BySupplierId { get; }
+
+            public IReadOnlyList<EntityAnalyticsPeriodMetricRow> ExistingGood { get; }
+
+            public IReadOnlyList<EntityAnalyticsPeriodMetricRow> ExistingBroken { get; }
+
+            public IReadOnlyList<EntityAnalyticsPeriodMetricRow> ExistingTotal { get; }
+        }
+
+        private sealed class ReturnPercentageComposition
+        {
+            public ReturnPercentageComposition(
+                bool matchesPeriod,
+                IReadOnlyDictionary<string, PrincipalReturnPercentageRow> bySupplierId,
+                IReadOnlyList<EntityAnalyticsPeriodMetricRow> existing)
+            {
+                MatchesPeriod = matchesPeriod;
+                BySupplierId = bySupplierId ?? new Dictionary<string, PrincipalReturnPercentageRow>(StringComparer.OrdinalIgnoreCase);
+                Existing = existing ?? Array.Empty<EntityAnalyticsPeriodMetricRow>();
+            }
+
+            public bool MatchesPeriod { get; }
+
+            public IReadOnlyDictionary<string, PrincipalReturnPercentageRow> BySupplierId { get; }
 
             public IReadOnlyList<EntityAnalyticsPeriodMetricRow> Existing { get; }
         }

@@ -14,6 +14,10 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Registrars
 
         public const string PrincipalSalesOutEvidenceFilterDimension = "supplierId";
 
+        public const string PrincipalReturnEvidenceRoute = "/dashboard/principal-performance/return-evidence";
+
+        public const string PrincipalReturnEvidenceFilterDimension = "supplierId";
+
         public void Register(
             IEntityTypeRegistry entityTypes,
             IKpiRegistry kpiRegistry,
@@ -25,6 +29,10 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Registrars
             kpiRegistry.RegisterPack(KpiPackId, new[]
             {
                 PrincipalKpiCatalog.SalesOutId,
+                PrincipalKpiCatalog.GoodReturnAmountId,
+                PrincipalKpiCatalog.BrokenReturnAmountId,
+                PrincipalKpiCatalog.TotalReturnAmountId,
+                PrincipalKpiCatalog.ReturnPercentageId,
                 "PU-KPI-001",
                 "PU-KPI-002",
                 "PU-KPI-003",
@@ -83,6 +91,114 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Registrars
                 ApplicableEntityTypes = new[] { EntityTypeCode.Supplier },
                 DefinitionVersion = 1,
                 IntroducedVersion = "PCM-015"
+            });
+
+            kpiRegistry.RegisterMetadata(new EntityKpiMetadata
+            {
+                KpiId = PrincipalKpiCatalog.GoodReturnAmountId,
+                Category = EntityKpiCategory.Quality,
+                DisplayName = "Good Return Amount",
+                Description = "PRN-RET-001 Good Return Amount from Return Item. Returns are independent KPIs and never reduce, replace, or redefine PRN-SALES-001. Evidence grain is Return Item. This is not Principal Sales-Out and not Net Sales.",
+                PeriodSemantics = "MTD",
+                TimeGrain = "Month",
+                Unit = "IDR",
+                ValueType = "Numeric",
+                AggregationType = "Sum",
+                Direction = "LowerIsBetter",
+                NormalizationRule = "None",
+                VisualizationType = "Card",
+                TrendEligible = true,
+                RankEligible = false,
+                RadarEligible = false,
+                DisplayPrecision = 0,
+                NullableBehavior = "ShowEmpty",
+                EvidenceRoute = PrincipalReturnEvidenceRoute,
+                EvidenceFilterDimension = PrincipalReturnEvidenceFilterDimension,
+                SourceDomain = PrincipalReturnSnapshot.Domain,
+                ApplicableEntityTypes = new[] { EntityTypeCode.Supplier },
+                DefinitionVersion = 1,
+                IntroducedVersion = "PCM-047"
+            });
+
+            kpiRegistry.RegisterMetadata(new EntityKpiMetadata
+            {
+                KpiId = PrincipalKpiCatalog.BrokenReturnAmountId,
+                Category = EntityKpiCategory.Quality,
+                DisplayName = "Broken Return Amount",
+                Description = "PRN-RET-002 Broken Return Amount from Return Item. Returns are independent KPIs and never reduce, replace, or redefine PRN-SALES-001. Evidence grain is Return Item. This is not Principal Sales-Out and not Net Sales.",
+                PeriodSemantics = "MTD",
+                TimeGrain = "Month",
+                Unit = "IDR",
+                ValueType = "Numeric",
+                AggregationType = "Sum",
+                Direction = "LowerIsBetter",
+                NormalizationRule = "None",
+                VisualizationType = "Card",
+                TrendEligible = true,
+                RankEligible = false,
+                RadarEligible = false,
+                DisplayPrecision = 0,
+                NullableBehavior = "ShowEmpty",
+                EvidenceRoute = PrincipalReturnEvidenceRoute,
+                EvidenceFilterDimension = PrincipalReturnEvidenceFilterDimension,
+                SourceDomain = PrincipalReturnSnapshot.Domain,
+                ApplicableEntityTypes = new[] { EntityTypeCode.Supplier },
+                DefinitionVersion = 1,
+                IntroducedVersion = "PCM-047"
+            });
+
+            kpiRegistry.RegisterMetadata(new EntityKpiMetadata
+            {
+                KpiId = PrincipalKpiCatalog.TotalReturnAmountId,
+                Category = EntityKpiCategory.Quality,
+                DisplayName = "Total Return Amount",
+                Description = "PRN-RET-003 Total Return Amount (Good Return + Broken Return) from Return Item. Returns are independent KPIs and never reduce, replace, or redefine PRN-SALES-001. Evidence grain is Return Item. This is not Principal Sales-Out and not Net Sales.",
+                PeriodSemantics = "MTD",
+                TimeGrain = "Month",
+                Unit = "IDR",
+                ValueType = "Numeric",
+                AggregationType = "Sum",
+                Direction = "LowerIsBetter",
+                NormalizationRule = "None",
+                VisualizationType = "Card",
+                TrendEligible = true,
+                RankEligible = false,
+                RadarEligible = false,
+                DisplayPrecision = 0,
+                NullableBehavior = "ShowEmpty",
+                EvidenceRoute = PrincipalReturnEvidenceRoute,
+                EvidenceFilterDimension = PrincipalReturnEvidenceFilterDimension,
+                SourceDomain = PrincipalReturnSnapshot.Domain,
+                ApplicableEntityTypes = new[] { EntityTypeCode.Supplier },
+                DefinitionVersion = 1,
+                IntroducedVersion = "PCM-047"
+            });
+
+            kpiRegistry.RegisterMetadata(new EntityKpiMetadata
+            {
+                KpiId = PrincipalKpiCatalog.ReturnPercentageId,
+                Category = EntityKpiCategory.Quality,
+                DisplayName = "Return Percentage",
+                Description = "PRN-RET-004 Return Percentage (Return Amount ÷ Sales-Out) when stored PRN-SALES-001 is greater than zero; otherwise null. Return Percentage is a quality and supporting ranking indicator only. It is not a deduction from Sales-Out and not Net Sales. Returns never reduce Principal Sales-Out.",
+                PeriodSemantics = "MTD",
+                TimeGrain = "Month",
+                Unit = "Ratio",
+                ValueType = "Numeric",
+                AggregationType = "LastValue",
+                Direction = "LowerIsBetter",
+                NormalizationRule = "None",
+                VisualizationType = "Card",
+                TrendEligible = true,
+                RankEligible = true,
+                RadarEligible = false,
+                DisplayPrecision = 6,
+                NullableBehavior = "ShowEmpty",
+                EvidenceRoute = PrincipalReturnEvidenceRoute,
+                EvidenceFilterDimension = PrincipalReturnEvidenceFilterDimension,
+                SourceDomain = PrincipalReturnPercentageSnapshot.Domain,
+                ApplicableEntityTypes = new[] { EntityTypeCode.Supplier },
+                DefinitionVersion = 1,
+                IntroducedVersion = "PCM-047"
             });
 
             kpiRegistry.RegisterMetadata(new EntityKpiMetadata

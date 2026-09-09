@@ -537,9 +537,13 @@ Only a review agent may set `GO` or `NO-GO`.
 
 ### PCM-047
 
-- Status: PLANNED
-- Implementation History: none
-- Review History: none
+- Status: GO
+- Implementation History:
+  - 2026-09-10: IN IMPLEMENTATION
+  - 2026-09-10: IMPLEMENTED. Composed stored `PRN-RET-001`, `PRN-RET-002`, `PRN-RET-003`, and `PRN-RET-004` onto the Supplier/Principal Entity Analytics profile from the Returns-owned snapshots. The existing `SupplierEntityAnalyticsProducer` reads the stored return snapshots and does not write, overwrite, or recalculate `PRN-SALES-001`. `PRN-RET-004` is null or absent when stored Sales-Out is not greater than zero. Return evidence opens Return Item evidence. No target, growth, purchase, inventory, or coverage pack was added.
+- Review History:
+  - 2026-09-10: IN REVIEW
+  - 2026-09-10: GO. Return values equal the stored return snapshots. `PRN-RET-004` is a quality supporting ranking indicator only and is null or absent when stored Sales-Out is not greater than zero. The producer does not write or replace `PRN-SALES-001`. Return evidence opens Return Item evidence. `btr.application` builds, `btr.test` builds via MSBuild, 67 related tests pass including 5 new `SupplierPrincipalReturnCompositionTest` tests.
 - Remediation History: none
 
 ### PCM-048

@@ -251,6 +251,7 @@
     <Compile Include="ReportingContext\SalesmanEntityAnalyticsReconciliationTest.cs" />
     <Compile Include="ReportingContext\SupplierEntityAnalyticsProducerTest.cs" />
     <Compile Include="ReportingContext\SupplierPrincipalSalesOutCompositionTest.cs" />
+    <Compile Include="ReportingContext\SupplierPrincipalReturnCompositionTest.cs" />
     <Compile Include="ReportingContext\SupplierPrincipalOmzetRelationshipMetadataTest.cs" />
     <Compile Include="ReportingContext\SupplierEntityAnalyticsReconciliationTest.cs" />
     <Compile Include="ReportingContext\ItemEntityAnalyticsProducerTest.cs" />

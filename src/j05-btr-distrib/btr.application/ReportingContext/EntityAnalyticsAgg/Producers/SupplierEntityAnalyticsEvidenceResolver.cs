@@ -27,7 +27,8 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Producers
             var query = $"?supplierCode={UriEncode(supplierCode)}";
             var links = new List<ProfileEvidenceLinkDto>
             {
-                CreatePrincipalSalesOutLink(identity, entityId, null, "Faktur Item evidence")
+                CreatePrincipalSalesOutLink(identity, entityId, null, "Faktur Item evidence"),
+                CreatePrincipalReturnLink(identity, entityId, "Return Item evidence")
             };
 
             links.Add(ResolveOmzetRelationshipEvidence(
@@ -97,6 +98,28 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Producers
                 FilterDimension = SupplierEntityAnalyticsRegistrar.PrincipalSalesOutEvidenceFilterDimension,
                 RelationshipCode = relationshipCode,
                 MetricKpiId = PrincipalKpiCatalog.SalesOutId
+            };
+        }
+
+        private static ProfileEvidenceLinkDto CreatePrincipalReturnLink(
+            EntityIdentity identity,
+            string entityId,
+            string label)
+        {
+            var supplierId = identity?.EntityId;
+            if (string.IsNullOrWhiteSpace(supplierId))
+                supplierId = entityId;
+
+            var route = SupplierEntityAnalyticsRegistrar.PrincipalReturnEvidenceRoute
+                + $"?{SupplierEntityAnalyticsRegistrar.PrincipalReturnEvidenceFilterDimension}={UriEncode(supplierId)}";
+
+            return new ProfileEvidenceLinkDto
+            {
+                Category = "Quality",
+                Label = label,
+                ReportRoute = route,
+                FilterDimension = SupplierEntityAnalyticsRegistrar.PrincipalReturnEvidenceFilterDimension,
+                MetricKpiId = PrincipalKpiCatalog.TotalReturnAmountId
             };
         }
 
