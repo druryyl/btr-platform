@@ -314,6 +314,38 @@ namespace btr.test.ReportingContext
         }
 
         [Fact]
+        public void Catalog_RegistersActiveCustomerCount_FromProjectionOnly()
+        {
+            PrincipalKpiCatalog.TryGet(PrincipalKpiCatalog.ActiveCustomerCountId, out var entry).Should().BeTrue();
+            entry.KpiId.Should().Be("PRN-CUS-001");
+            entry.Name.Should().Be("Active Customer Count");
+            entry.Description.Should().Be("Number of active Customers purchasing the Principal");
+            entry.EvidenceGrain.Should().Be("Customer × Principal Relationship Projection");
+            entry.Formula.Should().Be("COUNT(Customers on BTRPD_CustomerPrincipalRelationship where RelationshipStatus = Active)");
+            entry.EntityCategory.Should().Be(EntityTypeCode.Supplier);
+            entry.IsAuthoritativePrincipalPerformanceKpi.Should().BeFalse();
+            entry.IsAuthoritativeRankingKpi.Should().BeFalse();
+            entry.DeductsReturns.Should().BeFalse();
+            entry.DeductsClaims.Should().BeFalse();
+            entry.DeductsInventoryAdjustments.Should().BeFalse();
+            entry.DefinitionStatements.Should().Contain(
+                "PRN-CUS-001 Active Customer Count counts Customers on BTRPD_CustomerPrincipalRelationship whose stored status is Active.");
+            entry.DefinitionStatements.Should().Contain(
+                "The count does not scan raw transaction history.");
+            entry.DefinitionStatements.Should().Contain(
+                "A Dormant projection row is excluded from the count and is not deleted.");
+            entry.DefinitionStatements.Should().Contain(
+                "This KPI writer does not write projection status.");
+            entry.DefinitionStatements.Should().Contain(
+                "This KPI writer does not write, overwrite, or recalculate PRN-SALES-001.");
+            entry.DefinitionStatements.Should().Contain(
+                "This slice does not render a dashboard panel. Display is a later slice.");
+            entry.Name.Should().NotBe("Net Sales");
+
+            PrincipalKpiCatalog.TryGet("PRN-CUS-002", out _).Should().BeFalse();
+        }
+
+        [Fact]
         public void Catalog_DoesNotRegisterOtherPrincipalFamiliesOrWithdrawnIds()
         {
             var ids = PrincipalKpiCatalog.Entries.Select(entry => entry.KpiId).ToList();
@@ -331,6 +363,7 @@ namespace btr.test.ReportingContext
             ids.Should().Contain("PRN-RET-003");
             ids.Should().Contain("PRN-RET-004");
             ids.Should().Contain("PRN-GRW-001");
+            ids.Should().Contain("PRN-CUS-001");
             ids.Should().OnlyContain(id =>
                 id == "PRN-SALES-001" ||
                 id == "PRN-TGT-001" ||
@@ -343,12 +376,14 @@ namespace btr.test.ReportingContext
                 id == "PRN-RET-002" ||
                 id == "PRN-RET-003" ||
                 id == "PRN-RET-004" ||
-                id == "PRN-GRW-001");
+                id == "PRN-GRW-001" ||
+                id == "PRN-CUS-001");
             ids.Should().NotContain(id => id.StartsWith("PRN-RET-") && id != "PRN-RET-001" && id != "PRN-RET-002" && id != "PRN-RET-003" && id != "PRN-RET-004");
             ids.Should().NotContain(id => id.StartsWith("PRN-TGT-") && id != "PRN-TGT-001" && id != "PRN-TGT-002" && id != "PRN-TGT-003");
             ids.Should().NotContain(id => id.StartsWith("PRN-PUR-") && id != "PRN-PUR-001");
             ids.Should().NotContain(id => id.StartsWith("PRN-INV-") && id != "PRN-INV-001" && id != "PRN-INV-002");
-            ids.Should().NotContain(id => id.StartsWith("PRN-CUS-"));
+            ids.Should().NotContain(id => id.StartsWith("PRN-CUS-") && id != "PRN-CUS-001");
+            ids.Should().NotContain("PRN-CUS-002");
             ids.Should().NotContain("PRN-GRW-002");
             ids.Should().NotContain(id => id.StartsWith("PRN-GRW-") && id != "PRN-GRW-001");
             ids.Should().NotContain(id => id.StartsWith("PR-KPI-"));

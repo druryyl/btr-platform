@@ -486,9 +486,13 @@ Only a review agent may set `GO` or `NO-GO`.
 
 ### PCM-042
 
-- Status: PLANNED
-- Implementation History: none
-- Review History: none
+- Status: GO
+- Implementation History:
+  - 2026-09-10: IN IMPLEMENTATION
+  - 2026-09-10: IMPLEMENTED. Counted `PRN-CUS-001` Active Customer Count from stored `BTRPD_CustomerPrincipalRelationship` rows whose stored status is Active into `BTRPD_PrincipalActiveCustomer`. Catalog registers `PRN-CUS-001` only. The writer reads the stored projection, does not scan raw transactions, does not write projection status, does not write `PRN-SALES-001`, and renders no dashboard panel.
+- Review History:
+  - 2026-09-10: IN REVIEW
+  - 2026-09-10: GO. `PRN-CUS-001` counts stored Active rows on the projection only. Dormant rows are excluded from the count and retained. The writer touches only `BTRPD_PrincipalActiveCustomerKpi` and `BTRPD_PrincipalActiveCustomer`, writes no projection status and no `PRN-SALES-001`, and renders no dashboard panel. Catalog registers `PRN-CUS-001` only. `btr.application`, `btr.infrastructure`, `btr.test` (MSBuild), and `btr.portal.worker` build. 29 targeted tests pass, including 4 new composer tests and the new catalog test. 10 broader ReportingContext failures are pre-existing on baseline.
 - Remediation History: none
 
 ### PCM-043

@@ -29,6 +29,7 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.UseCases
         private readonly IRefreshPrincipalMomGrowthSnapshotWorker _principalMomGrowthWorker;
         private readonly IRefreshPrincipalSalesmanContributionSnapshotWorker _principalSalesmanContributionWorker;
         private readonly IRefreshCustomerPrincipalRelationshipWorker _customerPrincipalRelationshipWorker;
+        private readonly IRefreshPrincipalActiveCustomerSnapshotWorker _principalActiveCustomerWorker;
         private readonly IRefreshDashboardPurchasingSnapshotWorker _purchasingWorker;
         private readonly IRefreshPrincipalPurchaseInSnapshotWorker _principalPurchaseInWorker;
         private readonly IRefreshDashboardPurchasingManagementSnapshotWorker _purchasingManagementWorker;
@@ -54,6 +55,7 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.UseCases
             IRefreshPrincipalMomGrowthSnapshotWorker principalMomGrowthWorker,
             IRefreshPrincipalSalesmanContributionSnapshotWorker principalSalesmanContributionWorker,
             IRefreshCustomerPrincipalRelationshipWorker customerPrincipalRelationshipWorker,
+            IRefreshPrincipalActiveCustomerSnapshotWorker principalActiveCustomerWorker,
             IRefreshDashboardPurchasingSnapshotWorker purchasingWorker,
             IRefreshPrincipalPurchaseInSnapshotWorker principalPurchaseInWorker,
             IRefreshDashboardPurchasingManagementSnapshotWorker purchasingManagementWorker,
@@ -78,6 +80,7 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.UseCases
             _principalMomGrowthWorker = principalMomGrowthWorker;
             _principalSalesmanContributionWorker = principalSalesmanContributionWorker;
             _customerPrincipalRelationshipWorker = customerPrincipalRelationshipWorker;
+            _principalActiveCustomerWorker = principalActiveCustomerWorker;
             _purchasingWorker = purchasingWorker;
             _principalPurchaseInWorker = principalPurchaseInWorker;
             _purchasingManagementWorker = purchasingManagementWorker;
@@ -303,6 +306,20 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.UseCases
                     };
                     _customerPrincipalRelationshipWorker.Execute(relationshipRequest);
                     return relationshipRequest.Result;
+                },
+                domainResults,
+                failures);
+
+            RunDomain(
+                PrincipalActiveCustomerSnapshot.Domain,
+                () =>
+                {
+                    var activeCustomerRequest = new RefreshPrincipalActiveCustomerSnapshotRequest
+                    {
+                        TriggeredBy = triggeredBy
+                    };
+                    _principalActiveCustomerWorker.Execute(activeCustomerRequest);
+                    return activeCustomerRequest.Result;
                 },
                 domainResults,
                 failures);
@@ -563,6 +580,13 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.UseCases
                         Domain = domain,
                         RefreshLogId = customerPrincipalRelationship.RefreshLogId,
                         DurationMs = customerPrincipalRelationship.DurationMs
+                    };
+                case RefreshPrincipalActiveCustomerSnapshotResult principalActiveCustomer:
+                    return new RefreshDashboardDomainResult
+                    {
+                        Domain = domain,
+                        RefreshLogId = principalActiveCustomer.RefreshLogId,
+                        DurationMs = principalActiveCustomer.DurationMs
                     };
                 case RefreshDashboardPurchasingSnapshotResult purchasing:
                     return new RefreshDashboardDomainResult

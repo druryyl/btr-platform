@@ -34,6 +34,8 @@ namespace btr.application.ReportingContext.PrincipalAnalyticsAgg
 
         public const string MomGrowthId = "PRN-GRW-001";
 
+        public const string ActiveCustomerCountId = "PRN-CUS-001";
+
         public const string ReturnsMustNotReduceReplaceOrRedefinePrincipalSalesOut =
             "Returns KPIs must not reduce, replace, or redefine PRN-SALES-001.";
 
@@ -73,6 +75,8 @@ namespace btr.application.ReportingContext.PrincipalAnalyticsAgg
 
         private static readonly PrincipalKpiCatalogEntry MomGrowthEntry = CreateMomGrowth();
 
+        private static readonly PrincipalKpiCatalogEntry ActiveCustomerCountEntry = CreateActiveCustomerCount();
+
         private static readonly IReadOnlyList<PrincipalKpiCatalogEntry> RegisteredEntries =
             new[]
             {
@@ -87,7 +91,8 @@ namespace btr.application.ReportingContext.PrincipalAnalyticsAgg
                 BrokenReturnAmountEntry,
                 TotalReturnAmountEntry,
                 ReturnPercentageEntry,
-                MomGrowthEntry
+                MomGrowthEntry,
+                ActiveCustomerCountEntry
             };
 
         public static IReadOnlyList<PrincipalKpiCatalogEntry> Entries
@@ -529,6 +534,42 @@ namespace btr.application.ReportingContext.PrincipalAnalyticsAgg
                     "The writer does not write, overwrite, or recalculate PRN-SALES-001.",
                     "The writer does not write PRN-GRW-002.",
                     "The user-facing name is Month-over-Month Growth Percentage, not purchase growth and not Net Sales."
+                }
+            };
+        }
+
+        private static PrincipalKpiCatalogEntry CreateActiveCustomerCount()
+        {
+            return new PrincipalKpiCatalogEntry
+            {
+                KpiId = ActiveCustomerCountId,
+                Name = "Active Customer Count",
+                Description = "Number of active Customers purchasing the Principal",
+                EntityCategory = EntityTypeCode.Supplier,
+                EvidenceGrain = "Customer × Principal Relationship Projection",
+                Formula = "COUNT(Customers on BTRPD_CustomerPrincipalRelationship where RelationshipStatus = Active)",
+                IsAuthoritativePrincipalPerformanceKpi = false,
+                IsAuthoritativeRankingKpi = false,
+                DeductsReturns = false,
+                DeductsClaims = false,
+                DeductsInventoryAdjustments = false,
+                DefinitionStatements = new[]
+                {
+                    "PRN-CUS-001 Active Customer Count counts Customers on BTRPD_CustomerPrincipalRelationship whose stored status is Active.",
+                    "Evidence grain is Customer × Principal Relationship Projection.",
+                    "The count does not scan raw transaction history.",
+                    "A Dormant projection row is excluded from the count and is not deleted.",
+                    "History is retained indefinitely. Inactivity does not delete a projection row.",
+                    "Active means last transaction on the projection is within 6 months of the snapshot as-of date.",
+                    "Dormant means the projection row exists and last transaction is not within 6 months.",
+                    "This KPI writer does not write projection status.",
+                    "This KPI writer does not write, overwrite, or recalculate PRN-SALES-001.",
+                    "This KPI does not modify PRN-SALES-001.",
+                    "Coverage, Active Customer, Dormant Customer, Relationship Analytics, and Entity Analytics consume BTRPD_CustomerPrincipalRelationship.",
+                    "This slice does not render a dashboard panel. Display is a later slice.",
+                    "PRN-CUS-001 is not the authoritative Principal ranking KPI.",
+                    "PRN-CUS-001 is not Net Sales.",
+                    "The user-facing name is Active Customer Count, not Principal Sales-Out and not Net Sales."
                 }
             };
         }

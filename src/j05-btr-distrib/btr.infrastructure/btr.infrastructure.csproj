@@ -200,6 +200,7 @@
     <Compile Include="ReportingContext\PrincipalAnalyticsAgg\PrincipalInventorySnapshotDal.cs" />
     <Compile Include="ReportingContext\PrincipalAnalyticsAgg\PrincipalTargetEvidenceDal.cs" />
     <Compile Include="ReportingContext\PrincipalAnalyticsAgg\PrincipalTargetSnapshotDal.cs" />
+    <Compile Include="ReportingContext\PrincipalAnalyticsAgg\PrincipalActiveCustomerSnapshotDal.cs" />
     <Compile Include="ReportingContext\DashboardSnapshotAgg\DashboardCollectionSnapshotDal.cs" />
     <Compile Include="ReportingContext\DashboardSnapshotAgg\DashboardLocationSnapshotDal.cs" />
     <Compile Include="ReportingContext\DashboardCustomerAgg\DashboardCustomerDal.cs" />
