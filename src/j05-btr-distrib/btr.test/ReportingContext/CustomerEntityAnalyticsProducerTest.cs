@@ -9,6 +9,7 @@ using btr.application.ReportingContext.EntityAnalyticsAgg.Producers;
 using btr.application.ReportingContext.EntityAnalyticsAgg.Options;
 using btr.application.ReportingContext.EntityAnalyticsAgg.Registrars;
 using btr.application.ReportingContext.EntityAnalyticsAgg.Services;
+using btr.application.ReportingContext.PrincipalAnalyticsAgg.Models;
 using FluentAssertions;
 using Xunit;
 
@@ -151,6 +152,41 @@ namespace btr.test.ReportingContext
                 r.SourceEntityId == "CUST-001" && r.SourceEntityCode == "C001");
             repository.RelationshipRows.Should().Contain(r =>
                 r.RelationshipCode == CustomerRelationshipCatalog.TopItemsByOmzet);
+            repository.RelationshipRows.Should().Contain(r =>
+                r.RelationshipCode == CustomerRelationshipCatalog.TopPrincipalsByOmzet
+                && r.SourceEntityId == "CUST-001"
+                && r.TargetEntityType == EntityTypeCode.Supplier
+                && r.TargetEntityId == "SUP1"
+                && r.TargetEntityCode == "SUP1"
+                && r.MetricValue == 1000m);
+        }
+
+        [Fact]
+        public void Produce_WithoutPrincipalProjection_DoesNotWriteTopPrincipalsRelationships()
+        {
+            var repository = new RecordingRepository();
+            var producer = CreateProducer(repository);
+            var generatedAt = new DateTime(2026, 6, 24, 10, 0, 0);
+
+            producer.Produce(new EntityAnalyticsProduceContext
+            {
+                RefreshLogId = "refresh-1",
+                GeneratedAt = generatedAt,
+                BusinessDate = generatedAt.Date,
+                DomainInput = new CustomerEntityAnalyticsProduceInput
+                {
+                    PortfolioAggregate = new DashboardCustomerPortfolioAggregateResult
+                    {
+                        Customers = new List<DashboardCustomerPortfolioCustomerRow>
+                        {
+                            CreatePortfolioCustomer()
+                        }
+                    }
+                }
+            });
+
+            repository.RelationshipRows.Should().NotContain(r =>
+                r.RelationshipCode == CustomerRelationshipCatalog.TopPrincipalsByOmzet);
         }
 
         [Fact]
@@ -333,18 +369,28 @@ namespace btr.test.ReportingContext
                                         BrgName = "Item 1",
                                         MetricValue = 1000m
                                     }
-                                },
-                                TopPrincipals = new List<DashboardCustomerRelationshipPrincipalRow>
-                                {
-                                    new DashboardCustomerRelationshipPrincipalRow
-                                    {
-                                        Rank = 1,
-                                        SupplierId = "SUP1",
-                                        SupplierCode = "P01",
-                                        SupplierName = "Principal 1",
-                                        MetricValue = 1000m
-                                    }
                                 }
+                            }
+                        }
+                    },
+                    RelationshipProjection = new CustomerPrincipalRelationshipResult
+                    {
+                        KpiId = "PRN-SALES-001",
+                        AsOfDate = generatedAt.Date,
+                        Pairs = new List<CustomerPrincipalRelationshipRow>
+                        {
+                            new CustomerPrincipalRelationshipRow
+                            {
+                                CustomerId = customer.CustomerId ?? "CUST-001",
+                                CustomerName = customer.CustomerName,
+                                SupplierId = "SUP1",
+                                SupplierName = "Principal 1",
+                                FirstTransactionDate = generatedAt.Date.AddMonths(-2),
+                                LastTransactionDate = generatedAt.Date,
+                                RelationshipStatus = "Active",
+                                KpiId = "PRN-SALES-001",
+                                SalesOutAmount = 1000m,
+                                LineCount = 2
                             }
                         }
                     }

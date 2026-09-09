@@ -73,7 +73,7 @@ namespace btr.test.ReportingContext
         }
 
         [Fact]
-        public void CustomerTopPrincipalMetadata_IsUnchanged()
+        public void CustomerTopPrincipalMetadata_ReferencesPrincipalSalesOutNotPurchaseOrSalesmanKpis()
         {
             var entityTypes = new EntityTypeRegistry();
             entityTypes.Register(new EntityTypeRegistration
@@ -89,8 +89,12 @@ namespace btr.test.ReportingContext
                 EntityTypeCode.Customer,
                 CustomerRelationshipCatalog.TopPrincipalsByOmzet,
                 out var principals).Should().BeTrue();
-            principals.MetricKpiId.Should().Be("CU-KPI-009");
-            principals.MetricKpiId.Should().NotBe(PrincipalKpiCatalog.SalesOutId);
+            principals.MetricKpiId.Should().Be(PrincipalKpiCatalog.SalesOutId);
+            principals.MetricKpiId.Should().NotBe("CU-KPI-009");
+            principals.MetricKpiId.Should().NotBe("PU-KPI-001");
+            principals.MetricKpiId.Should().NotBe("SF-KPI-008");
+            principals.MetricKpiId.Should().NotBe("PRN-CUS-001");
+            principals.MetricKpiId.Should().NotBe("PRN-CUS-002");
         }
 
         [Fact]

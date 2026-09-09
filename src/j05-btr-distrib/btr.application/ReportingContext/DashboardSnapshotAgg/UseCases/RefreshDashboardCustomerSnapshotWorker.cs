@@ -10,6 +10,7 @@ using btr.application.ReportingContext.DashboardSnapshotAgg.Services;
 using btr.application.ReportingContext.EntityAnalyticsAgg.Contracts;
 using btr.application.ReportingContext.EntityAnalyticsAgg.Producers;
 using btr.application.ReportingContext.EntityAnalyticsAgg.Services;
+using btr.application.ReportingContext.PrincipalAnalyticsAgg.Contracts;
 using btr.application.SalesContext.CustomerAgg.Contracts;
 using btr.application.SalesContext.FakturInfo;
 using btr.application.Portal;
@@ -48,6 +49,7 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.UseCases
         private readonly IDashboardSalesmanSnapshotDal _salesmanSnapshotDal;
         private readonly IDashboardCustomerSnapshotDal _snapshotDal;
         private readonly IDashboardSnapshotRefreshLogDal _refreshLogDal;
+        private readonly ICustomerPrincipalRelationshipDal _customerPrincipalRelationshipDal;
         private readonly ITglJamDal _tglJamDal;
         private readonly IBusinessDateProvider _businessDateProvider;
         private readonly DashboardSnapshotOptions _options;
@@ -73,6 +75,7 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.UseCases
             IDashboardSalesmanSnapshotDal salesmanSnapshotDal,
             IDashboardCustomerSnapshotDal snapshotDal,
             IDashboardSnapshotRefreshLogDal refreshLogDal,
+            ICustomerPrincipalRelationshipDal customerPrincipalRelationshipDal,
             ITglJamDal tglJamDal,
             IBusinessDateProvider businessDateProvider,
             DashboardSnapshotOptions options,
@@ -97,6 +100,7 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.UseCases
             _salesmanSnapshotDal = salesmanSnapshotDal;
             _snapshotDal = snapshotDal;
             _refreshLogDal = refreshLogDal;
+            _customerPrincipalRelationshipDal = customerPrincipalRelationshipDal;
             _tglJamDal = tglJamDal;
             _businessDateProvider = businessDateProvider;
             _options = options ?? new DashboardSnapshotOptions();
@@ -257,6 +261,10 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.UseCases
                 var itemRollupRows = _customerMtdItemRollupDal.ListMtdItemRollups(periode)?.ToList()
                     ?? new System.Collections.Generic.List<CustomerMtdItemRollupDto>();
                 var relationshipAggregate = _relationshipAggregator.Aggregate(itemRollupRows, today, generatedAt);
+
+                WorkerProgressScope.Current.StepStarted($"{Domain}:LoadPrincipalProjection", "Load customer-principal relationship projection");
+                var principalProjection = _customerPrincipalRelationshipDal.GetProjection();
+                WorkerProgressScope.Current.StepCompleted($"{Domain}:LoadPrincipalProjection");
                 WorkerProgressScope.Current.StepCompleted($"{Domain}:AggregateRelationships");
 
                 WorkerProgressScope.Current.StepStarted($"{Domain}:Save", "Save snapshot");
@@ -277,7 +285,8 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.UseCases
                             ForecastAggregate = forecastAggregate,
                             PortfolioAggregate = portfolioAggregate,
                             SalesmanSnapshot = salesmanSnapshot,
-                            RelationshipAggregate = relationshipAggregate
+                            RelationshipAggregate = relationshipAggregate,
+                            RelationshipProjection = principalProjection
                         }
                     });
                     WorkerProgressScope.Current.StepCompleted($"{Domain}:EntityAnalytics");

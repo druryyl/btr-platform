@@ -18,6 +18,7 @@ using btr.application.ReportingContext.EntityAnalyticsAgg.Models.Snapshot;
 
 using btr.application.ReportingContext.EntityAnalyticsAgg.Registrars;
 using btr.application.ReportingContext.EntityAnalyticsAgg.Services;
+using btr.application.ReportingContext.PrincipalAnalyticsAgg.Models;
 using btr.nuna.Domain;
 
 
@@ -472,6 +473,8 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Producers
 
                 ?? new Dictionary<string, DashboardCustomerRelationshipCustomerRollup>(StringComparer.OrdinalIgnoreCase);
 
+            var principalPairsByCustomerId = BuildPrincipalPairIndex(input.RelationshipProjection);
+
 
 
             var snapshots = new List<EntityRelationshipSnapshot>();
@@ -566,9 +569,13 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Producers
 
                     }
 
+                }
 
+                if (principalPairsByCustomerId.TryGetValue(entityId, out var principalPairs))
 
-                    foreach (var principal in rollup.TopPrincipals)
+                {
+
+                    foreach (var principal in principalPairs)
 
                     {
 
@@ -586,11 +593,11 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Producers
 
                             TargetEntityId = principal.SupplierId,
 
-                            TargetEntityCode = principal.SupplierCode ?? principal.SupplierId,
+                            TargetEntityCode = principal.SupplierId,
 
                             TargetDisplayName = principal.SupplierName,
 
-                            MetricValue = principal.MetricValue
+                            MetricValue = principal.SalesOutAmount
 
                         });
 
@@ -606,7 +613,59 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Producers
 
         }
 
+        private static IReadOnlyDictionary<string, IList<CustomerPrincipalRelationshipRow>> BuildPrincipalPairIndex(
 
+            CustomerPrincipalRelationshipResult projection)
+
+        {
+
+            var index = new Dictionary<string, IList<CustomerPrincipalRelationshipRow>>(StringComparer.OrdinalIgnoreCase);
+
+
+
+            if (projection?.Pairs == null)
+
+                return index;
+
+
+
+            foreach (var pair in projection.Pairs)
+
+            {
+
+                if (pair == null
+
+                    || string.IsNullOrWhiteSpace(pair.CustomerId)
+
+                    || string.IsNullOrWhiteSpace(pair.SupplierId))
+
+                    continue;
+
+
+
+                var customerId = pair.CustomerId.Trim();
+
+                if (!index.TryGetValue(customerId, out var pairs))
+
+                {
+
+                    pairs = new List<CustomerPrincipalRelationshipRow>();
+
+                    index[customerId] = pairs;
+
+                }
+
+
+
+                pairs.Add(pair);
+
+            }
+
+
+
+            return index;
+
+        }
 
         private static Dictionary<string, CustomerRiskForecastContext> BuildForecastIndex(
 
