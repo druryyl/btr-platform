@@ -7,6 +7,7 @@ export const PortalMenuCodes = {
   SA01: 'SA01',
   SA02: 'SA02',
   SA03: 'SA03',
+  SA04: 'SA04',
   CU01: 'CU01',
   CU02: 'CU02',
   CU03: 'CU03',
