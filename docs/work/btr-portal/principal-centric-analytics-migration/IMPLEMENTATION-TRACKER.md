@@ -548,9 +548,13 @@ Only a review agent may set `GO` or `NO-GO`.
 
 ### PCM-048
 
-- Status: PLANNED
-- Implementation History: none
-- Review History: none
+- Status: GO
+- Implementation History:
+  - 2026-09-10: IN IMPLEMENTATION
+  - 2026-09-10: IMPLEMENTED. Composed stored `PRN-TGT-001`, `PRN-TGT-002`, and `PRN-TGT-003` onto the Supplier/Principal Entity Analytics profile from the Target-owned and Achievement-owned snapshots. The existing `SupplierEntityAnalyticsProducer` reads the stored target and achievement snapshots and does not write, overwrite, or recalculate `PRN-SALES-001`. No return, growth, purchase, inventory, or coverage pack was added.
+- Review History:
+  - 2026-09-10: IN REVIEW
+  - 2026-09-10: GO. Target pack reads stored `PRN-TGT-001` and stored `PRN-TGT-002`/`PRN-TGT-003` for the matching period and does not replace `PRN-SALES-001` with achievement or a net-of-returns amount. No return, growth, purchase, or inventory pack was added. `btr.application` and `btr.test` build via MSBuild. 5 new `SupplierPrincipalTargetCompositionTest` tests and 38 related tests pass; full ReportingContext failures are pre-existing on baseline.
 - Remediation History: none
 
 ### PCM-049

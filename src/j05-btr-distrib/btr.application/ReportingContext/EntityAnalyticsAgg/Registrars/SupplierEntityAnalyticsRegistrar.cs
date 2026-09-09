@@ -18,6 +18,10 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Registrars
 
         public const string PrincipalReturnEvidenceFilterDimension = "supplierId";
 
+        public const string PrincipalTargetEvidenceRoute = "/dashboard/principal-performance";
+
+        public const string PrincipalTargetEvidenceFilterDimension = "supplierId";
+
         public void Register(
             IEntityTypeRegistry entityTypes,
             IKpiRegistry kpiRegistry,
@@ -33,6 +37,9 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Registrars
                 PrincipalKpiCatalog.BrokenReturnAmountId,
                 PrincipalKpiCatalog.TotalReturnAmountId,
                 PrincipalKpiCatalog.ReturnPercentageId,
+                PrincipalKpiCatalog.TargetId,
+                PrincipalKpiCatalog.AchievementAmountId,
+                PrincipalKpiCatalog.AchievementPercentageId,
                 "PU-KPI-001",
                 "PU-KPI-002",
                 "PU-KPI-003",
@@ -199,6 +206,87 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Registrars
                 ApplicableEntityTypes = new[] { EntityTypeCode.Supplier },
                 DefinitionVersion = 1,
                 IntroducedVersion = "PCM-047"
+            });
+
+            kpiRegistry.RegisterMetadata(new EntityKpiMetadata
+            {
+                KpiId = PrincipalKpiCatalog.TargetId,
+                Category = EntityKpiCategory.Financial,
+                DisplayName = "Principal Target",
+                Description = "PRN-TGT-001 Principal Target (Sum of Salesman Principal Targets) from SalesPersonPrincipalTarget. Target is derived, not independently maintained. This is not Principal Sales-Out and not Net Sales.",
+                PeriodSemantics = "MTD",
+                TimeGrain = "Month",
+                Unit = "IDR",
+                ValueType = "Numeric",
+                AggregationType = "Sum",
+                Direction = "HigherIsBetter",
+                NormalizationRule = "None",
+                VisualizationType = "Card",
+                TrendEligible = true,
+                RankEligible = false,
+                RadarEligible = false,
+                DisplayPrecision = 0,
+                NullableBehavior = "ShowEmpty",
+                EvidenceRoute = PrincipalTargetEvidenceRoute,
+                EvidenceFilterDimension = PrincipalTargetEvidenceFilterDimension,
+                SourceDomain = PrincipalTargetSnapshot.Domain,
+                ApplicableEntityTypes = new[] { EntityTypeCode.Supplier },
+                DefinitionVersion = 1,
+                IntroducedVersion = "PCM-048"
+            });
+
+            kpiRegistry.RegisterMetadata(new EntityKpiMetadata
+            {
+                KpiId = PrincipalKpiCatalog.AchievementAmountId,
+                Category = EntityKpiCategory.Financial,
+                DisplayName = "Achievement Amount",
+                Description = "PRN-TGT-002 Achievement Amount (Principal Sales-Out versus Target) from stored PRN-SALES-001 and stored PRN-TGT-001. This is not a copy of Sales-Out, does not deduct returns, and is not Net Sales.",
+                PeriodSemantics = "MTD",
+                TimeGrain = "Month",
+                Unit = "IDR",
+                ValueType = "Numeric",
+                AggregationType = "Sum",
+                Direction = "HigherIsBetter",
+                NormalizationRule = "None",
+                VisualizationType = "Card",
+                TrendEligible = true,
+                RankEligible = false,
+                RadarEligible = false,
+                DisplayPrecision = 0,
+                NullableBehavior = "ShowEmpty",
+                EvidenceRoute = PrincipalTargetEvidenceRoute,
+                EvidenceFilterDimension = PrincipalTargetEvidenceFilterDimension,
+                SourceDomain = PrincipalAchievementSnapshot.Domain,
+                ApplicableEntityTypes = new[] { EntityTypeCode.Supplier },
+                DefinitionVersion = 1,
+                IntroducedVersion = "PCM-048"
+            });
+
+            kpiRegistry.RegisterMetadata(new EntityKpiMetadata
+            {
+                KpiId = PrincipalKpiCatalog.AchievementPercentageId,
+                Category = EntityKpiCategory.Financial,
+                DisplayName = "Achievement Percentage",
+                Description = "PRN-TGT-003 Achievement Percentage (Principal Sales-Out ÷ Principal Target) when stored PRN-TGT-001 is greater than zero; otherwise null. Achievement Percentage is a supporting ranking KPI only. It is not a replacement for Principal Sales-Out and not Net Sales.",
+                PeriodSemantics = "MTD",
+                TimeGrain = "Month",
+                Unit = "Ratio",
+                ValueType = "Numeric",
+                AggregationType = "LastValue",
+                Direction = "HigherIsBetter",
+                NormalizationRule = "None",
+                VisualizationType = "Card",
+                TrendEligible = true,
+                RankEligible = true,
+                RadarEligible = false,
+                DisplayPrecision = 6,
+                NullableBehavior = "ShowEmpty",
+                EvidenceRoute = PrincipalTargetEvidenceRoute,
+                EvidenceFilterDimension = PrincipalTargetEvidenceFilterDimension,
+                SourceDomain = PrincipalAchievementSnapshot.Domain,
+                ApplicableEntityTypes = new[] { EntityTypeCode.Supplier },
+                DefinitionVersion = 1,
+                IntroducedVersion = "PCM-048"
             });
 
             kpiRegistry.RegisterMetadata(new EntityKpiMetadata

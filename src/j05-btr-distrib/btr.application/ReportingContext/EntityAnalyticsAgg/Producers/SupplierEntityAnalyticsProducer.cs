@@ -33,6 +33,8 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Producers
         private readonly IPrincipalSalesOutSnapshotDal _salesOutSnapshotDal;
         private readonly IPrincipalReturnSnapshotDal _returnSnapshotDal;
         private readonly IPrincipalReturnPercentageSnapshotDal _returnPercentageSnapshotDal;
+        private readonly IPrincipalTargetSnapshotDal _targetSnapshotDal;
+        private readonly IPrincipalAchievementSnapshotDal _achievementSnapshotDal;
 
         public SupplierEntityAnalyticsProducer(
             IEntityAnalyticsRepository repository,
@@ -45,7 +47,9 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Producers
             IAttentionSignalRegistry attentionSignals,
             IPrincipalSalesOutSnapshotDal salesOutSnapshotDal = null,
             IPrincipalReturnSnapshotDal returnSnapshotDal = null,
-            IPrincipalReturnPercentageSnapshotDal returnPercentageSnapshotDal = null)
+            IPrincipalReturnPercentageSnapshotDal returnPercentageSnapshotDal = null,
+            IPrincipalTargetSnapshotDal targetSnapshotDal = null,
+            IPrincipalAchievementSnapshotDal achievementSnapshotDal = null)
         {
             _repository = repository;
             _kpiRegistry = kpiRegistry;
@@ -58,6 +62,8 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Producers
             _salesOutSnapshotDal = salesOutSnapshotDal;
             _returnSnapshotDal = returnSnapshotDal;
             _returnPercentageSnapshotDal = returnPercentageSnapshotDal;
+            _targetSnapshotDal = targetSnapshotDal;
+            _achievementSnapshotDal = achievementSnapshotDal;
         }
 
         public void Produce(EntityAnalyticsProduceContext context)
@@ -71,6 +77,8 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Producers
             var salesOut = ReadOwnedSalesOut(periodYear, periodMonth);
             var returns = ReadOwnedReturns(periodYear, periodMonth);
             var returnPercentage = ReadOwnedReturnPercentage(periodYear, periodMonth);
+            var target = ReadOwnedTarget(periodYear, periodMonth);
+            var achievement = ReadOwnedAchievement(periodYear, periodMonth);
 
             if (portfolio == null || portfolio.Count == 0)
             {
@@ -92,6 +100,12 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Producers
                 AppendSnapshotOnlyReturnPercentage(
                     retainedRows, retainedMonthly, periodYear, periodMonth, context.GeneratedAt, returnPercentage);
                 RetainPersistedReturnPercentage(retainedRows, context.GeneratedAt, returnPercentage);
+                AppendSnapshotOnlyTarget(
+                    retainedRows, retainedMonthly, periodYear, periodMonth, context.GeneratedAt, target);
+                RetainPersistedTarget(retainedRows, context.GeneratedAt, target);
+                AppendSnapshotOnlyAchievement(
+                    retainedRows, retainedMonthly, periodYear, periodMonth, context.GeneratedAt, achievement);
+                RetainPersistedAchievement(retainedRows, context.GeneratedAt, achievement);
 
                 EntityAnalyticsProducerReplaySupport.PersistL0(
                     _repository, context, EntityTypeCode.Supplier, retainedRows);
@@ -134,6 +148,8 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Producers
                 ComposeSalesOut(rows, monthlyRows, entityId, entityCode, periodYear, periodMonth, generatedAt, salesOut);
                 ComposeReturns(rows, monthlyRows, entityId, entityCode, periodYear, periodMonth, generatedAt, returns);
                 ComposeReturnPercentage(rows, monthlyRows, entityId, entityCode, periodYear, periodMonth, generatedAt, returnPercentage);
+                ComposeTarget(rows, monthlyRows, entityId, entityCode, periodYear, periodMonth, generatedAt, target);
+                ComposeAchievement(rows, monthlyRows, entityId, entityCode, periodYear, periodMonth, generatedAt, achievement);
                 signalsByEntity[entityId] = BuildAttentionSnapshots(
                     entityId,
                     entityCode,
@@ -147,6 +163,10 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Producers
             RetainPersistedReturns(rows, context.GeneratedAt, returns);
             AppendSnapshotOnlyReturnPercentage(rows, monthlyRows, periodYear, periodMonth, context.GeneratedAt, returnPercentage);
             RetainPersistedReturnPercentage(rows, context.GeneratedAt, returnPercentage);
+            AppendSnapshotOnlyTarget(rows, monthlyRows, periodYear, periodMonth, context.GeneratedAt, target);
+            RetainPersistedTarget(rows, context.GeneratedAt, target);
+            AppendSnapshotOnlyAchievement(rows, monthlyRows, periodYear, periodMonth, context.GeneratedAt, achievement);
+            RetainPersistedAchievement(rows, context.GeneratedAt, achievement);
 
             EntityAnalyticsProducerReplaySupport.PersistL0(_repository, context, EntityTypeCode.Supplier, rows);
 
@@ -529,6 +549,235 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Producers
             }
         }
 
+        private TargetComposition ReadOwnedTarget(int periodYear, int periodMonth)
+        {
+            var existing = _repository.GetCurrentKpiPopulation(
+                EntityTypeCode.Supplier,
+                PrincipalKpiCatalog.TargetId);
+
+            var snapshot = _targetSnapshotDal?.GetCurrent();
+            var matchesPeriod = snapshot != null
+                && string.Equals(snapshot.KpiId, PrincipalKpiCatalog.TargetId, StringComparison.OrdinalIgnoreCase)
+                && snapshot.PeriodYear == periodYear
+                && snapshot.PeriodMonth == periodMonth;
+
+            var bySupplierId = new Dictionary<string, PrincipalTargetRow>(StringComparer.OrdinalIgnoreCase);
+            if (matchesPeriod)
+            {
+                foreach (var row in snapshot.Principals ?? new List<PrincipalTargetRow>())
+                {
+                    if (string.IsNullOrWhiteSpace(row.SupplierId))
+                        continue;
+
+                    bySupplierId[row.SupplierId.Trim()] = row;
+                }
+            }
+
+            return new TargetComposition(matchesPeriod, bySupplierId, existing);
+        }
+
+        private AchievementComposition ReadOwnedAchievement(int periodYear, int periodMonth)
+        {
+            var existingAmount = _repository.GetCurrentKpiPopulation(
+                EntityTypeCode.Supplier,
+                PrincipalKpiCatalog.AchievementAmountId);
+            var existingPercentage = _repository.GetCurrentKpiPopulation(
+                EntityTypeCode.Supplier,
+                PrincipalKpiCatalog.AchievementPercentageId);
+
+            var snapshot = _achievementSnapshotDal?.GetCurrent();
+            var matchesPeriod = snapshot != null
+                && string.Equals(snapshot.AchievementAmountKpiId, PrincipalKpiCatalog.AchievementAmountId, StringComparison.OrdinalIgnoreCase)
+                && string.Equals(snapshot.AchievementPercentageKpiId, PrincipalKpiCatalog.AchievementPercentageId, StringComparison.OrdinalIgnoreCase)
+                && snapshot.PeriodYear == periodYear
+                && snapshot.PeriodMonth == periodMonth;
+
+            var bySupplierId = new Dictionary<string, PrincipalAchievementRow>(StringComparer.OrdinalIgnoreCase);
+            if (matchesPeriod)
+            {
+                foreach (var row in snapshot.Principals ?? new List<PrincipalAchievementRow>())
+                {
+                    if (string.IsNullOrWhiteSpace(row.SupplierId))
+                        continue;
+
+                    bySupplierId[row.SupplierId.Trim()] = row;
+                }
+            }
+
+            return new AchievementComposition(matchesPeriod, bySupplierId, existingAmount, existingPercentage);
+        }
+
+        private void ComposeTarget(
+            ICollection<EntityAnalyticsCurrentRow> rows,
+            ICollection<EntityAnalyticsMonthlyRow> monthlyRows,
+            string entityId,
+            string entityCode,
+            int periodYear,
+            int periodMonth,
+            DateTime generatedAt,
+            TargetComposition target)
+        {
+            if (target.MatchesPeriod && target.BySupplierId.TryGetValue(entityId, out var owned))
+            {
+                AddTargetRows(rows, monthlyRows, entityId, entityCode, owned.TargetAmount, periodYear, periodMonth, generatedAt);
+                return;
+            }
+
+            if (target.MatchesPeriod)
+                return;
+
+            var persisted = target.Existing.FirstOrDefault(row =>
+                string.Equals(row.EntityId, entityId, StringComparison.OrdinalIgnoreCase));
+            if (persisted?.NumericValue == null)
+                return;
+
+            AddTargetRows(rows, null, entityId, entityCode, persisted.NumericValue, 0, 0, generatedAt);
+        }
+
+        private void ComposeAchievement(
+            ICollection<EntityAnalyticsCurrentRow> rows,
+            ICollection<EntityAnalyticsMonthlyRow> monthlyRows,
+            string entityId,
+            string entityCode,
+            int periodYear,
+            int periodMonth,
+            DateTime generatedAt,
+            AchievementComposition achievement)
+        {
+            if (achievement.MatchesPeriod && achievement.BySupplierId.TryGetValue(entityId, out var owned))
+            {
+                AddAchievementRows(rows, monthlyRows, entityId, entityCode,
+                    owned.AchievementAmount, owned.AchievementPercentage,
+                    periodYear, periodMonth, generatedAt);
+                return;
+            }
+
+            if (achievement.MatchesPeriod)
+                return;
+
+            var amount = achievement.ExistingAmount.FirstOrDefault(row =>
+                string.Equals(row.EntityId, entityId, StringComparison.OrdinalIgnoreCase));
+            var percentage = achievement.ExistingPercentage.FirstOrDefault(row =>
+                string.Equals(row.EntityId, entityId, StringComparison.OrdinalIgnoreCase));
+
+            if (amount?.NumericValue == null && percentage?.NumericValue == null)
+                return;
+
+            AddAchievementRows(rows, null, entityId, entityCode,
+                amount?.NumericValue, percentage?.NumericValue,
+                0, 0, generatedAt);
+        }
+
+        private void AppendSnapshotOnlyTarget(
+            ICollection<EntityAnalyticsCurrentRow> rows,
+            ICollection<EntityAnalyticsMonthlyRow> monthlyRows,
+            int periodYear,
+            int periodMonth,
+            DateTime generatedAt,
+            TargetComposition target)
+        {
+            if (!target.MatchesPeriod)
+                return;
+
+            foreach (var owned in target.BySupplierId.Values)
+            {
+                var entityId = owned.SupplierId.Trim();
+                if (ContainsKpi(rows, entityId, PrincipalKpiCatalog.TargetId))
+                    continue;
+
+                EnsureIdentity(rows, entityId, entityId, owned.SupplierName, generatedAt);
+                AddTargetRows(rows, monthlyRows, entityId, entityId, owned.TargetAmount, periodYear, periodMonth, generatedAt);
+            }
+        }
+
+        private void RetainPersistedTarget(
+            ICollection<EntityAnalyticsCurrentRow> rows,
+            DateTime generatedAt,
+            TargetComposition target)
+        {
+            if (target.MatchesPeriod)
+                return;
+
+            foreach (var persisted in target.Existing)
+            {
+                if (string.IsNullOrWhiteSpace(persisted.EntityId) || persisted.NumericValue == null)
+                    continue;
+
+                var entityId = persisted.EntityId.Trim();
+                if (ContainsKpi(rows, entityId, PrincipalKpiCatalog.TargetId))
+                    continue;
+
+                var entityCode = string.IsNullOrWhiteSpace(persisted.EntityCode) ? entityId : persisted.EntityCode.Trim();
+                CopyIdentity(rows, entityId, entityCode, generatedAt);
+                AddTargetRows(rows, null, entityId, entityCode, persisted.NumericValue, 0, 0, generatedAt);
+            }
+        }
+
+        private void AppendSnapshotOnlyAchievement(
+            ICollection<EntityAnalyticsCurrentRow> rows,
+            ICollection<EntityAnalyticsMonthlyRow> monthlyRows,
+            int periodYear,
+            int periodMonth,
+            DateTime generatedAt,
+            AchievementComposition achievement)
+        {
+            if (!achievement.MatchesPeriod)
+                return;
+
+            foreach (var owned in achievement.BySupplierId.Values)
+            {
+                var entityId = owned.SupplierId.Trim();
+                if (ContainsKpi(rows, entityId, PrincipalKpiCatalog.AchievementAmountId)
+                    && ContainsKpi(rows, entityId, PrincipalKpiCatalog.AchievementPercentageId))
+                    continue;
+
+                EnsureIdentity(rows, entityId, entityId, owned.SupplierName, generatedAt);
+                AddAchievementRows(rows, monthlyRows, entityId, entityId,
+                    owned.AchievementAmount, owned.AchievementPercentage,
+                    periodYear, periodMonth, generatedAt);
+            }
+        }
+
+        private void RetainPersistedAchievement(
+            ICollection<EntityAnalyticsCurrentRow> rows,
+            DateTime generatedAt,
+            AchievementComposition achievement)
+        {
+            if (achievement.MatchesPeriod)
+                return;
+
+            var entityIds = achievement.ExistingAmount
+                .Concat(achievement.ExistingPercentage)
+                .Where(row => !string.IsNullOrWhiteSpace(row.EntityId))
+                .Select(row => row.EntityId.Trim())
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .ToList();
+
+            foreach (var entityId in entityIds)
+            {
+                if (ContainsKpi(rows, entityId, PrincipalKpiCatalog.AchievementAmountId)
+                    && ContainsKpi(rows, entityId, PrincipalKpiCatalog.AchievementPercentageId))
+                    continue;
+
+                var amount = achievement.ExistingAmount.FirstOrDefault(row =>
+                    string.Equals(row.EntityId, entityId, StringComparison.OrdinalIgnoreCase));
+                var percentage = achievement.ExistingPercentage.FirstOrDefault(row =>
+                    string.Equals(row.EntityId, entityId, StringComparison.OrdinalIgnoreCase));
+
+                if (amount?.NumericValue == null && percentage?.NumericValue == null)
+                    continue;
+
+                var entityCode = amount?.EntityCode ?? percentage?.EntityCode;
+                if (string.IsNullOrWhiteSpace(entityCode))
+                    entityCode = entityId;
+
+                CopyIdentity(rows, entityId, entityCode.Trim(), generatedAt);
+                AddAchievementRows(rows, null, entityId, entityCode.Trim(),
+                    amount?.NumericValue, percentage?.NumericValue,
+                    0, 0, generatedAt);
+            }
+        }
+
         private void EnsureIdentity(
             ICollection<EntityAnalyticsCurrentRow> rows,
             string entityId,
@@ -694,6 +943,52 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Producers
                 PrincipalKpiCatalog.ReturnPercentageId, returnPercentage, periodYear, periodMonth, generatedAt);
         }
 
+        private void AddTargetRows(
+            ICollection<EntityAnalyticsCurrentRow> rows,
+            ICollection<EntityAnalyticsMonthlyRow> monthlyRows,
+            string entityId,
+            string entityCode,
+            decimal? targetAmount,
+            int periodYear,
+            int periodMonth,
+            DateTime generatedAt)
+        {
+            AddKpiRow(rows, monthlyRows, entityId, entityCode,
+                PrincipalKpiCatalog.TargetId, targetAmount, periodYear, periodMonth, generatedAt);
+        }
+
+        private void AddAchievementRows(
+            ICollection<EntityAnalyticsCurrentRow> rows,
+            ICollection<EntityAnalyticsMonthlyRow> monthlyRows,
+            string entityId,
+            string entityCode,
+            PrincipalAchievementRow owned,
+            int periodYear,
+            int periodMonth,
+            DateTime generatedAt)
+        {
+            AddAchievementRows(rows, monthlyRows, entityId, entityCode,
+                owned.AchievementAmount, owned.AchievementPercentage,
+                periodYear, periodMonth, generatedAt);
+        }
+
+        private void AddAchievementRows(
+            ICollection<EntityAnalyticsCurrentRow> rows,
+            ICollection<EntityAnalyticsMonthlyRow> monthlyRows,
+            string entityId,
+            string entityCode,
+            decimal? achievementAmount,
+            decimal? achievementPercentage,
+            int periodYear,
+            int periodMonth,
+            DateTime generatedAt)
+        {
+            AddKpiRow(rows, monthlyRows, entityId, entityCode,
+                PrincipalKpiCatalog.AchievementAmountId, achievementAmount, periodYear, periodMonth, generatedAt);
+            AddKpiRow(rows, monthlyRows, entityId, entityCode,
+                PrincipalKpiCatalog.AchievementPercentageId, achievementPercentage, periodYear, periodMonth, generatedAt);
+        }
+
         private void AddKpiRow(
             ICollection<EntityAnalyticsCurrentRow> rows,
             ICollection<EntityAnalyticsMonthlyRow> monthlyRows,
@@ -795,6 +1090,48 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Producers
             public IReadOnlyDictionary<string, PrincipalReturnPercentageRow> BySupplierId { get; }
 
             public IReadOnlyList<EntityAnalyticsPeriodMetricRow> Existing { get; }
+        }
+
+        private sealed class TargetComposition
+        {
+            public TargetComposition(
+                bool matchesPeriod,
+                IReadOnlyDictionary<string, PrincipalTargetRow> bySupplierId,
+                IReadOnlyList<EntityAnalyticsPeriodMetricRow> existing)
+            {
+                MatchesPeriod = matchesPeriod;
+                BySupplierId = bySupplierId ?? new Dictionary<string, PrincipalTargetRow>(StringComparer.OrdinalIgnoreCase);
+                Existing = existing ?? Array.Empty<EntityAnalyticsPeriodMetricRow>();
+            }
+
+            public bool MatchesPeriod { get; }
+
+            public IReadOnlyDictionary<string, PrincipalTargetRow> BySupplierId { get; }
+
+            public IReadOnlyList<EntityAnalyticsPeriodMetricRow> Existing { get; }
+        }
+
+        private sealed class AchievementComposition
+        {
+            public AchievementComposition(
+                bool matchesPeriod,
+                IReadOnlyDictionary<string, PrincipalAchievementRow> bySupplierId,
+                IReadOnlyList<EntityAnalyticsPeriodMetricRow> existingAmount,
+                IReadOnlyList<EntityAnalyticsPeriodMetricRow> existingPercentage)
+            {
+                MatchesPeriod = matchesPeriod;
+                BySupplierId = bySupplierId ?? new Dictionary<string, PrincipalAchievementRow>(StringComparer.OrdinalIgnoreCase);
+                ExistingAmount = existingAmount ?? Array.Empty<EntityAnalyticsPeriodMetricRow>();
+                ExistingPercentage = existingPercentage ?? Array.Empty<EntityAnalyticsPeriodMetricRow>();
+            }
+
+            public bool MatchesPeriod { get; }
+
+            public IReadOnlyDictionary<string, PrincipalAchievementRow> BySupplierId { get; }
+
+            public IReadOnlyList<EntityAnalyticsPeriodMetricRow> ExistingAmount { get; }
+
+            public IReadOnlyList<EntityAnalyticsPeriodMetricRow> ExistingPercentage { get; }
         }
 
         private IEnumerable<EntityAnalyticsMonthlyRow> BuildMonthlyRows(
