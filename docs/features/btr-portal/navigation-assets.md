@@ -1,7 +1,7 @@
 # NAVIGATION ASSET REGISTRY
 
 **Audience:** Business analysts, Product Owner, Phase-4B Navigation Playbook authors  
-**Purpose:** Source of truth for what navigation assets actually exist in BTR Portal today.  
+**Purpose:** Source of truth for what navigation assets actually exist in BTR Portal today, and the single authoritative navigation code list.  
 **Scope:** Discover only. This is not a playbook, not a question-to-screen map, and not a redesign.  
 **Source of truth:** Portal as implemented (sidebar menu, pages, visible widgets, drill-downs). Where older documents use different names, this registry uses the names the user sees.
 
@@ -20,6 +20,37 @@
 Sidebar labels and page titles are not always the same. Both are recorded.
 
 **Not included:** Login. Presentation Mode is a header overlay, not a menu page.
+
+---
+
+# AUTHORITATIVE CODE LIST
+
+This file is the single authoritative navigation code list for BTR Portal. The list is the implemented sidebar codes in Section 1, in implemented menu order. Older specifications, roadmap reservations, and drafts are not authoritative for new assignment.
+
+Implemented codes:
+
+```text
+EX01  EX02  EX03
+SA01  SA04  SA02  SA03
+CU01  CU02  CU03  CU04  CU05
+FI01  FI02  FI03  FI04
+SF01  SF02  SF03
+IN01  IN02  IN03  IN04  IN05
+PU01  PU02
+OP01
+```
+
+Sales group order is SA01, SA04, SA02, SA03. Principal commercial performance is `SA04` — Principal Performance at `/dashboard/principal-performance`. It is not assigned `EX03`, `SF03`, or `SF04`.
+
+Older conflicting reservations are superseded by this list. They are not used for new assignment. Do not reassign an implemented code.
+
+| Code | Older reservation | Implemented use | New assignment |
+| ---- | ----------------- | --------------- | -------------- |
+| EX03 | Future Business Health page | Entity Analytics | Not used. EX03 remains Entity Analytics. |
+| SF03 | Sales Force Effectiveness | Salesman Field Activity | Not used. SF03 remains Salesman Field Activity. |
+| SF04 | Salesman Report; a prior draft also proposed SF04 for Principal Performance | Not an implemented menu code | Not used. Principal commercial performance is SA04. |
+
+`SF02` remains Sales Force Overview. Entity Analytics remains the cross-domain entity path. Purchasing remains the purchase path. Those uses are unchanged by SA04.
 
 ---
 
@@ -49,9 +80,10 @@ Items:
 ```text
 Menu ID:     MENU-SALES
 Menu Name:   Sales
-Purpose:     Current-month invoiced sales performance, month-end forecast, and invoice evidence.
+Purpose:     Current-month invoiced sales performance, Principal commercial performance, month-end forecast, and invoice evidence.
 Items:
   SA01  Sales                  → Sales Dashboard
+  SA04  Principal Performance  → Principal Performance
   SA02  Sales Forecast         → Sales Forecast Dashboard
   SA03  Sales Report           → Sales Report
 ```
@@ -199,6 +231,18 @@ Sidebar Label:   Sales
 Purpose:         Current-month invoiced sales (Faktur) versus target, weekly pace, and top salesmen.
 Primary Entity:  Salesman
 Business Intent: Is billing on plan this month, and who is contributing?
+```
+
+### PAGE-SA04
+
+```text
+Page ID:         PAGE-SA04
+Page Name:       Principal Performance
+Parent Menu:     Sales
+Sidebar Label:   Principal Performance
+Purpose:         Current-period Principal Sales-Out and Principal ranking by Principal Sales-Out.
+Primary Entity:  Principal
+Business Intent: Which Principals are performing on Principal Sales-Out?
 ```
 
 ### PAGE-SA02
@@ -572,6 +616,17 @@ Primary Entity:  Item
 Business Intent: Compare selected items.
 ```
 
+### PAGE-SA04-EVIDENCE
+
+```text
+Page ID:         PAGE-SA04-EVIDENCE
+Page Name:       Principal Sales-Out evidence
+Parent Menu:     Sales (via Principal Performance)
+Purpose:         Faktur Item rows for the selected Principal’s Principal Sales-Out.
+Primary Entity:  Faktur Item
+Business Intent: Show the invoice lines behind a Principal Sales-Out ranking. Not a sidebar item.
+```
+
 ### PAGE-DRAWER-SALESMAN
 
 ```text
@@ -658,6 +713,29 @@ Also on this page: **Open Alert Center** (not a widget — header action to Aler
 | W-SA01-TVA | Target vs Achievement | Chart | Target and achievement amounts | Total Target | Total Achievement | No |
 | W-SA01-WEEK | Weekly Trend | Trend | Weekly invoiced omzet in the month | Weekly omzet | — | No |
 | W-SA01-TOP10 | Top 10 Salesman | Ranking | Rank salesmen by invoiced omzet | Invoiced Omzet | Rank | Investigation → Sales Report (typical) |
+
+---
+
+## PAGE-SA04 — Principal Performance
+
+**Filters:** none (Refresh). A `supplierId` query may name the selected Principal. Ranking remains Principal Sales-Out.
+
+| Widget ID | Widget Name | Type | Purpose | Primary KPI | Secondary KPI | Drill-Down |
+| --------- | ----------- | ---- | ------- | ----------- | ------------- | ---------- |
+| W-SA04-SALESOUT | Principal Sales-Out | KPI Card | Current-period Principal Sales-Out | Principal Sales-Out | — | No |
+| W-SA04-UNKNOWN | Unknown Principal exceptions | KPI Card | Faktur Item lines with no Principal | Unknown Principal exceptions | — | No |
+| W-SA04-DISC | Principal Sales-Out disclosure | Table | Statements that Principal Sales-Out is not reduced by Returns | Principal Sales-Out | — | No |
+| W-SA04-RANK | Principal Sales-Out ranking | Ranking | Rank Principals by Principal Sales-Out | Principal Sales-Out | Rank | Principal Sales-Out evidence |
+
+---
+
+## PAGE-SA04-EVIDENCE — Principal Sales-Out evidence
+
+**Filters:** Selected Principal (`supplierId`). Header action: Back to ranking.
+
+| Widget ID | Widget Name | Type | Purpose | Primary KPI | Secondary KPI | Drill-Down |
+| --------- | ----------- | ---- | ------- | ----------- | ------------- | ---------- |
+| W-SA04E-TABLE | Faktur Item evidence | Table | Tanggal, Faktur, Faktur Item, BrgId, Principal Sales-Out | Principal Sales-Out | — | No further portal drill-down |
 
 ---
 
@@ -1247,6 +1325,38 @@ Purpose:         Show fakturs behind a salesman ranking.
 ```
 
 ```text
+DrillDown ID:    DD-SA01-PRINCIPAL
+Source Widget:   Principal contribution
+Target Page:     Principal Performance
+Target Entity:   Principal
+Purpose:         Open SA04 for the selected Principal. Principal commercial performance is not EX03, SF03, or SF04.
+```
+
+```text
+DrillDown ID:    DD-EX01-PRINCIPAL
+Source Widget:   Principal Sales-Out
+Target Page:     Principal Performance
+Target Entity:   Principal
+Purpose:         Open SA04 when the executive signal is Principal Sales-Out. Not Purchasing.
+```
+
+```text
+DrillDown ID:    DD-SA04-EVIDENCE
+Source Widget:   Principal Sales-Out ranking
+Target Page:     Principal Sales-Out evidence
+Target Entity:   Faktur Item
+Purpose:         Show Faktur Item rows for the selected Principal’s Principal Sales-Out.
+```
+
+```text
+DrillDown ID:    DD-SA04-BACK
+Source Widget:   Back to ranking
+Target Page:     Principal Performance
+Target Entity:   Principal
+Purpose:         Return from Faktur Item evidence to the SA04 ranking.
+```
+
+```text
 DrillDown ID:    DD-SA02-EVIDENCE
 Source Widget:   Forecast Risk / footer
 Target Page:     Sales Report
@@ -1567,6 +1677,18 @@ Invoiced Omzet (ranking)
   Page: Sales Dashboard
   Widget: Top 10 Salesman
   Drill-Down: Sales Report (investigation)
+
+Principal Sales-Out
+  Menu: Sales
+  Page: Principal Performance
+  Widget: Principal Sales-Out; Principal Sales-Out ranking
+  Drill-Down: Principal Sales-Out evidence (from ranking)
+
+Unknown Principal exceptions
+  Menu: Sales
+  Page: Principal Performance
+  Widget: Unknown Principal exceptions
+  Drill-Down: —
 ```
 
 ---
@@ -1913,6 +2035,7 @@ Inactive Warehouse With Stock / Stock Without Sales
 ```text
 Executive
  ├─ Executive  →  Management Attention Center
+ │   ├─ Principal Sales-Out  →  Principal Performance
  │   ├─ Sales  →  Sales Dashboard
  │   ├─ Piutang  →  Piutang Dashboard
  │   ├─ Purchasing  →  Purchasing Management Dashboard
@@ -1962,7 +2085,14 @@ Sales
  │   ├─ Achievement %
  │   ├─ Target vs Achievement
  │   ├─ Weekly Trend
- │   └─ Top 10 Salesman  →  Sales Report (investigation)
+ │   ├─ Top 10 Salesman  →  Sales Report (investigation)
+ │   └─ Principal contribution  →  Principal Performance
+ ├─ Principal Performance  →  Principal Performance
+ │   ├─ Principal Sales-Out
+ │   ├─ Unknown Principal exceptions
+ │   ├─ Principal Sales-Out disclosure
+ │   └─ Principal Sales-Out ranking  →  Principal Sales-Out evidence
+ │       └─ Back to ranking  →  Principal Performance
  ├─ Sales Forecast  →  Sales Forecast Dashboard
  │   ├─ Current vs Forecast KPIs
  │   ├─ Pace and gap KPIs
@@ -2105,29 +2235,30 @@ Operations
 
 ```text
 Total Menus (sidebar groups)                         8
-Total Sidebar Items                                  25
-Total Pages (sidebar + profile/compare/workspace)    34
-  Sidebar-linked pages                               25
+Total Sidebar Items                                  26
+Total Pages (sidebar + profile/compare/workspace)    36
+  Sidebar-linked pages                               26
   Investigation Workspace                            1
   Performance Profiles                               4
   Compare pages                                      4
-Total Widgets (named blocks in Section 3)            245
-Total KPI Cards                                      66
+  Principal Sales-Out evidence                       1
+Total Widgets (named blocks in Section 3)            250
+Total KPI Cards                                      68
 Total Charts                                         26
-Total Tables                                         54
-Total Rankings                                       37
+Total Tables                                         56
+Total Rankings                                       38
 Total Distributions                                  14
 Total Trends                                         11
 Total Forecast widgets                               9
 Total Risk Indicators                                28
-Total Drill-Down Targets (distinct page families)    18
+Total Drill-Down Targets (distinct page families)    19
 ```
 
 **Distinct drill-down target families**
 
 1. Management Attention Center  
 2. Alert Center  
-3. Domain dashboards (Sales, Piutang, Purchasing, Inventory, Collection, Customer Analytics, Customer Portfolio, Customer Risk Forecast, Cash Flow Forecast, Inventory Risk, Inventory Forecast, Salesman Performance, Sales Force Overview, Salesman Field Activity)  
+3. Domain dashboards (Sales, Principal Performance, Piutang, Purchasing, Inventory, Collection, Customer Analytics, Customer Portfolio, Customer Risk Forecast, Cash Flow Forecast, Inventory Risk, Inventory Forecast, Salesman Performance, Sales Force Overview, Salesman Field Activity)  
 4. Sales Report  
 5. Piutang Report  
 6. Inventory Report  
@@ -2142,7 +2273,8 @@ Total Drill-Down Targets (distinct page families)    18
 15. Compare Salesmen  
 16. Compare Suppliers  
 17. Compare Items  
-18. Salesman Detail drawer (same page)
+18. Salesman Detail drawer (same page)  
+19. Principal Sales-Out evidence
 
 Counts match named widgets in Section 3 (one row = one widget). A KPI strip registered as one row counts as one KPI Card. Use Section 3 as the authoritative list.
 
@@ -2167,6 +2299,7 @@ Pages exist but are not sidebar items
   Customer / Salesman / Supplier / Item Performance Profile
   Compare Customers / Salesmen / Suppliers / Items
   Salesman Detail drawer
+  Principal Sales-Out evidence (opened from SA04 ranking)
 
 KPI appears on multiple pages
   Achievement %, Total Piutang, Overdue Customer, Cash Collected MTD, Recovery vs Billing %,
@@ -2217,6 +2350,12 @@ Domain documentation vs portal
   Older domain text still says “Customer Analytics Dashboard”, “Slow Moving & Dead Stock Dashboard”
   as a business-area name, “Management Attention Center”, and “Purchasing Management Dashboard”.
   This registry follows on-screen titles. Trust this file over older aliases when mapping questions in Phase-4B.
+
+Superseded navigation-code reservations
+  Older documents reserve EX03 for a future Business Health page, SF03 for Sales Force Effectiveness,
+  and SF04 for Salesman Report or Principal Performance. Those reservations are not used for new
+  assignment. The authoritative code list is the implemented list in this file. EX03 remains Entity
+  Analytics. SF03 remains Salesman Field Activity. Principal commercial performance is SA04.
 
 Presentation Mode
   Header overlay (business date) on authenticated pages. Not a navigation asset.

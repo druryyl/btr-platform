@@ -551,9 +551,13 @@ Only a review agent may set `GO` or `NO-GO`.
 
 ### PCM-056
 
-- Status: PLANNED
-- Implementation History: none
-- Review History: none
+- Status: GO
+- Implementation History:
+  - 2026-09-09: IN IMPLEMENTATION
+  - 2026-09-09: IMPLEMENTED. Updated `docs/features/btr-portal/navigation-assets.md` so the implemented sidebar codes are the single authoritative code list. SA04 Principal Performance is documented under Sales after SA01 and before SA02. Older conflicting reservations of EX03, SF03, and SF04 are recorded as not used for new assignment. Menu code implementation was not changed.
+- Review History:
+  - 2026-09-09: IN REVIEW
+  - 2026-09-09: GO. The navigation asset registry names the implemented sidebar codes as the single authoritative code list. Older conflicting reservations of EX03, SF03, and SF04 are recorded as not used for new assignment. SA04 Principal Performance is documented under Sales after SA01 and before SA02. Menu code implementation was not changed.
 - Remediation History: none
 
 ### PCM-057
