@@ -239,9 +239,13 @@ Only a review agent may set `GO` or `NO-GO`.
 
 ### PCM-018
 
-- Status: PLANNED
-- Implementation History: none
-- Review History: none
+- Status: GO
+- Implementation History:
+  - 2026-09-09: IN IMPLEMENTATION
+  - 2026-09-09: IMPLEMENTED. PU01 and PU02 identify purchase amounts as Purchase-In. Those amounts are not labeled Principal Sales-Out and do not display `PRN-SALES-001` as purchase value. Purchase growth is not renamed to sales growth. PU02 remains purchase-invoice evidence. IN01–IN05 and Entity Analytics `PRN-PUR-001` are unchanged.
+- Review History:
+  - 2026-09-09: IN REVIEW
+  - 2026-09-09: GO. PU01 labels purchase amounts as Purchase-In and does not display `PRN-SALES-001` as purchase value. Purchase growth is not renamed to sales growth. PU02 remains purchase-invoice evidence and identifies invoice totals as Purchase-In. IN01–IN05 are unchanged. `PRN-PUR-001` is not published onto Entity Analytics.
 - Remediation History: none
 
 ### PCM-019

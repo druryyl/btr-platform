@@ -18,6 +18,15 @@ import { PROFILE_ROW_CLICK_HINT } from '@/navigation/entityAnalyticsNavigation'
 import { PURCHASING_ATTENTION_SIGNAL_ALL } from '@/services/purchasingAttentionSignals'
 import { resolveInvestigationSourceLabel } from '@/services/investigationSourceLabels'
 import { navigateToInvestigation } from '@/services/navigateToInvestigation'
+import {
+  PU01_MTD_PURCHASE_IN_LABEL,
+  PU01_PERCENT_OF_PURCHASE_IN_LABEL,
+  PU01_PURCHASE_IN_DISCLOSURES,
+  PU01_TOP_PRINCIPALS_EMPTY,
+  PU01_TOP_PRINCIPALS_TITLE,
+  PU01_WEEKLY_PURCHASE_IN_EMPTY,
+  PU01_WEEKLY_PURCHASE_IN_TREND_TITLE,
+} from '@/services/purchasingPurchaseInLabels'
 import { useDashboardStore } from '@/stores/dashboardStore'
 
 const dashboard = useDashboardStore()
@@ -33,8 +42,8 @@ const managementUnavailable = computed(
 const top10Columns = [
   { field: 'Rank', header: 'Rank' },
   { field: 'PrincipalName', header: 'Principal' },
-  { field: 'MtdPurchaseAmount', header: 'MTD Purchase' },
-  { field: 'PercentOfPurchase', header: '% of Purchase' },
+  { field: 'MtdPurchaseAmount', header: PU01_MTD_PURCHASE_IN_LABEL },
+  { field: 'PercentOfPurchase', header: PU01_PERCENT_OF_PURCHASE_IN_LABEL },
 ]
 
 const top10Rows = computed(
@@ -97,6 +106,13 @@ onMounted(() => {
       :is-data-fresh="dashboard.purchasing.IsDataFresh"
     />
 
+    <section class="purchasing-dashboard__disclosure" aria-label="Purchase-In disclosure">
+      <h2>Purchase-In disclosure</h2>
+      <ul>
+        <li v-for="item in PU01_PURCHASE_IN_DISCLOSURES" :key="item">{{ item }}</li>
+      </ul>
+    </section>
+
     <Message
       v-if="managementUnavailable && !presentation.hidePlatformDiagnostics"
       severity="info"
@@ -146,8 +162,8 @@ onMounted(() => {
       <WeeklyTrendChart
         :weekly-trend="weeklyTrendForChart"
         :loading="dashboard.loading"
-        title="Weekly Purchase Trend"
-        empty-message="No weekly purchase data for the current period."
+        :title="PU01_WEEKLY_PURCHASE_IN_TREND_TITLE"
+        :empty-message="PU01_WEEKLY_PURCHASE_IN_EMPTY"
       />
 
       <PostingStatusPieChart
@@ -158,13 +174,13 @@ onMounted(() => {
 
     <section id="purchasing-rankings" class="purchasing-dashboard__section purchasing-dashboard__rankings">
       <Top10RankingTable
-        title="Top 10 Principals"
+        :title="PU01_TOP_PRINCIPALS_TITLE"
         :columns="top10Columns"
         :rows="top10Rows as Record<string, unknown>[]"
         :loading="dashboard.loading"
         value-field="MtdPurchaseAmount"
         percent-field="PercentOfPurchase"
-        empty-message="No principal ranking data for the current period."
+        :empty-message="PU01_TOP_PRINCIPALS_EMPTY"
         :click-hint="PROFILE_ROW_CLICK_HINT"
         clickable
         @row-click="onTop10RowClick"
@@ -184,6 +200,27 @@ onMounted(() => {
 </template>
 
 <style scoped>
+.purchasing-dashboard__disclosure {
+  margin-bottom: 1.5rem;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--p-content-border-color);
+  border-radius: var(--p-content-border-radius);
+}
+
+.purchasing-dashboard__disclosure h2 {
+  margin: 0 0 0.5rem;
+  font-size: 1rem;
+}
+
+.purchasing-dashboard__disclosure ul {
+  margin: 0;
+  padding-left: 1.25rem;
+}
+
+.purchasing-dashboard__disclosure li + li {
+  margin-top: 0.25rem;
+}
+
 .purchasing-dashboard__banner {
   margin-bottom: 1rem;
 }

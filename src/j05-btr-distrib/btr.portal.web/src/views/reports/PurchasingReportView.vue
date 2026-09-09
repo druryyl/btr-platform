@@ -14,6 +14,11 @@ import { useReportInvestigationFilter } from '@/composables/useReportInvestigati
 import { useReportInvestigationHydration } from '@/composables/useReportInvestigationHydration'
 import { formatCurrency, formatDate, formatDateTime } from '@/services/formatters'
 import { summarizePurchasingRows } from '@/services/reportSummaryHelpers'
+import {
+  PU02_EVIDENCE_NOTE,
+  PU02_PURCHASE_IN_DISCLOSURES,
+  PU02_PURCHASE_IN_LABEL,
+} from '@/services/purchasingPurchaseInLabels'
 import { usePurchasingReportStore } from '@/stores/purchasingReportStore'
 
 const route = useRoute()
@@ -56,7 +61,7 @@ const summaryItems = computed(() => {
 
   return [
     {
-      label: 'Grand Total Purchase',
+      label: PU02_PURCHASE_IN_LABEL,
       value: formatCurrency(summary.GrandTotalPurchase),
     },
     {
@@ -89,10 +94,10 @@ onMounted(() => {
       <div>
         <h1>Purchasing Report</h1>
         <p v-if="purchasingReport.report">
-          Purchase invoices for {{ periodLabel }}.
+          {{ PU02_EVIDENCE_NOTE }} Purchase invoices for {{ periodLabel }}.
         </p>
         <p v-else>
-          Purchase invoices for the current month.
+          {{ PU02_EVIDENCE_NOTE }} Purchase invoices for the current month.
         </p>
       </div>
       <Button
@@ -105,6 +110,13 @@ onMounted(() => {
     </div>
 
     <InvestigationBreadcrumb :context="breadcrumb" />
+
+    <section class="purchasing-report__disclosure" aria-label="Purchase-In disclosure">
+      <h2>Purchase-In disclosure</h2>
+      <ul>
+        <li v-for="item in PU02_PURCHASE_IN_DISCLOSURES" :key="item">{{ item }}</li>
+      </ul>
+    </section>
 
     <Message v-if="purchasingReport.error" severity="error" :closable="false">
       {{ purchasingReport.error }}
@@ -210,6 +222,27 @@ onMounted(() => {
 .purchasing-report__header p {
   margin: 0;
   color: var(--p-text-muted-color);
+}
+
+.purchasing-report__disclosure {
+  margin-bottom: 1.5rem;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--p-content-border-color);
+  border-radius: var(--p-content-border-radius);
+}
+
+.purchasing-report__disclosure h2 {
+  margin: 0 0 0.5rem;
+  font-size: 1rem;
+}
+
+.purchasing-report__disclosure ul {
+  margin: 0;
+  padding-left: 1.25rem;
+}
+
+.purchasing-report__disclosure li + li {
+  margin-top: 0.25rem;
 }
 
 .purchasing-report__filter-hint {
