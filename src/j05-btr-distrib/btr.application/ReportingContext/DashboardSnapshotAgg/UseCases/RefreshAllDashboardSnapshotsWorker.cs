@@ -20,6 +20,7 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.UseCases
         private readonly IRefreshDashboardSalesSnapshotWorker _salesWorker;
         private readonly IRefreshPrincipalSalesOutSnapshotWorker _principalSalesOutWorker;
         private readonly IRefreshPrincipalSalesOutHistoryWorker _principalSalesOutHistoryWorker;
+        private readonly IRefreshPrincipalTargetSnapshotWorker _principalTargetWorker;
         private readonly IRefreshDashboardPurchasingSnapshotWorker _purchasingWorker;
         private readonly IRefreshDashboardPurchasingManagementSnapshotWorker _purchasingManagementWorker;
         private readonly IRefreshDashboardCustomerSnapshotWorker _customerWorker;
@@ -35,6 +36,7 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.UseCases
             IRefreshDashboardSalesSnapshotWorker salesWorker,
             IRefreshPrincipalSalesOutSnapshotWorker principalSalesOutWorker,
             IRefreshPrincipalSalesOutHistoryWorker principalSalesOutHistoryWorker,
+            IRefreshPrincipalTargetSnapshotWorker principalTargetWorker,
             IRefreshDashboardPurchasingSnapshotWorker purchasingWorker,
             IRefreshDashboardPurchasingManagementSnapshotWorker purchasingManagementWorker,
             IRefreshDashboardCustomerSnapshotWorker customerWorker,
@@ -49,6 +51,7 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.UseCases
             _salesWorker = salesWorker;
             _principalSalesOutWorker = principalSalesOutWorker;
             _principalSalesOutHistoryWorker = principalSalesOutHistoryWorker;
+            _principalTargetWorker = principalTargetWorker;
             _purchasingWorker = purchasingWorker;
             _purchasingManagementWorker = purchasingManagementWorker;
             _customerWorker = customerWorker;
@@ -147,6 +150,20 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.UseCases
                     };
                     _principalSalesOutHistoryWorker.Execute(principalSalesOutHistoryRequest);
                     return principalSalesOutHistoryRequest.Result;
+                },
+                domainResults,
+                failures);
+
+            RunDomain(
+                PrincipalTargetSnapshot.Domain,
+                () =>
+                {
+                    var principalTargetRequest = new RefreshPrincipalTargetSnapshotRequest
+                    {
+                        TriggeredBy = triggeredBy
+                    };
+                    _principalTargetWorker.Execute(principalTargetRequest);
+                    return principalTargetRequest.Result;
                 },
                 domainResults,
                 failures);
@@ -330,6 +347,13 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.UseCases
                         Domain = domain,
                         RefreshLogId = principalSalesOutHistory.RefreshLogId,
                         DurationMs = principalSalesOutHistory.DurationMs
+                    };
+                case RefreshPrincipalTargetSnapshotResult principalTarget:
+                    return new RefreshDashboardDomainResult
+                    {
+                        Domain = domain,
+                        RefreshLogId = principalTarget.RefreshLogId,
+                        DurationMs = principalTarget.DurationMs
                     };
                 case RefreshDashboardPurchasingSnapshotResult purchasing:
                     return new RefreshDashboardDomainResult

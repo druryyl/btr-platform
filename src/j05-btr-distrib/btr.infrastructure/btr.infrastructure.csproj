@@ -184,6 +184,8 @@
     <Compile Include="ReportingContext\PrincipalAnalyticsAgg\PrincipalSalesOutHistoryDal.cs" />
     <Compile Include="ReportingContext\PrincipalAnalyticsAgg\PrincipalSalesOutHistoryEvidenceDal.cs" />
     <Compile Include="ReportingContext\PrincipalAnalyticsAgg\PrincipalSalesOutSnapshotDal.cs" />
+    <Compile Include="ReportingContext\PrincipalAnalyticsAgg\PrincipalTargetEvidenceDal.cs" />
+    <Compile Include="ReportingContext\PrincipalAnalyticsAgg\PrincipalTargetSnapshotDal.cs" />
     <Compile Include="ReportingContext\DashboardSnapshotAgg\DashboardCollectionSnapshotDal.cs" />
     <Compile Include="ReportingContext\DashboardSnapshotAgg\DashboardLocationSnapshotDal.cs" />
     <Compile Include="ReportingContext\DashboardCustomerAgg\DashboardCustomerDal.cs" />

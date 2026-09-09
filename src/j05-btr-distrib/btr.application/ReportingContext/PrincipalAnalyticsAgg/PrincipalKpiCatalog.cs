@@ -12,6 +12,8 @@ namespace btr.application.ReportingContext.PrincipalAnalyticsAgg
     {
         public const string SalesOutId = "PRN-SALES-001";
 
+        public const string TargetId = "PRN-TGT-001";
+
         public const string ReturnsMustNotReduceReplaceOrRedefinePrincipalSalesOut =
             "Returns KPIs must not reduce, replace, or redefine PRN-SALES-001.";
 
@@ -29,8 +31,10 @@ namespace btr.application.ReportingContext.PrincipalAnalyticsAgg
 
         private static readonly PrincipalKpiCatalogEntry SalesOutEntry = CreateSalesOut();
 
+        private static readonly PrincipalKpiCatalogEntry TargetEntry = CreateTarget();
+
         private static readonly IReadOnlyList<PrincipalKpiCatalogEntry> RegisteredEntries =
-            new[] { SalesOutEntry };
+            new[] { SalesOutEntry, TargetEntry };
 
         public static IReadOnlyList<PrincipalKpiCatalogEntry> Entries
         {
@@ -105,6 +109,37 @@ namespace btr.application.ReportingContext.PrincipalAnalyticsAgg
                     "Unknown Principal and missing monthly target responsibility are visible exceptions, not silent drops of Principal Sales-Out.",
                     "The user-facing name is Principal Sales-Out, not Supplier Omzet and not Principal Omzet.",
                     "This KPI is not a Principal receivable, collection, or credit measure."
+                }
+            };
+        }
+
+        private static PrincipalKpiCatalogEntry CreateTarget()
+        {
+            return new PrincipalKpiCatalogEntry
+            {
+                KpiId = TargetId,
+                Name = "Principal Target",
+                Description = "Sum of Salesman Principal Targets",
+                EntityCategory = EntityTypeCode.Supplier,
+                EvidenceGrain = "SalesPersonPrincipalTarget",
+                Formula = "SUM(BTR_SalesPersonPrincipalTarget.TargetAmount)",
+                IsAuthoritativePrincipalPerformanceKpi = false,
+                IsAuthoritativeRankingKpi = false,
+                DeductsReturns = false,
+                DeductsClaims = false,
+                DeductsInventoryAdjustments = false,
+                DefinitionStatements = new[]
+                {
+                    "PRN-TGT-001 Principal Target = SUM(BTR_SalesPersonPrincipalTarget.TargetAmount) for that SupplierId, TargetYear, and TargetMonth.",
+                    "Evidence grain is SalesPersonPrincipalTarget.",
+                    "Principal Target is derived from Salesman Principal Targets.",
+                    "No independently maintained Principal Target exists.",
+                    "No standalone Principal Target row is created.",
+                    "A Salesman is responsible for a Principal in a month only when a target record exists for that Salesman, Principal, year, and month.",
+                    "BTR_SalesPersonSupplier is current eligibility reference only. It is not the historical responsibility source and must not override target-based historical responsibility.",
+                    "This KPI writer does not write PRN-SALES-001, PRN-TGT-002, PRN-TGT-003, or any return KPI.",
+                    "PRN-TGT-001 is not Principal Sales-Out and is not an achievement KPI.",
+                    "The user-facing name is Principal Target."
                 }
             };
         }

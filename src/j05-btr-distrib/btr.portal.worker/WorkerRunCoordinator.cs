@@ -242,6 +242,16 @@ namespace btr.portal.worker
                     });
                     break;
 
+                case "PRINCIPALTARGET":
+                    RunDomain(serviceProvider, PrincipalTargetSnapshot.Domain, triggeredBy, sp =>
+                    {
+                        var worker = sp.GetRequiredService<IRefreshPrincipalTargetSnapshotWorker>();
+                        var request = new RefreshPrincipalTargetSnapshotRequest { TriggeredBy = triggeredBy };
+                        worker.Execute(request);
+                        return request.Result?.DurationMs ?? 0;
+                    });
+                    break;
+
                 case "PURCHASING":
                     RunDomain(serviceProvider, "Purchasing", triggeredBy, sp =>
                     {

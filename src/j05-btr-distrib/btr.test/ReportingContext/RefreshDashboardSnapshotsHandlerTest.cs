@@ -68,7 +68,7 @@ namespace btr.test.ReportingContext
                 default).GetAwaiter().GetResult();
 
             act.Should().Throw<ArgumentException>()
-                .WithMessage("*Domain must be All, Piutang, Inventory, InventoryRisk, Sales, PrincipalSalesOut, PrnSalesOutHistory, Purchasing, PurchasingManagement, Customer, Salesman, Collection, FieldActivity, or Location*");
+                .WithMessage("*Domain must be All, Piutang, Inventory, InventoryRisk, Sales, PrincipalSalesOut, PrnSalesOutHistory, PrincipalTarget, Purchasing, PurchasingManagement, Customer, Salesman, Collection, FieldActivity, or Location*");
         }
 
         [Fact]
@@ -130,6 +130,7 @@ namespace btr.test.ReportingContext
             StubSalesWorker salesWorker = null,
             StubPrincipalSalesOutWorker principalSalesOutWorker = null,
             StubPrincipalSalesOutHistoryWorker principalSalesOutHistoryWorker = null,
+            StubPrincipalTargetWorker principalTargetWorker = null,
             StubPurchasingWorker purchasingWorker = null,
             StubPurchasingManagementWorker purchasingManagementWorker = null,
             StubCustomerWorker customerWorker = null,
@@ -146,6 +147,7 @@ namespace btr.test.ReportingContext
                 salesWorker ?? new StubSalesWorker(),
                 principalSalesOutWorker ?? new StubPrincipalSalesOutWorker(),
                 principalSalesOutHistoryWorker ?? new StubPrincipalSalesOutHistoryWorker(),
+                principalTargetWorker ?? new StubPrincipalTargetWorker(),
                 purchasingWorker ?? new StubPurchasingWorker(),
                 purchasingManagementWorker ?? new StubPurchasingManagementWorker(),
                 customerWorker ?? new StubCustomerWorker(),
@@ -218,6 +220,13 @@ namespace btr.test.ReportingContext
         private sealed class StubPrincipalSalesOutHistoryWorker : IRefreshPrincipalSalesOutHistoryWorker
         {
             public void Execute(RefreshPrincipalSalesOutHistoryRequest request)
+            {
+            }
+        }
+
+        private sealed class StubPrincipalTargetWorker : IRefreshPrincipalTargetSnapshotWorker
+        {
+            public void Execute(RefreshPrincipalTargetSnapshotRequest request)
             {
             }
         }
