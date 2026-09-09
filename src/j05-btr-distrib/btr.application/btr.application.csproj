@@ -615,6 +615,7 @@
     <Compile Include="ReportingContext\DashboardSalesAgg\SalesDashboardPrincipalContributionComposer.cs" />
     <Compile Include="ReportingContext\DashboardSalesForecastAgg\Contracts\IDashboardSalesForecastDal.cs" />
     <Compile Include="ReportingContext\DashboardSalesForecastAgg\Queries\GetDashboardSalesForecastQuery.cs" />
+    <Compile Include="ReportingContext\DashboardSalesForecastAgg\SalesForecastPrincipalPresentationComposer.cs" />
     <Compile Include="ReportingContext\DashboardCashFlowForecastAgg\Contracts\IDashboardCashFlowForecastDal.cs" />
     <Compile Include="ReportingContext\DashboardCashFlowForecastAgg\Queries\GetDashboardCashFlowForecastQuery.cs" />
     <Compile Include="ReportingContext\DashboardCustomerRiskForecastAgg\Contracts\IDashboardCustomerRiskForecastDal.cs" />

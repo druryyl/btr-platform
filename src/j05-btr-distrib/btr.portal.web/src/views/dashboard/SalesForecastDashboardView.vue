@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { computed, onMounted } from 'vue'
 import { RouterLink } from 'vue-router'
+import Column from 'primevue/column'
+import DataTable from 'primevue/datatable'
 import DashboardDetailLayout from '@/components/dashboard/DashboardDetailLayout.vue'
 import DailyPaceTrendChart from '@/components/dashboard/DailyPaceTrendChart.vue'
 import ForecastRiskCard from '@/components/dashboard/ForecastRiskCard.vue'
@@ -131,6 +133,14 @@ const scenarioMetrics = computed((): SalesForecastKpiMetric[] => {
   ]
 })
 
+const principalForecast = computed(() => forecast.value?.PrincipalForecast ?? null)
+
+const principalItems = computed(() => principalForecast.value?.Items ?? [])
+
+function formatAmount(value: number | null | undefined): string {
+  return value == null ? '—' : formatCurrency(value)
+}
+
 onMounted(() => {
   void dashboard.loadSalesForecast()
 })
@@ -190,6 +200,84 @@ onMounted(() => {
       :loading="dashboard.loading"
     />
 
+    <section
+      v-if="forecast"
+      class="sales-forecast-dashboard__principal"
+      aria-label="Principal forecast"
+    >
+      <h2>Principal forecast</h2>
+      <p class="sales-forecast-dashboard__principal-note">
+        Presentation of current-month
+        {{ principalForecast?.SalesOutKpiId || 'PRN-SALES-001' }}
+        history compared with
+        {{ principalForecast?.TargetKpiId || 'PRN-TGT-001' }}.
+        Pace uses the existing sales forecast method. This is not a registry KPI and is not used to rank Principals.
+        {{ principalForecast?.CompanyForecastNote }}
+      </p>
+
+      <p v-if="principalForecast?.IsAvailable" class="sales-forecast-dashboard__principal-note">
+        Sum of Principal forecasts:
+        {{ formatCurrency(principalForecast?.SumOfPrincipalForecasts ?? 0) }}.
+        Company forecast remains
+        {{ formatCurrency(forecast.ForecastSales) }}.
+      </p>
+
+      <section class="sales-forecast-dashboard__disclosure" aria-label="Principal forecast disclosure">
+        <h3>Principal forecast disclosure</h3>
+        <ul>
+          <li
+            v-for="statement in principalForecast?.Disclosures ?? []"
+            :key="statement"
+          >
+            {{ statement }}
+          </li>
+        </ul>
+      </section>
+
+      <DataTable
+        :value="principalItems"
+        striped-rows
+        class="sales-forecast-dashboard__principal-table"
+      >
+        <template #empty>
+          <p class="sales-forecast-dashboard__principal-empty">
+            No Principal Sales-Out history for the current period.
+          </p>
+        </template>
+        <Column field="PrincipalName" header="Principal" />
+        <Column header="Principal Sales-Out (PRN-SALES-001)">
+          <template #body="{ data }">
+            {{ formatAmount(data.PrincipalSalesOutAmount) }}
+          </template>
+        </Column>
+        <Column header="Principal Target (PRN-TGT-001)">
+          <template #body="{ data }">
+            {{ formatAmount(data.PrincipalTargetAmount) }}
+          </template>
+        </Column>
+        <Column header="Forecast">
+          <template #body="{ data }">
+            {{ formatAmount(data.ForecastAmount) }}
+          </template>
+        </Column>
+        <Column header="Daily average">
+          <template #body="{ data }">
+            {{ formatAmount(data.DailyAverageSales) }}
+          </template>
+        </Column>
+        <Column header="Required daily">
+          <template #body="{ data }">
+            {{ formatAmount(data.RequiredDailySales) }}
+          </template>
+        </Column>
+        <Column header="Target gap">
+          <template #body="{ data }">
+            {{ formatAmount(data.TargetGap) }}
+          </template>
+        </Column>
+      </DataTable>
+    </section>
+
     <footer class="sales-forecast-dashboard__footer">
       <p>
         Forecast based on invoiced Faktur omzet through the business date. Same rules as
@@ -220,6 +308,43 @@ onMounted(() => {
 
 .sales-forecast-dashboard__chart-half {
   min-width: 0;
+}
+
+.sales-forecast-dashboard__principal {
+  margin-top: 1.5rem;
+}
+
+.sales-forecast-dashboard__principal h2,
+.sales-forecast-dashboard__disclosure h3 {
+  margin: 0 0 0.75rem;
+  font-size: 1rem;
+}
+
+.sales-forecast-dashboard__principal-note {
+  margin: 0 0 1rem;
+  color: var(--p-text-muted-color);
+}
+
+.sales-forecast-dashboard__disclosure {
+  margin-bottom: 1rem;
+  padding: 1rem;
+  background: var(--p-surface-0);
+  border: 1px solid var(--p-surface-200);
+  border-radius: var(--dashboard-radius-sm);
+}
+
+.sales-forecast-dashboard__disclosure ul {
+  margin: 0;
+  padding-left: 1.25rem;
+}
+
+.sales-forecast-dashboard__disclosure li + li {
+  margin-top: 0.35rem;
+}
+
+.sales-forecast-dashboard__principal-empty {
+  margin: 0;
+  color: var(--p-text-muted-color);
 }
 
 .sales-forecast-dashboard__footer {

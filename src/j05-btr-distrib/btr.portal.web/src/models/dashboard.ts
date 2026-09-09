@@ -226,6 +226,37 @@ export type ForecastConfidence = 'Low' | 'Medium' | 'High'
 
 export type RequiredDailySeverity = 'Normal' | 'Warning' | 'Critical'
 
+export interface DashboardSalesPrincipalForecastItem {
+  PrincipalName: string
+  SupplierId: string
+  SalesOutKpiId: string
+  PrincipalSalesOutAmount: number
+  TargetKpiId: string | null
+  PrincipalTargetAmount: number | null
+  DailyAverageSales: number
+  ForecastAmount: number
+  ForecastAchievementPercent: number | null
+  RequiredDailySales: number | null
+  TargetGap: number
+  RequiredDailySeverity: string
+}
+
+export interface DashboardSalesPrincipalForecastPresentation {
+  IsAvailable: boolean
+  SalesOutKpiId: string
+  TargetKpiId: string
+  PeriodYear: number
+  PeriodMonth: number
+  BusinessDate: string
+  DaysInMonth: number
+  DaysElapsed: number
+  DaysRemaining: number
+  SumOfPrincipalForecasts: number
+  CompanyForecastNote: string
+  Disclosures: string[]
+  Items: DashboardSalesPrincipalForecastItem[]
+}
+
 export interface DashboardSalesForecastResponse {
   GeneratedAt: string
   PeriodYear: number
@@ -252,6 +283,7 @@ export interface DashboardSalesForecastResponse {
   ForecastVsTarget: DashboardSalesForecastVsTarget
   DailyPace: DashboardSalesDailyPaceItem[]
   WeeklyTrend: DashboardSalesWeekTrendItem[]
+  PrincipalForecast?: DashboardSalesPrincipalForecastPresentation | null
 }
 
 export interface DashboardCashFlowDailyPaceItem {
