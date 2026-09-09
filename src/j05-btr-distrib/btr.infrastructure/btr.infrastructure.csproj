@@ -194,6 +194,8 @@
     <Compile Include="ReportingContext\PrincipalAnalyticsAgg\PrincipalReturnSnapshotDal.cs" />
     <Compile Include="ReportingContext\PrincipalAnalyticsAgg\PrincipalReturnPercentageSnapshotDal.cs" />
     <Compile Include="ReportingContext\PrincipalAnalyticsAgg\PrincipalAchievementSnapshotDal.cs" />
+    <Compile Include="ReportingContext\PrincipalAnalyticsAgg\PrincipalContributionEvidenceDal.cs" />
+    <Compile Include="ReportingContext\PrincipalAnalyticsAgg\PrincipalSalesmanContributionSnapshotDal.cs" />
     <Compile Include="ReportingContext\PrincipalAnalyticsAgg\PrincipalInventorySnapshotDal.cs" />
     <Compile Include="ReportingContext\PrincipalAnalyticsAgg\PrincipalTargetEvidenceDal.cs" />
     <Compile Include="ReportingContext\PrincipalAnalyticsAgg\PrincipalTargetSnapshotDal.cs" />

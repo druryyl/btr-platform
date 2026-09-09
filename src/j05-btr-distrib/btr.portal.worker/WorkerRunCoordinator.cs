@@ -302,6 +302,16 @@ namespace btr.portal.worker
                     });
                     break;
 
+                case "PRNSALESMANCONTRIBUTION":
+                    RunDomain(serviceProvider, PrincipalSalesmanContributionSnapshot.Domain, triggeredBy, sp =>
+                    {
+                        var worker = sp.GetRequiredService<IRefreshPrincipalSalesmanContributionSnapshotWorker>();
+                        var request = new RefreshPrincipalSalesmanContributionSnapshotRequest { TriggeredBy = triggeredBy };
+                        worker.Execute(request);
+                        return request.Result?.DurationMs ?? 0;
+                    });
+                    break;
+
                 case "PRNCUSRELATIONSHIP":
                     RunDomain(serviceProvider, CustomerPrincipalRelationship.Domain, triggeredBy, sp =>
                     {

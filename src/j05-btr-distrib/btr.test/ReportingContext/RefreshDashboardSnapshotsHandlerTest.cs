@@ -136,6 +136,7 @@ namespace btr.test.ReportingContext
             StubPrincipalReturnHistoryWorker principalReturnHistoryWorker = null,
             StubPrincipalTargetWorker principalTargetWorker = null,
             StubPrincipalAchievementWorker principalAchievementWorker = null,
+            StubPrincipalSalesmanContributionWorker principalSalesmanContributionWorker = null,
             StubCustomerPrincipalRelationshipWorker customerPrincipalRelationshipWorker = null,
             StubPurchasingWorker purchasingWorker = null,
             StubPrincipalPurchaseInWorker principalPurchaseInWorker = null,
@@ -160,6 +161,7 @@ namespace btr.test.ReportingContext
                 principalReturnHistoryWorker ?? new StubPrincipalReturnHistoryWorker(),
                 principalTargetWorker ?? new StubPrincipalTargetWorker(),
                 principalAchievementWorker ?? new StubPrincipalAchievementWorker(),
+                principalSalesmanContributionWorker ?? new StubPrincipalSalesmanContributionWorker(),
                 customerPrincipalRelationshipWorker ?? new StubCustomerPrincipalRelationshipWorker(),
                 purchasingWorker ?? new StubPurchasingWorker(),
                 principalPurchaseInWorker ?? new StubPrincipalPurchaseInWorker(),
@@ -269,6 +271,13 @@ namespace btr.test.ReportingContext
         private sealed class StubPrincipalAchievementWorker : IRefreshPrincipalAchievementSnapshotWorker
         {
             public void Execute(RefreshPrincipalAchievementSnapshotRequest request)
+            {
+            }
+        }
+
+        private sealed class StubPrincipalSalesmanContributionWorker : IRefreshPrincipalSalesmanContributionSnapshotWorker
+        {
+            public void Execute(RefreshPrincipalSalesmanContributionSnapshotRequest request)
             {
             }
         }

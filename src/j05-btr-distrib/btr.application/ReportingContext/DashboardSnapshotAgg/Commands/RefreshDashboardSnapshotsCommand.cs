@@ -40,6 +40,7 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.Commands
         private readonly IRefreshPrincipalReturnHistoryWorker _principalReturnHistoryWorker;
         private readonly IRefreshPrincipalTargetSnapshotWorker _principalTargetWorker;
         private readonly IRefreshPrincipalAchievementSnapshotWorker _principalAchievementWorker;
+        private readonly IRefreshPrincipalSalesmanContributionSnapshotWorker _principalSalesmanContributionWorker;
         private readonly IRefreshCustomerPrincipalRelationshipWorker _customerPrincipalRelationshipWorker;
         private readonly IRefreshDashboardPurchasingSnapshotWorker _purchasingWorker;
         private readonly IRefreshPrincipalPurchaseInSnapshotWorker _principalPurchaseInWorker;
@@ -64,6 +65,7 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.Commands
             IRefreshPrincipalReturnHistoryWorker principalReturnHistoryWorker,
             IRefreshPrincipalTargetSnapshotWorker principalTargetWorker,
             IRefreshPrincipalAchievementSnapshotWorker principalAchievementWorker,
+            IRefreshPrincipalSalesmanContributionSnapshotWorker principalSalesmanContributionWorker,
             IRefreshCustomerPrincipalRelationshipWorker customerPrincipalRelationshipWorker,
             IRefreshDashboardPurchasingSnapshotWorker purchasingWorker,
             IRefreshPrincipalPurchaseInSnapshotWorker principalPurchaseInWorker,
@@ -87,6 +89,7 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.Commands
             _principalReturnHistoryWorker = principalReturnHistoryWorker;
             _principalTargetWorker = principalTargetWorker;
             _principalAchievementWorker = principalAchievementWorker;
+            _principalSalesmanContributionWorker = principalSalesmanContributionWorker;
             _customerPrincipalRelationshipWorker = customerPrincipalRelationshipWorker;
             _purchasingWorker = purchasingWorker;
             _principalPurchaseInWorker = principalPurchaseInWorker;
@@ -226,6 +229,14 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.Commands
                     };
                     _principalAchievementWorker.Execute(principalAchievementRequest);
                     return MapResult(PrincipalAchievementSnapshot.Domain, principalAchievementRequest.Result);
+
+                case PrincipalSalesmanContributionSnapshot.Domain:
+                    var principalSalesmanContributionRequest = new RefreshPrincipalSalesmanContributionSnapshotRequest
+                    {
+                        TriggeredBy = triggeredBy
+                    };
+                    _principalSalesmanContributionWorker.Execute(principalSalesmanContributionRequest);
+                    return MapResult(PrincipalSalesmanContributionSnapshot.Domain, principalSalesmanContributionRequest.Result);
 
                 case CustomerPrincipalRelationship.Domain:
                     var relationshipRequest = new RefreshCustomerPrincipalRelationshipRequest
@@ -472,6 +483,18 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.Commands
 
         private static RefreshDashboardDomainResult MapResult(
             string domain,
+            RefreshPrincipalSalesmanContributionSnapshotResult result)
+        {
+            return new RefreshDashboardDomainResult
+            {
+                Domain = domain,
+                RefreshLogId = result?.RefreshLogId,
+                DurationMs = result?.DurationMs ?? 0
+            };
+        }
+
+        private static RefreshDashboardDomainResult MapResult(
+            string domain,
             RefreshCustomerPrincipalRelationshipResult result)
         {
             return new RefreshDashboardDomainResult
@@ -611,6 +634,9 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.Commands
 
             if (string.Equals(trimmed, PrincipalAchievementSnapshot.Domain, StringComparison.OrdinalIgnoreCase))
                 return PrincipalAchievementSnapshot.Domain;
+
+            if (string.Equals(trimmed, PrincipalSalesmanContributionSnapshot.Domain, StringComparison.OrdinalIgnoreCase))
+                return PrincipalSalesmanContributionSnapshot.Domain;
 
             if (string.Equals(trimmed, CustomerPrincipalRelationship.Domain, StringComparison.OrdinalIgnoreCase))
                 return CustomerPrincipalRelationship.Domain;

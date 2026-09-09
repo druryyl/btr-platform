@@ -345,9 +345,13 @@ Only a review agent may set `GO` or `NO-GO`.
 
 ### PCM-029
 
-- Status: PLANNED
-- Implementation History: none
-- Review History: none
+- Status: GO
+- Implementation History:
+  - 2026-09-09: IN IMPLEMENTATION
+  - 2026-09-09: IMPLEMENTED. Stored Principal × Salesman commercial contribution decomposed from `PRN-SALES-001` Faktur Item evidence by `Faktur.SalesPersonId` into `BTRPD_PrincipalContribution`, with missing-target responsibility exceptions in `BTRPD_PrincipalContributionException`. A sold Salesman × Principal pair with no target record for the transaction month remains in the contribution and is listed as an exception. Contribution carries only the source `PRN-SALES-001` provenance and no registry KPI ID. The writer does not write `PRN-SALES-001` or `PRN-TGT-001`.
+- Review History:
+  - 2026-09-09: IN REVIEW
+  - 2026-09-09: GO. Contribution snapshot stores Principal × Salesman `PRN-SALES-001` decomposition by `Faktur.SalesPersonId` with `SUM(SubTotal - DiscRp)`; per-Principal sums reconcile to the Sales-Out measure with zero mismatches on `btr2`. Missing-target pairs remain in the contribution and are listed as responsibility exceptions. Contribution carries only source `PRN-SALES-001` provenance and no registry KPI ID. The writer touches only the three contribution tables. Full solution builds. 15 targeted tests pass (6 new composer tests plus orchestration tests).
 - Remediation History: none
 
 ### PCM-030

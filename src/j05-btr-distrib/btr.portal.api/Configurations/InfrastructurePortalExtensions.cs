@@ -113,6 +113,8 @@ namespace btr.portal.api.Configurations
             services.AddScoped<IPrincipalReturnSnapshotDal, PrincipalReturnSnapshotDal>();
             services.AddScoped<IPrincipalReturnPercentageSnapshotDal, PrincipalReturnPercentageSnapshotDal>();
             services.AddScoped<IPrincipalAchievementSnapshotDal, PrincipalAchievementSnapshotDal>();
+            services.AddScoped<IPrincipalContributionEvidenceDal, PrincipalContributionEvidenceDal>();
+            services.AddScoped<IPrincipalSalesmanContributionSnapshotDal, PrincipalSalesmanContributionSnapshotDal>();
             services.AddScoped<IPrincipalInventorySnapshotDal, PrincipalInventorySnapshotDal>();
             services.AddScoped<ICustomerPrincipalRelationshipEvidenceDal, CustomerPrincipalRelationshipEvidenceDal>();
             services.AddScoped<ICustomerPrincipalRelationshipDal, CustomerPrincipalRelationshipDal>();
