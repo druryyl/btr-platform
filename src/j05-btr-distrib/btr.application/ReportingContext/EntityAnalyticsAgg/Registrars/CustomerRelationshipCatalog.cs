@@ -19,7 +19,7 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Registrars
             registry.Register(EntityTypeCode.Customer, new RelationshipDefinition
             {
                 RelationshipCode = AssignedSalesman,
-                DisplayName = "Assigned Salesman",
+                DisplayName = "Last Invoicing Salesman",
                 TargetEntityType = EntityTypeCode.Salesman,
                 PeriodSemantics = "MTD",
                 TopN = 1

@@ -1,4 +1,9 @@
 import type { ProfileOverviewSection } from '@/models/entityAnalytics'
+import {
+  isLastInvoicingSalesmanLabel,
+  LAST_INVOICING_SALESMAN_LABEL,
+  LAST_INVOICING_SALESMAN_NOTE,
+} from '@/services/customerLastInvoicingSalesman'
 import { actionBadgeSeverity } from '@/services/customerPortfolioSignals'
 import { categoryBadgeSeverity } from '@/services/customerRiskForecastSignals'
 
@@ -12,6 +17,7 @@ export interface OverviewField {
   value: string
   isBadge: boolean
   badgeSeverity?: OverviewBadgeSeverity
+  note?: string
 }
 
 export interface OverviewSectionGroup {
@@ -46,7 +52,8 @@ const ENTITY_TYPE_LABELS: Record<string, string> = {
 const FIELD_LABEL_OVERRIDES: Record<string, string> = {
   Wilayah: 'Region',
   Klasifikasi: 'Classification',
-  Salesman: 'Assigned Salesman',
+  Salesman: LAST_INVOICING_SALESMAN_LABEL,
+  'Last Invoicing Salesman': LAST_INVOICING_SALESMAN_LABEL,
   'Faktur Count (6 Mo)': 'Invoices (6 Months)',
   'Active MTD': 'Active This Month',
   Active: 'Currently Active',
@@ -79,6 +86,7 @@ const SECTION_BY_NORMALIZED_LABEL: Record<string, OverviewSectionId> = {
   wilayah: 'business',
   klasifikasi: 'business',
   salesman: 'business',
+  lastinvoicingsalesman: 'business',
   segment: 'business',
   category: 'business',
   supplier: 'business',
@@ -200,6 +208,7 @@ function resolveBadgeSeverity(normalizedLabel: string, value: string): OverviewB
 function createField(key: string, label: string, value: string): OverviewField {
   const normalized = normalizeLabel(label)
   const isBadge = BADGE_LABELS.has(normalized)
+  const isLastInvoicingSalesman = isLastInvoicingSalesmanLabel(label)
 
   return {
     key,
@@ -207,6 +216,7 @@ function createField(key: string, label: string, value: string): OverviewField {
     value,
     isBadge,
     badgeSeverity: isBadge ? resolveBadgeSeverity(normalized, value) : undefined,
+    note: isLastInvoicingSalesman ? LAST_INVOICING_SALESMAN_NOTE : undefined,
   }
 }
 

@@ -173,9 +173,13 @@ Only a review agent may set `GO` or `NO-GO`.
 
 ### PCM-012
 
-- Status: PLANNED
-- Implementation History: none
-- Review History: none
+- Status: GO
+- Implementation History:
+  - 2026-09-09: IN IMPLEMENTATION
+  - 2026-09-09: IMPLEMENTED. Customer Entity Analytics relabels the latest-Faktur Salesman relationship from Assigned Salesman to Last Invoicing Salesman. The profile overview and related-entity display state that this is the last invoicing Salesman, not the Customer owner. The stored relationship code is unchanged. CU01–CU05, `PRN-CUS-001`, `PRN-CUS-002`, and Customer–Principal relationship computation are unchanged.
+- Review History:
+  - 2026-09-09: IN REVIEW
+  - 2026-09-09: GO. Customer Entity Analytics does not use Assigned Salesman or Owner as the label for the latest-Faktur Salesman. The display states that it is the last invoicing Salesman, not the Customer owner. CU01–CU05 are unchanged. `PRN-CUS-001` and `PRN-CUS-002` are not published. Customer–Principal relationships are not recomputed from raw transactions. No Customer–Principal master maintenance screen or assignment action was added.
 - Remediation History: none
 
 ### PCM-013

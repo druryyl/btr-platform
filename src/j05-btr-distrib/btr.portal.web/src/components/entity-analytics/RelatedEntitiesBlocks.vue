@@ -1,6 +1,10 @@
 <script setup lang="ts">
 import { RouterLink } from 'vue-router'
 import type { ProfileRelationshipBlock, ProfileRelatedEntityRow } from '@/models/entityAnalytics'
+import {
+  isLastInvoicingSalesmanRelationship,
+  LAST_INVOICING_SALESMAN_NOTE,
+} from '@/services/customerLastInvoicingSalesman'
 
 defineProps<{
   blocks: ProfileRelationshipBlock[]
@@ -22,6 +26,12 @@ function formatMetric(value: number | null | undefined): string {
   }).format(value)
 }
 
+function relationshipNote(block: ProfileRelationshipBlock): string | null {
+  return isLastInvoicingSalesmanRelationship(block.RelationshipCode)
+    ? LAST_INVOICING_SALESMAN_NOTE
+    : null
+}
+
 function barWidth(value: number | null | undefined, block: ProfileRelationshipBlock): string {
   if (value == null) return '0%'
   const max = Math.max(...block.Rows.map((r) => r.MetricValue ?? 0), 1)
@@ -39,6 +49,12 @@ function barWidth(value: number | null | undefined, block: ProfileRelationshipBl
       <h3 class="related-entities-blocks__heading">
         {{ block.RelationshipLabel || block.DisplayName }}
       </h3>
+      <p
+        v-if="relationshipNote(block)"
+        class="related-entities-blocks__note"
+      >
+        {{ relationshipNote(block) }}
+      </p>
 
       <div class="related-entities-blocks__table-wrap">
         <table class="related-entities-blocks__table">
@@ -96,9 +112,16 @@ function barWidth(value: number | null | undefined, block: ProfileRelationshipBl
 }
 
 .related-entities-blocks__heading {
-  margin: 0 0 0.75rem;
+  margin: 0 0 0.35rem;
   font-size: 0.95rem;
   font-weight: 600;
+}
+
+.related-entities-blocks__note {
+  margin: 0 0 0.75rem;
+  color: var(--p-text-muted-color, #64748b);
+  font-size: 0.8125rem;
+  line-height: 1.4;
 }
 
 .related-entities-blocks__table-wrap {

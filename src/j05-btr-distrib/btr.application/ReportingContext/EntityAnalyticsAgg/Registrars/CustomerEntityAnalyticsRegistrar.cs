@@ -66,7 +66,7 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Registrars
 
             RegisterDim(dimensionLabels, EntityAnalyticsMetaKpiIds.Klasifikasi, "Klasifikasi");
 
-            RegisterDim(dimensionLabels, EntityAnalyticsMetaKpiIds.Salesman, "Salesman");
+            RegisterDim(dimensionLabels, EntityAnalyticsMetaKpiIds.Salesman, "Last Invoicing Salesman");
 
             RegisterDim(dimensionLabels, EntityAnalyticsMetaKpiIds.Lifecycle, "Lifecycle");
 
