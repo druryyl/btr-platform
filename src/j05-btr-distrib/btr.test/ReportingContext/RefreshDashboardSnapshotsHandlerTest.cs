@@ -68,7 +68,7 @@ namespace btr.test.ReportingContext
                 default).GetAwaiter().GetResult();
 
             act.Should().Throw<ArgumentException>()
-                .WithMessage("*Domain must be All, Piutang, Inventory, InventoryRisk, PrincipalInventory, Sales, PrincipalSalesOut, PrincipalReturn, PrnSalesOutHistory, PrincipalTarget, PrnCusRelationship, Purchasing, PrincipalPurchaseIn, PurchasingManagement, Customer, Salesman, Collection, FieldActivity, or Location*");
+                .WithMessage("*Domain must be All, Piutang, Inventory, InventoryRisk, PrincipalInventory, Sales, PrincipalSalesOut, PrincipalReturn, PrnReturnPercentage, PrnSalesOutHistory, PrincipalTarget, PrnCusRelationship, Purchasing, PrincipalPurchaseIn, PurchasingManagement, Customer, Salesman, Collection, FieldActivity, or Location*");
         }
 
         [Fact]
@@ -131,6 +131,7 @@ namespace btr.test.ReportingContext
             StubSalesWorker salesWorker = null,
             StubPrincipalSalesOutWorker principalSalesOutWorker = null,
             StubPrincipalReturnWorker principalReturnWorker = null,
+            StubPrincipalReturnPercentageWorker principalReturnPercentageWorker = null,
             StubPrincipalSalesOutHistoryWorker principalSalesOutHistoryWorker = null,
             StubPrincipalTargetWorker principalTargetWorker = null,
             StubCustomerPrincipalRelationshipWorker customerPrincipalRelationshipWorker = null,
@@ -152,6 +153,7 @@ namespace btr.test.ReportingContext
                 salesWorker ?? new StubSalesWorker(),
                 principalSalesOutWorker ?? new StubPrincipalSalesOutWorker(),
                 principalReturnWorker ?? new StubPrincipalReturnWorker(),
+                principalReturnPercentageWorker ?? new StubPrincipalReturnPercentageWorker(),
                 principalSalesOutHistoryWorker ?? new StubPrincipalSalesOutHistoryWorker(),
                 principalTargetWorker ?? new StubPrincipalTargetWorker(),
                 customerPrincipalRelationshipWorker ?? new StubCustomerPrincipalRelationshipWorker(),
@@ -263,6 +265,13 @@ namespace btr.test.ReportingContext
         private sealed class StubPrincipalReturnWorker : IRefreshPrincipalReturnSnapshotWorker
         {
             public void Execute(RefreshPrincipalReturnSnapshotRequest request)
+            {
+            }
+        }
+
+        private sealed class StubPrincipalReturnPercentageWorker : IRefreshPrincipalReturnPercentageSnapshotWorker
+        {
+            public void Execute(RefreshPrincipalReturnPercentageSnapshotRequest request)
             {
             }
         }

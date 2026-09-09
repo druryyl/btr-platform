@@ -297,8 +297,13 @@ Only a review agent may set `GO` or `NO-GO`.
 
 ### PCM-024
 
-- Status: PLANNED
-- Implementation History: none
+- Status: GO
+- Implementation History:
+  - 2026-09-09: IN IMPLEMENTATION
+  - 2026-09-09: IMPLEMENTED. Persisted `PRN-RET-004` Return Percentage from stored `PRN-RET-003` and stored `PRN-SALES-001` (`PRN-RET-003 ÷ PRN-SALES-001` when Sales-Out > 0, otherwise null). Catalog registers `PRN-RET-004` as Return Percentage, a supporting ranking KPI, not a deduction from Sales-Out and not Net Sales. The writer does not write, overwrite, or recalculate `PRN-SALES-001` or `PRN-RET-003`.
+- Review History:
+  - 2026-09-09: IN REVIEW
+  - 2026-09-09: GO. `PRN-RET-004` equals stored `PRN-RET-003` ÷ stored `PRN-SALES-001` when Sales-Out > 0, otherwise null. The writer reads stored sources and does not update those rows. Catalog labels it Return Percentage, not a deduction and not Net Sales. Full solution builds. 28 tests pass, including percentage composition, source-row protection, catalog, and refresh orchestration.
 - Review History: none
 - Remediation History: none
 

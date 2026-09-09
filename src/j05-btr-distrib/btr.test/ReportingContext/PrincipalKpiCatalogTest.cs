@@ -216,8 +216,36 @@ namespace btr.test.ReportingContext
                 "PRN-RET-003 Total Return Amount = PRN-RET-001 + PRN-RET-002.");
             total.DefinitionStatements.Should().Contain(
                 "This KPI writer does not write PRN-RET-004.");
+        }
 
-            PrincipalKpiCatalog.TryGet("PRN-RET-004", out _).Should().BeFalse();
+        [Fact]
+        public void Catalog_RegistersReturnPercentage_AsQualityRatioNotNetSales()
+        {
+            PrincipalKpiCatalog.TryGet(PrincipalKpiCatalog.ReturnPercentageId, out var percentage).Should().BeTrue();
+            percentage.KpiId.Should().Be("PRN-RET-004");
+            percentage.Name.Should().Be("Return Percentage");
+            percentage.Description.Should().Be("Return Amount ÷ Sales-Out");
+            percentage.EvidenceGrain.Should().Be("Return Item and PRN-SALES-001");
+            percentage.Formula.Should().Be("PRN-RET-003 ÷ PRN-SALES-001 when PRN-SALES-001 > 0; otherwise null");
+            percentage.IsAuthoritativePrincipalPerformanceKpi.Should().BeFalse();
+            percentage.IsAuthoritativeRankingKpi.Should().BeFalse();
+            percentage.DeductsReturns.Should().BeFalse();
+            percentage.DefinitionStatements.Should().Contain(
+                "PRN-RET-004 Return Percentage = PRN-RET-003 ÷ PRN-SALES-001 when stored PRN-SALES-001 is greater than zero; otherwise null.");
+            percentage.DefinitionStatements.Should().Contain(
+                "The writer reads stored PRN-SALES-001 and stored PRN-RET-003.");
+            percentage.DefinitionStatements.Should().Contain(
+                "The writer does not write, overwrite, or recalculate PRN-SALES-001.");
+            percentage.DefinitionStatements.Should().Contain(
+                "The writer does not write, overwrite, or recalculate PRN-RET-003.");
+            percentage.DefinitionStatements.Should().Contain(
+                "Return Percentage is not a deduction from Sales-Out.");
+            percentage.DefinitionStatements.Should().Contain(
+                "Return Percentage is not Net Sales.");
+            percentage.DefinitionStatements.Should().Contain(
+                "The user-facing name is Return Percentage, not a deduction from Sales-Out and not Net Sales.");
+            percentage.Name.Should().NotBe("Net Sales");
+            percentage.Name.Should().NotContain("deduction");
         }
 
         [Fact]
@@ -234,6 +262,7 @@ namespace btr.test.ReportingContext
             ids.Should().Contain("PRN-RET-001");
             ids.Should().Contain("PRN-RET-002");
             ids.Should().Contain("PRN-RET-003");
+            ids.Should().Contain("PRN-RET-004");
             ids.Should().OnlyContain(id =>
                 id == "PRN-SALES-001" ||
                 id == "PRN-TGT-001" ||
@@ -242,9 +271,9 @@ namespace btr.test.ReportingContext
                 id == "PRN-INV-002" ||
                 id == "PRN-RET-001" ||
                 id == "PRN-RET-002" ||
-                id == "PRN-RET-003");
-            ids.Should().NotContain("PRN-RET-004");
-            ids.Should().NotContain(id => id.StartsWith("PRN-RET-") && id != "PRN-RET-001" && id != "PRN-RET-002" && id != "PRN-RET-003");
+                id == "PRN-RET-003" ||
+                id == "PRN-RET-004");
+            ids.Should().NotContain(id => id.StartsWith("PRN-RET-") && id != "PRN-RET-001" && id != "PRN-RET-002" && id != "PRN-RET-003" && id != "PRN-RET-004");
             ids.Should().NotContain("PRN-TGT-002");
             ids.Should().NotContain("PRN-TGT-003");
             ids.Should().NotContain(id => id.StartsWith("PRN-PUR-") && id != "PRN-PUR-001");

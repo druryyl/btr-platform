@@ -26,6 +26,8 @@ namespace btr.application.ReportingContext.PrincipalAnalyticsAgg
 
         public const string TotalReturnAmountId = "PRN-RET-003";
 
+        public const string ReturnPercentageId = "PRN-RET-004";
+
         public const string ReturnsMustNotReduceReplaceOrRedefinePrincipalSalesOut =
             "Returns KPIs must not reduce, replace, or redefine PRN-SALES-001.";
 
@@ -57,6 +59,8 @@ namespace btr.application.ReportingContext.PrincipalAnalyticsAgg
 
         private static readonly PrincipalKpiCatalogEntry TotalReturnAmountEntry = CreateTotalReturnAmount();
 
+        private static readonly PrincipalKpiCatalogEntry ReturnPercentageEntry = CreateReturnPercentage();
+
         private static readonly IReadOnlyList<PrincipalKpiCatalogEntry> RegisteredEntries =
             new[]
             {
@@ -67,7 +71,8 @@ namespace btr.application.ReportingContext.PrincipalAnalyticsAgg
                 InventoryDaysEntry,
                 GoodReturnAmountEntry,
                 BrokenReturnAmountEntry,
-                TotalReturnAmountEntry
+                TotalReturnAmountEntry,
+                ReturnPercentageEntry
             };
 
         public static IReadOnlyList<PrincipalKpiCatalogEntry> Entries
@@ -380,6 +385,38 @@ namespace btr.application.ReportingContext.PrincipalAnalyticsAgg
                     "This KPI writer does not write, overwrite, or recalculate PRN-SALES-001.",
                     "This KPI writer does not write PRN-RET-004.",
                     "The user-facing name is Total Return Amount, not Principal Sales-Out and not Net Sales."
+                }
+            };
+        }
+
+        private static PrincipalKpiCatalogEntry CreateReturnPercentage()
+        {
+            return new PrincipalKpiCatalogEntry
+            {
+                KpiId = ReturnPercentageId,
+                Name = "Return Percentage",
+                Description = "Return Amount ÷ Sales-Out",
+                EntityCategory = EntityTypeCode.Supplier,
+                EvidenceGrain = "Return Item and PRN-SALES-001",
+                Formula = "PRN-RET-003 ÷ PRN-SALES-001 when PRN-SALES-001 > 0; otherwise null",
+                IsAuthoritativePrincipalPerformanceKpi = false,
+                IsAuthoritativeRankingKpi = false,
+                DeductsReturns = false,
+                DeductsClaims = false,
+                DeductsInventoryAdjustments = false,
+                DefinitionStatements = new[]
+                {
+                    "PRN-RET-004 Return Percentage = PRN-RET-003 ÷ PRN-SALES-001 when stored PRN-SALES-001 is greater than zero; otherwise null.",
+                    "The writer reads stored PRN-SALES-001 and stored PRN-RET-003.",
+                    "The writer does not write, overwrite, or recalculate PRN-SALES-001.",
+                    "The writer does not write, overwrite, or recalculate PRN-RET-003.",
+                    "Return Percentage is a supporting ranking KPI.",
+                    "Return Percentage is not a replacement for Principal Sales-Out.",
+                    "Return Percentage is not a deduction from Sales-Out.",
+                    "Return Percentage is not Net Sales.",
+                    "Returns never reduce Principal Sales-Out.",
+                    "PRN-RET-004 is not the authoritative Principal ranking KPI.",
+                    "The user-facing name is Return Percentage, not a deduction from Sales-Out and not Net Sales."
                 }
             };
         }

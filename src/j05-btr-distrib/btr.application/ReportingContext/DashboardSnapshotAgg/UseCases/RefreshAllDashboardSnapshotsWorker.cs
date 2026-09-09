@@ -21,6 +21,7 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.UseCases
         private readonly IRefreshDashboardSalesSnapshotWorker _salesWorker;
         private readonly IRefreshPrincipalSalesOutSnapshotWorker _principalSalesOutWorker;
         private readonly IRefreshPrincipalReturnSnapshotWorker _principalReturnWorker;
+        private readonly IRefreshPrincipalReturnPercentageSnapshotWorker _principalReturnPercentageWorker;
         private readonly IRefreshPrincipalSalesOutHistoryWorker _principalSalesOutHistoryWorker;
         private readonly IRefreshPrincipalTargetSnapshotWorker _principalTargetWorker;
         private readonly IRefreshCustomerPrincipalRelationshipWorker _customerPrincipalRelationshipWorker;
@@ -41,6 +42,7 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.UseCases
             IRefreshDashboardSalesSnapshotWorker salesWorker,
             IRefreshPrincipalSalesOutSnapshotWorker principalSalesOutWorker,
             IRefreshPrincipalReturnSnapshotWorker principalReturnWorker,
+            IRefreshPrincipalReturnPercentageSnapshotWorker principalReturnPercentageWorker,
             IRefreshPrincipalSalesOutHistoryWorker principalSalesOutHistoryWorker,
             IRefreshPrincipalTargetSnapshotWorker principalTargetWorker,
             IRefreshCustomerPrincipalRelationshipWorker customerPrincipalRelationshipWorker,
@@ -60,6 +62,7 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.UseCases
             _salesWorker = salesWorker;
             _principalSalesOutWorker = principalSalesOutWorker;
             _principalReturnWorker = principalReturnWorker;
+            _principalReturnPercentageWorker = principalReturnPercentageWorker;
             _principalSalesOutHistoryWorker = principalSalesOutHistoryWorker;
             _principalTargetWorker = principalTargetWorker;
             _customerPrincipalRelationshipWorker = customerPrincipalRelationshipWorker;
@@ -176,6 +179,20 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.UseCases
                     };
                     _principalReturnWorker.Execute(principalReturnRequest);
                     return principalReturnRequest.Result;
+                },
+                domainResults,
+                failures);
+
+            RunDomain(
+                PrincipalReturnPercentageSnapshot.Domain,
+                () =>
+                {
+                    var principalReturnPercentageRequest = new RefreshPrincipalReturnPercentageSnapshotRequest
+                    {
+                        TriggeredBy = triggeredBy
+                    };
+                    _principalReturnPercentageWorker.Execute(principalReturnPercentageRequest);
+                    return principalReturnPercentageRequest.Result;
                 },
                 domainResults,
                 failures);
@@ -422,6 +439,13 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.UseCases
                         Domain = domain,
                         RefreshLogId = principalReturn.RefreshLogId,
                         DurationMs = principalReturn.DurationMs
+                    };
+                case RefreshPrincipalReturnPercentageSnapshotResult principalReturnPercentage:
+                    return new RefreshDashboardDomainResult
+                    {
+                        Domain = domain,
+                        RefreshLogId = principalReturnPercentage.RefreshLogId,
+                        DurationMs = principalReturnPercentage.DurationMs
                     };
                 case RefreshPrincipalSalesOutHistoryResult principalSalesOutHistory:
                     return new RefreshDashboardDomainResult
