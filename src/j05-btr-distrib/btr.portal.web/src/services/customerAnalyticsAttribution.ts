@@ -51,6 +51,23 @@ export const CU04_ATTRIBUTION_DISCLOSURES = [
   'Customer portfolio measures remain Customer-level. Principal portfolio mix is not shown.',
 ] as const
 
+export const CU05_ACTION_ROUTE_LABEL = 'Action Route'
+
+export const CU05_ACTION_ROUTE_NOTE =
+  'This is the portfolio action function for the recommended action, not the Customer owner.'
+
+export const CU05_LAST_INVOICING_SALESMAN_LABEL = LAST_INVOICING_SALESMAN_LABEL
+
+export const CU05_LAST_INVOICING_SALESMAN_NOTE =
+  'This is the last invoicing Salesman, a commercial attribution on the latest invoice, not the Customer owner.'
+
+export const CU05_ATTRIBUTION_DISCLOSURES = [
+  'The Salesman column is the last invoicing Salesman, a commercial attribution on the latest invoice, not the Customer owner.',
+  'This page does not label that Salesman as Owner of the Customer.',
+  'The action route is the portfolio action function, not Customer ownership.',
+  'Customer totals remain Customer-level. Pair evidence is not shown.',
+] as const
+
 export function isForbiddenCustomerOwnerLabel(label: string | null | undefined): boolean {
   const normalized = (label ?? '').toLowerCase().replace(/[^a-z0-9]/g, '')
   return normalized === 'assignedsalesman' || normalized === 'owner'

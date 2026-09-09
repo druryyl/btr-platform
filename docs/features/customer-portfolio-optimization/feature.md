@@ -268,7 +268,8 @@ Minimum business expectations (Architect details grain and columns):
 - Customer identity: code, name, wilayah, klasifikasi (display/filter)
 - MTD omzet, open piutang, last purchase date
 - Lifecycle stage and portfolio tier (from M31 snapshot or live compose — Architect decides)
-- Portfolio action and owner
+- Portfolio action and action route (the function for the recommended action, not the Customer owner)
+- Last invoicing Salesman (commercial attribution on the latest invoice, not the Customer owner)
 - Link from M31 portfolio row opens Customer Report with customer pre-filter
 
 ---

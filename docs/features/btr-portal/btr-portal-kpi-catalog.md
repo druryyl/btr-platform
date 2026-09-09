@@ -3356,7 +3356,7 @@ Customer Portfolio — Declining Count.
 
 ### WHAT
 
-Per-customer row: lifecycle, tier, portfolio action, salesman, MTD omzet, open balance.
+Per-customer row: lifecycle, tier, portfolio action, action route, last invoicing Salesman, MTD omzet, open balance. Customer totals remain Customer-level. The Last Invoicing Salesman is not the Customer owner. Pair evidence is not shown.
 - Evidence layer for M31.
 - One row per customer from M31 snapshot.
 

@@ -300,7 +300,7 @@ Use **Refresh** on any dashboard page to reload data from the server. Detail pag
 
 **Route:** `/reports/customers` (optional `?customerCode=` pre-filter)
 
-One row per customer from M31 snapshot — lifecycle, tier, portfolio action, salesman summary, MTD omzet, open balance.
+One row per customer from M31 snapshot — lifecycle, tier, portfolio action, action route, last invoicing Salesman, MTD omzet, open balance. Customer totals remain Customer-level. The Last Invoicing Salesman is the commercial attribution on the latest invoice, not the Customer owner. The Action Route is the portfolio action function, not Customer ownership. Pair evidence is not shown on this page.
 
 **Related:** [Customer Portfolio Optimization feature doc](../customer-portfolio-optimization/feature.md)
 

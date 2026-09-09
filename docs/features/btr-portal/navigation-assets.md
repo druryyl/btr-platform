@@ -782,7 +782,7 @@ Footer: Customer Analytics, Customer Risk Forecast, Collection Optimization, Cus
 | Widget ID | Widget Name | Type | Purpose | Primary KPI | Secondary KPI | Drill-Down |
 | --------- | ----------- | ---- | ------- | ----------- | ------------- | ---------- |
 | W-CU05-SUM | Report totals | KPI Card | Total Customers; Total MTD Omzet; Total Open Balance | Total MTD Omzet | Total Open Balance | No |
-| W-CU05-TABLE | Customer rows | Table | Code, Customer, Wilayah, Klasifikasi, Tier, Lifecycle, Action, Owner, Salesman, MTD Omzet, Open Balance, Overdue, Risk, Last Purchase, Sales Achievement | MTD Omzet | Open Balance | No further portal drill-down |
+| W-CU05-TABLE | Customer rows | Table | Code, Customer, Wilayah, Klasifikasi, Tier, Lifecycle, Action, Action Route, Last Invoicing Salesman, MTD Omzet, Open Balance, Overdue, Risk, Last Purchase, Sales Achievement | MTD Omzet | Open Balance | No further portal drill-down |
 
 ---
 

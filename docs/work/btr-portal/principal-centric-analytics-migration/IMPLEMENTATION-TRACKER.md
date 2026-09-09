@@ -442,9 +442,13 @@ Only a review agent may set `GO` or `NO-GO`.
 
 ### PCM-041
 
-- Status: PLANNED
-- Implementation History: none
-- Review History: none
+- Status: GO
+- Implementation History:
+  - 2026-09-09: IN IMPLEMENTATION
+  - 2026-09-09: IMPLEMENTED. CU05 labels the action function as Action Route and the latest-invoice Salesman as Last Invoicing Salesman, a commercial attribution, not the Customer owner. Customer totals remain Customer-level. Pair evidence was not added. Other Customer pages are unchanged.
+- Review History:
+  - 2026-09-09: IN REVIEW
+  - 2026-09-09: GO. CU05 does not label a Salesman column as Owner of the Customer. The action function is Action Route and the latest-invoice Salesman is Last Invoicing Salesman, a commercial attribution. Customer totals remain Customer-level. Pair evidence was not added. Other Customer pages are unchanged. `customerAnalyticsAttribution.spec.ts`: 8 passed.
 - Remediation History: none
 
 ### PCM-042

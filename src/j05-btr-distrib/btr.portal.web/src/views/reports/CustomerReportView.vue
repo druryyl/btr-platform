@@ -13,6 +13,13 @@ import InvestigationBreadcrumb from '@/components/reports/InvestigationBreadcrum
 import ReportSummaryBar from '@/components/reports/ReportSummaryBar.vue'
 import { useReportInvestigationFilter } from '@/composables/useReportInvestigationFilter'
 import { useReportInvestigationHydration } from '@/composables/useReportInvestigationHydration'
+import {
+  CU05_ACTION_ROUTE_LABEL,
+  CU05_ACTION_ROUTE_NOTE,
+  CU05_ATTRIBUTION_DISCLOSURES,
+  CU05_LAST_INVOICING_SALESMAN_LABEL,
+  CU05_LAST_INVOICING_SALESMAN_NOTE,
+} from '@/services/customerAnalyticsAttribution'
 import { formatCurrency, formatDate, formatDateTime, formatPercent } from '@/services/formatters'
 import { actionBadgeSeverity } from '@/services/customerPortfolioSignals'
 import { useCustomerReportStore } from '@/stores/customerReportStore'
@@ -117,6 +124,15 @@ onMounted(() => {
           {{ disclaimer }}
         </Message>
 
+        <p class="customer-report__attribution-note">{{ CU05_LAST_INVOICING_SALESMAN_NOTE }}</p>
+        <p class="customer-report__attribution-note">{{ CU05_ACTION_ROUTE_NOTE }}</p>
+
+        <section class="customer-report__disclosure" aria-label="Customer attribution disclosure">
+          <ul>
+            <li v-for="item in CU05_ATTRIBUTION_DISCLOSURES" :key="item">{{ item }}</li>
+          </ul>
+        </section>
+
         <DataTable
           :value="filteredRows"
           :loading="customerReport.loading"
@@ -149,8 +165,8 @@ onMounted(() => {
               />
             </template>
           </Column>
-          <Column field="ActionOwner" header="Owner" sortable />
-          <Column field="SalesPersonName" header="Salesman" sortable />
+          <Column field="ActionOwner" :header="CU05_ACTION_ROUTE_LABEL" sortable />
+          <Column field="SalesPersonName" :header="CU05_LAST_INVOICING_SALESMAN_LABEL" sortable />
           <Column field="MtdOmzet" header="MTD Omzet" sortable>
             <template #body="{ data }">{{ formatCurrency(data.MtdOmzet) }}</template>
           </Column>
@@ -225,6 +241,23 @@ onMounted(() => {
 
 .customer-report__disclaimer {
   margin-bottom: 1rem;
+}
+
+.customer-report__attribution-note {
+  margin: 0 0 0.5rem;
+  font-size: 0.875rem;
+  color: var(--p-text-muted-color);
+}
+
+.customer-report__disclosure {
+  margin: 0 0 1rem;
+  font-size: 0.875rem;
+  color: var(--p-text-muted-color);
+}
+
+.customer-report__disclosure ul {
+  margin: 0;
+  padding-left: 1.25rem;
 }
 
 .customer-report__table {

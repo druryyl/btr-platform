@@ -11,6 +11,11 @@ import {
   CU04_LAST_INVOICING_SALESMAN_FILTER_ALL,
   CU04_LAST_INVOICING_SALESMAN_LABEL,
   CU04_LAST_INVOICING_SALESMAN_NOTE,
+  CU05_ACTION_ROUTE_LABEL,
+  CU05_ACTION_ROUTE_NOTE,
+  CU05_ATTRIBUTION_DISCLOSURES,
+  CU05_LAST_INVOICING_SALESMAN_LABEL,
+  CU05_LAST_INVOICING_SALESMAN_NOTE,
   correctCu02AttributionText,
   isForbiddenCustomerOwnerLabel,
 } from '@/services/customerAnalyticsAttribution'
@@ -90,5 +95,33 @@ describe('CU04 ownership labels', () => {
     expect(text.toLowerCase()).toContain('customer-level')
     expect(text.toLowerCase()).toContain('principal portfolio mix is not shown')
     expect(CU04_ATTRIBUTION_DISCLOSURES.some((item) => /assigned salesman/i.test(item) && !/does not describe/i.test(item))).toBe(false)
+  })
+})
+
+describe('CU05 ownership labels', () => {
+  it('does not label a Salesman column as Owner of the Customer', () => {
+    expect(CU05_LAST_INVOICING_SALESMAN_LABEL).toBe('Last Invoicing Salesman')
+    expect(CU05_ACTION_ROUTE_LABEL).toBe('Action Route')
+    expect(isForbiddenCustomerOwnerLabel(CU05_LAST_INVOICING_SALESMAN_LABEL)).toBe(false)
+    expect(isForbiddenCustomerOwnerLabel(CU05_ACTION_ROUTE_LABEL)).toBe(false)
+    expect(isForbiddenCustomerOwnerLabel('Owner')).toBe(true)
+    expect(isForbiddenCustomerOwnerLabel('Salesman')).toBe(false)
+    expect(CU05_LAST_INVOICING_SALESMAN_LABEL).not.toBe('Owner')
+    expect(CU05_LAST_INVOICING_SALESMAN_LABEL).not.toBe('Salesman')
+    expect(CU05_ACTION_ROUTE_LABEL).not.toBe('Owner')
+    expect(CU05_LAST_INVOICING_SALESMAN_NOTE.toLowerCase()).toContain('last invoicing salesman')
+    expect(CU05_LAST_INVOICING_SALESMAN_NOTE.toLowerCase()).toContain('commercial attribution')
+    expect(CU05_LAST_INVOICING_SALESMAN_NOTE.toLowerCase()).toContain('not the customer owner')
+    expect(CU05_ACTION_ROUTE_NOTE.toLowerCase()).toContain('portfolio action function')
+    expect(CU05_ACTION_ROUTE_NOTE.toLowerCase()).toContain('not the customer owner')
+  })
+
+  it('keeps customer totals Customer-level and does not add pair evidence', () => {
+    const text = CU05_ATTRIBUTION_DISCLOSURES.join(' ')
+    expect(text.toLowerCase()).toContain('not the customer owner')
+    expect(text.toLowerCase()).toContain('does not label that salesman as owner of the customer')
+    expect(text.toLowerCase()).toContain('customer totals remain customer-level')
+    expect(text.toLowerCase()).toContain('pair evidence is not shown')
+    expect(CU05_ATTRIBUTION_DISCLOSURES.some((item) => /^owner$/i.test(item.trim()))).toBe(false)
   })
 })
