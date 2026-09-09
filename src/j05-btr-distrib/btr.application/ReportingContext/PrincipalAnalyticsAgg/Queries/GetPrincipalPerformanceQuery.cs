@@ -65,11 +65,37 @@ namespace btr.application.ReportingContext.PrincipalAnalyticsAgg.Queries
 
         public bool ReturnIsAvailable { get; set; }
 
+        public bool ContributionIsAvailable { get; set; }
+
         public IList<string> Disclosures { get; set; }
             = new List<string>();
 
         public IList<PrincipalPerformanceRankingItem> Ranking { get; set; }
             = new List<PrincipalPerformanceRankingItem>();
+
+        public IList<PrincipalSalesmanContributionItem> SalesmanContributions { get; set; }
+            = new List<PrincipalSalesmanContributionItem>();
+    }
+
+    public class PrincipalSalesmanContributionItem
+    {
+        public string SupplierId { get; set; }
+
+        public string PrincipalName { get; set; }
+
+        public string SalesPersonId { get; set; }
+
+        public string SalesPersonCode { get; set; }
+
+        public string SalesPersonName { get; set; }
+
+        public string SourceSalesOutKpiId { get; set; }
+
+        public decimal ContributionAmount { get; set; }
+
+        public int LineCount { get; set; }
+
+        public bool HasTargetResponsibility { get; set; }
     }
 
     public class PrincipalPerformanceRankingItem
@@ -121,31 +147,38 @@ namespace btr.application.ReportingContext.PrincipalAnalyticsAgg.Queries
         private readonly IPrincipalAchievementSnapshotDal _achievementSnapshotDal;
         private readonly IPrincipalReturnSnapshotDal _returnSnapshotDal;
         private readonly IPrincipalReturnPercentageSnapshotDal _returnPercentageSnapshotDal;
+        private readonly IPrincipalSalesmanContributionSnapshotDal _contributionSnapshotDal;
 
         public GetPrincipalPerformanceHandler(
             IPrincipalSalesOutSnapshotDal snapshotDal,
             IPrincipalTargetSnapshotDal targetSnapshotDal,
             IPrincipalAchievementSnapshotDal achievementSnapshotDal,
             IPrincipalReturnSnapshotDal returnSnapshotDal,
-            IPrincipalReturnPercentageSnapshotDal returnPercentageSnapshotDal)
+            IPrincipalReturnPercentageSnapshotDal returnPercentageSnapshotDal,
+            IPrincipalSalesmanContributionSnapshotDal contributionSnapshotDal)
         {
             _snapshotDal = snapshotDal;
             _targetSnapshotDal = targetSnapshotDal;
             _achievementSnapshotDal = achievementSnapshotDal;
             _returnSnapshotDal = returnSnapshotDal;
             _returnPercentageSnapshotDal = returnPercentageSnapshotDal;
+            _contributionSnapshotDal = contributionSnapshotDal;
         }
 
         public Task<PrincipalPerformanceResponse> Handle(
             GetPrincipalPerformanceQuery request,
             CancellationToken cancellationToken)
         {
+            var contribution = _contributionSnapshotDal is null
+                ? null
+                : _contributionSnapshotDal.GetCurrent();
             return Task.FromResult(PrincipalPerformanceComposer.Compose(
                 _snapshotDal.GetCurrent(),
                 _targetSnapshotDal.GetCurrent(),
                 _achievementSnapshotDal.GetCurrent(),
                 _returnSnapshotDal.GetCurrent(),
-                _returnPercentageSnapshotDal.GetCurrent()));
+                _returnPercentageSnapshotDal.GetCurrent(),
+                contribution));
         }
     }
 
@@ -170,6 +203,17 @@ namespace btr.application.ReportingContext.PrincipalAnalyticsAgg.Queries
             PrincipalAchievementResult achievement,
             PrincipalReturnAggregateResult returns,
             PrincipalReturnPercentageResult returnPercentage)
+        {
+            return Compose(snapshot, target, achievement, returns, returnPercentage, null);
+        }
+
+        public static PrincipalPerformanceResponse Compose(
+            PrincipalSalesOutAggregateResult snapshot,
+            PrincipalTargetAggregateResult target,
+            PrincipalAchievementResult achievement,
+            PrincipalReturnAggregateResult returns,
+            PrincipalReturnPercentageResult returnPercentage,
+            PrincipalSalesmanContributionResult contribution)
         {
             var response = new PrincipalPerformanceResponse
             {
@@ -213,7 +257,67 @@ namespace btr.application.ReportingContext.PrincipalAnalyticsAgg.Queries
 
             AttachStoredTargetAndAchievement(response, snapshot, target, achievement);
             AttachStoredReturns(response, snapshot, returns, returnPercentage);
+            AttachStoredSalesmanContributions(response, snapshot, contribution);
             return response;
+        }
+
+        private static void AttachStoredSalesmanContributions(
+            PrincipalPerformanceResponse response,
+            PrincipalSalesOutAggregateResult snapshot,
+            PrincipalSalesmanContributionResult contribution)
+        {
+            if (contribution is null)
+                return;
+
+            if (!string.Equals(
+                contribution.SourceSalesOutKpiId,
+                PrincipalKpiCatalog.SalesOutId,
+                StringComparison.Ordinal))
+                return;
+
+            if (contribution.PeriodYear != snapshot.PeriodYear
+                || contribution.PeriodMonth != snapshot.PeriodMonth)
+                return;
+
+            var rankedSuppliers = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            foreach (var item in response.Ranking)
+            {
+                if (item is null || string.IsNullOrWhiteSpace(item.SupplierId))
+                    continue;
+
+                rankedSuppliers.Add(item.SupplierId.Trim());
+            }
+
+            var attached = (contribution.Contributions ?? new List<PrincipalSalesmanContributionRow>())
+                .Where(row => row != null
+                    && !string.IsNullOrWhiteSpace(row.SupplierId)
+                    && rankedSuppliers.Contains(row.SupplierId.Trim())
+                    && string.Equals(
+                        row.SourceSalesOutKpiId,
+                        PrincipalKpiCatalog.SalesOutId,
+                        StringComparison.Ordinal))
+                .OrderBy(row => row.SupplierId, StringComparer.OrdinalIgnoreCase)
+                .ThenByDescending(row => row.ContributionAmount)
+                .ThenBy(row => row.SalesPersonId, StringComparer.OrdinalIgnoreCase)
+                .Select(row => new PrincipalSalesmanContributionItem
+                {
+                    SupplierId = (row.SupplierId ?? string.Empty).Trim(),
+                    PrincipalName = (row.SupplierName ?? string.Empty).Trim(),
+                    SalesPersonId = (row.SalesPersonId ?? string.Empty).Trim(),
+                    SalesPersonCode = (row.SalesPersonCode ?? string.Empty).Trim(),
+                    SalesPersonName = (row.SalesPersonName ?? string.Empty).Trim(),
+                    SourceSalesOutKpiId = PrincipalKpiCatalog.SalesOutId,
+                    ContributionAmount = row.ContributionAmount,
+                    LineCount = row.LineCount,
+                    HasTargetResponsibility = row.HasTargetResponsibility
+                })
+                .ToList();
+
+            if (attached.Count == 0)
+                return;
+
+            response.ContributionIsAvailable = true;
+            response.SalesmanContributions = attached;
         }
 
         private static void AttachStoredReturns(

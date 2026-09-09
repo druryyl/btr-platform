@@ -417,6 +417,142 @@ namespace btr.test.ReportingContext
             PrincipalReturnEvidenceDal.ListReturnItemEvidenceForPrincipalSql.Should().NotContain("SalesOutAmount");
         }
 
+        [Fact]
+        public void Compose_AttachesStoredContributions_WithoutChangingSalesOut()
+        {
+            var snapshot = new PrincipalSalesOutAggregateResult
+            {
+                KpiId = PrincipalKpiCatalog.SalesOutId,
+                PeriodYear = 2026,
+                PeriodMonth = 9,
+                GeneratedAt = new DateTime(2026, 9, 9, 8, 0, 0),
+                Principals = new[]
+                {
+                    Row("SUPA", "Alpha", 1000m, 1),
+                    Row("SUPB", "Beta", 500m, 2)
+                }.ToList()
+            };
+            var contribution = new PrincipalSalesmanContributionResult
+            {
+                SourceSalesOutKpiId = PrincipalKpiCatalog.SalesOutId,
+                PeriodYear = 2026,
+                PeriodMonth = 9,
+                GeneratedAt = new DateTime(2026, 9, 9, 8, 0, 0),
+                Contributions = new[]
+                {
+                    ContributionRow("SUPA", "Alpha", "SP1", "Name-SP1", 600m, 2, true),
+                    ContributionRow("SUPA", "Alpha", "SP2", "Name-SP2", 400m, 1, false),
+                    ContributionRow("SUPB", "Beta", "SP1", "Name-SP1", 500m, 1, true)
+                }.ToList()
+            };
+
+            var response = PrincipalPerformanceComposer.Compose(snapshot, null, null, null, null, contribution);
+
+            response.PrincipalSalesOutAmount.Should().Be(1500m);
+            response.Ranking.Select(row => row.SupplierId).Should().Equal("SUPA", "SUPB");
+            response.Ranking.Should().OnlyContain(row => row.KpiId == PrincipalKpiCatalog.SalesOutId);
+            response.ContributionIsAvailable.Should().BeTrue();
+            response.SalesmanContributions.Should().HaveCount(3);
+            var alphaRows = response.SalesmanContributions
+                .Where(row => row.SupplierId == "SUPA")
+                .OrderByDescending(row => row.ContributionAmount)
+                .ToList();
+            alphaRows.Should().HaveCount(2);
+            alphaRows.Select(row => row.SalesPersonId).Should().Equal("SP1", "SP2");
+            alphaRows.Sum(row => row.ContributionAmount).Should().Be(1000m);
+            response.SalesmanContributions.Should().OnlyContain(
+                row => row.SourceSalesOutKpiId == PrincipalKpiCatalog.SalesOutId);
+            response.SalesmanContributions.Should().OnlyContain(
+                row => !string.IsNullOrWhiteSpace(row.SalesPersonName));
+        }
+
+        [Fact]
+        public void Compose_DoesNotAttachContributionsFromADifferentPeriod()
+        {
+            var snapshot = new PrincipalSalesOutAggregateResult
+            {
+                KpiId = PrincipalKpiCatalog.SalesOutId,
+                PeriodYear = 2026,
+                PeriodMonth = 9,
+                GeneratedAt = new DateTime(2026, 9, 9, 8, 0, 0),
+                Principals = new[] { Row("SUPA", "Alpha", 100m, 1) }.ToList()
+            };
+            var contribution = new PrincipalSalesmanContributionResult
+            {
+                SourceSalesOutKpiId = PrincipalKpiCatalog.SalesOutId,
+                PeriodYear = 2026,
+                PeriodMonth = 8,
+                GeneratedAt = new DateTime(2026, 8, 9, 8, 0, 0),
+                Contributions = new[]
+                {
+                    ContributionRow("SUPA", "Alpha", "SP1", "Name-SP1", 100m, 1, true)
+                }.ToList()
+            };
+
+            var response = PrincipalPerformanceComposer.Compose(snapshot, null, null, null, null, contribution);
+
+            response.PrincipalSalesOutAmount.Should().Be(100m);
+            response.ContributionIsAvailable.Should().BeFalse();
+            response.SalesmanContributions.Should().BeEmpty();
+            response.Ranking.Single().PrincipalSalesOutAmount.Should().Be(100m);
+        }
+
+        [Fact]
+        public void Compose_IgnoresContributionsForUnrankedPrincipals()
+        {
+            var snapshot = new PrincipalSalesOutAggregateResult
+            {
+                KpiId = PrincipalKpiCatalog.SalesOutId,
+                PeriodYear = 2026,
+                PeriodMonth = 9,
+                GeneratedAt = new DateTime(2026, 9, 9, 8, 0, 0),
+                Principals = new[] { Row("SUPA", "Alpha", 100m, 1) }.ToList()
+            };
+            var contribution = new PrincipalSalesmanContributionResult
+            {
+                SourceSalesOutKpiId = PrincipalKpiCatalog.SalesOutId,
+                PeriodYear = 2026,
+                PeriodMonth = 9,
+                GeneratedAt = new DateTime(2026, 9, 9, 8, 0, 0),
+                Contributions = new[]
+                {
+                    ContributionRow("SUPA", "Alpha", "SP1", "Name-SP1", 100m, 1, true),
+                    ContributionRow("SUPX", "Unknown", "SP1", "Name-SP1", 50m, 1, true)
+                }.ToList()
+            };
+
+            var response = PrincipalPerformanceComposer.Compose(snapshot, null, null, null, null, contribution);
+
+            response.ContributionIsAvailable.Should().BeTrue();
+            response.SalesmanContributions.Should().ContainSingle()
+                .Which.SupplierId.Should().Be("SUPA");
+            response.PrincipalSalesOutAmount.Should().Be(100m);
+        }
+
+        private static PrincipalSalesmanContributionRow ContributionRow(
+            string supplierId,
+            string supplierName,
+            string salesPersonId,
+            string salesPersonName,
+            decimal contributionAmount,
+            int lineCount,
+            bool hasTargetResponsibility)
+        {
+            return new PrincipalSalesmanContributionRow
+            {
+                SourceSalesOutKpiId = PrincipalKpiCatalog.SalesOutId,
+                SupplierId = supplierId,
+                SupplierName = supplierName,
+                SalesPersonId = salesPersonId,
+                SalesPersonCode = "CODE-" + salesPersonId,
+                SalesPersonName = salesPersonName,
+                ContributionAmount = contributionAmount,
+                LineCount = lineCount,
+                HasTargetResponsibility = hasTargetResponsibility,
+                SortOrder = 1
+            };
+        }
+
         private static PrincipalSalesOutRow Row(
             string supplierId,
             string supplierName,

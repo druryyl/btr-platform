@@ -186,6 +186,18 @@ export interface PrincipalPerformanceRankingItem {
   ReturnPercentage?: number | null
 }
 
+export interface PrincipalSalesmanContributionItem {
+  SupplierId: string
+  PrincipalName: string
+  SalesPersonId: string
+  SalesPersonCode: string
+  SalesPersonName: string
+  SourceSalesOutKpiId: string
+  ContributionAmount: number
+  LineCount: number
+  HasTargetResponsibility: boolean
+}
+
 export interface PrincipalPerformanceResponse {
   IsAvailable: boolean
   KpiId: string
@@ -212,6 +224,8 @@ export interface PrincipalPerformanceResponse {
   TotalReturnAmount?: number | null
   ReturnPercentage?: number | null
   ReturnIsAvailable: boolean
+  ContributionIsAvailable: boolean
+  SalesmanContributions: PrincipalSalesmanContributionItem[]
   Disclosures: string[]
   Ranking: PrincipalPerformanceRankingItem[]
 }

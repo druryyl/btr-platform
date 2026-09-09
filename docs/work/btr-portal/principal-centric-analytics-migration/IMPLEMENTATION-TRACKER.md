@@ -396,9 +396,13 @@ Only a review agent may set `GO` or `NO-GO`.
 
 ### PCM-034
 
-- Status: PLANNED
-- Implementation History: none
-- Review History: none
+- Status: GO
+- Implementation History:
+  - 2026-09-10: IN IMPLEMENTATION
+  - 2026-09-10: IMPLEMENTED. SA04 reads the stored Principal × Salesman contribution snapshot for the matching period into a separate Salesman contribution panel within the selected Principal. Each contributing Salesman is shown with its stored `PRN-SALES-001` decomposition amount. Contribution is labeled as contribution, not a registry ranking KPI, and does not assign Customer ownership. Displayed `PRN-SALES-001` ranking and totals are unchanged.
+- Review History:
+  - 2026-09-10: IN REVIEW
+  - 2026-09-10: GO. SA04 contribution panel reads the stored PCM-029 snapshot for the matching period only and leaves the `PRN-SALES-001` ranking and totals unchanged. Each contributing Salesman of the selected Principal is shown with its stored decomposition amount. Contribution is labeled as contribution, not a registry ranking KPI, carries only `PRN-SALES-001` provenance, and disclaims Customer ownership. `btr.application` builds, `btr.test` builds via MSBuild, portal.web `vue-tsc + vite` builds. 14 PrincipalPerformanceQueryTest tests pass, including 3 new contribution tests. 252 frontend tests pass.
 - Remediation History: none
 
 ### PCM-035

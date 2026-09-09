@@ -5,7 +5,7 @@ import DashboardDetailLayout from '@/components/dashboard/DashboardDetailLayout.
 import DashboardMetric from '@/components/dashboard/primitives/DashboardMetric.vue'
 import Top10RankingTable from '@/components/dashboard/Top10RankingTable.vue'
 import { formatCurrency, formatCurrencyCompact, formatNumber, formatPercent } from '@/services/formatters'
-import type { PrincipalPerformanceRankingItem } from '@/models/dashboard'
+import type { PrincipalPerformanceRankingItem, PrincipalSalesmanContributionItem } from '@/models/dashboard'
 import { useDashboardStore } from '@/stores/dashboardStore'
 
 const dashboard = useDashboardStore()
@@ -83,6 +83,32 @@ const returnPercentDisplay = computed(() => {
   const ratio = dashboard.principalPerformance?.ReturnPercentage
   return formatPercent(ratio != null ? ratio * 100 : null)
 })
+
+const contributionIsAvailable = computed(
+  () => dashboard.principalPerformance?.ContributionIsAvailable === true,
+)
+
+const contributionColumns = [
+  { field: 'SalesPersonName', header: 'Salesman' },
+  { field: 'SalesPersonCode', header: 'Salesman Code' },
+  { field: 'ContributionAmount', header: 'Contribution Amount' },
+]
+
+const selectedPrincipalContributions = computed(
+  () =>
+    (
+      (dashboard.principalPerformance?.SalesmanContributions ??
+        []) as PrincipalSalesmanContributionItem[]
+    )
+      .filter(
+        (row) =>
+          selectedSupplierId.value &&
+          row.SupplierId.localeCompare(selectedSupplierId.value, undefined, {
+            sensitivity: 'accent',
+          }) === 0,
+      )
+      .map((row) => ({ ...row }) as Record<string, unknown>),
+)
 
 const missingTargetNote = computed(() => {
   const count = dashboard.principalPerformance?.MissingTargetExceptionCount ?? 0
@@ -355,6 +381,44 @@ onMounted(() => {
         @row-click="onReturnRowClick"
       />
     </section>
+
+    <section
+      class="principal-performance__contribution"
+      aria-label="Salesman contribution within selected Principal"
+    >
+      <h2 class="principal-performance__contribution-title">
+        Salesman contribution within selected Principal
+      </h2>
+
+      <p class="principal-performance__contribution-note">
+        Salesman contribution is a decomposition of stored Principal Sales-Out
+        (PRN-SALES-001) by invoice Salesman. It is not a registry ranking KPI.
+        Sales-Out shown above is unchanged.
+      </p>
+      <p class="principal-performance__contribution-note">
+        Contributing Salesmen are commercial contributors only. No Salesman is the
+        Customer owner.
+      </p>
+
+      <p v-if="!selectedSupplierId" class="principal-performance__contribution-note">
+        Select a Principal from the Principal Sales-Out ranking to see each
+        contributing Salesman.
+      </p>
+
+      <Top10RankingTable
+        v-else
+        title="Salesman contribution"
+        :columns="contributionColumns"
+        :rows="selectedPrincipalContributions"
+        :loading="dashboard.loading"
+        value-field="ContributionAmount"
+        :empty-message="
+          contributionIsAvailable
+            ? 'No Salesman contribution for the selected Principal in the current period.'
+            : 'Salesman contribution is not yet available for the current period.'
+        "
+      />
+    </section>
   </DashboardDetailLayout>
 </template>
 
@@ -441,6 +505,25 @@ onMounted(() => {
 }
 
 .principal-performance__returns-note {
+  margin: 0 0 1rem;
+  color: var(--p-text-muted-color);
+}
+
+.principal-performance__contribution {
+  margin-top: 1rem;
+  padding: 1rem;
+  background: var(--p-surface-0);
+  border: 1px solid var(--p-surface-200);
+  border-radius: var(--dashboard-radius-sm);
+  box-shadow: var(--dashboard-shadow-idle);
+}
+
+.principal-performance__contribution-title {
+  margin: 0 0 0.75rem;
+  font-size: 1rem;
+}
+
+.principal-performance__contribution-note {
   margin: 0 0 1rem;
   color: var(--p-text-muted-color);
 }
