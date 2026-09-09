@@ -37,7 +37,7 @@ M31  Portfolio Optimization       →  "What should Management do with each cust
 | Collection Optimization (M30) | Who should Finance contact first? | **Collect action links to M30** — never duplicates collection queue |
 | Piutang (M14) | Who owes money today? | Reuses open balance and aging semantics via shared piutang load |
 | Collection (M20) | Is recovery working? | Context only — recovery % not recomputed |
-| Salesman Performance (M18) | Which rep's book needs attention? | **Summary cross-read** — owner, achievement %, exposure flags on portfolio rows |
+| Salesman Performance (M18) | Which rep's book needs attention? | **Summary cross-read** — last invoicing Salesman, achievement %, exposure flags on portfolio rows |
 | Branch / Warehouse Performance (M22) | Territory concentration? | **Optional context** — wilayah breakdown |
 | Management Attention Center (M16) | What requires attention company-wide? | **Summary promotion** — portfolio health cards link to M31 |
 
@@ -211,7 +211,7 @@ Distinct from M30 **Collection Priority Score**.
 
 | Rule | Description |
 | ---- | ----------- |
-| CPO-70 | Portfolio **owner** = **last invoicing salesman** — existing portal attribution standard |
+| CPO-70 | Displayed Salesman = **last invoicing salesman**, a commercial attribution on the latest invoice, not the Customer owner |
 | CPO-71 | Do not use route-owner (`BTR_SalesRuteItem`) as portfolio owner |
 | CPO-72 | Each portfolio row may show M18 **summary** fields: salesman name, achievement %, high piutang exposure flag |
 | CPO-73 | Do not reproduce M18 Salesman Performance dashboard on M31 |
@@ -288,7 +288,7 @@ Minimum business expectations (Architect details grain and columns):
 ### Filters (V1)
 
 - View toggle: Attention Customers / All Customers
-- Wilayah, Klasifikasi (filter only), Tier, Lifecycle, Action, Salesman (owner)
+- Wilayah, Klasifikasi (filter only), Tier, Lifecycle, Action, Last Invoicing Salesman
 
 ---
 
@@ -359,7 +359,7 @@ Management can verify M31 by confirming:
 4. **Collect links to M30** — Collect action navigates to Collection Optimization; M30 queue is not duplicated on M31.
 5. **Value labeling** — omzet-based value is presented as proxy, not profitability.
 6. **Lifecycle and tier visible** — every portfolio row shows computed lifecycle stage and portfolio tier; Klasifikasi appears as filter only.
-7. **Salesman summary** — portfolio owner shows last invoicing salesman with optional achievement and exposure flags from M18.
+7. **Salesman summary** — last invoicing salesman is commercial attribution, not Customer ownership, with optional achievement and exposure flags from M18.
 8. **Executive summary** — M16 shows portfolio health cards linking to M31; no detailed tables on executive page.
 9. **Investigation chain** — portfolio row → Customer Report → Sales/Piutang Report path works with customer pre-filter.
 10. **Read-only** — no transactional writes from portal.

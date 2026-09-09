@@ -7,6 +7,10 @@ import {
   CU02_LAST_INVOICING_SALESMAN_LABEL,
   CU02_LAST_INVOICING_SALESMAN_NOTE,
   CU02_LOW_RECOVERY_EXPLANATION,
+  CU04_ATTRIBUTION_DISCLOSURES,
+  CU04_LAST_INVOICING_SALESMAN_FILTER_ALL,
+  CU04_LAST_INVOICING_SALESMAN_LABEL,
+  CU04_LAST_INVOICING_SALESMAN_NOTE,
   correctCu02AttributionText,
   isForbiddenCustomerOwnerLabel,
 } from '@/services/customerAnalyticsAttribution'
@@ -63,5 +67,28 @@ describe('CU02 ownership labels', () => {
     expect(correctCu02AttributionText('Chronic overdue exposure with no recent payment.')).toBe(
       'Chronic overdue exposure with no recent payment.',
     )
+  })
+})
+
+describe('CU04 ownership labels', () => {
+  it('labels the latest-Faktur Salesman as last invoicing commercial attribution, not the Customer owner', () => {
+    expect(CU04_LAST_INVOICING_SALESMAN_LABEL).toBe('Last Invoicing Salesman')
+    expect(CU04_LAST_INVOICING_SALESMAN_LABEL).not.toMatch(/assigned salesman/i)
+    expect(isForbiddenCustomerOwnerLabel(CU04_LAST_INVOICING_SALESMAN_LABEL)).toBe(false)
+    expect(isForbiddenCustomerOwnerLabel(CU04_LAST_INVOICING_SALESMAN_FILTER_ALL)).toBe(false)
+    expect(CU04_LAST_INVOICING_SALESMAN_FILTER_ALL.toLowerCase()).toContain('last invoicing')
+    expect(CU04_LAST_INVOICING_SALESMAN_NOTE.toLowerCase()).toContain('last invoicing salesman')
+    expect(CU04_LAST_INVOICING_SALESMAN_NOTE.toLowerCase()).toContain('commercial attribution')
+    expect(CU04_LAST_INVOICING_SALESMAN_NOTE.toLowerCase()).toContain('not the customer owner')
+  })
+
+  it('keeps portfolio measures Customer-level and does not add Principal portfolio mix', () => {
+    const text = CU04_ATTRIBUTION_DISCLOSURES.join(' ')
+    expect(text.toLowerCase()).toContain('not the customer owner')
+    expect(text.toLowerCase()).toContain('does not describe')
+    expect(text.toLowerCase()).toContain('commercial attribution')
+    expect(text.toLowerCase()).toContain('customer-level')
+    expect(text.toLowerCase()).toContain('principal portfolio mix is not shown')
+    expect(CU04_ATTRIBUTION_DISCLOSURES.some((item) => /assigned salesman/i.test(item) && !/does not describe/i.test(item))).toBe(false)
   })
 })

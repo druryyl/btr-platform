@@ -6,6 +6,7 @@ import Column from 'primevue/column'
 import Tag from 'primevue/tag'
 import { RouterLink } from 'vue-router'
 import type { DashboardCustomerPortfolioPriorityRow } from '@/models/dashboard'
+import { CU04_LAST_INVOICING_SALESMAN_LABEL } from '@/services/customerAnalyticsAttribution'
 import { formatCurrency } from '@/services/formatters'
 import {
   actionBadgeSeverity,
@@ -103,7 +104,7 @@ const expandedRows = ref<DashboardCustomerPortfolioPriorityRow[]>([])
           <div class="customer-portfolio-priority-table__detail">
             <p><strong>Reason:</strong> {{ data.ActionReasonText }}</p>
             <p><strong>Rules:</strong> {{ data.TriggeredRuleIds }}</p>
-            <p><strong>Salesman:</strong> {{ data.SalesPersonName || '—' }}</p>
+            <p><strong>{{ CU04_LAST_INVOICING_SALESMAN_LABEL }}:</strong> {{ data.SalesPersonName || '—' }}</p>
             <p><strong>Wilayah:</strong> {{ data.WilayahName || '—' }}</p>
           </div>
         </template>

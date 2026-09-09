@@ -431,9 +431,13 @@ Only a review agent may set `GO` or `NO-GO`.
 
 ### PCM-040
 
-- Status: PLANNED
-- Implementation History: none
-- Review History: none
+- Status: GO
+- Implementation History:
+  - 2026-09-09: IN IMPLEMENTATION
+  - 2026-09-09: IMPLEMENTED. CU04 labels the Salesman filter and displayed Salesman as Last Invoicing Salesman, a commercial attribution on the latest invoice, not the Customer owner. Customer portfolio measures remain Customer-level. Principal portfolio mix was not added. Other Customer pages are unchanged.
+- Review History:
+  - 2026-09-09: IN REVIEW
+  - 2026-09-09: GO. CU04 does not describe the latest-Faktur Salesman as the Customer owner. The filter and displayed Salesman use Last Invoicing Salesman, a commercial attribution on the latest invoice. Customer portfolio measures remain Customer-level. Principal portfolio mix was not added. Other Customer pages are unchanged. `customerAnalyticsAttribution.spec.ts`: 6 passed. `customerPortfolioSignals.spec.ts`: 8 passed.
 - Remediation History: none
 
 ### PCM-041

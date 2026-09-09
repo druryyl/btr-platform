@@ -450,8 +450,10 @@ Expanded rows also show:
 
 - Action reason
 - Triggered rules
-- Salesman
+- Last Invoicing Salesman
 - Wilayah
+
+The Last Invoicing Salesman is the commercial attribution on the latest invoice. It is not the Customer owner.
 
 ### Business Use
 
@@ -547,7 +549,9 @@ The dashboard supports:
 - **Tier**
 - **Lifecycle**
 - **Action**
-- **Salesman**
+- **Last Invoicing Salesman**
+
+The Salesman filter selects the last invoicing Salesman, a commercial attribution on the latest invoice. It does not mean that Salesman owns the Customer. Principal portfolio mix is not shown on this page.
 
 Klasifikasi is available for filtering and display only. It must not be
 interpreted as the source of the computed portfolio tier.

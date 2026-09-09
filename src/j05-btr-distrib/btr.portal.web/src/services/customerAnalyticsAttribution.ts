@@ -38,6 +38,19 @@ export const CU02_ATTRIBUTION_DISCLOSURES = [
   'Customer risk, credit, piutang, and decline measures remain Customer-level. Principal-specific decline is not shown.',
 ] as const
 
+export const CU04_LAST_INVOICING_SALESMAN_LABEL = LAST_INVOICING_SALESMAN_LABEL
+
+export const CU04_LAST_INVOICING_SALESMAN_FILTER_ALL = 'All Last Invoicing Salesmen'
+
+export const CU04_LAST_INVOICING_SALESMAN_NOTE =
+  'This is the last invoicing Salesman, a commercial attribution on the latest invoice, not the Customer owner.'
+
+export const CU04_ATTRIBUTION_DISCLOSURES = [
+  'The Salesman filter and displayed Salesman are the last invoicing Salesman, a commercial attribution on the latest invoice, not the Customer owner.',
+  'This page does not describe that Salesman as Assigned Salesman or Owner.',
+  'Customer portfolio measures remain Customer-level. Principal portfolio mix is not shown.',
+] as const
+
 export function isForbiddenCustomerOwnerLabel(label: string | null | undefined): boolean {
   const normalized = (label ?? '').toLowerCase().replace(/[^a-z0-9]/g, '')
   return normalized === 'assignedsalesman' || normalized === 'owner'
