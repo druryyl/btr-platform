@@ -22,6 +22,7 @@ const props = defineProps<{
   loading?: boolean
   error?: string | null
   entityCode?: string | null
+  notice?: string | null
 }>()
 
 const emit = defineEmits<{
@@ -122,6 +123,8 @@ const workspaceRoute = computed(() => {
       to populate Entity Analytics data.
     </Message>
 
+    <p v-if="notice" class="entity-profile-shell__notice">{{ notice }}</p>
+
     <div class="entity-profile-shell__sections">
       <ProfileOverviewSection :section="profile?.Overview" :loading="loading" />
       <ProfileKpiSummarySection
@@ -145,8 +148,14 @@ const workspaceRoute = computed(() => {
 </template>
 
 <style scoped>
-.entity-profile-shell__banner {
+.entity-profile-shell__banner,
+.entity-profile-shell__notice {
   margin-bottom: 1rem;
+}
+
+.entity-profile-shell__notice {
+  font-size: 0.875rem;
+  color: var(--p-text-muted-color);
 }
 
 .entity-profile-shell__sections {

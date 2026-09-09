@@ -83,6 +83,9 @@ function bandSeverity(band: string | null | undefined): 'success' | 'warn' | 'da
 
     <TabView v-else>
       <TabPanel value="principals" header="Principal Achievement">
+        <p class="salesman-detail-drawer__note">
+          Assigned Principal mix and invoiced contribution. Not customer ownership.
+        </p>
         <div v-if="loadingPrincipals" class="salesman-detail-drawer__loading">
           <ProgressSpinner style="width: 2.5rem; height: 2.5rem" stroke-width="4" />
         </div>
@@ -141,6 +144,12 @@ function bandSeverity(band: string | null | undefined): 'success' | 'warn' | 'da
 </template>
 
 <style scoped>
+.salesman-detail-drawer__note {
+  margin: 0 0 1rem;
+  font-size: 0.875rem;
+  color: var(--p-text-muted-color);
+}
+
 .salesman-detail-drawer__loading {
   display: flex;
   justify-content: center;

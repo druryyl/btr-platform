@@ -24,6 +24,7 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.Services
         public const string SignalHighPiutangExposure = "HighPiutangExposure";
         public const string SignalCustomerConcentration = "CustomerConcentration";
         public const string SignalDormantCustomerPortfolio = "DormantCustomerPortfolio";
+        public const string LabelLastInvoiceDormantCustomers = "Last-Invoice Dormant Customers";
 
         private const string AgingOver90BucketKey = "DaysOver90";
         private const string SegmentTypeWilayah = "Wilayah";
@@ -672,9 +673,9 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.Services
                     rows.Add((SignalPriority(SignalDormantCustomerPortfolio), rep.SalesPersonName, CreateAttentionRow(
                         rep,
                         SignalDormantCustomerPortfolio,
-                        "Dormant Customer Portfolio",
+                        LabelLastInvoiceDormantCustomers,
                         null,
-                        $"{rep.DormantCustomerCount} dormant customers on book")));
+                        FormatLastInvoiceDormantValueText(rep.DormantCustomerCount))));
                 }
             }
 
@@ -687,6 +688,50 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.Services
                     return r.Row;
                 })
                 .ToList();
+        }
+
+        public static string FormatLastInvoiceDormantValueText(int dormantCustomerCount)
+        {
+            return $"{dormantCustomerCount} last-invoiced customers inactive 90+ days; not customer ownership";
+        }
+
+        public static void ApplySf01AttentionCopy(string signalKey, ref string signalLabel, ref string valueText)
+        {
+            if (!string.Equals(signalKey, SignalDormantCustomerPortfolio, StringComparison.Ordinal))
+                return;
+
+            signalLabel = LabelLastInvoiceDormantCustomers;
+
+            var count = TryParseLeadingCount(valueText);
+            if (count.HasValue)
+            {
+                valueText = FormatLastInvoiceDormantValueText(count.Value);
+                return;
+            }
+
+            if (!string.IsNullOrWhiteSpace(valueText) &&
+                valueText.IndexOf("on book", StringComparison.OrdinalIgnoreCase) >= 0)
+            {
+                valueText = valueText.Replace(" on book", "; not customer ownership");
+            }
+        }
+
+        private static int? TryParseLeadingCount(string valueText)
+        {
+            if (string.IsNullOrWhiteSpace(valueText))
+                return null;
+
+            var digits = 0;
+            while (digits < valueText.Length && char.IsDigit(valueText[digits]))
+                digits++;
+
+            if (digits == 0)
+                return null;
+
+            if (int.TryParse(valueText.Substring(0, digits), out var count))
+                return count;
+
+            return null;
         }
 
         private static DashboardSalesmanAttentionRow CreateAttentionRow(

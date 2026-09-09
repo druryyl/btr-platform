@@ -55,7 +55,8 @@ const FIELD_LABEL_OVERRIDES: Record<string, string> = {
   'Movement Class': 'Inventory Movement',
   'At-Risk Value': 'At-Risk Inventory',
   'Customer Count': 'Active Customers',
-  'Dormant Customer Count': 'Dormant Customers',
+  'Dormant Customer Count': 'Last-Invoice Dormant Customers',
+  'Last-Invoice Dormant Customers': 'Last-Invoice Dormant Customers',
   'Active SKU Count': 'Active SKUs',
   'Catalog Penetration': 'Catalog Coverage',
   'Purchase Share': 'Purchase Share',
@@ -101,6 +102,7 @@ const SECTION_BY_NORMALIZED_LABEL: Record<string, OverviewSectionId> = {
   attentionsignals: 'activity',
   customercount: 'activity',
   dormantcustomercount: 'activity',
+  lastinvoicedormantcustomers: 'activity',
   activeskucount: 'activity',
   portfoliopriorityscore: 'details',
 }

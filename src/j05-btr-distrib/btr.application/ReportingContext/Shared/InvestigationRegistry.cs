@@ -141,7 +141,7 @@ namespace btr.application.ReportingContext.Shared
                     "/dashboard/salesmen", PiutangReportRoute, "Next validation: Piutang Tracker (FT5)", PeriodModeAllOpenBalances),
                 Entry(DashboardSalesmanAggregator.SignalCustomerConcentration, "Customer Concentration", InvestigationMetadataBuilder.EntityTypeSalesman,
                     "/dashboard/salesmen", SalesReportRoute, "Next validation: Sales Omzet Chart (RO2)", PeriodModeCurrentMonth),
-                Entry(DashboardSalesmanAggregator.SignalDormantCustomerPortfolio, "Dormant Customer Portfolio", InvestigationMetadataBuilder.EntityTypeSalesman,
+                Entry(DashboardSalesmanAggregator.SignalDormantCustomerPortfolio, DashboardSalesmanAggregator.LabelLastInvoiceDormantCustomers, InvestigationMetadataBuilder.EntityTypeSalesman,
                     "/dashboard/salesmen", SalesReportRoute, "Next validation: Sales Omzet Chart (RO2)", PeriodModeCurrentMonth),
 
                 // Collection

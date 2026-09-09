@@ -2,6 +2,7 @@
 import { computed } from 'vue'
 import ProfileSectionCard from '@/components/entity-analytics/ProfileSectionCard.vue'
 import type { ProfileAttentionEvent, ProfileAttentionSection } from '@/models/entityAnalytics'
+import { salesmanAttentionDisplayLabel } from '@/services/salesmanAttentionSignals'
 
 const props = defineProps<{
   section: ProfileAttentionSection | null | undefined
@@ -42,7 +43,7 @@ function statusLabel(event: ProfileAttentionEvent): string {
           class="profile-attention-section__item profile-attention-section__item--active"
         >
           <div class="profile-attention-section__item-header">
-            <strong>{{ event.SignalLabel }}</strong>
+            <strong>{{ salesmanAttentionDisplayLabel(event.SignalCode, event.SignalLabel) }}</strong>
             <span class="profile-attention-section__status">{{ statusLabel(event) }}</span>
           </div>
           <dl class="profile-attention-section__meta">
@@ -74,7 +75,7 @@ function statusLabel(event: ProfileAttentionEvent): string {
           class="profile-attention-section__item profile-attention-section__item--resolved"
         >
           <div class="profile-attention-section__item-header">
-            <strong>{{ event.SignalLabel }}</strong>
+            <strong>{{ salesmanAttentionDisplayLabel(event.SignalCode, event.SignalLabel) }}</strong>
             <span class="profile-attention-section__status">{{ statusLabel(event) }}</span>
           </div>
           <dl class="profile-attention-section__meta">

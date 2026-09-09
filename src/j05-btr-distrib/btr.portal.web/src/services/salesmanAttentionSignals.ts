@@ -19,7 +19,15 @@ export const SALESMAN_ATTENTION_SIGNAL_LABELS: Record<SalesmanAttentionSignalKey
   HighOverdueExposure: 'High Overdue Exposure',
   HighPiutangExposure: 'High Piutang Exposure',
   CustomerConcentration: 'Customer Concentration',
-  DormantCustomerPortfolio: 'Dormant Customer Portfolio',
+  DormantCustomerPortfolio: 'Last-Invoice Dormant Customers',
+}
+
+export function salesmanAttentionDisplayLabel(signalCode: string, fallback: string): string {
+  if (signalCode === 'DormantCustomerPortfolio') {
+    return SALESMAN_ATTENTION_SIGNAL_LABELS.DormantCustomerPortfolio
+  }
+
+  return fallback
 }
 
 export function filterSalesmanAttentionItems(

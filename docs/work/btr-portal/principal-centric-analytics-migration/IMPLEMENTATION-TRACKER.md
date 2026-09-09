@@ -162,9 +162,13 @@ Only a review agent may set `GO` or `NO-GO`.
 
 ### PCM-011
 
-- Status: PLANNED
-- Implementation History: none
-- Review History: none
+- Status: GO
+- Implementation History:
+  - 2026-09-09: IN IMPLEMENTATION
+  - 2026-09-09: IMPLEMENTED. SF01 no longer describes a Customer portfolio as owned by the Salesman. Last-invoice dormant labels replace owned-book and dormant-portfolio wording. Assigned Customers on the Salesman profile is invoiced contribution, not an assigned book. Coaching, target allocation, invoiced contribution, and assigned Principal mix remain. `BTRPD_SalesmanPrincipalAchievement.CompletedOmzet` is unchanged. SF02, SF03, and FI01–FI04 are unchanged.
+- Review History:
+  - 2026-09-09: IN REVIEW
+  - 2026-09-09: GO. SF01 no longer describes a Customer portfolio as owned by the Salesman. Last-invoice dormant labels replace owned-book and dormant-portfolio wording. Open piutang and overdue are stated as invoice-attributed exposure, not an owned book. Coaching, target allocation, invoiced contribution, and assigned Principal mix remain. `BTRPD_SalesmanPrincipalAchievement.CompletedOmzet` is unchanged. SF02, SF03, and FI01–FI04 are unchanged. No Principal filter was added to SF02 or SF03.
 - Remediation History: none
 
 ### PCM-012

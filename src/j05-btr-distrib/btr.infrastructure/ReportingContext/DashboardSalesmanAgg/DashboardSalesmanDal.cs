@@ -220,15 +220,19 @@ namespace btr.infrastructure.ReportingContext.DashboardSalesmanAgg
 
         private static DashboardSalesmanAttentionItem MapAttentionItem(DashboardSalesmanAttentionRow row)
         {
+            var signalLabel = row.SignalLabel;
+            var valueText = row.ValueText;
+            DashboardSalesmanAggregator.ApplySf01AttentionCopy(row.SignalKey, ref signalLabel, ref valueText);
+
             return new DashboardSalesmanAttentionItem
             {
                 SalesPersonId = row.SalesPersonId,
                 SalesPersonCode = row.SalesPersonCode,
                 SalesPersonName = row.SalesPersonName,
                 SignalKey = row.SignalKey,
-                SignalLabel = row.SignalLabel,
+                SignalLabel = signalLabel,
                 ValueAmount = row.ValueAmount,
-                ValueText = row.ValueText,
+                ValueText = valueText,
                 WilayahName = row.WilayahName,
                 IsActive = row.IsActive,
                 ReportRoute = ResolveReportRoute(row.SignalKey),
@@ -239,7 +243,7 @@ namespace btr.infrastructure.ReportingContext.DashboardSalesmanAgg
                     InvestigationMetadataBuilder.EntityTypeSalesman,
                     row.SalesPersonId,
                     row.SalesPersonName,
-                    signalLabelOverride: row.SignalLabel,
+                    signalLabelOverride: signalLabel,
                     reportRouteOverride: ResolveReportRoute(row.SignalKey))
             };
         }

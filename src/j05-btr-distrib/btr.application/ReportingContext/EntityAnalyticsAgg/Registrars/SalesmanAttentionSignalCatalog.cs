@@ -17,7 +17,7 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Registrars
             Register(registry, DashboardSalesmanAggregator.SignalHighOverdueExposure, "Finance", "High Overdue Exposure");
             Register(registry, DashboardSalesmanAggregator.SignalHighPiutangExposure, "Finance", "High Piutang Exposure");
             Register(registry, DashboardSalesmanAggregator.SignalCustomerConcentration, "Portfolio", "Customer Concentration");
-            Register(registry, DashboardSalesmanAggregator.SignalDormantCustomerPortfolio, "Portfolio", "Dormant Customer Portfolio");
+            Register(registry, DashboardSalesmanAggregator.SignalDormantCustomerPortfolio, "Recency", DashboardSalesmanAggregator.LabelLastInvoiceDormantCustomers);
         }
 
         private static void Register(
