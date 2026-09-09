@@ -130,6 +130,7 @@ const workspaceRoute = computed(() => {
       <ProfileKpiSummarySection
         :section="profile?.KpiSummary"
         :entity-code="resolvedEntityCode"
+        :entity-id="resolvedEntityId"
         :loading="loading"
       />
       <ProfileComparisonSection :section="profile?.Comparison" :loading="loading" />

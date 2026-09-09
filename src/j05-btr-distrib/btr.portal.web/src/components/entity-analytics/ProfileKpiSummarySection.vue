@@ -7,14 +7,17 @@ import type { ProfileKpiSummarySection } from '@/models/entityAnalytics'
 const props = defineProps<{
   section: ProfileKpiSummarySection | null | undefined
   entityCode?: string | null
+  entityId?: string | null
   loading?: boolean
 }>()
 
 function evidenceHref(baseRoute: string, filterDimension?: string | null): string {
-  const entityCode = props.entityCode?.trim() ?? ''
-  if (!entityCode || !filterDimension) return baseRoute
+  const filterValue = filterDimension === 'supplierId'
+    ? props.entityId?.trim() || props.entityCode?.trim() || ''
+    : props.entityCode?.trim() || ''
+  if (!filterValue || !filterDimension) return baseRoute
   const separator = baseRoute.includes('?') ? '&' : '?'
-  return `${baseRoute}${separator}${encodeURIComponent(filterDimension)}=${encodeURIComponent(entityCode)}`
+  return `${baseRoute}${separator}${encodeURIComponent(filterDimension)}=${encodeURIComponent(filterValue)}`
 }
 </script>
 

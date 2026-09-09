@@ -206,9 +206,13 @@ Only a review agent may set `GO` or `NO-GO`.
 
 ### PCM-015
 
-- Status: PLANNED
-- Implementation History: none
-- Review History: none
+- Status: GO
+- Implementation History:
+  - 2026-09-09: IN IMPLEMENTATION
+  - 2026-09-09: IMPLEMENTED. Composed stored `PRN-SALES-001` onto the Supplier/Principal Entity Analytics profile as the commercial performance and default ranking KPI. The existing `SupplierEntityAnalyticsProducer` reads the Sales-owned snapshot and does not calculate Sales-Out from Purchasing Management `SalesOutAmount`. A purchase refresh retains persisted `PRN-SALES-001`. Evidence opens Faktur Item evidence. No return, target, growth, purchase-in, inventory, coverage, collection, credit, Health Score, or Net Sales pack was added.
+- Review History:
+  - 2026-09-09: IN REVIEW
+  - 2026-09-09: GO. Principal profile commercial performance equals stored `PRN-SALES-001` for the same Principal and period. Default ranking uses `PRN-SALES-001`. The existing Supplier producer reads the owned snapshot and does not calculate Sales-Out from Purchasing Management `SalesOutAmount`. A purchase refresh does not erase persisted `PRN-SALES-001`. Evidence opens Faktur Item evidence, not the purchasing report. No second writer was added. No return, target, growth, purchase-in, inventory, coverage, collection, credit, Health Score, or Net Sales pack was composed.
 - Remediation History: none
 
 ### PCM-016

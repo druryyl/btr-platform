@@ -2,12 +2,17 @@ using System.Collections.Generic;
 using btr.application.ReportingContext.EntityAnalyticsAgg.Contracts;
 using btr.application.ReportingContext.EntityAnalyticsAgg.Models;
 using btr.application.ReportingContext.EntityAnalyticsAgg.Services;
+using btr.application.ReportingContext.PrincipalAnalyticsAgg;
 
 namespace btr.application.ReportingContext.EntityAnalyticsAgg.Registrars
 {
     public class SupplierEntityAnalyticsRegistrar : IEntityAnalyticsRegistrar
     {
         public const string KpiPackId = "supplier-default";
+
+        public const string PrincipalSalesOutEvidenceRoute = "/dashboard/principal-performance/evidence";
+
+        public const string PrincipalSalesOutEvidenceFilterDimension = "supplierId";
 
         public void Register(
             IEntityTypeRegistry entityTypes,
@@ -19,6 +24,7 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Registrars
 
             kpiRegistry.RegisterPack(KpiPackId, new[]
             {
+                PrincipalKpiCatalog.SalesOutId,
                 "PU-KPI-001",
                 "PU-KPI-002",
                 "PU-KPI-003",
@@ -50,10 +56,10 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Registrars
         {
             kpiRegistry.RegisterMetadata(new EntityKpiMetadata
             {
-                KpiId = "PU-KPI-001",
+                KpiId = PrincipalKpiCatalog.SalesOutId,
                 Category = EntityKpiCategory.Financial,
-                DisplayName = "MTD Purchase",
-                Description = "Supplier MTD purchase spend (same semantics as PU01 principal exposure row).",
+                DisplayName = "Principal Sales-Out",
+                Description = "PRN-SALES-001 Principal Sales-Out (DPP) from Faktur Item. Returns, Claims, and Inventory Adjustments are not deducted. Returns do not reduce or redefine Principal Sales-Out. Tax and header totals are excluded. Totals are not required to reconcile to Faktur GrandTotal. This is the commercial performance and default ranking KPI. It is not Purchase-In, Net Sales, or a Principal Health Score.",
                 PeriodSemantics = "MTD",
                 TimeGrain = "Month",
                 Unit = "IDR",
@@ -69,6 +75,33 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Registrars
                 RadarDisplayName = "Performance",
                 SignatureDimensionKey = EntityAnalyticsSignatureDimensions.Performance,
                 RadarValueSource = RadarValueSource.L0Kpi,
+                DisplayPrecision = 0,
+                NullableBehavior = "ShowEmpty",
+                EvidenceRoute = PrincipalSalesOutEvidenceRoute,
+                EvidenceFilterDimension = PrincipalSalesOutEvidenceFilterDimension,
+                SourceDomain = PrincipalSalesOutSnapshot.Domain,
+                ApplicableEntityTypes = new[] { EntityTypeCode.Supplier },
+                DefinitionVersion = 1,
+                IntroducedVersion = "PCM-015"
+            });
+
+            kpiRegistry.RegisterMetadata(new EntityKpiMetadata
+            {
+                KpiId = "PU-KPI-001",
+                Category = EntityKpiCategory.Financial,
+                DisplayName = "MTD Purchase",
+                Description = "Supplier MTD purchase spend (same semantics as PU01 principal exposure row).",
+                PeriodSemantics = "MTD",
+                TimeGrain = "Month",
+                Unit = "IDR",
+                ValueType = "Numeric",
+                AggregationType = "Sum",
+                Direction = "HigherIsBetter",
+                NormalizationRule = "None",
+                VisualizationType = "Card",
+                TrendEligible = true,
+                RankEligible = true,
+                RadarEligible = false,
                 DisplayPrecision = 0,
                 NullableBehavior = "ShowEmpty",
                 EvidenceRoute = "/reports/purchasing",

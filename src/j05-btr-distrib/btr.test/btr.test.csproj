@@ -238,6 +238,7 @@
     <Compile Include="ReportingContext\SalesmanEntityAnalyticsProducerTest.cs" />
     <Compile Include="ReportingContext\SalesmanEntityAnalyticsReconciliationTest.cs" />
     <Compile Include="ReportingContext\SupplierEntityAnalyticsProducerTest.cs" />
+    <Compile Include="ReportingContext\SupplierPrincipalSalesOutCompositionTest.cs" />
     <Compile Include="ReportingContext\SupplierEntityAnalyticsReconciliationTest.cs" />
     <Compile Include="ReportingContext\ItemEntityAnalyticsProducerTest.cs" />
     <Compile Include="ReportingContext\ItemEntityAnalyticsReconciliationTest.cs" />

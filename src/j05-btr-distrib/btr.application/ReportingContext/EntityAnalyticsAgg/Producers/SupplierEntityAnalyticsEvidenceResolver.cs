@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using btr.application.ReportingContext.EntityAnalyticsAgg.Contracts;
 using btr.application.ReportingContext.EntityAnalyticsAgg.Models;
 using btr.application.ReportingContext.EntityAnalyticsAgg.Queries;
+using btr.application.ReportingContext.EntityAnalyticsAgg.Registrars;
 
 namespace btr.application.ReportingContext.EntityAnalyticsAgg.Producers
 {
@@ -23,12 +24,23 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Producers
             }
 
             var query = $"?supplierCode={UriEncode(supplierCode)}";
+            var supplierId = identity?.EntityId;
+            if (string.IsNullOrWhiteSpace(supplierId))
+                supplierId = entityId;
+            var salesOutQuery = $"?{SupplierEntityAnalyticsRegistrar.PrincipalSalesOutEvidenceFilterDimension}={UriEncode(supplierId)}";
 
             return new ProfileEvidenceSectionDto
             {
                 IsAvailable = true,
                 Links = new List<ProfileEvidenceLinkDto>
                 {
+                    new ProfileEvidenceLinkDto
+                    {
+                        Category = "Financial",
+                        Label = "Faktur Item evidence",
+                        ReportRoute = SupplierEntityAnalyticsRegistrar.PrincipalSalesOutEvidenceRoute + salesOutQuery,
+                        FilterDimension = SupplierEntityAnalyticsRegistrar.PrincipalSalesOutEvidenceFilterDimension
+                    },
                     new ProfileEvidenceLinkDto
                     {
                         Category = "Purchasing",

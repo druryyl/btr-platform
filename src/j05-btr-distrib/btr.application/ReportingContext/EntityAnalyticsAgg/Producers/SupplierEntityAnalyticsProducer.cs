@@ -9,6 +9,9 @@ using btr.application.ReportingContext.EntityAnalyticsAgg.Models;
 using btr.application.ReportingContext.EntityAnalyticsAgg.Models.Snapshot;
 using btr.application.ReportingContext.EntityAnalyticsAgg.Registrars;
 using btr.application.ReportingContext.EntityAnalyticsAgg.Services;
+using btr.application.ReportingContext.PrincipalAnalyticsAgg;
+using btr.application.ReportingContext.PrincipalAnalyticsAgg.Contracts;
+using btr.application.ReportingContext.PrincipalAnalyticsAgg.Models;
 using btr.nuna.Domain;
 
 namespace btr.application.ReportingContext.EntityAnalyticsAgg.Producers
@@ -27,6 +30,7 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Producers
         private readonly IEntityRelationshipEngine _relationshipEngine;
         private readonly IEntityRadarEngine _radarEngine;
         private readonly IAttentionSignalRegistry _attentionSignals;
+        private readonly IPrincipalSalesOutSnapshotDal _salesOutSnapshotDal;
 
         public SupplierEntityAnalyticsProducer(
             IEntityAnalyticsRepository repository,
@@ -36,7 +40,8 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Producers
             IEntityAttentionEngine attentionEngine,
             IEntityRelationshipEngine relationshipEngine,
             IEntityRadarEngine radarEngine,
-            IAttentionSignalRegistry attentionSignals)
+            IAttentionSignalRegistry attentionSignals,
+            IPrincipalSalesOutSnapshotDal salesOutSnapshotDal = null)
         {
             _repository = repository;
             _kpiRegistry = kpiRegistry;
@@ -46,6 +51,7 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Producers
             _relationshipEngine = relationshipEngine;
             _radarEngine = radarEngine;
             _attentionSignals = attentionSignals;
+            _salesOutSnapshotDal = salesOutSnapshotDal;
         }
 
         public void Produce(EntityAnalyticsProduceContext context)
@@ -55,10 +61,38 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Producers
 
             var input = context.DomainInput as SupplierEntityAnalyticsProduceInput;
             var portfolio = input?.ManagementAggregate?.Portfolio;
+            var (periodYear, periodMonth) = EntityAnalyticsProducerReplaySupport.ResolvePeriod(context);
+            var salesOut = ReadOwnedSalesOut(periodYear, periodMonth);
+
             if (portfolio == null || portfolio.Count == 0)
             {
+                var retainedRows = new List<EntityAnalyticsCurrentRow>();
+                var retainedMonthly = new List<EntityAnalyticsMonthlyRow>();
+                if (salesOut.MatchesPeriod)
+                {
+                    AppendSnapshotOnlySalesOut(
+                        retainedRows, retainedMonthly, periodYear, periodMonth, context.GeneratedAt, salesOut);
+                }
+                else
+                {
+                    RetainPersistedSalesOut(retainedRows, context.GeneratedAt, salesOut);
+                }
+
                 EntityAnalyticsProducerReplaySupport.PersistL0(
-                    _repository, context, EntityTypeCode.Supplier, Array.Empty<EntityAnalyticsCurrentRow>());
+                    _repository, context, EntityTypeCode.Supplier, retainedRows);
+                if (retainedMonthly.Count > 0)
+                {
+                    EntityAnalyticsProducerReplaySupport.PersistL1(
+                        _repository, _monthCloseService, context, EntityTypeCode.Supplier, retainedMonthly);
+                    _rankingEngine.ComputeAndPersistRanks(
+                        EntityTypeCode.Supplier,
+                        periodYear,
+                        periodMonth,
+                        context.RefreshLogId,
+                        context.GeneratedAt,
+                        context.Replay);
+                }
+
                 return;
             }
 
@@ -68,8 +102,6 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Producers
             var monthlyRows = new List<EntityAnalyticsMonthlyRow>();
             var signalsByEntity = new Dictionary<string, IReadOnlyList<EntityAttentionSignalSnapshot>>(
                 StringComparer.OrdinalIgnoreCase);
-
-            var (periodYear, periodMonth) = EntityAnalyticsProducerReplaySupport.ResolvePeriod(context);
 
             foreach (var supplier in portfolio)
             {
@@ -84,12 +116,16 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Producers
 
                 rows.AddRange(BuildSupplierRows(supplier, entityId, entityCode, generatedAt, attentionById));
                 monthlyRows.AddRange(BuildMonthlyRows(supplier, entityId, entityCode, periodYear, periodMonth, generatedAt));
+                ComposeSalesOut(rows, monthlyRows, entityId, entityCode, periodYear, periodMonth, generatedAt, salesOut);
                 signalsByEntity[entityId] = BuildAttentionSnapshots(
                     entityId,
                     entityCode,
                     attentionById,
                     attentionDetailById);
             }
+
+            AppendSnapshotOnlySalesOut(rows, monthlyRows, periodYear, periodMonth, context.GeneratedAt, salesOut);
+            RetainPersistedSalesOut(rows, context.GeneratedAt, salesOut);
 
             EntityAnalyticsProducerReplaySupport.PersistL0(_repository, context, EntityTypeCode.Supplier, rows);
 
@@ -129,6 +165,216 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Producers
                 context.RefreshLogId,
                 context.GeneratedAt,
                 context.Replay);
+        }
+
+        private SalesOutComposition ReadOwnedSalesOut(int periodYear, int periodMonth)
+        {
+            var existing = _repository.GetCurrentKpiPopulation(
+                EntityTypeCode.Supplier,
+                PrincipalKpiCatalog.SalesOutId);
+
+            var snapshot = _salesOutSnapshotDal?.GetCurrent();
+            var matchesPeriod = snapshot != null
+                && string.Equals(snapshot.KpiId, PrincipalKpiCatalog.SalesOutId, StringComparison.OrdinalIgnoreCase)
+                && snapshot.PeriodYear == periodYear
+                && snapshot.PeriodMonth == periodMonth;
+
+            var bySupplierId = new Dictionary<string, PrincipalSalesOutRow>(StringComparer.OrdinalIgnoreCase);
+            if (matchesPeriod)
+            {
+                foreach (var row in snapshot.Principals ?? new List<PrincipalSalesOutRow>())
+                {
+                    if (string.IsNullOrWhiteSpace(row.SupplierId))
+                        continue;
+
+                    if (!string.IsNullOrWhiteSpace(row.KpiId)
+                        && !string.Equals(row.KpiId, PrincipalKpiCatalog.SalesOutId, StringComparison.OrdinalIgnoreCase))
+                    {
+                        continue;
+                    }
+
+                    bySupplierId[row.SupplierId.Trim()] = row;
+                }
+            }
+
+            return new SalesOutComposition(matchesPeriod, bySupplierId, existing);
+        }
+
+        private void ComposeSalesOut(
+            ICollection<EntityAnalyticsCurrentRow> rows,
+            ICollection<EntityAnalyticsMonthlyRow> monthlyRows,
+            string entityId,
+            string entityCode,
+            int periodYear,
+            int periodMonth,
+            DateTime generatedAt,
+            SalesOutComposition salesOut)
+        {
+            if (salesOut.MatchesPeriod && salesOut.BySupplierId.TryGetValue(entityId, out var owned))
+            {
+                AddSalesOutRows(rows, monthlyRows, entityId, entityCode, owned.SalesOutAmount, periodYear, periodMonth, generatedAt);
+                return;
+            }
+
+            if (salesOut.MatchesPeriod)
+                return;
+
+            var persisted = salesOut.Existing.FirstOrDefault(row =>
+                string.Equals(row.EntityId, entityId, StringComparison.OrdinalIgnoreCase));
+            if (persisted?.NumericValue == null)
+                return;
+
+            AddSalesOutRows(rows, null, entityId, entityCode, persisted.NumericValue.Value, periodYear, periodMonth, generatedAt);
+        }
+
+        private void AppendSnapshotOnlySalesOut(
+            ICollection<EntityAnalyticsCurrentRow> rows,
+            ICollection<EntityAnalyticsMonthlyRow> monthlyRows,
+            int periodYear,
+            int periodMonth,
+            DateTime generatedAt,
+            SalesOutComposition salesOut)
+        {
+            if (!salesOut.MatchesPeriod)
+                return;
+
+            foreach (var owned in salesOut.BySupplierId.Values)
+            {
+                var entityId = owned.SupplierId.Trim();
+                if (ContainsSalesOut(rows, entityId))
+                    continue;
+
+                var entityCode = entityId;
+                var displayName = string.IsNullOrWhiteSpace(owned.SupplierName) ? entityId : owned.SupplierName.Trim();
+                rows.Add(CreateMetaRow(entityId, entityCode, EntityAnalyticsMetaKpiIds.DisplayName, null, displayName, generatedAt));
+                rows.Add(CreateMetaRow(entityId, entityCode, EntityAnalyticsMetaKpiIds.IsActive, 1m, null, generatedAt));
+                AddSalesOutRows(rows, monthlyRows, entityId, entityCode, owned.SalesOutAmount, periodYear, periodMonth, generatedAt);
+            }
+        }
+
+        private void RetainPersistedSalesOut(
+            ICollection<EntityAnalyticsCurrentRow> rows,
+            DateTime generatedAt,
+            SalesOutComposition salesOut)
+        {
+            if (salesOut.MatchesPeriod)
+                return;
+
+            foreach (var persisted in salesOut.Existing)
+            {
+                if (string.IsNullOrWhiteSpace(persisted.EntityId) || persisted.NumericValue == null)
+                    continue;
+
+                var entityId = persisted.EntityId.Trim();
+                if (ContainsSalesOut(rows, entityId))
+                    continue;
+
+                var entityCode = string.IsNullOrWhiteSpace(persisted.EntityCode) ? entityId : persisted.EntityCode.Trim();
+                CopyIdentity(rows, entityId, entityCode, generatedAt);
+                AddSalesOutRows(rows, null, entityId, entityCode, persisted.NumericValue.Value, 0, 0, generatedAt);
+            }
+        }
+
+        private void CopyIdentity(
+            ICollection<EntityAnalyticsCurrentRow> rows,
+            string entityId,
+            string entityCode,
+            DateTime generatedAt)
+        {
+            var current = _repository.GetCurrentMetrics(EntityTypeCode.Supplier, entityId);
+            var displayName = current.FirstOrDefault(row =>
+                string.Equals(row.KpiId, EntityAnalyticsMetaKpiIds.DisplayName, StringComparison.OrdinalIgnoreCase));
+            var isActive = current.FirstOrDefault(row =>
+                string.Equals(row.KpiId, EntityAnalyticsMetaKpiIds.IsActive, StringComparison.OrdinalIgnoreCase));
+
+            if (!rows.Any(row =>
+                    string.Equals(row.EntityId, entityId, StringComparison.OrdinalIgnoreCase)
+                    && string.Equals(row.KpiId, EntityAnalyticsMetaKpiIds.DisplayName, StringComparison.OrdinalIgnoreCase)))
+            {
+                rows.Add(CreateMetaRow(
+                    entityId,
+                    entityCode,
+                    EntityAnalyticsMetaKpiIds.DisplayName,
+                    null,
+                    displayName?.TextValue ?? entityCode,
+                    generatedAt));
+            }
+
+            if (!rows.Any(row =>
+                    string.Equals(row.EntityId, entityId, StringComparison.OrdinalIgnoreCase)
+                    && string.Equals(row.KpiId, EntityAnalyticsMetaKpiIds.IsActive, StringComparison.OrdinalIgnoreCase)))
+            {
+                rows.Add(CreateMetaRow(
+                    entityId,
+                    entityCode,
+                    EntityAnalyticsMetaKpiIds.IsActive,
+                    isActive?.NumericValue ?? 1m,
+                    null,
+                    generatedAt));
+            }
+        }
+
+        private void AddSalesOutRows(
+            ICollection<EntityAnalyticsCurrentRow> rows,
+            ICollection<EntityAnalyticsMonthlyRow> monthlyRows,
+            string entityId,
+            string entityCode,
+            decimal amount,
+            int periodYear,
+            int periodMonth,
+            DateTime generatedAt)
+        {
+            if (ContainsSalesOut(rows, entityId))
+                return;
+
+            rows.Add(CreateRow(entityId, entityCode, PrincipalKpiCatalog.SalesOutId, amount, null, generatedAt));
+
+            if (monthlyRows == null || periodYear <= 0 || periodMonth <= 0)
+                return;
+
+            if (!_kpiRegistry.TryGetMetadata(PrincipalKpiCatalog.SalesOutId, out var metadata) || !metadata.TrendEligible)
+                return;
+
+            monthlyRows.Add(new EntityAnalyticsMonthlyRow
+            {
+                EntityType = EntityTypeCode.Supplier,
+                EntityId = entityId,
+                EntityCode = entityCode,
+                PeriodYear = periodYear,
+                PeriodMonth = periodMonth,
+                KpiId = PrincipalKpiCatalog.SalesOutId,
+                NumericValue = amount,
+                PeriodSemantics = metadata.PeriodSemantics,
+                DefinitionVersion = metadata.DefinitionVersion,
+                IsClosed = false,
+                GeneratedAt = generatedAt
+            });
+        }
+
+        private static bool ContainsSalesOut(IEnumerable<EntityAnalyticsCurrentRow> rows, string entityId)
+        {
+            return rows.Any(row =>
+                string.Equals(row.EntityId, entityId, StringComparison.OrdinalIgnoreCase)
+                && string.Equals(row.KpiId, PrincipalKpiCatalog.SalesOutId, StringComparison.OrdinalIgnoreCase));
+        }
+
+        private sealed class SalesOutComposition
+        {
+            public SalesOutComposition(
+                bool matchesPeriod,
+                IReadOnlyDictionary<string, PrincipalSalesOutRow> bySupplierId,
+                IReadOnlyList<EntityAnalyticsPeriodMetricRow> existing)
+            {
+                MatchesPeriod = matchesPeriod;
+                BySupplierId = bySupplierId ?? new Dictionary<string, PrincipalSalesOutRow>(StringComparer.OrdinalIgnoreCase);
+                Existing = existing ?? Array.Empty<EntityAnalyticsPeriodMetricRow>();
+            }
+
+            public bool MatchesPeriod { get; }
+
+            public IReadOnlyDictionary<string, PrincipalSalesOutRow> BySupplierId { get; }
+
+            public IReadOnlyList<EntityAnalyticsPeriodMetricRow> Existing { get; }
         }
 
         private IEnumerable<EntityAnalyticsMonthlyRow> BuildMonthlyRows(
