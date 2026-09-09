@@ -9,12 +9,19 @@ using btr.application.ReportingContext.DashboardSnapshotAgg;
 using btr.application.ReportingContext.Shared;
 using btr.application.ReportingContext.DashboardSnapshotAgg.Models;
 using btr.application.ReportingContext.DashboardSnapshotAgg.Services;
+using btr.application.ReportingContext.PrincipalAnalyticsAgg;
+using btr.application.ReportingContext.PrincipalAnalyticsAgg.Models;
+using btr.application.ReportingContext.PrincipalAnalyticsAgg.Queries;
 
 namespace btr.application.ReportingContext.DashboardExecutiveAgg.Services
 {
     public class DashboardExecutiveComposer
     {
         public const int ExecutiveRiskListCount = 5;
+
+        public const string PrincipalSalesDashboardRoute = "/dashboard/principal-performance";
+
+        public const string PurchasingDashboardRoute = "/dashboard/purchasing";
 
         private const string AgingOver90BucketKey = "DaysOver90";
         private const string PostingStatusBelumKey = "BELUM";
@@ -33,12 +40,17 @@ namespace btr.application.ReportingContext.DashboardExecutiveAgg.Services
             var hasUnavailable = DashboardSnapshotHealthHelper.HasExecutiveUnavailableDomain(
                 sales, piutang, inventory, purchasing);
 
+            var principalSalesAttention = ComposePrincipalSales(input.PrincipalSalesOut);
             var salesAttention = ComposeSales(sales);
             var piutangAttention = ComposePiutang(piutang);
             var purchasingAttention = ComposePurchasing(purchasing, input.PurchasingManagement);
             var inventoryAttention = ComposeInventory(inventory);
             var portfolioAttention = ComposePortfolio(input.PortfolioKpi);
-            var criticalExposures = ComposeCriticalExposures(piutang, inventory, purchasing);
+            var criticalExposures = ComposeCriticalExposures(
+                piutang,
+                inventory,
+                purchasing,
+                input.PrincipalSalesOut);
 
             var lastRefreshed = DashboardSnapshotHealthHelper.ResolveLastRefreshed(
                 sales?.GeneratedAt,
@@ -52,7 +64,7 @@ namespace btr.application.ReportingContext.DashboardExecutiveAgg.Services
             var overallHealth = DashboardSnapshotHealthHelper.ResolveOverallHealth(refreshStatuses);
 
             var domainSummaries = ComposeDomainSummaries(
-                salesAttention, piutangAttention, purchasingAttention, inventoryAttention);
+                principalSalesAttention, salesAttention, piutangAttention, purchasingAttention, inventoryAttention);
 
             return new DashboardExecutiveResponse
             {
@@ -60,6 +72,7 @@ namespace btr.application.ReportingContext.DashboardExecutiveAgg.Services
                 IsDataFresh = isDataFresh,
                 LastRefreshed = lastRefreshed,
                 OverallHealthStatus = overallHealth,
+                PrincipalSales = principalSalesAttention,
                 Sales = salesAttention,
                 Piutang = piutangAttention,
                 Purchasing = purchasingAttention,
@@ -85,6 +98,36 @@ namespace btr.application.ReportingContext.DashboardExecutiveAgg.Services
                 StrategicCustomersAtRiskCount = portfolioKpi.StrategicAtRiskCount,
                 DashboardRoute = CustomerPortfolioOptimizationPolicy.CustomerPortfolioDashboardRoute
             };
+        }
+
+        private static DashboardExecutivePrincipalSalesAttention ComposePrincipalSales(
+            PrincipalSalesOutAggregateResult salesOut)
+        {
+            var performance = PrincipalPerformanceComposer.Compose(salesOut);
+            var attention = new DashboardExecutivePrincipalSalesAttention
+            {
+                KpiId = PrincipalKpiCatalog.SalesOutId,
+                DashboardRoute = PrincipalSalesDashboardRoute,
+                Disclosures = PrincipalSalesOutDisclosure.Statements.ToList()
+            };
+
+            if (!performance.IsAvailable || performance.KpiId != PrincipalKpiCatalog.SalesOutId)
+                return attention;
+
+            var ranking = performance.Ranking ?? new List<PrincipalPerformanceRankingItem>();
+            var top = ranking.FirstOrDefault();
+            decimal? topPrincipalPercent = top != null && performance.PrincipalSalesOutAmount > 0
+                ? top.PrincipalSalesOutAmount / performance.PrincipalSalesOutAmount * 100m
+                : (decimal?)null;
+
+            attention.IsAvailable = true;
+            attention.PeriodYear = performance.PeriodYear;
+            attention.PeriodMonth = performance.PeriodMonth;
+            attention.PrincipalSalesOutAmount = performance.PrincipalSalesOutAmount;
+            attention.TopPrincipalPercent = topPrincipalPercent;
+            attention.TopPrincipalName = top?.PrincipalName ?? string.Empty;
+            attention.RequiresAttention = ranking.Count > 0;
+            return attention;
         }
 
         private static DashboardExecutiveSalesAttention ComposeSales(DashboardSalesAggregateResult sales)
@@ -218,7 +261,8 @@ namespace btr.application.ReportingContext.DashboardExecutiveAgg.Services
         private static DashboardExecutiveCriticalExposures ComposeCriticalExposures(
             DashboardPiutangAggregateResult piutang,
             DashboardInventoryAggregateResult inventory,
-            DashboardPurchasingAggregateResult purchasing)
+            DashboardPurchasingAggregateResult purchasing,
+            PrincipalSalesOutAggregateResult principalSalesOut)
         {
             var topCustomers = piutang?.TopCustomerRisk?
                 .OrderBy(c => c.Rank)
@@ -293,11 +337,33 @@ namespace btr.application.ReportingContext.DashboardExecutiveAgg.Services
                 TopCustomers = topCustomers,
                 TopCategories = topCategories,
                 TopSuppliers = topSuppliers,
-                TopPrincipals = topPrincipals
+                TopPrincipals = topPrincipals,
+                TopPrincipalSales = ComposePrincipalSalesExposure(principalSalesOut)
             };
         }
 
+        private static IList<DashboardExecutiveRiskItem> ComposePrincipalSalesExposure(
+            PrincipalSalesOutAggregateResult salesOut)
+        {
+            var performance = PrincipalPerformanceComposer.Compose(salesOut);
+            if (!performance.IsAvailable || performance.KpiId != PrincipalKpiCatalog.SalesOutId)
+                return new List<DashboardExecutiveRiskItem>();
+
+            return (performance.Ranking ?? new List<PrincipalPerformanceRankingItem>())
+                .Take(ExecutiveRiskListCount)
+                .Select(row => new DashboardExecutiveRiskItem
+                {
+                    Rank = row.Rank,
+                    Name = row.PrincipalName ?? string.Empty,
+                    SupplierId = row.SupplierId ?? string.Empty,
+                    Amount = row.PrincipalSalesOutAmount,
+                    DashboardRoute = PrincipalSalesDashboardRoute
+                })
+                .ToList();
+        }
+
         private static IList<DashboardExecutiveDomainSummary> ComposeDomainSummaries(
+            DashboardExecutivePrincipalSalesAttention principalSales,
             DashboardExecutiveSalesAttention sales,
             DashboardExecutivePiutangAttention piutang,
             DashboardExecutivePurchasingAttention purchasing,
@@ -305,6 +371,15 @@ namespace btr.application.ReportingContext.DashboardExecutiveAgg.Services
         {
             return new List<DashboardExecutiveDomainSummary>
             {
+                new DashboardExecutiveDomainSummary
+                {
+                    Domain = "Principal Sales",
+                    DetailDashboardRoute = principalSales.DashboardRoute ?? PrincipalSalesDashboardRoute,
+                    IsAvailable = principalSales.IsAvailable,
+                    SummaryText = principalSales.IsAvailable
+                        ? FormatPrincipalSalesSummary(principalSales)
+                        : "Principal Sales-Out data unavailable"
+                },
                 new DashboardExecutiveDomainSummary
                 {
                     Domain = "Sales",
@@ -342,6 +417,15 @@ namespace btr.application.ReportingContext.DashboardExecutiveAgg.Services
                         : "Inventory data unavailable"
                 }
             };
+        }
+
+        private static string FormatPrincipalSalesSummary(DashboardExecutivePrincipalSalesAttention principalSales)
+        {
+            var percentText = principalSales.TopPrincipalPercent.HasValue
+                ? $" · Top Principal {principalSales.TopPrincipalPercent.Value.ToString("0.#", CultureInfo.InvariantCulture)}%"
+                : string.Empty;
+
+            return $"{PrincipalKpiCatalog.SalesOutId} · {FormatCurrency(principalSales.PrincipalSalesOutAmount)}{percentText}";
         }
 
         private static string FormatSalesSummary(DashboardExecutiveSalesAttention sales)
@@ -390,6 +474,8 @@ namespace btr.application.ReportingContext.DashboardExecutiveAgg.Services
     public class ExecutiveComposeInput
     {
         public DashboardSalesAggregateResult Sales { get; set; }
+
+        public PrincipalSalesOutAggregateResult PrincipalSalesOut { get; set; }
 
         public DashboardPiutangAggregateResult Piutang { get; set; }
 

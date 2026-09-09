@@ -23,6 +23,15 @@ const rows = computed(() => props.items as unknown as Record<string, unknown>[])
 
 function onRowClick(row: Record<string, unknown>): void {
   const item = row as unknown as DashboardExecutiveRiskItem
+  if (item.DashboardRoute) {
+    const supplierId = item.SupplierId?.trim()
+    void router.push({
+      path: item.DashboardRoute,
+      query: supplierId ? { supplierId } : undefined,
+    })
+    return
+  }
+
   if (!item.Investigation) return
 
   navigateToInvestigation(

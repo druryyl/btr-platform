@@ -7,6 +7,8 @@ using btr.application.ReportingContext.DashboardSnapshotAgg.Models;
 using AggregateAgingBucket = btr.application.ReportingContext.DashboardSnapshotAgg.Models.DashboardPiutangAgingBucket;
 using AggregateTopCustomerRiskRow = btr.application.ReportingContext.DashboardSnapshotAgg.Models.DashboardPiutangTopCustomerRiskRow;
 using btr.application.ReportingContext.DashboardSnapshotAgg.Services;
+using btr.application.ReportingContext.PrincipalAnalyticsAgg;
+using btr.application.ReportingContext.PrincipalAnalyticsAgg.Models;
 using btr.application.ReportingContext.Shared;
 using FluentAssertions;
 using Xunit;
@@ -346,6 +348,139 @@ namespace btr.test.ReportingContext
                 .Should().Be(InvestigationRegistry.PeriodModeAllOpenBalances);
             result.CriticalExposures.TopPrincipals[0].Investigation.ReportRoute
                 .Should().Be(InvestigationRegistry.PurchasingReportRoute);
+            result.CriticalExposures.TopPrincipals[0].DashboardRoute.Should().BeNull();
+        }
+
+        [Fact]
+        public void Compose_PrincipalSalesAttention_UsesStoredPrincipalSalesOutAndRoutesToSa04()
+        {
+            var input = FullInput();
+            input.PrincipalSalesOut = PrincipalSalesOut(
+                ("SUP-B", "Beta", 40m, 2),
+                ("SUP-A", "Alpha", 60m, 1));
+            input.Purchasing.GrandTotalPurchase = 1000m;
+            input.Purchasing.TopPrincipal = new List<DashboardPurchasingTopPrincipalRow>
+            {
+                new DashboardPurchasingTopPrincipalRow
+                {
+                    Rank = 1,
+                    PrincipalName = "Purchase Principal",
+                    PurchaseAmount = 900m
+                }
+            };
+
+            var result = Compose(input);
+
+            result.Sales.TotalAchievement.Should().Be(5000000m);
+            result.Purchasing.TopPrincipalPercent.Should().Be(90m);
+            result.Inventory.TopCategoryPercent.Should().NotBeNull();
+            result.PrincipalSales.IsAvailable.Should().BeTrue();
+            result.PrincipalSales.KpiId.Should().Be(PrincipalKpiCatalog.SalesOutId);
+            result.PrincipalSales.PrincipalSalesOutAmount.Should().Be(100m);
+            result.PrincipalSales.TopPrincipalName.Should().Be("Alpha");
+            result.PrincipalSales.TopPrincipalPercent.Should().Be(60m);
+            result.PrincipalSales.DashboardRoute.Should().Be(DashboardExecutiveComposer.PrincipalSalesDashboardRoute);
+            result.PrincipalSales.DashboardRoute.Should().NotBe(DashboardExecutiveComposer.PurchasingDashboardRoute);
+            result.PrincipalSales.Disclosures.Should().Contain(PrincipalSalesOutDisclosure.ReturnsDoNotReduceOrRedefinePrincipalSalesOut);
+            result.CriticalExposures.TopPrincipalSales.Should().HaveCount(2);
+            result.CriticalExposures.TopPrincipalSales[0].Name.Should().Be("Alpha");
+            result.CriticalExposures.TopPrincipalSales[0].Amount.Should().Be(60m);
+            result.CriticalExposures.TopPrincipalSales[0].SupplierId.Should().Be("SUP-A");
+            result.CriticalExposures.TopPrincipalSales[0].DashboardRoute
+                .Should().Be(DashboardExecutiveComposer.PrincipalSalesDashboardRoute);
+            result.CriticalExposures.TopPrincipalSales[0].Investigation.Should().BeNull();
+            result.DomainSummaries.First().Domain.Should().Be("Principal Sales");
+            result.DomainSummaries.First().DetailDashboardRoute
+                .Should().Be(DashboardExecutiveComposer.PrincipalSalesDashboardRoute);
+            result.DomainSummaries.Single(summary => summary.Domain == "Sales").DetailDashboardRoute
+                .Should().Be("/dashboard/sales");
+        }
+
+        [Fact]
+        public void Compose_PrincipalSalesAttention_WhenSalesOutMissing_DoesNotUsePurchaseOrInventory()
+        {
+            var input = FullInput();
+            input.Purchasing.GrandTotalPurchase = 1000m;
+            input.Purchasing.TopPrincipal = new List<DashboardPurchasingTopPrincipalRow>
+            {
+                new DashboardPurchasingTopPrincipalRow
+                {
+                    Rank = 1,
+                    PrincipalName = "Purchase Principal",
+                    PurchaseAmount = 250m
+                }
+            };
+
+            var result = Compose(input);
+
+            result.PrincipalSales.IsAvailable.Should().BeFalse();
+            result.PrincipalSales.KpiId.Should().Be(PrincipalKpiCatalog.SalesOutId);
+            result.PrincipalSales.PrincipalSalesOutAmount.Should().Be(0m);
+            result.PrincipalSales.RequiresAttention.Should().BeFalse();
+            result.PrincipalSales.DashboardRoute.Should().Be(DashboardExecutiveComposer.PrincipalSalesDashboardRoute);
+            result.CriticalExposures.TopPrincipalSales.Should().BeEmpty();
+            result.CriticalExposures.TopPrincipals.Should().ContainSingle();
+            result.CriticalExposures.TopPrincipals[0].Amount.Should().Be(250m);
+            result.Purchasing.IsAvailable.Should().BeTrue();
+            result.Sales.IsAvailable.Should().BeTrue();
+        }
+
+        [Fact]
+        public void Compose_PrincipalSalesAttention_TruncatesExposureToTop5AndIgnoresOtherKpi()
+        {
+            var input = FullInput();
+            input.PrincipalSalesOut = new PrincipalSalesOutAggregateResult
+            {
+                KpiId = "PRN-RET-004",
+                PeriodYear = 2026,
+                PeriodMonth = 6,
+                Principals = new List<PrincipalSalesOutRow>
+                {
+                    new PrincipalSalesOutRow
+                    {
+                        KpiId = "PRN-RET-004",
+                        SupplierId = "SUP-R",
+                        SupplierName = "Return Principal",
+                        SalesOutAmount = 99m,
+                        SortOrder = 1
+                    }
+                }
+            };
+
+            var result = Compose(input);
+
+            result.PrincipalSales.IsAvailable.Should().BeFalse();
+            result.CriticalExposures.TopPrincipalSales.Should().BeEmpty();
+
+            input.PrincipalSalesOut = PrincipalSalesOut(
+                Enumerable.Range(1, 7)
+                    .Select(i => ($"SUP-{i}", $"Principal {i}", 100m - i, i))
+                    .ToArray());
+
+            result = Compose(input);
+
+            result.CriticalExposures.TopPrincipalSales.Should().HaveCount(5);
+            result.CriticalExposures.TopPrincipalSales.Select(row => row.Amount)
+                .Should().Equal(99m, 98m, 97m, 96m, 95m);
+        }
+
+        private static PrincipalSalesOutAggregateResult PrincipalSalesOut(
+            params (string SupplierId, string Name, decimal Amount, int SortOrder)[] rows)
+        {
+            return new PrincipalSalesOutAggregateResult
+            {
+                KpiId = PrincipalKpiCatalog.SalesOutId,
+                PeriodYear = 2026,
+                PeriodMonth = 6,
+                Principals = rows.Select(row => new PrincipalSalesOutRow
+                {
+                    KpiId = PrincipalKpiCatalog.SalesOutId,
+                    SupplierId = row.SupplierId,
+                    SupplierName = row.Name,
+                    SalesOutAmount = row.Amount,
+                    SortOrder = row.SortOrder
+                }).ToList()
+            };
         }
 
         private btr.application.ReportingContext.DashboardExecutiveAgg.Queries.DashboardExecutiveResponse Compose(

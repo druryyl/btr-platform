@@ -35,6 +35,19 @@ export interface DashboardOverviewResponse {
 
 export type AchievementBand = 'Healthy' | 'Warning' | 'Critical' | 'Unknown'
 
+export interface DashboardExecutivePrincipalSalesAttention {
+  KpiId: string
+  PeriodYear: number
+  PeriodMonth: number
+  PrincipalSalesOutAmount: number
+  TopPrincipalPercent: number | null
+  TopPrincipalName: string
+  DashboardRoute: string
+  RequiresAttention: boolean
+  IsAvailable: boolean
+  Disclosures: string[]
+}
+
 export interface DashboardExecutiveSalesAttention {
   AchievementPercent: number | null
   TotalAchievement: number
@@ -72,7 +85,9 @@ export interface DashboardExecutiveInventoryAttention {
 export interface DashboardExecutiveRiskItem {
   Rank: number
   Name: string
+  SupplierId?: string | null
   Amount: number
+  DashboardRoute?: string | null
   Investigation?: InvestigationMetadata | null
 }
 
@@ -81,6 +96,7 @@ export interface DashboardExecutiveCriticalExposures {
   TopCategories: DashboardExecutiveRiskItem[]
   TopSuppliers: DashboardExecutiveRiskItem[]
   TopPrincipals: DashboardExecutiveRiskItem[]
+  TopPrincipalSales?: DashboardExecutiveRiskItem[]
 }
 
 export interface DashboardExecutiveDomainSummary {
@@ -95,6 +111,7 @@ export interface DashboardExecutiveResponse {
   IsDataFresh: boolean
   LastRefreshed: string | null
   OverallHealthStatus: string
+  PrincipalSales?: DashboardExecutivePrincipalSalesAttention | null
   Sales: DashboardExecutiveSalesAttention
   Piutang: DashboardExecutivePiutangAttention
   Purchasing: DashboardExecutivePurchasingAttention

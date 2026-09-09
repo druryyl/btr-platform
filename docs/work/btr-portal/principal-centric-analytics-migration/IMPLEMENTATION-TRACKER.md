@@ -228,9 +228,13 @@ Only a review agent may set `GO` or `NO-GO`.
 
 ### PCM-017
 
-- Status: PLANNED
-- Implementation History: none
-- Review History: none
+- Status: GO
+- Implementation History:
+  - 2026-09-09: IN IMPLEMENTATION
+  - 2026-09-09: IMPLEMENTED. EX01 shows Principal Sales-Out attention from stored `PRN-SALES-001` beside company sales and existing purchase or inventory Principal exposure. The signal routes to SA04. Purchase-In, Inventory, Returns, Health Score, and Net Sales are not used. EX02 is unchanged.
+- Review History:
+  - 2026-09-09: IN REVIEW
+  - 2026-09-09: GO. EX01 still shows company totals and existing purchase or inventory Principal exposure. New Principal sales attention uses stored `PRN-SALES-001` only. Default commercial sales attention is Principal Sales-Out, not Purchase-In, Inventory, or Returns. No Principal Health Score or Net Sales alert. Principal sales navigation opens SA04, not PU01. EX02 is unchanged.
 - Remediation History: none
 
 ### PCM-018

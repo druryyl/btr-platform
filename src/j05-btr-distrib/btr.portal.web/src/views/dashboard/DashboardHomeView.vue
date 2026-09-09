@@ -82,11 +82,50 @@ onMounted(() => {
       />
       <div class="dashboard-home__grid">
         <ExecutiveAttentionCard
+          title="Principal Sales-Out"
+          icon="pi pi-chart-line"
+          domain="sales"
+          :route="dashboard.executive?.PrincipalSales?.DashboardRoute || '/dashboard/principal-performance'"
+          hero
+          :loading="dashboard.loading"
+          :requires-attention="dashboard.executive?.PrincipalSales?.RequiresAttention"
+          :unavailable="dashboard.executive != null && !dashboard.executive.PrincipalSales?.IsAvailable"
+        >
+          <DashboardMetric
+            label="Principal Sales-Out"
+            :value="
+              formatDashboardCurrency(
+                dashboard.executive?.PrincipalSales?.IsAvailable
+                  ? dashboard.executive.PrincipalSales.PrincipalSalesOutAmount
+                  : null,
+                formatCurrencyCompact,
+              )
+            "
+            :title="
+              dashboard.executive?.PrincipalSales?.IsAvailable
+                ? formatCurrency(dashboard.executive.PrincipalSales.PrincipalSalesOutAmount)
+                : undefined
+            "
+            variant="primary"
+            :empty="!dashboard.executive?.PrincipalSales?.IsAvailable"
+          />
+          <DashboardMetric
+            label="Top Principal %"
+            :value="formatDashboardPercent(dashboard.executive?.PrincipalSales?.TopPrincipalPercent)"
+            variant="secondary"
+            :empty="dashboard.executive?.PrincipalSales?.TopPrincipalPercent == null"
+            :progress="dashboard.executive?.PrincipalSales?.TopPrincipalPercent ?? null"
+          />
+          <p class="dashboard-home__kpi-note" data-kpi="PRN-SALES-001">
+            Default commercial attention uses PRN-SALES-001. Purchase-In, Inventory, and Returns are not this measure.
+          </p>
+        </ExecutiveAttentionCard>
+
+        <ExecutiveAttentionCard
           title="Sales"
           icon="pi pi-chart-line"
           domain="sales"
           route="/dashboard/sales"
-          hero
           :loading="dashboard.loading"
           :requires-attention="dashboard.executive?.Sales.RequiresAttention"
           :achievement-band="dashboard.executive?.Sales.AchievementBand"
@@ -258,6 +297,22 @@ onMounted(() => {
           />
         </ExecutiveAttentionCard>
       </div>
+      <section
+        v-if="dashboard.executive?.PrincipalSales?.IsAvailable"
+        class="dashboard-home__disclosure"
+        aria-label="Principal Sales-Out disclosure"
+        data-kpi="PRN-SALES-001"
+      >
+        <h2>Principal Sales-Out disclosure</h2>
+        <ul>
+          <li
+            v-for="statement in dashboard.executive.PrincipalSales.Disclosures"
+            :key="statement"
+          >
+            {{ statement }}
+          </li>
+        </ul>
+      </section>
     </section>
 
     <ExecutivePortfolioSummarySection
@@ -272,6 +327,14 @@ onMounted(() => {
         domain="alert"
       />
       <div class="dashboard-home__exposures">
+        <ExecutiveExposureSection
+          title="Top 5 Principal Sales-Out"
+          name-header="Principal"
+          amount-header="Principal Sales-Out"
+          domain="sales"
+          :items="dashboard.executive?.CriticalExposures?.TopPrincipalSales ?? []"
+          :loading="dashboard.loading"
+        />
         <ExecutiveExposureSection
           title="Top 5 Customers"
           name-header="Customer"
@@ -363,6 +426,36 @@ onMounted(() => {
 
 .dashboard-home__section {
   margin-bottom: 2rem;
+}
+
+.dashboard-home__kpi-note {
+  margin: 0.5rem 0 0;
+  color: var(--p-text-muted-color);
+  font-size: 0.8125rem;
+  line-height: 1.4;
+}
+
+.dashboard-home__disclosure {
+  margin-top: 1rem;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--p-surface-200);
+  border-radius: var(--dashboard-radius);
+  background: var(--p-surface-0);
+}
+
+.dashboard-home__disclosure h2 {
+  margin: 0 0 0.5rem;
+  font-size: 0.9375rem;
+  font-weight: 700;
+}
+
+.dashboard-home__disclosure ul {
+  margin: 0;
+  padding-left: 1.25rem;
+}
+
+.dashboard-home__disclosure li + li {
+  margin-top: 0.25rem;
 }
 
 .dashboard-home__grid {
