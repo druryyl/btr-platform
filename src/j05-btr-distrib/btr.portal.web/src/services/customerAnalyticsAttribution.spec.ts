@@ -13,6 +13,8 @@ import {
   CU04_LAST_INVOICING_SALESMAN_FILTER_ALL,
   CU04_LAST_INVOICING_SALESMAN_LABEL,
   CU04_LAST_INVOICING_SALESMAN_NOTE,
+  CU04_PRINCIPAL_MIX_KPI_ID,
+  CU04_PRINCIPAL_MIX_NOTE,
   CU05_ACTION_ROUTE_LABEL,
   CU05_ACTION_ROUTE_NOTE,
   CU05_ATTRIBUTION_DISCLOSURES,
@@ -95,14 +97,24 @@ describe('CU04 ownership labels', () => {
     expect(CU04_LAST_INVOICING_SALESMAN_NOTE.toLowerCase()).toContain('not the customer owner')
   })
 
-  it('keeps portfolio measures Customer-level and does not add Principal portfolio mix', () => {
+  it('keeps portfolio measures Customer-level and shows portfolio mix from the projection only', () => {
     const text = CU04_ATTRIBUTION_DISCLOSURES.join(' ')
     expect(text.toLowerCase()).toContain('not the customer owner')
     expect(text.toLowerCase()).toContain('does not describe')
     expect(text.toLowerCase()).toContain('commercial attribution')
     expect(text.toLowerCase()).toContain('customer-level')
-    expect(text.toLowerCase()).toContain('principal portfolio mix is not shown')
+    expect(text.toLowerCase()).toContain('not allocated to principals')
+    expect(text.toLowerCase()).toContain('portfolio mix')
+    expect(text.toLowerCase()).toContain('relationship projection only')
+    expect(text.toLowerCase()).toContain('does not recompute relationships from raw transactions')
+    expect(text.toLowerCase()).toContain('no pre-purchase assigned principal')
     expect(CU04_ATTRIBUTION_DISCLOSURES.some((item) => /assigned salesman/i.test(item) && !/does not describe/i.test(item))).toBe(false)
+  })
+
+  it('identifies the CU04 portfolio mix as PRN-SALES-001 from the relationship projection only', () => {
+    expect(CU04_PRINCIPAL_MIX_KPI_ID).toBe('PRN-SALES-001')
+    expect(CU04_PRINCIPAL_MIX_NOTE.toLowerCase()).toContain('relationship projection only')
+    expect(CU04_PRINCIPAL_MIX_NOTE.toLowerCase()).toContain('does not recompute relationships from raw transactions')
   })
 })
 

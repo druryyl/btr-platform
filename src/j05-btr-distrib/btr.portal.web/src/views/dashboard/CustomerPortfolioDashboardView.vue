@@ -10,6 +10,7 @@ import CustomerPortfolioFilterBar from '@/components/dashboard/customer-portfoli
 import CustomerPortfolioPriorityTable from '@/components/dashboard/customer-portfolio/CustomerPortfolioPriorityTable.vue'
 import CustomerPortfolioActionSegments from '@/components/dashboard/customer-portfolio/CustomerPortfolioActionSegments.vue'
 import CustomerPortfolioConcentrationTables from '@/components/dashboard/customer-portfolio/CustomerPortfolioConcentrationTables.vue'
+import CustomerPortfolioPrincipalMix from '@/components/dashboard/CustomerPortfolioPrincipalMix.vue'
 import type { SalesForecastKpiMetric } from '@/components/dashboard/SalesForecastKpiRow.vue'
 import { CU04_ATTRIBUTION_DISCLOSURES } from '@/services/customerAnalyticsAttribution'
 import { formatCurrency, formatCurrencyCompact, formatPercent } from '@/services/formatters'
@@ -39,6 +40,8 @@ const filteredPriorityQueue = computed(() => {
     customerCodes.has(row.CustomerCode),
   )
 })
+
+const principalMix = computed(() => portfolio.value?.PrincipalMix ?? null)
 
 function healthSeverity(score: number): SalesForecastKpiMetric['severity'] {
   if (score >= 75) return 'success'
@@ -185,6 +188,11 @@ onMounted(() => {
       <CustomerPortfolioConcentrationTables
         :top-omzet="portfolio?.TopOmzet ?? []"
         :top-piutang="portfolio?.TopPiutang ?? []"
+        :loading="dashboard.loading"
+      />
+
+      <CustomerPortfolioPrincipalMix
+        :mix="principalMix"
         :loading="dashboard.loading"
       />
     </template>

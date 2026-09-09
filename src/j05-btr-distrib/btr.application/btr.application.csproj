@@ -407,6 +407,7 @@
     <Compile Include="ReportingContext\DashboardCollectionOptimizationAgg\Contracts\IDashboardCollectionOptimizationDal.cs" />
     <Compile Include="ReportingContext\DashboardCollectionOptimizationAgg\Queries\GetDashboardCollectionOptimizationQuery.cs" />
     <Compile Include="ReportingContext\DashboardCustomerPortfolioAgg\Contracts\IDashboardCustomerPortfolioDal.cs" />
+    <Compile Include="ReportingContext\DashboardCustomerPortfolioAgg\CustomerPortfolioPrincipalMixComposer.cs" />
     <Compile Include="ReportingContext\DashboardCustomerPortfolioAgg\Queries\GetDashboardCustomerPortfolioQuery.cs" />
     <Compile Include="ReportingContext\CustomerReportAgg\Contracts\ICustomerReportDal.cs" />
     <Compile Include="ReportingContext\CustomerReportAgg\Queries\GetCustomerReportQuery.cs" />

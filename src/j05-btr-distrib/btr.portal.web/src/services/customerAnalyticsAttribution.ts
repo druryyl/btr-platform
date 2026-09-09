@@ -50,10 +50,17 @@ export const CU04_LAST_INVOICING_SALESMAN_FILTER_ALL = 'All Last Invoicing Sales
 export const CU04_LAST_INVOICING_SALESMAN_NOTE =
   'This is the last invoicing Salesman, a commercial attribution on the latest invoice, not the Customer owner.'
 
+export const CU04_PRINCIPAL_MIX_KPI_ID = 'PRN-SALES-001'
+
+export const CU04_PRINCIPAL_MIX_NOTE =
+  'Portfolio mix reads the Customer–Principal relationship projection only. It does not recompute relationships from raw transactions.'
+
 export const CU04_ATTRIBUTION_DISCLOSURES = [
   'The Salesman filter and displayed Salesman are the last invoicing Salesman, a commercial attribution on the latest invoice, not the Customer owner.',
   'This page does not describe that Salesman as Assigned Salesman or Owner.',
-  'Customer portfolio measures remain Customer-level. Principal portfolio mix is not shown.',
+  'Customer portfolio measures remain Customer-level and are not allocated to Principals.',
+  CU04_PRINCIPAL_MIX_NOTE,
+  'The mix lists Principals present on that Customer\'s projection only. No pre-purchase assigned Principal is shown.',
 ] as const
 
 export const CU05_ACTION_ROUTE_LABEL = 'Action Route'

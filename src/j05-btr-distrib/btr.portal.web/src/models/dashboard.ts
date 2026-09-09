@@ -1759,6 +1759,28 @@ export interface DashboardCustomerPortfolioWilayahRow {
   AttentionCustomerCount: number
 }
 
+export interface DashboardCustomerPortfolioPrincipalMixPair {
+  SupplierId: string
+  PrincipalName: string
+  RelationshipStatus: string
+  KpiId: string
+  PairSalesOutAmount: number
+}
+
+export interface DashboardCustomerPortfolioPrincipalMixCustomer {
+  CustomerCode: string
+  CustomerName: string
+  Principals: DashboardCustomerPortfolioPrincipalMixPair[]
+}
+
+export interface DashboardCustomerPortfolioPrincipalMix {
+  IsAvailable: boolean
+  KpiId: string
+  Note: string
+  Disclosures: string[]
+  Customers: DashboardCustomerPortfolioPrincipalMixCustomer[]
+}
+
 export interface DashboardCustomerPortfolioResponse {
   IsAvailable: boolean
   GeneratedAt: string
@@ -1772,4 +1794,5 @@ export interface DashboardCustomerPortfolioResponse {
   TopOmzet: DashboardCustomerPortfolioConcentrationRow[]
   TopPiutang: DashboardCustomerPortfolioConcentrationRow[]
   WilayahBreakdown: DashboardCustomerPortfolioWilayahRow[]
+  PrincipalMix?: DashboardCustomerPortfolioPrincipalMix | null
 }

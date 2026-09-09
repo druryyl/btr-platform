@@ -508,9 +508,13 @@ Only a review agent may set `GO` or `NO-GO`.
 
 ### PCM-044
 
-- Status: PLANNED
-- Implementation History: none
-- Review History: none
+- Status: GO
+- Implementation History:
+  - 2026-09-10: IN IMPLEMENTATION
+  - 2026-09-10: IMPLEMENTED. CU04 shows portfolio mix from stored `BTRPD_CustomerPrincipalRelationship` rows only for priority-queue customers. Pair status and pair-attributed `PRN-SALES-001` are read from the projection. Customer portfolio measures remain Customer-level and are not allocated to Principals. No pre-purchase assigned Principal is shown. Other Customer pages are unchanged.
+- Review History:
+  - 2026-09-10: IN REVIEW
+  - 2026-09-10: GO. CU04 portfolio mix reads the relationship projection only via `ListPairsForCustomerCodes` with stored status and pair-attributed `PRN-SALES-001`. The mix lists only Principals on each Customer's projection with no pre-purchase assigned Principal and no raw-transaction recomputation. Customer portfolio measures remain Customer-level. Other Customer pages are unchanged. `btr.application` builds, `btr.test` builds via MSBuild, portal.web `vue-tsc + vite` builds. 5 new `CustomerPortfolioPrincipalMixTest` tests pass; 11 related backend and 254 frontend tests pass.
 - Remediation History: none
 
 ### PCM-045
