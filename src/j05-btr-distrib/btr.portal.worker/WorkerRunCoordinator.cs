@@ -212,6 +212,16 @@ namespace btr.portal.worker
                     });
                     break;
 
+                case "PRINCIPALINVENTORY":
+                    RunDomain(serviceProvider, PrincipalInventorySnapshot.Domain, triggeredBy, sp =>
+                    {
+                        var worker = sp.GetRequiredService<IRefreshPrincipalInventorySnapshotWorker>();
+                        var request = new RefreshPrincipalInventorySnapshotRequest { TriggeredBy = triggeredBy };
+                        worker.Execute(request);
+                        return request.Result?.DurationMs ?? 0;
+                    });
+                    break;
+
                 case "SALES":
                     RunDomain(serviceProvider, "Sales", triggeredBy, sp =>
                     {
@@ -485,7 +495,9 @@ namespace btr.portal.worker
         {
             var validDomains = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
             {
-                "All", "Sales", "Piutang", "Inventory", "InventoryRisk", "Purchasing",
+                "All", "Sales", "Piutang", "Inventory", "InventoryRisk",
+                PrincipalInventorySnapshot.Domain,
+                "Purchasing",
                 PrincipalPurchaseInSnapshot.Domain,
                 "PurchasingManagement", "Customer", "Salesman", "Collection", "FieldActivity", "Location",
                 "EntityAnalyticsHistoricalBackfill", CustomerPrincipalRelationship.Domain
@@ -498,7 +510,7 @@ namespace btr.portal.worker
 
             if (!validDomains.Contains(domain))
                 throw new ArgumentException(
-                    $"Invalid --domain '{domain}'. Expected All, Sales, Piutang, Inventory, InventoryRisk, Purchasing, PrincipalPurchaseIn, PurchasingManagement, Customer, Salesman, Collection, FieldActivity, Location, EntityAnalyticsHistoricalBackfill, or PrnCusRelationship.");
+                    $"Invalid --domain '{domain}'. Expected All, Sales, Piutang, Inventory, InventoryRisk, PrincipalInventory, Purchasing, PrincipalPurchaseIn, PurchasingManagement, Customer, Salesman, Collection, FieldActivity, Location, EntityAnalyticsHistoricalBackfill, or PrnCusRelationship.");
 
             if (!validTriggers.Contains(triggeredBy))
                 throw new ArgumentException(

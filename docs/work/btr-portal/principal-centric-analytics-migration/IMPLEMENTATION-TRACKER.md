@@ -268,9 +268,13 @@ Only a review agent may set `GO` or `NO-GO`.
 
 ### PCM-021
 
-- Status: PLANNED
-- Implementation History: none
-- Review History: none
+- Status: GO
+- Implementation History:
+  - 2026-09-09: IN IMPLEMENTATION
+  - 2026-09-09: IMPLEMENTED. Persisted `PRN-INV-001` Inventory Value and `PRN-INV-002` Inventory Days from Inventory Snapshot evidence for Principal products. Inventory Days uses the existing Average Days of Supply measure. Catalog entries added. The writer does not write `PRN-SALES-001`, does not change IN01–IN05, and does not add an Entity Analytics inventory pack.
+- Review History:
+  - 2026-09-09: IN REVIEW
+  - 2026-09-09: GO. `PRN-INV-001` is current inventory value for Principal products from Inventory Snapshot evidence. `PRN-INV-002` uses the existing Average Days of Supply coverage measure and introduces no new days-of-cover algorithm. Neither writer writes `PRN-SALES-001`. IN01–IN05 are unchanged. No Entity Analytics inventory pack was added.
 - Remediation History: none
 
 ### PCM-022

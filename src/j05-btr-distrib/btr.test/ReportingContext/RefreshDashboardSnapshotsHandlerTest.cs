@@ -68,7 +68,7 @@ namespace btr.test.ReportingContext
                 default).GetAwaiter().GetResult();
 
             act.Should().Throw<ArgumentException>()
-                .WithMessage("*Domain must be All, Piutang, Inventory, InventoryRisk, Sales, PrincipalSalesOut, PrnSalesOutHistory, PrincipalTarget, PrnCusRelationship, Purchasing, PrincipalPurchaseIn, PurchasingManagement, Customer, Salesman, Collection, FieldActivity, or Location*");
+                .WithMessage("*Domain must be All, Piutang, Inventory, InventoryRisk, PrincipalInventory, Sales, PrincipalSalesOut, PrnSalesOutHistory, PrincipalTarget, PrnCusRelationship, Purchasing, PrincipalPurchaseIn, PurchasingManagement, Customer, Salesman, Collection, FieldActivity, or Location*");
         }
 
         [Fact]
@@ -127,6 +127,7 @@ namespace btr.test.ReportingContext
             StubPiutangWorker piutangWorker = null,
             StubInventoryWorker inventoryWorker = null,
             StubInventoryRiskWorker inventoryRiskWorker = null,
+            StubPrincipalInventoryWorker principalInventoryWorker = null,
             StubSalesWorker salesWorker = null,
             StubPrincipalSalesOutWorker principalSalesOutWorker = null,
             StubPrincipalSalesOutHistoryWorker principalSalesOutHistoryWorker = null,
@@ -146,6 +147,7 @@ namespace btr.test.ReportingContext
                 piutangWorker ?? new StubPiutangWorker(),
                 inventoryWorker ?? new StubInventoryWorker(),
                 inventoryRiskWorker ?? new StubInventoryRiskWorker(),
+                principalInventoryWorker ?? new StubPrincipalInventoryWorker(),
                 salesWorker ?? new StubSalesWorker(),
                 principalSalesOutWorker ?? new StubPrincipalSalesOutWorker(),
                 principalSalesOutHistoryWorker ?? new StubPrincipalSalesOutHistoryWorker(),
@@ -224,6 +226,13 @@ namespace btr.test.ReportingContext
         private sealed class StubPrincipalSalesOutHistoryWorker : IRefreshPrincipalSalesOutHistoryWorker
         {
             public void Execute(RefreshPrincipalSalesOutHistoryRequest request)
+            {
+            }
+        }
+
+        private sealed class StubPrincipalInventoryWorker : IRefreshPrincipalInventorySnapshotWorker
+        {
+            public void Execute(RefreshPrincipalInventorySnapshotRequest request)
             {
             }
         }

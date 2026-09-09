@@ -31,6 +31,7 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.Commands
         private readonly IRefreshDashboardPiutangSnapshotWorker _piutangWorker;
         private readonly IRefreshDashboardInventorySnapshotWorker _inventoryWorker;
         private readonly IRefreshDashboardInventoryRiskSnapshotWorker _inventoryRiskWorker;
+        private readonly IRefreshPrincipalInventorySnapshotWorker _principalInventoryWorker;
         private readonly IRefreshDashboardSalesSnapshotWorker _salesWorker;
         private readonly IRefreshPrincipalSalesOutSnapshotWorker _principalSalesOutWorker;
         private readonly IRefreshPrincipalSalesOutHistoryWorker _principalSalesOutHistoryWorker;
@@ -50,6 +51,7 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.Commands
             IRefreshDashboardPiutangSnapshotWorker piutangWorker,
             IRefreshDashboardInventorySnapshotWorker inventoryWorker,
             IRefreshDashboardInventoryRiskSnapshotWorker inventoryRiskWorker,
+            IRefreshPrincipalInventorySnapshotWorker principalInventoryWorker,
             IRefreshDashboardSalesSnapshotWorker salesWorker,
             IRefreshPrincipalSalesOutSnapshotWorker principalSalesOutWorker,
             IRefreshPrincipalSalesOutHistoryWorker principalSalesOutHistoryWorker,
@@ -68,6 +70,7 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.Commands
             _piutangWorker = piutangWorker;
             _inventoryWorker = inventoryWorker;
             _inventoryRiskWorker = inventoryRiskWorker;
+            _principalInventoryWorker = principalInventoryWorker;
             _salesWorker = salesWorker;
             _principalSalesOutWorker = principalSalesOutWorker;
             _principalSalesOutHistoryWorker = principalSalesOutHistoryWorker;
@@ -188,6 +191,14 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.Commands
                     _customerPrincipalRelationshipWorker.Execute(relationshipRequest);
                     return MapResult(CustomerPrincipalRelationship.Domain, relationshipRequest.Result);
 
+                case PrincipalInventorySnapshot.Domain:
+                    var principalInventoryRequest = new RefreshPrincipalInventorySnapshotRequest
+                    {
+                        TriggeredBy = triggeredBy
+                    };
+                    _principalInventoryWorker.Execute(principalInventoryRequest);
+                    return MapResult(PrincipalInventorySnapshot.Domain, principalInventoryRequest.Result);
+
                 case "Purchasing":
                     var purchasingRequest = new RefreshDashboardPurchasingSnapshotRequest
                     {
@@ -254,7 +265,7 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.Commands
 
                 default:
                     throw new ArgumentException(
-                        "Domain must be All, Piutang, Inventory, InventoryRisk, Sales, PrincipalSalesOut, PrnSalesOutHistory, PrincipalTarget, PrnCusRelationship, Purchasing, PrincipalPurchaseIn, PurchasingManagement, Customer, Salesman, Collection, FieldActivity, or Location.",
+                        "Domain must be All, Piutang, Inventory, InventoryRisk, PrincipalInventory, Sales, PrincipalSalesOut, PrnSalesOutHistory, PrincipalTarget, PrnCusRelationship, Purchasing, PrincipalPurchaseIn, PurchasingManagement, Customer, Salesman, Collection, FieldActivity, or Location.",
                         nameof(RefreshDashboardSnapshotsCommand.Domain));
             }
         }
@@ -322,6 +333,18 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.Commands
         private static RefreshDashboardDomainResult MapResult(
             string domain,
             RefreshPrincipalSalesOutHistoryResult result)
+        {
+            return new RefreshDashboardDomainResult
+            {
+                Domain = domain,
+                RefreshLogId = result?.RefreshLogId,
+                DurationMs = result?.DurationMs ?? 0
+            };
+        }
+
+        private static RefreshDashboardDomainResult MapResult(
+            string domain,
+            RefreshPrincipalInventorySnapshotResult result)
         {
             return new RefreshDashboardDomainResult
             {
@@ -469,6 +492,9 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.Commands
 
             if (string.Equals(trimmed, "InventoryRisk", StringComparison.OrdinalIgnoreCase))
                 return "InventoryRisk";
+
+            if (string.Equals(trimmed, PrincipalInventorySnapshot.Domain, StringComparison.OrdinalIgnoreCase))
+                return PrincipalInventorySnapshot.Domain;
 
             if (string.Equals(trimmed, "Sales", StringComparison.OrdinalIgnoreCase))
                 return "Sales";

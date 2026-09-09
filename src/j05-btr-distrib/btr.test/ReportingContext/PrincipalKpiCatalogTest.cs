@@ -141,6 +141,41 @@ namespace btr.test.ReportingContext
         }
 
         [Fact]
+        public void Catalog_RegistersInventoryValueAndInventoryDaysOnlyForThisFamily()
+        {
+            PrincipalKpiCatalog.TryGet(PrincipalKpiCatalog.InventoryValueId, out var value).Should().BeTrue();
+            value.KpiId.Should().Be("PRN-INV-001");
+            value.Name.Should().Be("Inventory Value");
+            value.Description.Should().Be("Current inventory value for Principal products");
+            value.EvidenceGrain.Should().Be("Inventory Snapshot");
+            value.IsAuthoritativePrincipalPerformanceKpi.Should().BeFalse();
+            value.IsAuthoritativeRankingKpi.Should().BeFalse();
+            value.DefinitionStatements.Should().Contain(
+                "PRN-INV-001 Inventory Value is current inventory value for Principal products.");
+            value.DefinitionStatements.Should().Contain(
+                "This KPI writer does not write, overwrite, or recalculate PRN-SALES-001.");
+            value.DefinitionStatements.Should().Contain(
+                "This writer does not change IN01-IN05 views.");
+
+            PrincipalKpiCatalog.TryGet(PrincipalKpiCatalog.InventoryDaysId, out var days).Should().BeTrue();
+            days.KpiId.Should().Be("PRN-INV-002");
+            days.Name.Should().Be("Inventory Days");
+            days.Description.Should().Be("Estimated days of inventory coverage");
+            days.EvidenceGrain.Should().Be("Inventory Snapshot");
+            days.Formula.Should().Be("Eligible quantity ÷ Total ADC");
+            days.IsAuthoritativePrincipalPerformanceKpi.Should().BeFalse();
+            days.IsAuthoritativeRankingKpi.Should().BeFalse();
+            days.DefinitionStatements.Should().Contain(
+                "It uses the existing inventory coverage measure. No new days-of-cover algorithm is introduced.");
+            days.DefinitionStatements.Should().Contain(
+                "The existing coverage measure is Average Days of Supply: eligible quantity ÷ total ADC.");
+            days.DefinitionStatements.Should().Contain(
+                "This KPI writer does not write, overwrite, or recalculate PRN-SALES-001.");
+
+            PrincipalKpiCatalog.TryGet("PRN-INV-003", out _).Should().BeFalse();
+        }
+
+        [Fact]
         public void Catalog_DoesNotRegisterOtherPrincipalFamiliesOrWithdrawnIds()
         {
             var ids = PrincipalKpiCatalog.Entries.Select(entry => entry.KpiId).ToList();
@@ -149,12 +184,19 @@ namespace btr.test.ReportingContext
             ids.Should().Contain("PRN-SALES-001");
             ids.Should().Contain("PRN-TGT-001");
             ids.Should().Contain("PRN-PUR-001");
-            ids.Should().OnlyContain(id => id == "PRN-SALES-001" || id == "PRN-TGT-001" || id == "PRN-PUR-001");
+            ids.Should().Contain("PRN-INV-001");
+            ids.Should().Contain("PRN-INV-002");
+            ids.Should().OnlyContain(id =>
+                id == "PRN-SALES-001" ||
+                id == "PRN-TGT-001" ||
+                id == "PRN-PUR-001" ||
+                id == "PRN-INV-001" ||
+                id == "PRN-INV-002");
             ids.Should().NotContain(id => id.StartsWith("PRN-RET-"));
             ids.Should().NotContain("PRN-TGT-002");
             ids.Should().NotContain("PRN-TGT-003");
             ids.Should().NotContain(id => id.StartsWith("PRN-PUR-") && id != "PRN-PUR-001");
-            ids.Should().NotContain(id => id.StartsWith("PRN-INV-"));
+            ids.Should().NotContain(id => id.StartsWith("PRN-INV-") && id != "PRN-INV-001" && id != "PRN-INV-002");
             ids.Should().NotContain(id => id.StartsWith("PRN-CUS-"));
             ids.Should().NotContain(id => id.StartsWith("PRN-GRW-"));
             ids.Should().NotContain(id => id.StartsWith("PR-KPI-"));

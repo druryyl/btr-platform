@@ -16,6 +16,10 @@ namespace btr.application.ReportingContext.PrincipalAnalyticsAgg
 
         public const string PurchaseInId = "PRN-PUR-001";
 
+        public const string InventoryValueId = "PRN-INV-001";
+
+        public const string InventoryDaysId = "PRN-INV-002";
+
         public const string ReturnsMustNotReduceReplaceOrRedefinePrincipalSalesOut =
             "Returns KPIs must not reduce, replace, or redefine PRN-SALES-001.";
 
@@ -37,8 +41,12 @@ namespace btr.application.ReportingContext.PrincipalAnalyticsAgg
 
         private static readonly PrincipalKpiCatalogEntry PurchaseInEntry = CreatePurchaseIn();
 
+        private static readonly PrincipalKpiCatalogEntry InventoryValueEntry = CreateInventoryValue();
+
+        private static readonly PrincipalKpiCatalogEntry InventoryDaysEntry = CreateInventoryDays();
+
         private static readonly IReadOnlyList<PrincipalKpiCatalogEntry> RegisteredEntries =
-            new[] { SalesOutEntry, TargetEntry, PurchaseInEntry };
+            new[] { SalesOutEntry, TargetEntry, PurchaseInEntry, InventoryValueEntry, InventoryDaysEntry };
 
         public static IReadOnlyList<PrincipalKpiCatalogEntry> Entries
         {
@@ -181,6 +189,73 @@ namespace btr.application.ReportingContext.PrincipalAnalyticsAgg
                     "This KPI writer does not write, overwrite, or recalculate PRN-SALES-001.",
                     "This KPI is not composed onto Entity Analytics in the writer slice. Entity Analytics purchase pack composition is a later slice.",
                     "The user-facing name is Purchase-In, not Principal Sales-Out and not Principal Omzet."
+                }
+            };
+        }
+
+        private static PrincipalKpiCatalogEntry CreateInventoryValue()
+        {
+            return new PrincipalKpiCatalogEntry
+            {
+                KpiId = InventoryValueId,
+                Name = "Inventory Value",
+                Description = "Current inventory value for Principal products",
+                EntityCategory = EntityTypeCode.Supplier,
+                EvidenceGrain = "Inventory Snapshot",
+                Formula = "SUM(Hpp * Qty) for Principal products on the Inventory Snapshot",
+                IsAuthoritativePrincipalPerformanceKpi = false,
+                IsAuthoritativeRankingKpi = false,
+                DeductsReturns = false,
+                DeductsClaims = false,
+                DeductsInventoryAdjustments = false,
+                DefinitionStatements = new[]
+                {
+                    "PRN-INV-001 Inventory Value is current inventory value for Principal products.",
+                    "Evidence grain is Inventory Snapshot.",
+                    "The value uses the existing Inventory Snapshot valuation: SUM(Hpp * Qty), excluding In-Transit and non-positive quantity.",
+                    "Attribute Principal products through item-master SupplierId on Inventory Snapshot evidence.",
+                    "Blank or unknown SupplierId is excluded. Do not create a synthetic Principal.",
+                    "Inventory KPIs are independent operational indicators.",
+                    "Inventory KPIs do not modify Sales-Out performance.",
+                    "PRN-INV-001 is not a Principal performance ranking KPI.",
+                    "This KPI writer does not write, overwrite, or recalculate PRN-SALES-001.",
+                    "This KPI is not composed onto Entity Analytics in the writer slice. Entity Analytics inventory pack composition is a later slice.",
+                    "This writer does not change IN01-IN05 views.",
+                    "The user-facing name is Inventory Value, not Principal Sales-Out."
+                }
+            };
+        }
+
+        private static PrincipalKpiCatalogEntry CreateInventoryDays()
+        {
+            return new PrincipalKpiCatalogEntry
+            {
+                KpiId = InventoryDaysId,
+                Name = "Inventory Days",
+                Description = "Estimated days of inventory coverage",
+                EntityCategory = EntityTypeCode.Supplier,
+                EvidenceGrain = "Inventory Snapshot",
+                Formula = "Eligible quantity ÷ Total ADC",
+                IsAuthoritativePrincipalPerformanceKpi = false,
+                IsAuthoritativeRankingKpi = false,
+                DeductsReturns = false,
+                DeductsClaims = false,
+                DeductsInventoryAdjustments = false,
+                DefinitionStatements = new[]
+                {
+                    "PRN-INV-002 Inventory Days is estimated days of inventory coverage for Principal products.",
+                    "Evidence grain is Inventory Snapshot.",
+                    "It uses the existing inventory coverage measure. No new days-of-cover algorithm is introduced.",
+                    "The existing coverage measure is Average Days of Supply: eligible quantity ÷ total ADC.",
+                    "Eligible quantity and ADC follow the existing inventory coverage rules: active items with positive quantity, excluding Never Sold and Dead Stock, and ADC from the existing inventory forecast policy.",
+                    "Inventory Days is null when total ADC is not positive.",
+                    "Inventory KPIs are independent operational indicators.",
+                    "Inventory KPIs do not modify Sales-Out performance.",
+                    "PRN-INV-002 is not a Principal performance ranking KPI.",
+                    "This KPI writer does not write, overwrite, or recalculate PRN-SALES-001.",
+                    "This KPI is not composed onto Entity Analytics in the writer slice. Entity Analytics inventory pack composition is a later slice.",
+                    "This writer does not change IN01-IN05 views.",
+                    "The user-facing name is Inventory Days, not Principal Sales-Out."
                 }
             };
         }
