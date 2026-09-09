@@ -258,6 +258,7 @@
     <Compile Include="ReportingContext\PurchasingReportDalTest.cs" />
     <Compile Include="ReportingContext\ReportPeriodValidatorTest.cs" />
     <Compile Include="ReportingContext\SalesReportDalTest.cs" />
+    <Compile Include="ReportingContext\SalesReportPrincipalEvidenceTest.cs" />
     <Compile Include="SalesContext\NumericHelperTest.cs" />
     <Compile Include="SalesContext\SalesOmzetEntityDalTest.cs" />
     <Compile Include="SalesContext\SalesOmzetPoliciesTest.cs" />

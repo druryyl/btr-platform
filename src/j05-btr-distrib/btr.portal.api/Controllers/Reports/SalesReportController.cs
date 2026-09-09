@@ -20,12 +20,14 @@ namespace btr.portal.api.Controllers.Reports
         [HttpGet, Route("")]
         public async Task<IHttpActionResult> Get(
             [FromUri] System.DateTime? from = null,
-            [FromUri] System.DateTime? to = null)
+            [FromUri] System.DateTime? to = null,
+            [FromUri] string supplierId = null)
         {
             var result = await _mediator.Send(new GetSalesReportQuery
             {
                 From = from,
                 To = to,
+                SupplierId = supplierId,
             });
             return Ok(ApiResponse<SalesReportResponse>.Success(result));
         }

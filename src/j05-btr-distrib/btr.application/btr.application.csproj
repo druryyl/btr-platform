@@ -677,6 +677,7 @@
     <Compile Include="ReportingContext\PurchasingReportAgg\Queries\GetPurchasingReportQuery.cs" />
     <Compile Include="ReportingContext\SalesReportAgg\Contracts\ISalesReportDal.cs" />
     <Compile Include="ReportingContext\SalesReportAgg\Queries\GetSalesReportQuery.cs" />
+    <Compile Include="ReportingContext\SalesReportAgg\SalesReportPrincipalEvidenceComposer.cs" />
     <Compile Include="SalesContext\AlokasiFpAgg\IAlokasiFpItemDal.cs" />
     <Compile Include="SalesContext\CheckInFeature\ICheckInDal.cs" />
     <Compile Include="SalesContext\CheckInFeature\IEffectiveCallDal.cs" />
