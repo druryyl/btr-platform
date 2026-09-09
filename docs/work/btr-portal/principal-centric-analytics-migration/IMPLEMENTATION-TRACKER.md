@@ -79,6 +79,8 @@ Only a review agent may set `GO` or `NO-GO`.
 - Review History:
   - 2026-09-09: IN REVIEW
   - 2026-09-09: GO. `PROFILING-BASELINE.md` contains a measured result for each required check, including TQ-001 through TQ-005 and TQ-008. The report states that findings do not change GAP-001 through GAP-023 or the Principal KPI Registry. No application behavior, schema, or KPI definition was changed.
+  - 2026-09-09: IN REVIEW (independent re-review)
+  - 2026-09-09: GO. Remeasured TQ-001 through TQ-005, TQ-008, and the nine section 9 checks against `btr2`. Results match `PROFILING-BASELINE.md`. Findings do not change GAP-001 through GAP-023 or the Principal KPI Registry. No application behavior, schema, or KPI definition was changed.
 - Remediation History: none
 
 ### PCM-004
