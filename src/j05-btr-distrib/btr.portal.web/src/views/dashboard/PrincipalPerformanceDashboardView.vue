@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import DashboardDetailLayout from '@/components/dashboard/DashboardDetailLayout.vue'
 import DashboardMetric from '@/components/dashboard/primitives/DashboardMetric.vue'
 import Top10RankingTable from '@/components/dashboard/Top10RankingTable.vue'
@@ -9,7 +9,13 @@ import type { PrincipalPerformanceRankingItem } from '@/models/dashboard'
 import { useDashboardStore } from '@/stores/dashboardStore'
 
 const dashboard = useDashboardStore()
+const route = useRoute()
 const router = useRouter()
+
+const selectedSupplierId = computed(() => {
+  const value = route.query.supplierId
+  return typeof value === 'string' ? value.trim() : ''
+})
 
 const rankingColumns = [
   { field: 'Rank', header: 'Rank' },
@@ -30,6 +36,15 @@ const periodLabel = computed(() => {
 
   const month = new Date(page.PeriodYear, page.PeriodMonth - 1, 1)
   return new Intl.DateTimeFormat('id-ID', { month: 'long', year: 'numeric' }).format(month)
+})
+
+const selectedPrincipal = computed(() => {
+  if (!selectedSupplierId.value) return null
+  return (
+    dashboard.principalPerformance?.Ranking.find(
+      (item) => item.SupplierId.localeCompare(selectedSupplierId.value, undefined, { sensitivity: 'accent' }) === 0,
+    ) ?? null
+  )
 })
 
 function onRankingClick(row: Record<string, unknown>): void {
@@ -85,6 +100,12 @@ onMounted(() => {
       {{ periodLabel }}. Ranking uses Principal Sales-Out only.
     </p>
 
+    <p v-if="selectedSupplierId" class="principal-performance__selected" data-selected-principal>
+      Selected Principal:
+      {{ selectedPrincipal?.PrincipalName || selectedSupplierId }}.
+      Ranking remains Principal Sales-Out.
+    </p>
+
     <section class="principal-performance__disclosure" aria-label="Principal Sales-Out disclosure">
       <h2>Principal Sales-Out disclosure</h2>
       <ul>
@@ -125,7 +146,8 @@ onMounted(() => {
   box-shadow: var(--dashboard-shadow-idle);
 }
 
-.principal-performance__period {
+.principal-performance__period,
+.principal-performance__selected {
   margin: 0 0 1rem;
   color: var(--p-text-muted-color);
 }

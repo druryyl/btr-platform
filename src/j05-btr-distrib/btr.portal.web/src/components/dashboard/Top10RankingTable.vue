@@ -20,13 +20,16 @@ const props = defineProps<{
   clickable?: boolean
   clickHint?: string
   domain?: DashboardDomain
+  currencyFields?: string[]
 }>()
 
 const emit = defineEmits<{
   rowClick: [row: Record<string, unknown>]
 }>()
 
-const numericFields = computed(() => new Set([props.valueField, props.percentField].filter(Boolean)))
+const numericFields = computed(
+  () => new Set([props.valueField, props.percentField, ...(props.currencyFields ?? [])].filter(Boolean)),
+)
 
 function onRowClick(event: { data: object }): void {
   if (!props.clickable) return
@@ -34,7 +37,8 @@ function onRowClick(event: { data: object }): void {
 }
 
 function formatCell(field: string, value: unknown, valueField: string, percentField?: string): string {
-  if (field === valueField) {
+  const isCurrency = field === valueField || (props.currencyFields ?? []).includes(field)
+  if (isCurrency) {
     if (value == null) return formatDashboardEmpty('no-data')
     return formatCurrency(value as number)
   }

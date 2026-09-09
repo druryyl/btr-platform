@@ -124,6 +124,29 @@ export interface DashboardSalesRankingItem {
   Investigation?: InvestigationMetadata | null
 }
 
+export interface DashboardSalesPrincipalContributionItem {
+  Rank: number
+  PrincipalName: string
+  SupplierId: string
+  SalesOutKpiId: string
+  PrincipalSalesOutAmount: number
+  TargetKpiId?: string | null
+  PrincipalTargetAmount?: number | null
+}
+
+export interface DashboardSalesPrincipalContribution {
+  IsAvailable: boolean
+  SalesOutKpiId: string
+  TargetKpiId: string
+  PeriodYear: number
+  PeriodMonth: number
+  PrincipalSalesOutAmount: number
+  PrincipalTargetAmount: number | null
+  CompanyHeaderNote: string
+  Disclosures: string[]
+  Ranking: DashboardSalesPrincipalContributionItem[]
+}
+
 export interface PrincipalPerformanceRankingItem {
   Rank: number
   PrincipalName: string
@@ -182,6 +205,7 @@ export interface DashboardSalesResponse {
   AchievementPercent: number | null
   TargetVsAchievement: DashboardSalesTargetVsAchievement
   TopSalesmanRanking: DashboardSalesRankingItem[]
+  PrincipalContribution?: DashboardSalesPrincipalContribution | null
 }
 
 export interface DashboardSalesForecastVsTarget {
