@@ -403,6 +403,8 @@ Only a review agent may set `GO` or `NO-GO`.
 - Review History:
   - 2026-09-09: IN REVIEW
   - 2026-09-09: GO. CU01 does not use Assigned Salesman or Owner for the latest-Faktur Salesman. The column and disclosure state that it is the last invoicing Salesman, a recency indicator, not the Customer owner. Customer credit, piutang, and lifecycle measures remain Customer-level. No Principal mix was added. CU02–CU05 are unchanged.
+  - 2026-09-09: IN REVIEW (independent)
+  - 2026-09-09: GO. Independent review confirms CU01 column headers, ranking note, and attention-list column use Last Invoicing Salesman as a recency indicator, not Assigned Salesman or Owner. Customer credit, piutang, and lifecycle measures remain Customer-level. Principal mix on CU01 is PCM-014, not this slice. CU02–CU05 are unchanged. `customerAnalyticsAttribution.spec.ts`: 2 passed.
 - Remediation History: none
 
 ### PCM-038
