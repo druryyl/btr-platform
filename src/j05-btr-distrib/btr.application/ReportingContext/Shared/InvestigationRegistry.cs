@@ -233,7 +233,7 @@ namespace btr.application.ReportingContext.Shared
                     "/dashboard/salesmen", PiutangReportRoute, "Next validation: Piutang Tracker (FT5)", PeriodModeAllOpenBalances),
                 Entry(SignalRankingCollectionTopOverdueCustomer, "Top Overdue Customer", InvestigationMetadataBuilder.EntityTypeCustomer,
                     "/dashboard/collection", PiutangReportRoute, "Next validation: Piutang Tracker (FT5)", PeriodModeAllOpenBalances),
-                Entry(SignalRankingCollectionTopOverdueSalesman, "Top Overdue Salesman", InvestigationMetadataBuilder.EntityTypeSalesman,
+                Entry(SignalRankingCollectionTopOverdueSalesman, "Invoice-Attributed Overdue Salesman", InvestigationMetadataBuilder.EntityTypeSalesman,
                     "/dashboard/collection", PiutangReportRoute, "Next validation: Piutang Tracker (FT5)", PeriodModeAllOpenBalances),
                 Entry(SignalRankingTopPrincipal, "Top Principal", InvestigationMetadataBuilder.EntityTypePrincipal,
                     "/dashboard/purchasing", PurchasingReportRoute, null, PeriodModeCurrentMonth),

@@ -374,9 +374,13 @@ Only a review agent may set `GO` or `NO-GO`.
 
 ### PCM-035
 
-- Status: PLANNED
-- Implementation History: none
-- Review History: none
+- Status: GO
+- Implementation History:
+  - 2026-09-09: IN IMPLEMENTATION
+  - 2026-09-09: IMPLEMENTED. FI02 labels the Top Overdue Salesmen ranking as invoice-attributed overdue exposure, not account ownership. Ranking measures, customer and wilayah rankings, and FI04 are unchanged. No Principal overdue or collection KPI was added.
+- Review History:
+  - 2026-09-09: IN REVIEW
+  - 2026-09-09: GO. FI02 describes the Salesman ranking as invoice-attributed overdue exposure, not account ownership. Ranking amounts, customer and wilayah rankings, and FI04 are unchanged. No Principal overdue or collection KPI was added. The investigation signal key, route, and period mode are unchanged.
 - Remediation History: none
 
 ### PCM-036

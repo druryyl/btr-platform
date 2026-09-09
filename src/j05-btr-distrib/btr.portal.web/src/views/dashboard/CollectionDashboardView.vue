@@ -10,6 +10,13 @@ import CollectionAgingRiskSummary from '@/components/dashboard/CollectionAgingRi
 import CollectionAttentionList from '@/components/dashboard/CollectionAttentionList.vue'
 import CollectionNavigationSection from '@/components/dashboard/CollectionNavigationSection.vue'
 import Top10RankingTable from '@/components/dashboard/Top10RankingTable.vue'
+import {
+  FI02_ATTRIBUTION_DISCLOSURES,
+  FI02_INVOICE_ATTRIBUTED_SALESMAN_LABEL,
+  FI02_TOP_OVERDUE_SALESMEN_EMPTY,
+  FI02_TOP_OVERDUE_SALESMEN_HEADING,
+  FI02_TOP_OVERDUE_SALESMEN_TITLE,
+} from '@/services/collectionInvoiceAttribution'
 import { formatCurrency, formatCurrencyCompact, formatNumber, formatPercent } from '@/services/formatters'
 import type { DashboardCollectionRankingRow } from '@/models/dashboard'
 import { COLLECTION_ATTENTION_SIGNAL_ALL } from '@/services/collectionAttentionSignals'
@@ -47,6 +54,14 @@ const rankingColumns = [
   { field: 'Rank', header: 'Rank' },
   { field: 'EntityCode', header: 'Code' },
   { field: 'EntityName', header: 'Name' },
+  { field: 'Amount', header: 'Overdue' },
+  { field: 'PercentOfTotal', header: '% of Total Overdue' },
+]
+
+const salesmanRankingColumns = [
+  { field: 'Rank', header: 'Rank' },
+  { field: 'EntityCode', header: 'Code' },
+  { field: 'EntityName', header: FI02_INVOICE_ATTRIBUTED_SALESMAN_LABEL },
   { field: 'Amount', header: 'Overdue' },
   { field: 'PercentOfTotal', header: '% of Total Overdue' },
 ]
@@ -224,16 +239,19 @@ onMounted(() => {
       />
 
       <h2 class="collection-dashboard__section-title collection-dashboard__section-title--spaced">
-        Top Overdue Salesmen
+        {{ FI02_TOP_OVERDUE_SALESMEN_HEADING }}
       </h2>
+      <p class="collection-dashboard__attribution-note">
+        <span v-for="item in FI02_ATTRIBUTION_DISCLOSURES" :key="item">{{ item }} </span>
+      </p>
       <Top10RankingTable
-        title="Top 10 Overdue Salesmen"
-        :columns="rankingColumns"
+        :title="FI02_TOP_OVERDUE_SALESMEN_TITLE"
+        :columns="salesmanRankingColumns"
         :rows="salesmanRankingRows"
         :loading="dashboard.loading"
         value-field="Amount"
         percent-field="PercentOfTotal"
-        empty-message="No overdue salesman ranking data."
+        :empty-message="FI02_TOP_OVERDUE_SALESMEN_EMPTY"
         clickable
         @row-click="onRankingRowClick"
       />
@@ -300,6 +318,12 @@ onMounted(() => {
 
 .collection-dashboard__section-title--spaced {
   margin-top: 1.5rem;
+}
+
+.collection-dashboard__attribution-note {
+  margin: -0.5rem 0 1rem;
+  font-size: 0.875rem;
+  color: var(--p-text-muted-color);
 }
 
 .collection-dashboard__cards {

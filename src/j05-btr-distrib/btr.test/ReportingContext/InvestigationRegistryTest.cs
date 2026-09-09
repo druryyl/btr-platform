@@ -141,6 +141,21 @@ namespace btr.test.ReportingContext
         }
 
         [Fact]
+        public void CollectionTopOverdueSalesman_IsInvoiceAttributedNotAccountOwner()
+        {
+            InvestigationRegistry.TryGet(
+                    InvestigationRegistry.SignalRankingCollectionTopOverdueSalesman,
+                    out var entry)
+                .Should().BeTrue();
+
+            entry.DefaultSignalLabel.Should().Be("Invoice-Attributed Overdue Salesman");
+            entry.DefaultSignalLabel.ToLowerInvariant().Should().Contain("invoice-attributed");
+            entry.DefaultSignalLabel.ToLowerInvariant().Should().NotContain("owner");
+            entry.DashboardRoute.Should().Be("/dashboard/collection");
+            entry.SignalKey.Should().Be(InvestigationRegistry.SignalRankingCollectionTopOverdueSalesman);
+        }
+
+        [Fact]
         public void ExecutiveTopPrincipalExposure_RoutesToPurchasingReport()
         {
             InvestigationRegistry.TryGet(InvestigationRegistry.SignalExecutiveTopPrincipalExposure, out var entry)
