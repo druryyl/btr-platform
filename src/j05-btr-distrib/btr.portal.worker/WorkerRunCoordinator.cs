@@ -5,6 +5,8 @@ using System.Linq;
 using System.Threading;
 using btr.application.ReportingContext.DashboardSnapshotAgg.Progress;
 using btr.application.ReportingContext.DashboardSnapshotAgg.UseCases;
+using btr.application.ReportingContext.PrincipalAnalyticsAgg;
+using btr.application.ReportingContext.PrincipalAnalyticsAgg.UseCases;
 using btr.application.ReportingContext.EntityAnalyticsAgg.Backfill.UseCases;
 using btr.infrastructure.Helpers;
 using btr.portal.worker.Progress;
@@ -215,6 +217,16 @@ namespace btr.portal.worker
                     {
                         var worker = sp.GetRequiredService<IRefreshDashboardSalesSnapshotWorker>();
                         var request = new RefreshDashboardSalesSnapshotRequest { TriggeredBy = triggeredBy };
+                        worker.Execute(request);
+                        return request.Result?.DurationMs ?? 0;
+                    });
+                    break;
+
+                case "PRINCIPALSALESOUT":
+                    RunDomain(serviceProvider, PrincipalSalesOutSnapshot.Domain, triggeredBy, sp =>
+                    {
+                        var worker = sp.GetRequiredService<IRefreshPrincipalSalesOutSnapshotWorker>();
+                        var request = new RefreshPrincipalSalesOutSnapshotRequest { TriggeredBy = triggeredBy };
                         worker.Execute(request);
                         return request.Result?.DurationMs ?? 0;
                     });

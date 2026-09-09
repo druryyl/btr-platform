@@ -5,6 +5,7 @@ using btr.application.ReportingContext.DashboardFieldActivityAgg.Services;
 using btr.application.ReportingContext.DashboardFieldActivityOverviewAgg.Services;
 using btr.application.ReportingContext.DashboardSnapshotAgg;
 using btr.application.ReportingContext.DashboardSnapshotAgg.Services;
+using btr.application.ReportingContext.PrincipalAnalyticsAgg.Services;
 using btr.application.ReportingContext.EntityAnalyticsAgg.Contracts;
 using btr.application.ReportingContext.EntityAnalyticsAgg.Backfill.Contracts;
 using btr.application.ReportingContext.EntityAnalyticsAgg.Backfill.Loaders;
@@ -105,6 +106,7 @@ namespace btr.portal.api.Configurations
             services.AddScoped<DashboardInventoryAggregator>();
             services.AddScoped<DashboardInventoryRiskAggregator>();
             services.AddScoped<DashboardSalesFakturAggregator>();
+            services.AddScoped<PrincipalSalesOutAggregator>();
             services.AddScoped<DashboardSalesForecastAggregator>();
             services.AddScoped<DashboardPurchasingInvoiceAggregator>();
             services.AddScoped<DashboardPurchasingManagementAggregator>();

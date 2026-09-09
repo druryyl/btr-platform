@@ -180,6 +180,8 @@
     <Compile Include="ReportingContext\DashboardSnapshotAgg\SalesmanMtdItemRollupDal.cs" />
     <Compile Include="ReportingContext\DashboardSnapshotAgg\SupplierMtdItemRollupDal.cs" />
     <Compile Include="ReportingContext\DashboardSnapshotAgg\DashboardSalesmanSnapshotDal.cs" />
+    <Compile Include="ReportingContext\PrincipalAnalyticsAgg\PrincipalSalesOutEvidenceDal.cs" />
+    <Compile Include="ReportingContext\PrincipalAnalyticsAgg\PrincipalSalesOutSnapshotDal.cs" />
     <Compile Include="ReportingContext\DashboardSnapshotAgg\DashboardCollectionSnapshotDal.cs" />
     <Compile Include="ReportingContext\DashboardSnapshotAgg\DashboardLocationSnapshotDal.cs" />
     <Compile Include="ReportingContext\DashboardCustomerAgg\DashboardCustomerDal.cs" />

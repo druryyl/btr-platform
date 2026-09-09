@@ -1,6 +1,7 @@
 using System;
 using btr.application.ReportingContext.DashboardSnapshotAgg.Commands;
 using btr.application.ReportingContext.DashboardSnapshotAgg.UseCases;
+using btr.application.ReportingContext.PrincipalAnalyticsAgg.UseCases;
 using FluentAssertions;
 using Xunit;
 
@@ -67,7 +68,7 @@ namespace btr.test.ReportingContext
                 default).GetAwaiter().GetResult();
 
             act.Should().Throw<ArgumentException>()
-                .WithMessage("*Domain must be All, Piutang, Inventory, InventoryRisk, Sales, Purchasing, PurchasingManagement, Customer, Salesman, Collection, FieldActivity, or Location*");
+                .WithMessage("*Domain must be All, Piutang, Inventory, InventoryRisk, Sales, PrincipalSalesOut, Purchasing, PurchasingManagement, Customer, Salesman, Collection, FieldActivity, or Location*");
         }
 
         [Fact]
@@ -127,6 +128,7 @@ namespace btr.test.ReportingContext
             StubInventoryWorker inventoryWorker = null,
             StubInventoryRiskWorker inventoryRiskWorker = null,
             StubSalesWorker salesWorker = null,
+            StubPrincipalSalesOutWorker principalSalesOutWorker = null,
             StubPurchasingWorker purchasingWorker = null,
             StubPurchasingManagementWorker purchasingManagementWorker = null,
             StubCustomerWorker customerWorker = null,
@@ -141,6 +143,7 @@ namespace btr.test.ReportingContext
                 inventoryWorker ?? new StubInventoryWorker(),
                 inventoryRiskWorker ?? new StubInventoryRiskWorker(),
                 salesWorker ?? new StubSalesWorker(),
+                principalSalesOutWorker ?? new StubPrincipalSalesOutWorker(),
                 purchasingWorker ?? new StubPurchasingWorker(),
                 purchasingManagementWorker ?? new StubPurchasingManagementWorker(),
                 customerWorker ?? new StubCustomerWorker(),
@@ -206,6 +209,13 @@ namespace btr.test.ReportingContext
         private sealed class StubSalesWorker : IRefreshDashboardSalesSnapshotWorker
         {
             public void Execute(RefreshDashboardSalesSnapshotRequest request)
+            {
+            }
+        }
+
+        private sealed class StubPrincipalSalesOutWorker : IRefreshPrincipalSalesOutSnapshotWorker
+        {
+            public void Execute(RefreshPrincipalSalesOutSnapshotRequest request)
             {
             }
         }
