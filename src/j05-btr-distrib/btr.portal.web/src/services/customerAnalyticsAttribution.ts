@@ -73,11 +73,18 @@ export const CU05_LAST_INVOICING_SALESMAN_LABEL = LAST_INVOICING_SALESMAN_LABEL
 export const CU05_LAST_INVOICING_SALESMAN_NOTE =
   'This is the last invoicing Salesman, a commercial attribution on the latest invoice, not the Customer owner.'
 
+export const CU05_PRINCIPAL_PAIR_KPI_ID = 'PRN-SALES-001'
+
+export const CU05_PRINCIPAL_PAIR_NOTE =
+  'Pair evidence reads the Customer–Principal relationship projection only. It does not recompute relationships from raw transactions.'
+
 export const CU05_ATTRIBUTION_DISCLOSURES = [
   'The Salesman column is the last invoicing Salesman, a commercial attribution on the latest invoice, not the Customer owner.',
   'This page does not label that Salesman as Owner of the Customer.',
   'The action route is the portfolio action function, not Customer ownership.',
-  'Customer totals remain Customer-level. Pair evidence is not shown.',
+  'Customer totals remain Customer-level and are not allocated to Principals.',
+  CU05_PRINCIPAL_PAIR_NOTE,
+  'The pair list shows Principals present on that Customer\'s projection only. No pre-purchase assigned Principal is shown.',
 ] as const
 
 export function isForbiddenCustomerOwnerLabel(label: string | null | undefined): boolean {

@@ -20,6 +20,8 @@ import {
   CU05_ATTRIBUTION_DISCLOSURES,
   CU05_LAST_INVOICING_SALESMAN_LABEL,
   CU05_LAST_INVOICING_SALESMAN_NOTE,
+  CU05_PRINCIPAL_PAIR_KPI_ID,
+  CU05_PRINCIPAL_PAIR_NOTE,
   correctCu02AttributionText,
   isForbiddenCustomerOwnerLabel,
 } from '@/services/customerAnalyticsAttribution'
@@ -136,12 +138,23 @@ describe('CU05 ownership labels', () => {
     expect(CU05_ACTION_ROUTE_NOTE.toLowerCase()).toContain('not the customer owner')
   })
 
-  it('keeps customer totals Customer-level and does not add pair evidence', () => {
+  it('keeps customer totals Customer-level and shows pair evidence from the projection only', () => {
     const text = CU05_ATTRIBUTION_DISCLOSURES.join(' ')
     expect(text.toLowerCase()).toContain('not the customer owner')
     expect(text.toLowerCase()).toContain('does not label that salesman as owner of the customer')
     expect(text.toLowerCase()).toContain('customer totals remain customer-level')
-    expect(text.toLowerCase()).toContain('pair evidence is not shown')
+    expect(text.toLowerCase()).toContain('not allocated to principals')
+    expect(text.toLowerCase()).toContain('pair evidence')
+    expect(text.toLowerCase()).toContain('relationship projection only')
+    expect(text.toLowerCase()).toContain('does not recompute relationships from raw transactions')
+    expect(text.toLowerCase()).toContain('no pre-purchase assigned principal')
+    expect(text.toLowerCase()).not.toContain('pair evidence is not shown')
     expect(CU05_ATTRIBUTION_DISCLOSURES.some((item) => /^owner$/i.test(item.trim()))).toBe(false)
+  })
+
+  it('identifies the CU05 pair evidence as PRN-SALES-001 from the relationship projection only', () => {
+    expect(CU05_PRINCIPAL_PAIR_KPI_ID).toBe('PRN-SALES-001')
+    expect(CU05_PRINCIPAL_PAIR_NOTE.toLowerCase()).toContain('relationship projection only')
+    expect(CU05_PRINCIPAL_PAIR_NOTE.toLowerCase()).toContain('does not recompute relationships from raw transactions')
   })
 })

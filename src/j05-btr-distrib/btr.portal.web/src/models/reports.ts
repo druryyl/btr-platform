@@ -164,8 +164,31 @@ export interface CustomerReportSummary {
   TotalOpenBalance: number
 }
 
+export interface CustomerReportPrincipalPair {
+  SupplierId: string
+  PrincipalName: string
+  RelationshipStatus: string
+  KpiId: string
+  PairSalesOutAmount: number
+}
+
+export interface CustomerReportPrincipalPairCustomer {
+  CustomerCode: string
+  CustomerName: string
+  Principals: CustomerReportPrincipalPair[]
+}
+
+export interface CustomerReportPrincipalPairEvidence {
+  IsAvailable: boolean
+  KpiId: string
+  Note: string
+  Disclosures: string[]
+  Customers: CustomerReportPrincipalPairCustomer[]
+}
+
 export interface CustomerReportResponse {
   GeneratedAt: string
   Summary: CustomerReportSummary
   Rows: CustomerReportRow[]
+  PairEvidence?: CustomerReportPrincipalPairEvidence | null
 }

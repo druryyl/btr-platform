@@ -410,6 +410,7 @@
     <Compile Include="ReportingContext\DashboardCustomerPortfolioAgg\CustomerPortfolioPrincipalMixComposer.cs" />
     <Compile Include="ReportingContext\DashboardCustomerPortfolioAgg\Queries\GetDashboardCustomerPortfolioQuery.cs" />
     <Compile Include="ReportingContext\CustomerReportAgg\Contracts\ICustomerReportDal.cs" />
+    <Compile Include="ReportingContext\CustomerReportAgg\CustomerReportPrincipalPairComposer.cs" />
     <Compile Include="ReportingContext\CustomerReportAgg\Queries\GetCustomerReportQuery.cs" />
     <Compile Include="ReportingContext\EntityAnalyticsAgg\Contracts\IEntityAnalyticsLayerRepositories.cs" />
     <Compile Include="ReportingContext\EntityAnalyticsAgg\Contracts\IEntityAnalyticsMonthCloseService.cs" />

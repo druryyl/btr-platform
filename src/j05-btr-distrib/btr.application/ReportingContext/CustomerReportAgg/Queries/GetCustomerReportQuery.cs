@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using btr.application.ReportingContext.CustomerReportAgg.Contracts;
+using btr.application.ReportingContext.PrincipalAnalyticsAgg.Contracts;
 using MediatR;
 
 namespace btr.application.ReportingContext.CustomerReportAgg.Queries
@@ -23,6 +24,9 @@ namespace btr.application.ReportingContext.CustomerReportAgg.Queries
         public CustomerReportSummaryDto Summary { get; set; } = new CustomerReportSummaryDto();
 
         public IReadOnlyList<CustomerReportRowDto> Rows { get; set; } = new List<CustomerReportRowDto>();
+
+        public CustomerReportPrincipalPairEvidence PairEvidence { get; set; }
+            = new CustomerReportPrincipalPairEvidence();
     }
 
     public class CustomerReportSummaryDto
@@ -85,21 +89,68 @@ namespace btr.application.ReportingContext.CustomerReportAgg.Queries
         public string ValueDisclaimer { get; set; }
     }
 
+    public class CustomerReportPrincipalPairEvidence
+    {
+        public bool IsAvailable { get; set; }
+
+        public string KpiId { get; set; }
+
+        public string Note { get; set; }
+
+        public IList<string> Disclosures { get; set; }
+            = new List<string>();
+
+        public IList<CustomerReportPrincipalPairCustomer> Customers { get; set; }
+            = new List<CustomerReportPrincipalPairCustomer>();
+    }
+
+    public class CustomerReportPrincipalPairCustomer
+    {
+        public string CustomerCode { get; set; }
+
+        public string CustomerName { get; set; }
+
+        public IList<CustomerReportPrincipalPair> Principals { get; set; }
+            = new List<CustomerReportPrincipalPair>();
+    }
+
+    public class CustomerReportPrincipalPair
+    {
+        public string SupplierId { get; set; }
+
+        public string PrincipalName { get; set; }
+
+        public string RelationshipStatus { get; set; }
+
+        public string KpiId { get; set; }
+
+        public decimal PairSalesOutAmount { get; set; }
+    }
+
     public class GetCustomerReportHandler
         : IRequestHandler<GetCustomerReportQuery, CustomerReportResponse>
     {
         private readonly ICustomerReportDal _dal;
+        private readonly ICustomerPrincipalRelationshipDal _relationshipDal;
 
-        public GetCustomerReportHandler(ICustomerReportDal dal)
+        public GetCustomerReportHandler(
+            ICustomerReportDal dal,
+            ICustomerPrincipalRelationshipDal relationshipDal)
         {
             _dal = dal;
+            _relationshipDal = relationshipDal;
         }
 
         public Task<CustomerReportResponse> Handle(
             GetCustomerReportQuery request,
             CancellationToken cancellationToken)
         {
-            return Task.FromResult(_dal.GetReport(request.CustomerCode));
+            var response = _dal.GetReport(request.CustomerCode);
+            var customerCodes = CustomerReportPrincipalPairComposer.CollectReportCustomerCodes(response);
+            response.PairEvidence = CustomerReportPrincipalPairComposer.Compose(
+                response,
+                _relationshipDal.ListPairsForCustomerCodes(customerCodes));
+            return Task.FromResult(response);
         }
     }
 }

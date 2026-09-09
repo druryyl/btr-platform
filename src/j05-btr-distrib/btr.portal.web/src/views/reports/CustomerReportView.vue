@@ -10,6 +10,7 @@ import InputText from 'primevue/inputtext'
 import Message from 'primevue/message'
 import Tag from 'primevue/tag'
 import InvestigationBreadcrumb from '@/components/reports/InvestigationBreadcrumb.vue'
+import CustomerReportPrincipalPairs from '@/components/reports/CustomerReportPrincipalPairs.vue'
 import ReportSummaryBar from '@/components/reports/ReportSummaryBar.vue'
 import { useReportInvestigationFilter } from '@/composables/useReportInvestigationFilter'
 import { useReportInvestigationHydration } from '@/composables/useReportInvestigationHydration'
@@ -30,6 +31,8 @@ const { freeText } = storeToRefs(customerReport)
 const { breadcrumb, customerCode, hydrateFromRoute } = useReportInvestigationHydration()
 
 const sourceRows = computed(() => customerReport.report?.Rows ?? [])
+
+const pairEvidence = computed(() => customerReport.report?.PairEvidence ?? null)
 const { filteredRows, hasActiveFilter } = useReportInvestigationFilter(
   sourceRows,
   ['CustomerCode', 'CustomerName', 'WilayahName', 'SalesPersonName', 'PrimaryActionLabel'],
@@ -190,6 +193,11 @@ onMounted(() => {
             </template>
           </Column>
         </DataTable>
+
+        <CustomerReportPrincipalPairs
+          :evidence="pairEvidence"
+          :loading="customerReport.loading"
+        />
 
         <div v-if="customerReport.report" class="customer-report__meta">
           Updated {{ formatDateTime(customerReport.report.GeneratedAt) }}

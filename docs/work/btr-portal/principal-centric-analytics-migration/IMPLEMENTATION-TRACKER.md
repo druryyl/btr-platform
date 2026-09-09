@@ -519,9 +519,13 @@ Only a review agent may set `GO` or `NO-GO`.
 
 ### PCM-045
 
-- Status: PLANNED
-- Implementation History: none
-- Review History: none
+- Status: GO
+- Implementation History:
+  - 2026-09-10: IN IMPLEMENTATION
+  - 2026-09-10: IMPLEMENTED. CU05 shows pair evidence from stored `BTRPD_CustomerPrincipalRelationship` rows only for report customers. Pair status and pair-attributed `PRN-SALES-001` are read from the projection via `ListPairsForCustomerCodes`. Customer totals, latest-Faktur Salesman, and raw transaction scans are not used. No collection queue is routed by Principal financial exposure. Other Customer pages are unchanged.
+- Review History:
+  - 2026-09-10: IN REVIEW
+  - 2026-09-10: GO. CU05 keeps Action Route and Last Invoicing Salesman labels with no Owner column and adds pair evidence reading stored status and pair-attributed `PRN-SALES-001` from the projection only. No collection queue is routed by Principal financial exposure. Other Customer pages are unchanged. `btr.application` and `btr.test` build via MSBuild; portal.web `vue-tsc -b` passes. 5 new `CustomerReportPrincipalPairTest` tests pass; 19 related backend and 255 frontend tests pass.
 - Remediation History: none
 
 ### PCM-046
