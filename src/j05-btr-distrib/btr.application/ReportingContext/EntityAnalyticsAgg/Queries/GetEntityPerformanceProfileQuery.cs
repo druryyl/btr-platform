@@ -344,6 +344,10 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Queries
         public decimal? MetricValue { get; set; }
 
         public string ProfileRoute { get; set; }
+
+        public string RelationshipStatus { get; set; }
+
+        public DateTime? LastTransactionDate { get; set; }
     }
 
     public class ProfileEvidenceSectionDto : ProfileSectionDtoBase

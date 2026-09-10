@@ -37,6 +37,33 @@ function barWidth(value: number | null | undefined, block: ProfileRelationshipBl
   const max = Math.max(...block.Rows.map((r) => r.MetricValue ?? 0), 1)
   return `${Math.round((value / max) * 100)}%`
 }
+
+function blockHasStatus(block: ProfileRelationshipBlock): boolean {
+  return block.Rows.some((r) => !!r.RelationshipStatus)
+}
+
+function blockHasLastTransaction(block: ProfileRelationshipBlock): boolean {
+  return block.Rows.some((r) => !!r.LastTransactionDate)
+}
+
+function formatStatus(status: string | null | undefined): string {
+  if (!status) return ''
+  return status
+}
+
+function statusClass(status: string | null | undefined): string {
+  if (!status) return ''
+  if (status === 'Active') return 'related-entities-blocks__status--active'
+  if (status === 'Dormant') return 'related-entities-blocks__status--dormant'
+  return ''
+}
+
+function formatLastTransaction(date: string | null | undefined): string {
+  if (!date) return '—'
+  const d = new Date(date)
+  if (isNaN(d.getTime())) return '—'
+  return d.toLocaleDateString('id-ID', { year: 'numeric', month: 'short', day: 'numeric' })
+}
 </script>
 
 <template>
@@ -62,6 +89,8 @@ function barWidth(value: number | null | undefined, block: ProfileRelationshipBl
             <tr>
               <th v-if="block.Rows.length > 1">#</th>
               <th>{{ block.TargetEntityType }}</th>
+              <th v-if="blockHasStatus(block)">Status</th>
+              <th v-if="blockHasLastTransaction(block)">Last Transaction</th>
               <th v-if="block.Rows.some((row) => row.MetricValue != null)" class="iw-numeric">Value</th>
             </tr>
           </thead>
@@ -88,6 +117,14 @@ function barWidth(value: number | null | undefined, block: ProfileRelationshipBl
                   {{ row.TargetEntityName || row.DisplayName || row.TargetEntityCode }}
                 </RouterLink>
                 <span v-else>{{ row.TargetEntityName || row.DisplayName || row.TargetEntityCode }}</span>
+              </td>
+              <td v-if="blockHasStatus(block)">
+                <span v-if="row.RelationshipStatus" :class="['related-entities-blocks__status', statusClass(row.RelationshipStatus)]">
+                  {{ formatStatus(row.RelationshipStatus) }}
+                </span>
+              </td>
+              <td v-if="blockHasLastTransaction(block)">
+                {{ formatLastTransaction(row.LastTransactionDate) }}
               </td>
               <td v-if="block.Rows.some((r) => r.MetricValue != null)" class="iw-numeric related-entities-blocks__value-cell">
                 <span>{{ formatMetric(row.MetricValue) }}</span>
@@ -175,5 +212,24 @@ function barWidth(value: number | null | undefined, block: ProfileRelationshipBl
   margin-top: 0.25rem;
   background: rgba(59, 130, 246, 0.35);
   border-radius: 2px;
+}
+
+.related-entities-blocks__status {
+  display: inline-block;
+  padding: 0.125rem 0.5rem;
+  border-radius: 0.25rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.related-entities-blocks__status--active {
+  background: rgba(34, 197, 94, 0.12);
+  color: rgb(22, 163, 74);
+}
+
+.related-entities-blocks__status--dormant {
+  background: rgba(234, 179, 8, 0.12);
+  color: rgb(202, 138, 4);
 }
 </style>

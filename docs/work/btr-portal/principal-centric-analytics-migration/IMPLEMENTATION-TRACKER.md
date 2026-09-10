@@ -628,9 +628,11 @@ Only a review agent may set `GO` or `NO-GO`.
 
 ### PCM-055
 
-- Status: PLANNED
-- Implementation History: none
-- Review History: none
+- Status: IN REVIEW
+- Implementation History:
+  - 2026-09-10: IN IMPLEMENTATION
+  - 2026-09-10: IMPLEMENTED. Made Entity Analytics relationship presentation consume `BTRPD_CustomerPrincipalRelationship` for both Supplier and Customer profiles. Supplier `TopCustomersByOmzet` now sources from the projection (pair-attributed `PRN-SALES-001`, status, last transaction date) instead of MTD rollup. Customer `TopPrincipalsByOmzet` now carries projection status and last transaction date. Added `RelationshipStatus` and `LastTransactionDate` to the relationship pipeline: `EntityRelationshipSnapshot` → `EntityAnalyticsRelationshipRow` → `BTRPD_EntityAnalytics_Relationship` table → `ProfileRelatedEntityRowDto` → frontend `ProfileRelatedEntityRow`. Frontend displays Active/Dormant status badge and last transaction date when available. Files changed: upgrade script `Upgrade_PCM055_EntityAnalyticsRelationshipStatus.sql`; `EntityRelationshipSnapshot.cs`; `EntityAnalyticsRelationshipRow.cs`; `EntityAnalyticsRepository.cs` (SELECT/INSERT for new columns); `GetEntityPerformanceProfileQuery.cs` (DTO); `EntityRelationshipEngine.cs` (persist + map); `SupplierEntityAnalyticsProduceInput.cs` (projection input); `SupplierEntityAnalyticsProducer.cs` (projection-sourced `TopCustomersByOmzet` + `BuildSupplierPairIndex`); `CustomerEntityAnalyticsProducer.cs` (carry status/date); `RefreshDashboardPurchasingManagementSnapshotWorker.cs` (inject + load projection); `entityAnalytics.ts` (model); `RelatedEntitiesBlocks.vue` (status + date display).
+- Review History:
 - Remediation History: none
 
 ### PCM-056

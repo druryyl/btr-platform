@@ -92,7 +92,9 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Services
                         PeriodYear = periodYear,
                         PeriodMonth = periodMonth,
                         Rank = i + 1,
-                        GeneratedAt = generatedAt
+                        GeneratedAt = generatedAt,
+                        RelationshipStatus = snapshot.RelationshipStatus,
+                        LastTransactionDate = snapshot.LastTransactionDate
                     });
                 }
             }
@@ -209,7 +211,9 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Services
                 ProfileRoute = EntityAnalyticsRouteBuilder.BuildProfileRoute(
                     _entityTypes,
                     targetEntityType,
-                    row.TargetEntityId)
+                    row.TargetEntityId),
+                RelationshipStatus = row.RelationshipStatus,
+                LastTransactionDate = row.LastTransactionDate
             };
         }
 

@@ -597,7 +597,11 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Producers
 
                             TargetDisplayName = principal.SupplierName,
 
-                            MetricValue = principal.SalesOutAmount
+                            MetricValue = principal.SalesOutAmount,
+
+                            RelationshipStatus = principal.RelationshipStatus,
+
+                            LastTransactionDate = principal.LastTransactionDate
 
                         });
 

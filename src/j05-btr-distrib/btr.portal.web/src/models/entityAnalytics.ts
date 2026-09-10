@@ -368,6 +368,8 @@ export interface ProfileRelatedEntityRow {
   TargetEntityName: string
   MetricValue: number | null
   ProfileRoute: string
+  RelationshipStatus?: string | null
+  LastTransactionDate?: string | null
 }
 
 export interface ProfileEvidenceSection extends ProfileSectionBase {

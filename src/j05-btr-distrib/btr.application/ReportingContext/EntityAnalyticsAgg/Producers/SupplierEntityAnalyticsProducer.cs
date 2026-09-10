@@ -1539,6 +1539,8 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Producers
             var relationshipById = input.RelationshipAggregate?.BySupplierId
                 ?? new Dictionary<string, DashboardSupplierRelationshipSupplierRollup>(StringComparer.OrdinalIgnoreCase);
 
+            var customerPairsBySupplierId = BuildSupplierPairIndex(input.RelationshipProjection);
+
             var snapshots = new List<EntityRelationshipSnapshot>();
 
             foreach (var supplier in portfolio)
@@ -1551,61 +1553,94 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Producers
                     ? entityId
                     : supplier.SupplierCode.Trim();
 
-                if (!relationshipById.TryGetValue(entityId, out var rollup))
-                    continue;
-
-                foreach (var customer in rollup.TopCustomers)
+                if (customerPairsBySupplierId.TryGetValue(entityId, out var customerPairs))
                 {
-                    var customerIdentity = EntityAnalyticsCustomerIdentityResolver.Resolve(
-                        customer.CustomerCode,
-                        customerLookup,
-                        customerName: customer.CustomerName);
-
-                    snapshots.Add(new EntityRelationshipSnapshot
+                    foreach (var pair in customerPairs)
                     {
-                        SourceEntityId = entityId,
-                        SourceEntityCode = entityCode,
-                        RelationshipCode = SupplierRelationshipCatalog.TopCustomersByOmzet,
-                        TargetEntityType = EntityTypeCode.Customer,
-                        TargetEntityId = customerIdentity.CustomerId,
-                        TargetEntityCode = customerIdentity.CustomerCode,
-                        TargetDisplayName = customer.CustomerName ?? customerIdentity.CustomerCode,
-                        MetricValue = customer.MetricValue
-                    });
+                        var customerIdentity = EntityAnalyticsCustomerIdentityResolver.Resolve(
+                            pair.CustomerCode,
+                            customerLookup,
+                            customerName: pair.CustomerName);
+
+                        snapshots.Add(new EntityRelationshipSnapshot
+                        {
+                            SourceEntityId = entityId,
+                            SourceEntityCode = entityCode,
+                            RelationshipCode = SupplierRelationshipCatalog.TopCustomersByOmzet,
+                            TargetEntityType = EntityTypeCode.Customer,
+                            TargetEntityId = customerIdentity.CustomerId,
+                            TargetEntityCode = customerIdentity.CustomerCode,
+                            TargetDisplayName = pair.CustomerName ?? customerIdentity.CustomerCode,
+                            MetricValue = pair.SalesOutAmount,
+                            RelationshipStatus = pair.RelationshipStatus,
+                            LastTransactionDate = pair.LastTransactionDate
+                        });
+                    }
                 }
 
-                foreach (var salesman in rollup.TopSalesmen)
+                if (relationshipById.TryGetValue(entityId, out var rollup))
                 {
-                    snapshots.Add(new EntityRelationshipSnapshot
+                    foreach (var salesman in rollup.TopSalesmen)
                     {
-                        SourceEntityId = entityId,
-                        SourceEntityCode = entityCode,
-                        RelationshipCode = SupplierRelationshipCatalog.TopSalesmenByOmzet,
-                        TargetEntityType = EntityTypeCode.Salesman,
-                        TargetEntityId = salesman.SalesPersonId,
-                        TargetEntityCode = salesman.SalesPersonCode ?? salesman.SalesPersonId,
-                        TargetDisplayName = salesman.SalesPersonName ?? salesman.SalesPersonCode,
-                        MetricValue = salesman.MetricValue
-                    });
-                }
+                        snapshots.Add(new EntityRelationshipSnapshot
+                        {
+                            SourceEntityId = entityId,
+                            SourceEntityCode = entityCode,
+                            RelationshipCode = SupplierRelationshipCatalog.TopSalesmenByOmzet,
+                            TargetEntityType = EntityTypeCode.Salesman,
+                            TargetEntityId = salesman.SalesPersonId,
+                            TargetEntityCode = salesman.SalesPersonCode ?? salesman.SalesPersonId,
+                            TargetDisplayName = salesman.SalesPersonName ?? salesman.SalesPersonCode,
+                            MetricValue = salesman.MetricValue
+                        });
+                    }
 
-                foreach (var item in rollup.TopItems)
-                {
-                    snapshots.Add(new EntityRelationshipSnapshot
+                    foreach (var item in rollup.TopItems)
                     {
-                        SourceEntityId = entityId,
-                        SourceEntityCode = entityCode,
-                        RelationshipCode = SupplierRelationshipCatalog.TopProductsByOmzet,
-                        TargetEntityType = EntityTypeCode.Item,
-                        TargetEntityId = item.BrgId,
-                        TargetEntityCode = item.BrgCode ?? item.BrgId,
-                        TargetDisplayName = item.BrgName,
-                        MetricValue = item.MetricValue
-                    });
+                        snapshots.Add(new EntityRelationshipSnapshot
+                        {
+                            SourceEntityId = entityId,
+                            SourceEntityCode = entityCode,
+                            RelationshipCode = SupplierRelationshipCatalog.TopProductsByOmzet,
+                            TargetEntityType = EntityTypeCode.Item,
+                            TargetEntityId = item.BrgId,
+                            TargetEntityCode = item.BrgCode ?? item.BrgId,
+                            TargetDisplayName = item.BrgName,
+                            MetricValue = item.MetricValue
+                        });
+                    }
                 }
             }
 
             return snapshots;
+        }
+
+        private static IReadOnlyDictionary<string, IList<CustomerPrincipalRelationshipRow>> BuildSupplierPairIndex(
+            CustomerPrincipalRelationshipResult projection)
+        {
+            var index = new Dictionary<string, IList<CustomerPrincipalRelationshipRow>>(StringComparer.OrdinalIgnoreCase);
+
+            if (projection?.Pairs == null)
+                return index;
+
+            foreach (var pair in projection.Pairs)
+            {
+                if (pair == null
+                    || string.IsNullOrWhiteSpace(pair.CustomerId)
+                    || string.IsNullOrWhiteSpace(pair.SupplierId))
+                    continue;
+
+                var supplierId = pair.SupplierId.Trim();
+                if (!index.TryGetValue(supplierId, out var pairs))
+                {
+                    pairs = new List<CustomerPrincipalRelationshipRow>();
+                    index[supplierId] = pairs;
+                }
+
+                pairs.Add(pair);
+            }
+
+            return index;
         }
 
         private static IEnumerable<EntityAnalyticsCurrentRow> BuildSupplierRows(

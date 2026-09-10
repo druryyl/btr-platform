@@ -30,5 +30,9 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Models.Snapshot
         public int Rank { get; set; }
 
         public DateTime GeneratedAt { get; set; }
+
+        public string RelationshipStatus { get; set; }
+
+        public DateTime? LastTransactionDate { get; set; }
     }
 }
