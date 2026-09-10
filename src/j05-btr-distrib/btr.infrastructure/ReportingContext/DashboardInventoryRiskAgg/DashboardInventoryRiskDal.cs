@@ -8,6 +8,7 @@ using btr.application.ReportingContext.DashboardSnapshotAgg;
 using btr.application.ReportingContext.DashboardSnapshotAgg.Contracts;
 using btr.application.ReportingContext.DashboardSnapshotAgg.Models;
 using btr.application.ReportingContext.DashboardSnapshotAgg.Services;
+using btr.infrastructure.ReportingContext.DashboardSnapshotAgg;
 using Microsoft.Extensions.Options;
 
 namespace btr.infrastructure.ReportingContext.DashboardInventoryRiskAgg
@@ -124,10 +125,26 @@ namespace btr.infrastructure.ReportingContext.DashboardInventoryRiskAgg
             new DashboardInventoryRiskBreakdownItem
             {
                 Name = row.Name,
+                SupplierId = row.SupplierId ?? string.Empty,
+                DashboardRoute = BuildSupplierDashboardRoute(row),
                 AtRiskValue = row.AtRiskValue,
                 ItemCount = row.ItemCount,
                 PercentOfAtRisk = row.PercentOfAtRisk
             };
+
+        private static string BuildSupplierDashboardRoute(DashboardInventoryRiskBreakdownRow row)
+        {
+            if (!string.Equals(
+                row.DimensionType,
+                DashboardInventoryRiskAggregator.DimensionSupplier,
+                StringComparison.OrdinalIgnoreCase))
+                return null;
+
+            if (string.IsNullOrWhiteSpace(row.SupplierId))
+                return null;
+
+            return DashboardInventorySnapshotDal.PrincipalPerformanceRoute;
+        }
 
         private static DashboardInventoryRiskAttentionItem MapAttentionItem(
             DashboardInventoryRiskAttentionRow row) =>

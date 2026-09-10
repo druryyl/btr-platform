@@ -55,6 +55,72 @@ namespace btr.test.ReportingContext
                 .WithMessage("Dashboard data not yet available");
         }
 
+        [Fact]
+        public void GetSummary_SupplierRanking_NavigatesToPrincipalPerformance()
+        {
+            var snapshot = new DashboardInventoryAggregateResult
+            {
+                TotalInventoryValue = 1_000_000m,
+                TotalItem = 1,
+                GeneratedAt = SnapshotGeneratedAt,
+                Breakdown = new List<DashboardInventoryBreakdownRow>
+                {
+                    new DashboardInventoryBreakdownRow
+                    {
+                        DimensionType = DashboardInventoryAggregator.DimensionSupplier,
+                        Name = "Sup A",
+                        SupplierId = "S-01",
+                        InventoryValue = 1_000_000m,
+                        IsTop10 = true,
+                        Top10Rank = 1
+                    }
+                }
+            };
+
+            var dal = CreateDal(snapshot);
+            var result = dal.GetSummary();
+
+            var row = result.TopSuppliers.Should().ContainSingle(x => x.Name == "Sup A").Subject;
+            row.SupplierId.Should().Be("S-01");
+            row.DashboardRoute.Should().Be("/dashboard/principal-performance");
+
+            var chartItem = result.SupplierBreakdown.Should().ContainSingle(x => x.Name == "Sup A").Subject;
+            chartItem.SupplierId.Should().Be("S-01");
+            chartItem.DashboardRoute.Should().Be("/dashboard/principal-performance");
+        }
+
+        [Fact]
+        public void GetSummary_CategoryRanking_DoesNotExposeSupplierNavigation()
+        {
+            var snapshot = new DashboardInventoryAggregateResult
+            {
+                TotalInventoryValue = 1_000_000m,
+                TotalItem = 1,
+                GeneratedAt = SnapshotGeneratedAt,
+                Breakdown = new List<DashboardInventoryBreakdownRow>
+                {
+                    new DashboardInventoryBreakdownRow
+                    {
+                        DimensionType = DashboardInventoryAggregator.DimensionCategory,
+                        Name = "Cat A",
+                        InventoryValue = 1_000_000m,
+                        IsTop10 = true,
+                        Top10Rank = 1
+                    }
+                }
+            };
+
+            var dal = CreateDal(snapshot);
+            var result = dal.GetSummary();
+
+            var row = result.TopCategories.Should().ContainSingle(x => x.Name == "Cat A").Subject;
+            row.DashboardRoute.Should().BeNull();
+
+            var chartItem = result.CategoryBreakdown.Should().ContainSingle(x => x.Name == "Cat A").Subject;
+            chartItem.SupplierId.Should().Be(string.Empty);
+            chartItem.DashboardRoute.Should().BeNull();
+        }
+
         private static DashboardInventoryDal CreateDal(DashboardInventoryAggregateResult snapshot)
         {
             return new DashboardInventoryDal(new StubSnapshotDal(snapshot));

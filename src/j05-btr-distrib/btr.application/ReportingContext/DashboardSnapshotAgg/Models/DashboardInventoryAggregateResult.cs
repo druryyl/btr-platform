@@ -21,6 +21,8 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.Models
 
         public string Name { get; set; }
 
+        public string SupplierId { get; set; }
+
         public decimal InventoryValue { get; set; }
 
         public bool IsTop10 { get; set; }

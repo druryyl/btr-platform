@@ -30,6 +30,7 @@ namespace btr.test.ReportingContext
             var principalSalesmanContributionWorker = new StubPrincipalSalesmanContributionWorker();
             var customerPrincipalRelationshipWorker = new StubCustomerPrincipalRelationshipWorker();
             var principalActiveCustomerWorker = new StubPrincipalActiveCustomerWorker();
+            var principalCustomerCoverageWorker = new StubPrincipalCustomerCoverageWorker();
             var purchasingWorker = new StubPurchasingWorker();
             var principalPurchaseInWorker = new StubPrincipalPurchaseInWorker();
             var purchasingManagementWorker = new StubPurchasingManagementWorker();
@@ -55,6 +56,7 @@ namespace btr.test.ReportingContext
                 principalSalesmanContributionWorker,
                 customerPrincipalRelationshipWorker,
                 principalActiveCustomerWorker,
+                principalCustomerCoverageWorker,
                 purchasingWorker,
                 principalPurchaseInWorker,
                 purchasingManagementWorker,
@@ -87,6 +89,7 @@ namespace btr.test.ReportingContext
             principalSalesmanContributionWorker.WasCalled.Should().BeTrue();
             customerPrincipalRelationshipWorker.WasCalled.Should().BeTrue();
             principalActiveCustomerWorker.WasCalled.Should().BeTrue();
+            principalCustomerCoverageWorker.WasCalled.Should().BeTrue();
             purchasingWorker.WasCalled.Should().BeTrue();
             principalPurchaseInWorker.WasCalled.Should().BeTrue();
             purchasingManagementWorker.WasCalled.Should().BeTrue();
@@ -110,7 +113,8 @@ namespace btr.test.ReportingContext
             principalMomGrowthWorker.CallOrder.Should().BeLessThan(principalSalesmanContributionWorker.CallOrder);
             principalSalesmanContributionWorker.CallOrder.Should().BeLessThan(customerPrincipalRelationshipWorker.CallOrder);
             customerPrincipalRelationshipWorker.CallOrder.Should().BeLessThan(principalActiveCustomerWorker.CallOrder);
-            principalActiveCustomerWorker.CallOrder.Should().BeLessThan(purchasingWorker.CallOrder);
+            principalActiveCustomerWorker.CallOrder.Should().BeLessThan(principalCustomerCoverageWorker.CallOrder);
+            principalCustomerCoverageWorker.CallOrder.Should().BeLessThan(purchasingWorker.CallOrder);
             purchasingWorker.CallOrder.Should().BeLessThan(principalPurchaseInWorker.CallOrder);
             principalPurchaseInWorker.CallOrder.Should().BeLessThan(purchasingManagementWorker.CallOrder);
             purchasingManagementWorker.CallOrder.Should().BeLessThan(customerWorker.CallOrder);
@@ -118,7 +122,7 @@ namespace btr.test.ReportingContext
             salesmanWorker.CallOrder.Should().BeLessThan(collectionWorker.CallOrder);
             collectionWorker.CallOrder.Should().BeLessThan(fieldActivityWorker.CallOrder);
             fieldActivityWorker.CallOrder.Should().BeLessThan(locationWorker.CallOrder);
-            request.Result.Domains.Should().HaveCount(24);
+            request.Result.Domains.Should().HaveCount(25);
             request.Result.Domains[0].Domain.Should().Be("Piutang");
             request.Result.Domains[1].Domain.Should().Be("Inventory");
             request.Result.Domains[2].Domain.Should().Be("InventoryRisk");
@@ -135,14 +139,15 @@ namespace btr.test.ReportingContext
             request.Result.Domains[13].Domain.Should().Be("PrnSalesmanContribution");
             request.Result.Domains[14].Domain.Should().Be("PrnCusRelationship");
             request.Result.Domains[15].Domain.Should().Be("PrnActiveCustomer");
-            request.Result.Domains[16].Domain.Should().Be("Purchasing");
-            request.Result.Domains[17].Domain.Should().Be("PrincipalPurchaseIn");
-            request.Result.Domains[18].Domain.Should().Be("PurchasingManagement");
-            request.Result.Domains[19].Domain.Should().Be("Customer");
-            request.Result.Domains[20].Domain.Should().Be("Salesman");
-            request.Result.Domains[21].Domain.Should().Be("Collection");
-            request.Result.Domains[22].Domain.Should().Be("FieldActivity");
-            request.Result.Domains[23].Domain.Should().Be("Location");
+            request.Result.Domains[16].Domain.Should().Be("PrnCustomerCoverage");
+            request.Result.Domains[17].Domain.Should().Be("Purchasing");
+            request.Result.Domains[18].Domain.Should().Be("PrincipalPurchaseIn");
+            request.Result.Domains[19].Domain.Should().Be("PurchasingManagement");
+            request.Result.Domains[20].Domain.Should().Be("Customer");
+            request.Result.Domains[21].Domain.Should().Be("Salesman");
+            request.Result.Domains[22].Domain.Should().Be("Collection");
+            request.Result.Domains[23].Domain.Should().Be("FieldActivity");
+            request.Result.Domains[24].Domain.Should().Be("Location");
         }
 
         [Fact]
@@ -165,6 +170,7 @@ namespace btr.test.ReportingContext
                 new StubPrincipalSalesmanContributionWorker(),
                 new StubCustomerPrincipalRelationshipWorker(),
                 new StubPrincipalActiveCustomerWorker(),
+                new StubPrincipalCustomerCoverageWorker(),
                 new StubPurchasingWorker(),
                 new StubPrincipalPurchaseInWorker(),
                 new StubPurchasingManagementWorker(),
@@ -472,6 +478,24 @@ namespace btr.test.ReportingContext
                 {
                     RefreshLogId = StubRefreshLogId,
                     DurationMs = 381
+                };
+            }
+        }
+
+        private sealed class StubPrincipalCustomerCoverageWorker : IRefreshPrincipalCustomerCoverageSnapshotWorker
+        {
+            public bool WasCalled { get; private set; }
+
+            public int CallOrder { get; private set; }
+
+            public void Execute(RefreshPrincipalCustomerCoverageSnapshotRequest request)
+            {
+                WasCalled = true;
+                CallOrder = ++_callSequence;
+                request.Result = new RefreshPrincipalCustomerCoverageSnapshotResult
+                {
+                    RefreshLogId = StubRefreshLogId,
+                    DurationMs = 382
                 };
             }
         }

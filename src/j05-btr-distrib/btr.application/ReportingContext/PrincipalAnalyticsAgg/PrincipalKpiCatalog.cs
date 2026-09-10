@@ -36,6 +36,8 @@ namespace btr.application.ReportingContext.PrincipalAnalyticsAgg
 
         public const string ActiveCustomerCountId = "PRN-CUS-001";
 
+        public const string CustomerCoverageId = "PRN-CUS-002";
+
         public const string ReturnsMustNotReduceReplaceOrRedefinePrincipalSalesOut =
             "Returns KPIs must not reduce, replace, or redefine PRN-SALES-001.";
 
@@ -77,6 +79,8 @@ namespace btr.application.ReportingContext.PrincipalAnalyticsAgg
 
         private static readonly PrincipalKpiCatalogEntry ActiveCustomerCountEntry = CreateActiveCustomerCount();
 
+        private static readonly PrincipalKpiCatalogEntry CustomerCoverageEntry = CreateCustomerCoverage();
+
         private static readonly IReadOnlyList<PrincipalKpiCatalogEntry> RegisteredEntries =
             new[]
             {
@@ -92,7 +96,8 @@ namespace btr.application.ReportingContext.PrincipalAnalyticsAgg
                 TotalReturnAmountEntry,
                 ReturnPercentageEntry,
                 MomGrowthEntry,
-                ActiveCustomerCountEntry
+                ActiveCustomerCountEntry,
+                CustomerCoverageEntry
             };
 
         public static IReadOnlyList<PrincipalKpiCatalogEntry> Entries
@@ -570,6 +575,42 @@ namespace btr.application.ReportingContext.PrincipalAnalyticsAgg
                     "PRN-CUS-001 is not the authoritative Principal ranking KPI.",
                     "PRN-CUS-001 is not Net Sales.",
                     "The user-facing name is Active Customer Count, not Principal Sales-Out and not Net Sales."
+                }
+            };
+        }
+
+        private static PrincipalKpiCatalogEntry CreateCustomerCoverage()
+        {
+            return new PrincipalKpiCatalogEntry
+            {
+                KpiId = CustomerCoverageId,
+                Name = "Customer Coverage Percentage",
+                Description = "Customer reach against the eligible customer base on the projection",
+                EntityCategory = EntityTypeCode.Supplier,
+                EvidenceGrain = "Customer × Principal Relationship Projection",
+                Formula = "PRN-CUS-001 ÷ COUNT(Customers on BTRPD_CustomerPrincipalRelationship) when that count is greater than zero; otherwise null",
+                IsAuthoritativePrincipalPerformanceKpi = false,
+                IsAuthoritativeRankingKpi = false,
+                DeductsReturns = false,
+                DeductsClaims = false,
+                DeductsInventoryAdjustments = false,
+                DefinitionStatements = new[]
+                {
+                    "PRN-CUS-002 Customer Coverage Percentage = PRN-CUS-001 ÷ count of Customers on that Principal's relationship projection when that count is greater than zero; otherwise null.",
+                    "Evidence grain is Customer × Principal Relationship Projection.",
+                    "The denominator is the retained projection population, including Dormant Customers.",
+                    "The denominator is not a manually assigned eligible-customer list.",
+                    "The calculation reads stored PRN-CUS-001 and the stored projection.",
+                    "The calculation does not scan raw transaction history.",
+                    "This KPI writer does not write projection status.",
+                    "This KPI writer does not write, overwrite, or recalculate PRN-SALES-001.",
+                    "This KPI does not modify PRN-SALES-001.",
+                    "Coverage, Active Customer, Dormant Customer, Relationship Analytics, and Entity Analytics consume BTRPD_CustomerPrincipalRelationship.",
+                    "This slice does not render a dashboard panel. Display is a later slice.",
+                    "PRN-CUS-002 is not the authoritative Principal ranking KPI.",
+                    "PRN-CUS-002 is not Net Sales.",
+                    "No CP-KPI-* ID is created.",
+                    "The user-facing name is Customer Coverage Percentage, not Principal Sales-Out and not Net Sales."
                 }
             };
         }

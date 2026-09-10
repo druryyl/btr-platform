@@ -44,6 +44,7 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.Commands
         private readonly IRefreshPrincipalSalesmanContributionSnapshotWorker _principalSalesmanContributionWorker;
         private readonly IRefreshCustomerPrincipalRelationshipWorker _customerPrincipalRelationshipWorker;
         private readonly IRefreshPrincipalActiveCustomerSnapshotWorker _principalActiveCustomerWorker;
+        private readonly IRefreshPrincipalCustomerCoverageSnapshotWorker _principalCustomerCoverageWorker;
         private readonly IRefreshDashboardPurchasingSnapshotWorker _purchasingWorker;
         private readonly IRefreshPrincipalPurchaseInSnapshotWorker _principalPurchaseInWorker;
         private readonly IRefreshDashboardPurchasingManagementSnapshotWorker _purchasingManagementWorker;
@@ -71,6 +72,7 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.Commands
             IRefreshPrincipalSalesmanContributionSnapshotWorker principalSalesmanContributionWorker,
             IRefreshCustomerPrincipalRelationshipWorker customerPrincipalRelationshipWorker,
             IRefreshPrincipalActiveCustomerSnapshotWorker principalActiveCustomerWorker,
+            IRefreshPrincipalCustomerCoverageSnapshotWorker principalCustomerCoverageWorker,
             IRefreshDashboardPurchasingSnapshotWorker purchasingWorker,
             IRefreshPrincipalPurchaseInSnapshotWorker principalPurchaseInWorker,
             IRefreshDashboardPurchasingManagementSnapshotWorker purchasingManagementWorker,
@@ -97,6 +99,7 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.Commands
             _principalSalesmanContributionWorker = principalSalesmanContributionWorker;
             _customerPrincipalRelationshipWorker = customerPrincipalRelationshipWorker;
             _principalActiveCustomerWorker = principalActiveCustomerWorker;
+            _principalCustomerCoverageWorker = principalCustomerCoverageWorker;
             _purchasingWorker = purchasingWorker;
             _principalPurchaseInWorker = principalPurchaseInWorker;
             _purchasingManagementWorker = purchasingManagementWorker;
@@ -268,6 +271,14 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.Commands
                     _principalActiveCustomerWorker.Execute(activeCustomerRequest);
                     return MapResult(PrincipalActiveCustomerSnapshot.Domain, activeCustomerRequest.Result);
 
+                case PrincipalCustomerCoverageSnapshot.Domain:
+                    var customerCoverageRequest = new RefreshPrincipalCustomerCoverageSnapshotRequest
+                    {
+                        TriggeredBy = triggeredBy
+                    };
+                    _principalCustomerCoverageWorker.Execute(customerCoverageRequest);
+                    return MapResult(PrincipalCustomerCoverageSnapshot.Domain, customerCoverageRequest.Result);
+
                 case PrincipalInventorySnapshot.Domain:
                     var principalInventoryRequest = new RefreshPrincipalInventorySnapshotRequest
                     {
@@ -342,7 +353,7 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.Commands
 
                 default:
                     throw new ArgumentException(
-                        "Domain must be All, Piutang, Inventory, InventoryRisk, PrincipalInventory, Sales, PrincipalSalesOut, PrincipalReturn, PrnReturnPercentage, PrnSalesOutHistory, PrnReturnHistory, PrincipalTarget, PrnAchievement, PrnMomGrowth, PrnCusRelationship, PrnActiveCustomer, Purchasing, PrincipalPurchaseIn, PurchasingManagement, Customer, Salesman, Collection, FieldActivity, or Location.",
+                        "Domain must be All, Piutang, Inventory, InventoryRisk, PrincipalInventory, Sales, PrincipalSalesOut, PrincipalReturn, PrnReturnPercentage, PrnSalesOutHistory, PrnReturnHistory, PrincipalTarget, PrnAchievement, PrnMomGrowth, PrnCusRelationship, PrnActiveCustomer, PrnCustomerCoverage, Purchasing, PrincipalPurchaseIn, PurchasingManagement, Customer, Salesman, Collection, FieldActivity, or Location.",
                         nameof(RefreshDashboardSnapshotsCommand.Domain));
             }
         }
@@ -553,6 +564,18 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.Commands
 
         private static RefreshDashboardDomainResult MapResult(
             string domain,
+            RefreshPrincipalCustomerCoverageSnapshotResult result)
+        {
+            return new RefreshDashboardDomainResult
+            {
+                Domain = domain,
+                RefreshLogId = result?.RefreshLogId,
+                DurationMs = result?.DurationMs ?? 0
+            };
+        }
+
+        private static RefreshDashboardDomainResult MapResult(
+            string domain,
             RefreshDashboardPurchasingSnapshotResult result)
         {
             return new RefreshDashboardDomainResult
@@ -692,6 +715,9 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.Commands
 
             if (string.Equals(trimmed, PrincipalActiveCustomerSnapshot.Domain, StringComparison.OrdinalIgnoreCase))
                 return PrincipalActiveCustomerSnapshot.Domain;
+
+            if (string.Equals(trimmed, PrincipalCustomerCoverageSnapshot.Domain, StringComparison.OrdinalIgnoreCase))
+                return PrincipalCustomerCoverageSnapshot.Domain;
 
             if (string.Equals(trimmed, "Purchasing", StringComparison.OrdinalIgnoreCase))
                 return "Purchasing";

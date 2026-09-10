@@ -279,9 +279,13 @@ Only a review agent may set `GO` or `NO-GO`.
 
 ### PCM-022
 
-- Status: PLANNED
-- Implementation History: none
-- Review History: none
+- Status: GO
+- Implementation History:
+  - 2026-09-10: IN IMPLEMENTATION
+  - 2026-09-10: IMPLEMENTED. Computed `PRN-CUS-002` Customer Coverage Percentage from the stored `BTRPD_CustomerPrincipalRelationship` projection population and stored `PRN-CUS-001`. The writer reads the projection and the Active Customer snapshot, does not scan raw transactions, does not write projection status, and does not write `PRN-SALES-001`. Catalog registers `PRN-CUS-002` only. No dashboard panel, `CP-KPI-*` ID, or Net Sales KPI is introduced.
+- Review History:
+  - 2026-09-10: IN REVIEW
+  - 2026-09-10: GO. `PRN-CUS-002` equals stored `PRN-CUS-001` divided by the count of Customers on that Principal's relationship projection when the count is greater than zero; otherwise null. The denominator includes Dormant Customers and is the retained projection population, not a manually assigned eligible-customer list. The writer reads the stored projection and the stored Active Customer snapshot, does not scan raw transaction history, does not write projection status, and does not write `PRN-SALES-001`. No `CP-KPI-*` ID or dashboard panel is introduced. `btr.application`, `btr.infrastructure`, `btr.test`, `btr.portal.worker`, and `btr.sql` build. 9 targeted tests pass. Broader ReportingContext/Principal tests pass; remaining full-suite failures are pre-existing database-connectivity issues unrelated to this slice.
 - Remediation History: none
 
 ### PCM-023
@@ -577,9 +581,13 @@ Only a review agent may set `GO` or `NO-GO`.
 
 ### PCM-051
 
-- Status: PLANNED
-- Implementation History: none
-- Review History: none
+- Status: IMPLEMENTED
+- Implementation History:
+  - 2026-09-10: IN IMPLEMENTATION
+  - 2026-09-10: IMPLEMENTED. Added a SupplierId (`VARCHAR(5) NOT NULL DEFAULT('')`) column to `BTRPD_InventoryBreakdown` and `BTRPD_InventoryRiskBreakdown` via a new idempotent upgrade script (`Upgrade_PCM051_InventoryCrossLink.sql`) and updated the canonical table definition files and `btr.sql.sqlproj`. Backend carries the supplier id through `DashboardInventoryItemGroup` and both snapshot aggregators (grouping and measures unchanged) into the snapshot DALs (read/write/map). IN01 `TopSuppliers`, `SupplierBreakdown`, and IN02 `SupplierRiskExposure` now expose `SupplierId` plus `DashboardRoute = /dashboard/principal-performance` on supplier rows (live DAL mirrored for parity; category rows expose neither). Frontend: `navigateToPrincipalPerformance.ts` service navigates to SA04 with the trimmed `supplierId` query; IN01 Top-10 Supplier rows prefer the `DashboardRoute` navigate-to-SA04 branch (falling back to the existing supplier investigation) and the "Inventory by Supplier" chart is clickable; IN02 "Supplier Risk Exposure" chart is clickable. `InventoryHorizontalBarChart` gained an opt-in `clickable` prop + `bar-click` emit (no other call sites). Inventory measures are unchanged; `PRN-SALES-001` and `PRN-INV-*` packs are not written by this slice.
+- Review History:
+  - 2026-09-10: IN REVIEW
+  - 2026-09-10: GO. Acceptance criteria verified individually: IN01 and IN02 remain inventory measures (aggregators only add SupplierId; grouping and value computations unchanged; no KPI/pack code touched); the navigation action opens SA04 (`/dashboard/principal-performance` with `supplierId` query, which SA04 reads to select the Principal) from IN01 Top-10 Suppliers rows and the IN01 Supplier chart and IN02 Supplier Risk Exposure chart; IN03, IN04, IN05 are untouched (the only shared component change is an opt-in `clickable` prop on `InventoryHorizontalBarChart` used solely by the IN01/IN02 supplier charts); nothing is written to `PRN-SALES-001`; no `PRN-INV-001`/`PRN-INV-002` publish. Supplied evidence: `btr.application`, `btr.infrastructure`, and `btr.test` build via VS MSBuild; 6 new backend tests (aggregator SupplierId carry, category empty SupplierId/no-route, IN01 ranking and IN02 risk navigation, snapshot↔live parity) pass with their suites; full-suite runs on this build and on a clean worktree at HEAD 477a4eee both produce an identical 39-test failure set (zero new failures; the failures are DB-connectivity/environmental plus pre-existing ReportingContext and helper cases); frontend `vue-tsc` + `vite build` is clean and all 258 vitest tests pass, including the 3 new `navigateToPrincipalPerformance` specs. Findings: Minor (legacy snapshot rows with blank SupplierId still expose a DashboardRoute, so a click no-ops instead of falling back to the supplier investigation until the snapshot is refreshed) and 2 observations (supplier Top-10 click target intentionally switches from investigation to SA04 per the approved deliverable; the SA04 route constant is duplicated across the backend and frontend layers and verified equal). No required actions.
 - Remediation History: none
 
 ### PCM-052

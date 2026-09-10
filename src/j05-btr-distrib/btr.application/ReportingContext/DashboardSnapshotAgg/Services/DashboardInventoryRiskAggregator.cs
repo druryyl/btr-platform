@@ -193,7 +193,7 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.Services
         {
             var breakdown = new List<DashboardInventoryRiskBreakdownRow>();
             breakdown.AddRange(BuildDimensionBreakdown(atRiskItems, DimensionCategory, g => g.Item.CategoryName, atRiskValue));
-            breakdown.AddRange(BuildDimensionBreakdown(atRiskItems, DimensionSupplier, g => g.Item.SupplierName, atRiskValue));
+            breakdown.AddRange(BuildDimensionBreakdown(atRiskItems, DimensionSupplier, g => g.Item.SupplierName, atRiskValue, g => g.Item.SupplierId));
             return breakdown;
         }
 
@@ -201,13 +201,17 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.Services
             IList<ClassifiedItem> atRiskItems,
             string dimensionType,
             Func<ClassifiedItem, string> dimensionSelector,
-            decimal atRiskValue)
+            decimal atRiskValue,
+            Func<ClassifiedItem, string> supplierIdSelector = null)
         {
             var rollup = atRiskItems
                 .GroupBy(dimensionSelector, StringComparer.OrdinalIgnoreCase)
                 .Select(g => new
                 {
                     Name = g.Key,
+                    SupplierId = supplierIdSelector == null
+                        ? null
+                        : g.Select(supplierIdSelector).FirstOrDefault(x => !string.IsNullOrWhiteSpace(x)),
                     AtRiskValue = g.Sum(x => x.Item.InventoryValue),
                     ItemCount = g.Count()
                 })
@@ -218,6 +222,7 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.Services
                 {
                     DimensionType = dimensionType,
                     Name = x.Name,
+                    SupplierId = x.SupplierId ?? string.Empty,
                     AtRiskValue = x.AtRiskValue,
                     ItemCount = x.ItemCount,
                     Rank = index + 1,

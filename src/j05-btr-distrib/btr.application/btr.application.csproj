@@ -660,6 +660,7 @@
     <Compile Include="ReportingContext\PrincipalAnalyticsAgg\PrincipalInventorySnapshot.cs" />
     <Compile Include="ReportingContext\PrincipalAnalyticsAgg\PrincipalTargetSnapshot.cs" />
     <Compile Include="ReportingContext\PrincipalAnalyticsAgg\PrincipalActiveCustomerSnapshot.cs" />
+    <Compile Include="ReportingContext\PrincipalAnalyticsAgg\PrincipalCustomerCoverageSnapshot.cs" />
     <Compile Include="ReportingContext\PrincipalAnalyticsAgg\Contracts\ICustomerPrincipalRelationshipDal.cs" />
     <Compile Include="ReportingContext\PrincipalAnalyticsAgg\Contracts\ICustomerPrincipalRelationshipEvidenceDal.cs" />
     <Compile Include="ReportingContext\PrincipalAnalyticsAgg\Contracts\IPrincipalSalesOutHistoryDal.cs" />
@@ -681,6 +682,7 @@
     <Compile Include="ReportingContext\PrincipalAnalyticsAgg\Contracts\IPrincipalTargetEvidenceDal.cs" />
     <Compile Include="ReportingContext\PrincipalAnalyticsAgg\Contracts\IPrincipalTargetSnapshotDal.cs" />
     <Compile Include="ReportingContext\PrincipalAnalyticsAgg\Contracts\IPrincipalActiveCustomerSnapshotDal.cs" />
+    <Compile Include="ReportingContext\PrincipalAnalyticsAgg\Contracts\IPrincipalCustomerCoverageSnapshotDal.cs" />
     <Compile Include="ReportingContext\PrincipalAnalyticsAgg\Queries\GetPrincipalPerformanceQuery.cs" />
     <Compile Include="ReportingContext\PrincipalAnalyticsAgg\Queries\GetPrincipalReturnEvidenceQuery.cs" />
     <Compile Include="ReportingContext\PrincipalAnalyticsAgg\Queries\GetPrincipalSalesOutEvidenceQuery.cs" />
@@ -696,6 +698,7 @@
     <Compile Include="ReportingContext\PrincipalAnalyticsAgg\Models\PrincipalInventoryAggregateResult.cs" />
     <Compile Include="ReportingContext\PrincipalAnalyticsAgg\Models\PrincipalTargetAggregateResult.cs" />
     <Compile Include="ReportingContext\PrincipalAnalyticsAgg\Models\PrincipalActiveCustomerResult.cs" />
+    <Compile Include="ReportingContext\PrincipalAnalyticsAgg\Models\PrincipalCustomerCoverageResult.cs" />
     <Compile Include="ReportingContext\PrincipalAnalyticsAgg\Models\PrincipalSalesOutHistoryResult.cs" />
     <Compile Include="ReportingContext\PrincipalAnalyticsAgg\Services\CustomerPrincipalRelationshipComposer.cs" />
     <Compile Include="ReportingContext\PrincipalAnalyticsAgg\Services\PrincipalSalesOutAggregator.cs" />
@@ -709,6 +712,7 @@
     <Compile Include="ReportingContext\PrincipalAnalyticsAgg\Services\PrincipalInventoryAggregator.cs" />
     <Compile Include="ReportingContext\PrincipalAnalyticsAgg\Services\PrincipalTargetAggregator.cs" />
     <Compile Include="ReportingContext\PrincipalAnalyticsAgg\Services\PrincipalActiveCustomerComposer.cs" />
+    <Compile Include="ReportingContext\PrincipalAnalyticsAgg\Services\PrincipalCustomerCoverageComposer.cs" />
     <Compile Include="ReportingContext\PrincipalAnalyticsAgg\Services\PrincipalSalesOutHistoryComposer.cs" />
     <Compile Include="ReportingContext\PrincipalAnalyticsAgg\UseCases\RefreshCustomerPrincipalRelationshipRequest.cs" />
     <Compile Include="ReportingContext\PrincipalAnalyticsAgg\UseCases\RefreshCustomerPrincipalRelationshipWorker.cs" />
@@ -736,6 +740,8 @@
     <Compile Include="ReportingContext\PrincipalAnalyticsAgg\UseCases\RefreshPrincipalTargetSnapshotWorker.cs" />
     <Compile Include="ReportingContext\PrincipalAnalyticsAgg\UseCases\RefreshPrincipalActiveCustomerSnapshotRequest.cs" />
     <Compile Include="ReportingContext\PrincipalAnalyticsAgg\UseCases\RefreshPrincipalActiveCustomerSnapshotWorker.cs" />
+    <Compile Include="ReportingContext\PrincipalAnalyticsAgg\UseCases\RefreshPrincipalCustomerCoverageSnapshotRequest.cs" />
+    <Compile Include="ReportingContext\PrincipalAnalyticsAgg\UseCases\RefreshPrincipalCustomerCoverageSnapshotWorker.cs" />
     <Compile Include="ReportingContext\PiutangReportAgg\Contracts\IPiutangReportDal.cs" />
     <Compile Include="ReportingContext\PiutangReportAgg\PiutangReportDateField.cs" />
     <Compile Include="ReportingContext\PiutangReportAgg\Queries\GetPiutangReportQuery.cs" />

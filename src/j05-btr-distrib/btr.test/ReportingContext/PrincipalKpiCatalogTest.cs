@@ -342,7 +342,37 @@ namespace btr.test.ReportingContext
                 "This slice does not render a dashboard panel. Display is a later slice.");
             entry.Name.Should().NotBe("Net Sales");
 
-            PrincipalKpiCatalog.TryGet("PRN-CUS-002", out _).Should().BeFalse();
+            PrincipalKpiCatalog.TryGet("PRN-CUS-002", out _).Should().BeTrue();
+        }
+
+        [Fact]
+        public void Catalog_RegistersCustomerCoverage_FromProjectionAndActiveCustomerCount()
+        {
+            PrincipalKpiCatalog.TryGet(PrincipalKpiCatalog.CustomerCoverageId, out var entry).Should().BeTrue();
+            entry.KpiId.Should().Be("PRN-CUS-002");
+            entry.Name.Should().Be("Customer Coverage Percentage");
+            entry.Description.Should().Be("Customer reach against the eligible customer base on the projection");
+            entry.EvidenceGrain.Should().Be("Customer × Principal Relationship Projection");
+            entry.Formula.Should().Be("PRN-CUS-001 ÷ COUNT(Customers on BTRPD_CustomerPrincipalRelationship) when that count is greater than zero; otherwise null");
+            entry.EntityCategory.Should().Be(EntityTypeCode.Supplier);
+            entry.IsAuthoritativePrincipalPerformanceKpi.Should().BeFalse();
+            entry.IsAuthoritativeRankingKpi.Should().BeFalse();
+            entry.DeductsReturns.Should().BeFalse();
+            entry.DeductsClaims.Should().BeFalse();
+            entry.DeductsInventoryAdjustments.Should().BeFalse();
+            entry.DefinitionStatements.Should().Contain(
+                "PRN-CUS-002 Customer Coverage Percentage = PRN-CUS-001 ÷ count of Customers on that Principal's relationship projection when that count is greater than zero; otherwise null.");
+            entry.DefinitionStatements.Should().Contain(
+                "The denominator is the retained projection population, including Dormant Customers.");
+            entry.DefinitionStatements.Should().Contain(
+                "The calculation reads stored PRN-CUS-001 and the stored projection.");
+            entry.DefinitionStatements.Should().Contain(
+                "The calculation does not scan raw transaction history.");
+            entry.DefinitionStatements.Should().Contain(
+                "No CP-KPI-* ID is created.");
+            entry.DefinitionStatements.Should().Contain(
+                "This slice does not render a dashboard panel. Display is a later slice.");
+            entry.Name.Should().NotBe("Net Sales");
         }
 
         [Fact]
@@ -364,6 +394,7 @@ namespace btr.test.ReportingContext
             ids.Should().Contain("PRN-RET-004");
             ids.Should().Contain("PRN-GRW-001");
             ids.Should().Contain("PRN-CUS-001");
+            ids.Should().Contain("PRN-CUS-002");
             ids.Should().OnlyContain(id =>
                 id == "PRN-SALES-001" ||
                 id == "PRN-TGT-001" ||
@@ -377,13 +408,13 @@ namespace btr.test.ReportingContext
                 id == "PRN-RET-003" ||
                 id == "PRN-RET-004" ||
                 id == "PRN-GRW-001" ||
-                id == "PRN-CUS-001");
+                id == "PRN-CUS-001" ||
+                id == "PRN-CUS-002");
             ids.Should().NotContain(id => id.StartsWith("PRN-RET-") && id != "PRN-RET-001" && id != "PRN-RET-002" && id != "PRN-RET-003" && id != "PRN-RET-004");
             ids.Should().NotContain(id => id.StartsWith("PRN-TGT-") && id != "PRN-TGT-001" && id != "PRN-TGT-002" && id != "PRN-TGT-003");
             ids.Should().NotContain(id => id.StartsWith("PRN-PUR-") && id != "PRN-PUR-001");
             ids.Should().NotContain(id => id.StartsWith("PRN-INV-") && id != "PRN-INV-001" && id != "PRN-INV-002");
-            ids.Should().NotContain(id => id.StartsWith("PRN-CUS-") && id != "PRN-CUS-001");
-            ids.Should().NotContain("PRN-CUS-002");
+            ids.Should().NotContain(id => id.StartsWith("PRN-CUS-") && id != "PRN-CUS-001" && id != "PRN-CUS-002");
             ids.Should().NotContain("PRN-GRW-002");
             ids.Should().NotContain(id => id.StartsWith("PRN-GRW-") && id != "PRN-GRW-001");
             ids.Should().NotContain(id => id.StartsWith("PR-KPI-"));

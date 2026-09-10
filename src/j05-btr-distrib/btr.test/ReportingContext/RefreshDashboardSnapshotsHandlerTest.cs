@@ -68,7 +68,7 @@ namespace btr.test.ReportingContext
                 default).GetAwaiter().GetResult();
 
             act.Should().Throw<ArgumentException>()
-                .WithMessage("*Domain must be All, Piutang, Inventory, InventoryRisk, PrincipalInventory, Sales, PrincipalSalesOut, PrincipalReturn, PrnReturnPercentage, PrnSalesOutHistory, PrnReturnHistory, PrincipalTarget, PrnAchievement, PrnMomGrowth, PrnCusRelationship, PrnActiveCustomer, Purchasing, PrincipalPurchaseIn, PurchasingManagement, Customer, Salesman, Collection, FieldActivity, or Location*");
+                .WithMessage("*Domain must be All, Piutang, Inventory, InventoryRisk, PrincipalInventory, Sales, PrincipalSalesOut, PrincipalReturn, PrnReturnPercentage, PrnSalesOutHistory, PrnReturnHistory, PrincipalTarget, PrnAchievement, PrnMomGrowth, PrnCusRelationship, PrnActiveCustomer, PrnCustomerCoverage, Purchasing, PrincipalPurchaseIn, PurchasingManagement, Customer, Salesman, Collection, FieldActivity, or Location*");
         }
 
         [Fact]
@@ -140,6 +140,7 @@ namespace btr.test.ReportingContext
             StubPrincipalSalesmanContributionWorker principalSalesmanContributionWorker = null,
             StubCustomerPrincipalRelationshipWorker customerPrincipalRelationshipWorker = null,
             StubPrincipalActiveCustomerWorker principalActiveCustomerWorker = null,
+            StubPrincipalCustomerCoverageWorker principalCustomerCoverageWorker = null,
             StubPurchasingWorker purchasingWorker = null,
             StubPrincipalPurchaseInWorker principalPurchaseInWorker = null,
             StubPurchasingManagementWorker purchasingManagementWorker = null,
@@ -167,6 +168,7 @@ namespace btr.test.ReportingContext
                 principalSalesmanContributionWorker ?? new StubPrincipalSalesmanContributionWorker(),
                 customerPrincipalRelationshipWorker ?? new StubCustomerPrincipalRelationshipWorker(),
                 principalActiveCustomerWorker ?? new StubPrincipalActiveCustomerWorker(),
+                principalCustomerCoverageWorker ?? new StubPrincipalCustomerCoverageWorker(),
                 purchasingWorker ?? new StubPurchasingWorker(),
                 principalPurchaseInWorker ?? new StubPrincipalPurchaseInWorker(),
                 purchasingManagementWorker ?? new StubPurchasingManagementWorker(),
@@ -296,6 +298,13 @@ namespace btr.test.ReportingContext
         private sealed class StubPrincipalActiveCustomerWorker : IRefreshPrincipalActiveCustomerSnapshotWorker
         {
             public void Execute(RefreshPrincipalActiveCustomerSnapshotRequest request)
+            {
+            }
+        }
+
+        private sealed class StubPrincipalCustomerCoverageWorker : IRefreshPrincipalCustomerCoverageSnapshotWorker
+        {
+            public void Execute(RefreshPrincipalCustomerCoverageSnapshotRequest request)
             {
             }
         }

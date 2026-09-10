@@ -260,6 +260,8 @@
     <None Include="Scripts\Upgrade_PCM037_Cu01LastInvoicingSalesman.sql" />
     <None Include="Scripts\Upgrade_PCM020_PrincipalPurchaseIn.sql" />
     <None Include="Scripts\Upgrade_PCM021_PrincipalInventory.sql" />
+    <None Include="Scripts\Upgrade_PCM051_InventoryCrossLink.sql" />
+    <None Include="Scripts\Upgrade_PCM022_PrincipalCustomerCoverage.sql" />
     <None Include="Scripts\Create_BTR_SalesPersonSupplier.sql" />
     <None Include="Scripts\Create_BTR_SalesPersonPrincipalTarget.sql" />
   </ItemGroup>

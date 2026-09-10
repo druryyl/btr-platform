@@ -714,12 +714,16 @@ export interface DashboardPiutangResponse {
 
 export interface DashboardInventoryBreakdownItem {
   Name: string
+  SupplierId?: string
+  DashboardRoute?: string | null
   InventoryValue: number
 }
 
 export interface DashboardInventoryRankingItem {
   Rank: number
   Name: string
+  SupplierId?: string
+  DashboardRoute?: string | null
   InventoryValue: number
   Investigation?: InvestigationMetadata | null
 }
@@ -754,6 +758,8 @@ export interface DashboardInventoryRiskAgingBucket {
 
 export interface DashboardInventoryRiskBreakdownItem {
   Name: string
+  SupplierId?: string
+  DashboardRoute?: string | null
   AtRiskValue: number
   ItemCount: number
   PercentOfAtRisk: number | null

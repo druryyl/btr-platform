@@ -18,6 +18,7 @@ import { PROFILE_ROW_CLICK_HINT } from '@/navigation/entityAnalyticsNavigation'
 import { INVENTORY_RISK_ATTENTION_SIGNAL_ALL } from '@/services/inventoryRiskAttentionSignals'
 import { resolveInvestigationSourceLabel } from '@/services/investigationSourceLabels'
 import { navigateToInvestigation } from '@/services/navigateToInvestigation'
+import { openPrincipalPerformance } from '@/services/navigateToPrincipalPerformance'
 import { useDashboardStore } from '@/stores/dashboardStore'
 import type { DashboardInventoryBreakdownItem, DashboardInventoryRiskRankingRow } from '@/models/dashboard'
 
@@ -49,6 +50,8 @@ const categoryRiskItems = computed<DashboardInventoryBreakdownItem[]>(() =>
 const supplierRiskItems = computed<DashboardInventoryBreakdownItem[]>(() =>
   (dashboard.inventoryRisk?.SupplierRiskExposure ?? []).map((item) => ({
     Name: item.Name,
+    SupplierId: item.SupplierId,
+    DashboardRoute: item.DashboardRoute,
     InventoryValue: item.AtRiskValue,
   })),
 )
@@ -95,6 +98,11 @@ function onRankingRowClick(row: Record<string, unknown>): void {
 
   if (!item.Investigation) return
   navigateToInvestigation(router, item.Investigation, sourceLabel)
+}
+
+function onSupplierBarClick(item: DashboardInventoryBreakdownItem): void {
+  if (!item.DashboardRoute) return
+  openPrincipalPerformance(router, item.SupplierId)
 }
 
 function setAttentionSignalFilter(signalKey: string): void {
@@ -277,6 +285,8 @@ onMounted(() => {
       title="Supplier Risk Exposure"
       :items="supplierRiskItems"
       :loading="dashboard.loading"
+      clickable
+      @bar-click="onSupplierBarClick"
     />
 
     <section

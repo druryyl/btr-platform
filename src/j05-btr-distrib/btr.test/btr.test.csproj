@@ -141,6 +141,7 @@
     <Compile Include="ReportingContext\DashboardInventoryAggregatorTest.cs" />
     <Compile Include="ReportingContext\DashboardInventoryRiskAggregatorTest.cs" />
     <Compile Include="ReportingContext\DashboardInventoryDalTest.cs" />
+    <Compile Include="ReportingContext\DashboardInventoryRiskDalTest.cs" />
     <Compile Include="ReportingContext\DashboardInventorySnapshotVerificationTest.cs" />
     <Compile Include="ReportingContext\DashboardSalesFakturAggregatorTest.cs" />
     <Compile Include="ReportingContext\DashboardSalesForecastAggregatorTest.cs" />
@@ -227,6 +228,7 @@
     <Compile Include="ReportingContext\PrincipalReturnPercentageComposerTest.cs" />
     <Compile Include="ReportingContext\PrincipalAchievementComposerTest.cs" />
     <Compile Include="ReportingContext\PrincipalActiveCustomerComposerTest.cs" />
+    <Compile Include="ReportingContext\PrincipalCustomerCoverageComposerTest.cs" />
     <Compile Include="ReportingContext\PrincipalMomGrowthComposerTest.cs" />
     <Compile Include="ReportingContext\PrincipalSalesmanContributionComposerTest.cs" />
     <Compile Include="ReportingContext\PrincipalInventoryAggregatorTest.cs" />

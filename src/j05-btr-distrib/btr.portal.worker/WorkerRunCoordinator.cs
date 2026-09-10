@@ -332,6 +332,16 @@ namespace btr.portal.worker
                     });
                     break;
 
+                case "PRNCUSTOMERCOVERAGE":
+                    RunDomain(serviceProvider, PrincipalCustomerCoverageSnapshot.Domain, triggeredBy, sp =>
+                    {
+                        var worker = sp.GetRequiredService<IRefreshPrincipalCustomerCoverageSnapshotWorker>();
+                        var request = new RefreshPrincipalCustomerCoverageSnapshotRequest { TriggeredBy = triggeredBy };
+                        worker.Execute(request);
+                        return request.Result?.DurationMs ?? 0;
+                    });
+                    break;
+
                 case "PURCHASING":
                     RunDomain(serviceProvider, "Purchasing", triggeredBy, sp =>
                     {
@@ -564,6 +574,7 @@ namespace btr.portal.worker
                 "PurchasingManagement", "Customer", "Salesman", "Collection", "FieldActivity", "Location",
                 "EntityAnalyticsHistoricalBackfill", CustomerPrincipalRelationship.Domain,
                 PrincipalActiveCustomerSnapshot.Domain,
+                PrincipalCustomerCoverageSnapshot.Domain,
                 PrincipalReturnHistory.Domain,
                 PrincipalAchievementSnapshot.Domain
             };
@@ -575,7 +586,7 @@ namespace btr.portal.worker
 
             if (!validDomains.Contains(domain))
                 throw new ArgumentException(
-                    $"Invalid --domain '{domain}'. Expected All, Sales, Piutang, Inventory, InventoryRisk, PrincipalInventory, PrincipalReturn, PrnReturnPercentage, PrnAchievement, PrnActiveCustomer, Purchasing, PrincipalPurchaseIn, PurchasingManagement, Customer, Salesman, Collection, FieldActivity, Location, EntityAnalyticsHistoricalBackfill, or PrnCusRelationship.");
+                    $"Invalid --domain '{domain}'. Expected All, Sales, Piutang, Inventory, InventoryRisk, PrincipalInventory, PrincipalReturn, PrnReturnPercentage, PrnAchievement, PrnActiveCustomer, PrnCustomerCoverage, Purchasing, PrincipalPurchaseIn, PurchasingManagement, Customer, Salesman, Collection, FieldActivity, Location, EntityAnalyticsHistoricalBackfill, or PrnCusRelationship.");
 
             if (!validTriggers.Contains(triggeredBy))
                 throw new ArgumentException(

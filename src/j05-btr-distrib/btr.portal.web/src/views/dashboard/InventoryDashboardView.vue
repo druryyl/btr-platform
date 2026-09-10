@@ -6,9 +6,13 @@ import DashboardMetric from '@/components/dashboard/primitives/DashboardMetric.v
 import InventoryHorizontalBarChart from '@/components/dashboard/InventoryHorizontalBarChart.vue'
 import Top10RankingTable from '@/components/dashboard/Top10RankingTable.vue'
 import { formatCurrency, formatCurrencyCompact, formatNumber } from '@/services/formatters'
-import type { DashboardInventoryRankingItem } from '@/models/dashboard'
+import type {
+  DashboardInventoryBreakdownItem,
+  DashboardInventoryRankingItem,
+} from '@/models/dashboard'
 import { resolveInvestigationSourceLabel } from '@/services/investigationSourceLabels'
 import { navigateToInvestigation } from '@/services/navigateToInvestigation'
+import { openPrincipalPerformance } from '@/services/navigateToPrincipalPerformance'
 import { useDashboardStore } from '@/stores/dashboardStore'
 
 const dashboard = useDashboardStore()
@@ -37,8 +41,17 @@ const supplierRows = computed(
 
 function onRankingClick(row: Record<string, unknown>): void {
   const item = row as unknown as DashboardInventoryRankingItem
+  if (item.DashboardRoute) {
+    openPrincipalPerformance(router, item.SupplierId)
+    return
+  }
   if (!item.Investigation) return
   navigateToInvestigation(router, item.Investigation, sourceLabel)
+}
+
+function onSupplierBarClick(item: DashboardInventoryBreakdownItem): void {
+  if (!item.DashboardRoute) return
+  openPrincipalPerformance(router, item.SupplierId)
 }
 
 onMounted(() => {
@@ -80,6 +93,8 @@ onMounted(() => {
       title="Inventory by Supplier"
       :items="dashboard.inventory?.SupplierBreakdown ?? []"
       :loading="dashboard.loading"
+      clickable
+      @bar-click="onSupplierBarClick"
     />
 
     <Top10RankingTable
@@ -102,6 +117,7 @@ onMounted(() => {
       :loading="dashboard.loading"
       value-field="InventoryValue"
       clickable
+      click-hint="Opens the Principal Performance dashboard for this supplier."
       empty-message="No supplier data available."
       @row-click="onRankingClick"
     />

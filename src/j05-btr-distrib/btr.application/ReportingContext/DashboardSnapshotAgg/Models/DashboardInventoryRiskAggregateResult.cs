@@ -112,6 +112,8 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.Models
 
         public string Name { get; set; }
 
+        public string SupplierId { get; set; }
+
         public decimal AtRiskValue { get; set; }
 
         public int ItemCount { get; set; }
