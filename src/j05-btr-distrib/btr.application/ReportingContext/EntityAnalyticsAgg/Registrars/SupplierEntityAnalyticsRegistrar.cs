@@ -40,6 +40,8 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Registrars
                 PrincipalKpiCatalog.TargetId,
                 PrincipalKpiCatalog.AchievementAmountId,
                 PrincipalKpiCatalog.AchievementPercentageId,
+                PrincipalKpiCatalog.MomGrowthId,
+                PrincipalKpiCatalog.YoyGrowthId,
                 "PU-KPI-001",
                 "PU-KPI-002",
                 "PU-KPI-003",
@@ -291,6 +293,60 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Registrars
 
             kpiRegistry.RegisterMetadata(new EntityKpiMetadata
             {
+                KpiId = PrincipalKpiCatalog.MomGrowthId,
+                Category = EntityKpiCategory.Growth,
+                DisplayName = "Month-over-Month Growth Percentage",
+                Description = "PRN-GRW-001 Month-over-Month Growth Percentage from stored PRN-SALES-001 history. Growth is computed from Principal Sales-Out only. It does not use Purchase-In, returns, claims, or inventory adjustments. PRN-GRW-001 is a supporting ranking KPI and is not a replacement for Principal Sales-Out. It is not Net Sales.",
+                PeriodSemantics = "MTD",
+                TimeGrain = "Month",
+                Unit = "Percent",
+                ValueType = "Numeric",
+                AggregationType = "LastValue",
+                Direction = "HigherIsBetter",
+                NormalizationRule = "None",
+                VisualizationType = "Card",
+                TrendEligible = false,
+                RankEligible = true,
+                RadarEligible = false,
+                DisplayPrecision = 4,
+                NullableBehavior = "ShowEmpty",
+                EvidenceRoute = PrincipalSalesOutEvidenceRoute,
+                EvidenceFilterDimension = PrincipalSalesOutEvidenceFilterDimension,
+                SourceDomain = PrincipalMomGrowthSnapshot.Domain,
+                ApplicableEntityTypes = new[] { EntityTypeCode.Supplier },
+                DefinitionVersion = 1,
+                IntroducedVersion = "PCM-046"
+            });
+
+            kpiRegistry.RegisterMetadata(new EntityKpiMetadata
+            {
+                KpiId = PrincipalKpiCatalog.YoyGrowthId,
+                Category = EntityKpiCategory.Growth,
+                DisplayName = "Year-over-Year Growth Percentage",
+                Description = "PRN-GRW-002 Year-over-Year Growth Percentage from stored PRN-SALES-001 history. Growth is computed from Principal Sales-Out only. It does not use Purchase-In, returns, claims, or inventory adjustments. PRN-GRW-002 is a supporting ranking KPI and is not a replacement for Principal Sales-Out. It is not Net Sales.",
+                PeriodSemantics = "MTD",
+                TimeGrain = "Month",
+                Unit = "Percent",
+                ValueType = "Numeric",
+                AggregationType = "LastValue",
+                Direction = "HigherIsBetter",
+                NormalizationRule = "None",
+                VisualizationType = "Card",
+                TrendEligible = false,
+                RankEligible = true,
+                RadarEligible = false,
+                DisplayPrecision = 4,
+                NullableBehavior = "ShowEmpty",
+                EvidenceRoute = PrincipalSalesOutEvidenceRoute,
+                EvidenceFilterDimension = PrincipalSalesOutEvidenceFilterDimension,
+                SourceDomain = PrincipalYoyGrowthSnapshot.Domain,
+                ApplicableEntityTypes = new[] { EntityTypeCode.Supplier },
+                DefinitionVersion = 1,
+                IntroducedVersion = "PCM-046"
+            });
+
+            kpiRegistry.RegisterMetadata(new EntityKpiMetadata
+            {
                 KpiId = "PU-KPI-001",
                 Category = EntityKpiCategory.Financial,
                 DisplayName = "MTD Purchase",
@@ -384,7 +440,7 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Registrars
                 KpiId = EntityAnalyticsRadarAxisIds.GrowthMom,
                 Category = EntityKpiCategory.Growth,
                 DisplayName = "Growth",
-                Description = "MoM purchase growth percentile within peer group.",
+                Description = "MoM Principal Sales-Out growth percentile within peer group from PRN-GRW-001.",
                 PeriodSemantics = "MTD",
                 TimeGrain = "Month",
                 Unit = "Percent",
@@ -397,12 +453,12 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Registrars
                 RadarAxisOrder = 2,
                 RadarDisplayName = "Growth",
                 SignatureDimensionKey = EntityAnalyticsSignatureDimensions.Growth,
-                RadarValueSource = RadarValueSource.L1MomGrowthPercent,
-                RadarSourceKpiId = "PU-KPI-001",
+                RadarValueSource = RadarValueSource.L0Kpi,
+                RadarSourceKpiId = PrincipalKpiCatalog.MomGrowthId,
                 DisplayPrecision = 1,
                 NullableBehavior = "Omit",
                 ApplicableEntityTypes = new[] { EntityTypeCode.Supplier },
-                DefinitionVersion = 1,
+                DefinitionVersion = 2,
                 IntroducedVersion = "M32.10"
             });
 

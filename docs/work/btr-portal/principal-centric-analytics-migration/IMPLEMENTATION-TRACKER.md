@@ -544,8 +544,10 @@ Only a review agent may set `GO` or `NO-GO`.
 
 ### PCM-046
 
-- Status: PLANNED
-- Implementation History: none
+- Status: IMPLEMENTED
+- Implementation History:
+  - 2026-09-10: IN IMPLEMENTATION
+  - 2026-09-10: IMPLEMENTED. Composed stored `PRN-GRW-001` and `PRN-GRW-002` onto the Supplier/Principal Entity Analytics profile from the Sales-Out growth KPI snapshots. The existing `SupplierEntityAnalyticsProducer` injects `IPrincipalMomGrowthSnapshotDal` and `IPrincipalYoyGrowthSnapshotDal`, reads the stored growth snapshots, and writes growth KPIs as L0 rows. The Growth radar axis now sources from `PRN-GRW-001` instead of `PU-KPI-001`. Registrar adds both growth KPIs to the pack and metadata with Growth category. The producer does not write, overwrite, or recalculate `PRN-SALES-001`. No return, target, purchase, or inventory pack was added.
 - Review History: none
 - Remediation History: none
 
