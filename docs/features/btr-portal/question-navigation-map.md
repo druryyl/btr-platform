@@ -125,7 +125,7 @@ EQ-002  Where is my biggest risk?
     ↓
 MQ-001  Which customers are becoming risky?
 MQ-002  Which inventory is unhealthy?
-MQ-003  Which salespeople are carrying overdue or dormant books?
+MQ-003  Which salespeople have high invoice-attributed overdue exposure or last-invoice dormant signals?
 MQ-004  Which principals are becoming a buying or stock risk?
 ```
 
@@ -511,11 +511,13 @@ Delay buy, clear, or review purchasing
 
 Question:
 
-Which salespeople are carrying overdue or dormant books?
+Which salespeople have high invoice-attributed overdue exposure or last-invoice dormant signals?
 
 Why Owner Asks This:
 
-A salesperson’s omzet can look strong while the owned book is late or going quiet. Those books become next month’s collection problem.
+A salesperson's invoiced omzet can look strong while invoices attributed to
+that salesperson are late or going quiet. Those invoices become next month's
+collection problem.
 
 Typical Trigger:
 
@@ -538,7 +540,7 @@ Page: Menu **Sales Force** → **Salesmen**
 
 Primary KPI: High Overdue Exposure  
 
-Supporting KPI: High Piutang Exposure; Dormant Portfolio; Top Omzet Salesman %; Top Piutang Salesman %; Top 10 Overdue Salesmen (on Collection Dashboard)
+Supporting KPI: High Piutang Exposure; Last-Invoice Dormant Signals; Top Omzet Salesman %; Top Piutang Salesman %; Top 10 Overdue Salesmen (on Collection Dashboard)
 
 ---
 
@@ -547,11 +549,11 @@ Supporting KPI: High Piutang Exposure; Dormant Portfolio; Top Omzet Salesman %; 
 
 Healthy Signal:
 
-Collection Exposure is quiet. Dormant Portfolio is not filling the attention list. Overdue is not concentrated in a few books.
+Collection Exposure is quiet. Last-invoice dormant signals are not filling the attention list. Overdue is not concentrated in a few invoice-attributed exposures.
 
 Warning Signal:
 
-High Piutang Exposure without High Overdue Exposure — large outstanding that may not yet be late. Dormant Portfolio is rising on otherwise busy salesmen.
+High Piutang Exposure without High Overdue Exposure — large outstanding that may not yet be late. Last-invoice dormant signals are rising on otherwise busy salesmen.
 
 Critical Signal:
 
@@ -564,7 +566,7 @@ High Overdue Exposure on named salesmen. Stars on Top 10 Omzet also appear on To
 
 Evidence Sources:
 
-- Salesman Attention List (portal table; including Dormant Customer Portfolio)
+- Salesman Attention List (portal table; including last-invoice dormant signals)
 - Top 10 Piutang ranking on Salesman Performance
 - Salesman Performance Profile
 - Salesman Detail drawer (Principal Achievement, Trend — when no profile route)
@@ -574,7 +576,7 @@ Evidence Sources:
 
 Purpose:
 
-Separate large outstanding from actually late. Name the overdue books. See whether dormancy is a portfolio problem, not only a collection problem.
+Separate large outstanding from actually late. Name the overdue invoice-attributed exposures. See whether dormancy signals reflect quiet invoiced activity, not Customer ownership.
 
 ---
 
@@ -592,17 +594,17 @@ Typical Decisions:
 ### Investigation Path
 
 ```text
-Which salespeople are carrying overdue or dormant books?
+Which salespeople have high invoice-attributed overdue exposure or last-invoice dormant signals?
     ↓
 Salesman Performance
     ↓
 High Overdue Exposure
     ↓
-High Piutang Exposure / Dormant Portfolio / Top Overdue Salesmen
+High Piutang Exposure / Last-Invoice Dormant Signals / Top Overdue Salesmen
     ↓
 Salesman Attention List → Salesman Performance Profile → Piutang Report
     ↓
-Joint review of the named books
+Joint review of the named invoice-attributed exposures
 ```
 
 ---
@@ -2139,7 +2141,7 @@ Only assets discovered in Phase-4A. “Used By” is the management question tha
 | Why is this customer risky? | Customer Risk Forecast Dashboard | Payment Delay; Credit Limit; Inactivity; Purchase Decline | Customer Performance Profile; Piutang Report; Sales Report |
 | Which inventory is unhealthy? | Slow Moving & Dead Stock Dashboard | At-Risk Inventory % | Inventory Attention List; Item Performance Profile; Inventory Report |
 | Which SKUs are dead or slow? | Slow Moving & Dead Stock Dashboard | Dead Stock Value; Slow Moving Value | Top 10 Dead / Slow Moving; Item Performance Profile |
-| Which salespeople carry overdue or dormant books? | Salesman Performance | High Overdue Exposure; Dormant Portfolio | Salesman Attention List; Salesman Performance Profile; Piutang Report |
+| Which salespeople have high invoice-attributed overdue exposure or last-invoice dormant signals? | Salesman Performance | High Overdue Exposure; Last-Invoice Dormant Signals | Salesman Attention List; Salesman Performance Profile; Piutang Report |
 | Which principals are a buying or stock risk? | Purchasing Management Dashboard | Inventory Cross-Risk; Principal Dependency | Purchasing Attention List; Supplier Performance Profile; Inventory Report |
 | Who should be contacted today? | Collection Optimization Dashboard | Actions Today | Today's Collection Priorities; Specialized Queues; Piutang Report |
 | What should we buy, delay, transfer, or clear today? | Inventory Optimization Dashboard | Critical Actions | Action tables; Item Performance Profile; Inventory Report; Purchasing Report |
@@ -2190,3 +2192,109 @@ Open → Review → Interpret → Evidence → Decide
 ```
 
 Do not start the playbook from a dashboard list. Do not re-read the codebase to invent screens.
+
+---
+
+# Principal-Centric Addendum (PCM-058 — implemented surfaces only)
+
+This addendum routes only implemented Principal surfaces. Unimplemented
+questions are not marked as available. No Salesman is described as the
+Customer owner. Returns are independent KPIs and are never described as a
+reduction of, deduction from, or redefinition of `PRN-SALES-001`.
+
+## PQ-001 — Which Principals drive company sales, and which miss target?
+
+Open: Menu **Sales** → **Principal Performance**
+(`/dashboard/principal-performance`).
+
+Review: `PRN-SALES-001` ranking; target and achievement panel
+(`PRN-TGT-001`, `PRN-TGT-002`, `PRN-TGT-003`).
+
+Interpret: Default ranking is `PRN-SALES-001`. Missing-target exceptions
+remain visible and do not remove Sales-Out.
+
+Evidence: Faktur Item evidence drill-down for the selected Principal and
+period; SA01 Principal contribution with navigation to SA04.
+
+Decide: Focus commercial follow-up on low Sales-Out or low achievement
+Principals.
+
+## PQ-002 — Is a Principal gap explained by reach, mix, or contribution?
+
+Open: SA04 target and achievement panel, then the SA04 customer-reach panel
+(`PRN-CUS-001`, `PRN-CUS-002`).
+
+Review: Missing-target exception count; stored Active Customer Count and
+Customer Coverage Percentage (evidence grain is
+`BTRPD_CustomerPrincipalRelationship`); SA02 Principal forecast presentation
+from `PRN-SALES-001` history compared with `PRN-TGT-001` (not a registry
+KPI, not a ranking KPI).
+
+Evidence: Relationship projection rows; Faktur Item evidence; Sales Report
+header totals remain header totals.
+
+## PQ-003 — Which Customers grow or decline for each Principal?
+
+Open: Menu **Customers** → **Customers** (CU01 Principal mix), **Customer
+Risk Forecast** (CU02 Principal decline), **Customer Portfolio** (CU04
+portfolio mix), **Customer Report** (CU05 pair evidence).
+
+Review: Pair status and pair-attributed `PRN-SALES-001` from the projection.
+One Customer can show Active and Dormant pairs at the same time.
+
+Evidence: `BTRPD_CustomerPrincipalRelationship` rows; Customer Report;
+Sales Report and Piutang Report remain Customer-level.
+
+## PQ-004 — Cross-Principal gap
+
+Status: Not yet available. No implemented surface compares one Principal
+against another eligible Principal for the same Customer. Do not route as
+if available.
+
+## PQ-005 — Which relationships are newly active, dormant, or at risk?
+
+Open: The same CU01, CU02, CU04, and Customer Report pair views as PQ-003.
+
+Review: Stored Active or Dormant status and last transaction date from the
+projection. History is retained indefinitely; inactivity does not delete a
+row.
+
+## PQ-006 — Purchasing and inventory alignment
+
+Status: Not yet available as a joint view. Open PU01 Purchasing for
+Purchase-In (labeled Purchase-In, not Principal Sales-Out), IN01 Inventory
+and IN02 Inventory Risk for inventory measures, and SA04 for
+`PRN-SALES-001`. IN01 and IN02 supplier rows navigate to SA04 for the same
+Principal. Do not treat the three measures as one reconciled KPI.
+
+## PQ-007 — Are Principal targets fully allocated?
+
+Open: SA04 target and achievement panel.
+
+Review: `PRN-TGT-001` against stored `PRN-SALES-001`; missing-target
+responsibility exceptions (sold Salesman × Principal pairs with no target
+record remain in Sales-Out and are listed as exceptions).
+
+## PQ-008 — Which Salesmen contribute to each Principal?
+
+Open: SA04 and SA01 Principal contribution (decomposition of stored
+`PRN-SALES-001` by `Faktur.SalesPersonId`).
+
+Review: Each contributing Salesman with its stored decomposition amount.
+Contribution is labeled as contribution, not a registry ranking KPI, and
+does not assign Customer ownership.
+
+## Executive and evidence routing
+
+- EX01 Principal sales attention opens SA04, not PU01, when the signal is
+  Principal sales performance.
+- EX02 Principal sales alerts open SA04. No return, collection, credit,
+  Health Score, or Net Sales alert is introduced.
+- SA03 / Sales Report Principal filter uses Faktur Item amounts and
+  `Brg.SupplierId`. A mixed-Principal Faktur contributes each line to its
+  own Principal and does not split `GrandTotal`.
+- Return drill-down opens Return Item evidence at Return Item grain.
+- FI surfaces introduce no Principal financial, collection, or credit KPIs.
+  FI02 and FI04 invoice-attributed wording is owned by its own slices and is
+  unchanged here.
+- The KPI catalog is unchanged by this slice (PCM-019).

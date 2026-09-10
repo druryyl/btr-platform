@@ -607,3 +607,14 @@ SF01 does not measure:
 
 Those measures belong to the relevant Field Activity and Collection
 dashboards.
+
+## Principal-Centric Addendum (PCM-058, implemented surfaces only)
+
+SF01 no longer describes a Customer portfolio as owned by the Salesman.
+Owned-book, assigned-book, and singular Customer-owner language is replaced
+by last-invoice and invoiced-contribution wording (PCM-011). Coaching,
+target allocation, invoiced contribution, and assigned Principal mix remain.
+`BTRPD_SalesmanPrincipalAchievement.CompletedOmzet` is unchanged and is not
+`PRN-SALES-001`. SF02 and SF03 routes, grains, and performer attribution are
+unchanged. No Principal filter is added to SF02 or SF03. FI01–FI04 are
+unchanged by this addendum.

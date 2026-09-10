@@ -551,7 +551,7 @@ The dashboard supports:
 - **Action**
 - **Last Invoicing Salesman**
 
-The Salesman filter selects the last invoicing Salesman, a commercial attribution on the latest invoice. It does not mean that Salesman owns the Customer. Principal portfolio mix is not shown on this page.
+The Salesman filter selects the last invoicing Salesman, a commercial attribution on the latest invoice. It does not mean that Salesman owns the Customer.
 
 Klasifikasi is available for filtering and display only. It must not be
 interpreted as the source of the computed portfolio tier.
@@ -580,3 +580,12 @@ interpreted as the source of the computed portfolio tier.
 - **CU05 — Customer Report:** customer-level evidence
 - **Sales Report:** invoice-level sales evidence
 - **Piutang Report:** open-receivable evidence
+
+## Principal-Centric Addendum (PCM-058, implemented surfaces only)
+
+CU04 portfolio mix reads stored `BTRPD_CustomerPrincipalRelationship` rows
+only. Pair status and pair-attributed `PRN-SALES-001` are read from the
+projection (PCM-044). Only Principals present on each Customer's projection
+are listed. No pre-purchase assigned Principal is shown. Relationships are
+not recomputed from raw transactions. Customer portfolio measures remain
+Customer-level.

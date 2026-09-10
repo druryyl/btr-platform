@@ -672,7 +672,12 @@ Only a review agent may set `GO` or `NO-GO`.
 
 ### PCM-058
 
-- Status: PLANNED
-- Implementation History: none
+- Status: GO
+- Implementation History:
+  - 2026-09-10: IN IMPLEMENTATION
+  - 2026-09-10: IMPLEMENTED. Synchronized dashboard feature artifacts and question navigation to implemented surfaces only. Created dashboard-sa04-principal-performance.md (PRN-SALES-001 ranking, target/achievement, returns, customer-reach panels with GR-001 and PD-010). Added implemented-only addenda to SA01, SA02, CU01, CU02, CU04, SF01, PU01, IN01, IN02. Fixed CU04 stale no-mix line. Reworded MQ-003 in business-question-catalog-v3.md and question-navigation-map.md to invoice-attributed/last-invoice language. Added PQ-001–PQ-008 addenda routing Available questions to SA04/SA01/SA02/SA03/CU01/CU02/CU04/CU05/EX01/EX02/IN01/IN02 and marking PQ-004 and PQ-006 Not yet available. Returns described as independent KPIs, never a reduction of PRN-SALES-001. KPI catalog untouched.
+- Review History:
+  - 2026-09-10: IN REVIEW
+  - 2026-09-10: GO. Acceptance criteria verified individually: implemented feasibility §4.3 questions route to SA04/SA01/SA02/SA03/CU01/CU02/CU04/CU05/EX01/EX02/IN01/IN02 while PQ-004 and PQ-006 are marked Not yet available; MQ-003 and new question text use invoice-attributed/last-invoice/contribution language with no Salesman-as-Customer-owner description; Returns are independent KPIs, never a reduction of PRN-SALES-001; KPI catalog untouched. Scope verified: docs-only, SA04 + SA01/SA02/CU01/CU02/CU04/SF01/PU01/IN01/IN02 addenda plus v3 catalog and navigation map; no code, catalog, navigation, domain, or architecture changes. Authority verified: FEASIBILITY ASSESSMENT with PRINCIPAL KPI REGISTRY; GR-001/GR-002/GR-003 and PD-010 preserved; no new KPI IDs, Net Sales, or Health Score. Docs-only slice: no build or test run required. INFO: PCM-050 EX02 alerts are IMPLEMENTED (IN REVIEW) rather than GO; documenting the existing SA04-routed alert path as implemented code is consistent with the slice's implemented-surfaces rule and does not block GO.
 - Review History: none
 - Remediation History: none

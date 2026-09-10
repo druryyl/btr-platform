@@ -475,3 +475,11 @@ decisions:
 The dashboard supports management decisions; posting, purchasing changes,
 warehouse action, and supplier follow-up are completed through the appropriate
 operational BTR workflows.
+
+## Principal-Centric Addendum (PCM-058, implemented surfaces only)
+
+PU01 and PU02 purchase amounts are identified as Purchase-In. They are not
+labeled Principal Sales-Out and do not display `PRN-SALES-001` as purchase
+value (PCM-018). Purchase growth is not renamed to sales growth. PU02
+remains purchase-invoice evidence. The user-facing Principal purchase
+measure on Principal analytics is `PRN-PUR-001`, not Principal Sales-Out.

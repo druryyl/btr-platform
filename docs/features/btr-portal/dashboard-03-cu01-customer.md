@@ -471,3 +471,14 @@ context for the attention cards and rankings, not separate financial KPIs.
 CU01 is a current-state customer attention view. Forward-looking customer risk
 is handled by the Customer Risk Forecast Dashboard, while daily collection
 prioritization is handled by Collection Optimization.
+
+## Principal-Centric Addendum (PCM-058, implemented surfaces only)
+
+CU01 Principal mix reads `BTRPD_CustomerPrincipalRelationship` only.
+Pair amount is pair-attributed `PRN-SALES-001` and does not deduct returns,
+claims, or inventory adjustments (PCM-014). Customer total sales, credit,
+and piutang remain Customer-level and are not allocated to Principals. Only
+Principals present on that Customer's projection are listed. No
+pre-purchase assigned Principal is shown. The latest-Faktur Salesman, where
+shown, is the last invoicing Salesman as a recency indicator, not the
+Customer owner.

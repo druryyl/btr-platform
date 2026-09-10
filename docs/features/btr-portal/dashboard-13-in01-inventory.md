@@ -307,3 +307,12 @@ supplier quality, delivery performance, or purchasing dependency.
   totals.
 - **PU01 — Purchasing:** supplier purchasing activity, dependency, and posting
   context.
+
+## Principal-Centric Addendum (PCM-058, implemented surfaces only)
+
+IN01 remains an inventory measure. Supplier rows expose the Principal
+identity and a navigation action to SA04 Principal Performance
+(`/dashboard/principal-performance`) for the same Principal (PCM-051). No
+inventory metric is copied into `PRN-SALES-001`. `PRN-INV-001` and
+`PRN-INV-002` publication is owned by its own slice and is not described
+here.

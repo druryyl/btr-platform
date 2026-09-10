@@ -401,3 +401,11 @@ they identify the highest-value items where management should begin.
 - **IN05 — Inventory Report:** item-by-warehouse stock evidence.
 - **PU01 — Purchasing:** purchasing activity, Supplier dependency, and posting
   context.
+
+## Principal-Centric Addendum (PCM-058, implemented surfaces only)
+
+IN02 remains an inventory measure. Supplier Risk Exposure rows expose the
+Principal identity and a navigation action to SA04 Principal Performance
+(`/dashboard/principal-performance`) for the same Principal (PCM-051). No
+inventory metric is copied into `PRN-SALES-001`. IN03, IN04, and IN05
+measures and views are otherwise unchanged by this addendum.

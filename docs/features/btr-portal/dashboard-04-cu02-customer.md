@@ -816,4 +816,15 @@ more than one family.
 5. Use **Signal Family Mix** to determine whether Finance, Collection, Sales,
    or Credit should lead.
 6. Open **Top Customers By Risk Priority** and verify the evidence in the
-   Piutang Report, Sales Report, and BTR Desktop before acting.
+    Piutang Report, Sales Report, and BTR Desktop before acting.
+
+## Principal-Centric Addendum (PCM-058, implemented surfaces only)
+
+CU02 Principal decline or inactivity reads stored
+`BTRPD_CustomerPrincipalRelationship` rows only. Pair status and
+pair-attributed `PRN-SALES-001` are read for the at-risk customers on the
+page (PCM-043). Customer totals, latest-Faktur Salesman, and raw
+transaction scans are not used for the Principal decline view. One Customer
+can show Active and Dormant pairs at the same time. Customer risk, credit,
+piutang, and decline measures otherwise remain Customer-level. Other
+Customer pages are unchanged by this addendum.
