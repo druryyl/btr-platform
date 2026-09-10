@@ -704,6 +704,65 @@ Terms used consistently across BTR Portal analytics. Core BTR terms are defined 
 
 ---
 
+## 11.7 Principal-Centric Analytics (Implemented — PCM-057)
+
+Authoritative KPI semantics follow the Principal KPI Registry v1. Full
+definitions live in [btr-portal-kpi-catalog.md](./btr-portal-kpi-catalog.md)
+(§6.9). Where an older section of this document uses a different Principal
+measure, the registry wins for Principal analytics scope. Non-Principal
+(company, Customer-account, Salesman-execution) measures are unchanged.
+
+### Principal performance measure
+
+- The canonical Principal commercial performance measure is
+  `PRN-SALES-001` Principal Sales-Out (DPP) from Faktur Item evidence.
+- `PRN-SALES-001` is independent of Returns: Returns, Claims, and
+  Inventory Adjustments are never deducted from it and never redefine it.
+- Returns are independent KPIs (`PRN-RET-001` through `PRN-RET-004`) shown
+  separately. `PRN-RET-004` Return Percentage is a quality ratio
+  (Return Amount ÷ Sales-Out), not a deduction and not Net Sales.
+- No Net Sales KPI is defined in V1. A future Net Sales KPI, if ever
+  approved, must be a separate KPI ID and must not replace, rename, or
+  become the authoritative meaning of `PRN-SALES-001`.
+- No Principal Health Score or other composite Principal score is defined
+  in V1. Principal ranking uses `PRN-SALES-001` unless the user explicitly
+  selects an approved supporting ranking KPI (`PRN-RET-004`, `PRN-TGT-003`,
+  `PRN-GRW-001`, `PRN-GRW-002`). Purchase-In (`PRN-PUR-001`) and inventory
+  indicators (`PRN-INV-001`, `PRN-INV-002`) are never Principal performance
+  ranking KPIs.
+
+### Customer–Principal relationship projection
+
+- Customer–Principal is a transaction-derived analytical relationship, not
+  master data and not a new Entity Analytics entity type. No pre-purchase
+  assignment record is created.
+- The canonical store is `BTRPD_CustomerPrincipalRelationship`. Historical
+  transaction data is the source of truth for the projection refresh only.
+- A pair is retained when a transaction has attributed the Customer to the
+  Principal. History is retained indefinitely; inactivity never deletes a
+  projection row.
+- Active means the last transaction on the projection is within 6 months of
+  the snapshot as-of date. Dormant means the projection row exists and the
+  last transaction is not within 6 months.
+- Coverage, Active Customer, Dormant Customer, Relationship Analytics, and
+  Entity Analytics consume `BTRPD_CustomerPrincipalRelationship`. Those
+  consumers read stored pair identity, first/last transaction dates, Active
+  or Dormant status, and pair-attributed `PRN-SALES-001`; they do not
+  recompute those attributes from raw transaction history.
+- Pair Sales-Out stored on the projection is `PRN-SALES-001` attributed to
+  the pair at refresh. It is not reduced by returns, claims, or inventory
+  adjustments.
+
+### Explicit non-goals for Principal analytics
+
+Principal analytics does not introduce: Principal financial (piutang,
+overdue, aging, collection, credit) attribution; an invoice-time Principal
+snapshot; a Customer–Principal master assignment table; a Net Sales KPI;
+or a Principal Health Score. Technical identifiers remain
+`Supplier` / `SupplierId`; user-facing labels use Principal.
+
+---
+
 ## 12. Future Accepted Domain Concepts
 
 Concepts **approved for BTR Portal roadmap direction** but **not yet implemented** as management capabilities. Future agents must not treat these as current portal features.

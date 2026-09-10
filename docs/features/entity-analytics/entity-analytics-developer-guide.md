@@ -561,29 +561,38 @@ Reference: [m32.9-implementation-summary.md](../../work/btr-portal/entity-analyt
 
 No changes required to platform engines, `EntityPerformanceProfileComposer`, or `EntityAnalyticsController`.
 
-Example: **Supplier** (M32.10 entity pack) — **implemented**
+Example: **Supplier** (M32.10 entity pack) — **implemented, extended by Principal-centric analytics (PCM-015–PCM-055)**
 
 Reference: [m32.10-implementation-summary.md](../../work/btr-portal/entity-analytics/m32.10-implementation-summary.md)
 
 1. **Platform registrar** — `EntityTypeCode.Supplier` metadata in `EntityAnalyticsPlatformRegistrar` (`supplier-default`, `supplier-relationships`, route `/analytics/suppliers/{id}`).
 
-2. **`SupplierEntityAnalyticsRegistrar`** — KPI pack PU-KPI-001/002/003 + radar/meta axes; dimension labels.
+2. **`SupplierEntityAnalyticsRegistrar`** — Principal KPI packs on the Supplier/Principal profile (one pack per slice; no composite score):
+   - Sales-Out pack: `PRN-SALES-001` (authoritative Principal performance and default ranking KPI; independent of Returns).
+   - Returns pack: `PRN-RET-001`, `PRN-RET-002`, `PRN-RET-003`, `PRN-RET-004` (Return Percentage is a quality ratio and supporting ranking KPI only; never a deduction from Sales-Out; never Net Sales).
+   - Target pack: `PRN-TGT-001`, `PRN-TGT-002`, `PRN-TGT-003`.
+   - Growth pack: `PRN-GRW-001`, `PRN-GRW-002` (from stored `PRN-SALES-001` history only).
+   - Purchase pack: `PRN-PUR-001` (labeled Purchase-In; never a performance or ranking KPI).
+   - Inventory pack: `PRN-INV-001`, `PRN-INV-002` (operational indicators; never performance or ranking KPIs).
 
-3. **`SupplierEntityAnalyticsProducer`** — maps `DashboardPurchasingManagementAggregateResult.Portfolio` to L0; L0→L5 orchestration (`EntityId = SupplierId`, `EntityCode = SupplierCode`).
+3. **`SupplierEntityAnalyticsProducer`** — the single writer of the Supplier/Principal Entity Analytics profile; maps owned Principal snapshots to L0; L0→L5 orchestration (`EntityId = SupplierId`, `EntityCode = SupplierCode`).
+   - Reads owned snapshots only (Sales-Out, returns, return percentage, target, achievement, MoM/YoY growth, purchase-in, inventory). Never recomputes `PRN-SALES-001` from Purchasing Management in-memory `SalesOutAmount` or from purchase data. Never writes a source KPI from a consumer pack.
+   - A purchase or inventory refresh never erases persisted `PRN-SALES-001`.
+   - Ranking hierarchy: default `PRN-SALES-001`; supporting rankings only `PRN-RET-004`, `PRN-TGT-003`, `PRN-GRW-001`, `PRN-GRW-002`. No Net Sales and no Principal Health Score.
 
-4. **`SupplierEntityAnalyticsProduceInput`** — wraps management aggregate + `DashboardSupplierRelationshipAggregateResult`.
+4. **`SupplierEntityAnalyticsProduceInput`** — wraps management aggregate + `DashboardSupplierRelationshipAggregateResult` plus the projection-sourced relationship input for Principal/Customer pairs.
 
-5. **Worker hook** — `RefreshDashboardPurchasingManagementSnapshotWorker` calls orchestrator after domain save (loads `ISupplierDal`, `ISupplierMtdItemRollupDal`, relationship aggregator first).
+5. **Worker hook** — `RefreshDashboardPurchasingManagementSnapshotWorker` calls orchestrator after domain save (loads `ISupplierDal`, `ISupplierMtdItemRollupDal`, relationship aggregator, owned Principal snapshots, and `BTRPD_CustomerPrincipalRelationship` first). Refresh order: source snapshots and the relationship projection complete before this Principal Entity Analytics refresh.
 
-6. **`SupplierEntityAnalyticsEvidenceResolver`** — `/reports/purchasing`, `/reports/inventory` with `supplierCode` filter.
+6. **`SupplierEntityAnalyticsEvidenceResolver`** — Faktur Item evidence for `PRN-SALES-001` (Principal omzet relationships); Return Item evidence for return KPIs. Purchase/inventory evidence stays on purchasing/inventory reports and is never presented as Sales-Out evidence.
 
-7. **Attention / relationship catalogs** — `SupplierAttentionSignalCatalog`, `SupplierRelationshipCatalog`.
+7. **Attention / relationship catalogs** — `SupplierAttentionSignalCatalog`, `SupplierRelationshipCatalog` (registered in bootstrap). Relationship presentation consumes `BTRPD_CustomerPrincipalRelationship`: relationship existence, last transaction date, Active/Dormant status, and pair-attributed `PRN-SALES-001` are read from the projection, never recomputed from raw transactions. Pair Sales-Out is not reduced by returns. No Customer–Principal entity type and no master assignment table exist.
 
 8. **Enable** — `Supplier` in `EntityAnalytics.EnabledEntityTypes` (API + worker).
 
 9. **Register DI** — `AddSingleton<IEntityAnalyticsRegistrar, SupplierEntityAnalyticsRegistrar>()`.
 
-10. **Frontend** — `SupplierProfileView.vue`, `SupplierCompareView.vue`, PU01 `ProfileRoute` links.
+10. **Frontend** — `SupplierProfileView.vue`, `SupplierCompareView.vue`, PU01 `ProfileRoute` links. Relationship rows show Active/Dormant status badge and last transaction date when the projection provides them.
 
 Example: **Item** (M32.11 entity pack) — **implemented**
 

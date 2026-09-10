@@ -879,3 +879,76 @@ Rules that must be preserved when extending the portal:
 ### Testing Convention
 
 Portal wrapper DALs have unit tests in `btr.test/ReportingContext/` verifying filters, summary totals, customer-key logic, and reconciliation expectations.
+
+---
+
+## Principal-Centric Analytics (Implemented — PCM-057)
+
+KPI semantics follow the Principal KPI Registry v1; the full catalog lives
+in [btr-portal-kpi-catalog.md](./btr-portal-kpi-catalog.md) (§6.9). This
+section records only the implemented structural model and guardrails. SA04
+surface detail lives in [dashboard-sa04-principal-performance.md](./dashboard-sa04-principal-performance.md).
+
+### Return semantic protection (GR-001)
+
+- `PRN-SALES-001` Principal Sales-Out is an independent KPI. It is never
+  reduced, replaced, or redefined by Returns KPIs (`PRN-RET-001` through
+  `PRN-RET-004`).
+- The Sales-Out writer stores `PRN-SALES-001` only and never writes a
+  `PRN-RET-*` value. Returns writers store return KPIs only and never
+  write, overwrite, or recalculate `PRN-SALES-001`. `PRN-RET-004` may read
+  `PRN-SALES-001` as a denominator; that read does not authorize an update.
+- No Net Sales KPI is defined in V1, and no Principal Health Score is
+  introduced.
+
+### Snapshot ownership and composition (PD-005)
+
+- Registry measures persist in ReportingContext snapshot tables owned by
+  the domain that calculates them: Sales aggregation owns `PRN-SALES-001`
+  and the Sales-Out-only growth history; Returns aggregation owns
+  `PRN-RET-001` through `PRN-RET-004` in separate writes; Target
+  aggregation owns `PRN-TGT-001`; Achievement reads stored Sales-Out and
+  stored Target and writes only `PRN-TGT-002`/`PRN-TGT-003`; Purchasing
+  owns `PRN-PUR-001`; Inventory owns `PRN-INV-001`/`PRN-INV-002`;
+  `BTRPD_CustomerPrincipalRelationship` owns relationship status while
+  `PRN-CUS-001`/`PRN-CUS-002` are counted from that projection only.
+- `SupplierEntityAnalyticsProducer` remains the single writer of the
+  Supplier/Principal Entity Analytics profile. It reads owned snapshots and
+  composes one registry pack per slice (Sales-Out, returns, target and
+  achievement, growth, purchase-in, inventory). It never recomputes
+  `PRN-SALES-001` from purchase data and never replaces the profile with
+  purchase-only metrics. No second writer and no new producer framework
+  exist.
+- Refresh order: source snapshots and the relationship projection complete
+  before the Principal Entity Analytics refresh that consumes them.
+
+### Relationship projection consumption (GR-002)
+
+- Canonical projection: `BTRPD_CustomerPrincipalRelationship`. It is not
+  master data and not a new Entity Analytics entity type. Historical
+  transaction data is the source of truth for the projection refresh only.
+- Coverage, Active Customer, Dormant Customer, Relationship Analytics, and
+  Entity Analytics relationship presentation read the projection. They do
+  not recompute relationship existence, last transaction date, Active
+  status, or Dormant status from raw transaction history.
+- Entity Analytics relationship rows carry projection status and last
+  transaction date; pair Sales-Out shown equals the projection copy of
+  `PRN-SALES-001` and is not reduced by returns.
+
+### Ranking hierarchy (implemented)
+
+1. Authoritative Principal ranking KPI: `PRN-SALES-001` (default on SA04
+   and on the Principal Entity Analytics profile).
+2. Supporting ranking KPIs only: `PRN-RET-004`, `PRN-TGT-003`,
+   `PRN-GRW-001`, `PRN-GRW-002`.
+3. `PRN-PUR-001`, `PRN-INV-001`, and `PRN-INV-002` are never Principal
+   performance ranking KPIs.
+
+### Navigation and authorization (implemented)
+
+- Principal commercial performance lives under Sales as `SA04` —
+  Principal Performance at `/dashboard/principal-performance`. No
+  Principals domain group, no replacement of Sales Force, and no
+  Principal-scoped authorization, row filter, or menu restriction exist.
+- Technical identifiers remain `Supplier` / `SupplierId`; user-facing
+  labels use Principal and the registry KPI names.

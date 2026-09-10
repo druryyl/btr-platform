@@ -665,9 +665,13 @@ Only a review agent may set `GO` or `NO-GO`.
 
 ### PCM-057
 
-- Status: PLANNED
-- Implementation History: none
-- Review History: none
+- Status: GO
+- Implementation History:
+  - 2026-09-10: IN IMPLEMENTATION
+  - 2026-09-10: IMPLEMENTED. Synchronized portal domain, architecture, and Entity Analytics guidance to the implemented model and guardrails. `btr-portal-domain.md` §11.7 records PRN-SALES-001 independent of Returns, projection consumption for Coverage/Active/Dormant/Relationship/Entity Analytics, ranking hierarchy, and explicit non-goals. `btr-portal-architecture.md` records GR-001/GR-002, snapshot ownership with single-writer SupplierEntityAnalyticsProducer, refresh order, ranking hierarchy, and SA04/no-authorization rules. `entity-analytics-developer-guide.md` Supplier pack updated to separate PRN-* KPI packs, ranking hierarchy, owned-snapshot reads, projection-consumed relationships, and Faktur/Return Item evidence routes. `docs/foundation/DOMAIN.md` and `docs/foundation/WORKFLOW.md` unchanged (no workflow change; relationship is an analytics projection, not core vocabulary).
+- Review History:
+  - 2026-09-10: IN REVIEW
+  - 2026-09-10: GO. All acceptance criteria verified against registry and implemented code; docs-only scope with no forbidden claims; WORKFLOW/DOMAIN foundation untouched as permitted.
 - Remediation History: none
 
 ### PCM-058
