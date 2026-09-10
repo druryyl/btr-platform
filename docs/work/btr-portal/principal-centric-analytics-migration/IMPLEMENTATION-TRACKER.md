@@ -586,9 +586,12 @@ Only a review agent may set `GO` or `NO-GO`.
 
 ### PCM-050
 
-- Status: PLANNED
-- Implementation History: none
-- Review History: none
+- Status: IMPLEMENTED
+- Implementation History:
+  - 2026-09-10: IN IMPLEMENTATION
+  - 2026-09-10: IMPLEMENTED. Added Principal Sales-Out alerts to EX02 (Alert Center). Backend: `AlertCenterRegistry` registers `SignalPrincipalSalesOut` in Sales category routing to `/dashboard/principal-performance`; `DashboardAlertCenterComposer` gains `BuildPrincipalSalesAlerts` reading `PrincipalSalesOutAggregateResult` via `PrincipalPerformanceComposer.Compose`, emitting top-5 Principal alerts with `EntityType=Principal`, `KpiId=PRN-SALES-001`, `DashboardRoute=/dashboard/principal-performance`; `AlertCenterComposeInput` gains `PrincipalSalesOut` property; `DashboardAlertCenterDal` injects `IPrincipalSalesOutSnapshotDal` and loads the snapshot; `DashboardAlertCenterNavigationLinks` gains `PrincipalPerformanceDashboardRoute`; `InvestigationRegistry` registers the signal for investigation metadata. Frontend: `DashboardAlertCenterNavigationLinks` TypeScript interface gains `PrincipalPerformanceDashboardRoute`. Tests: 6 new tests covering alert creation routed to SA04, no return/collection/credit alerts, coexistence with Salesman alerts, null/wrong-KpiId guards, and navigation route. `btr.application` and `btr.infrastructure` build successfully. No return, collection, credit, or financial alerts added. EX01 unchanged.
+- Review History:
+  - 2026-09-10: IN REVIEW
 - Remediation History: none
 
 ### PCM-051

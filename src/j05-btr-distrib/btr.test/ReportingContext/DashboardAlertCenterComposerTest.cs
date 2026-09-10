@@ -7,6 +7,8 @@ using btr.application.ReportingContext.DashboardSnapshotAgg;
 using btr.application.ReportingContext.DashboardSnapshotAgg.Models;
 using AggregateTopCustomerRiskRow = btr.application.ReportingContext.DashboardSnapshotAgg.Models.DashboardPiutangTopCustomerRiskRow;
 using btr.application.ReportingContext.DashboardSnapshotAgg.Services;
+using btr.application.ReportingContext.PrincipalAnalyticsAgg;
+using btr.application.ReportingContext.PrincipalAnalyticsAgg.Models;
 using FluentAssertions;
 using Xunit;
 
@@ -463,6 +465,197 @@ namespace btr.test.ReportingContext
 
             result.IsAvailable.Should().BeTrue();
             GetCategoryAlerts(result, AlertCenterRegistry.CategoryCustomer).Should().BeEmpty();
+        }
+
+        [Fact]
+        public void Compose_PrincipalSalesOut_CreatesAlertsRoutedToSa04()
+        {
+            var input = FullInput();
+            input.PrincipalSalesOut = new PrincipalSalesOutAggregateResult
+            {
+                KpiId = PrincipalKpiCatalog.SalesOutId,
+                PeriodYear = 2026,
+                PeriodMonth = 6,
+                GeneratedAt = _utcNow.AddMinutes(-5),
+                Principals = new List<PrincipalSalesOutRow>
+                {
+                    new PrincipalSalesOutRow
+                    {
+                        KpiId = PrincipalKpiCatalog.SalesOutId,
+                        SupplierId = "SUP001",
+                        SupplierName = "Principal Alpha",
+                        SalesOutAmount = 5000000m,
+                        LineCount = 42,
+                        SortOrder = 1
+                    },
+                    new PrincipalSalesOutRow
+                    {
+                        KpiId = PrincipalKpiCatalog.SalesOutId,
+                        SupplierId = "SUP002",
+                        SupplierName = "Principal Beta",
+                        SalesOutAmount = 3000000m,
+                        LineCount = 28,
+                        SortOrder = 2
+                    }
+                }
+            };
+
+            var result = Compose(input);
+            var salesAlerts = GetCategoryAlerts(result, AlertCenterRegistry.CategorySales);
+
+            salesAlerts.Should().Contain(a =>
+                a.SignalKey == AlertCenterRegistry.SignalPrincipalSalesOut
+                && a.EntityType == "Principal"
+                && a.EntityName == "Principal Alpha"
+                && a.DashboardRoute == "/dashboard/principal-performance"
+                && a.ValueAmount == 5000000m);
+            salesAlerts.Should().Contain(a =>
+                a.SignalKey == AlertCenterRegistry.SignalPrincipalSalesOut
+                && a.EntityName == "Principal Beta"
+                && a.DashboardRoute == "/dashboard/principal-performance");
+        }
+
+        [Fact]
+        public void Compose_PrincipalSalesOut_DoesNotAddReturnCollectionOrCreditAlerts()
+        {
+            var input = FullInput();
+            input.PrincipalSalesOut = new PrincipalSalesOutAggregateResult
+            {
+                KpiId = PrincipalKpiCatalog.SalesOutId,
+                PeriodYear = 2026,
+                PeriodMonth = 6,
+                GeneratedAt = _utcNow.AddMinutes(-5),
+                Principals = new List<PrincipalSalesOutRow>
+                {
+                    new PrincipalSalesOutRow
+                    {
+                        KpiId = PrincipalKpiCatalog.SalesOutId,
+                        SupplierId = "SUP001",
+                        SupplierName = "Principal Alpha",
+                        SalesOutAmount = 5000000m,
+                        SortOrder = 1
+                    }
+                }
+            };
+
+            var result = Compose(input);
+            var allAlerts = result.AlertGroups.SelectMany(g => g.Alerts).ToList();
+
+            allAlerts.Should().NotContain(a =>
+                a.SignalKey != null && a.SignalKey.StartsWith("PRN-RET", StringComparison.OrdinalIgnoreCase));
+            allAlerts.Should().NotContain(a =>
+                a.SignalKey != null && a.SignalKey.Contains("Collection", StringComparison.OrdinalIgnoreCase)
+                && a.EntityType == "Principal");
+            allAlerts.Should().NotContain(a =>
+                a.SignalKey != null && a.SignalKey.Contains("Credit", StringComparison.OrdinalIgnoreCase)
+                && a.EntityType == "Principal");
+        }
+
+        [Fact]
+        public void Compose_PrincipalSalesOutAndSalesmanAlerts_BothPresentAndDistinguishable()
+        {
+            var input = FullInput();
+            input.PrincipalSalesOut = new PrincipalSalesOutAggregateResult
+            {
+                KpiId = PrincipalKpiCatalog.SalesOutId,
+                PeriodYear = 2026,
+                PeriodMonth = 6,
+                GeneratedAt = _utcNow.AddMinutes(-5),
+                Principals = new List<PrincipalSalesOutRow>
+                {
+                    new PrincipalSalesOutRow
+                    {
+                        KpiId = PrincipalKpiCatalog.SalesOutId,
+                        SupplierId = "SUP001",
+                        SupplierName = "Principal Alpha",
+                        SalesOutAmount = 5000000m,
+                        SortOrder = 1
+                    }
+                }
+            };
+            input.Salesman.AttentionList = new List<DashboardSalesmanAttentionRow>
+            {
+                new DashboardSalesmanAttentionRow
+                {
+                    SalesPersonId = "S001",
+                    SalesPersonCode = "S001",
+                    SalesPersonName = "Budi",
+                    SignalKey = DashboardSalesmanAggregator.SignalBelowTarget,
+                    SignalLabel = "Below Target",
+                    SortOrder = 2
+                }
+            };
+
+            var result = Compose(input);
+            var salesAlerts = GetCategoryAlerts(result, AlertCenterRegistry.CategorySales);
+
+            salesAlerts.Should().Contain(a =>
+                a.SignalKey == AlertCenterRegistry.SignalPrincipalSalesOut
+                && a.EntityType == "Principal");
+            salesAlerts.Should().Contain(a =>
+                a.SignalKey == DashboardSalesmanAggregator.SignalBelowTarget
+                && a.EntityType == "Salesman");
+        }
+
+        [Fact]
+        public void Compose_PrincipalSalesOutNull_NoPrincipalSalesAlerts()
+        {
+            var input = FullInput();
+            input.PrincipalSalesOut = null;
+
+            var result = Compose(input);
+            var salesAlerts = GetCategoryAlerts(result, AlertCenterRegistry.CategorySales);
+
+            salesAlerts.Should().NotContain(a =>
+                a.SignalKey == AlertCenterRegistry.SignalPrincipalSalesOut);
+        }
+
+        [Fact]
+        public void Compose_PrincipalSalesOut_WrongKpiId_NoPrincipalSalesAlerts()
+        {
+            var input = FullInput();
+            input.PrincipalSalesOut = new PrincipalSalesOutAggregateResult
+            {
+                KpiId = "WRONG-KPI",
+                PeriodYear = 2026,
+                PeriodMonth = 6,
+                GeneratedAt = _utcNow.AddMinutes(-5),
+                Principals = new List<PrincipalSalesOutRow>
+                {
+                    new PrincipalSalesOutRow
+                    {
+                        KpiId = "WRONG-KPI",
+                        SupplierId = "SUP001",
+                        SupplierName = "Principal Alpha",
+                        SalesOutAmount = 5000000m,
+                        SortOrder = 1
+                    }
+                }
+            };
+
+            var result = Compose(input);
+
+            GetCategoryAlerts(result, AlertCenterRegistry.CategorySales)
+                .Should().NotContain(a => a.SignalKey == AlertCenterRegistry.SignalPrincipalSalesOut);
+        }
+
+        [Fact]
+        public void Compose_PrincipalSalesOut_NavigationIncludesPrincipalPerformanceRoute()
+        {
+            var input = FullInput();
+            input.PrincipalSalesOut = new PrincipalSalesOutAggregateResult
+            {
+                KpiId = PrincipalKpiCatalog.SalesOutId,
+                PeriodYear = 2026,
+                PeriodMonth = 6,
+                GeneratedAt = _utcNow.AddMinutes(-5),
+                Principals = new List<PrincipalSalesOutRow>()
+            };
+
+            var result = Compose(input);
+
+            result.Navigation.PrincipalPerformanceDashboardRoute
+                .Should().Be("/dashboard/principal-performance");
         }
 
         private AlertCenterComposeInput FullInput()

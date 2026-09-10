@@ -1366,6 +1366,7 @@ export interface PortalMenuLinkDto {
 export interface DashboardAlertCenterNavigationLinks {
   ExecutiveDashboardRoute: string
   SalesDashboardRoute: string
+  PrincipalPerformanceDashboardRoute: string
   PiutangDashboardRoute: string
   CustomerDashboardRoute: string
   SalesmanDashboardRoute: string

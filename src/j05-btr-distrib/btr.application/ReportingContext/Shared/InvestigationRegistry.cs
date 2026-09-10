@@ -238,6 +238,10 @@ namespace btr.application.ReportingContext.Shared
                 Entry(SignalRankingTopPrincipal, "Top Principal", InvestigationMetadataBuilder.EntityTypePrincipal,
                     "/dashboard/purchasing", PurchasingReportRoute, null, PeriodModeCurrentMonth),
 
+                // Principal Sales-Out (PCM-050)
+                Entry(DashboardAlertCenterAgg.Services.AlertCenterRegistry.SignalPrincipalSalesOut, "Principal Sales-Out", InvestigationMetadataBuilder.EntityTypePrincipal,
+                    "/dashboard/principal-performance", SalesReportRoute, null, PeriodModeCurrentMonth),
+
                 // Customer portfolio (M31)
                 Entry(PortfolioActionCollect, "Collect", InvestigationMetadataBuilder.EntityTypeCustomer,
                     CustomerPortfolioDashboardRoute, CustomerReportRoute,
