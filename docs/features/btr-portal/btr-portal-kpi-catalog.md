@@ -44,6 +44,7 @@ Pembaca harus dapat menjawab untuk setiap KPI:
 | `IN-KPI-` | Inventory | IN01–IN05 |
 | `PU-KPI-` | Purchasing | PU01, PU02 |
 | `OP-KPI-` | Operations (Locations) | OP01 |
+| `PRN-` | Principal Analytics (Principal KPI Registry v1) | SA04, Principal Entity Analytics profile |
 
 **Aturan:** Tiga digit sequential per prefix; ID immutable setelah publish; KPI lintas-menu dimiliki prefix domain **primary** (contoh: Total Piutang → `FI-KPI-001`).
 
@@ -59,8 +60,9 @@ Pembaca harus dapat menjawab untuk setiap KPI:
 | IN-KPI-001 – 027 | Inventory lifecycle | 27 |
 | PU-KPI-001 – 014 | Purchasing | 14 |
 | OP-KPI-001 – 012 | Locations | 12 |
+| PRN-SALES-001, PRN-RET-001 – 004, PRN-TGT-001 – 003, PRN-GRW-001 – 002, PRN-CUS-001 – 002, PRN-PUR-001, PRN-INV-001 – 002 | Principal Analytics (Registry v1) | 15 |
 
-**Total:** ~214 entri terindeks (termasuk sub-bucket aging, payment mix, ranking pattern, dan ref lintas-menu).
+**Total:** ~229 entri terindeks (termasuk sub-bucket aging, payment mix, ranking pattern, dan ref lintas-menu).
 
 ---
 
@@ -71,6 +73,7 @@ Pembaca harus dapat menjawab untuk setiap KPI:
 | EX01 | Executive | `/dashboard` |
 | EX02 | Alert Center | `/alerts` |
 | SA01 | Sales | `/dashboard/sales` |
+| SA04 | Principal Performance | `/dashboard/principal-performance` |
 | SA02 | Sales Forecast | `/dashboard/sales-forecast` |
 | SA03 | Sales Report | `/reports/sales` |
 | CU01 | Customers | `/dashboard/customers` |
@@ -384,6 +387,24 @@ Navigasi cepat ke setiap entri KPI di §6. Klik kode KPI untuk loncat ke definis
 - [OP-KPI-010 — Top Warehouse by Purchasing (Ranking)](#op-kpi-010)
 - [OP-KPI-011 — Top Wilayah by Sales (Ranking)](#op-kpi-011)
 - [OP-KPI-012 — Location Attention Signal Counts](#op-kpi-012)
+
+### 6.9 Principal Analytics (PRN-)
+
+- [PRN-SALES-001 — Principal Sales-Out](#prn-sales-001)
+- [PRN-RET-001 — Good Return Amount](#prn-ret-001)
+- [PRN-RET-002 — Broken Return Amount](#prn-ret-002)
+- [PRN-RET-003 — Total Return Amount](#prn-ret-003)
+- [PRN-RET-004 — Return Percentage](#prn-ret-004)
+- [PRN-TGT-001 — Principal Target](#prn-tgt-001)
+- [PRN-TGT-002 — Achievement Amount](#prn-tgt-002)
+- [PRN-TGT-003 — Achievement Percentage](#prn-tgt-003)
+- [PRN-GRW-001 — Month-over-Month Growth Percentage](#prn-grw-001)
+- [PRN-GRW-002 — Year-over-Year Growth Percentage](#prn-grw-002)
+- [PRN-CUS-001 — Active Customer Count](#prn-cus-001)
+- [PRN-CUS-002 — Customer Coverage Percentage](#prn-cus-002)
+- [PRN-PUR-001 — Purchase-In](#prn-pur-001)
+- [PRN-INV-001 — Inventory Value](#prn-inv-001)
+- [PRN-INV-002 — Inventory Days](#prn-inv-002)
 
 ---
 
@@ -6774,6 +6795,462 @@ Warehouse × Signal rows: Inactive With Stock, No Sales With Inventory, concentr
 
 ---
 
+### 6.9 Principal Analytics (PRN-)
+
+Bagian ini adalah sinkronisasi katalog permanen ke **Principal KPI Registry v1** dan guardrail implementasi **GR-001** (perlindungan semantik Return) serta **GR-002** (proyeksi relasi Customer–Principal). Hierarki ranking: otoritatif `PRN-SALES-001`; pendukung (`supporting`) hanya `PRN-RET-004`, `PRN-TGT-003`, `PRN-GRW-001`, `PRN-GRW-002`. `PRN-PUR-001`, `PRN-INV-001`, `PRN-INV-002`, `PRN-CUS-001`, dan `PRN-CUS-002` bukan ranking KPI performa Principal. Tidak ada composite Principal Health Score dan tidak ada KPI Net Sales pada V1. ID `PR-KPI-*` dan `CP-KPI-*` ditarik (withdrawn) dan tidak boleh dipakai. Klasifikasi kategori entity memakai kategori Supplier yang sudah ada; label user-facing memakai Principal. Istilah teknis tetap `Supplier` / `SupplierId`.
+
+<a id="prn-sales-001"></a>
+## PRN-SALES-001 — Principal Sales-Out
+
+**Location**
+
+- SA04 - Principal Performance (ranking dan nilai performa utama)
+- SA01 - Sales (dekomposisi Principal)
+- SA03 - Sales Report (evidence Faktur Item)
+- Principal Entity Analytics profile (commercial performance pack)
+
+---
+
+### WHAT
+
+Total **Sales-Out (DPP)** yang diatribusikan ke satu Principal. KPI performa Principal yang otoritatif dan KPI ranking otoritatif untuk performa komersial Principal.
+
+- Independen terhadap Returns: Returns, Claims, dan Inventory Adjustments tidak mengurangi, mengganti, atau mendefinisikan ulang Sales-Out.
+- Audience: Owner, GM, Sales management.
+- Sumber: Faktur Item non-void.
+
+### HOW
+
+* Rumus: `SUM(FakturItem.SubTotal - FakturItem.DiscRp)` per Principal.
+- Evidence grain: Faktur Item.
+- Hanya Faktur non-void (`Faktur.VoidDate = '3000-01-01'`, mengikuti evidence omzet Principal yang sudah ada).
+- Atribusi tiap baris melalui `FakturItem.BrgId → BTR_Brg.SupplierId` (Item master saat ini, diperlakukan immutable untuk analytics).
+- Jangan pakai `FakturItem.Total` (memuat pajak: `SubTotal - DiscRp + PpnRp`), `FakturItem.DppRp` (tax-base via `DppProsen`, bukan Sales-Out DPP), atau `Faktur.GrandTotal`.
+- Jangan alokasikan pajak header, freight, rounding, atau adjustment header lain ke Principal.
+- Jangan kurangi Returns, Claims, atau Inventory Adjustments. Jangan tulis nominal return ke snapshot Sales-Out.
+- `SupplierId` kosong/tidak dikenal dikecualikan dari baris Principal dan dicatat di output data-quality Sales-Out (amount + count). Jangan buat Principal sintetis.
+- Total company pada surface company tetap memakai header `GrandTotal`; tidak harus sama dengan jumlah `PRN-SALES-001`.
+- `BTRPD_SalesmanPrincipalAchievement.CompletedOmzet` tetap memakai measure `Total` existing dan tidak ditimpa `PRN-SALES-001`.
+- `PRN-RET-004` boleh membaca `PRN-SALES-001` sebagai denominator; pembacaan itu bukan otorisasi update.
+- Tidak ada KPI Net Sales / net-of-returns / sales-after-returns. Net Sales di masa depan — bila disetujui — harus memakai ID terpisah dan tidak boleh menggantikan, me-rename, atau menjadi makna otoritatif `PRN-SALES-001`.
+
+### WHY
+
+* Satu angka kebenaran performa komersial Principal; dasar ranking, target vs achievement, growth, dan attention.
+- Melindungi performa dari distorsi retur/klaim/adjustment.
+
+### WHEN
+
+* Daily SA04 ranking → drill-down evidence Faktur Item.
+- SA01 dekomposisi Principal → SA04 untuk Principal terpilih.
+- SA03 filter/dekomposisi Principal; company total header tetap dilabel header total.
+
+<a id="prn-ret-001"></a>
+## PRN-RET-001 — Good Return Amount
+
+**Location**
+
+- SA04 - Principal Performance (panel returns)
+- Principal Entity Analytics profile (return pack)
+- Return Item evidence drill-down
+
+---
+
+### WHAT
+
+Total nilai **Good Return** yang diatribusikan ke satu Principal. KPI return independen; bukan ranking otoritatif Principal.
+
+### HOW
+
+* Rumus: `SUM(ReturJualItem.SubTotal - ReturJualItem.DiscRp)` dengan `JenisRetur = BAGUS`.
+- Evidence grain: Return Item. Nilai baris = amount setelah diskon komersial dan sebelum pajak; `PpnRp` dikecualikan. Jangan pakai `ReturJualItem.Total` atau `ReturJual.GrandTotal`.
+- Atribusi via `ReturJualItem.BrgId → BTR_Brg.SupplierId`. Nilai `JenisRetur` hanya `BAGUS` dan `RUSAK` (operasional existing).
+- Return void dikecualikan memakai void sentinel existing. `SupplierId` kosong/tidak dikenal dikecualikan; jangan buat Principal sintetis.
+- Salesman pada dokumen return tidak dipakai untuk reassign revenue, target, atau bonus Faktur.
+- Returns tidak pernah mengurangi `PRN-SALES-001`. Slice penulis return tidak menulis/meng-update `PRN-SALES-001` dan tidak menulis `PRN-RET-004`.
+
+### WHY
+
+* Kualitas dan after-sales per Principal, terpisah dari performa penjualan.
+
+### WHEN
+
+* SA04 panel returns → drill-down Return Item untuk Principal dan periode terpilih.
+
+<a id="prn-ret-002"></a>
+## PRN-RET-002 — Broken Return Amount
+
+**Location**
+
+- SA04 - Principal Performance (panel returns)
+- Principal Entity Analytics profile (return pack)
+- Return Item evidence drill-down
+
+---
+
+### WHAT
+
+Total nilai **Broken/Damaged Return** yang diatribusikan ke satu Principal. KPI return independen; bukan ranking otoritatif Principal.
+
+### HOW
+
+* Rumus: `SUM(ReturJualItem.SubTotal - ReturJualItem.DiscRp)` dengan `JenisRetur = RUSAK`.
+- Evidence grain: Return Item; aturanvoid, atribusi `SupplierId`, eksklusi `PpnRp`/`Total`/`GrandTotal`, dan larangan reassign Salesman sama dengan `PRN-RET-001`.
+- Returns tidak pernah mengurangi `PRN-SALES-001`. Slice penulis tidak menulis/meng-update `PRN-SALES-001` dan tidak menulis `PRN-RET-004`.
+
+### WHY
+
+* Memisahkan retur rusak dari retur bagus untuk analisis kualitas Principal.
+
+### WHEN
+
+* SA04 panel returns → drill-down Return Item.
+
+<a id="prn-ret-003"></a>
+## PRN-RET-003 — Total Return Amount
+
+**Location**
+
+- SA04 - Principal Performance (panel returns)
+- Principal Entity Analytics profile (return pack)
+
+---
+
+### WHAT
+
+Total Return = Good Return + Broken Return per Principal. KPI return independen; bukan ranking otoritatif.
+
+### HOW
+
+* Rumus: `PRN-RET-001 + PRN-RET-002`.
+- Evidence grain: Return Item. Tidak dihitung dengan mengurangkan return dari Sales-Out.
+- Returns tidak pernah mengurangi `PRN-SALES-001`. Slice penulis tidak menulis/meng-update `PRN-SALES-001` dan tidak menulis `PRN-RET-004`.
+
+### WHY
+
+* Denominator tunggal untuk Return Percentage dan ringkasan return per Principal.
+
+### WHEN
+
+* SA04 panel returns; input `PRN-RET-004`.
+
+<a id="prn-ret-004"></a>
+## PRN-RET-004 — Return Percentage
+
+**Location**
+
+- SA04 - Principal Performance (panel returns; opsi supporting ranking)
+- Principal Entity Analytics profile (return pack, indikator kualitas)
+
+---
+
+### WHAT
+
+Rasio kualitas **Return Amount ÷ Sales-Out** per Principal. Supporting ranking KPI; bukan pengurang Sales-Out dan bukan Net Sales. User-facing name: Return Percentage.
+
+### HOW
+
+* Rumus: `PRN-RET-003 ÷ PRN-SALES-001` bila `PRN-SALES-001 > 0`; selain itu null.
+- Evidence grain: Return Item dan `PRN-SALES-001` tersimpan. Writer membaca snapshot tersimpan dan tidak menulis/meng-update `PRN-SALES-001` maupun `PRN-RET-003`.
+- Dilabel Return Percentage (quality ratio), bukan deduksi dari Sales-Out dan bukan Net Sales. Tidak menggantikan ranking otoritatif `PRN-SALES-001`.
+
+### WHY
+
+* Membandingkan beban return antar Principal secara proporsional; opsi ranking pendukung bila dipilih user.
+
+### WHEN
+
+* SA04 panel returns dan kontrol supporting ranking (default tetap `PRN-SALES-001`) → Return Item evidence.
+
+<a id="prn-tgt-001"></a>
+## PRN-TGT-001 — Principal Target
+
+**Location**
+
+- SA04 - Principal Performance (panel target & achievement)
+- SA01 - Sales (kontribusi Principal vs target)
+- Principal Entity Analytics profile (target pack)
+
+---
+
+### WHAT
+
+Jumlah **Target Principal** per Principal dan bulan. Bukan Sales-Out dan bukan achievement.
+
+### HOW
+
+* Rumus: `SUM(BTR_SalesPersonPrincipalTarget.TargetAmount)` untuk `SupplierId`, `TargetYear`, dan `TargetMonth` tersebut.
+- Evidence grain: `SalesPersonPrincipalTarget`.
+- Tidak ada Principal Target yang dikelola independen; tidak ada baris Principal Target mandiri.
+- Salesman bertanggung jawab atas Principal pada suatu bulan hanya bila ada record target untuk Salesman, Principal, tahun, dan bulan itu.
+- `BTR_SalesPersonSupplier` hanya referensi eligibilitas saat ini; bukan sumber responsibility historis.
+- Slice penulis tidak menulis `PRN-SALES-001`, `PRN-TGT-002`, `PRN-TGT-003`, atau KPI return apa pun.
+
+### WHY
+
+* Denominator plan untuk achievement Principal; tanggung jawab bulanan berbasis target.
+
+### WHEN
+
+* SA04 panel target & achievement; SA01 kontribusi Principal.
+
+<a id="prn-tgt-002"></a>
+## PRN-TGT-002 — Achievement Amount
+
+**Location**
+
+- SA04 - Principal Performance (panel target & achievement)
+- Principal Entity Analytics profile (target pack)
+
+---
+
+### WHAT
+
+**Principal Sales-Out versus Target** per Principal dan bulan. Bukan salinan Sales-Out dan bukan Net Sales.
+
+### HOW
+
+* Rumus: tersimpan `PRN-SALES-001 − PRN-TGT-001` bila `PRN-TGT-001 > 0` dan Sales-Out tersimpan ada; selain itu null.
+- Evidence grain: `PRN-SALES-001` dan `PRN-TGT-001` tersimpan. Writer hanya membaca; tidak menulis/meng-update kedua source dan tidak menulis KPI return.
+- Tidak mengurangi returns, claims, atau inventory adjustments. Tidak dilabel Net Sales.
+
+### WHY
+
+* Nilai absolut pencapaian Principal terhadap plan.
+
+### WHEN
+
+* SA04 panel target & achievement untuk periode yang sama.
+
+<a id="prn-tgt-003"></a>
+## PRN-TGT-003 — Achievement Percentage
+
+**Location**
+
+- SA04 - Principal Performance (panel target & achievement; opsi supporting ranking)
+- Principal Entity Analytics profile (target pack)
+
+---
+
+### WHAT
+
+**Principal Sales-Out ÷ Principal Target** per Principal dan bulan. Supporting ranking KPI; bukan pengganti Sales-Out dan bukan Net Sales.
+
+### HOW
+
+* Rumus: tersimpan `PRN-SALES-001 ÷ PRN-TGT-001` bila `PRN-TGT-001 > 0`; selain itu null.
+- Evidence grain: `PRN-SALES-001` dan `PRN-TGT-001` tersimpan. Writer hanya membaca; tidak menulis/meng-update kedua source.
+- Tidak dilabel Net Sales.
+
+### WHY
+
+* Perbandingan relatif pencapaian antar Principal; opsi ranking pendukung bila dipilih user.
+
+### WHEN
+
+* SA04 panel target & achievement dan kontrol supporting ranking (default tetap `PRN-SALES-001`).
+
+<a id="prn-grw-001"></a>
+## PRN-GRW-001 — Month-over-Month Growth Percentage
+
+**Location**
+
+- SA04 - Principal Performance (panel growth; opsi supporting ranking)
+- Principal Entity Analytics profile (growth pack)
+
+---
+
+### WHAT
+
+Pertumbuhan bulanan Principal dari Sales-Out. Supporting ranking KPI; bukan pengganti Sales-Out dan bukan Net Sales.
+
+### HOW
+
+* Rumus: `(bulan berjalan PRN-SALES-001 − bulan sebelumnya PRN-SALES-001) ÷ bulan sebelumnya PRN-SALES-001` bila bulan sebelumnya > 0; selain itu null.
+- Evidence grain: histori bulan `PRN-SALES-001` tersimpan. Hanya memakai histori Sales-Out; tidak memakai Purchase-In, returns, claims, atau inventory adjustments.
+- Writer tidak menulis `PRN-SALES-001` maupun `PRN-GRW-002`.
+
+### WHY
+
+* Momentum jangka pendek Principal.
+
+### WHEN
+
+* SA04 panel growth dan kontrol supporting ranking.
+
+<a id="prn-grw-002"></a>
+## PRN-GRW-002 — Year-over-Year Growth Percentage
+
+**Location**
+
+- SA04 - Principal Performance (panel growth; opsi supporting ranking)
+- Principal Entity Analytics profile (growth pack)
+
+---
+
+### WHAT
+
+Pertumbuhan tahunan Principal dari Sales-Out (bulan yang sama tahun sebelumnya). Supporting ranking KPI; bukan pengganti Sales-Out dan bukan Net Sales.
+
+### HOW
+
+* Rumus: `(bulan berjalan PRN-SALES-001 − bulan yang sama tahun sebelumnya PRN-SALES-001) ÷ bulan yang sama tahun sebelumnya PRN-SALES-001` bila pembanding > 0; selain itu null.
+- Evidence grain: histori bulan `PRN-SALES-001` tersimpan. Hanya memakai histori Sales-Out; tidak memakai Purchase-In, returns, claims, atau inventory adjustments.
+- Writer tidak menulis `PRN-SALES-001` maupun `PRN-GRW-001`.
+
+### WHY
+
+* Tren tahunan Principal yang membersihkan musiman bulanan.
+
+### WHEN
+
+* SA04 panel growth dan kontrol supporting ranking.
+
+<a id="prn-cus-001"></a>
+## PRN-CUS-001 — Active Customer Count
+
+**Location**
+
+- SA04 - Principal Performance (panel customer reach)
+- Principal Entity Analytics profile (customer pack, bila dikomposisikan)
+
+---
+
+### WHAT
+
+Jumlah Customer aktif yang membeli Principal tersebut. Bukan ranking performa Principal dan bukan Net Sales.
+
+### HOW
+
+* Rumus: `COUNT(Customers pada BTRPD_CustomerPrincipalRelationship dengan RelationshipStatus = Active)` per Principal.
+- Evidence grain: Customer × Principal Relationship Projection (`BTRPD_CustomerPrincipalRelationship`).
+- Active = transaksi terakhir pada proyeksi dalam 6 bulan dari tanggal as-of snapshot. Dormant = baris proyeksi ada tetapi transaksi terakhir di luar 6 bulan; baris Dormant dikecualikan dari hitungan tetapi tidak dihapus. Histori dipertahankan tanpa batas waktu.
+- Hitungan tidak memindai (scan) histori transaksi mentah; hanya membaca status tersimpan pada proyeksi. Writer tidak menulis status proyeksi dan tidak menulis `PRN-SALES-001`. Tidak merender panel dashboard pada slice penulis; display pada slice consumer.
+- Coverage, Active Customer, Dormant Customer, Relationship Analytics, dan Entity Analytics wajib mengonsumsi `BTRPD_CustomerPrincipalRelationship`.
+
+### WHY
+
+* Breadth distribusi Principal: berapa account aktif yang benar-benar menyerap produk Principal.
+
+### WHEN
+
+* SA04 panel customer reach; evidence grain dinyatakan sebagai relationship projection.
+
+<a id="prn-cus-002"></a>
+## PRN-CUS-002 — Customer Coverage Percentage
+
+**Location**
+
+- SA04 - Principal Performance (panel customer reach)
+
+---
+
+### WHAT
+
+Jangkauan Customer terhadap basis Customer eligible pada proyeksi per Principal. Bukan ranking performa Principal dan bukan Net Sales.
+
+### HOW
+
+* Rumus: `PRN-CUS-001 ÷ COUNT(Customers pada proyeksi relationship Principal tersebut)` bila count > 0; selain itu null.
+- Evidence grain: Customer × Principal Relationship Projection.
+- Denominator adalah populasi proyeksi yang dipertahankan (retained), termasuk Customer Dormant. Bukan daftar eligible-customer manual/assignment pra-pembelian.
+- Kalkulasi membaca `PRN-CUS-001` tersimpan dan proyeksi tersimpan; tidak memindai histori transaksi mentah. Writer tidak menulis status proyeksi dan tidak menulis `PRN-SALES-001`. Tidak ada ID `CP-KPI-*`. Tidak merender panel dashboard pada slice penulis.
+- Coverage, Active Customer, Dormant Customer, Relationship Analytics, dan Entity Analytics wajib mengonsumsi `BTRPD_CustomerPrincipalRelationship`.
+
+### WHY
+
+* Seberapa luas Principal menembus basis Customer yang pernah bertransaksi dengannya.
+
+### WHEN
+
+* SA04 panel customer reach; evidence grain dinyatakan sebagai relationship projection.
+
+<a id="prn-pur-001"></a>
+## PRN-PUR-001 — Purchase-In
+
+**Location**
+
+- PU01 - Purchasing (dilabel Purchase-In; bukan Sales-Out)
+- Principal Entity Analytics profile (purchase pack, dilabel Purchase-In)
+
+---
+
+### WHAT
+
+Total pembelian dari Principal tersebut. KPI purchasing independen; bukan ranking KPI performa Principal dan bukan Sales-Out.
+
+### HOW
+
+* Rumus: `SUM(InvoiceItem.Total)` untuk purchase invoice non-void, diatribusikan via `Invoice.SupplierId`.
+- Evidence grain: Purchase Detail. Nilai dihitung dari Purchase Detail; bukan dari histori Sales-Out dan bukan in-memory Purchasing Management `SalesOutAmount`. `PU-KPI-001` existing tidak berubah untuk pemakaian purchasing-nya.
+- Diskon header, pajak, dan adjustment header tidak dialokasikan ke Principal. Purchase return tidak dikurangkan.
+- Writer tidak menulis `PRN-SALES-001`. Slice penulis tidak menambah Entity Analytics purchase pack (komposisi pada slice terpisah).
+
+### WHY
+
+* Sisi supply (pembelian) Principal, dipisahkan tegas dari sisi sell-out komersial.
+
+### WHEN
+
+* PU01/PU02 sebagai Purchase-In; profil Principal sebagai pack Purchase-In, tidak dipakai untuk ranking performa.
+
+<a id="prn-inv-001"></a>
+## PRN-INV-001 — Inventory Value
+
+**Location**
+
+- Principal Entity Analytics profile (inventory pack, indikator operasional)
+- Cross-link IN01/IN02 → SA04 (navigasi; measure inventory tidak berubah)
+
+---
+
+### WHAT
+
+Nilai inventory saat ini untuk produk Principal tersebut. Indikator operasional independen; bukan ranking performa dan tidak memodifikasi Sales-Out.
+
+### HOW
+
+* Rumus: valuasi Inventory Snapshot existing `SUM(Hpp * Qty)`, exclude In-Transit dan qty non-positif.
+- Evidence grain: Inventory Snapshot. Atribusi produk Principal via Item-master `SupplierId`; `SupplierId` kosong/tidak dikenal dikecualikan tanpa Principal sintetis.
+- Writer tidak menulis `PRN-SALES-001`. Slice penulis tidak mengubah view IN01–IN05 dan tidak menambah Entity Analytics pack (komposisi pada slice terpisah).
+
+### WHY
+
+* Modal yang terikat pada produk Principal; konteks operasional di samping performa sell-out.
+
+### WHEN
+
+* Profil Principal sebagai indikator inventory; IN01/IN02 tetap inventory measure dengan navigasi ke SA04.
+
+<a id="prn-inv-002"></a>
+## PRN-INV-002 — Inventory Days
+
+**Location**
+
+- Principal Entity Analytics profile (inventory pack, indikator operasional)
+
+---
+
+### WHAT
+
+Estimasi hari cakupan inventory (days of coverage) untuk produk Principal tersebut. Indikator operasional independen; bukan ranking performa dan tidak memodifikasi Sales-Out.
+
+### HOW
+
+* Rumus: measure coverage existing — Average Days of Supply = eligible quantity ÷ total ADC; null bila total ADC tidak positif.
+- Evidence grain: Inventory Snapshot. Tidak ada algoritma days-of-cover baru. Aturan eligible quantity dan ADC mengikuti aturan coverage inventory existing.
+- Writer tidak menulis `PRN-SALES-001`. Slice penulis tidak mengubah view IN01–IN05 dan tidak menambah Entity Analytics pack (komposisi pada slice terpisah).
+
+### WHY
+
+* Berapa lama stok Principal bertahan pada laju pemakaian berjalan.
+
+### WHEN
+
+* Profil Principal sebagai indikator inventory.
+
+---
+
 ## 7. Indeks KPI per Menu
 
 | Menu | KPI Codes (primary) |
@@ -6781,6 +7258,7 @@ Warehouse × Signal rows: Inactive With Stock, No Sales With Inventory, concentr
 | EX01 | EX-KPI-001–021 |
 | EX02 | EX-KPI-022–029; concentrations reuse FI/CU/IN/PU KPIs |
 | SA01 | SA-KPI-001–008 |
+| SA04 | PRN-SALES-001, PRN-RET-001 – 004, PRN-TGT-001 – 003, PRN-GRW-001 – 002, PRN-CUS-001 – 002 (display; evidence grains per §6.9) |
 | SA02 | SA-KPI-009–019 |
 | SA03 | SA-KPI-002 (derivable); no footer KPI |
 | CU01 | CU-KPI-001–010 |

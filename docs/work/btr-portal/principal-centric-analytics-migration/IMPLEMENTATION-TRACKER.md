@@ -250,9 +250,13 @@ Only a review agent may set `GO` or `NO-GO`.
 
 ### PCM-019
 
-- Status: PLANNED
-- Implementation History: none
-- Review History: none
+- Status: GO
+- Implementation History:
+  - 2026-09-10: IN IMPLEMENTATION
+  - 2026-09-10: IMPLEMENTED. Synchronized `docs/features/btr-portal/btr-portal-kpi-catalog.md` to the Principal KPI Registry v1 and GR-001/GR-002: added §6.9 with all 15 implemented registry KPI entries (PRN-SALES-001, PRN-RET-001–004, PRN-TGT-001–003, PRN-GRW-001–002, PRN-CUS-001–002, PRN-PUR-001, PRN-INV-001–002) with registry formulas, evidence grains, ranking hierarchy, return-semantic protection, separate-ID Net Sales rule, and projection consumption; added PRN prefix/registry rows (§3/§3.1), SA04 menu/index rows (§4/§7), and Daftar Isi §6.9. No PR-KPI/CP-KPI/Health Score/Net Sales entry added. Navigation, domain, and dashboard artifacts unchanged.
+- Review History:
+  - 2026-09-10: IN REVIEW
+  - 2026-09-10: GO. Catalog text matches registry, GR-001/GR-002, and implemented formulas; PRN-SALES-001 independent of Returns; future Net Sales separate-ID rule stated; Active/Coverage read BTRPD_CustomerPrincipalRelationship; no PR-KPI/CP-KPI/Health Score/Net Sales entry added; only catalog + tracker changed.
 - Remediation History: none
 
 ### PCM-020
