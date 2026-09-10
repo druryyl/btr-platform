@@ -41,6 +41,13 @@ const returnRankingColumns = [
   { field: 'ReturnPercentage', header: 'Return %' },
 ]
 
+const growthRankingColumns = [
+  { field: 'Rank', header: 'Rank' },
+  { field: 'PrincipalName', header: 'Principal' },
+  { field: 'MomGrowthPercentage', header: 'MoM Growth %' },
+  { field: 'YoyGrowthPercentage', header: 'YoY Growth %' },
+]
+
 const rankingRows = computed(
   () => (dashboard.principalPerformance?.Ranking ?? []) as Record<string, unknown>[],
 )
@@ -81,6 +88,35 @@ const returnRankingRows = computed(() =>
 
 const returnPercentDisplay = computed(() => {
   const ratio = dashboard.principalPerformance?.ReturnPercentage
+  return formatPercent(ratio != null ? ratio * 100 : null)
+})
+
+const growthIsAvailable = computed(
+  () => dashboard.principalPerformance?.GrowthIsAvailable === true,
+)
+
+const growthRankingRows = computed(() =>
+  ((dashboard.principalPerformance?.Ranking ?? []) as PrincipalPerformanceRankingItem[])
+    .filter((row) => row.MomGrowthPercentage != null || row.YoyGrowthPercentage != null)
+    .map(
+      (row) =>
+        ({
+          ...row,
+          MomGrowthPercentage:
+            row.MomGrowthPercentage != null ? row.MomGrowthPercentage * 100 : null,
+          YoyGrowthPercentage:
+            row.YoyGrowthPercentage != null ? row.YoyGrowthPercentage * 100 : null,
+        }) as Record<string, unknown>,
+    ),
+)
+
+const momGrowthPercentDisplay = computed(() => {
+  const ratio = dashboard.principalPerformance?.MomGrowthPercentage
+  return formatPercent(ratio != null ? ratio * 100 : null)
+})
+
+const yoyGrowthPercentDisplay = computed(() => {
+  const ratio = dashboard.principalPerformance?.YoyGrowthPercentage
   return formatPercent(ratio != null ? ratio * 100 : null)
 })
 
@@ -383,6 +419,44 @@ onMounted(() => {
     </section>
 
     <section
+      class="principal-performance__growth"
+      data-kpi="PRN-GRW-001"
+      aria-label="Principal Sales-Out growth"
+    >
+      <div class="principal-performance__growth-kpis">
+        <DashboardMetric
+          label="Month-over-Month Growth %"
+          :value="growthIsAvailable ? momGrowthPercentDisplay : '—'"
+          :empty="!growthIsAvailable || dashboard.principalPerformance?.MomGrowthPercentage == null"
+        />
+        <DashboardMetric
+          label="Year-over-Year Growth %"
+          :value="growthIsAvailable ? yoyGrowthPercentDisplay : '—'"
+          :empty="!growthIsAvailable || dashboard.principalPerformance?.YoyGrowthPercentage == null"
+        />
+      </div>
+
+      <p class="principal-performance__growth-note">
+        Growth from stored Principal Sales-Out history only.
+        Sales-Out shown above is unchanged. Growth is not Purchase-In.
+      </p>
+
+      <Top10RankingTable
+        title="Principal Sales-Out growth"
+        :columns="growthRankingColumns"
+        :rows="growthRankingRows"
+        :loading="dashboard.loading"
+        value-field="MomGrowthPercentage"
+        percent-field="MomGrowthPercentage"
+        :empty-message="
+          growthIsAvailable
+            ? 'No Principal Sales-Out growth for the current period.'
+            : 'Principal Sales-Out growth is not yet available for the current period.'
+        "
+      />
+    </section>
+
+    <section
       class="principal-performance__contribution"
       aria-label="Salesman contribution within selected Principal"
     >
@@ -509,6 +583,27 @@ onMounted(() => {
   color: var(--p-text-muted-color);
 }
 
+.principal-performance__growth {
+  margin-top: 1rem;
+  padding: 1rem;
+  background: var(--p-surface-0);
+  border: 1px solid var(--p-surface-200);
+  border-radius: var(--dashboard-radius-sm);
+  box-shadow: var(--dashboard-shadow-idle);
+}
+
+.principal-performance__growth-kpis {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.principal-performance__growth-note {
+  margin: 0 0 1rem;
+  color: var(--p-text-muted-color);
+}
+
 .principal-performance__contribution {
   margin-top: 1rem;
   padding: 1rem;
@@ -538,6 +633,10 @@ onMounted(() => {
   }
 
   .principal-performance__returns-kpis {
+    grid-template-columns: 1fr;
+  }
+
+  .principal-performance__growth-kpis {
     grid-template-columns: 1fr;
   }
 }

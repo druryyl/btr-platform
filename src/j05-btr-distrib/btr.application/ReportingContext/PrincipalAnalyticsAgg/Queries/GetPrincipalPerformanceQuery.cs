@@ -65,6 +65,16 @@ namespace btr.application.ReportingContext.PrincipalAnalyticsAgg.Queries
 
         public bool ReturnIsAvailable { get; set; }
 
+        public string MomGrowthKpiId { get; set; }
+
+        public string YoyGrowthKpiId { get; set; }
+
+        public decimal? MomGrowthPercentage { get; set; }
+
+        public decimal? YoyGrowthPercentage { get; set; }
+
+        public bool GrowthIsAvailable { get; set; }
+
         public bool ContributionIsAvailable { get; set; }
 
         public IList<string> Disclosures { get; set; }
@@ -137,6 +147,14 @@ namespace btr.application.ReportingContext.PrincipalAnalyticsAgg.Queries
         public decimal? TotalReturnAmount { get; set; }
 
         public decimal? ReturnPercentage { get; set; }
+
+        public string MomGrowthKpiId { get; set; }
+
+        public string YoyGrowthKpiId { get; set; }
+
+        public decimal? MomGrowthPercentage { get; set; }
+
+        public decimal? YoyGrowthPercentage { get; set; }
     }
 
     public class GetPrincipalPerformanceHandler
@@ -147,6 +165,8 @@ namespace btr.application.ReportingContext.PrincipalAnalyticsAgg.Queries
         private readonly IPrincipalAchievementSnapshotDal _achievementSnapshotDal;
         private readonly IPrincipalReturnSnapshotDal _returnSnapshotDal;
         private readonly IPrincipalReturnPercentageSnapshotDal _returnPercentageSnapshotDal;
+        private readonly IPrincipalMomGrowthSnapshotDal _momGrowthSnapshotDal;
+        private readonly IPrincipalYoyGrowthSnapshotDal _yoyGrowthSnapshotDal;
         private readonly IPrincipalSalesmanContributionSnapshotDal _contributionSnapshotDal;
 
         public GetPrincipalPerformanceHandler(
@@ -155,6 +175,8 @@ namespace btr.application.ReportingContext.PrincipalAnalyticsAgg.Queries
             IPrincipalAchievementSnapshotDal achievementSnapshotDal,
             IPrincipalReturnSnapshotDal returnSnapshotDal,
             IPrincipalReturnPercentageSnapshotDal returnPercentageSnapshotDal,
+            IPrincipalMomGrowthSnapshotDal momGrowthSnapshotDal,
+            IPrincipalYoyGrowthSnapshotDal yoyGrowthSnapshotDal,
             IPrincipalSalesmanContributionSnapshotDal contributionSnapshotDal)
         {
             _snapshotDal = snapshotDal;
@@ -162,6 +184,8 @@ namespace btr.application.ReportingContext.PrincipalAnalyticsAgg.Queries
             _achievementSnapshotDal = achievementSnapshotDal;
             _returnSnapshotDal = returnSnapshotDal;
             _returnPercentageSnapshotDal = returnPercentageSnapshotDal;
+            _momGrowthSnapshotDal = momGrowthSnapshotDal;
+            _yoyGrowthSnapshotDal = yoyGrowthSnapshotDal;
             _contributionSnapshotDal = contributionSnapshotDal;
         }
 
@@ -178,6 +202,8 @@ namespace btr.application.ReportingContext.PrincipalAnalyticsAgg.Queries
                 _achievementSnapshotDal.GetCurrent(),
                 _returnSnapshotDal.GetCurrent(),
                 _returnPercentageSnapshotDal.GetCurrent(),
+                _momGrowthSnapshotDal is null ? null : _momGrowthSnapshotDal.GetCurrent(),
+                _yoyGrowthSnapshotDal is null ? null : _yoyGrowthSnapshotDal.GetCurrent(),
                 contribution));
         }
     }
@@ -215,6 +241,19 @@ namespace btr.application.ReportingContext.PrincipalAnalyticsAgg.Queries
             PrincipalReturnPercentageResult returnPercentage,
             PrincipalSalesmanContributionResult contribution)
         {
+            return Compose(snapshot, target, achievement, returns, returnPercentage, null, null, contribution);
+        }
+
+        public static PrincipalPerformanceResponse Compose(
+            PrincipalSalesOutAggregateResult snapshot,
+            PrincipalTargetAggregateResult target,
+            PrincipalAchievementResult achievement,
+            PrincipalReturnAggregateResult returns,
+            PrincipalReturnPercentageResult returnPercentage,
+            PrincipalMomGrowthResult momGrowth,
+            PrincipalYoyGrowthResult yoyGrowth,
+            PrincipalSalesmanContributionResult contribution)
+        {
             var response = new PrincipalPerformanceResponse
             {
                 KpiId = PrincipalKpiCatalog.SalesOutId,
@@ -226,6 +265,8 @@ namespace btr.application.ReportingContext.PrincipalAnalyticsAgg.Queries
                 BrokenReturnAmountKpiId = PrincipalKpiCatalog.BrokenReturnAmountId,
                 TotalReturnAmountKpiId = PrincipalKpiCatalog.TotalReturnAmountId,
                 ReturnPercentageKpiId = PrincipalKpiCatalog.ReturnPercentageId,
+                MomGrowthKpiId = PrincipalKpiCatalog.MomGrowthId,
+                YoyGrowthKpiId = PrincipalKpiCatalog.YoyGrowthId,
                 Disclosures = PrincipalSalesOutDisclosure.Statements.ToList()
             };
 
@@ -257,8 +298,148 @@ namespace btr.application.ReportingContext.PrincipalAnalyticsAgg.Queries
 
             AttachStoredTargetAndAchievement(response, snapshot, target, achievement);
             AttachStoredReturns(response, snapshot, returns, returnPercentage);
+            AttachStoredGrowth(response, snapshot, momGrowth, yoyGrowth);
             AttachStoredSalesmanContributions(response, snapshot, contribution);
             return response;
+        }
+
+        private static void AttachStoredGrowth(
+            PrincipalPerformanceResponse response,
+            PrincipalSalesOutAggregateResult snapshot,
+            PrincipalMomGrowthResult momGrowth,
+            PrincipalYoyGrowthResult yoyGrowth)
+        {
+            var momBySupplier = IndexMatchingMomGrowth(momGrowth, snapshot.PeriodYear, snapshot.PeriodMonth);
+            var yoyBySupplier = IndexMatchingYoyGrowth(yoyGrowth, snapshot.PeriodYear, snapshot.PeriodMonth);
+
+            if (momBySupplier.Count == 0 && yoyBySupplier.Count == 0)
+                return;
+
+            response.GrowthIsAvailable = true;
+
+            foreach (var item in response.Ranking)
+            {
+                if (string.IsNullOrWhiteSpace(item.SupplierId))
+                    continue;
+
+                var key = item.SupplierId.Trim();
+
+                if (momBySupplier.TryGetValue(key, out var momRow))
+                {
+                    item.MomGrowthKpiId = PrincipalKpiCatalog.MomGrowthId;
+                    item.MomGrowthPercentage = momRow.MomGrowthPercentage;
+                }
+
+                if (yoyBySupplier.TryGetValue(key, out var yoyRow))
+                {
+                    item.YoyGrowthKpiId = PrincipalKpiCatalog.YoyGrowthId;
+                    item.YoyGrowthPercentage = yoyRow.YoyGrowthPercentage;
+                }
+            }
+
+            if (momBySupplier.Count > 0)
+            {
+                response.MomGrowthKpiId = PrincipalKpiCatalog.MomGrowthId;
+                response.MomGrowthPercentage = CalculateTotalGrowthPercentage(
+                    momBySupplier.Values, row => row.CurrentSalesOutAmount, row => row.PriorSalesOutAmount);
+            }
+
+            if (yoyBySupplier.Count > 0)
+            {
+                response.YoyGrowthKpiId = PrincipalKpiCatalog.YoyGrowthId;
+                response.YoyGrowthPercentage = CalculateTotalGrowthPercentage(
+                    yoyBySupplier.Values, row => row.CurrentSalesOutAmount, row => row.PriorSalesOutAmount);
+            }
+        }
+
+        private static Dictionary<string, PrincipalMomGrowthRow> IndexMatchingMomGrowth(
+            PrincipalMomGrowthResult momGrowth,
+            int periodYear,
+            int periodMonth)
+        {
+            var bySupplier = new Dictionary<string, PrincipalMomGrowthRow>(StringComparer.OrdinalIgnoreCase);
+            if (momGrowth is null)
+                return bySupplier;
+
+            if (!string.Equals(momGrowth.MomGrowthKpiId, PrincipalKpiCatalog.MomGrowthId, StringComparison.Ordinal))
+                return bySupplier;
+
+            if (momGrowth.PeriodYear != periodYear || momGrowth.PeriodMonth != periodMonth)
+                return bySupplier;
+
+            foreach (var row in momGrowth.Principals ?? new List<PrincipalMomGrowthRow>())
+            {
+                if (row is null)
+                    continue;
+
+                var supplierId = (row.SupplierId ?? string.Empty).Trim();
+                if (supplierId.Length == 0 || bySupplier.ContainsKey(supplierId))
+                    continue;
+
+                bySupplier[supplierId] = row;
+            }
+
+            return bySupplier;
+        }
+
+        private static Dictionary<string, PrincipalYoyGrowthRow> IndexMatchingYoyGrowth(
+            PrincipalYoyGrowthResult yoyGrowth,
+            int periodYear,
+            int periodMonth)
+        {
+            var bySupplier = new Dictionary<string, PrincipalYoyGrowthRow>(StringComparer.OrdinalIgnoreCase);
+            if (yoyGrowth is null)
+                return bySupplier;
+
+            if (!string.Equals(yoyGrowth.YoyGrowthKpiId, PrincipalKpiCatalog.YoyGrowthId, StringComparison.Ordinal))
+                return bySupplier;
+
+            if (yoyGrowth.PeriodYear != periodYear || yoyGrowth.PeriodMonth != periodMonth)
+                return bySupplier;
+
+            foreach (var row in yoyGrowth.Principals ?? new List<PrincipalYoyGrowthRow>())
+            {
+                if (row is null)
+                    continue;
+
+                var supplierId = (row.SupplierId ?? string.Empty).Trim();
+                if (supplierId.Length == 0 || bySupplier.ContainsKey(supplierId))
+                    continue;
+
+                bySupplier[supplierId] = row;
+            }
+
+            return bySupplier;
+        }
+
+        private static decimal? CalculateTotalGrowthPercentage<T>(
+            IEnumerable<T> rows,
+            Func<T, decimal?> currentSelector,
+            Func<T, decimal?> priorSelector)
+        {
+            decimal currentTotal = 0m;
+            decimal priorTotal = 0m;
+            var hasAny = false;
+
+            foreach (var row in rows)
+            {
+                var current = currentSelector(row);
+                var prior = priorSelector(row);
+                if (!current.HasValue || !prior.HasValue)
+                    continue;
+
+                currentTotal += current.Value;
+                priorTotal += prior.Value;
+                hasAny = true;
+            }
+
+            if (!hasAny || priorTotal <= 0m)
+                return null;
+
+            return Math.Round(
+                (currentTotal - priorTotal) / priorTotal,
+                PrincipalMomGrowthSnapshot.PercentageScale,
+                MidpointRounding.AwayFromZero);
         }
 
         private static void AttachStoredSalesmanContributions(

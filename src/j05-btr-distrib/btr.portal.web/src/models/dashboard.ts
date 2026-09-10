@@ -184,6 +184,10 @@ export interface PrincipalPerformanceRankingItem {
   BrokenReturnAmount?: number | null
   TotalReturnAmount?: number | null
   ReturnPercentage?: number | null
+  MomGrowthKpiId?: string | null
+  YoyGrowthKpiId?: string | null
+  MomGrowthPercentage?: number | null
+  YoyGrowthPercentage?: number | null
 }
 
 export interface PrincipalSalesmanContributionItem {
@@ -224,6 +228,11 @@ export interface PrincipalPerformanceResponse {
   TotalReturnAmount?: number | null
   ReturnPercentage?: number | null
   ReturnIsAvailable: boolean
+  MomGrowthKpiId: string
+  YoyGrowthKpiId: string
+  MomGrowthPercentage?: number | null
+  YoyGrowthPercentage?: number | null
+  GrowthIsAvailable: boolean
   ContributionIsAvailable: boolean
   SalesmanContributions: PrincipalSalesmanContributionItem[]
   Disclosures: string[]

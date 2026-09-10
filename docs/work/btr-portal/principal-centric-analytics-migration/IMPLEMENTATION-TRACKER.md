@@ -390,8 +390,10 @@ Only a review agent may set `GO` or `NO-GO`.
 
 ### PCM-032
 
-- Status: PLANNED
-- Implementation History: none
+- Status: IMPLEMENTED
+- Implementation History:
+  - 2026-09-10: IN IMPLEMENTATION
+  - 2026-09-10: IMPLEMENTED. Added SA04 growth panel showing stored `PRN-GRW-001` (Month-over-Month Growth %) and `PRN-GRW-002` (Year-over-Year Growth %) from Sales-Out growth KPI snapshots. Backend injects `IPrincipalMomGrowthSnapshotDal` and `IPrincipalYoyGrowthSnapshotDal` into the performance query handler and composes growth onto the response and ranking items. Frontend adds a dedicated growth section with two metric cards and a ranking table. Growth is from stored Sales-Out history only and does not change `PRN-SALES-001`. 4 new tests verify growth attachment, period matching, and Sales-Out immutability. All 18 PrincipalPerformanceQueryTest tests pass. Frontend type-checks and all 258 frontend tests pass.
 - Review History: none
 - Remediation History: none
 
