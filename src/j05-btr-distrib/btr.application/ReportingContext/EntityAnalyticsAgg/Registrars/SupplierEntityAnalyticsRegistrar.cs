@@ -43,6 +43,8 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Registrars
                 PrincipalKpiCatalog.MomGrowthId,
                 PrincipalKpiCatalog.YoyGrowthId,
                 PrincipalKpiCatalog.PurchaseInId,
+                PrincipalKpiCatalog.InventoryValueId,
+                PrincipalKpiCatalog.InventoryDaysId,
                 "PU-KPI-001",
                 "PU-KPI-002",
                 "PU-KPI-003",
@@ -371,6 +373,60 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Registrars
                 ApplicableEntityTypes = new[] { EntityTypeCode.Supplier },
                 DefinitionVersion = 1,
                 IntroducedVersion = "PCM-052"
+            });
+
+            kpiRegistry.RegisterMetadata(new EntityKpiMetadata
+            {
+                KpiId = PrincipalKpiCatalog.InventoryValueId,
+                Category = EntityKpiCategory.Portfolio,
+                DisplayName = "Inventory Value",
+                Description = "PRN-INV-001 Inventory Value from Inventory Snapshot. Inventory KPIs are independent operational indicators and do not modify Sales-Out performance. PRN-INV-001 is not a Principal performance ranking KPI and does not change PRN-SALES-001. Evidence grain is Inventory Snapshot. This is not Principal Sales-Out and not Net Sales.",
+                PeriodSemantics = "PointInTime",
+                TimeGrain = "PointInTime",
+                Unit = "IDR",
+                ValueType = "Numeric",
+                AggregationType = "LastValue",
+                Direction = "Neutral",
+                NormalizationRule = "None",
+                VisualizationType = "Card",
+                TrendEligible = false,
+                RankEligible = false,
+                RadarEligible = false,
+                DisplayPrecision = 0,
+                NullableBehavior = "ShowEmpty",
+                EvidenceRoute = "/reports/inventory",
+                EvidenceFilterDimension = "supplierCode",
+                SourceDomain = PrincipalInventorySnapshot.Domain,
+                ApplicableEntityTypes = new[] { EntityTypeCode.Supplier },
+                DefinitionVersion = 1,
+                IntroducedVersion = "PCM-053"
+            });
+
+            kpiRegistry.RegisterMetadata(new EntityKpiMetadata
+            {
+                KpiId = PrincipalKpiCatalog.InventoryDaysId,
+                Category = EntityKpiCategory.Portfolio,
+                DisplayName = "Inventory Days",
+                Description = "PRN-INV-002 Inventory Days from Inventory Snapshot. Inventory KPIs are independent operational indicators and do not modify Sales-Out performance. PRN-INV-002 is not a Principal performance ranking KPI and does not change PRN-SALES-001. Evidence grain is Inventory Snapshot. This is not Principal Sales-Out and not Net Sales.",
+                PeriodSemantics = "PointInTime",
+                TimeGrain = "PointInTime",
+                Unit = "Days",
+                ValueType = "Numeric",
+                AggregationType = "LastValue",
+                Direction = "Neutral",
+                NormalizationRule = "None",
+                VisualizationType = "Card",
+                TrendEligible = false,
+                RankEligible = false,
+                RadarEligible = false,
+                DisplayPrecision = 2,
+                NullableBehavior = "ShowEmpty",
+                EvidenceRoute = "/reports/inventory",
+                EvidenceFilterDimension = "supplierCode",
+                SourceDomain = PrincipalInventorySnapshot.Domain,
+                ApplicableEntityTypes = new[] { EntityTypeCode.Supplier },
+                DefinitionVersion = 1,
+                IntroducedVersion = "PCM-053"
             });
 
             kpiRegistry.RegisterMetadata(new EntityKpiMetadata

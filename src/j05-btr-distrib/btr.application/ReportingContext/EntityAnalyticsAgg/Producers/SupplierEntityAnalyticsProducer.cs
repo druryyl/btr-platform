@@ -38,6 +38,7 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Producers
         private readonly IPrincipalMomGrowthSnapshotDal _momGrowthSnapshotDal;
         private readonly IPrincipalYoyGrowthSnapshotDal _yoyGrowthSnapshotDal;
         private readonly IPrincipalPurchaseInSnapshotDal _purchaseInSnapshotDal;
+        private readonly IPrincipalInventorySnapshotDal _inventorySnapshotDal;
 
         public SupplierEntityAnalyticsProducer(
             IEntityAnalyticsRepository repository,
@@ -55,7 +56,8 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Producers
             IPrincipalAchievementSnapshotDal achievementSnapshotDal = null,
             IPrincipalMomGrowthSnapshotDal momGrowthSnapshotDal = null,
             IPrincipalYoyGrowthSnapshotDal yoyGrowthSnapshotDal = null,
-            IPrincipalPurchaseInSnapshotDal purchaseInSnapshotDal = null)
+            IPrincipalPurchaseInSnapshotDal purchaseInSnapshotDal = null,
+            IPrincipalInventorySnapshotDal inventorySnapshotDal = null)
         {
             _repository = repository;
             _kpiRegistry = kpiRegistry;
@@ -73,6 +75,7 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Producers
             _momGrowthSnapshotDal = momGrowthSnapshotDal;
             _yoyGrowthSnapshotDal = yoyGrowthSnapshotDal;
             _purchaseInSnapshotDal = purchaseInSnapshotDal;
+            _inventorySnapshotDal = inventorySnapshotDal;
         }
 
         public void Produce(EntityAnalyticsProduceContext context)
@@ -91,6 +94,7 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Producers
             var momGrowth = ReadOwnedMomGrowth(periodYear, periodMonth);
             var yoyGrowth = ReadOwnedYoyGrowth(periodYear, periodMonth);
             var purchaseIn = ReadOwnedPurchaseIn(periodYear, periodMonth);
+            var inventory = ReadOwnedInventory();
 
             if (portfolio == null || portfolio.Count == 0)
             {
@@ -127,6 +131,9 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Producers
                 AppendSnapshotOnlyPurchaseIn(
                     retainedRows, retainedMonthly, periodYear, periodMonth, context.GeneratedAt, purchaseIn);
                 RetainPersistedPurchaseIn(retainedRows, context.GeneratedAt, purchaseIn);
+                AppendSnapshotOnlyInventory(
+                    retainedRows, retainedMonthly, periodYear, periodMonth, context.GeneratedAt, inventory);
+                RetainPersistedInventory(retainedRows, context.GeneratedAt, inventory);
 
                 EntityAnalyticsProducerReplaySupport.PersistL0(
                     _repository, context, EntityTypeCode.Supplier, retainedRows);
@@ -174,6 +181,7 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Producers
                 ComposeMomGrowth(rows, entityId, entityCode, periodYear, periodMonth, generatedAt, momGrowth);
                 ComposeYoyGrowth(rows, entityId, entityCode, periodYear, periodMonth, generatedAt, yoyGrowth);
                 ComposePurchaseIn(rows, monthlyRows, entityId, entityCode, periodYear, periodMonth, generatedAt, purchaseIn);
+                ComposeInventory(rows, monthlyRows, entityId, entityCode, periodYear, periodMonth, generatedAt, inventory);
                 signalsByEntity[entityId] = BuildAttentionSnapshots(
                     entityId,
                     entityCode,
@@ -197,6 +205,8 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Producers
             RetainPersistedYoyGrowth(rows, context.GeneratedAt, yoyGrowth);
             AppendSnapshotOnlyPurchaseIn(rows, monthlyRows, periodYear, periodMonth, context.GeneratedAt, purchaseIn);
             RetainPersistedPurchaseIn(rows, context.GeneratedAt, purchaseIn);
+            AppendSnapshotOnlyInventory(rows, monthlyRows, periodYear, periodMonth, context.GeneratedAt, inventory);
+            RetainPersistedInventory(rows, context.GeneratedAt, inventory);
 
             EntityAnalyticsProducerReplaySupport.PersistL0(_repository, context, EntityTypeCode.Supplier, rows);
 
@@ -1121,6 +1131,151 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Producers
                 PrincipalKpiCatalog.PurchaseInId, purchaseInAmount, periodYear, periodMonth, generatedAt);
         }
 
+        private InventoryComposition ReadOwnedInventory()
+        {
+            var existingValue = _repository.GetCurrentKpiPopulation(
+                EntityTypeCode.Supplier,
+                PrincipalKpiCatalog.InventoryValueId);
+            var existingDays = _repository.GetCurrentKpiPopulation(
+                EntityTypeCode.Supplier,
+                PrincipalKpiCatalog.InventoryDaysId);
+
+            var snapshot = _inventorySnapshotDal?.GetCurrent();
+            var matchesSnapshot = snapshot != null
+                && string.Equals(snapshot.InventoryValueKpiId, PrincipalKpiCatalog.InventoryValueId, StringComparison.OrdinalIgnoreCase)
+                && string.Equals(snapshot.InventoryDaysKpiId, PrincipalKpiCatalog.InventoryDaysId, StringComparison.OrdinalIgnoreCase);
+
+            var bySupplierId = new Dictionary<string, PrincipalInventoryRow>(StringComparer.OrdinalIgnoreCase);
+            if (matchesSnapshot)
+            {
+                foreach (var row in snapshot.Principals ?? new List<PrincipalInventoryRow>())
+                {
+                    if (string.IsNullOrWhiteSpace(row.SupplierId))
+                        continue;
+
+                    bySupplierId[row.SupplierId.Trim()] = row;
+                }
+            }
+
+            return new InventoryComposition(matchesSnapshot, bySupplierId, existingValue, existingDays);
+        }
+
+        private void ComposeInventory(
+            ICollection<EntityAnalyticsCurrentRow> rows,
+            ICollection<EntityAnalyticsMonthlyRow> monthlyRows,
+            string entityId,
+            string entityCode,
+            int periodYear,
+            int periodMonth,
+            DateTime generatedAt,
+            InventoryComposition inventory)
+        {
+            if (inventory.MatchesSnapshot && inventory.BySupplierId.TryGetValue(entityId, out var owned))
+            {
+                AddInventoryRows(rows, monthlyRows, entityId, entityCode,
+                    owned.InventoryValue, owned.InventoryDays,
+                    periodYear, periodMonth, generatedAt);
+                return;
+            }
+
+            if (inventory.MatchesSnapshot)
+                return;
+
+            var value = inventory.ExistingValue.FirstOrDefault(row =>
+                string.Equals(row.EntityId, entityId, StringComparison.OrdinalIgnoreCase));
+            var days = inventory.ExistingDays.FirstOrDefault(row =>
+                string.Equals(row.EntityId, entityId, StringComparison.OrdinalIgnoreCase));
+
+            if (value?.NumericValue == null && days?.NumericValue == null)
+                return;
+
+            AddInventoryRows(rows, null, entityId, entityCode,
+                value?.NumericValue, days?.NumericValue,
+                0, 0, generatedAt);
+        }
+
+        private void AppendSnapshotOnlyInventory(
+            ICollection<EntityAnalyticsCurrentRow> rows,
+            ICollection<EntityAnalyticsMonthlyRow> monthlyRows,
+            int periodYear,
+            int periodMonth,
+            DateTime generatedAt,
+            InventoryComposition inventory)
+        {
+            if (!inventory.MatchesSnapshot)
+                return;
+
+            foreach (var owned in inventory.BySupplierId.Values)
+            {
+                var entityId = owned.SupplierId.Trim();
+                if (ContainsKpi(rows, entityId, PrincipalKpiCatalog.InventoryValueId)
+                    && ContainsKpi(rows, entityId, PrincipalKpiCatalog.InventoryDaysId))
+                    continue;
+
+                EnsureIdentity(rows, entityId, entityId, owned.SupplierName, generatedAt);
+                AddInventoryRows(rows, monthlyRows, entityId, entityId,
+                    owned.InventoryValue, owned.InventoryDays,
+                    periodYear, periodMonth, generatedAt);
+            }
+        }
+
+        private void RetainPersistedInventory(
+            ICollection<EntityAnalyticsCurrentRow> rows,
+            DateTime generatedAt,
+            InventoryComposition inventory)
+        {
+            if (inventory.MatchesSnapshot)
+                return;
+
+            var entityIds = inventory.ExistingValue
+                .Concat(inventory.ExistingDays)
+                .Where(row => !string.IsNullOrWhiteSpace(row.EntityId))
+                .Select(row => row.EntityId.Trim())
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .ToList();
+
+            foreach (var entityId in entityIds)
+            {
+                if (ContainsKpi(rows, entityId, PrincipalKpiCatalog.InventoryValueId)
+                    && ContainsKpi(rows, entityId, PrincipalKpiCatalog.InventoryDaysId))
+                    continue;
+
+                var value = inventory.ExistingValue.FirstOrDefault(row =>
+                    string.Equals(row.EntityId, entityId, StringComparison.OrdinalIgnoreCase));
+                var days = inventory.ExistingDays.FirstOrDefault(row =>
+                    string.Equals(row.EntityId, entityId, StringComparison.OrdinalIgnoreCase));
+
+                if (value?.NumericValue == null && days?.NumericValue == null)
+                    continue;
+
+                var entityCode = value?.EntityCode ?? days?.EntityCode;
+                if (string.IsNullOrWhiteSpace(entityCode))
+                    entityCode = entityId;
+
+                CopyIdentity(rows, entityId, entityCode.Trim(), generatedAt);
+                AddInventoryRows(rows, null, entityId, entityCode.Trim(),
+                    value?.NumericValue, days?.NumericValue,
+                    0, 0, generatedAt);
+            }
+        }
+
+        private void AddInventoryRows(
+            ICollection<EntityAnalyticsCurrentRow> rows,
+            ICollection<EntityAnalyticsMonthlyRow> monthlyRows,
+            string entityId,
+            string entityCode,
+            decimal? inventoryValue,
+            decimal? inventoryDays,
+            int periodYear,
+            int periodMonth,
+            DateTime generatedAt)
+        {
+            AddKpiRow(rows, monthlyRows, entityId, entityCode,
+                PrincipalKpiCatalog.InventoryValueId, inventoryValue, periodYear, periodMonth, generatedAt);
+            AddKpiRow(rows, monthlyRows, entityId, entityCode,
+                PrincipalKpiCatalog.InventoryDaysId, inventoryDays, periodYear, periodMonth, generatedAt);
+        }
+
         private static void AddGrowthRows(
             ICollection<EntityAnalyticsCurrentRow> rows,
             string entityId,
@@ -1546,6 +1701,35 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Producers
             public IReadOnlyDictionary<string, PrincipalPurchaseInRow> BySupplierId { get; }
 
             public IReadOnlyList<EntityAnalyticsPeriodMetricRow> Existing { get; }
+        }
+
+        private sealed class InventoryComposition
+        {
+            public InventoryComposition(
+                bool matchesSnapshot,
+                IReadOnlyDictionary<string, PrincipalInventoryRow> bySupplierId,
+                IReadOnlyList<EntityAnalyticsPeriodMetricRow> existingValue,
+                IReadOnlyList<EntityAnalyticsPeriodMetricRow> existingDays)
+            {
+                MatchesSnapshot = matchesSnapshot;
+                BySupplierId = bySupplierId ?? new Dictionary<string, PrincipalInventoryRow>(StringComparer.OrdinalIgnoreCase);
+                ExistingValue = existingValue ?? Array.Empty<EntityAnalyticsPeriodMetricRow>();
+                ExistingDays = existingDays ?? Array.Empty<EntityAnalyticsPeriodMetricRow>();
+            }
+
+            public bool MatchesSnapshot { get; }
+
+            public bool MatchesPeriod => MatchesSnapshot;
+
+            public IReadOnlyDictionary<string, PrincipalInventoryRow> BySupplierId { get; }
+
+            public IReadOnlyList<EntityAnalyticsPeriodMetricRow> ExistingValue { get; }
+
+            public IReadOnlyList<EntityAnalyticsPeriodMetricRow> ExistingDays { get; }
+
+            public IReadOnlyList<EntityAnalyticsPeriodMetricRow> Existing => ExistingValue
+                .Concat(ExistingDays)
+                .ToList();
         }
 
         private IEnumerable<EntityAnalyticsMonthlyRow> BuildMonthlyRows(
