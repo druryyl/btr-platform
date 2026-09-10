@@ -630,9 +630,13 @@ Only a review agent may set `GO` or `NO-GO`.
 
 ### PCM-054
 
-- Status: PLANNED
-- Implementation History: none
-- Review History: none
+- Status: GO
+- Implementation History:
+  - 2026-09-10: IN IMPLEMENTATION
+  - 2026-09-10: IMPLEMENTED. SA04 reads stored `PRN-CUS-001` and stored `PRN-CUS-002` into a separate customer-reach panel. The existing `GetPrincipalPerformanceHandler` injects `IPrincipalActiveCustomerSnapshotDal` and `IPrincipalCustomerCoverageSnapshotDal` and composes both stored snapshots onto the response and ranking items by SupplierId. Frontend adds a dedicated customer-reach section with a ranking table and states that the evidence grain is the Customer–Principal relationship projection. Displayed `PRN-SALES-001` ranking and totals are unchanged. Coverage is not offered as a ranking option.
+- Review History:
+  - 2026-09-10: IN REVIEW
+  - 2026-09-10: GO. SA04 customer-reach panel reads stored `PRN-CUS-001` and stored `PRN-CUS-002` for ranked Principals only and leaves the `PRN-SALES-001` ranking and totals unchanged. No Active, Dormant, or Coverage value is recomputed from raw transactions. The panel states that the evidence grain is the Customer–Principal relationship projection. Coverage is not offered as a ranking option. `btr.application`, `btr.infrastructure`, and `btr.test` build via MSBuild; portal.web `vue-tsc + vite` builds. 26 `PrincipalPerformanceQueryTest` tests pass, including 5 new customer-reach tests; 37 related backend and 258 frontend tests pass.
 - Remediation History: none
 
 ### PCM-055

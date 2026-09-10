@@ -188,6 +188,11 @@ export interface PrincipalPerformanceRankingItem {
   YoyGrowthKpiId?: string | null
   MomGrowthPercentage?: number | null
   YoyGrowthPercentage?: number | null
+  ActiveCustomerCountKpiId?: string | null
+  CustomerCoverageKpiId?: string | null
+  ActiveCustomerCount?: number | null
+  TotalCustomerCount?: number | null
+  CoveragePercentage?: number | null
 }
 
 export interface PrincipalSalesmanContributionItem {
@@ -239,6 +244,9 @@ export interface PrincipalPerformanceResponse {
   YoyGrowthPercentage?: number | null
   GrowthIsAvailable: boolean
   ContributionIsAvailable: boolean
+  ActiveCustomerCountKpiId: string
+  CustomerCoverageKpiId: string
+  CustomerReachIsAvailable: boolean
   SalesmanContributions: PrincipalSalesmanContributionItem[]
   Disclosures: string[]
   Ranking: PrincipalPerformanceRankingItem[]

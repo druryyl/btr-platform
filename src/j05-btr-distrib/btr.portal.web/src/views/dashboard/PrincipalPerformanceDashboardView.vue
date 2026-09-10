@@ -214,6 +214,30 @@ const contributionIsAvailable = computed(
   () => dashboard.principalPerformance?.ContributionIsAvailable === true,
 )
 
+const customerReachIsAvailable = computed(
+  () => dashboard.principalPerformance?.CustomerReachIsAvailable === true,
+)
+
+const customerReachRankingColumns = [
+  { field: 'Rank', header: 'Rank' },
+  { field: 'PrincipalName', header: 'Principal' },
+  { field: 'ActiveCustomerCount', header: 'Active Customer Count' },
+  { field: 'CoveragePercentage', header: 'Coverage %' },
+]
+
+const customerReachRankingRows = computed(() =>
+  ((dashboard.principalPerformance?.Ranking ?? []) as PrincipalPerformanceRankingItem[])
+    .filter((row) => row.ActiveCustomerCount != null || row.CoveragePercentage != null)
+    .map(
+      (row) =>
+        ({
+          ...row,
+          CoveragePercentage:
+            row.CoveragePercentage != null ? row.CoveragePercentage * 100 : null,
+        }) as Record<string, unknown>,
+    ),
+)
+
 const contributionColumns = [
   { field: 'SalesPersonName', header: 'Salesman' },
   { field: 'SalesPersonCode', header: 'Salesman Code' },
@@ -617,6 +641,38 @@ onMounted(() => {
         "
       />
     </section>
+
+    <section
+      class="principal-performance__customer-reach"
+      data-kpi="PRN-CUS-001"
+      aria-label="Principal customer reach"
+    >
+      <h2 class="principal-performance__customer-reach-title">
+        Customer reach
+      </h2>
+
+      <p class="principal-performance__customer-reach-note">
+        Active Customer Count (PRN-CUS-001) and Customer Coverage Percentage
+        (PRN-CUS-002) from stored snapshots. Sales-Out shown above is unchanged.
+      </p>
+      <p class="principal-performance__customer-reach-note">
+        Evidence grain is the Customer–Principal relationship projection.
+      </p>
+
+      <Top10RankingTable
+        title="Principal customer reach"
+        :columns="customerReachRankingColumns"
+        :rows="customerReachRankingRows"
+        :loading="dashboard.loading"
+        value-field="ActiveCustomerCount"
+        percent-field="CoveragePercentage"
+        :empty-message="
+          customerReachIsAvailable
+            ? 'No Principal customer reach for the current period.'
+            : 'Principal customer reach is not yet available for the current period.'
+        "
+      />
+    </section>
   </DashboardDetailLayout>
 </template>
 
@@ -765,6 +821,25 @@ onMounted(() => {
 }
 
 .principal-performance__contribution-note {
+  margin: 0 0 1rem;
+  color: var(--p-text-muted-color);
+}
+
+.principal-performance__customer-reach {
+  margin-top: 1rem;
+  padding: 1rem;
+  background: var(--p-surface-0);
+  border: 1px solid var(--p-surface-200);
+  border-radius: var(--dashboard-radius-sm);
+  box-shadow: var(--dashboard-shadow-idle);
+}
+
+.principal-performance__customer-reach-title {
+  margin: 0 0 0.75rem;
+  font-size: 1rem;
+}
+
+.principal-performance__customer-reach-note {
   margin: 0 0 1rem;
   color: var(--p-text-muted-color);
 }

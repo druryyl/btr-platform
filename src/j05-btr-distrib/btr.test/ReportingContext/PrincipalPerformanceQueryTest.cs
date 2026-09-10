@@ -999,5 +999,227 @@ namespace btr.test.ReportingContext
                 YoyGrowthPercentage = yoyGrowthPercentage
             };
         }
+
+        [Fact]
+        public void Compose_AttachesStoredCustomerReach_WithoutChangingSalesOut()
+        {
+            var snapshot = new PrincipalSalesOutAggregateResult
+            {
+                KpiId = PrincipalKpiCatalog.SalesOutId,
+                PeriodYear = 2026,
+                PeriodMonth = 9,
+                GeneratedAt = new DateTime(2026, 9, 9, 8, 0, 0),
+                Principals = new[]
+                {
+                    Row("SUPA", "Alpha", 900m, 1),
+                    Row("SUPB", "Beta", 200m, 2)
+                }.ToList()
+            };
+            var activeCustomers = new PrincipalActiveCustomerResult
+            {
+                ActiveCustomerKpiId = PrincipalKpiCatalog.ActiveCustomerCountId,
+                AsOfDate = new DateTime(2026, 9, 9),
+                GeneratedAt = new DateTime(2026, 9, 9, 8, 0, 0),
+                Principals = new[]
+                {
+                    ActiveCustomerRow("SUPA", "Alpha", 12),
+                    ActiveCustomerRow("SUPB", "Beta", 5)
+                }.ToList()
+            };
+            var customerCoverage = new PrincipalCustomerCoverageResult
+            {
+                CustomerCoverageKpiId = PrincipalKpiCatalog.CustomerCoverageId,
+                AsOfDate = new DateTime(2026, 9, 9),
+                GeneratedAt = new DateTime(2026, 9, 9, 8, 0, 0),
+                Principals = new[]
+                {
+                    CustomerCoverageRow("SUPA", "Alpha", 12, 20, 0.6m),
+                    CustomerCoverageRow("SUPB", "Beta", 5, 25, 0.2m)
+                }.ToList()
+            };
+
+            var response = PrincipalPerformanceComposer.Compose(
+                snapshot, null, null, null, null, null, null, null,
+                activeCustomers, customerCoverage);
+
+            response.IsAvailable.Should().BeTrue();
+            response.PrincipalSalesOutAmount.Should().Be(1100m);
+            response.CustomerReachIsAvailable.Should().BeTrue();
+            response.ActiveCustomerCountKpiId.Should().Be(PrincipalKpiCatalog.ActiveCustomerCountId);
+            response.CustomerCoverageKpiId.Should().Be(PrincipalKpiCatalog.CustomerCoverageId);
+
+            var alpha = response.Ranking.First(r => r.SupplierId == "SUPA");
+            alpha.PrincipalSalesOutAmount.Should().Be(900m);
+            alpha.ActiveCustomerCountKpiId.Should().Be(PrincipalKpiCatalog.ActiveCustomerCountId);
+            alpha.ActiveCustomerCount.Should().Be(12);
+            alpha.CustomerCoverageKpiId.Should().Be(PrincipalKpiCatalog.CustomerCoverageId);
+            alpha.TotalCustomerCount.Should().Be(20);
+            alpha.CoveragePercentage.Should().Be(0.6m);
+
+            var beta = response.Ranking.First(r => r.SupplierId == "SUPB");
+            beta.ActiveCustomerCount.Should().Be(5);
+            beta.TotalCustomerCount.Should().Be(25);
+            beta.CoveragePercentage.Should().Be(0.2m);
+
+            response.Ranking.Should().OnlyContain(row => row.KpiId == PrincipalKpiCatalog.SalesOutId);
+            response.SupportingRankingOptions.Select(o => o.KpiId).Should().NotContain(PrincipalKpiCatalog.ActiveCustomerCountId);
+            response.SupportingRankingOptions.Select(o => o.KpiId).Should().NotContain(PrincipalKpiCatalog.CustomerCoverageId);
+        }
+
+        [Fact]
+        public void Compose_WhenCustomerReachMissing_DoesNotSetCustomerReachAvailable()
+        {
+            var snapshot = new PrincipalSalesOutAggregateResult
+            {
+                KpiId = PrincipalKpiCatalog.SalesOutId,
+                PeriodYear = 2026,
+                PeriodMonth = 9,
+                GeneratedAt = new DateTime(2026, 9, 9, 8, 0, 0),
+                Principals = new[]
+                {
+                    Row("SUPA", "Alpha", 900m, 1)
+                }.ToList()
+            };
+
+            var response = PrincipalPerformanceComposer.Compose(
+                snapshot, null, null, null, null, null, null, null, null, null);
+
+            response.IsAvailable.Should().BeTrue();
+            response.CustomerReachIsAvailable.Should().BeFalse();
+            response.Ranking.Single().ActiveCustomerCount.Should().BeNull();
+            response.Ranking.Single().CoveragePercentage.Should().BeNull();
+            response.Ranking.Single().PrincipalSalesOutAmount.Should().Be(900m);
+        }
+
+        [Fact]
+        public void Compose_CustomerReachDoesNotOverwriteSalesOut()
+        {
+            var snapshot = new PrincipalSalesOutAggregateResult
+            {
+                KpiId = PrincipalKpiCatalog.SalesOutId,
+                PeriodYear = 2026,
+                PeriodMonth = 9,
+                GeneratedAt = new DateTime(2026, 9, 9, 8, 0, 0),
+                Principals = new[]
+                {
+                    Row("SUPA", "Alpha", 900m, 1)
+                }.ToList()
+            };
+            var activeCustomers = new PrincipalActiveCustomerResult
+            {
+                ActiveCustomerKpiId = PrincipalKpiCatalog.ActiveCustomerCountId,
+                AsOfDate = new DateTime(2026, 9, 9),
+                GeneratedAt = new DateTime(2026, 9, 9, 8, 0, 0),
+                Principals = new[]
+                {
+                    ActiveCustomerRow("SUPA", "Alpha", 12)
+                }.ToList()
+            };
+
+            var responseWithoutReach = PrincipalPerformanceComposer.Compose(snapshot);
+            var responseWithReach = PrincipalPerformanceComposer.Compose(
+                snapshot, null, null, null, null, null, null, null,
+                activeCustomers, null);
+
+            responseWithReach.PrincipalSalesOutAmount.Should().Be(responseWithoutReach.PrincipalSalesOutAmount);
+            responseWithReach.Ranking[0].PrincipalSalesOutAmount.Should().Be(responseWithoutReach.Ranking[0].PrincipalSalesOutAmount);
+            responseWithReach.Ranking[0].Rank.Should().Be(responseWithoutReach.Ranking[0].Rank);
+        }
+
+        [Fact]
+        public void Compose_IgnoresCustomerReachForUnrankedPrincipals()
+        {
+            var snapshot = new PrincipalSalesOutAggregateResult
+            {
+                KpiId = PrincipalKpiCatalog.SalesOutId,
+                PeriodYear = 2026,
+                PeriodMonth = 9,
+                GeneratedAt = new DateTime(2026, 9, 9, 8, 0, 0),
+                Principals = new[] { Row("SUPA", "Alpha", 100m, 1) }.ToList()
+            };
+            var activeCustomers = new PrincipalActiveCustomerResult
+            {
+                ActiveCustomerKpiId = PrincipalKpiCatalog.ActiveCustomerCountId,
+                AsOfDate = new DateTime(2026, 9, 9),
+                GeneratedAt = new DateTime(2026, 9, 9, 8, 0, 0),
+                Principals = new[]
+                {
+                    ActiveCustomerRow("SUPA", "Alpha", 10),
+                    ActiveCustomerRow("SUPX", "Unknown", 7)
+                }.ToList()
+            };
+
+            var response = PrincipalPerformanceComposer.Compose(
+                snapshot, null, null, null, null, null, null, null,
+                activeCustomers, null);
+
+            response.CustomerReachIsAvailable.Should().BeTrue();
+            response.Ranking.Should().ContainSingle()
+                .Which.ActiveCustomerCount.Should().Be(10);
+            response.PrincipalSalesOutAmount.Should().Be(100m);
+        }
+
+        [Fact]
+        public void Compose_IgnoresCustomerReachWithWrongKpiId()
+        {
+            var snapshot = new PrincipalSalesOutAggregateResult
+            {
+                KpiId = PrincipalKpiCatalog.SalesOutId,
+                PeriodYear = 2026,
+                PeriodMonth = 9,
+                GeneratedAt = new DateTime(2026, 9, 9, 8, 0, 0),
+                Principals = new[] { Row("SUPA", "Alpha", 100m, 1) }.ToList()
+            };
+            var activeCustomers = new PrincipalActiveCustomerResult
+            {
+                ActiveCustomerKpiId = "PRN-CUS-002",
+                AsOfDate = new DateTime(2026, 9, 9),
+                GeneratedAt = new DateTime(2026, 9, 9, 8, 0, 0),
+                Principals = new[]
+                {
+                    ActiveCustomerRow("SUPA", "Alpha", 10)
+                }.ToList()
+            };
+
+            var response = PrincipalPerformanceComposer.Compose(
+                snapshot, null, null, null, null, null, null, null,
+                activeCustomers, null);
+
+            response.CustomerReachIsAvailable.Should().BeFalse();
+            response.Ranking.Single().ActiveCustomerCount.Should().BeNull();
+            response.Ranking.Single().PrincipalSalesOutAmount.Should().Be(100m);
+        }
+
+        private static PrincipalActiveCustomerRow ActiveCustomerRow(
+            string supplierId,
+            string supplierName,
+            int activeCustomerCount)
+        {
+            return new PrincipalActiveCustomerRow
+            {
+                ActiveCustomerKpiId = PrincipalKpiCatalog.ActiveCustomerCountId,
+                SupplierId = supplierId,
+                SupplierName = supplierName,
+                ActiveCustomerCount = activeCustomerCount
+            };
+        }
+
+        private static PrincipalCustomerCoverageRow CustomerCoverageRow(
+            string supplierId,
+            string supplierName,
+            int activeCustomerCount,
+            int totalCustomerCount,
+            decimal? coveragePercentage)
+        {
+            return new PrincipalCustomerCoverageRow
+            {
+                CustomerCoverageKpiId = PrincipalKpiCatalog.CustomerCoverageId,
+                SupplierId = supplierId,
+                SupplierName = supplierName,
+                ActiveCustomerCount = activeCustomerCount,
+                TotalCustomerCount = totalCustomerCount,
+                CoveragePercentage = coveragePercentage
+            };
+        }
     }
 }

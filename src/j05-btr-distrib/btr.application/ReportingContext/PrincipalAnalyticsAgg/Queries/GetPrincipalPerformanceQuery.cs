@@ -84,6 +84,12 @@ namespace btr.application.ReportingContext.PrincipalAnalyticsAgg.Queries
 
         public bool ContributionIsAvailable { get; set; }
 
+        public string ActiveCustomerCountKpiId { get; set; }
+
+        public string CustomerCoverageKpiId { get; set; }
+
+        public bool CustomerReachIsAvailable { get; set; }
+
         public IList<string> Disclosures { get; set; }
             = new List<string>();
 
@@ -165,6 +171,16 @@ namespace btr.application.ReportingContext.PrincipalAnalyticsAgg.Queries
         public decimal? MomGrowthPercentage { get; set; }
 
         public decimal? YoyGrowthPercentage { get; set; }
+
+        public string ActiveCustomerCountKpiId { get; set; }
+
+        public string CustomerCoverageKpiId { get; set; }
+
+        public int? ActiveCustomerCount { get; set; }
+
+        public int? TotalCustomerCount { get; set; }
+
+        public decimal? CoveragePercentage { get; set; }
     }
 
     public class GetPrincipalPerformanceHandler
@@ -178,6 +194,8 @@ namespace btr.application.ReportingContext.PrincipalAnalyticsAgg.Queries
         private readonly IPrincipalMomGrowthSnapshotDal _momGrowthSnapshotDal;
         private readonly IPrincipalYoyGrowthSnapshotDal _yoyGrowthSnapshotDal;
         private readonly IPrincipalSalesmanContributionSnapshotDal _contributionSnapshotDal;
+        private readonly IPrincipalActiveCustomerSnapshotDal _activeCustomerSnapshotDal;
+        private readonly IPrincipalCustomerCoverageSnapshotDal _customerCoverageSnapshotDal;
 
         public GetPrincipalPerformanceHandler(
             IPrincipalSalesOutSnapshotDal snapshotDal,
@@ -187,7 +205,9 @@ namespace btr.application.ReportingContext.PrincipalAnalyticsAgg.Queries
             IPrincipalReturnPercentageSnapshotDal returnPercentageSnapshotDal,
             IPrincipalMomGrowthSnapshotDal momGrowthSnapshotDal,
             IPrincipalYoyGrowthSnapshotDal yoyGrowthSnapshotDal,
-            IPrincipalSalesmanContributionSnapshotDal contributionSnapshotDal)
+            IPrincipalSalesmanContributionSnapshotDal contributionSnapshotDal,
+            IPrincipalActiveCustomerSnapshotDal activeCustomerSnapshotDal = null,
+            IPrincipalCustomerCoverageSnapshotDal customerCoverageSnapshotDal = null)
         {
             _snapshotDal = snapshotDal;
             _targetSnapshotDal = targetSnapshotDal;
@@ -197,6 +217,8 @@ namespace btr.application.ReportingContext.PrincipalAnalyticsAgg.Queries
             _momGrowthSnapshotDal = momGrowthSnapshotDal;
             _yoyGrowthSnapshotDal = yoyGrowthSnapshotDal;
             _contributionSnapshotDal = contributionSnapshotDal;
+            _activeCustomerSnapshotDal = activeCustomerSnapshotDal;
+            _customerCoverageSnapshotDal = customerCoverageSnapshotDal;
         }
 
         public Task<PrincipalPerformanceResponse> Handle(
@@ -214,7 +236,9 @@ namespace btr.application.ReportingContext.PrincipalAnalyticsAgg.Queries
                 _returnPercentageSnapshotDal.GetCurrent(),
                 _momGrowthSnapshotDal is null ? null : _momGrowthSnapshotDal.GetCurrent(),
                 _yoyGrowthSnapshotDal is null ? null : _yoyGrowthSnapshotDal.GetCurrent(),
-                contribution));
+                contribution,
+                _activeCustomerSnapshotDal is null ? null : _activeCustomerSnapshotDal.GetCurrent(),
+                _customerCoverageSnapshotDal is null ? null : _customerCoverageSnapshotDal.GetCurrent()));
         }
     }
 
@@ -264,6 +288,23 @@ namespace btr.application.ReportingContext.PrincipalAnalyticsAgg.Queries
             PrincipalYoyGrowthResult yoyGrowth,
             PrincipalSalesmanContributionResult contribution)
         {
+            return Compose(
+                snapshot, target, achievement, returns, returnPercentage,
+                momGrowth, yoyGrowth, contribution, null, null);
+        }
+
+        public static PrincipalPerformanceResponse Compose(
+            PrincipalSalesOutAggregateResult snapshot,
+            PrincipalTargetAggregateResult target,
+            PrincipalAchievementResult achievement,
+            PrincipalReturnAggregateResult returns,
+            PrincipalReturnPercentageResult returnPercentage,
+            PrincipalMomGrowthResult momGrowth,
+            PrincipalYoyGrowthResult yoyGrowth,
+            PrincipalSalesmanContributionResult contribution,
+            PrincipalActiveCustomerResult activeCustomers,
+            PrincipalCustomerCoverageResult customerCoverage)
+        {
             var response = new PrincipalPerformanceResponse
             {
                 KpiId = PrincipalKpiCatalog.SalesOutId,
@@ -277,6 +318,8 @@ namespace btr.application.ReportingContext.PrincipalAnalyticsAgg.Queries
                 ReturnPercentageKpiId = PrincipalKpiCatalog.ReturnPercentageId,
                 MomGrowthKpiId = PrincipalKpiCatalog.MomGrowthId,
                 YoyGrowthKpiId = PrincipalKpiCatalog.YoyGrowthId,
+                ActiveCustomerCountKpiId = PrincipalKpiCatalog.ActiveCustomerCountId,
+                CustomerCoverageKpiId = PrincipalKpiCatalog.CustomerCoverageId,
                 Disclosures = PrincipalSalesOutDisclosure.Statements.ToList()
             };
 
@@ -310,8 +353,136 @@ namespace btr.application.ReportingContext.PrincipalAnalyticsAgg.Queries
             AttachStoredReturns(response, snapshot, returns, returnPercentage);
             AttachStoredGrowth(response, snapshot, momGrowth, yoyGrowth);
             AttachStoredSalesmanContributions(response, snapshot, contribution);
+            AttachStoredCustomerReach(response, activeCustomers, customerCoverage);
             AttachSupportingRankingOptions(response);
             return response;
+        }
+
+        private static void AttachStoredCustomerReach(
+            PrincipalPerformanceResponse response,
+            PrincipalActiveCustomerResult activeCustomers,
+            PrincipalCustomerCoverageResult customerCoverage)
+        {
+            var activeBySupplier = IndexMatchingActiveCustomers(activeCustomers);
+            var coverageBySupplier = IndexMatchingCustomerCoverage(customerCoverage);
+
+            if (activeBySupplier.Count == 0 && coverageBySupplier.Count == 0)
+                return;
+
+            var rankedSuppliers = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            foreach (var item in response.Ranking)
+            {
+                if (item is null || string.IsNullOrWhiteSpace(item.SupplierId))
+                    continue;
+
+                rankedSuppliers.Add(item.SupplierId.Trim());
+            }
+
+            var attachedAny = false;
+
+            foreach (var item in response.Ranking)
+            {
+                if (item is null || string.IsNullOrWhiteSpace(item.SupplierId))
+                    continue;
+
+                var key = item.SupplierId.Trim();
+                if (!rankedSuppliers.Contains(key))
+                    continue;
+
+                if (activeBySupplier.TryGetValue(key, out var activeRow))
+                {
+                    item.ActiveCustomerCountKpiId = PrincipalKpiCatalog.ActiveCustomerCountId;
+                    item.ActiveCustomerCount = activeRow.ActiveCustomerCount;
+                    attachedAny = true;
+                }
+
+                if (coverageBySupplier.TryGetValue(key, out var coverageRow))
+                {
+                    item.CustomerCoverageKpiId = PrincipalKpiCatalog.CustomerCoverageId;
+                    item.TotalCustomerCount = coverageRow.TotalCustomerCount;
+                    item.CoveragePercentage = coverageRow.CoveragePercentage;
+                    if (!item.ActiveCustomerCount.HasValue)
+                    {
+                        item.ActiveCustomerCountKpiId = PrincipalKpiCatalog.ActiveCustomerCountId;
+                        item.ActiveCustomerCount = coverageRow.ActiveCustomerCount;
+                    }
+
+                    attachedAny = true;
+                }
+            }
+
+            if (!attachedAny)
+                return;
+
+            response.CustomerReachIsAvailable = true;
+        }
+
+        private static Dictionary<string, PrincipalActiveCustomerRow> IndexMatchingActiveCustomers(
+            PrincipalActiveCustomerResult activeCustomers)
+        {
+            var bySupplier = new Dictionary<string, PrincipalActiveCustomerRow>(StringComparer.OrdinalIgnoreCase);
+            if (activeCustomers is null)
+                return bySupplier;
+
+            if (!string.Equals(
+                activeCustomers.ActiveCustomerKpiId,
+                PrincipalKpiCatalog.ActiveCustomerCountId,
+                StringComparison.Ordinal))
+                return bySupplier;
+
+            foreach (var row in activeCustomers.Principals ?? new List<PrincipalActiveCustomerRow>())
+            {
+                if (row is null)
+                    continue;
+
+                if (!string.Equals(
+                    row.ActiveCustomerKpiId,
+                    PrincipalKpiCatalog.ActiveCustomerCountId,
+                    StringComparison.Ordinal))
+                    continue;
+
+                var supplierId = (row.SupplierId ?? string.Empty).Trim();
+                if (supplierId.Length == 0 || bySupplier.ContainsKey(supplierId))
+                    continue;
+
+                bySupplier[supplierId] = row;
+            }
+
+            return bySupplier;
+        }
+
+        private static Dictionary<string, PrincipalCustomerCoverageRow> IndexMatchingCustomerCoverage(
+            PrincipalCustomerCoverageResult customerCoverage)
+        {
+            var bySupplier = new Dictionary<string, PrincipalCustomerCoverageRow>(StringComparer.OrdinalIgnoreCase);
+            if (customerCoverage is null)
+                return bySupplier;
+
+            if (!string.Equals(
+                customerCoverage.CustomerCoverageKpiId,
+                PrincipalKpiCatalog.CustomerCoverageId,
+                StringComparison.Ordinal))
+                return bySupplier;
+
+            foreach (var row in customerCoverage.Principals ?? new List<PrincipalCustomerCoverageRow>())
+            {
+                if (row is null)
+                    continue;
+
+                if (!string.Equals(
+                    row.CustomerCoverageKpiId,
+                    PrincipalKpiCatalog.CustomerCoverageId,
+                    StringComparison.Ordinal))
+                    continue;
+
+                var supplierId = (row.SupplierId ?? string.Empty).Trim();
+                if (supplierId.Length == 0 || bySupplier.ContainsKey(supplierId))
+                    continue;
+
+                bySupplier[supplierId] = row;
+            }
+
+            return bySupplier;
         }
 
         private static void AttachStoredGrowth(
