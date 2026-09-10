@@ -815,6 +815,153 @@ namespace btr.test.ReportingContext
             response.MomGrowthPercentage.Should().BeNull();
         }
 
+        [Fact]
+        public void Compose_SupportingRankingOptions_ListsAvailableSupportingKpis()
+        {
+            var snapshot = new PrincipalSalesOutAggregateResult
+            {
+                KpiId = PrincipalKpiCatalog.SalesOutId,
+                PeriodYear = 2026,
+                PeriodMonth = 9,
+                GeneratedAt = new DateTime(2026, 9, 9, 8, 0, 0),
+                Principals = new[]
+                {
+                    Row("SUPA", "Alpha", 1000m, 1),
+                    Row("SUPB", "Beta", 500m, 2)
+                }.ToList()
+            };
+            var returns = new PrincipalReturnAggregateResult
+            {
+                GoodReturnKpiId = PrincipalKpiCatalog.GoodReturnAmountId,
+                BrokenReturnKpiId = PrincipalKpiCatalog.BrokenReturnAmountId,
+                TotalReturnKpiId = PrincipalKpiCatalog.TotalReturnAmountId,
+                PeriodYear = 2026,
+                PeriodMonth = 9,
+                Principals = new[]
+                {
+                    ReturnRow("SUPA", "Alpha", 80m, 20m, 100m)
+                }.ToList()
+            };
+            var percentages = new PrincipalReturnPercentageResult
+            {
+                ReturnPercentageKpiId = PrincipalKpiCatalog.ReturnPercentageId,
+                SalesOutKpiId = PrincipalKpiCatalog.SalesOutId,
+                TotalReturnKpiId = PrincipalKpiCatalog.TotalReturnAmountId,
+                PeriodYear = 2026,
+                PeriodMonth = 9,
+                Principals = new[]
+                {
+                    PercentageRow("SUPA", "Alpha", 100m, 1000m, 0.100000m)
+                }.ToList()
+            };
+            var achievement = new PrincipalAchievementResult
+            {
+                AchievementAmountKpiId = PrincipalKpiCatalog.AchievementAmountId,
+                AchievementPercentageKpiId = PrincipalKpiCatalog.AchievementPercentageId,
+                SalesOutKpiId = PrincipalKpiCatalog.SalesOutId,
+                TargetKpiId = PrincipalKpiCatalog.TargetId,
+                PeriodYear = 2026,
+                PeriodMonth = 9,
+                Principals = new[]
+                {
+                    AchievementRow("SUPA", 1000m, 800m, 200m, 1.250000m)
+                }.ToList()
+            };
+            var momGrowth = new PrincipalMomGrowthResult
+            {
+                MomGrowthKpiId = PrincipalKpiCatalog.MomGrowthId,
+                SalesOutKpiId = PrincipalKpiCatalog.SalesOutId,
+                PeriodYear = 2026,
+                PeriodMonth = 9,
+                Principals = new[]
+                {
+                    MomGrowthRow("SUPA", "Alpha", 1000m, 800m, 0.25m)
+                }.ToList()
+            };
+            var yoyGrowth = new PrincipalYoyGrowthResult
+            {
+                YoyGrowthKpiId = PrincipalKpiCatalog.YoyGrowthId,
+                SalesOutKpiId = PrincipalKpiCatalog.SalesOutId,
+                PeriodYear = 2026,
+                PeriodMonth = 9,
+                Principals = new[]
+                {
+                    YoyGrowthRow("SUPA", "Alpha", 1000m, 600m, 0.667m)
+                }.ToList()
+            };
+
+            var response = PrincipalPerformanceComposer.Compose(
+                snapshot, null, achievement, returns, percentages, momGrowth, yoyGrowth, null);
+
+            response.SupportingRankingOptions.Should().HaveCount(4);
+            response.SupportingRankingOptions.Select(o => o.KpiId).Should().Contain(PrincipalKpiCatalog.ReturnPercentageId);
+            response.SupportingRankingOptions.Select(o => o.KpiId).Should().Contain(PrincipalKpiCatalog.AchievementPercentageId);
+            response.SupportingRankingOptions.Select(o => o.KpiId).Should().Contain(PrincipalKpiCatalog.MomGrowthId);
+            response.SupportingRankingOptions.Select(o => o.KpiId).Should().Contain(PrincipalKpiCatalog.YoyGrowthId);
+            response.SupportingRankingOptions.Should().OnlyContain(o => !string.IsNullOrWhiteSpace(o.KpiName));
+            response.PrincipalSalesOutAmount.Should().Be(1500m);
+            response.Ranking.Should().OnlyContain(row => row.KpiId == PrincipalKpiCatalog.SalesOutId);
+        }
+
+        [Fact]
+        public void Compose_SupportingRankingOptions_ExcludesUnavailableKpis()
+        {
+            var snapshot = new PrincipalSalesOutAggregateResult
+            {
+                KpiId = PrincipalKpiCatalog.SalesOutId,
+                PeriodYear = 2026,
+                PeriodMonth = 9,
+                GeneratedAt = new DateTime(2026, 9, 9, 8, 0, 0),
+                Principals = new[]
+                {
+                    Row("SUPA", "Alpha", 1000m, 1)
+                }.ToList()
+            };
+
+            var response = PrincipalPerformanceComposer.Compose(snapshot);
+
+            response.SupportingRankingOptions.Should().BeEmpty();
+            response.PrincipalSalesOutAmount.Should().Be(1000m);
+        }
+
+        [Fact]
+        public void Compose_SupportingRankingOptions_DoesNotIncludePurchaseInOrInventoryOrCoverage()
+        {
+            var snapshot = new PrincipalSalesOutAggregateResult
+            {
+                KpiId = PrincipalKpiCatalog.SalesOutId,
+                PeriodYear = 2026,
+                PeriodMonth = 9,
+                GeneratedAt = new DateTime(2026, 9, 9, 8, 0, 0),
+                Principals = new[]
+                {
+                    Row("SUPA", "Alpha", 1000m, 1)
+                }.ToList()
+            };
+            var momGrowth = new PrincipalMomGrowthResult
+            {
+                MomGrowthKpiId = PrincipalKpiCatalog.MomGrowthId,
+                SalesOutKpiId = PrincipalKpiCatalog.SalesOutId,
+                PeriodYear = 2026,
+                PeriodMonth = 9,
+                Principals = new[]
+                {
+                    MomGrowthRow("SUPA", "Alpha", 1000m, 800m, 0.25m)
+                }.ToList()
+            };
+
+            var response = PrincipalPerformanceComposer.Compose(
+                snapshot, null, null, null, null, momGrowth, null, null);
+
+            response.SupportingRankingOptions.Should().HaveCount(1);
+            response.SupportingRankingOptions.Single().KpiId.Should().Be(PrincipalKpiCatalog.MomGrowthId);
+            response.SupportingRankingOptions.Select(o => o.KpiId).Should().NotContain(PrincipalKpiCatalog.PurchaseInId);
+            response.SupportingRankingOptions.Select(o => o.KpiId).Should().NotContain(PrincipalKpiCatalog.InventoryValueId);
+            response.SupportingRankingOptions.Select(o => o.KpiId).Should().NotContain(PrincipalKpiCatalog.InventoryDaysId);
+            response.SupportingRankingOptions.Select(o => o.KpiId).Should().NotContain(PrincipalKpiCatalog.ActiveCustomerCountId);
+            response.SupportingRankingOptions.Select(o => o.KpiId).Should().NotContain(PrincipalKpiCatalog.CustomerCoverageId);
+        }
+
         private static PrincipalMomGrowthRow MomGrowthRow(
             string supplierId,
             string supplierName,

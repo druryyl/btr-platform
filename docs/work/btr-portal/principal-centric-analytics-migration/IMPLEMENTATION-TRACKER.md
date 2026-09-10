@@ -399,9 +399,13 @@ Only a review agent may set `GO` or `NO-GO`.
 
 ### PCM-033
 
-- Status: PLANNED
-- Implementation History: none
-- Review History: none
+- Status: GO
+- Implementation History:
+  - 2026-09-10: IN IMPLEMENTATION
+  - 2026-09-10: IMPLEMENTED. Added SA04 supporting ranking controls. Backend exposes `SupportingRankingOptions` listing available supporting KPIs (`PRN-RET-004`, `PRN-TGT-003`, `PRN-GRW-001`, `PRN-GRW-002`) based on data availability. Frontend adds a ranking selector dropdown defaulting to `PRN-SALES-001`. When a supporting KPI is selected, the ranking table re-sorts client-side by that KPI's value with recomputed rank numbers. Default ranking and stored Sales-Out values are unchanged. Purchase-In, Inventory, Coverage, and Net Sales are not offered. 3 new backend tests verify supporting ranking option composition, exclusion of unavailable KPIs, and exclusion of non-ranking KPIs. All 21 `PrincipalPerformanceQueryTest` tests pass. Frontend type-checks and all 258 frontend tests pass.
+- Review History:
+  - 2026-09-10: IN REVIEW
+  - 2026-09-10: GO. Default ranking remains `PRN-SALES-001`. No supporting ranking replaces the stored Sales-Out value. Purchase-In, Inventory, Coverage, and Net Sales are not offered as ranking options. Only the four approved supporting ranking KPIs (`PRN-RET-004`, `PRN-TGT-003`, `PRN-GRW-001`, `PRN-GRW-002`) are available when data exists. `btr.application` builds, `btr.test` builds via MSBuild, portal.web `vue-tsc + vite` builds. 21 `PrincipalPerformanceQueryTest` tests pass including 3 new supporting ranking tests. 258 frontend tests pass.
 - Remediation History: none
 
 ### PCM-034

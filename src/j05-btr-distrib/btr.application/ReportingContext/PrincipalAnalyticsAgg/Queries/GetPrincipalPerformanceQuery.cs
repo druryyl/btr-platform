@@ -13,6 +13,13 @@ namespace btr.application.ReportingContext.PrincipalAnalyticsAgg.Queries
     {
     }
 
+    public class SupportingRankingOption
+    {
+        public string KpiId { get; set; }
+
+        public string KpiName { get; set; }
+    }
+
     public class PrincipalPerformanceResponse
     {
         public bool IsAvailable { get; set; }
@@ -82,6 +89,9 @@ namespace btr.application.ReportingContext.PrincipalAnalyticsAgg.Queries
 
         public IList<PrincipalPerformanceRankingItem> Ranking { get; set; }
             = new List<PrincipalPerformanceRankingItem>();
+
+        public IList<SupportingRankingOption> SupportingRankingOptions { get; set; }
+            = new List<SupportingRankingOption>();
 
         public IList<PrincipalSalesmanContributionItem> SalesmanContributions { get; set; }
             = new List<PrincipalSalesmanContributionItem>();
@@ -300,6 +310,7 @@ namespace btr.application.ReportingContext.PrincipalAnalyticsAgg.Queries
             AttachStoredReturns(response, snapshot, returns, returnPercentage);
             AttachStoredGrowth(response, snapshot, momGrowth, yoyGrowth);
             AttachStoredSalesmanContributions(response, snapshot, contribution);
+            AttachSupportingRankingOptions(response);
             return response;
         }
 
@@ -499,6 +510,53 @@ namespace btr.application.ReportingContext.PrincipalAnalyticsAgg.Queries
 
             response.ContributionIsAvailable = true;
             response.SalesmanContributions = attached;
+        }
+
+        private static void AttachSupportingRankingOptions(PrincipalPerformanceResponse response)
+        {
+            var options = new List<SupportingRankingOption>();
+
+            if (response.ReturnIsAvailable
+                && response.Ranking.Any(item => item.ReturnPercentage.HasValue))
+            {
+                options.Add(new SupportingRankingOption
+                {
+                    KpiId = PrincipalKpiCatalog.ReturnPercentageId,
+                    KpiName = "Return Percentage"
+                });
+            }
+
+            if (response.TargetAchievementIsAvailable
+                && response.Ranking.Any(item => item.AchievementPercentage.HasValue))
+            {
+                options.Add(new SupportingRankingOption
+                {
+                    KpiId = PrincipalKpiCatalog.AchievementPercentageId,
+                    KpiName = "Achievement Percentage"
+                });
+            }
+
+            if (response.GrowthIsAvailable
+                && response.Ranking.Any(item => item.MomGrowthPercentage.HasValue))
+            {
+                options.Add(new SupportingRankingOption
+                {
+                    KpiId = PrincipalKpiCatalog.MomGrowthId,
+                    KpiName = "Month-over-Month Growth Percentage"
+                });
+            }
+
+            if (response.GrowthIsAvailable
+                && response.Ranking.Any(item => item.YoyGrowthPercentage.HasValue))
+            {
+                options.Add(new SupportingRankingOption
+                {
+                    KpiId = PrincipalKpiCatalog.YoyGrowthId,
+                    KpiName = "Year-over-Year Growth Percentage"
+                });
+            }
+
+            response.SupportingRankingOptions = options;
         }
 
         private static void AttachStoredReturns(

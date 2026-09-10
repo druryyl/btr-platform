@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import { computed, onMounted } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import Select from 'primevue/select'
 import DashboardDetailLayout from '@/components/dashboard/DashboardDetailLayout.vue'
 import DashboardMetric from '@/components/dashboard/primitives/DashboardMetric.vue'
 import Top10RankingTable from '@/components/dashboard/Top10RankingTable.vue'
@@ -15,6 +16,95 @@ const router = useRouter()
 const selectedSupplierId = computed(() => {
   const value = route.query.supplierId
   return typeof value === 'string' ? value.trim() : ''
+})
+
+const defaultRankingKpiId = 'PRN-SALES-001'
+
+const selectedRankingKpiId = ref<string>(defaultRankingKpiId)
+
+const rankingOptions = computed(() => {
+  const page = dashboard.principalPerformance
+  const options: { label: string; value: string }[] = [
+    { label: 'Principal Sales-Out', value: defaultRankingKpiId },
+  ]
+  for (const opt of page?.SupportingRankingOptions ?? []) {
+    options.push({ label: opt.KpiName, value: opt.KpiId })
+  }
+  return options
+})
+
+const rankingValueField = computed(() => {
+  switch (selectedRankingKpiId.value) {
+    case 'PRN-RET-004':
+      return 'ReturnPercentage'
+    case 'PRN-TGT-003':
+      return 'AchievementPercentage'
+    case 'PRN-GRW-001':
+      return 'MomGrowthPercentage'
+    case 'PRN-GRW-002':
+      return 'YoyGrowthPercentage'
+    default:
+      return 'PrincipalSalesOutAmount'
+  }
+})
+
+const rankingValueHeader = computed(() => {
+  switch (selectedRankingKpiId.value) {
+    case 'PRN-RET-004':
+      return 'Return %'
+    case 'PRN-TGT-003':
+      return 'Achievement %'
+    case 'PRN-GRW-001':
+      return 'MoM Growth %'
+    case 'PRN-GRW-002':
+      return 'YoY Growth %'
+    default:
+      return 'Principal Sales-Out'
+  }
+})
+
+const isPercentageRanking = computed(
+  () => selectedRankingKpiId.value !== defaultRankingKpiId,
+)
+
+const dynamicRankingColumns = computed(() => [
+  { field: 'Rank', header: 'Rank' },
+  { field: 'PrincipalName', header: 'Principal' },
+  { field: 'SupplierId', header: 'SupplierId' },
+  { field: 'RankingValue', header: rankingValueHeader.value },
+])
+
+const dynamicRankingRows = computed(() => {
+  const source = (dashboard.principalPerformance?.Ranking ?? []) as PrincipalPerformanceRankingItem[]
+  const valueField = rankingValueField.value
+  const isPercent = isPercentageRanking.value
+
+  const withValue = source
+    .map((row) => {
+      const raw = (row as unknown as Record<string, unknown>)[valueField]
+      const numericValue = typeof raw === 'number' ? raw : null
+      return { row, numericValue }
+    })
+    .filter((entry) => entry.numericValue != null)
+
+  withValue.sort((a, b) => {
+    const av = a.numericValue as number
+    const bv = b.numericValue as number
+    if (bv !== av) return bv - av
+    return a.row.SupplierId.localeCompare(b.row.SupplierId, undefined, { sensitivity: 'accent' })
+  })
+
+  return withValue.map((entry, index) => {
+    const base = entry.row as unknown as Record<string, unknown>
+    const displayValue = isPercent && entry.numericValue != null
+      ? (entry.numericValue as number) * 100
+      : entry.numericValue
+    return {
+      ...base,
+      Rank: index + 1,
+      RankingValue: displayValue,
+    } as Record<string, unknown>
+  })
 })
 
 const rankingColumns = [
@@ -234,8 +324,26 @@ onMounted(() => {
     </div>
 
     <p class="principal-performance__period">
-      {{ periodLabel }}. Ranking uses Principal Sales-Out only.
+      {{ periodLabel }}. Default ranking uses Principal Sales-Out.
     </p>
+
+    <div v-if="rankingOptions.length > 1" class="principal-performance__ranking-selector">
+      <label for="ranking-kpi-select" class="principal-performance__ranking-label">
+        Rank by:
+      </label>
+      <Select
+        id="ranking-kpi-select"
+        v-model="selectedRankingKpiId"
+        :options="rankingOptions"
+        option-label="label"
+        option-value="value"
+        data-testid="ranking-kpi-select"
+        class="principal-performance__ranking-select"
+      />
+      <span v-if="selectedRankingKpiId !== defaultRankingKpiId" class="principal-performance__ranking-note">
+        Supporting ranking only. Principal Sales-Out is unchanged.
+      </span>
+    </div>
 
     <p v-if="selectedSupplierId" class="principal-performance__selected" data-selected-principal>
       Selected Principal:
@@ -256,6 +364,7 @@ onMounted(() => {
     </section>
 
     <Top10RankingTable
+      v-show="selectedRankingKpiId === defaultRankingKpiId"
       class="principal-performance__section"
       title="Principal Sales-Out ranking"
       :columns="rankingColumns"
@@ -265,6 +374,21 @@ onMounted(() => {
       clickable
       click-hint="Open Faktur Item evidence"
       empty-message="No Principal Sales-Out ranking for the current period."
+      @row-click="onRankingClick"
+    />
+
+    <Top10RankingTable
+      v-if="selectedRankingKpiId !== defaultRankingKpiId"
+      class="principal-performance__section"
+      :title="`${rankingValueHeader} ranking`"
+      :columns="dynamicRankingColumns"
+      :rows="dynamicRankingRows"
+      :loading="dashboard.loading"
+      :value-field="isPercentageRanking ? 'RankingValue' : rankingValueField"
+      :percent-field="isPercentageRanking ? 'RankingValue' : undefined"
+      clickable
+      click-hint="Open Faktur Item evidence"
+      :empty-message="`No ${rankingValueHeader} ranking for the current period.`"
       @row-click="onRankingClick"
     />
 
@@ -513,6 +637,28 @@ onMounted(() => {
 .principal-performance__selected {
   margin: 0 0 1rem;
   color: var(--p-text-muted-color);
+}
+
+.principal-performance__ranking-selector {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+}
+
+.principal-performance__ranking-label {
+  font-weight: 600;
+  color: var(--p-text-color);
+}
+
+.principal-performance__ranking-select {
+  min-width: 260px;
+}
+
+.principal-performance__ranking-note {
+  color: var(--p-text-muted-color);
+  font-size: 0.875rem;
 }
 
 .principal-performance__disclosure {

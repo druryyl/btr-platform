@@ -202,6 +202,11 @@ export interface PrincipalSalesmanContributionItem {
   HasTargetResponsibility: boolean
 }
 
+export interface SupportingRankingOption {
+  KpiId: string
+  KpiName: string
+}
+
 export interface PrincipalPerformanceResponse {
   IsAvailable: boolean
   KpiId: string
@@ -237,6 +242,7 @@ export interface PrincipalPerformanceResponse {
   SalesmanContributions: PrincipalSalesmanContributionItem[]
   Disclosures: string[]
   Ranking: PrincipalPerformanceRankingItem[]
+  SupportingRankingOptions: SupportingRankingOption[]
 }
 
 export interface PrincipalReturnEvidenceItem {
