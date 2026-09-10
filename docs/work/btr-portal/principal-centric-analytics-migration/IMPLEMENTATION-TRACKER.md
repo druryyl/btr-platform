@@ -607,8 +607,13 @@ Only a review agent may set `GO` or `NO-GO`.
 
 ### PCM-052
 
-- Status: PLANNED
-- Implementation History: none
+- Status: GO
+- Implementation History:
+  - 2026-09-10: IN IMPLEMENTATION
+  - 2026-09-10: IMPLEMENTED. Composed stored `PRN-PUR-001` onto the Supplier/Principal Entity Analytics profile from the Purchasing-owned snapshot. The existing `SupplierEntityAnalyticsProducer` injects `IPrincipalPurchaseInSnapshotDal`, reads the stored purchase-in snapshot, and writes the purchase-in KPI as L0 rows labeled Purchase-In. The producer does not write, overwrite, or recalculate `PRN-SALES-001`, `PRN-GRW-001`, or `PRN-GRW-002`. A purchase refresh retains persisted `PRN-SALES-001`. No return, target, growth, inventory, or coverage pack was added.
+- Review History:
+  - 2026-09-10: IN REVIEW
+  - 2026-09-10: GO. `PRN-PUR-001` is present on the Principal profile and labeled Purchase-In. It is not used as the Principal performance KPI or as a Principal ranking KPI. It does not change `PRN-SALES-001`, `PRN-GRW-001`, or `PRN-GRW-002`. No purchase refresh removes `PRN-SALES-001` from the profile. `btr.application` builds. 5 new `SupplierPrincipalPurchaseInCompositionTest` tests and 77 related tests pass; 2 remaining failures (`CustomerDefaultPack_ContainsCatalogBackedKpiIds`, `Produce_WritesL4RelationshipRows`) and the `DashboardAlertCenterComposerTest` compile errors are pre-existing on baseline from committed PCM-049/PCM-050/PCM-055 work and are unrelated to this slice.
 - Review History: none
 - Remediation History: none
 

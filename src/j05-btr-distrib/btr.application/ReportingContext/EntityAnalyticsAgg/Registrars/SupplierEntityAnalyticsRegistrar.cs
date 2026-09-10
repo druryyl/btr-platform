@@ -42,6 +42,7 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Registrars
                 PrincipalKpiCatalog.AchievementPercentageId,
                 PrincipalKpiCatalog.MomGrowthId,
                 PrincipalKpiCatalog.YoyGrowthId,
+                PrincipalKpiCatalog.PurchaseInId,
                 "PU-KPI-001",
                 "PU-KPI-002",
                 "PU-KPI-003",
@@ -343,6 +344,33 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Registrars
                 ApplicableEntityTypes = new[] { EntityTypeCode.Supplier },
                 DefinitionVersion = 1,
                 IntroducedVersion = "PCM-046"
+            });
+
+            kpiRegistry.RegisterMetadata(new EntityKpiMetadata
+            {
+                KpiId = PrincipalKpiCatalog.PurchaseInId,
+                Category = EntityKpiCategory.Financial,
+                DisplayName = "Purchase-In",
+                Description = "PRN-PUR-001 Purchase-In from Purchase Detail. Purchase-In remains independent from Sales-Out and is not used as the Principal performance ranking KPI. It does not change PRN-SALES-001, PRN-GRW-001, or PRN-GRW-002. Evidence grain is Purchase Detail. This is not Principal Sales-Out and not Net Sales.",
+                PeriodSemantics = "MTD",
+                TimeGrain = "Month",
+                Unit = "IDR",
+                ValueType = "Numeric",
+                AggregationType = "Sum",
+                Direction = "Neutral",
+                NormalizationRule = "None",
+                VisualizationType = "Card",
+                TrendEligible = true,
+                RankEligible = false,
+                RadarEligible = false,
+                DisplayPrecision = 0,
+                NullableBehavior = "ShowEmpty",
+                EvidenceRoute = "/reports/purchasing",
+                EvidenceFilterDimension = "supplierCode",
+                SourceDomain = PrincipalPurchaseInSnapshot.Domain,
+                ApplicableEntityTypes = new[] { EntityTypeCode.Supplier },
+                DefinitionVersion = 1,
+                IntroducedVersion = "PCM-052"
             });
 
             kpiRegistry.RegisterMetadata(new EntityKpiMetadata
