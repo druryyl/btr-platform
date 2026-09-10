@@ -576,7 +576,11 @@ namespace btr.portal.worker
                 PrincipalActiveCustomerSnapshot.Domain,
                 PrincipalCustomerCoverageSnapshot.Domain,
                 PrincipalReturnHistory.Domain,
-                PrincipalAchievementSnapshot.Domain
+                PrincipalAchievementSnapshot.Domain,
+                PrincipalSalesOutSnapshot.Domain,
+                PrincipalSalesOutHistory.Domain,
+                PrincipalTargetSnapshot.Domain,
+                PrincipalSalesmanContributionSnapshot.Domain
             };
 
             var validTriggers = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
@@ -586,7 +590,7 @@ namespace btr.portal.worker
 
             if (!validDomains.Contains(domain))
                 throw new ArgumentException(
-                    $"Invalid --domain '{domain}'. Expected All, Sales, Piutang, Inventory, InventoryRisk, PrincipalInventory, PrincipalReturn, PrnReturnPercentage, PrnAchievement, PrnActiveCustomer, PrnCustomerCoverage, Purchasing, PrincipalPurchaseIn, PurchasingManagement, Customer, Salesman, Collection, FieldActivity, Location, EntityAnalyticsHistoricalBackfill, or PrnCusRelationship.");
+                    $"Invalid --domain '{domain}'. Expected All, Sales, Piutang, Inventory, InventoryRisk, PrincipalInventory, PrincipalReturn, PrnReturnPercentage, PrnReturnHistory, PrnSalesOutHistory, PrincipalSalesOut, PrincipalTarget, PrnSalesmanContribution, PrnAchievement, PrnActiveCustomer, PrnCustomerCoverage, PrnCusRelationship, Purchasing, PrincipalPurchaseIn, PurchasingManagement, Customer, Salesman, Collection, FieldActivity, Location, or EntityAnalyticsHistoricalBackfill.");
 
             if (!validTriggers.Contains(triggeredBy))
                 throw new ArgumentException(

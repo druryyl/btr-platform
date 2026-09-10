@@ -104,7 +104,7 @@ function logout(): void {
 
         <div>
 
-          <div class="layout__brand-title">BTR Portal</div>
+          <div class="layout__brand-title">BTR Portal V2</div>
 
           <div class="layout__brand-subtitle">Distributor Management</div>
 
