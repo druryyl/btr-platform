@@ -230,6 +230,7 @@
     <Compile Include="ReportingContext\PrincipalActiveCustomerComposerTest.cs" />
     <Compile Include="ReportingContext\PrincipalCustomerCoverageComposerTest.cs" />
     <Compile Include="ReportingContext\PrincipalMomGrowthComposerTest.cs" />
+    <Compile Include="ReportingContext\PrincipalYoyGrowthComposerTest.cs" />
     <Compile Include="ReportingContext\PrincipalSalesmanContributionComposerTest.cs" />
     <Compile Include="ReportingContext\PrincipalInventoryAggregatorTest.cs" />
     <Compile Include="ReportingContext\PrincipalTargetAggregatorTest.cs" />

@@ -335,9 +335,13 @@ Only a review agent may set `GO` or `NO-GO`.
 
 ### PCM-027
 
-- Status: PLANNED
-- Implementation History: none
-- Review History: none
+- Status: GO
+- Implementation History:
+  - 2026-09-10: IN IMPLEMENTATION
+  - 2026-09-10: IMPLEMENTED. Calculated `PRN-GRW-002` Year-over-Year Growth Percentage from stored `PRN-SALES-001` month history only. Catalog registers `PRN-GRW-002` only. The writer does not write `PRN-SALES-001` or `PRN-GRW-001` and does not use Purchase-In, returns, claims, or inventory adjustments.
+- Review History:
+  - 2026-09-10: IN REVIEW
+  - 2026-09-10: GO. `PRN-GRW-002` equals (current month `PRN-SALES-001` − same month prior year `PRN-SALES-001`) ÷ same month prior year `PRN-SALES-001` when the prior-year month is greater than zero, otherwise null, computed from stored Sales-Out history only. The writer touches only `BTRPD_PrincipalYoyGrowthKpi` and `BTRPD_PrincipalYoyGrowth`, writes no `PRN-SALES-001` or `PRN-GRW-001`, and uses no Purchase-In, return, claim, or inventory source. Full `btr.application`, `btr.infrastructure`, and `btr.test` build. 5 new `PrincipalYoyGrowthComposerTest` tests, 14 `PrincipalKpiCatalogTest` tests, and 14 refresh/orchestration tests pass.
 - Remediation History: none
 
 ### PCM-028

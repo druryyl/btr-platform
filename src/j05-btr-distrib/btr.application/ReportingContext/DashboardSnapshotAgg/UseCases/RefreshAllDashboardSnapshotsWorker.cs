@@ -27,6 +27,7 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.UseCases
         private readonly IRefreshPrincipalTargetSnapshotWorker _principalTargetWorker;
         private readonly IRefreshPrincipalAchievementSnapshotWorker _principalAchievementWorker;
         private readonly IRefreshPrincipalMomGrowthSnapshotWorker _principalMomGrowthWorker;
+        private readonly IRefreshPrincipalYoyGrowthSnapshotWorker _principalYoyGrowthWorker;
         private readonly IRefreshPrincipalSalesmanContributionSnapshotWorker _principalSalesmanContributionWorker;
         private readonly IRefreshCustomerPrincipalRelationshipWorker _customerPrincipalRelationshipWorker;
         private readonly IRefreshPrincipalActiveCustomerSnapshotWorker _principalActiveCustomerWorker;
@@ -54,6 +55,7 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.UseCases
             IRefreshPrincipalTargetSnapshotWorker principalTargetWorker,
             IRefreshPrincipalAchievementSnapshotWorker principalAchievementWorker,
             IRefreshPrincipalMomGrowthSnapshotWorker principalMomGrowthWorker,
+            IRefreshPrincipalYoyGrowthSnapshotWorker principalYoyGrowthWorker,
             IRefreshPrincipalSalesmanContributionSnapshotWorker principalSalesmanContributionWorker,
             IRefreshCustomerPrincipalRelationshipWorker customerPrincipalRelationshipWorker,
             IRefreshPrincipalActiveCustomerSnapshotWorker principalActiveCustomerWorker,
@@ -80,6 +82,7 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.UseCases
             _principalTargetWorker = principalTargetWorker;
             _principalAchievementWorker = principalAchievementWorker;
             _principalMomGrowthWorker = principalMomGrowthWorker;
+            _principalYoyGrowthWorker = principalYoyGrowthWorker;
             _principalSalesmanContributionWorker = principalSalesmanContributionWorker;
             _customerPrincipalRelationshipWorker = customerPrincipalRelationshipWorker;
             _principalActiveCustomerWorker = principalActiveCustomerWorker;
@@ -281,6 +284,20 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.UseCases
                     };
                     _principalMomGrowthWorker.Execute(principalMomGrowthRequest);
                     return principalMomGrowthRequest.Result;
+                },
+                domainResults,
+                failures);
+
+            RunDomain(
+                PrincipalYoyGrowthSnapshot.Domain,
+                () =>
+                {
+                    var principalYoyGrowthRequest = new RefreshPrincipalYoyGrowthSnapshotRequest
+                    {
+                        TriggeredBy = triggeredBy
+                    };
+                    _principalYoyGrowthWorker.Execute(principalYoyGrowthRequest);
+                    return principalYoyGrowthRequest.Result;
                 },
                 domainResults,
                 failures);

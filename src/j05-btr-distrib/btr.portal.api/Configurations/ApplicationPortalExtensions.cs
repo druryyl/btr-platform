@@ -115,6 +115,7 @@ namespace btr.portal.api.Configurations
             services.AddScoped<PrincipalReturnPercentageComposer>();
             services.AddScoped<PrincipalAchievementComposer>();
             services.AddScoped<PrincipalMomGrowthComposer>();
+            services.AddScoped<PrincipalYoyGrowthComposer>();
             services.AddScoped<PrincipalSalesmanContributionComposer>();
             services.AddScoped<PrincipalInventoryAggregator>();
             services.AddScoped<CustomerPrincipalRelationshipComposer>();

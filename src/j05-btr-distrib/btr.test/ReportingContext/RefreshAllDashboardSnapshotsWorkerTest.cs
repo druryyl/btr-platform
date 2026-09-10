@@ -27,6 +27,7 @@ namespace btr.test.ReportingContext
             var principalTargetWorker = new StubPrincipalTargetWorker();
             var principalAchievementWorker = new StubPrincipalAchievementWorker();
             var principalMomGrowthWorker = new StubPrincipalMomGrowthWorker();
+            var principalYoyGrowthWorker = new StubPrincipalYoyGrowthWorker();
             var principalSalesmanContributionWorker = new StubPrincipalSalesmanContributionWorker();
             var customerPrincipalRelationshipWorker = new StubCustomerPrincipalRelationshipWorker();
             var principalActiveCustomerWorker = new StubPrincipalActiveCustomerWorker();
@@ -53,6 +54,7 @@ namespace btr.test.ReportingContext
                 principalTargetWorker,
                 principalAchievementWorker,
                 principalMomGrowthWorker,
+                principalYoyGrowthWorker,
                 principalSalesmanContributionWorker,
                 customerPrincipalRelationshipWorker,
                 principalActiveCustomerWorker,
@@ -86,6 +88,7 @@ namespace btr.test.ReportingContext
             principalTargetWorker.WasCalled.Should().BeTrue();
             principalAchievementWorker.WasCalled.Should().BeTrue();
             principalMomGrowthWorker.WasCalled.Should().BeTrue();
+            principalYoyGrowthWorker.WasCalled.Should().BeTrue();
             principalSalesmanContributionWorker.WasCalled.Should().BeTrue();
             customerPrincipalRelationshipWorker.WasCalled.Should().BeTrue();
             principalActiveCustomerWorker.WasCalled.Should().BeTrue();
@@ -110,7 +113,8 @@ namespace btr.test.ReportingContext
             principalReturnHistoryWorker.CallOrder.Should().BeLessThan(principalTargetWorker.CallOrder);
             principalTargetWorker.CallOrder.Should().BeLessThan(principalAchievementWorker.CallOrder);
             principalAchievementWorker.CallOrder.Should().BeLessThan(principalMomGrowthWorker.CallOrder);
-            principalMomGrowthWorker.CallOrder.Should().BeLessThan(principalSalesmanContributionWorker.CallOrder);
+            principalMomGrowthWorker.CallOrder.Should().BeLessThan(principalYoyGrowthWorker.CallOrder);
+            principalYoyGrowthWorker.CallOrder.Should().BeLessThan(principalSalesmanContributionWorker.CallOrder);
             principalSalesmanContributionWorker.CallOrder.Should().BeLessThan(customerPrincipalRelationshipWorker.CallOrder);
             customerPrincipalRelationshipWorker.CallOrder.Should().BeLessThan(principalActiveCustomerWorker.CallOrder);
             principalActiveCustomerWorker.CallOrder.Should().BeLessThan(principalCustomerCoverageWorker.CallOrder);
@@ -122,7 +126,7 @@ namespace btr.test.ReportingContext
             salesmanWorker.CallOrder.Should().BeLessThan(collectionWorker.CallOrder);
             collectionWorker.CallOrder.Should().BeLessThan(fieldActivityWorker.CallOrder);
             fieldActivityWorker.CallOrder.Should().BeLessThan(locationWorker.CallOrder);
-            request.Result.Domains.Should().HaveCount(25);
+            request.Result.Domains.Should().HaveCount(26);
             request.Result.Domains[0].Domain.Should().Be("Piutang");
             request.Result.Domains[1].Domain.Should().Be("Inventory");
             request.Result.Domains[2].Domain.Should().Be("InventoryRisk");
@@ -136,18 +140,19 @@ namespace btr.test.ReportingContext
             request.Result.Domains[10].Domain.Should().Be("PrincipalTarget");
             request.Result.Domains[11].Domain.Should().Be("PrnAchievement");
             request.Result.Domains[12].Domain.Should().Be("PrnMomGrowth");
-            request.Result.Domains[13].Domain.Should().Be("PrnSalesmanContribution");
-            request.Result.Domains[14].Domain.Should().Be("PrnCusRelationship");
-            request.Result.Domains[15].Domain.Should().Be("PrnActiveCustomer");
-            request.Result.Domains[16].Domain.Should().Be("PrnCustomerCoverage");
-            request.Result.Domains[17].Domain.Should().Be("Purchasing");
-            request.Result.Domains[18].Domain.Should().Be("PrincipalPurchaseIn");
-            request.Result.Domains[19].Domain.Should().Be("PurchasingManagement");
-            request.Result.Domains[20].Domain.Should().Be("Customer");
-            request.Result.Domains[21].Domain.Should().Be("Salesman");
-            request.Result.Domains[22].Domain.Should().Be("Collection");
-            request.Result.Domains[23].Domain.Should().Be("FieldActivity");
-            request.Result.Domains[24].Domain.Should().Be("Location");
+            request.Result.Domains[13].Domain.Should().Be("PrnYoyGrowth");
+            request.Result.Domains[14].Domain.Should().Be("PrnSalesmanContribution");
+            request.Result.Domains[15].Domain.Should().Be("PrnCusRelationship");
+            request.Result.Domains[16].Domain.Should().Be("PrnActiveCustomer");
+            request.Result.Domains[17].Domain.Should().Be("PrnCustomerCoverage");
+            request.Result.Domains[18].Domain.Should().Be("Purchasing");
+            request.Result.Domains[19].Domain.Should().Be("PrincipalPurchaseIn");
+            request.Result.Domains[20].Domain.Should().Be("PurchasingManagement");
+            request.Result.Domains[21].Domain.Should().Be("Customer");
+            request.Result.Domains[22].Domain.Should().Be("Salesman");
+            request.Result.Domains[23].Domain.Should().Be("Collection");
+            request.Result.Domains[24].Domain.Should().Be("FieldActivity");
+            request.Result.Domains[25].Domain.Should().Be("Location");
         }
 
         [Fact]
@@ -167,6 +172,7 @@ namespace btr.test.ReportingContext
                 new StubPrincipalTargetWorker(),
                 new StubPrincipalAchievementWorker(),
                 new StubPrincipalMomGrowthWorker(),
+                new StubPrincipalYoyGrowthWorker(),
                 new StubPrincipalSalesmanContributionWorker(),
                 new StubCustomerPrincipalRelationshipWorker(),
                 new StubPrincipalActiveCustomerWorker(),
@@ -442,6 +448,24 @@ namespace btr.test.ReportingContext
                 {
                     RefreshLogId = StubRefreshLogId,
                     DurationMs = 373
+                };
+            }
+        }
+
+        private sealed class StubPrincipalYoyGrowthWorker : IRefreshPrincipalYoyGrowthSnapshotWorker
+        {
+            public bool WasCalled { get; private set; }
+
+            public int CallOrder { get; private set; }
+
+            public void Execute(RefreshPrincipalYoyGrowthSnapshotRequest request)
+            {
+                WasCalled = true;
+                CallOrder = ++_callSequence;
+                request.Result = new RefreshPrincipalYoyGrowthSnapshotResult
+                {
+                    RefreshLogId = StubRefreshLogId,
+                    DurationMs = 374
                 };
             }
         }

@@ -34,6 +34,8 @@ namespace btr.application.ReportingContext.PrincipalAnalyticsAgg
 
         public const string MomGrowthId = "PRN-GRW-001";
 
+        public const string YoyGrowthId = "PRN-GRW-002";
+
         public const string ActiveCustomerCountId = "PRN-CUS-001";
 
         public const string CustomerCoverageId = "PRN-CUS-002";
@@ -77,6 +79,8 @@ namespace btr.application.ReportingContext.PrincipalAnalyticsAgg
 
         private static readonly PrincipalKpiCatalogEntry MomGrowthEntry = CreateMomGrowth();
 
+        private static readonly PrincipalKpiCatalogEntry YoyGrowthEntry = CreateYoyGrowth();
+
         private static readonly PrincipalKpiCatalogEntry ActiveCustomerCountEntry = CreateActiveCustomerCount();
 
         private static readonly PrincipalKpiCatalogEntry CustomerCoverageEntry = CreateCustomerCoverage();
@@ -96,6 +100,7 @@ namespace btr.application.ReportingContext.PrincipalAnalyticsAgg
                 TotalReturnAmountEntry,
                 ReturnPercentageEntry,
                 MomGrowthEntry,
+                YoyGrowthEntry,
                 ActiveCustomerCountEntry,
                 CustomerCoverageEntry
             };
@@ -539,6 +544,39 @@ namespace btr.application.ReportingContext.PrincipalAnalyticsAgg
                     "The writer does not write, overwrite, or recalculate PRN-SALES-001.",
                     "The writer does not write PRN-GRW-002.",
                     "The user-facing name is Month-over-Month Growth Percentage, not purchase growth and not Net Sales."
+                }
+            };
+        }
+
+        private static PrincipalKpiCatalogEntry CreateYoyGrowth()
+        {
+            return new PrincipalKpiCatalogEntry
+            {
+                KpiId = YoyGrowthId,
+                Name = "Year-over-Year Growth Percentage",
+                Description = "Year-over-year Principal growth",
+                EntityCategory = EntityTypeCode.Supplier,
+                EvidenceGrain = "PRN-SALES-001",
+                Formula = "(current month PRN-SALES-001 − same month prior year PRN-SALES-001) ÷ same month prior year PRN-SALES-001 when prior-year month > 0; otherwise null",
+                IsAuthoritativePrincipalPerformanceKpi = false,
+                IsAuthoritativeRankingKpi = false,
+                DeductsReturns = false,
+                DeductsClaims = false,
+                DeductsInventoryAdjustments = false,
+                DefinitionStatements = new[]
+                {
+                    "PRN-GRW-002 Year-over-Year Growth Percentage = (current month PRN-SALES-001 − same month prior year PRN-SALES-001) ÷ same month prior year PRN-SALES-001 when the same month prior year is greater than zero; otherwise null.",
+                    "Evidence grain is PRN-SALES-001.",
+                    "Growth calculations use Principal Sales-Out as the source KPI.",
+                    "The calculation uses stored Principal Sales-Out month history only.",
+                    "The calculation does not use Purchase-In, returns, claims, or inventory adjustments.",
+                    "PRN-GRW-002 is a supporting ranking KPI.",
+                    "PRN-GRW-002 is not a replacement for Principal Sales-Out.",
+                    "PRN-GRW-002 is not Net Sales.",
+                    "The writer reads stored PRN-SALES-001 history.",
+                    "The writer does not write, overwrite, or recalculate PRN-SALES-001.",
+                    "The writer does not write PRN-GRW-001.",
+                    "The user-facing name is Year-over-Year Growth Percentage, not purchase growth and not Net Sales."
                 }
             };
         }
