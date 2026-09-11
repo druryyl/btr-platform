@@ -414,7 +414,7 @@ conflicts and to land after the lens model is stable.
 | Slice | Objective | Status |
 | --- | --- | --- |
 | PIW-01 | Backend entity-type display name "Principal" | GO |
-| PIW-02 | Frontend Principal presentation labels | PLANNED |
+| PIW-02 | Frontend Principal presentation labels | GO |
 | PIW-03 | Lens configuration model | PLANNED |
 | PIW-04 | Lens switcher in workspace shell | PLANNED |
 | PIW-05 | `principal-sales-out-map` preset and bubble encoding | PLANNED |
@@ -437,6 +437,7 @@ IN REVIEW → GO`).
 | Slice | Review date | Result | Findings | Remediation |
 | --- | --- | --- | --- | --- |
 | PIW-01 | 2026-09-11 | GO | None blocking; INFO-001 pre-existing `btr.test` compile error (out of slice scope) | Resolved outside PIW-01 (`DashboardAlertCenterComposerTest.cs` `IndexOf` fix, uncommitted); PIW-01 focused test passes |
+| PIW-02 | 2026-09-11 | GO | None blocking | N/A |
 
 ---
 
@@ -462,3 +463,12 @@ and `PeerGroupLabelFormatter` peer label text. No code reads the registered `Dis
 Note: `btr.test` has a pre-existing, unrelated compile failure
 (`DashboardAlertCenterComposerTest.cs`: `string.Contains(string, StringComparison)` unsupported on
 net48) present before PIW-01; it is out of slice scope and was not modified.
+
+### PIW-02 verification note
+
+`entityAnalyticsNavigation.ts` now supplies the single Principal presentation mapping
+(`singularLabel = "Principal"`, `pluralLabel = "Principals"` for key `Supplier`) via
+`getEntityDisplayLabel`, consumed by the workspace title/subtitle, breadcrumb, scope label, home
+cards, profile shell, and compare view. No `EntityType`/route/store identifier changed; only
+user-facing labels. Frontend build (`npm run build`: `vue-tsc -b && vite build`) and tests
+(`npm run test`: 34 files, 266 tests) both pass.

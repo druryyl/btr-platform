@@ -28,6 +28,6 @@ export function buildWorkspaceRoute(
 export const ENTITY_TYPE_WORKSPACE_LABELS: Record<string, string> = {
   Customer: 'Customers',
   Salesman: 'Salesmen',
-  Supplier: 'Suppliers',
+  Supplier: 'Principals',
   Item: 'Items',
 }

@@ -101,7 +101,7 @@ watch(
 
 <template>
   <DashboardDetailLayout
-    title="Compare Suppliers"
+    title="Compare Principals"
     subtitle="Side-by-side KPI, trend, ranking, attention, and relationship comparison"
     :loading="store.compareLoading"
     :error="store.compareError"
@@ -117,7 +117,7 @@ watch(
         <EntityPicker
           v-model="slots[index]"
           :entity-type="ENTITY_TYPE"
-          :placeholder="`Supplier ${index + 1}`"
+          :placeholder="`Principal ${index + 1}`"
         />
         <Button
           v-if="slots.length > MIN_ENTITIES"

@@ -8,6 +8,7 @@ const props = defineProps<{
   section: ProfileRelatedEntitiesSection | null | undefined
   loading?: boolean
   workspaceMode?: boolean
+  title?: string | null
 }>()
 
 const emit = defineEmits<{
@@ -19,7 +20,7 @@ const blocks = computed(() => props.section?.Blocks ?? [])
 
 <template>
   <ProfileSectionCard
-    :title="workspaceMode ? undefined : 'Related Entities'"
+    :title="title ?? (workspaceMode ? undefined : 'Related Entities')"
     :is-available="section?.IsAvailable"
     :unavailable-reason="section?.UnavailableReason"
     :loading="loading"

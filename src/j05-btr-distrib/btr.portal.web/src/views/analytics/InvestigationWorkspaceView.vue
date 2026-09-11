@@ -26,6 +26,7 @@ import ComparisonLimitDialog from '@/components/entity-analytics/workspace/Compa
 import type { PopulationMapPoint } from '@/models/entityAnalytics'
 import { buildWorkspaceQuery, parseWorkspaceUrlState } from '@/services/investigationWorkspaceUrl'
 import { buildWorkspaceRoute } from '@/navigation/investigationWorkspaceNavigation'
+import { getEntityDisplayLabel } from '@/navigation/entityAnalyticsNavigation'
 import { useEntityAnalyticsStore } from '@/stores/entityAnalyticsStore'
 import { useInvestigationWorkspaceStore } from '@/stores/investigationWorkspaceStore'
 
@@ -53,6 +54,12 @@ const entityTypeOptions = computed(() =>
 )
 
 const isInvestigation = computed(() => workspace.mode === 'investigation')
+
+const entityLabel = computed(() => getEntityDisplayLabel(workspace.entityType))
+
+const workspaceTitle = computed(() =>
+  workspace.entityType === 'Supplier' ? 'Principal Investigation Workspace' : 'Investigation Workspace',
+)
 
 const primaryKpiId = computed(
   () => workspace.activePreset?.AxisYKpiId ?? workspace.population?.AxisYKpiId ?? '',
@@ -189,8 +196,8 @@ watch(
 
 <template>
   <DashboardDetailLayout
-    title="Investigation Workspace"
-    :subtitle="`${workspace.entityType} population investigation`"
+    :title="workspaceTitle"
+    :subtitle="`${entityLabel} population investigation`"
     :loading="workspace.loadingPopulation && !workspace.population"
     :error="workspace.error"
     :generated-at="workspace.population?.GeneratedAt"

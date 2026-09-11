@@ -2,6 +2,7 @@ import type { RouteLocationRaw } from 'vue-router'
 
 export interface EntityAnalyticsNavConfig {
   entityType: string
+  singularLabel: string
   pluralLabel: string
   compareRouteName: string
 }
@@ -9,21 +10,25 @@ export interface EntityAnalyticsNavConfig {
 export const ENTITY_ANALYTICS_NAV: Record<string, EntityAnalyticsNavConfig> = {
   Customer: {
     entityType: 'Customer',
+    singularLabel: 'Customer',
     pluralLabel: 'Customers',
     compareRouteName: 'customer-compare',
   },
   Salesman: {
     entityType: 'Salesman',
+    singularLabel: 'Salesman',
     pluralLabel: 'Salesmen',
     compareRouteName: 'salesman-compare',
   },
   Supplier: {
     entityType: 'Supplier',
-    pluralLabel: 'Suppliers',
+    singularLabel: 'Principal',
+    pluralLabel: 'Principals',
     compareRouteName: 'supplier-compare',
   },
   Item: {
     entityType: 'Item',
+    singularLabel: 'Item',
     pluralLabel: 'Items',
     compareRouteName: 'item-compare',
   },
@@ -32,6 +37,11 @@ export const ENTITY_ANALYTICS_NAV: Record<string, EntityAnalyticsNavConfig> = {
 export function getEntityAnalyticsNav(entityType: string | null | undefined): EntityAnalyticsNavConfig | undefined {
   if (!entityType) return undefined
   return ENTITY_ANALYTICS_NAV[entityType]
+}
+
+export function getEntityDisplayLabel(entityType: string | null | undefined): string {
+  const config = getEntityAnalyticsNav(entityType)
+  return config?.singularLabel ?? (entityType ?? '')
 }
 
 export function buildCompareRoute(

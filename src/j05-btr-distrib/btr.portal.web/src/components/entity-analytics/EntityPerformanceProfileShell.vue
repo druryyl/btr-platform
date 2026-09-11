@@ -14,7 +14,11 @@ import ProfileAttentionHistorySection from '@/components/entity-analytics/Profil
 import ProfileRelatedEntitiesSection from '@/components/entity-analytics/ProfileRelatedEntitiesSection.vue'
 import ProfileEvidenceSection from '@/components/entity-analytics/ProfileEvidenceSection.vue'
 import type { EntityPerformanceProfileResponse } from '@/models/entityAnalytics'
-import { buildCompareRoute, getEntityAnalyticsNav } from '@/navigation/entityAnalyticsNavigation'
+import {
+  buildCompareRoute,
+  getEntityAnalyticsNav,
+  getEntityDisplayLabel,
+} from '@/navigation/entityAnalyticsNavigation'
 import { buildWorkspaceRoute } from '@/navigation/investigationWorkspaceNavigation'
 
 const props = defineProps<{
@@ -22,6 +26,7 @@ const props = defineProps<{
   loading?: boolean
   error?: string | null
   entityCode?: string | null
+  profileTitle?: string | null
   notice?: string | null
 }>()
 
@@ -46,6 +51,22 @@ const resolvedEntityId = computed(
 
 const navConfig = computed(() => getEntityAnalyticsNav(resolvedEntityType.value))
 
+const entityLabel = computed(() => getEntityDisplayLabel(resolvedEntityType.value))
+
+const displayTitle = computed(
+  () =>
+    props.profileTitle?.trim()
+    || props.profile?.Overview?.DisplayName
+    || props.profile?.EntityId
+    || 'Entity Performance Profile',
+)
+
+const isPrincipal = computed(() => resolvedEntityType.value === 'Supplier')
+
+const relationshipTitle = computed(() => (isPrincipal.value ? 'Principal Relationships' : null))
+
+const evidenceTitle = computed(() => (isPrincipal.value ? 'Principal Evidence' : null))
+
 const compareRoute = computed(() => {
   if (!navConfig.value) return null
   return buildCompareRoute(navConfig.value.entityType, resolvedEntityId.value)
@@ -66,8 +87,8 @@ const workspaceRoute = computed(() => {
 
 <template>
   <DashboardDetailLayout
-    :title="profile?.Overview?.DisplayName || profile?.EntityId || 'Entity Performance Profile'"
-    :subtitle="profile ? `${profile.EntityType} · ${profile.Overview?.EntityCode || profile.EntityId}` : 'Entity Analytics'"
+    :title="displayTitle"
+    :subtitle="profile ? `${entityLabel} · ${profile.Overview?.EntityCode || profile.EntityId}` : 'Entity Analytics'"
     :loading="loading"
     :error="error"
     :generated-at="profile?.GeneratedAt"
@@ -142,8 +163,16 @@ const workspaceRoute = computed(() => {
       />
       <ProfileRankingHistorySection :section="profile?.Ranking" :loading="loading" />
       <ProfileAttentionHistorySection :section="profile?.Attention" :loading="loading" />
-      <ProfileRelatedEntitiesSection :section="profile?.RelatedEntities" :loading="loading" />
-      <ProfileEvidenceSection :section="profile?.Evidence" :loading="loading" />
+      <ProfileRelatedEntitiesSection
+        :section="profile?.RelatedEntities"
+        :loading="loading"
+        :title="relationshipTitle ?? undefined"
+      />
+      <ProfileEvidenceSection
+        :section="profile?.Evidence"
+        :loading="loading"
+        :title="evidenceTitle ?? undefined"
+      />
     </div>
   </DashboardDetailLayout>
 </template>

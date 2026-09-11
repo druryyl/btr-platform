@@ -20,6 +20,7 @@ import type {
   WorkspaceSelectedEntity,
 } from '@/models/entityAnalytics'
 import { MAX_WORKSPACE_COMPARISON as MAX_COMPARISON } from '@/models/entityAnalytics'
+import { getEntityDisplayLabel } from '@/navigation/entityAnalyticsNavigation'
 
 export type WorkspaceMode = 'discovery' | 'investigation'
 
@@ -96,7 +97,7 @@ export const useInvestigationWorkspaceStore = defineStore('investigationWorkspac
     if (!population.value) return null
     if (population.value.ActiveFilterDescription) return population.value.ActiveFilterDescription
     const total = population.value.TotalPopulationCount
-    const label = entityType.value
+    const label = getEntityDisplayLabel(entityType.value)
     return `Showing ${total} active ${label.toLowerCase()}s`
   })
 
