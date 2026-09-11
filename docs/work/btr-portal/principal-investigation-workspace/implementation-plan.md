@@ -420,7 +420,7 @@ conflicts and to land after the lens model is stable.
 | PIW-05 | `principal-sales-out-map` preset and bubble encoding | GO |
 | PIW-06 | Current Facts KPI grouping by lens | GO |
 | PIW-07 | Sales-Out attention categories | GO |
-| PIW-08 | Purchasing relationship drivers | PLANNED |
+| PIW-08 | Purchasing relationship drivers | GO |
 | PIW-09 | Purchase-to-Sales-Out Ratio (derived metric) | PLANNED |
 | PIW-10 | Workspace presentation refinements (tooltip/peer) | PLANNED |
 | PIW-11 | Lens-scoped evidence presentation | PLANNED |
@@ -443,6 +443,7 @@ IN REVIEW → GO`).
 | PIW-05 | 2026-09-11 | GO | None blocking. INFO-001: `.iw-map-encoding` legend has no scoped CSS (unstyled text caption); cosmetic only, bubble color rendering unaffected | N/A |
 | PIW-06 | 2026-09-11 | GO | None blocking. INFO-001: `PRN-CUS-001/002` are in the Sales-Out lens KpiIds but are not listed in the `supplier-default` pack (registered separately); absent rows simply do not render, data-driven, non-blocking. INFO-002: lens scoping applies to the workspace Current Facts summary only; standalone profile/compare views keep the full pack (consistent with slice scope) | N/A |
 | PIW-07 | 2026-09-12 | GO | None blocking. INFO-001: five Sales-Out categories registered with new self-descriptive signal codes; no existing EX01/EX02 code maps 1:1 to a category, so code reuse was not applicable — engine/computation untouched, no new attention engine. INFO-002: `dotnet build` of the sln requires VS MSBuild (dotnet SDK lacks VS web-application targets); build/test ran under VS 2022 MSBuild, previously established convention | N/A |
+| PIW-08 | 2026-09-12 | GO | None blocking. INFO-001: purchasing drivers (`TopPurchasedItems`, `PurchaseHistory`) are declarative catalog registrations; no snapshot production/rendering added — consistent with FEASIBILITY §10 ("no additional model") and PIW-03's deferred "catalog registration" note. INFO-002: `PurchaseHistory` is a time-series driver and carries no `TargetEntityType`; inert until a resolution mechanism is introduced (out of slice scope). INFO-003: 11 pre-existing `btr.test.ReportingContext` failures at the parent commit (cash-flow, customer pack, field activity, sales report, inventory-risk, collection, `SupplierEntityAnalyticsProducerTest` fixture missing `RelationshipProjection`) are unrelated; no new failures introduced | N/A |
 
 ---
 
@@ -593,3 +594,37 @@ Focused tests: `src/services/lensScopedKpis.spec.ts` (4 tests: no-set passthroug
 excludes `PRN-PUR-001`, Purchasing set excludes sales KPIs, doc-order preservation). Full frontend
 build (`vue-tsc -b && vite build`) passes; frontend tests 35 files / 273 tests pass (includes the 4
 new lens-scoping tests).
+
+### PIW-08 verification note
+
+Registered the approved purchasing relationship drivers in the existing `SupplierRelationshipCatalog`
+(no additional model, per FEASIBILITY §10):
+
+- `TopPurchasedItems` ("Top Purchased Items"): `TargetEntityType = Item`,
+  `MetricKpiId = PRN-PUR-001` (`PurchaseInvoiceDetailMetricKpiId`, Purchase Invoice Detail grain),
+  `PeriodSemantics = MTD`, `TopN = 10`.
+- `PurchaseHistory` ("Purchase History"): `MetricKpiId = "PU-KPI-001"`
+  (`PurchaseHistoryMetricKpiId`, monthly purchase-amount history), `PeriodSemantics = Monthly`,
+  `TopN = 12`.
+- Both codes added to the `supplier-relationships` pack alongside the three Sales-Out omzet drivers.
+  `IsPurchasingRelationship` was added for symmetry with `IsSalesOmzetRelationship`. The PIW-03
+  `EntityInvestigationLensRegistry` Purchasing-lens `RelationshipDrivers` now reference the catalog
+  constants instead of duplicated string literals.
+
+Acceptance criteria: the catalog registers Top Purchased Items and Purchase History for Supplier;
+resolution sources are declared as Purchase Invoice Detail (`PRN-PUR-001`) and `PU-KPI-001` monthly
+history, both Supplier-scoped (entity-type pack) and never `SupplierName`-keyed; no PO-based,
+purchasing-user, buyer, or procurement-workflow relationship is registered. Existing Sales-Out omzet
+drivers (`PRN-SALES-001`) are unchanged, so purchase-in is still never presented/ranked as Principal
+sales performance. The expanded pack is inert for existing producers (no snapshots use the new
+codes), so no L4/persistence behavior changes.
+
+Focused tests: `SupplierPurchasingRelationshipCatalogTest` (6 tests: Top Purchased Items metadata,
+Purchase History metadata, pack resolution, no PO/purchasing-user/procurement codes, purchasing-lens
+scoping, disjoint classification) plus the PIW-03/omzet metadata suites pass 17/17. The previously
+pack-wide omzet assertion in `SupplierPrincipalOmzetRelationshipMetadataTest` was scoped to omzet
+relationships (the expanded pack otherwise invalidates it). Backend build (VS MSBuild,
+`btr.test.csproj`) succeeds. Full `btr.test.ReportingContext` run: 946 passed / 11 failed, identical
+to the 940 / 11 baseline at the parent commit; the 11 failures are pre-existing and unrelated to this
+slice (cash-flow, customer pack, field activity, sales report, inventory-risk, collection, and a
+`SupplierEntityAnalyticsProducerTest` fixture that omits `RelationshipProjection`).

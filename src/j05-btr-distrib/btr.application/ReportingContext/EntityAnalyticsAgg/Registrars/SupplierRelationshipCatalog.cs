@@ -13,13 +13,24 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Registrars
         public const string TopSalesmenByOmzet = "TopSalesmenByOmzet";
         public const string TopProductsByOmzet = "TopProductsByOmzet";
 
+        public const string TopPurchasedItems = "TopPurchasedItems";
+        public const string PurchaseHistory = "PurchaseHistory";
+
         public const string SalesOmzetMetricKpiId = PrincipalKpiCatalog.SalesOutId;
+        public const string PurchaseInvoiceDetailMetricKpiId = PrincipalKpiCatalog.PurchaseInId;
+        public const string PurchaseHistoryMetricKpiId = "PU-KPI-001";
 
         public static bool IsSalesOmzetRelationship(string relationshipCode)
         {
             return string.Equals(relationshipCode, TopCustomersByOmzet, StringComparison.OrdinalIgnoreCase)
                 || string.Equals(relationshipCode, TopSalesmenByOmzet, StringComparison.OrdinalIgnoreCase)
                 || string.Equals(relationshipCode, TopProductsByOmzet, StringComparison.OrdinalIgnoreCase);
+        }
+
+        public static bool IsPurchasingRelationship(string relationshipCode)
+        {
+            return string.Equals(relationshipCode, TopPurchasedItems, StringComparison.OrdinalIgnoreCase)
+                || string.Equals(relationshipCode, PurchaseHistory, StringComparison.OrdinalIgnoreCase);
         }
 
         public static void Register(IRelationshipDefinitionRegistry registry)
@@ -57,11 +68,32 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Registrars
                 TopN = 10
             });
 
+            registry.Register(EntityTypeCode.Supplier, new RelationshipDefinition
+            {
+                RelationshipCode = TopPurchasedItems,
+                DisplayName = "Top Purchased Items",
+                TargetEntityType = EntityTypeCode.Item,
+                MetricKpiId = PurchaseInvoiceDetailMetricKpiId,
+                PeriodSemantics = "MTD",
+                TopN = 10
+            });
+
+            registry.Register(EntityTypeCode.Supplier, new RelationshipDefinition
+            {
+                RelationshipCode = PurchaseHistory,
+                DisplayName = "Purchase History",
+                MetricKpiId = PurchaseHistoryMetricKpiId,
+                PeriodSemantics = "Monthly",
+                TopN = 12
+            });
+
             registry.RegisterPack(PackId, new List<string>
             {
                 TopCustomersByOmzet,
                 TopSalesmenByOmzet,
-                TopProductsByOmzet
+                TopProductsByOmzet,
+                TopPurchasedItems,
+                PurchaseHistory
             });
         }
     }

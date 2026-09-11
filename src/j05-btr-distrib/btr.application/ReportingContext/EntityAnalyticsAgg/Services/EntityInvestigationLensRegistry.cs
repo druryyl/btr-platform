@@ -93,8 +93,8 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Services
                 },
                 RelationshipDrivers = new[]
                 {
-                    "TopPurchasedItems",
-                    "PurchaseHistory"
+                    SupplierRelationshipCatalog.TopPurchasedItems,
+                    SupplierRelationshipCatalog.PurchaseHistory
                 },
                 EvidenceRoutes = new[]
                 {

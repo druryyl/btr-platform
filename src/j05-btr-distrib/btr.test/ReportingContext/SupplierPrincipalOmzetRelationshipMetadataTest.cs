@@ -40,6 +40,7 @@ namespace btr.test.ReportingContext
             products.MetricKpiId.Should().NotBe("SF-KPI-008");
 
             relationships.ResolvePackForEntityType(EntityTypeCode.Supplier)
+                .Where(definition => SupplierRelationshipCatalog.IsSalesOmzetRelationship(definition.RelationshipCode))
                 .Should().OnlyContain(definition =>
                     definition.MetricKpiId == PrincipalKpiCatalog.SalesOutId
                     && !definition.MetricKpiId.StartsWith("PR-KPI-")

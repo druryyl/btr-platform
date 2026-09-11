@@ -262,6 +262,7 @@
     <Compile Include="ReportingContext\SupplierPrincipalPurchaseInCompositionTest.cs" />
     <Compile Include="ReportingContext\SupplierPrincipalInventoryCompositionTest.cs" />
     <Compile Include="ReportingContext\SupplierPrincipalOmzetRelationshipMetadataTest.cs" />
+    <Compile Include="ReportingContext\SupplierPurchasingRelationshipCatalogTest.cs" />
     <Compile Include="ReportingContext\SupplierEntityAnalyticsReconciliationTest.cs" />
     <Compile Include="ReportingContext\ItemEntityAnalyticsProducerTest.cs" />
     <Compile Include="ReportingContext\ItemEntityAnalyticsReconciliationTest.cs" />
