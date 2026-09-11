@@ -544,10 +544,10 @@ namespace btr.test.ReportingContext
             allAlerts.Should().NotContain(a =>
                 a.SignalKey != null && a.SignalKey.StartsWith("PRN-RET", StringComparison.OrdinalIgnoreCase));
             allAlerts.Should().NotContain(a =>
-                a.SignalKey != null && a.SignalKey.Contains("Collection", StringComparison.OrdinalIgnoreCase)
+                a.SignalKey != null && a.SignalKey.IndexOf("Collection", StringComparison.OrdinalIgnoreCase) >= 0
                 && a.EntityType == "Principal");
             allAlerts.Should().NotContain(a =>
-                a.SignalKey != null && a.SignalKey.Contains("Credit", StringComparison.OrdinalIgnoreCase)
+                a.SignalKey != null && a.SignalKey.IndexOf("Credit", StringComparison.OrdinalIgnoreCase) >= 0
                 && a.EntityType == "Principal");
         }
 

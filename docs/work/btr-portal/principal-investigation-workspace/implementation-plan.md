@@ -413,7 +413,7 @@ conflicts and to land after the lens model is stable.
 
 | Slice | Objective | Status |
 | --- | --- | --- |
-| PIW-01 | Backend entity-type display name "Principal" | IMPLEMENTED |
+| PIW-01 | Backend entity-type display name "Principal" | GO |
 | PIW-02 | Frontend Principal presentation labels | PLANNED |
 | PIW-03 | Lens configuration model | PLANNED |
 | PIW-04 | Lens switcher in workspace shell | PLANNED |
@@ -431,6 +431,12 @@ conflicts and to land after the lens model is stable.
 
 Lifecycle: `PLANNED → IN IMPLEMENTATION → IMPLEMENTED → IN REVIEW → GO` (or `NO-GO → REMEDIATION →
 IN REVIEW → GO`).
+
+### Review History
+
+| Slice | Review date | Result | Findings | Remediation |
+| --- | --- | --- | --- | --- |
+| PIW-01 | 2026-09-11 | GO | None blocking; INFO-001 pre-existing `btr.test` compile error (out of slice scope) | Resolved outside PIW-01 (`DashboardAlertCenterComposerTest.cs` `IndexOf` fix, uncommitted); PIW-01 focused test passes |
 
 ---
 
