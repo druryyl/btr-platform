@@ -21,6 +21,8 @@ const props = defineProps<{
   clickHint?: string
   domain?: DashboardDomain
   currencyFields?: string[]
+  selectedField?: string
+  selectedValue?: string
 }>()
 
 const emit = defineEmits<{
@@ -55,7 +57,14 @@ function isNumericField(field: string): boolean {
 }
 
 function rowClass(data: object): string | undefined {
-  const rank = (data as Record<string, unknown>).Rank
+  const row = data as Record<string, unknown>
+  const rank = row.Rank
+
+  if (props.selectedField && props.selectedValue != null && props.selectedValue !== '') {
+    const selected = String(row[props.selectedField] ?? '')
+    if (selected === props.selectedValue) return 'dashboard-table-row--selected'
+  }
+
   if (rank === 1) return 'dashboard-table-row--top'
   return undefined
 }
@@ -225,6 +234,14 @@ function parseRank(value: unknown): number | null {
 
 .dashboard-table :deep(.dashboard-table-row--top) {
   background: var(--dashboard-table-row-top) !important;
+}
+
+.dashboard-table :deep(.dashboard-table-row--selected) {
+  background: color-mix(
+    in srgb,
+    var(--dashboard-domain-color, #2563eb) 14%,
+    var(--dashboard-table-row-hover)
+  ) !important;
 }
 
 .dashboard-table :deep(.dashboard-table__numeric) {

@@ -2,10 +2,12 @@
 import { computed, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import Select from 'primevue/select'
+import Button from 'primevue/button'
 import DashboardDetailLayout from '@/components/dashboard/DashboardDetailLayout.vue'
 import DashboardMetric from '@/components/dashboard/primitives/DashboardMetric.vue'
 import Top10RankingTable from '@/components/dashboard/Top10RankingTable.vue'
 import { formatCurrency, formatCurrencyCompact, formatNumber, formatPercent } from '@/services/formatters'
+import { contributionPercentage } from '@/services/principalContribution'
 import type { PrincipalPerformanceRankingItem, PrincipalSalesmanContributionItem } from '@/models/dashboard'
 import { useDashboardStore } from '@/stores/dashboardStore'
 
@@ -238,10 +240,20 @@ const customerReachRankingRows = computed(() =>
     ),
 )
 
+const selectedPrincipal = computed(() => {
+  if (!selectedSupplierId.value) return null
+  return (
+    dashboard.principalPerformance?.Ranking.find(
+      (item) => item.SupplierId.localeCompare(selectedSupplierId.value, undefined, { sensitivity: 'accent' }) === 0,
+    ) ?? null
+  )
+})
+
 const contributionColumns = [
-  { field: 'SalesPersonName', header: 'Salesman' },
   { field: 'SalesPersonCode', header: 'Salesman Code' },
+  { field: 'SalesPersonName', header: 'Salesman' },
   { field: 'ContributionAmount', header: 'Contribution Amount' },
+  { field: 'ContributionPercentage', header: 'Contribution %' },
 ]
 
 const selectedPrincipalContributions = computed(
@@ -257,7 +269,16 @@ const selectedPrincipalContributions = computed(
             sensitivity: 'accent',
           }) === 0,
       )
-      .map((row) => ({ ...row }) as Record<string, unknown>),
+      .map(
+        (row) =>
+          ({
+            ...row,
+            ContributionPercentage: contributionPercentage(
+              row.ContributionAmount,
+              selectedPrincipal.value?.PrincipalSalesOutAmount,
+            ),
+          }) as Record<string, unknown>,
+      ),
 )
 
 const missingTargetNote = computed(() => {
@@ -280,20 +301,11 @@ const periodLabel = computed(() => {
   return new Intl.DateTimeFormat('id-ID', { month: 'long', year: 'numeric' }).format(month)
 })
 
-const selectedPrincipal = computed(() => {
-  if (!selectedSupplierId.value) return null
-  return (
-    dashboard.principalPerformance?.Ranking.find(
-      (item) => item.SupplierId.localeCompare(selectedSupplierId.value, undefined, { sensitivity: 'accent' }) === 0,
-    ) ?? null
-  )
-})
-
 function onRankingClick(row: Record<string, unknown>): void {
   const item = row as unknown as PrincipalPerformanceRankingItem
   if (!item.SupplierId) return
-  void router.push({
-    name: 'principal-performance-evidence',
+  void router.replace({
+    name: 'principal-performance-dashboard',
     query: { supplierId: item.SupplierId },
   })
 }
@@ -304,6 +316,14 @@ function onReturnRowClick(row: Record<string, unknown>): void {
   void router.push({
     name: 'principal-performance-return-evidence',
     query: { supplierId: item.SupplierId },
+  })
+}
+
+function onViewSalesOutEvidence(): void {
+  if (!selectedSupplierId.value) return
+  void router.push({
+    name: 'principal-performance-evidence',
+    query: { supplierId: selectedSupplierId.value },
   })
 }
 
@@ -396,7 +416,9 @@ onMounted(() => {
       :loading="dashboard.loading"
       value-field="PrincipalSalesOutAmount"
       clickable
-      click-hint="Open Faktur Item evidence"
+      click-hint="Select to view Salesman contribution"
+      selected-field="SupplierId"
+      :selected-value="selectedSupplierId"
       empty-message="No Principal Sales-Out ranking for the current period."
       @row-click="onRankingClick"
     />
@@ -411,7 +433,9 @@ onMounted(() => {
       :value-field="isPercentageRanking ? 'RankingValue' : rankingValueField"
       :percent-field="isPercentageRanking ? 'RankingValue' : undefined"
       clickable
-      click-hint="Open Faktur Item evidence"
+      click-hint="Select to view Salesman contribution"
+      selected-field="SupplierId"
+      :selected-value="selectedSupplierId"
       :empty-message="`No ${rankingValueHeader} ranking for the current period.`"
       @row-click="onRankingClick"
     />
@@ -623,8 +647,7 @@ onMounted(() => {
       </p>
 
       <p v-if="!selectedSupplierId" class="principal-performance__contribution-note">
-        Select a Principal from the Principal Sales-Out ranking to see each
-        contributing Salesman.
+        Select a Principal from the ranking above to view Salesman Contribution.
       </p>
 
       <Top10RankingTable
@@ -634,12 +657,22 @@ onMounted(() => {
         :rows="selectedPrincipalContributions"
         :loading="dashboard.loading"
         value-field="ContributionAmount"
+        percent-field="ContributionPercentage"
         :empty-message="
           contributionIsAvailable
             ? 'No Salesman contribution for the selected Principal in the current period.'
             : 'Salesman contribution is not yet available for the current period.'
         "
       />
+
+      <div v-if="selectedSupplierId" class="principal-performance__contribution-actions">
+        <Button
+          label="View Sales-Out Evidence"
+          icon="pi pi-id-card"
+          outlined
+          @click="onViewSalesOutEvidence"
+        />
+      </div>
     </section>
 
     <section
@@ -823,6 +856,12 @@ onMounted(() => {
 .principal-performance__contribution-note {
   margin: 0 0 1rem;
   color: var(--p-text-muted-color);
+}
+
+.principal-performance__contribution-actions {
+  margin-top: 1rem;
+  display: flex;
+  justify-content: flex-end;
 }
 
 .principal-performance__customer-reach {
