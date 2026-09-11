@@ -80,6 +80,18 @@ namespace btr.test.ReportingContext
             types.Should().Contain(t => t.EntityType == EntityTypeCode.Salesman);
         }
 
+        [Fact]
+        public void GetEnabledTypes_SupplierUsesPrincipalDisplayName()
+        {
+            var repository = new ServiceTestRepository { HasMetrics = true };
+            var service = CreateService(enabledTypes: new string[0], repository: repository);
+
+            var supplier = service.GetEnabledTypes()
+                .Single(t => t.EntityType == EntityTypeCode.Supplier);
+
+            supplier.DisplayName.Should().Be("Principal");
+        }
+
         private static EntityAnalyticsService CreateService(
             string[] enabledTypes,
             IEntityAnalyticsRepository repository = null)
