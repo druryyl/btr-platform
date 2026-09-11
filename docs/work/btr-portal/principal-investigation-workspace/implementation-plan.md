@@ -415,7 +415,7 @@ conflicts and to land after the lens model is stable.
 | --- | --- | --- |
 | PIW-01 | Backend entity-type display name "Principal" | GO |
 | PIW-02 | Frontend Principal presentation labels | GO |
-| PIW-03 | Lens configuration model | PLANNED |
+| PIW-03 | Lens configuration model | GO |
 | PIW-04 | Lens switcher in workspace shell | PLANNED |
 | PIW-05 | `principal-sales-out-map` preset and bubble encoding | PLANNED |
 | PIW-06 | Current Facts KPI grouping by lens | PLANNED |
@@ -438,6 +438,7 @@ IN REVIEW → GO`).
 | --- | --- | --- | --- | --- |
 | PIW-01 | 2026-09-11 | GO | None blocking; INFO-001 pre-existing `btr.test` compile error (out of slice scope) | Resolved outside PIW-01 (`DashboardAlertCenterComposerTest.cs` `IndexOf` fix, uncommitted); PIW-01 focused test passes |
 | PIW-02 | 2026-09-11 | GO | None blocking | N/A |
+| PIW-03 | 2026-09-11 | GO | None blocking. INFO-001: preset/driver/category declarations are config-only and registered by later slices. INFO-002: lens config not yet API-exposed; consumption deferred to PIW-04 | N/A |
 
 ---
 
@@ -472,3 +473,29 @@ net48) present before PIW-01; it is out of slice scope and was not modified.
 cards, profile shell, and compare view. No `EntityType`/route/store identifier changed; only
 user-facing labels. Frontend build (`npm run build`: `vue-tsc -b && vite build`) and tests
 (`npm run test`: 34 files, 266 tests) both pass.
+
+### PIW-03 verification note
+
+Backend lens configuration model added under Entity Analytics:
+
+- `EntityInvestigationLensIds` (`sales-out`, `purchasing`) and
+  `EntityInvestigationDerivedMetricIds` (`purchase-to-sales-out-ratio`, explicitly not a KPI ID).
+- `EntityInvestigationLensDefinition` model (lens id, entity type, display name, default flag,
+  default preset, KPI IDs, derived metric IDs, attention categories, relationship drivers,
+  evidence routes).
+- `EntityInvestigationLensRegistry` declaring exactly two lenses for `EntityTypeCode.Supplier`:
+  Sales-Out (default, preset `principal-sales-out-map`) with the §8.4 Sales-Out KPI set, and
+  Purchasing (preset `purchase-exposure-map`) with `PRN-PUR-001`, `PU-KPI-001`, `PRN-INV-001/002`
+  plus the derived Purchase-to-Sales-Out Ratio. No new entity type, KPI ID, or profile is
+  introduced; no catalog is registered and no data is persisted by this slice.
+
+The configuration is the declarative source of truth consumed by later slices: PIW-04 (lens
+switcher / store lens state), PIW-05 (`principal-sales-out-map` preset definition), PIW-06 (KPI
+grouping), PIW-07 (attention lens association), PIW-08 (purchasing relationship drivers), and
+PIW-11 (lens-scoped evidence). The referenced preset id `principal-sales-out-map`, the purchasing
+relationship driver codes, and the Sales-Out attention categories are declared here; their catalog
+registration is implemented by those later slices and is intentionally out of PIW-03 scope.
+
+Focused tests (`EntityInvestigationLensRegistryTest`, 6 tests) verify lens count/default, both KPI
+sets, per-lens default presets, derived-metric non-KPI treatment, and Sales-Out/Purchasing KPI
+separation. Backend build (VS MSBuild, `btr.test.csproj`) succeeds and the focused tests pass.

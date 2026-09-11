@@ -435,6 +435,9 @@
     <Compile Include="ReportingContext\EntityAnalyticsAgg\Contracts\IKpiRegistry.cs" />
     <Compile Include="ReportingContext\EntityAnalyticsAgg\Models\EntityAnalyticsConstants.cs" />
     <Compile Include="ReportingContext\EntityAnalyticsAgg\Models\EntityAnalyticsMetaKpiIds.cs" />
+    <Compile Include="ReportingContext\EntityAnalyticsAgg\Models\EntityInvestigationLensIds.cs" />
+    <Compile Include="ReportingContext\EntityAnalyticsAgg\Models\EntityInvestigationDerivedMetricIds.cs" />
+    <Compile Include="ReportingContext\EntityAnalyticsAgg\Models\EntityInvestigationLensDefinition.cs" />
     <Compile Include="ReportingContext\EntityAnalyticsAgg\Models\EntityMapPresetDefinition.cs" />
     <Compile Include="ReportingContext\EntityAnalyticsAgg\Models\AttentionSignalDefinition.cs" />
     <Compile Include="ReportingContext\EntityAnalyticsAgg\Models\EntityAttentionSignalSnapshot.cs" />
@@ -513,6 +516,7 @@
     <Compile Include="ReportingContext\EntityAnalyticsAgg\Services\EntityRelationshipEngine.cs" />
     <Compile Include="ReportingContext\EntityAnalyticsAgg\Services\EntityComparisonCalculator.cs" />
     <Compile Include="ReportingContext\EntityAnalyticsAgg\Services\EntityMapPresetRegistry.cs" />
+    <Compile Include="ReportingContext\EntityAnalyticsAgg\Services\EntityInvestigationLensRegistry.cs" />
     <Compile Include="ReportingContext\EntityAnalyticsAgg\Services\EntityPopulationMapEngine.cs" />
     <Compile Include="ReportingContext\EntityAnalyticsAgg\Services\EntityPeerDistributionBinBuilder.cs" />
     <Compile Include="ReportingContext\EntityAnalyticsAgg\Services\EntityPeerDistributionEngine.cs" />
