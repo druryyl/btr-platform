@@ -20,11 +20,17 @@ vi.mock('@/api/entityAnalyticsApi', () => ({
   fetchMapPresets: vi.fn(),
   fetchPopulationMap: vi.fn(),
   fetchPeerGroupRules: vi.fn(),
+  fetchInvestigationLenses: vi.fn(),
   fetchEntityProfile: vi.fn(),
   fetchEntityCompare: vi.fn(),
 }))
 
-import { fetchMapPresets, fetchPeerGroupRules, fetchPopulationMap } from '@/api/entityAnalyticsApi'
+import {
+  fetchInvestigationLenses,
+  fetchMapPresets,
+  fetchPeerGroupRules,
+  fetchPopulationMap,
+} from '@/api/entityAnalyticsApi'
 
 function makePopulationResponse(overrides: Record<string, unknown> = {}) {
   return {
@@ -267,5 +273,124 @@ describe('investigationWorkspaceStore peer group', () => {
 
     expect(store.peerGroupRuleId).toBe('item-principal')
     expect(store.showPeerGroupSelector).toBe(true)
+  })
+})
+
+const SUPPLIER_LENSES = {
+  EntityType: 'Supplier',
+  DefaultLensId: 'sales-out',
+  Lenses: [
+    {
+      LensId: 'sales-out',
+      DisplayName: 'Sales-Out',
+      IsDefault: true,
+      DefaultPresetId: 'principal-sales-out-map',
+      KpiIds: [],
+      AttentionCategories: [],
+      RelationshipDrivers: [],
+      EvidenceRoutes: [],
+    },
+    {
+      LensId: 'purchasing',
+      DisplayName: 'Purchasing',
+      IsDefault: false,
+      DefaultPresetId: 'purchase-exposure-map',
+      KpiIds: [],
+      AttentionCategories: [],
+      RelationshipDrivers: [],
+      EvidenceRoutes: [],
+    },
+  ],
+}
+
+describe('investigationWorkspaceStore investigation lenses', () => {
+  beforeEach(() => {
+    setActivePinia(createPinia())
+    vi.mocked(fetchPopulationMap).mockReset()
+    vi.mocked(fetchPeerGroupRules).mockReset()
+    vi.mocked(fetchMapPresets).mockReset()
+    vi.mocked(fetchInvestigationLenses).mockReset()
+
+    vi.mocked(fetchPopulationMap).mockImplementation(
+      async (params: { presetId?: string }) =>
+        makePopulationResponse({ PresetId: params.presetId ?? 'default' }) as never,
+    )
+    vi.mocked(fetchInvestigationLenses).mockResolvedValue(SUPPLIER_LENSES as never)
+    vi.mocked(fetchPeerGroupRules).mockResolvedValue({
+      EntityType: 'Supplier',
+      DefaultRuleId: 'supplier-all-active',
+      Rules: [
+        {
+          RuleId: 'supplier-all-active',
+          DisplayLabel: 'All Active',
+          DimensionLabel: null,
+          IsDefault: true,
+        },
+        {
+          RuleId: 'supplier-wilayah',
+          DisplayLabel: 'Wilayah',
+          DimensionLabel: 'Wilayah',
+          IsDefault: false,
+        },
+      ],
+    } as never)
+    vi.mocked(fetchMapPresets).mockResolvedValue({
+      EntityType: 'Supplier',
+      Presets: [
+        {
+          PresetId: 'principal-sales-out-map',
+          DisplayName: 'Principal Sales-Out Map',
+          Description: '',
+          AxisXKpiId: 'PRN-TGT-003',
+          AxisYKpiId: 'PRN-GRW-002',
+          AxisXLabel: 'Achievement %',
+          AxisYLabel: 'YoY Growth %',
+          IsDefault: false,
+        },
+        {
+          PresetId: 'purchase-exposure-map',
+          DisplayName: 'Purchase Exposure Map',
+          Description: '',
+          AxisXKpiId: 'PU-KPI-001',
+          AxisYKpiId: 'PRN-INV-001',
+          AxisXLabel: 'Purchase',
+          AxisYLabel: 'Inventory',
+          IsDefault: true,
+        },
+      ],
+    } as never)
+  })
+
+  it('defaults the workspace to the Sales-Out lens and its default preset', async () => {
+    const store = useInvestigationWorkspaceStore()
+    await store.initializeWorkspace('Supplier')
+
+    expect(store.lenses).toHaveLength(2)
+    expect(store.hasLensSwitcher).toBe(true)
+    expect(store.activeLensId).toBe('sales-out')
+    expect(store.presetId).toBe('principal-sales-out-map')
+  })
+
+  it('switching lens selects the lens default preset and reloads the population map', async () => {
+    const store = useInvestigationWorkspaceStore()
+    await store.initializeWorkspace('Supplier')
+    vi.mocked(fetchPopulationMap).mockClear()
+
+    await store.setLens('purchasing')
+
+    expect(store.activeLensId).toBe('purchasing')
+    expect(store.presetId).toBe('purchase-exposure-map')
+    expect(fetchPopulationMap).toHaveBeenCalledTimes(1)
+    expect(fetchPopulationMap).toHaveBeenCalledWith(
+      expect.objectContaining({ presetId: 'purchase-exposure-map' }),
+    )
+  })
+
+  it('keeps the Peer Group Selector hidden for the Principal entity type', async () => {
+    const store = useInvestigationWorkspaceStore()
+    await store.initializeWorkspace('Supplier')
+
+    expect(store.peerGroupRules.length).toBeGreaterThan(1)
+    expect(store.showPeerGroupSelector).toBe(false)
   })
 })

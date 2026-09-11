@@ -1,5 +1,9 @@
 using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
+using btr.application.ReportingContext.EntityAnalyticsAgg.Contracts;
 using btr.application.ReportingContext.EntityAnalyticsAgg.Models;
+using btr.application.ReportingContext.EntityAnalyticsAgg.Queries;
 using btr.application.ReportingContext.EntityAnalyticsAgg.Services;
 using btr.application.ReportingContext.PrincipalAnalyticsAgg;
 using FluentAssertions;
@@ -96,6 +100,51 @@ namespace btr.test.ReportingContext
                 .Should().BeEmpty();
             EntityInvestigationLensRegistry.ResolveDefaultLens(EntityTypeCode.Customer)
                 .Should().BeNull();
+        }
+    }
+
+    public class GetInvestigationLensesHandlerTest
+    {
+        private static IEntityTypeRegistry SupplierRegistry()
+        {
+            var registry = new EntityTypeRegistry();
+            registry.Register(new EntityTypeRegistration
+            {
+                EntityTypeCode = EntityTypeCode.Supplier,
+                DisplayName = "Principal",
+                KpiPackId = "supplier-default"
+            });
+            return registry;
+        }
+
+        [Fact]
+        public async Task Supplier_Lenses_AreExposedWithSalesOutDefault()
+        {
+            var handler = new GetInvestigationLensesHandler(SupplierRegistry());
+
+            var result = await handler.Handle(
+                new GetInvestigationLensesQuery { EntityType = EntityTypeCode.Supplier },
+                CancellationToken.None);
+
+            result.EntityType.Should().Be(EntityTypeCode.Supplier);
+            result.DefaultLensId.Should().Be(EntityInvestigationLensIds.SalesOut);
+            result.Lenses.Should().HaveCount(2);
+            result.Lenses.Single(l => l.IsDefault).LensId
+                .Should().Be(EntityInvestigationLensIds.SalesOut);
+            result.Lenses.Single(l => l.LensId == EntityInvestigationLensIds.SalesOut)
+                .DefaultPresetId.Should().Be("principal-sales-out-map");
+            result.Lenses.Single(l => l.LensId == EntityInvestigationLensIds.Purchasing)
+                .DefaultPresetId.Should().Be("purchase-exposure-map");
+        }
+
+        [Fact]
+        public async Task UnknownEntityType_Throws()
+        {
+            var handler = new GetInvestigationLensesHandler(SupplierRegistry());
+
+            await Assert.ThrowsAsync<System.ArgumentException>(() => handler.Handle(
+                new GetInvestigationLensesQuery { EntityType = EntityTypeCode.Customer },
+                CancellationToken.None));
         }
     }
 }

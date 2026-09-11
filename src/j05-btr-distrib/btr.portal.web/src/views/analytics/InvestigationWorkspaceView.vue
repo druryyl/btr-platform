@@ -3,6 +3,7 @@ import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import Button from 'primevue/button'
 import Select from 'primevue/select'
+import SelectButton from 'primevue/selectbutton'
 import Message from 'primevue/message'
 import DashboardDetailLayout from '@/components/dashboard/DashboardDetailLayout.vue'
 import WorkspaceBreadcrumb from '@/components/entity-analytics/workspace/WorkspaceBreadcrumb.vue'
@@ -59,6 +60,10 @@ const entityLabel = computed(() => getEntityDisplayLabel(workspace.entityType))
 
 const workspaceTitle = computed(() =>
   workspace.entityType === 'Supplier' ? 'Principal Investigation Workspace' : 'Investigation Workspace',
+)
+
+const lensOptions = computed(() =>
+  workspace.lenses.map((lens) => ({ label: lens.DisplayName, value: lens.LensId })),
 )
 
 const primaryKpiId = computed(
@@ -119,6 +124,10 @@ function onEntityTypeChange(type: string) {
 
 function onPresetChange(presetId: string) {
   void workspace.setPreset(presetId).then(syncRoute)
+}
+
+function onLensChange(lensId: string) {
+  void workspace.setLens(lensId).then(syncRoute)
 }
 
 function onFilterChange(filter: string | null) {
@@ -220,6 +229,16 @@ watch(
             option-value="EntityType"
             placeholder="Entity type"
             @update:model-value="onEntityTypeChange"
+          />
+          <SelectButton
+            v-if="workspace.hasLensSwitcher"
+            :model-value="workspace.activeLensId"
+            :options="lensOptions"
+            option-label="label"
+            option-value="value"
+            :allow-empty="false"
+            aria-label="Investigation lens"
+            @update:model-value="onLensChange"
           />
           <MapPresetSelector
             v-if="workspace.presets.length"

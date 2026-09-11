@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using btr.application.ReportingContext.EntityAnalyticsAgg.Contracts;
+using btr.application.ReportingContext.EntityAnalyticsAgg.Models;
 using btr.application.ReportingContext.EntityAnalyticsAgg.Services;
 using MediatR;
 
@@ -180,6 +181,82 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Queries
                     IsDefault = string.Equals(r.RuleId, defaultRuleId, StringComparison.OrdinalIgnoreCase)
                         || (string.IsNullOrWhiteSpace(defaultRuleId) && r.IsDefault)
                 }).ToList()
+            });
+        }
+    }
+
+    public class GetInvestigationLensesQuery : IRequest<InvestigationLensesResponse>
+    {
+        public string EntityType { get; set; }
+    }
+
+    public class InvestigationLensesResponse
+    {
+        public string EntityType { get; set; }
+
+        public string DefaultLensId { get; set; }
+
+        public List<InvestigationLensDto> Lenses { get; set; } = new List<InvestigationLensDto>();
+    }
+
+    public class InvestigationLensDto
+    {
+        public string LensId { get; set; }
+
+        public string DisplayName { get; set; }
+
+        public bool IsDefault { get; set; }
+
+        public string DefaultPresetId { get; set; }
+
+        public List<string> KpiIds { get; set; } = new List<string>();
+
+        public List<string> AttentionCategories { get; set; } = new List<string>();
+
+        public List<string> RelationshipDrivers { get; set; } = new List<string>();
+
+        public List<string> EvidenceRoutes { get; set; } = new List<string>();
+    }
+
+    public class GetInvestigationLensesHandler
+        : IRequestHandler<GetInvestigationLensesQuery, InvestigationLensesResponse>
+    {
+        private readonly IEntityTypeRegistry _entityTypes;
+
+        public GetInvestigationLensesHandler(IEntityTypeRegistry entityTypes)
+        {
+            _entityTypes = entityTypes;
+        }
+
+        public Task<InvestigationLensesResponse> Handle(
+            GetInvestigationLensesQuery request,
+            CancellationToken cancellationToken)
+        {
+            if (string.IsNullOrWhiteSpace(request.EntityType))
+                throw new ArgumentException("EntityType is required.");
+
+            if (!_entityTypes.TryGet(request.EntityType, out _))
+                throw new ArgumentException($"Unknown entity type: {request.EntityType}");
+
+            var defaultLens = EntityInvestigationLensRegistry.ResolveDefaultLens(request.EntityType);
+
+            return Task.FromResult(new InvestigationLensesResponse
+            {
+                EntityType = request.EntityType,
+                DefaultLensId = defaultLens?.LensId,
+                Lenses = EntityInvestigationLensRegistry.GetLensesForEntityType(request.EntityType)
+                    .Select(l => new InvestigationLensDto
+                    {
+                        LensId = l.LensId,
+                        DisplayName = l.DisplayName,
+                        IsDefault = l.IsDefault,
+                        DefaultPresetId = l.DefaultPresetId,
+                        KpiIds = l.KpiIds?.ToList() ?? new List<string>(),
+                        AttentionCategories = l.AttentionCategories?.ToList() ?? new List<string>(),
+                        RelationshipDrivers = l.RelationshipDrivers?.ToList() ?? new List<string>(),
+                        EvidenceRoutes = l.EvidenceRoutes?.ToList() ?? new List<string>()
+                    })
+                    .ToList()
             });
         }
     }

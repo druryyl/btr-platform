@@ -416,7 +416,7 @@ conflicts and to land after the lens model is stable.
 | PIW-01 | Backend entity-type display name "Principal" | GO |
 | PIW-02 | Frontend Principal presentation labels | GO |
 | PIW-03 | Lens configuration model | GO |
-| PIW-04 | Lens switcher in workspace shell | PLANNED |
+| PIW-04 | Lens switcher in workspace shell | GO |
 | PIW-05 | `principal-sales-out-map` preset and bubble encoding | PLANNED |
 | PIW-06 | Current Facts KPI grouping by lens | PLANNED |
 | PIW-07 | Sales-Out attention categories | PLANNED |
@@ -439,6 +439,7 @@ IN REVIEW → GO`).
 | PIW-01 | 2026-09-11 | GO | None blocking; INFO-001 pre-existing `btr.test` compile error (out of slice scope) | Resolved outside PIW-01 (`DashboardAlertCenterComposerTest.cs` `IndexOf` fix, uncommitted); PIW-01 focused test passes |
 | PIW-02 | 2026-09-11 | GO | None blocking | N/A |
 | PIW-03 | 2026-09-11 | GO | None blocking. INFO-001: preset/driver/category declarations are config-only and registered by later slices. INFO-002: lens config not yet API-exposed; consumption deferred to PIW-04 | N/A |
+| PIW-04 | 2026-09-11 | GO | None blocking. INFO-001: lens config exposed read-only via `GET /api/entity-analytics/lenses` (consumes PIW-03 registry; PIW-03 INFO-002 resolved). INFO-002: `principal-sales-out-map` not yet registered (PIW-05); Sales-Out lens preset resolution falls back to the entity default until PIW-05. INFO-003: active lens is session state, not persisted in URL; deferred pending later lens-scoped content slices | N/A |
 
 ---
 
@@ -499,3 +500,36 @@ registration is implemented by those later slices and is intentionally out of PI
 Focused tests (`EntityInvestigationLensRegistryTest`, 6 tests) verify lens count/default, both KPI
 sets, per-lens default presets, derived-metric non-KPI treatment, and Sales-Out/Purchasing KPI
 separation. Backend build (VS MSBuild, `btr.test.csproj`) succeeds and the focused tests pass.
+
+### PIW-04 verification note
+
+Consumed the PIW-03 lens configuration (review INFO-002 deferred API exposure to PIW-04) as a
+read-only projection, then wired the workspace lens switcher:
+
+- Backend: `GetInvestigationLensesQuery` / `InvestigationLensesResponse` /
+  `GetInvestigationLensesHandler` in `EntityAnalyticsAgg/Queries/GetInvestigationWorkspaceQueries.cs`
+  project `EntityInvestigationLensRegistry` (lens id, display name, default flag, default preset,
+  KPI ids, attention categories, relationship drivers, evidence routes). New
+  `GET /api/entity-analytics/lenses?entityType=` route in `EntityAnalyticsController`; no writes,
+  no new entity type/KPI, no persistence. The API is a thin projection of the approved PIW-03 model.
+- Frontend store (`investigationWorkspaceStore.ts`): added `lenses`/`activeLensId`,
+  `activeLens`/`hasLensSwitcher`, `loadLenses`, and `setLens`. `setLens` toggles the lens, selects
+  that lens's default preset (falling back to the entity default only while
+  `principal-sales-out-map` is still absent, i.e. before PIW-05), and reloads the population map.
+  `activeLensId` participates in undo snapshots. `initializeWorkspace`/`setEntityType` load lenses
+  before presets; the default Sales-Out lens drives the initial preset. No navigation entry, route,
+  or peer selector is added or duplicated; `showPeerGroupSelector` stays false for `Supplier`
+  (`supplier-all-active` population retained).
+- Frontend view (`InvestigationWorkspaceView.vue`): rendered a PrimeVue `SelectButton` lens switcher
+  in the Population toolbar, shown only when more than one lens exists (`Supplier`).
+
+Focused tests: frontend `investigationWorkspaceStore.spec.ts` (3 new tests: Sales-Out default lens +
+default preset, Purchasing switch selects `purchase-exposure-map` and reloads the map, Peer Group
+Selector hidden for Principal). Backend `GetInvestigationLensesHandlerTest` (2 tests) verifies the
+exposed lens set/default and unknown-entity rejection.
+
+Note (sequencing): `principal-sales-out-map` is not yet registered in `EntityMapPresetRegistry`
+(PIW-05); PIW-04 resolves it when present and otherwise falls back to the entity default preset, so
+the initial Sales-Out resolution becomes exact once PIW-05 lands. Full frontend build
+(`vue-tsc -b && vite build`) passes; frontend tests 34 files / 269 tests pass; backend build (VS
+MSBuild, `btr.test.csproj`) succeeds; focused backend lens tests 8/8 pass.

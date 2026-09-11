@@ -478,6 +478,23 @@ export interface PeerDistributionBin {
   Label: string
 }
 
+export interface InvestigationLensesResponse {
+  EntityType: string
+  DefaultLensId: string | null
+  Lenses: InvestigationLens[]
+}
+
+export interface InvestigationLens {
+  LensId: string
+  DisplayName: string
+  IsDefault: boolean
+  DefaultPresetId: string | null
+  KpiIds: string[]
+  AttentionCategories: string[]
+  RelationshipDrivers: string[]
+  EvidenceRoutes: string[]
+}
+
 export interface WorkspaceSelectedEntity {
   EntityId: string
   EntityCode: string

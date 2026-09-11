@@ -114,6 +114,29 @@ namespace btr.portal.api.Controllers.EntityAnalytics
             }
         }
 
+        [HttpGet, Route("lenses")]
+        public async Task<IHttpActionResult> GetLenses([FromUri] string entityType = null)
+        {
+            if (string.IsNullOrWhiteSpace(entityType))
+            {
+                return Content(
+                    HttpStatusCode.BadRequest,
+                    ApiResponse<InvestigationLensesResponse>.Error(400, "EntityType is required."));
+            }
+
+            try
+            {
+                var result = await _mediator.Send(new GetInvestigationLensesQuery { EntityType = entityType });
+                return Ok(ApiResponse<InvestigationLensesResponse>.Success(result));
+            }
+            catch (System.ArgumentException ex)
+            {
+                return Content(
+                    HttpStatusCode.BadRequest,
+                    ApiResponse<InvestigationLensesResponse>.Error(400, ex.Message));
+            }
+        }
+
         [HttpGet, Route("population")]
         public async Task<IHttpActionResult> GetPopulation(
             [FromUri] string entityType = null,
