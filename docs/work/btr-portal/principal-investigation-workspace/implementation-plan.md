@@ -419,7 +419,7 @@ conflicts and to land after the lens model is stable.
 | PIW-04 | Lens switcher in workspace shell | GO |
 | PIW-05 | `principal-sales-out-map` preset and bubble encoding | GO |
 | PIW-06 | Current Facts KPI grouping by lens | GO |
-| PIW-07 | Sales-Out attention categories | PLANNED |
+| PIW-07 | Sales-Out attention categories | GO |
 | PIW-08 | Purchasing relationship drivers | PLANNED |
 | PIW-09 | Purchase-to-Sales-Out Ratio (derived metric) | PLANNED |
 | PIW-10 | Workspace presentation refinements (tooltip/peer) | PLANNED |
@@ -442,6 +442,7 @@ IN REVIEW → GO`).
 | PIW-04 | 2026-09-11 | GO | None blocking. INFO-001: lens config exposed read-only via `GET /api/entity-analytics/lenses` (consumes PIW-03 registry; PIW-03 INFO-002 resolved). INFO-002: `principal-sales-out-map` not yet registered (PIW-05); Sales-Out lens preset resolution falls back to the entity default until PIW-05. INFO-003: active lens is session state, not persisted in URL; deferred pending later lens-scoped content slices | N/A |
 | PIW-05 | 2026-09-11 | GO | None blocking. INFO-001: `.iw-map-encoding` legend has no scoped CSS (unstyled text caption); cosmetic only, bubble color rendering unaffected | N/A |
 | PIW-06 | 2026-09-11 | GO | None blocking. INFO-001: `PRN-CUS-001/002` are in the Sales-Out lens KpiIds but are not listed in the `supplier-default` pack (registered separately); absent rows simply do not render, data-driven, non-blocking. INFO-002: lens scoping applies to the workspace Current Facts summary only; standalone profile/compare views keep the full pack (consistent with slice scope) | N/A |
+| PIW-07 | 2026-09-12 | GO | None blocking. INFO-001: five Sales-Out categories registered with new self-descriptive signal codes; no existing EX01/EX02 code maps 1:1 to a category, so code reuse was not applicable — engine/computation untouched, no new attention engine. INFO-002: `dotnet build` of the sln requires VS MSBuild (dotnet SDK lacks VS web-application targets); build/test ran under VS 2022 MSBuild, previously established convention | N/A |
 
 ---
 
