@@ -303,6 +303,7 @@ watch(
             :profiles="workspace.profiles"
             :entity-ids="workspace.selectedEntityIds"
             :loading="workspace.loadingProfiles"
+            :kpi-ids="workspace.activeLensKpiIds"
           />
         </WorkspaceStageSection>
 

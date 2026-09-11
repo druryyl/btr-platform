@@ -86,6 +86,8 @@ export const useInvestigationWorkspaceStore = defineStore('investigationWorkspac
     ?? null,
   )
 
+  const activeLensKpiIds = computed(() => activeLens.value?.KpiIds ?? null)
+
   const hasLensSwitcher = computed(() => lenses.value.length > 1)
 
   const activePreset = computed(() =>
@@ -442,6 +444,7 @@ export const useInvestigationWorkspaceStore = defineStore('investigationWorkspac
     mode,
     isComparisonMode,
     activeLens,
+    activeLensKpiIds,
     hasLensSwitcher,
     activePreset,
     selectedEntities,

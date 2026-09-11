@@ -418,7 +418,7 @@ conflicts and to land after the lens model is stable.
 | PIW-03 | Lens configuration model | GO |
 | PIW-04 | Lens switcher in workspace shell | GO |
 | PIW-05 | `principal-sales-out-map` preset and bubble encoding | GO |
-| PIW-06 | Current Facts KPI grouping by lens | PLANNED |
+| PIW-06 | Current Facts KPI grouping by lens | GO |
 | PIW-07 | Sales-Out attention categories | PLANNED |
 | PIW-08 | Purchasing relationship drivers | PLANNED |
 | PIW-09 | Purchase-to-Sales-Out Ratio (derived metric) | PLANNED |
@@ -441,6 +441,7 @@ IN REVIEW → GO`).
 | PIW-03 | 2026-09-11 | GO | None blocking. INFO-001: preset/driver/category declarations are config-only and registered by later slices. INFO-002: lens config not yet API-exposed; consumption deferred to PIW-04 | N/A |
 | PIW-04 | 2026-09-11 | GO | None blocking. INFO-001: lens config exposed read-only via `GET /api/entity-analytics/lenses` (consumes PIW-03 registry; PIW-03 INFO-002 resolved). INFO-002: `principal-sales-out-map` not yet registered (PIW-05); Sales-Out lens preset resolution falls back to the entity default until PIW-05. INFO-003: active lens is session state, not persisted in URL; deferred pending later lens-scoped content slices | N/A |
 | PIW-05 | 2026-09-11 | GO | None blocking. INFO-001: `.iw-map-encoding` legend has no scoped CSS (unstyled text caption); cosmetic only, bubble color rendering unaffected | N/A |
+| PIW-06 | 2026-09-11 | GO | None blocking. INFO-001: `PRN-CUS-001/002` are in the Sales-Out lens KpiIds but are not listed in the `supplier-default` pack (registered separately); absent rows simply do not render, data-driven, non-blocking. INFO-002: lens scoping applies to the workspace Current Facts summary only; standalone profile/compare views keep the full pack (consistent with slice scope) | N/A |
 
 ---
 
@@ -559,3 +560,35 @@ Focused tests: `EntityMapPresetRegistryTest` (3 new tests: encoding, Supplier de
 single-default stability) + `EntityInvestigationLensRegistryTest` (6 tests) pass 11/11. Backend
 build (VS MSBuild, `btr.test.csproj`) succeeds. Full frontend build (`vue-tsc -b && vite build`)
 passes; frontend tests 34 files / 269 tests pass.
+
+### PIW-06 verification note
+
+Implemented lens-scoped Current Facts KPI grouping (frontend-only, consumed the PIW-03 lens
+configuration projection and PIW-04 lens state):
+
+- New pure service `btr.portal.web/src/services/lensScopedKpis.ts`: `selectLensScopedKpis`
+  filters the profile `KpiSummary.Categories` flat KPI list to the active lens `KpiIds` set. When
+  no lens set is supplied (null/undefined/empty, e.g. non-Supplier entity types), all KPIs are
+  returned unchanged, preserving existing behavior for Customer/Salesman/Item.
+- `investigationWorkspaceStore.ts` exposes `activeLensKpiIds` (the active lens `KpiIds`, null when
+  no lens), reactive to `activeLens`/lens switcher state.
+- `InvestigationWorkspaceView.vue` passes `:kpi-ids="workspace.activeLensKpiIds` to the Current
+  Facts KPI summary (unchanged for non-lensed entity types).
+- `WorkspaceKpiSummarySection.vue` consumes the optional `kpiIds` prop and filters the headline
+  KPI list before the existing 8-KPI slice; KpiCard rendering, category order, and display
+  formatting (Currency compact/IDR) are unchanged.
+
+Acceptance criteria: Sales-Out lens (`PRN-SALES-001`, `PRN-GRW-001/002`, `PRN-RET-001..004`,
+`PRN-TGT-002/003`, `PRN-CUS-001/002`) is shown under the Sales-Out lens; Purchasing lens
+(`PRN-PUR-001`, `PU-KPI-001`, `PRN-INV-001/002`) under the Purchasing lens. `PRN-PUR-001`
+(Purchase-In) is excluded from the Sales-Out lens, so it is never grouped/presented as Principal
+sales performance; its registry DisplayName "Purchase-In" is unchanged. No ranking path or
+ranking KPI is touched: `PRN-SALES-001` remains the default ranking KPI (registry
+`RankEligible = true` + principal ranking default unchanged), verified as no-regression (IW-GAP-010,
+MIG-GAP-010). Lens `KpiIds` are read from the approved PIW-03 lens registry; no new KPI ID,
+registry entry, or persistence was introduced.
+
+Focused tests: `src/services/lensScopedKpis.spec.ts` (4 tests: no-set passthrough, Sales-Out set
+excludes `PRN-PUR-001`, Purchasing set excludes sales KPIs, doc-order preservation). Full frontend
+build (`vue-tsc -b && vite build`) passes; frontend tests 35 files / 273 tests pass (includes the 4
+new lens-scoping tests).

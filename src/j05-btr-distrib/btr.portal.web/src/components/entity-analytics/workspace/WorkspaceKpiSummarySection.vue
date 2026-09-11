@@ -4,19 +4,21 @@ import CompactValue from '@/components/dashboard/primitives/CompactValue.vue'
 import type { EntityPerformanceProfileResponse, KpiEnvelope } from '@/models/entityAnalytics'
 import { buildEntityColorMap } from '@/composables/useComparisonColors'
 import { formatCurrencyCompact } from '@/services/formatters'
+import { selectLensScopedKpis } from '@/services/lensScopedKpis'
 import { isIdrAxisUnit } from '@/services/populationProjection/robustStats'
 
 const props = defineProps<{
   profiles: Record<string, EntityPerformanceProfileResponse>
   entityIds: string[]
   loading?: boolean
+  kpiIds?: string[] | null
 }>()
 
 const colors = () => buildEntityColorMap(props.entityIds)
 
 function headlineKpis(profile: EntityPerformanceProfileResponse) {
   const groups = profile.KpiSummary?.Categories ?? []
-  return groups.flatMap((g) => g.Kpis).slice(0, 8)
+  return selectLensScopedKpis(groups, props.kpiIds).slice(0, 8)
 }
 
 function displayKpi(kpi: KpiEnvelope): { display: string; full: string | null } {
