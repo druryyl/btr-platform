@@ -502,6 +502,7 @@ export interface InvestigationLens {
   IsDefault: boolean
   DefaultPresetId: string | null
   KpiIds: string[]
+  DerivedMetricIds: string[]
   AttentionCategories: string[]
   RelationshipDrivers: string[]
   EvidenceRoutes: string[]

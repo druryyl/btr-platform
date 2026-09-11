@@ -421,7 +421,7 @@ conflicts and to land after the lens model is stable.
 | PIW-06 | Current Facts KPI grouping by lens | GO |
 | PIW-07 | Sales-Out attention categories | GO |
 | PIW-08 | Purchasing relationship drivers | GO |
-| PIW-09 | Purchase-to-Sales-Out Ratio (derived metric) | PLANNED |
+| PIW-09 | Purchase-to-Sales-Out Ratio (derived metric) | GO |
 | PIW-10 | Workspace presentation refinements (tooltip/peer) | PLANNED |
 | PIW-11 | Lens-scoped evidence presentation | PLANNED |
 | PIW-12 | Platform-wide Performance Signature retirement | PLANNED |
@@ -444,6 +444,7 @@ IN REVIEW → GO`).
 | PIW-06 | 2026-09-11 | GO | None blocking. INFO-001: `PRN-CUS-001/002` are in the Sales-Out lens KpiIds but are not listed in the `supplier-default` pack (registered separately); absent rows simply do not render, data-driven, non-blocking. INFO-002: lens scoping applies to the workspace Current Facts summary only; standalone profile/compare views keep the full pack (consistent with slice scope) | N/A |
 | PIW-07 | 2026-09-12 | GO | None blocking. INFO-001: five Sales-Out categories registered with new self-descriptive signal codes; no existing EX01/EX02 code maps 1:1 to a category, so code reuse was not applicable — engine/computation untouched, no new attention engine. INFO-002: `dotnet build` of the sln requires VS MSBuild (dotnet SDK lacks VS web-application targets); build/test ran under VS 2022 MSBuild, previously established convention | N/A |
 | PIW-08 | 2026-09-12 | GO | None blocking. INFO-001: purchasing drivers (`TopPurchasedItems`, `PurchaseHistory`) are declarative catalog registrations; no snapshot production/rendering added — consistent with FEASIBILITY §10 ("no additional model") and PIW-03's deferred "catalog registration" note. INFO-002: `PurchaseHistory` is a time-series driver and carries no `TargetEntityType`; inert until a resolution mechanism is introduced (out of slice scope). INFO-003: 11 pre-existing `btr.test.ReportingContext` failures at the parent commit (cash-flow, customer pack, field activity, sales report, inventory-risk, collection, `SupplierEntityAnalyticsProducerTest` fixture missing `RelationshipProjection`) are unrelated; no new failures introduced | N/A |
+| PIW-09 | 2026-09-12 | GO | None blocking. INFO-001: the approved `≈ 1.0` band carries no numeric tolerance in FEASIBILITY GAP-005 / Architecture §8.3; implementation keys bands off the approved `1.0` boundary (exact `1.0` → Balanced) and displays the three-band guide, introducing no new threshold. INFO-002: the lens DTO now also projects `DerivedMetricIds` (PIW-04 exposed the lens config without it); minimal read-only projection of the approved PIW-03 model, needed for config-driven lens scoping. INFO-003: pre-existing `btr.test.ReportingContext` failures unchanged; no new failures | N/A |
 
 ---
 
@@ -628,3 +629,41 @@ relationships (the expanded pack otherwise invalidates it). Backend build (VS MS
 to the 940 / 11 baseline at the parent commit; the 11 failures are pre-existing and unrelated to this
 slice (cash-flow, customer pack, field activity, sales report, inventory-risk, collection, and a
 `SupplierEntityAnalyticsProducerTest` fixture that omits `RelationshipProjection`).
+
+### PIW-09 verification note
+
+Surfaced the investigation-only Purchase-to-Sales-Out Ratio in the Purchasing lens
+(frontend composition over already-stored measures):
+
+- Backend prerequisite: the approved PIW-03 `EntityInvestigationLensDefinition.DerivedMetricIds`
+  is now projected read-only by `GetInvestigationLensesHandler` / `InvestigationLensDto` (PIW-04
+  exposed the lens config but omitted the derived-metric list). No new entity type, KPI ID,
+  registry entry, persistence, or write path.
+- Frontend service `btr.portal.web/src/services/investigationDerivedMetrics.ts`: pure
+  `computePurchaseToSalesOutRatio` derives the ratio from the already-stored `PRN-PUR-001` and
+  `PRN-SALES-001` `KpiEnvelope` values (no source-transaction recompute), formats it to 2 decimals,
+  and maps it to the approved bands (`> 1.0` Inventory Building / Potential Over-Buying;
+  `≈ 1.0` Balanced; `< 1.0` Inventory Drawdown / Potential Under-Buying). `selectLensDerivedMetrics`
+  consumes the active lens `DerivedMetricIds`, ignores unknown ids, and returns nothing when the
+  lens declares none (non-`Supplier` entity types unchanged). No numeric tolerance was introduced:
+  the bands key off the approved `1.0` boundary (exact `1.0` → Balanced); the three-band guide is
+  displayed alongside the value.
+- `investigationWorkspaceStore.ts` exposes `activeLensDerivedMetricIds` (from the active lens);
+  `InvestigationWorkspaceView.vue` renders the new `WorkspaceDerivedMetricsSection.vue` in the
+  Current Facts stage only when the active lens declares derived metrics (Purchasing), displaying
+  the ratio, its per-entity interpretation, the source KPI lineage, and a caption stating it is an
+  investigation-only metric that is not a KPI, ranking, or sales-performance measure.
+
+Acceptance criteria: ratio = `PRN-PUR-001` ÷ `PRN-SALES-001` with the `> 1.0 / ≈ 1.0 / < 1.0`
+interpretation shown; no new KPI ID, registry entry, persistence, or ranking contract (the metric
+id `purchase-to-sales-out-ratio` is not a `PRN-` KPI and is absent from the KPI registry); the
+panel renders only under the Purchasing lens (`activeLensDerivedMetricIds` empty for Sales-Out),
+so the ratio is never presented or ranked as Principal sales performance.
+
+Focused tests: frontend `investigationDerivedMetrics.spec.ts` (8 tests: ratio derivation,
+balanced/over/under bands, zero/missing denominators, no-metric passthrough, config-driven
+selection, unknown-id ignore, non-KPI treatment) plus the updated
+`investigationWorkspaceStore.spec.ts` lens tests (derived-metric ids per lens) pass; backend
+`GetInvestigationLensesHandlerTest.DerivedMetricIds_AreExposedPerLens` passes. Full frontend tests
+36 files / 281 tests pass; full frontend build (`vue-tsc -b && vite build`) passes; backend build
+(VS MSBuild, `btr.test.csproj`) succeeds; focused backend lens tests 9/9 pass.

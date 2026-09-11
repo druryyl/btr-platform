@@ -138,6 +138,22 @@ namespace btr.test.ReportingContext
         }
 
         [Fact]
+        public async Task DerivedMetricIds_AreExposedPerLens()
+        {
+            var handler = new GetInvestigationLensesHandler(SupplierRegistry());
+
+            var result = await handler.Handle(
+                new GetInvestigationLensesQuery { EntityType = EntityTypeCode.Supplier },
+                CancellationToken.None);
+
+            result.Lenses.Single(l => l.LensId == EntityInvestigationLensIds.SalesOut)
+                .DerivedMetricIds.Should().BeEmpty();
+            result.Lenses.Single(l => l.LensId == EntityInvestigationLensIds.Purchasing)
+                .DerivedMetricIds.Should().ContainSingle()
+                .Which.Should().Be(EntityInvestigationDerivedMetricIds.PurchaseToSalesOutRatio);
+        }
+
+        [Fact]
         public async Task UnknownEntityType_Throws()
         {
             var handler = new GetInvestigationLensesHandler(SupplierRegistry());

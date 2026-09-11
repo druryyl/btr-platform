@@ -217,6 +217,8 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Queries
 
         public List<string> KpiIds { get; set; } = new List<string>();
 
+        public List<string> DerivedMetricIds { get; set; } = new List<string>();
+
         public List<string> AttentionCategories { get; set; } = new List<string>();
 
         public List<string> RelationshipDrivers { get; set; } = new List<string>();
@@ -258,6 +260,7 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Queries
                         IsDefault = l.IsDefault,
                         DefaultPresetId = l.DefaultPresetId,
                         KpiIds = l.KpiIds?.ToList() ?? new List<string>(),
+                        DerivedMetricIds = l.DerivedMetricIds?.ToList() ?? new List<string>(),
                         AttentionCategories = l.AttentionCategories?.ToList() ?? new List<string>(),
                         RelationshipDrivers = l.RelationshipDrivers?.ToList() ?? new List<string>(),
                         EvidenceRoutes = l.EvidenceRoutes?.ToList() ?? new List<string>()

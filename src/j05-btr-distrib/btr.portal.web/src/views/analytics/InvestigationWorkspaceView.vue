@@ -15,6 +15,7 @@ import PopulationSearchField from '@/components/entity-analytics/workspace/Popul
 import ScopeIndicator from '@/components/entity-analytics/workspace/ScopeIndicator.vue'
 import EntityIdentityPanel from '@/components/entity-analytics/workspace/EntityIdentityPanel.vue'
 import WorkspaceKpiSummarySection from '@/components/entity-analytics/workspace/WorkspaceKpiSummarySection.vue'
+import WorkspaceDerivedMetricsSection from '@/components/entity-analytics/workspace/WorkspaceDerivedMetricsSection.vue'
 import ComparisonLegend from '@/components/entity-analytics/workspace/ComparisonLegend.vue'
 import PeerPositionPanel from '@/components/entity-analytics/workspace/PeerPositionPanel.vue'
 import PeerGroupSelector from '@/components/entity-analytics/workspace/PeerGroupSelector.vue'
@@ -304,6 +305,13 @@ watch(
             :entity-ids="workspace.selectedEntityIds"
             :loading="workspace.loadingProfiles"
             :kpi-ids="workspace.activeLensKpiIds"
+          />
+          <WorkspaceDerivedMetricsSection
+            v-if="workspace.activeLensDerivedMetricIds?.length"
+            :profiles="workspace.profiles"
+            :entity-ids="workspace.selectedEntityIds"
+            :metric-ids="workspace.activeLensDerivedMetricIds"
+            :loading="workspace.loadingProfiles"
           />
         </WorkspaceStageSection>
 

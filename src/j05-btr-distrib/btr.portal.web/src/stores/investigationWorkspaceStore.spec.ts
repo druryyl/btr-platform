@@ -286,6 +286,7 @@ const SUPPLIER_LENSES = {
       IsDefault: true,
       DefaultPresetId: 'principal-sales-out-map',
       KpiIds: [],
+      DerivedMetricIds: [],
       AttentionCategories: [],
       RelationshipDrivers: [],
       EvidenceRoutes: [],
@@ -296,6 +297,7 @@ const SUPPLIER_LENSES = {
       IsDefault: false,
       DefaultPresetId: 'purchase-exposure-map',
       KpiIds: [],
+      DerivedMetricIds: ['purchase-to-sales-out-ratio'],
       AttentionCategories: [],
       RelationshipDrivers: [],
       EvidenceRoutes: [],
@@ -369,6 +371,7 @@ describe('investigationWorkspaceStore investigation lenses', () => {
     expect(store.hasLensSwitcher).toBe(true)
     expect(store.activeLensId).toBe('sales-out')
     expect(store.presetId).toBe('principal-sales-out-map')
+    expect(store.activeLensDerivedMetricIds).toEqual([])
   })
 
   it('switching lens selects the lens default preset and reloads the population map', async () => {
@@ -380,6 +383,7 @@ describe('investigationWorkspaceStore investigation lenses', () => {
 
     expect(store.activeLensId).toBe('purchasing')
     expect(store.presetId).toBe('purchase-exposure-map')
+    expect(store.activeLensDerivedMetricIds).toEqual(['purchase-to-sales-out-ratio'])
     expect(fetchPopulationMap).toHaveBeenCalledTimes(1)
     expect(fetchPopulationMap).toHaveBeenCalledWith(
       expect.objectContaining({ presetId: 'purchase-exposure-map' }),
