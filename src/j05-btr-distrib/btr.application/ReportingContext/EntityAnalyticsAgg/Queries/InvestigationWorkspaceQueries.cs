@@ -34,6 +34,14 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Queries
 
         public string AxisYUnit { get; set; }
 
+        public string BubbleKpiId { get; set; }
+
+        public string BubbleColorKpiId { get; set; }
+
+        public string BubbleLabel { get; set; }
+
+        public string BubbleColorLabel { get; set; }
+
         public int TotalPopulationCount { get; set; }
 
         public int FilteredPopulationCount { get; set; }
@@ -72,6 +80,14 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Queries
         public int ActiveAttentionCount { get; set; }
 
         public bool MatchesFilter { get; set; }
+
+        public decimal? BubbleValue { get; set; }
+
+        public string FormattedBubbleValue { get; set; }
+
+        public decimal? BubbleColorValue { get; set; }
+
+        public string FormattedBubbleColorValue { get; set; }
 
         public string SupplementaryLabel { get; set; }
 
@@ -174,6 +190,14 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Queries
         public string AxisXLabel { get; set; }
 
         public string AxisYLabel { get; set; }
+
+        public string BubbleKpiId { get; set; }
+
+        public string BubbleColorKpiId { get; set; }
+
+        public string BubbleLabel { get; set; }
+
+        public string BubbleColorLabel { get; set; }
 
         public bool IsDefault { get; set; }
     }

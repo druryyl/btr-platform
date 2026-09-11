@@ -33,6 +33,22 @@ defineProps<{
       <div class="iw-map-tooltip__value">{{ point.FormattedSupplementaryValue }}</div>
     </div>
 
+    <div
+      v-if="population?.BubbleLabel && point.FormattedBubbleValue"
+      class="iw-map-tooltip__section"
+    >
+      <div class="iw-map-tooltip__label">{{ population.BubbleLabel }}</div>
+      <div class="iw-map-tooltip__value">{{ point.FormattedBubbleValue }}</div>
+    </div>
+
+    <div
+      v-if="population?.BubbleColorLabel && point.FormattedBubbleColorValue"
+      class="iw-map-tooltip__section"
+    >
+      <div class="iw-map-tooltip__label">{{ population.BubbleColorLabel }}</div>
+      <div class="iw-map-tooltip__value">{{ point.FormattedBubbleColorValue }}</div>
+    </div>
+
     <div v-if="analyzed" class="iw-map-tooltip__section">
       <div class="iw-map-tooltip__label">Classification</div>
       <div class="iw-map-tooltip__value">{{ formatStatisticalClass(analyzed.statisticalClass) }}</div>

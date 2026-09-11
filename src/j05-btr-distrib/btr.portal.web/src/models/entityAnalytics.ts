@@ -400,6 +400,10 @@ export interface MapPreset {
   AxisYKpiId: string
   AxisXLabel: string
   AxisYLabel: string
+  BubbleKpiId?: string | null
+  BubbleColorKpiId?: string | null
+  BubbleLabel?: string | null
+  BubbleColorLabel?: string | null
   IsDefault: boolean
 }
 
@@ -413,6 +417,10 @@ export interface PopulationMapResponse {
   AxisYLabel: string
   AxisXUnit: string | null
   AxisYUnit: string | null
+  BubbleKpiId?: string | null
+  BubbleColorKpiId?: string | null
+  BubbleLabel?: string | null
+  BubbleColorLabel?: string | null
   TotalPopulationCount: number
   FilteredPopulationCount: number
   ActiveFilterDescription: string | null
@@ -434,6 +442,10 @@ export interface PopulationMapPoint {
   IsActive: boolean
   ActiveAttentionCount: number
   MatchesFilter: boolean
+  BubbleValue?: number | null
+  FormattedBubbleValue?: string | null
+  BubbleColorValue?: number | null
+  FormattedBubbleColorValue?: string | null
   SupplementaryLabel?: string | null
   FormattedSupplementaryValue?: string | null
 }

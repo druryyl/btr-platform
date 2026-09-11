@@ -87,6 +87,49 @@ const colorMap = computed(() => buildEntityColorMap(props.selectedEntityIds))
 const selectedSet = computed(() => new Set(props.selectedEntityIds))
 const searchSet = computed(() => new Set(props.searchHighlightIds ?? []))
 
+/** PIW-05 bounded extension: bubble color encoding (Return % via BubbleColorValue). */
+const hasBubbleColorEncoding = computed(() => !!props.population?.BubbleColorKpiId)
+
+const bubbleColorScale = computed(() => {
+  const values = renderablePoints.value
+    .map((p) => p.BubbleColorValue)
+    .filter((v): v is number => typeof v === 'number' && Number.isFinite(v))
+  if (!values.length) return null
+  const min = Math.min(...values)
+  const max = Math.max(...values)
+  return { min, max }
+})
+
+function hexToRgb(hex: string): [number, number, number] {
+  const clean = hex.replace('#', '')
+  const full = clean.length === 3
+    ? clean.split('').map((c) => c + c).join('')
+    : clean
+  const num = parseInt(full, 16)
+  return [(num >> 16) & 255, (num >> 8) & 255, num & 255]
+}
+
+function lerpColor(from: string, to: string, t: number): string {
+  const clamped = Math.min(1, Math.max(0, t))
+  const [r1, g1, b1] = hexToRgb(from)
+  const [r2, g2, b2] = hexToRgb(to)
+  const r = Math.round(r1 + (r2 - r1) * clamped)
+  const g = Math.round(g1 + (g2 - g1) * clamped)
+  const b = Math.round(b1 + (b2 - b1) * clamped)
+  return `rgb(${r}, ${g}, ${b})`
+}
+
+/** Data-relative color: lowest Return % → neutral, highest → critical. No business thresholds. */
+function resolveBubbleFill(point: PopulationMapPoint): string | null {
+  if (!hasBubbleColorEncoding.value) return null
+  if (typeof point.BubbleColorValue !== 'number' || !Number.isFinite(point.BubbleColorValue)) return null
+  const scale = bubbleColorScale.value
+  if (!scale) return null
+  const span = scale.max - scale.min
+  const t = span <= 0 ? 0 : (point.BubbleColorValue - scale.min) / span
+  return lerpColor(WORKSPACE_NEUTRAL_POINT, WORKSPACE_CRITICAL_POINT, t)
+}
+
 const visiblePoints = computed(() =>
   (props.population?.Points ?? []).filter((p) => p.AxisX != null && p.AxisY != null),
 )
@@ -230,6 +273,10 @@ function drawBatchedTierPoints(ctx: CanvasRenderingContext2D, tier: VisualPointT
     if (flags.isSelected || flags.isSearchMatch) continue
     if (getVisualTier(item) !== tier) continue
 
+    // PIW-05: normal-tier points carry the preset bubble color (e.g. Return %);
+    // attention tiers keep their signal colors.
+    if (tier === 'normal' && resolveBubbleFill(item.point)) continue
+
     const alphaKey = Math.round(getEffectiveAlpha(flags, style.opacity) * 1000)
     const bucket = buckets.get(alphaKey) ?? []
     bucket.push(item)
@@ -247,6 +294,20 @@ function drawBatchedTierPoints(ctx: CanvasRenderingContext2D, tier: VisualPointT
     ctx.fill()
   }
   ctx.globalAlpha = 1
+
+  // PIW-05: draw bubble-color-encoded normal points individually.
+  if (tier === 'normal' && hasBubbleColorEncoding.value) {
+    for (const item of plottedCache) {
+      const flags = getPointFlags(item.point)
+      if (flags.isSelected || flags.isSearchMatch) continue
+      if (getVisualTier(item) !== tier) continue
+      const fill = resolveBubbleFill(item.point)
+      if (!fill) continue
+      applyPointAlpha(ctx, flags, style.opacity)
+      drawFilledCircle(ctx, item.screenX, item.screenY, style.radius, fill)
+      ctx.globalAlpha = 1
+    }
+  }
 }
 
 function drawTieredPoint(
@@ -778,6 +839,13 @@ onUnmounted(() => {
       role="status"
     >
       No entities match the current filters
+    </div>
+    <div
+      v-if="hasBubbleColorEncoding"
+      class="iw-map-encoding"
+      role="note"
+    >
+      Bubble color: {{ population?.BubbleColorLabel ?? population?.BubbleColorKpiId }}
     </div>
     <div
       v-if="hovered"

@@ -417,7 +417,7 @@ conflicts and to land after the lens model is stable.
 | PIW-02 | Frontend Principal presentation labels | GO |
 | PIW-03 | Lens configuration model | GO |
 | PIW-04 | Lens switcher in workspace shell | GO |
-| PIW-05 | `principal-sales-out-map` preset and bubble encoding | PLANNED |
+| PIW-05 | `principal-sales-out-map` preset and bubble encoding | GO |
 | PIW-06 | Current Facts KPI grouping by lens | PLANNED |
 | PIW-07 | Sales-Out attention categories | PLANNED |
 | PIW-08 | Purchasing relationship drivers | PLANNED |
@@ -440,6 +440,7 @@ IN REVIEW → GO`).
 | PIW-02 | 2026-09-11 | GO | None blocking | N/A |
 | PIW-03 | 2026-09-11 | GO | None blocking. INFO-001: preset/driver/category declarations are config-only and registered by later slices. INFO-002: lens config not yet API-exposed; consumption deferred to PIW-04 | N/A |
 | PIW-04 | 2026-09-11 | GO | None blocking. INFO-001: lens config exposed read-only via `GET /api/entity-analytics/lenses` (consumes PIW-03 registry; PIW-03 INFO-002 resolved). INFO-002: `principal-sales-out-map` not yet registered (PIW-05); Sales-Out lens preset resolution falls back to the entity default until PIW-05. INFO-003: active lens is session state, not persisted in URL; deferred pending later lens-scoped content slices | N/A |
+| PIW-05 | 2026-09-11 | GO | None blocking. INFO-001: `.iw-map-encoding` legend has no scoped CSS (unstyled text caption); cosmetic only, bubble color rendering unaffected | N/A |
 
 ---
 
@@ -533,3 +534,28 @@ Note (sequencing): `principal-sales-out-map` is not yet registered in `EntityMap
 the initial Sales-Out resolution becomes exact once PIW-05 lands. Full frontend build
 (`vue-tsc -b && vite build`) passes; frontend tests 34 files / 269 tests pass; backend build (VS
 MSBuild, `btr.test.csproj`) succeeds; focused backend lens tests 8/8 pass.
+
+### PIW-05 verification note
+
+Implemented the default Sales-Out population preset with its bubble size/color encoding:
+
+- Backend: `principal-sales-out-map` registered in `EntityMapPresetRegistry` for `Supplier` with
+  `AxisXKpiId = PRN-TGT-003`, `AxisYKpiId = PRN-GRW-002`, `BubbleKpiId = PRN-SALES-001`,
+  `BubbleColorKpiId = PRN-RET-004`, `IsDefault = true`, `FilterDimensionKpiId = null`.
+  `purchase-exposure-map` demoted to `IsDefault = false` (still available alongside
+  `purchasing-discipline-map`); exactly one Supplier default remains.
+- Bounded extension (per Architecture §16): `EntityMapPresetDefinition.BubbleColorKpiId` added
+  (size field `BubbleKpiId` already existed); `MapPresetDto` / `PopulationMapResponseDto` /
+  `PopulationMapPointDto` expose bubble + color IDs, labels, and per-point values; `GetMapPresets`
+  handler and `EntityPopulationMapEngine` populate them.
+- Frontend: `entityAnalytics.ts` models extended; `PopulationMapCanvas.vue` renders bubble color
+  for normal-tier points via a data-relative neutral→critical scale (no business thresholds;
+  attention/watch/critical tiers, selection, search, and hover behavior unchanged) with a
+  "Bubble color: <label>" legend; tooltip shows bubble size/color values.
+- Lens alignment: registered preset id matches the PIW-03 Sales-Out lens `DefaultPresetId`, so the
+  PIW-04 lens-switcher fallback now resolves exactly.
+
+Focused tests: `EntityMapPresetRegistryTest` (3 new tests: encoding, Supplier default resolution,
+single-default stability) + `EntityInvestigationLensRegistryTest` (6 tests) pass 11/11. Backend
+build (VS MSBuild, `btr.test.csproj`) succeeds. Full frontend build (`vue-tsc -b && vite build`)
+passes; frontend tests 34 files / 269 tests pass.

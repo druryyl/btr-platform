@@ -46,6 +46,8 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Queries
                 {
                     _kpiRegistry.TryGetMetadata(p.AxisXKpiId, out var axisX);
                     _kpiRegistry.TryGetMetadata(p.AxisYKpiId, out var axisY);
+                    _kpiRegistry.TryGetMetadata(p.BubbleKpiId, out var bubble);
+                    _kpiRegistry.TryGetMetadata(p.BubbleColorKpiId, out var bubbleColor);
 
                     return new MapPresetDto
                     {
@@ -56,6 +58,10 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Queries
                         AxisYKpiId = p.AxisYKpiId,
                         AxisXLabel = axisX?.DisplayName ?? p.AxisXKpiId,
                         AxisYLabel = axisY?.DisplayName ?? p.AxisYKpiId,
+                        BubbleKpiId = p.BubbleKpiId,
+                        BubbleColorKpiId = p.BubbleColorKpiId,
+                        BubbleLabel = bubble?.DisplayName ?? p.BubbleKpiId,
+                        BubbleColorLabel = bubbleColor?.DisplayName ?? p.BubbleColorKpiId,
                         IsDefault = p.IsDefault
                     };
                 })

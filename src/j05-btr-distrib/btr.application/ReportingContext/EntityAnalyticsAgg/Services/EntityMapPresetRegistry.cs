@@ -75,13 +75,26 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Services
             },
             new EntityMapPresetDefinition
             {
+                PresetId = "principal-sales-out-map",
+                EntityType = EntityTypeCode.Supplier,
+                DisplayName = "Principal Sales-Out Map",
+                Description = "Which principals combine achievement, growth, scale, and return risk?",
+                AxisXKpiId = "PRN-TGT-003",
+                AxisYKpiId = "PRN-GRW-002",
+                BubbleKpiId = "PRN-SALES-001",
+                BubbleColorKpiId = "PRN-RET-004",
+                IsDefault = true,
+                FilterDimensionKpiId = null
+            },
+            new EntityMapPresetDefinition
+            {
                 PresetId = "purchase-exposure-map",
                 EntityType = EntityTypeCode.Supplier,
                 DisplayName = "Purchase Exposure Map",
                 Description = "Which principals create purchase and inventory exposure?",
                 AxisXKpiId = "PU-KPI-001",
                 AxisYKpiId = EntityAnalyticsMetaKpiIds.InventoryValue,
-                IsDefault = true,
+                IsDefault = false,
                 FilterDimensionKpiId = null
             },
             new EntityMapPresetDefinition
