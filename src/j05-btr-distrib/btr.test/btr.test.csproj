@@ -231,6 +231,7 @@
     <Compile Include="ReportingContext\PrincipalReturnHistoryComposerTest.cs" />
     <Compile Include="ReportingContext\PrincipalReturnPercentageComposerTest.cs" />
     <Compile Include="ReportingContext\PrincipalAchievementComposerTest.cs" />
+    <Compile Include="ReportingContext\PrincipalPacingAchievementComposerTest.cs" />
     <Compile Include="ReportingContext\PrincipalActiveCustomerComposerTest.cs" />
     <Compile Include="ReportingContext\PrincipalCustomerCoverageComposerTest.cs" />
     <Compile Include="ReportingContext\PrincipalMomGrowthComposerTest.cs" />

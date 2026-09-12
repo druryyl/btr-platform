@@ -702,6 +702,7 @@
     <Compile Include="ReportingContext\PrincipalAnalyticsAgg\Models\PrincipalReturnHistoryResult.cs" />
     <Compile Include="ReportingContext\PrincipalAnalyticsAgg\Models\PrincipalReturnPercentageResult.cs" />
     <Compile Include="ReportingContext\PrincipalAnalyticsAgg\Models\PrincipalAchievementResult.cs" />
+    <Compile Include="ReportingContext\PrincipalAnalyticsAgg\Models\PrincipalPacingAchievementResult.cs" />
     <Compile Include="ReportingContext\PrincipalAnalyticsAgg\Models\PrincipalMomGrowthResult.cs" />
     <Compile Include="ReportingContext\PrincipalAnalyticsAgg\Models\PrincipalYoyGrowthResult.cs" />
     <Compile Include="ReportingContext\PrincipalAnalyticsAgg\Models\PrincipalSalesmanContributionResult.cs" />
@@ -718,6 +719,7 @@
     <Compile Include="ReportingContext\PrincipalAnalyticsAgg\Services\PrincipalReturnHistoryComposer.cs" />
     <Compile Include="ReportingContext\PrincipalAnalyticsAgg\Services\PrincipalReturnPercentageComposer.cs" />
     <Compile Include="ReportingContext\PrincipalAnalyticsAgg\Services\PrincipalAchievementComposer.cs" />
+    <Compile Include="ReportingContext\PrincipalAnalyticsAgg\Services\PrincipalPacingAchievementComposer.cs" />
     <Compile Include="ReportingContext\PrincipalAnalyticsAgg\Services\PrincipalMomGrowthComposer.cs" />
     <Compile Include="ReportingContext\PrincipalAnalyticsAgg\Services\PrincipalYoyGrowthComposer.cs" />
     <Compile Include="ReportingContext\PrincipalAnalyticsAgg\Services\PrincipalSalesmanContributionComposer.cs" />
