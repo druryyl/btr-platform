@@ -318,7 +318,7 @@ Prove the re-ordered flow across NEW, EDIT, Faktur Klaim, and voided modes: prev
 
 | Slice ID | Status | Implementation History | Review History | Remediation History |
 | --- | --- | --- | --- | --- |
-| SL-01 | PLANNED | — | — | — |
+| SL-01 | GO | 2026-09-12: SL-01 implemented (null-safe FakturPrintOutDto + [DRAFT] handling) | 2026-09-12: GO — all 7 ACs verified, no findings above INFO | — |
 | SL-02 | PLANNED | — | — | — |
 | SL-03 | PLANNED | — | — | — |
 | SL-04 | PLANNED | — | — | — |
