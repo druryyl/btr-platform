@@ -322,7 +322,7 @@ Prove the re-ordered flow across NEW, EDIT, Faktur Klaim, and voided modes: prev
 | SL-02 | GO | 2026-09-12: SL-02 implemented (shared SaveFakturValidator entry; SaveFakturWorker delegates; zero-item-line guard) | 2026-09-12: GO — all 8 ACs verified, no findings above INFO | — |
 | SL-03 | GO | 2026-09-12: SL-03 implemented (shared BuildFakturAggregateWorker path; SaveFakturWorker delegates; side-effect-free) | 2026-09-12: GO — all 5 ACs verified, no findings above INFO | — |
 | SL-04 | GO | 2026-09-12: SL-04 implemented (Save as preview entry point; shared validation + shared construction; SAVE / SAVE & PRINT / Cancel dialog; persist-only-after-confirm) | 2026-09-12: GO — all 6 ACs verified, no findings above INFO | — |
-| SL-05 | PLANNED | — | — | — |
+| SL-05 | GO | 2026-09-12: SL-05 implemented (mode-aware draft title; void-only Preview/Print with read-only viewer; EDIT/Klaim via shared path) | 2026-09-12: GO — all 6 ACs verified, no findings above INFO | — |
 | SL-06 | PLANNED | — | — | — |
 | SL-07 | PLANNED | — | — | — |
 

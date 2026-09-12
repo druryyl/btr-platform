@@ -200,6 +200,7 @@ namespace btr.distrib.SalesContext.FakturAgg
             FakturItemGrid.RowPostPaint += DataGridViewExtensions.DataGridView_RowPostPaint;
 
             NewButton.Click += NewButton_Click;
+            PreviewButton.Click += PreviewVoidButton_Click;
             UangMukaText.KeyDown += UangMukaText_KeyDown;
             CopyItemJualButton.Click += CopyItemJualButton_Click;
 
@@ -450,6 +451,9 @@ namespace btr.distrib.SalesContext.FakturAgg
             return true;
         }
         
+        //  SL-05 (D-008): voided keeps Save unavailable; Preview / Print
+        //  stays available via a void-only button. Normal modes keep Save
+        //  as the single primary action (D-003).
         private void ShowAsVoid(FakturModel faktur)
         {
             this.BackColor = Color.RosyBrown;
@@ -457,6 +461,7 @@ namespace btr.distrib.SalesContext.FakturAgg
             CancelLabel.Text = $@"Faktur sudah DIBATALKAN \noleh {faktur.UserIdVoid} \npada {faktur.VoidDate:ddd, dd MMM yyyy}";
             VoidPanel.Visible = true;
             SaveButton.Visible = false;
+            PreviewButton.Visible = true;
         }
         
         private void ShowAsActive()
@@ -465,6 +470,7 @@ namespace btr.distrib.SalesContext.FakturAgg
 
             VoidPanel.Visible = false;
             SaveButton.Visible = true;
+            PreviewButton.Visible = false;
         }
         #endregion
 
@@ -1028,6 +1034,14 @@ namespace btr.distrib.SalesContext.FakturAgg
             }
         }
 
+        //  SL-05 (D-002/D-008/D-011): mode-aware preview number. NEW with empty
+        //  code shows [DRAFT] (DTO fallback) and the dialog is titled DRAFT so
+        //  the draft is visually distinguishable from the final; NEW with a
+        //  pre-selected open code and EDIT show that code verbatim. EDIT is
+        //  built from the current form state (unsaved modifications included);
+        //  save preserves the existing FakturId/FakturCode via writer
+        //  skip-empty behavior (no regeneration). Klaim follows its
+        //  corresponding NEW/EDIT mode with business rules unchanged.
         private FakturPreviewChoice ShowPreviewDialog(FakturPrintOutDto previewDto)
         {
             var fakturJualDataset = new ReportDataSource("FakturJualDataset", new List<FakturPrintOutDto> { previewDto });
@@ -1054,9 +1068,95 @@ namespace btr.distrib.SalesContext.FakturAgg
             };
             var rdlcViewerForm = new RdlcViewerForm();
             rdlcViewerForm.SetReportData(printOutTemplate, listDataset);
+            var isDraft = (previewDto.FakturCode ?? string.Empty).Contains("[DRAFT]");
+            rdlcViewerForm.Text = isDraft
+                ? "Faktur Preview - [DRAFT] (draft, not yet saved)"
+                : $"Faktur Preview - {previewDto.FakturCode}";
             rdlcViewerForm.EnableSaveConfirm();
             rdlcViewerForm.ShowDialog();
             return rdlcViewerForm.PreviewChoice;
+        }
+
+        //  SL-05 (D-008): voided Faktur allows preview/print with save
+        //  unavailable. Read-only viewer (no SAVE panel); toolbar print stays
+        //  available. Side-effect free: shared construction + reads only, no
+        //  writer/genstok/piutang/packing/commit/counter (D-007).
+        private void PreviewVoidButton_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                var req = BuildSaveFakturRequest();
+                FakturModel previewAggregate;
+                try
+                {
+                    previewAggregate = _aggregateBuilder.Execute(req);
+                }
+                catch (KeyNotFoundException ex)
+                {
+                    MessageBox.Show(ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    return;
+                }
+                catch (ArgumentException ex)
+                {
+                    MessageBox.Show(ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    return;
+                }
+
+                CustomerModel previewCustomer = null;
+                try
+                {
+                    previewCustomer = _customerDal.GetData(previewAggregate);
+                }
+                catch (KeyNotFoundException)
+                {
+                }
+                var previewUser = _userDal.GetData(previewAggregate) ?? new UserModel
+                {
+                    UserId = previewAggregate.UserId,
+                    UserName = previewAggregate.UserId
+                };
+                var isKlaim = FakturKlaimRadio.Checked;
+                var previewDto = new FakturPrintOutDto(previewAggregate, previewCustomer, previewUser, isKlaim);
+                ShowReadOnlyPreview(previewDto);
+            }
+            catch (KeyNotFoundException ex)
+            {
+                MessageBox.Show(ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+            catch (ArgumentException ex)
+            {
+                MessageBox.Show(ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        private void ShowReadOnlyPreview(FakturPrintOutDto previewDto)
+        {
+            var fakturJualDataset = new ReportDataSource("FakturJualDataset", new List<FakturPrintOutDto> { previewDto });
+            var fakturJualItemDataset = new ReportDataSource("FakturJualItemDataset", previewDto.ListItem);
+            var clientId = _paramSistemDal.GetData(new ParamSistemModel("CLIENT_ID"))?.ParamValue ?? string.Empty;
+
+            var printOutTemplate = string.Empty;
+            switch (clientId)
+            {
+                case "BTR-YK":
+                    printOutTemplate = "FakturPrintOut-Yk";
+                    break;
+                case "BTR-MGL":
+                    printOutTemplate = "FakturPrintOut-Mgl";
+                    break;
+                default:
+                    break;
+            }
+
+            var listDataset = new List<ReportDataSource>
+            {
+                fakturJualDataset,
+                fakturJualItemDataset
+            };
+            var rdlcViewerForm = new RdlcViewerForm();
+            rdlcViewerForm.SetReportData(printOutTemplate, listDataset);
+            rdlcViewerForm.Text = $"Faktur Preview (VOID) - {previewDto.FakturCode}";
+            rdlcViewerForm.ShowDialog();
         }
 
         private FakturModel SaveFaktur()

@@ -49,6 +49,7 @@
             this.TotalText = new System.Windows.Forms.NumericUpDown();
             this.TotalLabel = new System.Windows.Forms.Label();
             this.SaveButton = new System.Windows.Forms.Button();
+            this.PreviewButton = new System.Windows.Forms.Button();
             this.NewButton = new System.Windows.Forms.Button();
             this.panel1 = new System.Windows.Forms.Panel();
             this.OrderIdText = new System.Windows.Forms.TextBox();
@@ -383,6 +384,19 @@
             this.SaveButton.Text = "Save";
             this.SaveButton.UseVisualStyleBackColor = true;
             this.SaveButton.Click += new System.EventHandler(this.SaveButton_Click);
+            // 
+            // PreviewButton
+            // 
+            //  SL-05 (D-008): voided-only preview/print entry. Hidden in normal
+            //  flow so Save remains the single primary action (D-003).
+            this.PreviewButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+            this.PreviewButton.Location = new System.Drawing.Point(974, 491);
+            this.PreviewButton.Name = "PreviewButton";
+            this.PreviewButton.Size = new System.Drawing.Size(95, 23);
+            this.PreviewButton.TabIndex = 27;
+            this.PreviewButton.Text = "Preview / Print";
+            this.PreviewButton.UseVisualStyleBackColor = true;
+            this.PreviewButton.Visible = false;
             // 
             // NewButton
             // 
@@ -839,6 +853,7 @@
             this.Controls.Add(this.FakturItemGrid);
             this.Controls.Add(this.PanelTengah);
             this.Controls.Add(this.SaveButton);
+            this.Controls.Add(this.PreviewButton);
             this.Controls.Add(this.label2);
             this.Controls.Add(this.NewButton);
             this.Controls.Add(this.panel1);
@@ -894,6 +909,7 @@
         private System.Windows.Forms.NumericUpDown TotalText;
         private System.Windows.Forms.Label TotalLabel;
         private System.Windows.Forms.Button SaveButton;
+        private System.Windows.Forms.Button PreviewButton;
         private System.Windows.Forms.Button NewButton;
         private System.Windows.Forms.Panel panel1;
         private System.Windows.Forms.TextBox FakturIdText;
