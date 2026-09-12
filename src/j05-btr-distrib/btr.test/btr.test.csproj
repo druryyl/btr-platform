@@ -225,6 +225,7 @@
     <Compile Include="ReportingContext\SalesForecastPrincipalPresentationTest.cs" />
     <Compile Include="ReportingContext\CustomerPrincipalRelationshipComposerTest.cs" />
     <Compile Include="ReportingContext\PrincipalSalesOutHistoryComposerTest.cs" />
+    <Compile Include="ReportingContext\PrincipalSalesOutRangeEvidenceDalTest.cs" />
     <Compile Include="ReportingContext\PrincipalPurchaseInAggregatorTest.cs" />
     <Compile Include="ReportingContext\PrincipalReturnAggregatorTest.cs" />
     <Compile Include="ReportingContext\PrincipalReturnHistoryComposerTest.cs" />

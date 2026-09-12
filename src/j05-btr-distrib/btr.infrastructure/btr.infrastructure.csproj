@@ -185,6 +185,7 @@
     <Compile Include="ReportingContext\PrincipalAnalyticsAgg\PrincipalSalesOutEvidenceDal.cs" />
     <Compile Include="ReportingContext\PrincipalAnalyticsAgg\PrincipalSalesOutHistoryDal.cs" />
     <Compile Include="ReportingContext\PrincipalAnalyticsAgg\PrincipalSalesOutHistoryEvidenceDal.cs" />
+    <Compile Include="ReportingContext\PrincipalAnalyticsAgg\PrincipalSalesOutRangeEvidenceDal.cs" />
     <Compile Include="ReportingContext\PrincipalAnalyticsAgg\PrincipalSalesOutSnapshotDal.cs" />
     <Compile Include="ReportingContext\PrincipalAnalyticsAgg\PrincipalPurchaseInEvidenceDal.cs" />
     <Compile Include="ReportingContext\PrincipalAnalyticsAgg\PrincipalPurchaseInSnapshotDal.cs" />

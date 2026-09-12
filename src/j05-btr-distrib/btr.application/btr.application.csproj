@@ -672,6 +672,7 @@
     <Compile Include="ReportingContext\PrincipalAnalyticsAgg\Contracts\IPrincipalSalesOutHistoryDal.cs" />
     <Compile Include="ReportingContext\PrincipalAnalyticsAgg\Contracts\IPrincipalSalesOutHistoryEvidenceDal.cs" />
     <Compile Include="ReportingContext\PrincipalAnalyticsAgg\Contracts\IPrincipalSalesOutEvidenceDal.cs" />
+    <Compile Include="ReportingContext\PrincipalAnalyticsAgg\Contracts\IPrincipalSalesOutRangeEvidenceDal.cs" />
     <Compile Include="ReportingContext\PrincipalAnalyticsAgg\Contracts\IPrincipalSalesOutSnapshotDal.cs" />
     <Compile Include="ReportingContext\PrincipalAnalyticsAgg\Contracts\IPrincipalPurchaseInEvidenceDal.cs" />
     <Compile Include="ReportingContext\PrincipalAnalyticsAgg\Contracts\IPrincipalPurchaseInSnapshotDal.cs" />
