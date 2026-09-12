@@ -59,6 +59,7 @@ namespace btr.application.SalesContext.FakturAgg.UseCases
     public class SaveFakturWorker : ISaveFakturWorker
     {
         private readonly IFakturBuilder _fakturBuilder;
+        private readonly IBuildFakturAggregateWorker _aggregateBuilder;
         private readonly IFakturWriter _fakturWriter;
         private readonly IMediator _mediator;
         private readonly IGenStokFakturWorker _genStokWorker;
@@ -66,10 +67,12 @@ namespace btr.application.SalesContext.FakturAgg.UseCases
         private readonly IOrderDal _orderDal;
 
         public SaveFakturWorker(IFakturBuilder fakturBuilder,
+            IBuildFakturAggregateWorker aggregateBuilder,
             IFakturWriter fakturWriter,
             IMediator mediator, IGenStokFakturWorker genStokWorker, IOrderMapDal orderMapDal, IOrderDal orderDal)
         {
             _fakturBuilder = fakturBuilder;
+            _aggregateBuilder = aggregateBuilder;
             _fakturWriter = fakturWriter;
             _mediator = mediator;
             _genStokWorker = genStokWorker;
@@ -158,57 +161,9 @@ namespace btr.application.SalesContext.FakturAgg.UseCases
 
         private FakturModel SaveFaktur(SaveFakturRequest req)
         {
-            //  BUILD
-            FakturModel result;
-            if (req.FakturId.Length == 0)
-            {
-                result = _fakturBuilder.CreateNew(req).Build();
-            }
-            else
-            {
-                result = _fakturBuilder.Load(req).Build();
-                result.ListItem.Clear();
-                result.ListItemKlaim.Clear();
-            }
-
-            result = _fakturBuilder
-                .Attach(result)
-                .FakturCode(req.FakturCode)
-                .FakturDate(req.FakturDate.ToDate(DateFormatEnum.YMD))
-                .Customer(req)
-                .Order(OrderModel.Key(req.OrderId))
-                .SalesPerson(req)
-                .Warehouse(req)
-                .TglRencanaKirim(req.RencanaKirimDate.ToDate(DateFormatEnum.YMD))
-                .Driver(req)
-                .User(req)
-                .TermOfPayment((TermOfPaymentEnum)req.TermOfPayment)
-                .DueDate(req.DueDate.ToDate(DateFormatEnum.YMD))
-                .Cash(req.Cash)
-                .Note(req.Note)
-                .Build();
-
-            foreach (var item in req.ListBrg)
-            {
-                result = _fakturBuilder
-                    .Attach(result)
-                    .AddItem(item, item.StokHarga, item.QtyString, item.HrgString, item.DiscountString, item.DppProsen, item.PpnProsen, false)
-                    .Build();
-            }
-
-            foreach (var item in req.ListBrgKlaim)
-            {
-                result = _fakturBuilder
-                    .Attach(result)
-                    .AddItemKlaim(item, item.StokHarga, item.QtyString, item.HrgString, item.DiscountString, item.DppProsen, item.PpnProsen, false)
-                    .Build();
-            }
-
-
-            result = _fakturBuilder
-                .Attach(result)
-                .CalcTotal()
-                .Build();
+            //  BUILD via single shared construction path (SL-03 / D-006);
+            //  preview calls IBuildFakturAggregateWorker directly for the same aggregate
+            var result = _aggregateBuilder.Execute(req);
 
             //  APPLY
             _ = _fakturWriter.Save(result);
