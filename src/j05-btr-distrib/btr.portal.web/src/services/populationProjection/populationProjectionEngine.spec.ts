@@ -11,7 +11,7 @@ import {
   projectedEntityToAnalyzed,
   resolveDeviationLabel,
 } from '@/services/populationProjection/populationProjectionEngine'
-import { businessToLog, businessToProjectedLog, robustNormalize } from '@/services/populationProjection/robustStats'
+import { businessToLog, businessToProjectedLog, businessToSignedLog, robustNormalize } from '@/services/populationProjection/robustStats'
 import { robustProjectionStrategy } from '@/services/populationProjection/strategies/robustProjectionStrategy'
 
 function makePoint(overrides: Partial<PopulationMapPoint> = {}): PopulationMapPoint {
@@ -42,9 +42,35 @@ describe('businessToVisual', () => {
     expect(businessToVisual(9)).toBeCloseTo(1, 10)
   })
 
-  it('clamps negatives before transform', () => {
+  it('clamps negatives for the non-signed generic transform (IDR/days)', () => {
     expect(businessToVisual(-100)).toBe(0)
     expect(Number.isFinite(businessToVisual(-100))).toBe(true)
+  })
+})
+
+describe('businessToSignedLog (percent axes)', () => {
+  it('maps zero to zero', () => {
+    expect(businessToSignedLog(0)).toBe(0)
+  })
+
+  it('keeps negative values negative instead of clamping', () => {
+    expect(businessToSignedLog(-100)).toBeLessThan(0)
+    expect(businessToSignedLog(-100)).toBeCloseTo(-Math.log10(101), 10)
+  })
+
+  it('preserves sign and magnitude ordering', () => {
+    expect(businessToSignedLog(-100)).toBeLessThan(businessToSignedLog(-1))
+    expect(businessToSignedLog(-1)).toBeLessThan(businessToSignedLog(0))
+    expect(businessToSignedLog(0)).toBeLessThan(businessToSignedLog(1))
+    expect(businessToSignedLog(1)).toBeLessThan(businessToSignedLog(100))
+  })
+
+  it('businessToProjectedLog uses signed transform for Percent and clamps otherwise', () => {
+    expect(businessToProjectedLog(-50, 'Percent')).toBeCloseTo(businessToSignedLog(-50), 10)
+    expect(businessToProjectedLog(50, 'Percent')).toBeCloseTo(businessToSignedLog(50), 10)
+    expect(businessToProjectedLog(-500, 'IDR')).toBe(0)
+    expect(businessToProjectedLog(-500, 'Days')).toBe(0)
+    expect(businessToProjectedLog(-500, undefined)).toBe(0)
   })
 })
 
@@ -293,6 +319,59 @@ describe('robustProjectionStrategy', () => {
         { entityId: 'b', label: 'B', businessX: 1, businessY: Infinity },
       ]),
     ).not.toThrow()
+  })
+})
+
+describe('signed percent projection (PSOM-11)', () => {
+  it('does not clamp negative percent Y values and preserves sign ordering', () => {
+    const points = [
+      makePoint({ EntityId: 'neg', AxisX: 50, AxisY: -20 }),
+      makePoint({ EntityId: 'zero', AxisX: 100, AxisY: 0 }),
+      makePoint({ EntityId: 'pos', AxisX: 150, AxisY: 30 }),
+    ]
+    const result = populationProjectionEngine.project(points, {
+      axisXUnit: 'Percent',
+      axisYUnit: 'Percent',
+    })!
+
+    const neg = result.entities.get('neg')!
+    const zero = result.entities.get('zero')!
+    const pos = result.entities.get('pos')!
+
+    expect(neg.businessY).toBe(-20)
+    expect(neg.projectionY).toBeLessThan(zero.projectionY)
+    expect(zero.projectionY).toBeLessThan(pos.projectionY)
+  })
+
+  it('computes Y bounds that enclose business zero when data spans both signs', () => {
+    const points = [
+      makePoint({ EntityId: 'neg', AxisX: 50, AxisY: -30 }),
+      makePoint({ EntityId: 'pos', AxisX: 150, AxisY: 40 }),
+    ]
+    const result = populationProjectionEngine.project(points, {
+      axisXUnit: 'Percent',
+      axisYUnit: 'Percent',
+    })!
+
+    const zeroProjection =
+      (0 - result.metadata.normalizationY.center) / result.metadata.normalizationY.scale
+    expect(result.bounds.minY).toBeLessThan(zeroProjection)
+    expect(result.bounds.maxY).toBeGreaterThan(zeroProjection)
+  })
+
+  it('retains non-negative behavior for non-percent axes', () => {
+    const points = [
+      makePoint({ EntityId: 'a', AxisX: 1_000_000, AxisY: -500 }),
+      makePoint({ EntityId: 'b', AxisX: 2_000_000, AxisY: 1_000 }),
+    ]
+    const result = populationProjectionEngine.project(points, {
+      axisXUnit: 'IDR',
+      axisYUnit: 'IDR',
+    })!
+
+    const a = result.entities.get('a')!
+    expect(a.businessY).toBe(0)
+    expect(businessToProjectedLog(-500, 'IDR')).toBe(0)
   })
 })
 

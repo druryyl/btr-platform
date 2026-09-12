@@ -14,6 +14,7 @@ import {
   classifyByResidualMagnitude,
   computeLabelPriority,
   fitTheilSenRegression,
+  isPercentAxisUnit,
   mad,
   percentileValue,
   resolveDeviationLabel,
@@ -51,8 +52,12 @@ function validateEntities(
       continue
     }
 
-    const businessX = Math.max(entity.businessX, 0)
-    const businessY = Math.max(entity.businessY, 0)
+    const businessX = isPercentAxisUnit(options?.axisXUnit)
+      ? entity.businessX
+      : Math.max(entity.businessX, 0)
+    const businessY = isPercentAxisUnit(options?.axisYUnit)
+      ? entity.businessY
+      : Math.max(entity.businessY, 0)
 
     valid.push({
       entityId: entity.entityId,
