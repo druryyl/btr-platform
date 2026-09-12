@@ -483,7 +483,23 @@ export function resolvePopulationAxisTicks(
 }
 
 /**
- * PSOM-12 — business-zero helpers (GAP-005).
+ * PSOM-12/PSOM-13 — project an arbitrary business value with the same
+ * log + robust-norm transform used for scatter points, so overlays (zero line,
+ * quadrant boundaries) sit exactly on the plotted value.
+ */
+export function resolveBusinessProjection(
+  norm: { center: number; scale: number },
+  unit: string | null | undefined,
+  businessValue: number,
+): number {
+  if (!Number.isFinite(norm.center) || !Number.isFinite(norm.scale)) return NaN
+  const scale = Math.abs(norm.scale) < 1e-12 ? 1e-12 : norm.scale
+  const logValue = businessToProjectedLog(businessValue, unit)
+  return (logValue - norm.center) / scale
+}
+
+/**
+ * PSOM-12 — business-zero helper (GAP-005).
  *
  * Business `Y = 0` is projected with the same log + robust-norm transform used
  * for scatter points, so the reference line and its tick sit exactly on the
@@ -494,10 +510,7 @@ export function resolveBusinessZeroProjection(
   norm: { center: number; scale: number },
   unit: string | null | undefined,
 ): number {
-  const scale = Math.abs(norm.scale) < 1e-12 ? 1e-12 : norm.scale
-  if (!Number.isFinite(norm.center) || !Number.isFinite(norm.scale)) return NaN
-  const logZero = businessToProjectedLog(0, unit)
-  return (logZero - norm.center) / scale
+  return resolveBusinessProjection(norm, unit, 0)
 }
 
 export function isBusinessZeroWithinBounds(
@@ -526,6 +539,54 @@ export function ensureZeroTick(
   return [...ticks, { businessValue: 0, projectionValue: zeroProjection }].sort(
     (a, b) => a.projectionValue - b.projectionValue,
   )
+}
+
+/**
+ * PSOM-13 — fixed business quadrants (GAP-006 / OQ-002).
+ *
+ * The `principal-sales-out-map` preset replaces statistical regions with fixed
+ * business quadrants at X = 100% Pacing Achievement and Y = 0% YoY MTD Growth.
+ */
+export const PRINCIPAL_SALES_OUT_MAP_PRESET_ID = 'principal-sales-out-map'
+
+export const PACING_QUADRANT_X_THRESHOLD = 100
+export const PACING_QUADRANT_Y_THRESHOLD = 0
+
+export type PacingQuadrant = 'star' | 'growing' | 'steady' | 'declining'
+
+export const PACING_QUADRANT_LABELS: Record<PacingQuadrant, string> = {
+  star: 'Star',
+  growing: 'Growing',
+  steady: 'Steady',
+  declining: 'Declining',
+}
+
+/**
+ * Classify a Principal into a fixed business quadrant using thresholds — never
+ * regression residuals:
+ * Star (X≥100, Y≥0), Growing (X<100, Y≥0), Steady (X≥100, Y<0), Declining (X<100, Y<0).
+ * Returns `null` when either business value is missing/non-finite.
+ */
+export function classifyPacingQuadrant(
+  businessX: number | null | undefined,
+  businessY: number | null | undefined,
+): PacingQuadrant | null {
+  if (
+    businessX == null
+    || businessY == null
+    || !Number.isFinite(businessX)
+    || !Number.isFinite(businessY)
+  ) {
+    return null
+  }
+
+  const strongX = businessX >= PACING_QUADRANT_X_THRESHOLD
+  const positiveY = businessY >= PACING_QUADRANT_Y_THRESHOLD
+
+  if (strongX && positiveY) return 'star'
+  if (!strongX && positiveY) return 'growing'
+  if (strongX && !positiveY) return 'steady'
+  return 'declining'
 }
 
 export function generateProjectionAxisGuides(
@@ -675,6 +736,48 @@ export function rawToScreenXFromBusiness(rawTick: number, transform: MapTransfor
 /** @deprecated Use projectionToScreenY */
 export function rawToScreenYFromBusiness(rawTick: number, transform: MapTransform): number {
   return projectionToScreenY(rawTick, transform)
+}
+
+export interface PacingQuadrantBoundaries {
+  /** Screen X of the X = 100% boundary; null when outside the visible X bounds. */
+  boundaryX: number | null
+  /** Screen Y of the Y = 0% boundary; null when outside the visible Y bounds. */
+  boundaryY: number | null
+}
+
+/**
+ * PSOM-13 — convert the fixed business quadrant boundaries (X = 100%,
+ * Y = 0%) to screen coordinates using the same transform as the plotted points.
+ */
+export function resolvePacingQuadrantBoundaries(
+  projection: PopulationProjectionResult,
+  transform: MapTransform,
+  axisXUnit: string | null | undefined,
+  axisYUnit: string | null | undefined,
+): PacingQuadrantBoundaries {
+  const xProjection = resolveBusinessProjection(
+    projection.metadata.normalizationX,
+    axisXUnit,
+    PACING_QUADRANT_X_THRESHOLD,
+  )
+  const yProjection = resolveBusinessProjection(
+    projection.metadata.normalizationY,
+    axisYUnit,
+    PACING_QUADRANT_Y_THRESHOLD,
+  )
+
+  const { bounds } = transform
+  const xVisible = Number.isFinite(xProjection)
+    && xProjection >= bounds.minX
+    && xProjection <= bounds.maxX
+  const yVisible = Number.isFinite(yProjection)
+    && yProjection >= bounds.minY
+    && yProjection <= bounds.maxY
+
+  return {
+    boundaryX: xVisible ? projectionToScreenX(xProjection, transform) : null,
+    boundaryY: yVisible ? projectionToScreenY(yProjection, transform) : null,
+  }
 }
 
 export function plotPoints(

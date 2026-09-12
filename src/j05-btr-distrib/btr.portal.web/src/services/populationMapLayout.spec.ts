@@ -7,6 +7,7 @@ import {
   buildDaysCalendarAxisTicks,
   buildIdrNiceAxisTicks,
   buildTransform,
+  classifyPacingQuadrant,
   computeBounds,
   computeRawExtents,
   dataToScreen,
@@ -26,6 +27,7 @@ import {
   resolveBusinessAttentionTier,
   resolveBusinessZeroProjection,
   resolveLabelPlacements,
+  resolvePacingQuadrantBoundaries,
   resolvePopulationAxisTicks,
   resolveVisualTier,
   formatBinRangeLabel,
@@ -639,5 +641,73 @@ describe('business zero reference (PSOM-12)', () => {
       { businessValue: 10, projectionValue: 0.5 },
     ]
     expect(ensureZeroTick(withZero, 0, inBounds)).toBe(withZero)
+  })
+})
+
+describe('fixed business quadrants (PSOM-13)', () => {
+  it('classifies the four fixed business quadrants', () => {
+    expect(classifyPacingQuadrant(120, 10)).toBe('star')
+    expect(classifyPacingQuadrant(80, 10)).toBe('growing')
+    expect(classifyPacingQuadrant(120, -10)).toBe('steady')
+    expect(classifyPacingQuadrant(80, -10)).toBe('declining')
+  })
+
+  it('treats the exact boundaries as Star (X≥100, Y≥0)', () => {
+    expect(classifyPacingQuadrant(100, 0)).toBe('star')
+    expect(classifyPacingQuadrant(100, -1)).toBe('steady')
+    expect(classifyPacingQuadrant(99, 0)).toBe('growing')
+    expect(classifyPacingQuadrant(99, -1)).toBe('declining')
+  })
+
+  it('returns null when a business value is missing or non-finite', () => {
+    expect(classifyPacingQuadrant(null, 10)).toBeNull()
+    expect(classifyPacingQuadrant(120, null)).toBeNull()
+    expect(classifyPacingQuadrant(undefined, undefined)).toBeNull()
+    expect(classifyPacingQuadrant(Number.NaN, 10)).toBeNull()
+  })
+
+  it('aligns quadrant boundaries with the plotted point transform', () => {
+    const points = [
+      makePoint({ EntityId: 'low', AxisX: 50, AxisY: -20 }),
+      makePoint({ EntityId: 'threshold', AxisX: 100, AxisY: 0 }),
+      makePoint({ EntityId: 'high', AxisX: 160, AxisY: 30 }),
+    ]
+    const projection = project(points)
+    const bounds = computeBounds(projection)
+    const transform = buildTransform(800, 600, bounds)
+
+    const { boundaryX, boundaryY } = resolvePacingQuadrantBoundaries(
+      projection,
+      transform,
+      'Percent',
+      'Percent',
+    )
+
+    const threshold = projection.entities.get('threshold')!
+    const screen = dataToScreen(threshold.projectionX, threshold.projectionY, transform)
+
+    expect(boundaryX).not.toBeNull()
+    expect(boundaryY).not.toBeNull()
+    expect(boundaryX!).toBeCloseTo(screen.x, 6)
+    expect(boundaryY!).toBeCloseTo(screen.y, 6)
+  })
+
+  it('returns null boundaries when they fall outside the visible bounds', () => {
+    const points = [
+      makePoint({ EntityId: 'a', AxisX: 0, AxisY: 0 }),
+      makePoint({ EntityId: 'b', AxisX: 200, AxisY: 50 }),
+    ]
+    const projection = project(points)
+    const transform = buildTransform(800, 600, { minX: 5, maxX: 10, minY: 0.5, maxY: 2 })
+
+    const { boundaryX, boundaryY } = resolvePacingQuadrantBoundaries(
+      projection,
+      transform,
+      'Percent',
+      'Percent',
+    )
+
+    expect(boundaryX).toBeNull()
+    expect(boundaryY).toBeNull()
   })
 })

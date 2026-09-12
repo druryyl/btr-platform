@@ -47,7 +47,10 @@ import {
   generateProjectionAxisGuides,
   generateProjectionGridTicks,
   isBusinessZeroWithinBounds,
+  PACING_QUADRANT_LABELS,
+  PRINCIPAL_SALES_OUT_MAP_PRESET_ID,
   resolveBusinessZeroProjection,
+  resolvePacingQuadrantBoundaries,
   resolvePopulationAxisTicks,
   measureLabel,
   plotPoints,
@@ -93,6 +96,11 @@ const searchSet = computed(() => new Set(props.searchHighlightIds ?? []))
 
 /** PIW-05 bounded extension: bubble color encoding (Return % via BubbleColorValue). */
 const hasBubbleColorEncoding = computed(() => !!props.population?.BubbleColorKpiId)
+
+/** PSOM-13 (GAP-006): fixed business quadrants replace statistical regions for this preset. */
+const isFixedQuadrantPreset = computed(
+  () => props.population?.PresetId === PRINCIPAL_SALES_OUT_MAP_PRESET_ID,
+)
 
 const bubbleColorScale = computed(() => {
   const values = renderablePoints.value
@@ -643,6 +651,86 @@ function drawRegionLabels(ctx: CanvasRenderingContext2D, transform: MapTransform
   drawRegionLabelPill(ctx, 'Below Expected', midX, offsetY + plotHeight - 28)
 }
 
+/** PSOM-13 (GAP-006): pill metrics so quadrant labels can be corner-aligned. */
+const QUADRANT_LABEL_PAD = 10
+const QUADRANT_LABEL_FONT = '600 10px system-ui, sans-serif'
+
+function measureRegionLabelPill(
+  ctx: CanvasRenderingContext2D,
+  text: string,
+): { width: number; height: number } {
+  ctx.font = QUADRANT_LABEL_FONT
+  const metrics = ctx.measureText(text)
+  return { width: metrics.width + 12, height: 20 }
+}
+
+/**
+ * PSOM-13 (GAP-006): vertical boundary at business X = 100% Pacing Achievement.
+ * The horizontal Y = 0% boundary is drawn by drawBusinessZeroLine (PSOM-12);
+ * both boundaries use the same transform as the plotted points. Other presets
+ * keep their statistical regions and draw no quadrant boundary.
+ */
+function drawPacingQuadrantBoundaryLine(ctx: CanvasRenderingContext2D, transform: MapTransform) {
+  const projection = mapProjection.value
+  if (!projection) return
+
+  const { boundaryX } = resolvePacingQuadrantBoundaries(
+    projection,
+    transform,
+    props.population?.AxisXUnit,
+    props.population?.AxisYUnit,
+  )
+  if (boundaryX == null) return
+
+  const { offsetX, offsetY, plotWidth, plotHeight } = transform
+  if (boundaryX < offsetX || boundaryX > offsetX + plotWidth) return
+
+  ctx.save()
+  ctx.beginPath()
+  ctx.rect(offsetX, offsetY, plotWidth, plotHeight)
+  ctx.clip()
+
+  ctx.strokeStyle = WORKSPACE_MAP_QUADRANT_LINE
+  ctx.lineWidth = 1.25
+  ctx.setLineDash([])
+  ctx.beginPath()
+  ctx.moveTo(boundaryX, offsetY)
+  ctx.lineTo(boundaryX, offsetY + plotHeight)
+  ctx.stroke()
+
+  ctx.restore()
+}
+
+/** PSOM-13 (GAP-006): fixed business quadrant labels — Star / Growing / Steady / Declining. */
+function drawFixedQuadrantLabels(ctx: CanvasRenderingContext2D, transform: MapTransform) {
+  const { offsetX, offsetY, plotWidth, plotHeight } = transform
+  const pad = QUADRANT_LABEL_PAD
+  const left = offsetX + pad
+  const right = offsetX + plotWidth - pad
+  const top = offsetY + pad
+  const bottom = offsetY + plotHeight - pad
+
+  const entries: Array<{
+    label: string
+    anchoredX: number
+    anchoredY: number
+    alignRight: boolean
+    alignBottom: boolean
+  }> = [
+    { label: PACING_QUADRANT_LABELS.star, anchoredX: right, anchoredY: top, alignRight: true, alignBottom: false },
+    { label: PACING_QUADRANT_LABELS.growing, anchoredX: left, anchoredY: top, alignRight: false, alignBottom: false },
+    { label: PACING_QUADRANT_LABELS.steady, anchoredX: right, anchoredY: bottom, alignRight: true, alignBottom: true },
+    { label: PACING_QUADRANT_LABELS.declining, anchoredX: left, anchoredY: bottom, alignRight: false, alignBottom: true },
+  ]
+
+  for (const entry of entries) {
+    const { width, height } = measureRegionLabelPill(ctx, entry.label)
+    const x = entry.alignRight ? entry.anchoredX - width : entry.anchoredX
+    const y = entry.alignBottom ? entry.anchoredY - height : entry.anchoredY
+    drawRegionLabelPill(ctx, entry.label, x, y)
+  }
+}
+
 function drawEmphasisTierPass(
   ctx: CanvasRenderingContext2D,
   tier: 'watch' | 'attention' | 'critical',
@@ -795,7 +883,12 @@ function draw() {
   drawAxes(ctx, transform, height)
   drawRegressionLine(ctx, transform)
   drawBusinessZeroLine(ctx, transform)
-  drawRegionLabels(ctx, transform)
+  if (isFixedQuadrantPreset.value) {
+    drawPacingQuadrantBoundaryLine(ctx, transform)
+    drawFixedQuadrantLabels(ctx, transform)
+  } else {
+    drawRegionLabels(ctx, transform)
+  }
   drawBatchedTierPoints(ctx, 'normal')
   drawEmphasisTierPass(ctx, 'watch')
   drawEmphasisTierPass(ctx, 'attention')
