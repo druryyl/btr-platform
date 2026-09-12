@@ -482,6 +482,52 @@ export function resolvePopulationAxisTicks(
   return fallback
 }
 
+/**
+ * PSOM-12 — business-zero helpers (GAP-005).
+ *
+ * Business `Y = 0` is projected with the same log + robust-norm transform used
+ * for scatter points, so the reference line and its tick sit exactly on the
+ * plotted zero. For Percent (signed symlog) axes 0 anchors at 0; for other
+ * units businessToProjectedLog(0, unit) is likewise the origin.
+ */
+export function resolveBusinessZeroProjection(
+  norm: { center: number; scale: number },
+  unit: string | null | undefined,
+): number {
+  const scale = Math.abs(norm.scale) < 1e-12 ? 1e-12 : norm.scale
+  if (!Number.isFinite(norm.center) || !Number.isFinite(norm.scale)) return NaN
+  const logZero = businessToProjectedLog(0, unit)
+  return (logZero - norm.center) / scale
+}
+
+export function isBusinessZeroWithinBounds(
+  zeroProjection: number,
+  bounds: MapBounds,
+): boolean {
+  if (!Number.isFinite(zeroProjection)) return false
+  return zeroProjection >= bounds.minY && zeroProjection <= bounds.maxY
+}
+
+/**
+ * Ensure a `0` business tick exists at the projected zero position.
+ * Returns the input unchanged when zero is outside the visible Y bounds or a
+ * zero tick is already present; otherwise inserts it sorted by projection value.
+ */
+export function ensureZeroTick(
+  ticks: ProjectionAxisTick[],
+  zeroProjection: number,
+  bounds: MapBounds,
+): ProjectionAxisTick[] {
+  if (!isBusinessZeroWithinBounds(zeroProjection, bounds)) return ticks
+  const hasZero = ticks.some(
+    (t) => t.businessValue === 0 || Math.abs(t.projectionValue - zeroProjection) < 1e-9,
+  )
+  if (hasZero) return ticks
+  return [...ticks, { businessValue: 0, projectionValue: zeroProjection }].sort(
+    (a, b) => a.projectionValue - b.projectionValue,
+  )
+}
+
 export function generateProjectionAxisGuides(
   projection: PopulationProjectionResult,
 ): { xTicks: ProjectionAxisTick[]; yTicks: ProjectionAxisTick[] } {

@@ -12,16 +12,19 @@ import {
   dataToScreen,
   DAYS_CALENDAR_EDGES,
   DAYS_YEAR_EDGE,
+  ensureZeroTick,
   formatAxisTickValue,
   generateIdrNiceEdges,
   generateLinearAxisTicks,
   generateProjectionAxisGuides,
   generateProjectionGridTicks,
+  isBusinessZeroWithinBounds,
   isDaysAxisUnit,
   isIdrAxisUnit,
   plotPoints,
   projectionToScreenX,
   resolveBusinessAttentionTier,
+  resolveBusinessZeroProjection,
   resolveLabelPlacements,
   resolvePopulationAxisTicks,
   resolveVisualTier,
@@ -587,5 +590,54 @@ describe('formatBinRangeLabel', () => {
     expect(formatBinRangeLabel(50_000_000, 1_400_000_000, 'IDR')).toBe('50J – 1.4M')
     expect(formatBinRangeLabel(500_000_000, 1_400_000_000, 'IDR', true)).toBe('500J – ~')
     expect(formatBinRangeLabel(1_000_000_000, 2_500_000_000_000, 'IDR')).toBe('1M – 2.5T')
+  })
+})
+
+describe('business zero reference (PSOM-12)', () => {
+  it('projects business 0 with the same transform as plotted points', () => {
+    const points = [
+      makePoint({ EntityId: 'neg', AxisX: 50, AxisY: -30 }),
+      makePoint({ EntityId: 'pos', AxisX: 150, AxisY: 40 }),
+    ]
+    const projection = populationProjectionEngine.project(points, {
+      axisXUnit: 'Percent',
+      axisYUnit: 'Percent',
+    })!
+    const zero = resolveBusinessZeroProjection(
+      projection.metadata.normalizationY,
+      'Percent',
+    )
+    expect(Number.isFinite(zero)).toBe(true)
+    expect(isBusinessZeroWithinBounds(zero, projection.bounds)).toBe(true)
+    expect(projection.bounds.minY).toBeLessThan(zero)
+    expect(projection.bounds.maxY).toBeGreaterThan(zero)
+  })
+
+  it('inserts a 0 tick when missing and zero is within bounds', () => {
+    const bounds = { minX: -2, maxX: 2, minY: -1, maxY: 1 }
+    const ticks = [
+      { businessValue: -20, projectionValue: -0.8 },
+      { businessValue: 30, projectionValue: 0.7 },
+    ]
+    const result = ensureZeroTick(ticks, 0, bounds)
+    expect(result.map((t) => t.businessValue)).toContain(0)
+    const zeroTick = result.find((t) => t.businessValue === 0)!
+    expect(zeroTick.projectionValue).toBe(0)
+    for (let i = 1; i < result.length; i++) {
+      expect(result[i].projectionValue).toBeGreaterThanOrEqual(result[i - 1].projectionValue)
+    }
+  })
+
+  it('keeps ticks unchanged when zero is outside bounds or already present', () => {
+    const bounds = { minX: -2, maxX: 2, minY: 0.5, maxY: 2 }
+    const ticks = [{ businessValue: 10, projectionValue: 1 }]
+    expect(ensureZeroTick(ticks, 0, bounds)).toBe(ticks)
+
+    const inBounds = { minX: -2, maxX: 2, minY: -1, maxY: 1 }
+    const withZero = [
+      { businessValue: 0, projectionValue: 0 },
+      { businessValue: 10, projectionValue: 0.5 },
+    ]
+    expect(ensureZeroTick(withZero, 0, inBounds)).toBe(withZero)
   })
 })

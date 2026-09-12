@@ -22,6 +22,7 @@ import {
   WORKSPACE_MAP_PLOT_BG,
   WORKSPACE_MAP_PLOT_BORDER,
   WORKSPACE_MAP_QUADRANT_LABEL,
+  WORKSPACE_MAP_QUADRANT_LINE,
   WORKSPACE_MAP_TICK_COLOR,
   WORKSPACE_NEUTRAL_POINT,
   WORKSPACE_NEUTRAL_POINT_OPACITY,
@@ -40,10 +41,13 @@ import {
   buildTransform,
   computeBounds,
   dataToScreen,
+  ensureZeroTick,
   findNearestPoint,
   formatAxisTickValue,
   generateProjectionAxisGuides,
   generateProjectionGridTicks,
+  isBusinessZeroWithinBounds,
+  resolveBusinessZeroProjection,
   resolvePopulationAxisTicks,
   measureLabel,
   plotPoints,
@@ -457,6 +461,42 @@ function drawRegressionLine(ctx: CanvasRenderingContext2D, transform: MapTransfo
   ctx.restore()
 }
 
+/**
+ * PSOM-12 (GAP-005): visible horizontal reference line at business Y = 0.
+ * Distinct from the diagonal statistical regression line: horizontal, drawn
+ * with the business-boundary color, using the auto-calculated bounds. Only
+ * rendered when 0 falls within the visible Y bounds.
+ */
+function drawBusinessZeroLine(ctx: CanvasRenderingContext2D, transform: MapTransform) {
+  const projection = mapProjection.value
+  if (!projection) return
+
+  const zeroProjection = resolveBusinessZeroProjection(
+    projection.metadata.normalizationY,
+    props.population?.AxisYUnit,
+  )
+  if (!isBusinessZeroWithinBounds(zeroProjection, transform.bounds)) return
+
+  const y = projectionToScreenY(zeroProjection, transform)
+  const { offsetX, offsetY, plotWidth, plotHeight } = transform
+  if (y < offsetY || y > offsetY + plotHeight) return
+
+  ctx.save()
+  ctx.beginPath()
+  ctx.rect(offsetX, offsetY, plotWidth, plotHeight)
+  ctx.clip()
+
+  ctx.strokeStyle = WORKSPACE_MAP_QUADRANT_LINE
+  ctx.lineWidth = 1.25
+  ctx.setLineDash([])
+  ctx.beginPath()
+  ctx.moveTo(offsetX, y)
+  ctx.lineTo(offsetX + plotWidth, y)
+  ctx.stroke()
+
+  ctx.restore()
+}
+
 function drawAxes(
   ctx: CanvasRenderingContext2D,
   transform: MapTransform,
@@ -484,13 +524,20 @@ function drawAxes(
     xMax,
     guides.xTicks,
   )
-  const yTicks = resolvePopulationAxisTicks(
+  const resolvedYTicks = resolvePopulationAxisTicks(
     props.population?.AxisYUnit,
     projection.metadata.normalizationY,
     yMin,
     yMax,
     guides.yTicks,
   )
+  // PSOM-12 (GAP-005): guarantee a `0` tick/label at business Y = 0 using the
+  // same transform as the plotted points; no-op when 0 is outside the bounds.
+  const zeroProjection = resolveBusinessZeroProjection(
+    projection.metadata.normalizationY,
+    props.population?.AxisYUnit,
+  )
+  const yTicks = ensureZeroTick(resolvedYTicks, zeroProjection, bounds)
 
   ctx.strokeStyle = WORKSPACE_MAP_GRID_LINE
   ctx.lineWidth = 1
@@ -747,6 +794,7 @@ function draw() {
   drawConfidenceBands(ctx, transform)
   drawAxes(ctx, transform, height)
   drawRegressionLine(ctx, transform)
+  drawBusinessZeroLine(ctx, transform)
   drawRegionLabels(ctx, transform)
   drawBatchedTierPoints(ctx, 'normal')
   drawEmphasisTierPass(ctx, 'watch')
