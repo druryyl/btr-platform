@@ -1086,15 +1086,14 @@ namespace btr.distrib.SalesContext.FakturAgg
                 fakturJualDataset,
                 fakturJualItemDataset
             };
-            var rdlcViewerForm = new RdlcViewerForm();
-            rdlcViewerForm.SetReportData(printOutTemplate, listDataset);
+            var fakturSavePreviewForm = new FakturSavePreviewForm();
+            fakturSavePreviewForm.SetReportData(printOutTemplate, listDataset);
             var isDraft = (previewDto.FakturCode ?? string.Empty).Contains("[DRAFT]");
-            rdlcViewerForm.Text = isDraft
+            fakturSavePreviewForm.Text = isDraft
                 ? "Faktur Preview - [DRAFT] (draft, not yet saved)"
                 : $"Faktur Preview - {previewDto.FakturCode}";
-            rdlcViewerForm.EnableSaveConfirm();
-            rdlcViewerForm.ShowDialog();
-            return rdlcViewerForm.PreviewChoice;
+            fakturSavePreviewForm.ShowDialog();
+            return fakturSavePreviewForm.PreviewChoice;
         }
 
         //  SL-05 (D-008): voided Faktur allows preview/print with save
@@ -1314,14 +1313,19 @@ namespace btr.distrib.SalesContext.FakturAgg
                 fakturJualDataset,
                 fakturJualItemDataset
             };
-            var rdlcViewerForm = new RdlcViewerForm();
-            rdlcViewerForm.SetReportData(printOutTemplate, listDataset);
-            //  SL-06 (D-012): final print viewer shows the persisted final
-            //  number, visually distinct from the [DRAFT] preview. No SAVE
-            //  panel here (read-only final); toolbar print stays available.
-            //  Template/CLIENT_ID selection above is unchanged (D-005 review focus).
-            rdlcViewerForm.Text = $"Faktur Print (FINAL) - {faktur.FakturCode}";
-            rdlcViewerForm.ShowDialog();
+            //  SAVE & PRINT prints silently to the default printer with no
+            //  second preview window. The draft preview (ShowPreviewDialog)
+            //  is the only visual verification step. Print failures show a
+            //  message but never roll back the already-committed save.
+            try
+            {
+                RdlcViewerForm.PrintDirect(printOutTemplate, listDataset);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Faktur tersimpan, tetapi cetak gagal: {ex.Message}",
+                    "Print Gagal", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            }
         }
 
         internal void ShowKlaim()

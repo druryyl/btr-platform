@@ -1,19 +1,15 @@
 ﻿using Microsoft.Reporting.WinForms;
 using System;
 using System.Collections.Generic;
+using System.Drawing;
+using System.Drawing.Imaging;
 using System.Drawing.Printing;
 using System.IO;
+using System.Text;
 using System.Windows.Forms;
 
 namespace btr.distrib.SalesContext.FakturAgg
 {
-    public enum FakturPreviewChoice
-    {
-        Cancel,
-        Save,
-        SaveAndPrint
-    }
-
     public partial class RdlcViewerForm : Form
     {
         private string _reportName;
@@ -22,57 +18,39 @@ namespace btr.distrib.SalesContext.FakturAgg
         private PaperSize _currentPaperSize;
         private ToolStripButton _paperSizeButton;
 
-        /// <summary>
-        /// Preview dialog outcome (SL-04, D-003/D-005).
-        /// Defaults to Cancel so closing the dialog persists nothing.
-        /// </summary>
-        public FakturPreviewChoice PreviewChoice { get; private set; } = FakturPreviewChoice.Cancel;
-
         // Define standard paper sizes
-        private readonly PaperSize _letterSize = new PaperSize("Letter", 850, 1100);
-        private readonly PaperSize _halfLetterSize = new PaperSize("Half Letter", 850, 550);
+        private static readonly PaperSize _letterSize = new PaperSize("Letter", 850, 1100);
+        private static readonly PaperSize _halfLetterSize = new PaperSize("Half Letter", 850, 550);
+
+        //  Last paper choice shared across preview dialogs and silent
+        //  SAVE & PRINT, so direct print honors the viewer's Paper toggle.
+        private static PaperSize _lastPaperSize = _letterSize;
 
         public RdlcViewerForm()
         {
             InitializeComponent();
             TheViewer.Print += TheViewer_Print;
-            _currentPaperSize = _letterSize;
+            _currentPaperSize = _lastPaperSize;
             AddCustomToolbarButton();
-            SaveButton.Click += SaveButton_Click;
-            SavePrintButton.Click += SavePrintButton_Click;
-            CancelPreviewButton.Click += CancelPreviewButton_Click;
         }
+
+        //  Shared paper instances so other preview dialogs (Faktur save
+        //  confirm) can reuse the same objects and comparisons.
+        internal static PaperSize LetterPaperSize => _letterSize;
+        internal static PaperSize HalfLetterPaperSize => _halfLetterSize;
 
         /// <summary>
-        /// Opt-in SAVE / SAVE &amp; PRINT / Cancel actions for the Faktur
-        /// preview-before-save dialog (SL-04, D-003/D-005).
-        /// Other RdlcViewerForm callers are unaffected (panel stays hidden).
+        /// Last paper size chosen in any preview dialog. Shared so silent
+        /// direct print (SAVE &amp; PRINT) honors the operator's selection.
         /// </summary>
-        public void EnableSaveConfirm()
+        internal static PaperSize GetLastPaperSize()
         {
-            PanelBottom.Visible = true;
-            PreviewChoice = FakturPreviewChoice.Cancel;
+            return _lastPaperSize ?? _letterSize;
         }
 
-        private void SaveButton_Click(object sender, EventArgs e)
+        internal static void SetLastPaperSize(PaperSize paperSize)
         {
-            PreviewChoice = FakturPreviewChoice.Save;
-            DialogResult = DialogResult.OK;
-            Close();
-        }
-
-        private void SavePrintButton_Click(object sender, EventArgs e)
-        {
-            PreviewChoice = FakturPreviewChoice.SaveAndPrint;
-            DialogResult = DialogResult.OK;
-            Close();
-        }
-
-        private void CancelPreviewButton_Click(object sender, EventArgs e)
-        {
-            PreviewChoice = FakturPreviewChoice.Cancel;
-            DialogResult = DialogResult.Cancel;
-            Close();
+            _lastPaperSize = paperSize ?? _letterSize;
         }
 
         private void AddCustomToolbarButton()
@@ -144,12 +122,14 @@ namespace btr.distrib.SalesContext.FakturAgg
         public void SwitchToLetter()
         {
             _currentPaperSize = _letterSize;
+            _lastPaperSize = _letterSize;
             LoadReport();
         }
 
         public void SwitchToHalfLetter()
         {
             _currentPaperSize = _halfLetterSize;
+            _lastPaperSize = _halfLetterSize;
             LoadReport();
         }
 
@@ -176,6 +156,96 @@ namespace btr.distrib.SalesContext.FakturAgg
         public string GetCurrentPaperSizeName()
         {
             return _currentPaperSize == _letterSize ? "Letter" : "Half Letter";
+        }
+
+        /// <summary>
+        /// Silent direct print to the default printer with no preview window.
+        /// Uses the last Paper toggle choice (Letter / Half Letter) and the
+        /// same margins/landscape conventions as the viewer.
+        /// </summary>
+        public static void PrintDirect(string reportName, List<ReportDataSource> listDatasource, bool isLandscape = false)
+        {
+            var reportFileName = $"{reportName}.rdlc";
+            var reportFileFullPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Reports", reportFileName);
+            if (!File.Exists(reportFileFullPath))
+                throw new FileNotFoundException($"Report template tidak ditemukan: {reportFileFullPath}");
+
+            var paperSize = _lastPaperSize ?? _letterSize;
+            var margins = new Margins(25, 25, 25, 25);
+
+            var pageWidthInch = paperSize.Width / 100.0;
+            var pageHeightInch = paperSize.Height / 100.0;
+            if (isLandscape)
+            {
+                var tmp = pageWidthInch;
+                pageWidthInch = pageHeightInch;
+                pageHeightInch = tmp;
+            }
+
+            var deviceInfo = new StringBuilder();
+            deviceInfo.Append("<DeviceInfo>");
+            deviceInfo.Append("<OutputFormat>EMF</OutputFormat>");
+            deviceInfo.Append($"<PageWidth>{pageWidthInch.ToString(System.Globalization.CultureInfo.InvariantCulture)}in</PageWidth>");
+            deviceInfo.Append($"<PageHeight>{pageHeightInch.ToString(System.Globalization.CultureInfo.InvariantCulture)}in</PageHeight>");
+            deviceInfo.Append("<MarginTop>0.25in</MarginTop>");
+            deviceInfo.Append("<MarginLeft>0.25in</MarginLeft>");
+            deviceInfo.Append("<MarginRight>0.25in</MarginRight>");
+            deviceInfo.Append("<MarginBottom>0.25in</MarginBottom>");
+            deviceInfo.Append("</DeviceInfo>");
+
+            var streams = new List<Stream>();
+            using (var report = new LocalReport())
+            {
+                report.ReportPath = reportFileFullPath;
+                foreach (var ds in listDatasource)
+                    report.DataSources.Add(new ReportDataSource(ds.Name, ds.Value));
+
+                Warning[] warnings;
+                report.Render("Image", deviceInfo.ToString(),
+                    (name, fileNameExtension, encoding, mimeType, willSeek) =>
+                    {
+                        var stream = new MemoryStream();
+                        streams.Add(stream);
+                        return stream;
+                    },
+                    out warnings);
+
+                foreach (var stream in streams)
+                    stream.Position = 0;
+            }
+
+            if (streams.Count == 0)
+                return;
+
+            try
+            {
+                using (var printDoc = new PrintDocument())
+                {
+                    if (!printDoc.PrinterSettings.IsValid)
+                        throw new InvalidOperationException("Default printer tidak valid.");
+
+                    printDoc.DefaultPageSettings.PaperSize = paperSize;
+                    printDoc.DefaultPageSettings.Margins = margins;
+                    printDoc.DefaultPageSettings.Landscape = isLandscape;
+
+                    var pageIndex = 0;
+                    printDoc.PrintPage += (sender, e) =>
+                    {
+                        using (var pageImage = new Metafile(streams[pageIndex]))
+                        {
+                            e.Graphics.DrawImage(pageImage, e.PageBounds);
+                        }
+                        pageIndex++;
+                        e.HasMorePages = pageIndex < streams.Count;
+                    };
+                    printDoc.Print();
+                }
+            }
+            finally
+            {
+                foreach (var stream in streams)
+                    stream.Dispose();
+            }
         }
     }
 }

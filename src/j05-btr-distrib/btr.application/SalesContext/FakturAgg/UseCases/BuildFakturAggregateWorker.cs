@@ -30,7 +30,7 @@ namespace btr.application.SalesContext.FakturAgg.UseCases
         {
             //  BUILD (shared verbatim construction; save delegates here, preview calls here)
             FakturModel result;
-            if (req.FakturId.Length == 0)
+            if (string.IsNullOrEmpty(req.FakturId))
             {
                 //  NEW: number deferred to save (empty FakturId); pre-selected open code carried via req.FakturCode below
                 result = _fakturBuilder.CreateNew(req).Build();

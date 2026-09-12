@@ -753,6 +753,12 @@
     <Compile Include="SalesContext\FakturAgg\RdlcViewerForm.Designer.cs">
       <DependentUpon>RdlcViewerForm.cs</DependentUpon>
     </Compile>
+    <Compile Include="SalesContext\FakturAgg\FakturSavePreviewForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="SalesContext\FakturAgg\FakturSavePreviewForm.Designer.cs">
+      <DependentUpon>FakturSavePreviewForm.cs</DependentUpon>
+    </Compile>
     <Compile Include="SalesContext\FakturCashRpt\FakturCashInfoForm.cs">
       <SubType>Form</SubType>
     </Compile>

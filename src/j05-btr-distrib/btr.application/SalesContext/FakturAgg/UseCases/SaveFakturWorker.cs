@@ -18,7 +18,6 @@ using btr.nuna.Domain;
 using Dawn;
 using MediatR;
 using Newtonsoft.Json;
-using Polly;
 
 namespace btr.application.SalesContext.FakturAgg.UseCases
 {
@@ -87,10 +86,13 @@ namespace btr.application.SalesContext.FakturAgg.UseCases
 
             //  PROSES FAKTUR
             FakturModel result;
-            var fallback = Policy<FakturModel>
-                .Handle<KeyNotFoundException>()
-                .Fallback(() => null);
-            var existingFaktur = fallback.Execute(() => _fakturBuilder.Load(req).Build());
+            //  No id => NEW: number is generated later by FakturWriter at save (D-002).
+            //  Id present => EDIT: load the persisted Faktur to detect item changes.
+            //  Branch explicitly by id; do not probe with Load() (empty id would throw
+            //  KeyNotFoundException("Faktur not found ()") on the preview/save path).
+            FakturModel existingFaktur = string.IsNullOrEmpty(req.FakturId)
+                ? null
+                : _fakturBuilder.Load(req).Build();
             var order = _orderDal.GetData(OrderModel.Key(req.OrderId));
             if (order != null)
                 order.StatusSync = "TERBIT FAKTUR";
