@@ -170,6 +170,29 @@ namespace btr.portal.api.Controllers.EntityAnalytics
             }
         }
 
+        [HttpGet, Route("data-health")]
+        public async Task<IHttpActionResult> GetDataHealth([FromUri] string entityType = null)
+        {
+            if (string.IsNullOrWhiteSpace(entityType))
+            {
+                return Content(
+                    HttpStatusCode.BadRequest,
+                    ApiResponse<EntityDataHealthResponse>.Error(400, "EntityType is required."));
+            }
+
+            try
+            {
+                var result = await _mediator.Send(new GetEntityDataHealthQuery { EntityType = entityType });
+                return Ok(ApiResponse<EntityDataHealthResponse>.Success(result));
+            }
+            catch (System.ArgumentException ex)
+            {
+                return Content(
+                    HttpStatusCode.BadRequest,
+                    ApiResponse<EntityDataHealthResponse>.Error(400, ex.Message));
+            }
+        }
+
         [HttpGet, Route("peer-group-rules")]
         public async Task<IHttpActionResult> GetPeerGroupRules([FromUri] string entityType = null)
         {

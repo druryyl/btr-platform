@@ -204,6 +204,7 @@
     <Compile Include="ReportingContext\EntityAnalyticsKpiRegistryTest.cs" />
     <Compile Include="ReportingContext\EntityMapPresetRegistryTest.cs" />
     <Compile Include="ReportingContext\EntityInvestigationLensRegistryTest.cs" />
+    <Compile Include="ReportingContext\GetEntityDataHealthHandlerTest.cs" />
     <Compile Include="ReportingContext\EntityAnalyticsRepositoryStubBase.cs" />
     <Compile Include="ReportingContext\EntityAnalyticsServiceTest.cs" />
     <Compile Include="ReportingContext\CustomerReplayDataLoaderIntegrationTest.cs" />

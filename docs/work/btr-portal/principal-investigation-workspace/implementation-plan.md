@@ -425,7 +425,7 @@ conflicts and to land after the lens model is stable.
 | PIW-10 | Workspace presentation refinements (tooltip/peer) | GO |
 | PIW-11 | Lens-scoped evidence presentation | IMPLEMENTED |
 | PIW-12 | Platform-wide Performance Signature retirement | GO |
-| PIW-13 | Data Health backend data | PLANNED |
+| PIW-13 | Data Health backend data | GO |
 | PIW-14 | Data Health frontend panel | PLANNED |
 | PIW-15 | Knowledge and terminology synchronization | PLANNED |
 
@@ -447,6 +447,7 @@ IN REVIEW → GO`).
 | PIW-09 | 2026-09-12 | GO | None blocking. INFO-001: the approved `≈ 1.0` band carries no numeric tolerance in FEASIBILITY GAP-005 / Architecture §8.3; implementation keys bands off the approved `1.0` boundary (exact `1.0` → Balanced) and displays the three-band guide, introducing no new threshold. INFO-002: the lens DTO now also projects `DerivedMetricIds` (PIW-04 exposed the lens config without it); minimal read-only projection of the approved PIW-03 model, needed for config-driven lens scoping. INFO-003: pre-existing `btr.test.ReportingContext` failures unchanged; no new failures | N/A |
 | PIW-10 | 2026-09-12 | GO | None blocking. INFO-001: the population map backend now projects a read-only `PopulationMapResponseDto.DimensionLabel` from the approved `IDimensionLabelRegistry` (outside the §3 impact inventory, which lists only `PopulationMapTooltip.vue`); bounded read-only projection required to satisfy Architecture §7.6 — a data-driven, non-generic dimension label that keeps dimensioned entity types (Customer/Item/Salesman) intact while leaving Principal undimensioned — reusing the same accepted precedent as PIW-09 INFO-002. INFO-002: the Item map tooltip now shows the registry label ("Supplier" for the `SupplierName` dimension; "Category" is the correct label when the Category dimension is active) instead of the previous hardcoded generic "Category" fallback; terminology is data-driven from the approved registry. Pre-existing `btr.test.ReportingContext` failures unchanged (11); no new failures | N/A |
 | PIW-12 | 2026-09-12 | GO | None blocking. INFO-001: the retired wrapper components `ProfileRadarSection.vue` / `RadarCompareSection.vue` were deleted; the underlying `PerformanceSignatureSection.vue` / `PerformanceSignatureChart.vue` / `PerformanceSignatureScoreTable.vue` remain as unreferenced (orphaned) components — not listed in the §3 impact inventory, so removal is out of slice scope; grep confirms zero importers. INFO-002: `models/entityAnalytics.ts` retains the `Radar` / `RadarComparison` API-contract types (backend response contract still carries them; L5 composition is out of this slice's scope per AC4) — they are data types, not a rendered surface. Verified: no entity profile, compare, evidence, or router view imports the retired surface; `BTRPD_EntityAnalytics_Radar` / L5 history untouched | N/A |
+| PIW-13 | 2026-09-12 | GO | None blocking. INFO-001: indicator computation is a thin read-only projection of existing `BTRPD_PrincipalTarget` / `BTRPD_PrincipalSalesOut` / `BTRPD_PrincipalSalesOutDataQuality` via the already-registered `IPrincipalTargetSnapshotDal` / `IPrincipalSalesOutSnapshotDal` (no new table, no write path). Target Coverage % and Missing Target Count derive from `BTRPD_PrincipalTarget` vs the Sales-Out population; Unknown Principal Count/Amount derive from the Sales-Out data-quality output (blank/unknown codes only). INFO-002: non-Supplier entity types return `IsAvailable = false` (disclosures are Principal-specific per IW-OQ-003); unknown entity types return 400 — consistent with the other entity-analytics endpoints. INFO-003: focused `GetEntityDataHealthHandlerTest` (6 tests) passes; backend build (VS MSBuild, `btr.application` + `btr.test`) succeeds; no production code beyond the approved slice | N/A |
 
 ---
 
@@ -741,3 +742,37 @@ modified. No replacement radar was introduced.
 Full frontend build (`vue-tsc -b && vite build`) passes; full frontend tests 37 files / 287 tests
 pass. No backend files were changed; backend build and `btr.test.ReportingContext` status are
 unaffected by this slice.
+
+### PIW-13 verification note
+
+Exposed the lens-independent Data Health indicators for the Principal (Supplier) investigation
+workspace as a thin, read-only projection — no new tables, no writes, no new entity type/KPI:
+
+- Backend: new `GetEntityDataHealthQuery` / `EntityDataHealthResponse` /
+  `GetEntityDataHealthHandler` in `EntityAnalyticsAgg/Queries/GetEntityDataHealthQuery.cs`. The
+  handler validates the entity type, then (for `Supplier` only) reads `BTRPD_PrincipalSalesOut`
+  (`IPrincipalSalesOutSnapshotDal.GetCurrent`) and `BTRPD_PrincipalTarget`
+  (`IPrincipalTargetSnapshotDal.GetCurrent`) and composes:
+  - `TargetCoveragePercentage` = principals in the Sales-Out population (`PRN-SALES-001` rows) that
+    have a matching `BTRPD_PrincipalTarget` row (same period, `PRN-TGT-001`) ÷ total Sales-Out
+    population, as a percentage.
+  - `PrincipalsMissingTargetCount` = Sales-Out population principals without a target row.
+  - `UnknownPrincipalExceptionCount` = summed `LineCount` of `BTRPD_PrincipalSalesOutDataQuality`
+    rows whose `ExceptionCode` is `BLANK_SUPPLIER` / `UNKNOWN_SUPPLIER`.
+  - `UnknownPrincipalExceptionAmount` = summed `Amount` of the same exception rows.
+  - Snapshot freshness metadata (`PeriodYear`, `PeriodMonth`, `GeneratedAt`) is carried through for
+    the Data Health freshness disclosure (PIW-14). The Unknown Principal exceptions are surfaced as a
+    disclosure (count + amount), never as a synthetic Principal, and Principal Sales-Out is never
+    silently dropped. Non-Supplier entity types return `IsAvailable = false` (the disclosures are
+    Principal-specific per IW-OQ-003); unknown entity types return 400.
+- API: new `GET /api/entity-analytics/data-health?entityType=Supplier` in
+  `EntityAnalyticsController`; read-only, mirrors the existing lenses/presets endpoint shape.
+- Files changed: `GetEntityDataHealthQuery.cs` (new), `EntityAnalyticsController.cs`,
+  `btr.application.csproj` (`<Compile Include>`), `btr.test.csproj` (`<Compile Include>`),
+  `GetEntityDataHealthHandlerTest.cs` (new).
+
+Focused tests: `GetEntityDataHealthHandlerTest` (6 tests: four indicators, all-missing coverage 0%,
+empty/unavailable snapshot, non-Supplier unavailable, unknown-entity 400, handler-level four
+indicators) pass. Backend build (VS 2022 MSBuild, `btr.application.csproj` + `btr.test.csproj`)
+succeeds; focused tests 6/6 pass. No production code beyond the approved slice; no unrelated
+changes. PIW-14 consumes this endpoint for the lens-independent frontend panel.

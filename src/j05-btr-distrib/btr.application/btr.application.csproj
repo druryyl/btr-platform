@@ -471,6 +471,7 @@
     <Compile Include="ReportingContext\EntityAnalyticsAgg\Options\EntityAnalyticsOptions.cs" />
     <Compile Include="ReportingContext\EntityAnalyticsAgg\Queries\GetEntityAnalyticsSearchQuery.cs" />
     <Compile Include="ReportingContext\EntityAnalyticsAgg\Queries\GetEntityAnalyticsTypesQuery.cs" />
+    <Compile Include="ReportingContext\EntityAnalyticsAgg\Queries\GetEntityDataHealthQuery.cs" />
     <Compile Include="ReportingContext\EntityAnalyticsAgg\Queries\GetEntityPerformanceProfileQuery.cs" />
     <Compile Include="ReportingContext\EntityAnalyticsAgg\Queries\CompareEntitiesQuery.cs" />
     <Compile Include="ReportingContext\EntityAnalyticsAgg\Queries\GetInvestigationWorkspaceQueries.cs" />
