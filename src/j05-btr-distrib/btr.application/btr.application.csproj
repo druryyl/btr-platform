@@ -693,6 +693,7 @@
     <Compile Include="ReportingContext\PrincipalAnalyticsAgg\Queries\GetPrincipalPerformanceQuery.cs" />
     <Compile Include="ReportingContext\PrincipalAnalyticsAgg\Queries\GetPrincipalReturnEvidenceQuery.cs" />
     <Compile Include="ReportingContext\PrincipalAnalyticsAgg\Queries\GetPrincipalSalesOutEvidenceQuery.cs" />
+    <Compile Include="ReportingContext\PrincipalAnalyticsAgg\Models\AnalyticsPeriodContext.cs" />
     <Compile Include="ReportingContext\PrincipalAnalyticsAgg\Models\CustomerPrincipalRelationshipResult.cs" />
     <Compile Include="ReportingContext\PrincipalAnalyticsAgg\Models\PrincipalSalesOutAggregateResult.cs" />
     <Compile Include="ReportingContext\PrincipalAnalyticsAgg\Models\PrincipalPurchaseInAggregateResult.cs" />
@@ -708,6 +709,7 @@
     <Compile Include="ReportingContext\PrincipalAnalyticsAgg\Models\PrincipalActiveCustomerResult.cs" />
     <Compile Include="ReportingContext\PrincipalAnalyticsAgg\Models\PrincipalCustomerCoverageResult.cs" />
     <Compile Include="ReportingContext\PrincipalAnalyticsAgg\Models\PrincipalSalesOutHistoryResult.cs" />
+    <Compile Include="ReportingContext\PrincipalAnalyticsAgg\Services\AnalyticsPeriodCalculator.cs" />
     <Compile Include="ReportingContext\PrincipalAnalyticsAgg\Services\CustomerPrincipalRelationshipComposer.cs" />
     <Compile Include="ReportingContext\PrincipalAnalyticsAgg\Services\PrincipalSalesOutAggregator.cs" />
     <Compile Include="ReportingContext\PrincipalAnalyticsAgg\Services\PrincipalPurchaseInAggregator.cs" />
