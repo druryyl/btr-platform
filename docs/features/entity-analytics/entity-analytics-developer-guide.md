@@ -32,6 +32,8 @@ Entity Analytics is a **platform layer** that materializes per-entity KPI snapsh
 
 **Current status (M32.11):** Customer, **Salesman**, **Supplier**, and **Item** are enabled entity types. L0–L5 platform layers, Comparison Engine, Search API, and Radar Engine are implemented on Customer; Salesman (M32.9), Supplier (M32.10), and Item (M32.11) adopt the full pipeline via entity packs.
 
+**Terminology:** `Supplier` is the technical entity type; **Principal** is the user-facing term across navigation, workspace titles, profile pages, compare views, labels, KPI descriptions, and user documentation. Technical identifiers remain `Supplier` — `EntityTypeCode.Supplier`, `SupplierId`, the `/analytics/suppliers/{id}` route template, registrar/producer classes, and snapshot tables.
+
 
 
 ```text
@@ -561,7 +563,7 @@ Reference: [m32.9-implementation-summary.md](../../work/btr-portal/entity-analyt
 
 No changes required to platform engines, `EntityPerformanceProfileComposer`, or `EntityAnalyticsController`.
 
-Example: **Supplier** (M32.10 entity pack) — **implemented, extended by Principal-centric analytics (PCM-015–PCM-055)**
+Example: **Supplier** (M32.10 entity pack) — **implemented, extended by Principal-centric analytics (PCM-015–PCM-055)**. Supplier is the technical identity; **Principal** is its user-facing presentation across navigation, workspace titles, and labels (technical identifiers unchanged).
 
 Reference: [m32.10-implementation-summary.md](../../work/btr-portal/entity-analytics/m32.10-implementation-summary.md)
 
@@ -592,7 +594,7 @@ Reference: [m32.10-implementation-summary.md](../../work/btr-portal/entity-analy
 
 9. **Register DI** — `AddSingleton<IEntityAnalyticsRegistrar, SupplierEntityAnalyticsRegistrar>()`.
 
-10. **Frontend** — `SupplierProfileView.vue`, `SupplierCompareView.vue`, PU01 `ProfileRoute` links. Relationship rows show Active/Dormant status badge and last transaction date when the projection provides them.
+10. **Frontend** — `SupplierProfileView.vue` (renders "Principal Profile"), `SupplierCompareView.vue` (renders "Compare Principals"), and the investigation workspace renders "Principal Investigation Workspace" for `Supplier`; PU01 `ProfileRoute` links. Relationship rows show Active/Dormant status badge and last transaction date when the projection provides them.
 
 Example: **Item** (M32.11 entity pack) — **implemented**
 

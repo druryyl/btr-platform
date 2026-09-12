@@ -672,7 +672,7 @@ Evidence Sources:
 
 - Purchasing Attention List (portal table; Compound Dependency / Inventory Cross-Risk filter)
 - Top 10 Principals; Principal Exposure Comparison
-- Supplier Performance Profile
+- Principal Performance Profile
 - Inventory Attention List / Supplier Risk Exposure
 - Purchasing Report
 - Inventory Report
@@ -705,7 +705,7 @@ Inventory Cross-Risk
     ↓
 Principal Dependency / Principal Exposure Comparison / Supplier Risk Exposure
     ↓
-Purchasing Attention List → Supplier Performance Profile → Purchasing Report / Inventory Report
+Purchasing Attention List → Principal Performance Profile → Purchasing Report / Inventory Report
     ↓
 Delay buy, review Principal, or accept as strategy
 ```
@@ -1588,11 +1588,11 @@ Compound Dependency: spend and stock on the same Principal, and Supplier Risk Ex
 Evidence Sources:
 
 - Purchasing Attention List (Compound Dependency)
-- Principal Exposure Comparison → Supplier Performance Profile
-- Top 10 Principals → Supplier Performance Profile or Investigate
+- Principal Exposure Comparison → Principal Performance Profile
+- Top 10 Principals → Principal Performance Profile or Investigate
 - Inventory Dashboard Top 10 Suppliers → Inventory Report
 - Purchasing Report
-- Compare Suppliers
+- Compare Principals
 
 Purpose:
 
@@ -1622,7 +1622,7 @@ Top Principal % / Top 10 Principals
     ↓
 Principal Exposure Comparison / Compound Dependency / Inventory Top 10 Suppliers
     ↓
-Supplier Performance Profile → Purchasing Report / Inventory Report
+Principal Performance Profile → Purchasing Report / Inventory Report
     ↓
 Diversify, delay buy, or accept as strategy
 ```
@@ -1892,7 +1892,7 @@ Evidence Sources:
 - Posting Status Breakdown
 - Purchasing Report (invoice rows including Posting Stok; optional posting filter from investigation)
 - Inventory Forecast — Stock-Out Risk Items / Purchasing Recommendations
-- Supplier Performance Profile (when the backlog is a supplier, not only a posting queue)
+- Principal Performance Profile (when the backlog is a principal, not only a posting queue)
 
 Purpose:
 
@@ -1985,7 +1985,7 @@ Purchasing Management Dashboard
     ↓
 Top 10 Principals / Principal Dependency / Inventory Cross-Risk / Compound Dependency
     ↓
-Supplier Risk Exposure (Slow Moving & Dead Stock) → Supplier Performance Profile → Purchasing Report / Inventory Report
+Supplier Risk Exposure (Slow Moving & Dead Stock) → Principal Performance Profile → Purchasing Report / Inventory Report
     ↓
 Diversify, delay buy, or accept as strategy (MQ-013, MQ-004)
 ```
@@ -2116,10 +2116,10 @@ Only assets discovered in Phase-4A. “Used By” is the management question tha
 | Top 10 Salesman (Sales Dashboard) | Ranking | MQ-009, MQ-014 |
 | Customer Performance Profile | Performance Profile | MQ-001, MQ-005, MQ-007, MQ-010, MQ-012, MQ-015 |
 | Salesman Performance Profile | Performance Profile | MQ-003, MQ-009, MQ-014 |
-| Supplier Performance Profile | Performance Profile | MQ-004, MQ-013, MQ-016 |
+| Principal Performance Profile | Performance Profile | MQ-004, MQ-013, MQ-016 |
 | Item Performance Profile | Performance Profile | MQ-002, MQ-006, MQ-011 |
 | Investigation Workspace | Portal Detail Page | Named-entity follow-up from Entity Analytics (any MQ once a name is known) |
-| Compare Customers / Salesmen / Suppliers / Items | Portal Detail Page | MQ-012, MQ-014, MQ-013, MQ-002 |
+| Compare Customers / Salesmen / Principals / Items | Portal Detail Page | MQ-012, MQ-014, MQ-013, MQ-002 |
 | Sales Report (Faktur list) | Portal Report | MQ-001, MQ-009, MQ-010, MQ-012, MQ-014, MQ-015 |
 | Piutang Report (open receivable rows) | Portal Report | MQ-001, MQ-003, MQ-005, MQ-007, MQ-008, MQ-012 |
 | Customer Report (customer rows) | Portal Report | MQ-001, MQ-010, MQ-012 |
@@ -2142,7 +2142,7 @@ Only assets discovered in Phase-4A. “Used By” is the management question tha
 | Which inventory is unhealthy? | Slow Moving & Dead Stock Dashboard | At-Risk Inventory % | Inventory Attention List; Item Performance Profile; Inventory Report |
 | Which SKUs are dead or slow? | Slow Moving & Dead Stock Dashboard | Dead Stock Value; Slow Moving Value | Top 10 Dead / Slow Moving; Item Performance Profile |
 | Which salespeople have high invoice-attributed overdue exposure or last-invoice dormant signals? | Salesman Performance | High Overdue Exposure; Last-Invoice Dormant Signals | Salesman Attention List; Salesman Performance Profile; Piutang Report |
-| Which principals are a buying or stock risk? | Purchasing Management Dashboard | Inventory Cross-Risk; Principal Dependency | Purchasing Attention List; Supplier Performance Profile; Inventory Report |
+| Which principals are a buying or stock risk? | Purchasing Management Dashboard | Inventory Cross-Risk; Principal Dependency | Purchasing Attention List; Principal Performance Profile; Inventory Report |
 | Who should be contacted today? | Collection Optimization Dashboard | Actions Today | Today's Collection Priorities; Specialized Queues; Piutang Report |
 | What should we buy, delay, transfer, or clear today? | Inventory Optimization Dashboard | Critical Actions | Action tables; Item Performance Profile; Inventory Report; Purchasing Report |
 | Which receivables need attention? | Piutang Dashboard | Overdue Piutang | Top 20 Outstanding Customers; Piutang Report; Collection Attention List |
@@ -2154,12 +2154,12 @@ Only assets discovered in Phase-4A. “Used By” is the management question tha
 | Is warehouse capital trapped or about to run out? | Slow Moving & Dead Stock Dashboard and Inventory Forecast Dashboard | Dead Stock Value; Stock-Out Risk Items | Inventory Attention List; Warehouse Rebalancing; Inventory Report |
 | Which warehouse holds idle stock? | Branch / Warehouse Performance Dashboard | Top Warehouse At-Risk %; Inactive Warehouse With Stock | Top 10 Warehouse by At-Risk Value; Inventory Report |
 | Which customers dominate omzet or piutang? | Customer Analytics | Top Omzet Customer %; Top Piutang Customer % | Top 10 rankings; Customer Performance Profile; Customer Report |
-| Which suppliers are becoming dominant? | Purchasing Management Dashboard | Top Principal %; Top 10 Principals | Principal Exposure Comparison; Supplier Performance Profile; Purchasing Report |
+| Which suppliers are becoming dominant? | Purchasing Management Dashboard | Top Principal %; Top 10 Principals | Principal Exposure Comparison; Principal Performance Profile; Purchasing Report |
 | Are we too dependent on a few salespeople? | Salesman Performance | Top Omzet Salesman % | Top 10 Omzet; Salesman Performance Profile; Sales Report |
 | Is credit policy being respected? | Customer Analytics | Plafond Breach; Suspended + Sales | Customer Attention List; Customer Performance Profile; Sales Report |
 | Are purchases posted or stuck? | Purchasing Management Dashboard | Pending Posting Value; Posted % | Purchasing Attention List; Purchasing Report |
 | What needs attention right now (exceptions)? | Alert Center | Top Critical Alerts; Inventory Risk Summary | Investigate → related report; View Dashboard → domain dashboard |
-| I have a name (customer, salesman, supplier, item) | Entity Analytics | Open Profile / Investigation / Compare | Performance Profile; Investigation Workspace; profile Evidence → related report |
+| I have a name (customer, salesman, principal, item) | Entity Analytics | Open Profile / Investigation / Compare | Performance Profile; Investigation Workspace; profile Evidence → related report |
 
 ---
 

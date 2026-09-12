@@ -52,6 +52,8 @@ Older conflicting reservations are superseded by this list. They are not used fo
 
 `SF02` remains Sales Force Overview. Entity Analytics remains the cross-domain entity path. Purchasing remains the purchase path. Those uses are unchanged by SA04.
 
+**Terminology:** The `Supplier` entity type is presented to users as **Principal** on navigation, menu, workspace-title, profile-title, compare-title, breadcrumb, and label surfaces. Technical identifiers (`Supplier`, `SupplierId`, `/analytics/suppliers/{id}`, KPI and widget codes) remain `Supplier`.
+
 ---
 
 # SECTION 1
@@ -216,7 +218,7 @@ Page ID:         PAGE-EX03
 Page Name:       Entity Analytics
 Parent Menu:     Executive
 Sidebar Label:   Entity Analytics
-Purpose:         Choose Customer, Salesman, Supplier, or Item and open Investigation Workspace, Performance Profile, or Compare.
+Purpose:         Choose Customer, Salesman, Principal, or Item and open Investigation Workspace, Performance Profile, or Compare.
 Primary Entity:  Customer / Salesman / Supplier / Item
 Business Intent: Cross-domain entity investigation, not a domain dashboard.
 ```
@@ -521,7 +523,7 @@ These exist and are reachable from Entity Analytics or from dashboard rows.
 Page ID:         PAGE-WORKSPACE
 Page Name:       Investigation Workspace
 Parent Menu:     Executive (via Entity Analytics)
-Purpose:         Population map and staged investigation for Customer, Salesman, Supplier, or Item.
+Purpose:         Population map and staged investigation for Customer, Salesman, Principal, or Item.
 Primary Entity:  Selected entity type
 Business Intent: Compare an entity against its population and explain position with facts, context, and drivers.
 ```
@@ -552,11 +554,11 @@ Business Intent: Understand one salesperson across sales and receivables.
 
 ```text
 Page ID:         PAGE-PROFILE-SUPPLIER
-Page Name:       Supplier Performance Profile
+Page Name:       Principal Performance Profile
 Parent Menu:     Executive (via Entity Analytics) or Purchasing rankings
-Purpose:         Single-supplier / principal performance profile.
+Purpose:         Single-principal (technical `Supplier`) performance profile.
 Primary Entity:  Supplier
-Business Intent: Understand one supplier’s commercial footprint.
+Business Intent: Understand one principal’s commercial footprint.
 ```
 
 ### PAGE-PROFILE-ITEM
@@ -598,11 +600,11 @@ Business Intent: Compare selected salespeople.
 
 ```text
 Page ID:         PAGE-COMPARE-SUPPLIER
-Page Name:       Compare Suppliers
+Page Name:       Compare Principals
 Parent Menu:     Executive (via Entity Analytics)
-Purpose:         Same compare workspace for suppliers.
+Purpose:         Same compare workspace for principals.
 Primary Entity:  Supplier
-Business Intent: Compare selected suppliers.
+Business Intent: Compare selected principals.
 ```
 
 ### PAGE-COMPARE-ITEM
@@ -697,7 +699,7 @@ Also on this page: **Open Alert Center** (not a widget — header action to Aler
 | --------- | ----------- | ---- | ------- | ----------- | ------------- | ---------- |
 | W-EX03-WS | {Entity} Investigation | Table | Open Investigation Workspace for that entity type | — | — | Investigation Workspace |
 | W-EX03-PROFILE | Open Profile | Table | Open a selected entity’s performance profile | — | — | Performance Profile |
-| W-EX03-COMPARE | Compare {Entities} | Table | Open side-by-side compare | — | — | Compare Customers / Salesmen / Suppliers / Items |
+| W-EX03-COMPARE | Compare {Entities} | Table | Open side-by-side compare | — | — | Compare Customers / Salesmen / Principals / Items |
 
 ---
 
@@ -1169,7 +1171,7 @@ Footer: Inventory Forecast, Inventory Risk, Purchasing Management, Inventory Rep
 
 ## PAGE-PROFILE-* — Performance Profile (all four entity types)
 
-Same widgets on Customer, Salesman, Supplier, and Item profiles. KPI card titles are the live KPI display names for that entity.
+Same widgets on Customer, Salesman, Principal, and Item profiles. KPI card titles are the live KPI display names for that entity.
 
 | Widget ID | Widget Name | Type | Purpose | Primary KPI | Secondary KPI | Drill-Down |
 | --------- | ----------- | ---- | ------- | ----------- | ------------- | ---------- |
@@ -1208,7 +1210,7 @@ Header actions: Investigation Workspace; Compare {Entities}; Entity Analytics.
 Two reusable patterns appear on many widgets:
 
 1. **Investigation** — row opens a **Report** (Sales, Piutang, Inventory, Purchasing, or Customer) already filtered to the investigated subject. A breadcrumb returns to the source dashboard. The exact report is chosen by the investigation attached to that row.
-2. **Performance Profile** — row opens the entity’s profile (Customer, Salesman, Supplier, or Item). Hint on several rankings: “Click a row to open Performance Profile”.
+2. **Performance Profile** — row opens the entity’s profile (Customer, Salesman, Principal, or Item). Hint on several rankings: “Click a row to open Performance Profile”.
 
 ---
 
@@ -1311,7 +1313,7 @@ Purpose:         Open one entity’s profile.
 ```text
 DrillDown ID:    DD-EX03-COMPARE
 Source Widget:   Compare {Entities}
-Target Page:     Compare Customers / Salesmen / Suppliers / Items
+Target Page:     Compare Customers / Salesmen / Principals / Items
 Target Entity:   Same type
 Purpose:         Side-by-side comparison.
 ```
@@ -1567,9 +1569,9 @@ Purpose:         Filter the list to the card’s signal.
 ```text
 DrillDown ID:    DD-PU01-PROFILE
 Source Widget:   Top 10 Principals / Principal Exposure Comparison / Purchasing Attention List
-Target Page:     Supplier Performance Profile
+Target Page:     Principal Performance Profile
 Target Entity:   Supplier / Principal
-Purpose:         Open the supplier profile.
+Purpose:         Open the principal profile.
 ```
 
 ```text
@@ -2060,7 +2062,7 @@ Executive
      │   ├─ Context
      │   ├─ Explanation
      │   └─ Validation
-     ├─ Open Profile  →  Performance Profile (Customer / Salesman / Supplier / Item)
+     ├─ Open Profile  →  Performance Profile (Customer / Salesman / Principal / Item)
      │   ├─ Overview
      │   ├─ KPI Summary
      │   ├─ Comparison
@@ -2070,7 +2072,7 @@ Executive
      │   ├─ Attention History
      │   ├─ Related Entities  →  related Profile / Workspace
      │   └─ Evidence  →  related Report
-     └─ Compare {Entities}  →  Compare Customers / Salesmen / Suppliers / Items
+     └─ Compare {Entities}  →  Compare Customers / Salesmen / Principals / Items
          ├─ KPI Comparison
          ├─ Trend Comparison
          ├─ Ranking Comparison
@@ -2210,11 +2212,11 @@ Purchasing
  ├─ Purchasing  →  Purchasing Management Dashboard
  │   ├─ Posting Exposure / Principal Dependency / Purchasing Pace / Inventory Cross-Risk  →  Purchasing Attention List
  │   ├─ Purchasing Summary
- │   ├─ Purchasing Attention List  →  Supplier Performance Profile
+ │   ├─ Purchasing Attention List  →  Principal Performance Profile
  │   ├─ Weekly Purchase Trend
  │   ├─ Posting Status Breakdown
- │   ├─ Top 10 Principals  →  Supplier Performance Profile
- │   └─ Principal Exposure Comparison  →  Supplier Performance Profile
+ │   ├─ Top 10 Principals  →  Principal Performance Profile
+ │   └─ Principal Exposure Comparison  →  Principal Performance Profile
  └─ Purchasing Report  →  Purchase invoice rows
 
 Operations
@@ -2267,11 +2269,11 @@ Total Drill-Down Targets (distinct page families)    19
 9. Investigation Workspace  
 10. Customer Performance Profile  
 11. Salesman Performance Profile  
-12. Supplier Performance Profile  
+12. Principal Performance Profile  
 13. Item Performance Profile  
 14. Compare Customers  
 15. Compare Salesmen  
-16. Compare Suppliers  
+16. Compare Principals  
 17. Compare Items  
 18. Salesman Detail drawer (same page)  
 19. Principal Sales-Out evidence
@@ -2296,8 +2298,8 @@ Sidebar label ≠ page title
 
 Pages exist but are not sidebar items
   Investigation Workspace
-  Customer / Salesman / Supplier / Item Performance Profile
-  Compare Customers / Salesmen / Suppliers / Items
+  Customer / Salesman / Principal / Item Performance Profile
+  Compare Customers / Salesmen / Principals / Items
   Salesman Detail drawer
   Principal Sales-Out evidence (opened from SA04 ranking)
 
