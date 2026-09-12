@@ -3,6 +3,7 @@ import { defineStore } from 'pinia'
 import axios from 'axios'
 import {
   fetchEntityCompare,
+  fetchEntityDataHealth,
   fetchEntityProfile,
   fetchInvestigationLenses,
   fetchMapPresets,
@@ -13,6 +14,7 @@ import {
 import { getApiErrorMessage } from '@/api/httpClient'
 import type {
   EntityCompareResponse,
+  EntityDataHealthResponse,
   EntityPerformanceProfileResponse,
   InvestigationLens,
   MapPreset,
@@ -51,10 +53,12 @@ export const useInvestigationWorkspaceStore = defineStore('investigationWorkspac
   const population = shallowRef<PopulationMapResponse | null>(null)
   const profiles = ref<Record<string, EntityPerformanceProfileResponse>>({})
   const compareBundle = ref<EntityCompareResponse | null>(null)
+  const dataHealth = ref<EntityDataHealthResponse | null>(null)
 
   const loadingPresets = ref(false)
   const loadingPopulation = ref(false)
   const loadingProfiles = ref(false)
+  const loadingDataHealth = ref(false)
   const error = ref<string | null>(null)
 
   const historyStack = ref<WorkspaceHistoryEntry[]>([])
@@ -221,6 +225,17 @@ export const useInvestigationWorkspaceStore = defineStore('investigationWorkspac
     }
   }
 
+  async function loadDataHealth(type = entityType.value) {
+    loadingDataHealth.value = true
+    try {
+      dataHealth.value = await fetchEntityDataHealth(type)
+    } catch {
+      dataHealth.value = null
+    } finally {
+      loadingDataHealth.value = false
+    }
+  }
+
   async function loadPopulation() {
     if (!entityType.value) return
 
@@ -304,6 +319,7 @@ export const useInvestigationWorkspaceStore = defineStore('investigationWorkspac
     await loadLenses(type)
     await loadPresets(type)
     await loadPeerGroupRules(type)
+    await loadDataHealth(type)
     await loadPopulation()
     if (selectedEntityIds.value.length) {
       await loadProfilesForSelection()
@@ -320,9 +336,11 @@ export const useInvestigationWorkspaceStore = defineStore('investigationWorkspac
     dimensionFilter.value = null
     attentionOnly.value = false
     peerGroupRuleId.value = null
+    dataHealth.value = null
     await loadLenses(type)
     await loadPresets(type)
     await loadPeerGroupRules(type)
+    await loadDataHealth(type)
     await loadPopulation()
   }
 
@@ -422,6 +440,7 @@ export const useInvestigationWorkspaceStore = defineStore('investigationWorkspac
   }
 
   async function refresh() {
+    await loadDataHealth()
     await loadPopulation()
     if (selectedEntityIds.value.length) await loadProfilesForSelection()
   }
@@ -440,9 +459,11 @@ export const useInvestigationWorkspaceStore = defineStore('investigationWorkspac
     population,
     profiles,
     compareBundle,
+    dataHealth,
     loadingPresets,
     loadingPopulation,
     loadingProfiles,
+    loadingDataHealth,
     error,
     expandedPanels,
     mode,
@@ -459,6 +480,7 @@ export const useInvestigationWorkspaceStore = defineStore('investigationWorkspac
     loadLenses,
     loadPresets,
     loadPeerGroupRules,
+    loadDataHealth,
     loadPopulation,
     loadProfilesForSelection,
     setEntityType,

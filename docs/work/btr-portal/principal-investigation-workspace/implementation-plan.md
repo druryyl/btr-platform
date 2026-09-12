@@ -426,7 +426,7 @@ conflicts and to land after the lens model is stable.
 | PIW-11 | Lens-scoped evidence presentation | IMPLEMENTED |
 | PIW-12 | Platform-wide Performance Signature retirement | GO |
 | PIW-13 | Data Health backend data | GO |
-| PIW-14 | Data Health frontend panel | PLANNED |
+| PIW-14 | Data Health frontend panel | GO |
 | PIW-15 | Knowledge and terminology synchronization | PLANNED |
 
 Lifecycle: `PLANNED → IN IMPLEMENTATION → IMPLEMENTED → IN REVIEW → GO` (or `NO-GO → REMEDIATION →
@@ -448,6 +448,7 @@ IN REVIEW → GO`).
 | PIW-10 | 2026-09-12 | GO | None blocking. INFO-001: the population map backend now projects a read-only `PopulationMapResponseDto.DimensionLabel` from the approved `IDimensionLabelRegistry` (outside the §3 impact inventory, which lists only `PopulationMapTooltip.vue`); bounded read-only projection required to satisfy Architecture §7.6 — a data-driven, non-generic dimension label that keeps dimensioned entity types (Customer/Item/Salesman) intact while leaving Principal undimensioned — reusing the same accepted precedent as PIW-09 INFO-002. INFO-002: the Item map tooltip now shows the registry label ("Supplier" for the `SupplierName` dimension; "Category" is the correct label when the Category dimension is active) instead of the previous hardcoded generic "Category" fallback; terminology is data-driven from the approved registry. Pre-existing `btr.test.ReportingContext` failures unchanged (11); no new failures | N/A |
 | PIW-12 | 2026-09-12 | GO | None blocking. INFO-001: the retired wrapper components `ProfileRadarSection.vue` / `RadarCompareSection.vue` were deleted; the underlying `PerformanceSignatureSection.vue` / `PerformanceSignatureChart.vue` / `PerformanceSignatureScoreTable.vue` remain as unreferenced (orphaned) components — not listed in the §3 impact inventory, so removal is out of slice scope; grep confirms zero importers. INFO-002: `models/entityAnalytics.ts` retains the `Radar` / `RadarComparison` API-contract types (backend response contract still carries them; L5 composition is out of this slice's scope per AC4) — they are data types, not a rendered surface. Verified: no entity profile, compare, evidence, or router view imports the retired surface; `BTRPD_EntityAnalytics_Radar` / L5 history untouched | N/A |
 | PIW-13 | 2026-09-12 | GO | None blocking. INFO-001: indicator computation is a thin read-only projection of existing `BTRPD_PrincipalTarget` / `BTRPD_PrincipalSalesOut` / `BTRPD_PrincipalSalesOutDataQuality` via the already-registered `IPrincipalTargetSnapshotDal` / `IPrincipalSalesOutSnapshotDal` (no new table, no write path). Target Coverage % and Missing Target Count derive from `BTRPD_PrincipalTarget` vs the Sales-Out population; Unknown Principal Count/Amount derive from the Sales-Out data-quality output (blank/unknown codes only). INFO-002: non-Supplier entity types return `IsAvailable = false` (disclosures are Principal-specific per IW-OQ-003); unknown entity types return 400 — consistent with the other entity-analytics endpoints. INFO-003: focused `GetEntityDataHealthHandlerTest` (6 tests) passes; backend build (VS MSBuild, `btr.application` + `btr.test`) succeeds; no production code beyond the approved slice | N/A |
+| PIW-14 | 2026-09-12 | GO | None blocking. INFO-001: on Data Health fetch failure the section (and its snapshot disclosure) is hidden rather than surfacing an error banner — consistent with the existing best-effort load pattern (lenses/presets/population) and preserves workspace stability; the freshness rows are `v-if` guarded and the disclosure text renders regardless, so the block degrades gracefully when freshness metadata is null ("when applicable" per IW-OQ-002). INFO-002: the section renders only when the API reports `IsAvailable` (true for Supplier/Principal); non-Principal investigation entity types show no Data Health section — consistent with PIW-13 INFO-002 and the Principal-specific disclosure rule (IW-OQ-003 / ADR-PIW-010). Verified: section placed outside the lens-gated template block (visible in both lens modes and Discovery/Investigation modes); four indicators rendered via `DashboardMetric`; evidence link `RouterLink` → `/reports/sales` (SalesReportView surfaces the Unknown Principal exception-line disclosure); freshness block shows Generated At / Reporting Period / Data Snapshot Period + the OQ-002 disclosure verbatim; Unknown Principal evidence block always rendered (never silently dropped, ADR-PIW-010); frontend build (`vue-tsc -b && vite build`) passes and 38 files / 296 frontend tests pass; no backend files changed | N/A |
 
 ---
 
@@ -776,3 +777,37 @@ empty/unavailable snapshot, non-Supplier unavailable, unknown-entity 400, handle
 indicators) pass. Backend build (VS 2022 MSBuild, `btr.application.csproj` + `btr.test.csproj`)
 succeeds; focused tests 6/6 pass. No production code beyond the approved slice; no unrelated
 changes. PIW-14 consumes this endpoint for the lens-independent frontend panel.
+
+### PIW-14 verification note
+
+Rendered the lens-independent Data Health panel in the Investigation Workspace, consuming the
+PIW-13 `GET /api/entity-analytics/data-health` endpoint:
+
+- New `WorkspaceDataHealthSection.vue` (`components/entity-analytics/workspace/`): renders the four
+  disclosures as `DashboardMetric` indicators (Target Coverage % via `formatPercent`,
+  Principals Missing Target via `formatNumber`, Unknown Principal Exception Count via
+  `formatNumber`, Unknown Principal Exception Amount via `formatCurrency`); an Unknown Principal
+  evidence block linking to `/reports/sales` (the Sales Report view surfaces the Unknown Principal
+  exception lines), kept visible even at zero count/amount so the disclosure mechanism is never
+  dropped; and a freshness block showing Generated At (`formatDateTime`), Reporting Period, and Data
+  Snapshot Period (`formatSnapshotPeriod`, id-ID long month + year) followed by the standard
+  snapshot disclosure text added to the disclosure when freshness metadata is present.
+- New `services/workspaceDataHealth.ts`: `DATA_HEALTH_SNAPSHOT_DISCLOSURE`,
+  `UNKNOWN_PRINCIPAL_EVIDENCE_ROUTE = '/reports/sales'`, and null-safe `formatSnapshotPeriod`.
+- Changed: `models/entityAnalytics.ts` (`EntityDataHealthResponse`), `api/entityAnalyticsApi.ts`
+  (`fetchEntityDataHealth`), `stores/investigationWorkspaceStore.ts` (`dataHealth` + `loadingDataHealth`
+  state, `loadDataHealth` wired into `initializeWorkspace`, `setEntityType` (state reset), and
+  `refresh`; never reloaded on lens switch), `views/analytics/InvestigationWorkspaceView.vue`
+  (Data Health stage rendered in its own `WorkspaceStageSection` after the Population Map stage,
+  outside the lens-gated `isInvestigation` block, so it is visible regardless of the active lens).
+
+Acceptance criteria mapping: (1) Data Health renders regardless of active lens — the section sits
+outside the lens-gated template block; (2) all four disclosures shown; (3) Unknown Principal
+exceptions link to the Sales Report evidence; (4) Generated At / Reporting Period / Data Snapshot
+Period shown when applicable, with the standard snapshot disclosure.
+
+Verification: full frontend build (`vue-tsc -b && vite build`) passes; full frontend tests now 38
+files / 296 tests pass, including new `workspaceDataHealth.spec.ts` (5 tests) and the four new
+data-health store tests (load, failure clears state non-blocking, reload on entity-type switch, no
+reload on lens switch). No backend files were changed; backend build and `btr.test.ReportingContext`
+status are unaffected by this slice.

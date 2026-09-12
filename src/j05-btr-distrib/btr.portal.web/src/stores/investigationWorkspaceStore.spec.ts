@@ -23,9 +23,11 @@ vi.mock('@/api/entityAnalyticsApi', () => ({
   fetchInvestigationLenses: vi.fn(),
   fetchEntityProfile: vi.fn(),
   fetchEntityCompare: vi.fn(),
+  fetchEntityDataHealth: vi.fn(),
 }))
 
 import {
+  fetchEntityDataHealth,
   fetchInvestigationLenses,
   fetchMapPresets,
   fetchPeerGroupRules,
@@ -396,5 +398,122 @@ describe('investigationWorkspaceStore investigation lenses', () => {
 
     expect(store.peerGroupRules.length).toBeGreaterThan(1)
     expect(store.showPeerGroupSelector).toBe(false)
+  })
+})
+
+function makeDataHealthResponse(overrides: Record<string, unknown> = {}) {
+  return {
+    IsAvailable: true,
+    EntityType: 'Supplier',
+    PeriodYear: 2026,
+    PeriodMonth: 6,
+    GeneratedAt: '2026-06-30T10:00:00Z',
+    TargetCoveragePercentage: 66.67,
+    PrincipalsMissingTargetCount: 9,
+    UnknownPrincipalExceptionCount: 3,
+    UnknownPrincipalExceptionAmount: 150_000_000,
+    ...overrides,
+  }
+}
+
+describe('investigationWorkspaceStore data health', () => {
+  beforeEach(() => {
+    setActivePinia(createPinia())
+    vi.mocked(fetchPopulationMap).mockReset()
+    vi.mocked(fetchPeerGroupRules).mockReset()
+    vi.mocked(fetchMapPresets).mockReset()
+    vi.mocked(fetchInvestigationLenses).mockReset()
+    vi.mocked(fetchEntityDataHealth).mockReset()
+
+    vi.mocked(fetchPopulationMap).mockResolvedValue(makePopulationResponse() as never)
+    vi.mocked(fetchInvestigationLenses).mockResolvedValue(SUPPLIER_LENSES as never)
+    vi.mocked(fetchPeerGroupRules).mockResolvedValue({
+      EntityType: 'Supplier',
+      DefaultRuleId: 'supplier-all-active',
+      Rules: [
+        {
+          RuleId: 'supplier-all-active',
+          DisplayLabel: 'All Active',
+          DimensionLabel: null,
+          IsDefault: true,
+        },
+      ],
+    } as never)
+    vi.mocked(fetchMapPresets).mockResolvedValue({
+      EntityType: 'Supplier',
+      Presets: [
+        {
+          PresetId: 'principal-sales-out-map',
+          DisplayName: 'Principal Sales-Out Map',
+          Description: '',
+          AxisXKpiId: 'PRN-TGT-003',
+          AxisYKpiId: 'PRN-GRW-002',
+          AxisXLabel: 'Achievement %',
+          AxisYLabel: 'YoY Growth %',
+          IsDefault: false,
+        },
+        {
+          PresetId: 'purchase-exposure-map',
+          DisplayName: 'Purchase Exposure Map',
+          Description: '',
+          AxisXKpiId: 'PU-KPI-001',
+          AxisYKpiId: 'PRN-INV-001',
+          AxisXLabel: 'Purchase',
+          AxisYLabel: 'Inventory',
+          IsDefault: true,
+        },
+      ],
+    } as never)
+  })
+
+  it('loads the lens-independent Data Health disclosures for the Principal', async () => {
+    vi.mocked(fetchEntityDataHealth).mockResolvedValue(makeDataHealthResponse() as never)
+    const store = useInvestigationWorkspaceStore()
+
+    await store.initializeWorkspace('Supplier')
+
+    expect(fetchEntityDataHealth).toHaveBeenCalledWith('Supplier')
+    expect(store.dataHealth?.IsAvailable).toBe(true)
+    expect(store.dataHealth?.TargetCoveragePercentage).toBe(66.67)
+    expect(store.dataHealth?.PrincipalsMissingTargetCount).toBe(9)
+    expect(store.dataHealth?.UnknownPrincipalExceptionCount).toBe(3)
+    expect(store.dataHealth?.UnknownPrincipalExceptionAmount).toBe(150_000_000)
+  })
+
+  it('clears Data Health state when the load fails (non-blocking disclosure)', async () => {
+    vi.mocked(fetchEntityDataHealth).mockRejectedValue(new Error('network down'))
+    const store = useInvestigationWorkspaceStore()
+
+    await store.initializeWorkspace('Supplier')
+
+    expect(store.dataHealth).toBeNull()
+    expect(store.loadingDataHealth).toBe(false)
+  })
+
+  it('reloads Data Health when switching entity type', async () => {
+    vi.mocked(fetchEntityDataHealth)
+      .mockResolvedValueOnce(makeDataHealthResponse() as never)
+      .mockResolvedValueOnce(
+        makeDataHealthResponse({ EntityType: 'Customer', IsAvailable: false }) as never,
+      )
+    const store = useInvestigationWorkspaceStore()
+
+    await store.initializeWorkspace('Supplier')
+    await store.setEntityType('Customer')
+
+    expect(fetchEntityDataHealth).toHaveBeenCalledTimes(2)
+    expect(store.dataHealth?.IsAvailable).toBe(false)
+  })
+
+  it('never reloads Data Health on a lens switch (section is lens-independent)', async () => {
+    vi.mocked(fetchEntityDataHealth).mockResolvedValue(makeDataHealthResponse() as never)
+    const store = useInvestigationWorkspaceStore()
+
+    await store.initializeWorkspace('Supplier')
+    vi.mocked(fetchEntityDataHealth).mockClear()
+
+    await store.setLens('purchasing')
+
+    expect(fetchEntityDataHealth).not.toHaveBeenCalled()
   })
 })

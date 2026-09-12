@@ -5,6 +5,7 @@ import type {
   EntityAnalyticsTypesResponse,
   EntityCompareQuery,
   EntityCompareResponse,
+  EntityDataHealthResponse,
   EntityPerformanceProfileResponse,
   EntitySearchResult,
   InvestigationLensesResponse,
@@ -95,6 +96,19 @@ export async function fetchInvestigationLenses(
   )
   if (!isApiSuccess(data) || !data.Data) {
     throw new Error(data.Message ?? 'Failed to load investigation lenses')
+  }
+  return data.Data
+}
+
+export async function fetchEntityDataHealth(
+  entityType: string,
+): Promise<EntityDataHealthResponse> {
+  const { data } = await httpClient.get<ApiResponse<EntityDataHealthResponse>>(
+    '/api/entity-analytics/data-health',
+    { params: { entityType } },
+  )
+  if (!isApiSuccess(data) || !data.Data) {
+    throw new Error(data.Message ?? 'Failed to load data health')
   }
   return data.Data
 }

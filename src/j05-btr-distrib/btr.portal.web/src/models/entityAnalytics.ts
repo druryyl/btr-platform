@@ -498,6 +498,18 @@ export interface InvestigationLensesResponse {
   Lenses: InvestigationLens[]
 }
 
+export interface EntityDataHealthResponse {
+  IsAvailable: boolean
+  EntityType: string
+  PeriodYear: number | null
+  PeriodMonth: number | null
+  GeneratedAt: string | null
+  TargetCoveragePercentage: number | null
+  PrincipalsMissingTargetCount: number
+  UnknownPrincipalExceptionCount: number
+  UnknownPrincipalExceptionAmount: number
+}
+
 export interface InvestigationLens {
   LensId: string
   DisplayName: string
