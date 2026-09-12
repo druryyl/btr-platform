@@ -79,13 +79,8 @@ namespace btr.application.SalesContext.FakturAgg.UseCases
 
         public FakturModel Execute(SaveFakturRequest req)
         {
-            //  GUARD
-            Guard.Argument(() => req).NotNull()
-                .Member(x => x.FakturDate, y => y.ValidDate("yyyy-MM-dd"))
-                .Member(x => x.CustomerId, y => y.NotEmpty())
-                .Member(x => x.SalesPersonId, y => y.NotEmpty())
-                .Member(x => x.WarehouseId, y => y.NotEmpty())
-                .Member(x => x.DueDate, y => y.ValidDate("yyyy-MM-dd"));
+            //  GUARD (shared save-level validation entry for preview and save, SL-02 / D-010)
+            SaveFakturValidator.Validate(req);
 
             //  PROSES FAKTUR
             FakturModel result;

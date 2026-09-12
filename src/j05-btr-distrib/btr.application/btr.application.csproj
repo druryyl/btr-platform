@@ -797,6 +797,7 @@
     <Compile Include="SalesContext\FakturAgg\Workers\FakturValidator.cs" />
     <Compile Include="SalesContext\FakturAgg\Workers\FakturWriter.cs" />
     <Compile Include="SalesContext\FakturAgg\UseCases\SaveFakturWorker.cs" />
+    <Compile Include="SalesContext\FakturAgg\UseCases\SaveFakturValidator.cs" />
     <Compile Include="SalesContext\FakturBrgInfo\FakturBrgView.cs" />
     <Compile Include="SalesContext\FakturBrgInfo\IFakturBrgViewDal.cs" />
     <Compile Include="SalesContext\FakturCashRpt\IFakturCashViewDal.cs" />
