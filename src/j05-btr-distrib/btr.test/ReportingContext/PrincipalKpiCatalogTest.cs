@@ -148,6 +148,39 @@ namespace btr.test.ReportingContext
         }
 
         [Fact]
+        public void Catalog_RegistersPacingAchievementPercentage_AsIndependentTimeAwareKpi()
+        {
+            PrincipalKpiCatalog.TryGet(PrincipalKpiCatalog.PacingAchievementPercentageId, out var pacing).Should().BeTrue();
+            pacing.KpiId.Should().Be("PRN-TGT-004");
+            pacing.Name.Should().Be("Pacing Achievement Percentage");
+            pacing.Description.Should().Be("Paced Principal achievement against the month-to-date target");
+            pacing.EvidenceGrain.Should().Be("PRN-SALES-001, PRN-TGT-001, and Business Date");
+            pacing.Formula.Should().Be("Actual Sales MTD ÷ (Monthly Target × Elapsed Days ÷ Days In Month) × 100 when the expected target is greater than zero; otherwise null");
+            pacing.EntityCategory.Should().Be(EntityTypeCode.Supplier);
+            pacing.IsAuthoritativePrincipalPerformanceKpi.Should().BeFalse();
+            pacing.IsAuthoritativeRankingKpi.Should().BeFalse();
+            pacing.DeductsReturns.Should().BeFalse();
+            pacing.DeductsClaims.Should().BeFalse();
+            pacing.DeductsInventoryAdjustments.Should().BeFalse();
+            pacing.DefinitionStatements.Should().Contain(
+                "PRN-TGT-004 Pacing Achievement Percentage = Actual Sales MTD ÷ Expected Target MTD × 100.");
+            pacing.DefinitionStatements.Should().Contain(
+                "Expected Target MTD = Monthly Target × (Elapsed Days ÷ Days In Month).");
+            pacing.DefinitionStatements.Should().Contain(
+                "Elapsed Days and Days In Month are derived at runtime from the Business Date. They are not persisted.");
+            pacing.DefinitionStatements.Should().Contain(
+                "PRN-TGT-004 is not PRN-TGT-003 Achievement Percentage and does not change it.");
+            pacing.DefinitionStatements.Should().Contain(
+                "The writer does not write, overwrite, or recalculate PRN-SALES-001.");
+            pacing.DefinitionStatements.Should().Contain(
+                "The writer does not write, overwrite, or recalculate PRN-TGT-001.");
+            pacing.Name.Should().NotBe("Net Sales");
+
+            PrincipalKpiCatalog.TryGet(PrincipalKpiCatalog.AchievementPercentageId, out var existing).Should().BeTrue();
+            existing.KpiId.Should().Be("PRN-TGT-003");
+        }
+
+        [Fact]
         public void Catalog_RegistersPurchaseInOnlyForThisFamily()
         {
             PrincipalKpiCatalog.TryGet(PrincipalKpiCatalog.PurchaseInId, out var entry).Should().BeTrue();
@@ -338,6 +371,38 @@ namespace btr.test.ReportingContext
         }
 
         [Fact]
+        public void Catalog_RegistersYoyMtdGrowth_AsIndependentTimeAwareKpi()
+        {
+            PrincipalKpiCatalog.TryGet(PrincipalKpiCatalog.YoyMtdGrowthId, out var growth).Should().BeTrue();
+            growth.KpiId.Should().Be("PRN-GRW-003");
+            growth.Name.Should().Be("Year-over-Year MTD Growth Percentage");
+            growth.Description.Should().Be("Month-to-date year-over-year Principal growth");
+            growth.EvidenceGrain.Should().Be("PRN-SALES-001 range evidence");
+            growth.Formula.Should().Be("(current year MTD PRN-SALES-001 − prior year MTD PRN-SALES-001) ÷ prior year MTD PRN-SALES-001 when prior-year MTD > 0; otherwise null");
+            growth.IsAuthoritativePrincipalPerformanceKpi.Should().BeFalse();
+            growth.IsAuthoritativeRankingKpi.Should().BeFalse();
+            growth.DeductsReturns.Should().BeFalse();
+            growth.DeductsClaims.Should().BeFalse();
+            growth.DeductsInventoryAdjustments.Should().BeFalse();
+            growth.DefinitionStatements.Should().Contain(
+                "PRN-GRW-003 Year-over-Year MTD Growth Percentage = (current year MTD PRN-SALES-001 − prior year MTD PRN-SALES-001) ÷ prior year MTD PRN-SALES-001 when the prior-year MTD is greater than zero; otherwise null.");
+            growth.DefinitionStatements.Should().Contain(
+                "The current-year and prior-year MTD windows use equivalent elapsed days, aligned on the Business Date.");
+            growth.DefinitionStatements.Should().Contain(
+                "Elapsed Days and period context are derived at runtime from the Business Date. They are not persisted.");
+            growth.DefinitionStatements.Should().Contain(
+                "Both window values are sourced dynamically from transactional Sales-Out facts by date range.");
+            growth.DefinitionStatements.Should().Contain(
+                "PRN-GRW-003 is not PRN-GRW-002 Year-over-Year Growth Percentage and does not change it.");
+            growth.DefinitionStatements.Should().Contain(
+                "The writer does not write, overwrite, or recalculate PRN-SALES-001.");
+            growth.Name.Should().NotBe("Net Sales");
+
+            PrincipalKpiCatalog.TryGet(PrincipalKpiCatalog.YoyGrowthId, out var existing).Should().BeTrue();
+            existing.KpiId.Should().Be("PRN-GRW-002");
+        }
+
+        [Fact]
         public void Catalog_RegistersActiveCustomerCount_FromProjectionOnly()
         {
             PrincipalKpiCatalog.TryGet(PrincipalKpiCatalog.ActiveCustomerCountId, out var entry).Should().BeTrue();
@@ -409,6 +474,7 @@ namespace btr.test.ReportingContext
             ids.Should().Contain("PRN-TGT-001");
             ids.Should().Contain("PRN-TGT-002");
             ids.Should().Contain("PRN-TGT-003");
+            ids.Should().Contain("PRN-TGT-004");
             ids.Should().Contain("PRN-PUR-001");
             ids.Should().Contain("PRN-INV-001");
             ids.Should().Contain("PRN-INV-002");
@@ -418,6 +484,7 @@ namespace btr.test.ReportingContext
             ids.Should().Contain("PRN-RET-004");
             ids.Should().Contain("PRN-GRW-001");
             ids.Should().Contain("PRN-GRW-002");
+            ids.Should().Contain("PRN-GRW-003");
             ids.Should().Contain("PRN-CUS-001");
             ids.Should().Contain("PRN-CUS-002");
             ids.Should().OnlyContain(id =>
@@ -425,6 +492,7 @@ namespace btr.test.ReportingContext
                 id == "PRN-TGT-001" ||
                 id == "PRN-TGT-002" ||
                 id == "PRN-TGT-003" ||
+                id == "PRN-TGT-004" ||
                 id == "PRN-PUR-001" ||
                 id == "PRN-INV-001" ||
                 id == "PRN-INV-002" ||
@@ -434,14 +502,15 @@ namespace btr.test.ReportingContext
                 id == "PRN-RET-004" ||
                 id == "PRN-GRW-001" ||
                 id == "PRN-GRW-002" ||
+                id == "PRN-GRW-003" ||
                 id == "PRN-CUS-001" ||
                 id == "PRN-CUS-002");
             ids.Should().NotContain(id => id.StartsWith("PRN-RET-") && id != "PRN-RET-001" && id != "PRN-RET-002" && id != "PRN-RET-003" && id != "PRN-RET-004");
-            ids.Should().NotContain(id => id.StartsWith("PRN-TGT-") && id != "PRN-TGT-001" && id != "PRN-TGT-002" && id != "PRN-TGT-003");
+            ids.Should().NotContain(id => id.StartsWith("PRN-TGT-") && id != "PRN-TGT-001" && id != "PRN-TGT-002" && id != "PRN-TGT-003" && id != "PRN-TGT-004");
             ids.Should().NotContain(id => id.StartsWith("PRN-PUR-") && id != "PRN-PUR-001");
             ids.Should().NotContain(id => id.StartsWith("PRN-INV-") && id != "PRN-INV-001" && id != "PRN-INV-002");
             ids.Should().NotContain(id => id.StartsWith("PRN-CUS-") && id != "PRN-CUS-001" && id != "PRN-CUS-002");
-            ids.Should().NotContain(id => id.StartsWith("PRN-GRW-") && id != "PRN-GRW-001" && id != "PRN-GRW-002");
+            ids.Should().NotContain(id => id.StartsWith("PRN-GRW-") && id != "PRN-GRW-001" && id != "PRN-GRW-002" && id != "PRN-GRW-003");
             ids.Should().NotContain(id => id.StartsWith("PR-KPI-"));
             ids.Should().NotContain(id => id.StartsWith("CP-KPI-"));
             ids.Should().NotContain("Net Sales");

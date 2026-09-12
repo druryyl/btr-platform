@@ -18,6 +18,8 @@ namespace btr.application.ReportingContext.PrincipalAnalyticsAgg
 
         public const string AchievementPercentageId = "PRN-TGT-003";
 
+        public const string PacingAchievementPercentageId = "PRN-TGT-004";
+
         public const string PurchaseInId = "PRN-PUR-001";
 
         public const string InventoryValueId = "PRN-INV-001";
@@ -35,6 +37,8 @@ namespace btr.application.ReportingContext.PrincipalAnalyticsAgg
         public const string MomGrowthId = "PRN-GRW-001";
 
         public const string YoyGrowthId = "PRN-GRW-002";
+
+        public const string YoyMtdGrowthId = "PRN-GRW-003";
 
         public const string ActiveCustomerCountId = "PRN-CUS-001";
 
@@ -63,6 +67,8 @@ namespace btr.application.ReportingContext.PrincipalAnalyticsAgg
 
         private static readonly PrincipalKpiCatalogEntry AchievementPercentageEntry = CreateAchievementPercentage();
 
+        private static readonly PrincipalKpiCatalogEntry PacingAchievementPercentageEntry = CreatePacingAchievementPercentage();
+
         private static readonly PrincipalKpiCatalogEntry PurchaseInEntry = CreatePurchaseIn();
 
         private static readonly PrincipalKpiCatalogEntry InventoryValueEntry = CreateInventoryValue();
@@ -81,6 +87,8 @@ namespace btr.application.ReportingContext.PrincipalAnalyticsAgg
 
         private static readonly PrincipalKpiCatalogEntry YoyGrowthEntry = CreateYoyGrowth();
 
+        private static readonly PrincipalKpiCatalogEntry YoyMtdGrowthEntry = CreateYoyMtdGrowth();
+
         private static readonly PrincipalKpiCatalogEntry ActiveCustomerCountEntry = CreateActiveCustomerCount();
 
         private static readonly PrincipalKpiCatalogEntry CustomerCoverageEntry = CreateCustomerCoverage();
@@ -92,6 +100,7 @@ namespace btr.application.ReportingContext.PrincipalAnalyticsAgg
                 TargetEntry,
                 AchievementAmountEntry,
                 AchievementPercentageEntry,
+                PacingAchievementPercentageEntry,
                 PurchaseInEntry,
                 InventoryValueEntry,
                 InventoryDaysEntry,
@@ -101,6 +110,7 @@ namespace btr.application.ReportingContext.PrincipalAnalyticsAgg
                 ReturnPercentageEntry,
                 MomGrowthEntry,
                 YoyGrowthEntry,
+                YoyMtdGrowthEntry,
                 ActiveCustomerCountEntry,
                 CustomerCoverageEntry
             };
@@ -273,6 +283,41 @@ namespace btr.application.ReportingContext.PrincipalAnalyticsAgg
                     "The writer does not write, overwrite, or recalculate PRN-TGT-001.",
                     "Achievement is not labeled Net Sales.",
                     "The user-facing name is Achievement Percentage, not Principal Sales-Out and not Net Sales."
+                }
+            };
+        }
+
+        private static PrincipalKpiCatalogEntry CreatePacingAchievementPercentage()
+        {
+            return new PrincipalKpiCatalogEntry
+            {
+                KpiId = PacingAchievementPercentageId,
+                Name = "Pacing Achievement Percentage",
+                Description = "Paced Principal achievement against the month-to-date target",
+                EntityCategory = EntityTypeCode.Supplier,
+                EvidenceGrain = "PRN-SALES-001, PRN-TGT-001, and Business Date",
+                Formula = "Actual Sales MTD ÷ (Monthly Target × Elapsed Days ÷ Days In Month) × 100 when the expected target is greater than zero; otherwise null",
+                IsAuthoritativePrincipalPerformanceKpi = false,
+                IsAuthoritativeRankingKpi = false,
+                DeductsReturns = false,
+                DeductsClaims = false,
+                DeductsInventoryAdjustments = false,
+                DefinitionStatements = new[]
+                {
+                    "PRN-TGT-004 Pacing Achievement Percentage = Actual Sales MTD ÷ Expected Target MTD × 100.",
+                    "Expected Target MTD = Monthly Target × (Elapsed Days ÷ Days In Month).",
+                    "The calculation uses stored PRN-SALES-001 and stored PRN-TGT-001 plus the shared analytics period context.",
+                    "Elapsed Days and Days In Month are derived at runtime from the Business Date. They are not persisted.",
+                    "Pacing is linear. Seasonal or weighted pacing models are out of scope.",
+                    "The value is null when the expected target is not greater than zero.",
+                    "PRN-TGT-004 is a supporting ranking KPI.",
+                    "PRN-TGT-004 is not a replacement for Principal Sales-Out.",
+                    "PRN-TGT-004 is not PRN-TGT-003 Achievement Percentage and does not change it.",
+                    "The calculation does not deduct returns, claims, or inventory adjustments.",
+                    "PRN-TGT-004 is not Net Sales.",
+                    "The writer does not write, overwrite, or recalculate PRN-SALES-001.",
+                    "The writer does not write, overwrite, or recalculate PRN-TGT-001.",
+                    "The user-facing name is Pacing Achievement Percentage, not Achievement Percentage and not Net Sales."
                 }
             };
         }
@@ -577,6 +622,40 @@ namespace btr.application.ReportingContext.PrincipalAnalyticsAgg
                     "The writer does not write, overwrite, or recalculate PRN-SALES-001.",
                     "The writer does not write PRN-GRW-001.",
                     "The user-facing name is Year-over-Year Growth Percentage, not purchase growth and not Net Sales."
+                }
+            };
+        }
+
+        private static PrincipalKpiCatalogEntry CreateYoyMtdGrowth()
+        {
+            return new PrincipalKpiCatalogEntry
+            {
+                KpiId = YoyMtdGrowthId,
+                Name = "Year-over-Year MTD Growth Percentage",
+                Description = "Month-to-date year-over-year Principal growth",
+                EntityCategory = EntityTypeCode.Supplier,
+                EvidenceGrain = "PRN-SALES-001 range evidence",
+                Formula = "(current year MTD PRN-SALES-001 − prior year MTD PRN-SALES-001) ÷ prior year MTD PRN-SALES-001 when prior-year MTD > 0; otherwise null",
+                IsAuthoritativePrincipalPerformanceKpi = false,
+                IsAuthoritativeRankingKpi = false,
+                DeductsReturns = false,
+                DeductsClaims = false,
+                DeductsInventoryAdjustments = false,
+                DefinitionStatements = new[]
+                {
+                    "PRN-GRW-003 Year-over-Year MTD Growth Percentage = (current year MTD PRN-SALES-001 − prior year MTD PRN-SALES-001) ÷ prior year MTD PRN-SALES-001 when the prior-year MTD is greater than zero; otherwise null.",
+                    "The current-year and prior-year MTD windows use equivalent elapsed days, aligned on the Business Date.",
+                    "The prior-year MTD window end is clamped to the last valid day of the prior-year month.",
+                    "Elapsed Days and period context are derived at runtime from the Business Date. They are not persisted.",
+                    "Both window values are sourced dynamically from transactional Sales-Out facts by date range.",
+                    "The value is null when the prior-year MTD is not greater than zero.",
+                    "PRN-GRW-003 is a supporting ranking KPI.",
+                    "PRN-GRW-003 is not a replacement for Principal Sales-Out.",
+                    "PRN-GRW-003 is not PRN-GRW-002 Year-over-Year Growth Percentage and does not change it.",
+                    "The calculation does not use Purchase-In, returns, claims, or inventory adjustments.",
+                    "PRN-GRW-003 is not Net Sales.",
+                    "The writer does not write, overwrite, or recalculate PRN-SALES-001.",
+                    "The user-facing name is Year-over-Year MTD Growth Percentage, not Year-over-Year Growth Percentage and not Net Sales."
                 }
             };
         }
