@@ -141,6 +141,59 @@ namespace btr.test.ReportingContext
             sql.Should().NotContain("PRN-CUS-002");
         }
 
+        [Fact]
+        public void EvidenceLinks_AreTaggedWithOriginatingLens()
+        {
+            var resolver = new SupplierEntityAnalyticsEvidenceResolver();
+            var identity = new EntityIdentity
+            {
+                EntityType = EntityTypeCode.Supplier,
+                EntityId = "S001",
+                EntityCode = "SUPA"
+            };
+
+            var evidence = resolver.BuildEvidence("SUPA", identity);
+
+            var salesOutLinks = evidence.Links
+                .Where(link => link.LensId == EntityInvestigationLensIds.SalesOut)
+                .ToList();
+            salesOutLinks.Should().HaveCount(5);
+            salesOutLinks.Should().OnlyContain(link =>
+                !link.ReportRoute.Contains("/reports/purchasing")
+                && !link.ReportRoute.Contains("/reports/inventory"));
+
+            var purchasingLinks = evidence.Links
+                .Where(link => link.LensId == EntityInvestigationLensIds.Purchasing)
+                .ToList();
+            purchasingLinks.Should().HaveCount(2);
+            purchasingLinks.Should().OnlyContain(link =>
+                link.ReportRoute.Contains("/reports/purchasing")
+                || link.ReportRoute.Contains("/reports/inventory"));
+        }
+
+        [Fact]
+        public void PurchasingEvidence_IsNeverReachableThroughSalesOutLens()
+        {
+            var resolver = new SupplierEntityAnalyticsEvidenceResolver();
+            var identity = new EntityIdentity
+            {
+                EntityType = EntityTypeCode.Supplier,
+                EntityId = "S001",
+                EntityCode = "SUPA"
+            };
+
+            var evidence = resolver.BuildEvidence("SUPA", identity);
+            var salesOutLinks = evidence.Links
+                .Where(link => link.LensId == EntityInvestigationLensIds.SalesOut)
+                .ToList();
+
+            salesOutLinks.Should().NotContain(link =>
+                link.ReportRoute.Contains("/reports/purchasing")
+                || link.ReportRoute.Contains("/reports/inventory")
+                || link.Category == "Purchasing"
+                || link.Category == "Inventory");
+        }
+
         private static EntityRelationshipDefinitionRegistry RegisterSupplierRelationships()
         {
             var relationships = new EntityRelationshipDefinitionRegistry(CreateSupplierEntityTypes());

@@ -383,6 +383,7 @@ export interface ProfileEvidenceLink {
   FilterDimension: string
   RelationshipCode?: string | null
   MetricKpiId?: string | null
+  LensId?: string | null
 }
 
 // --- M32R Investigation Workspace ---

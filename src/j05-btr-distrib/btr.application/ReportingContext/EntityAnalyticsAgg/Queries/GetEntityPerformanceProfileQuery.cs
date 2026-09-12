@@ -368,6 +368,8 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Queries
         public string RelationshipCode { get; set; }
 
         public string MetricKpiId { get; set; }
+
+        public string LensId { get; set; }
     }
 
     public class GetEntityPerformanceProfileHandler

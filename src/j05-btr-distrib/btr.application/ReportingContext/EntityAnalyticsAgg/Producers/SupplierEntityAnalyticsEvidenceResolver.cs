@@ -3,6 +3,7 @@ using btr.application.ReportingContext.EntityAnalyticsAgg.Contracts;
 using btr.application.ReportingContext.EntityAnalyticsAgg.Models;
 using btr.application.ReportingContext.EntityAnalyticsAgg.Queries;
 using btr.application.ReportingContext.EntityAnalyticsAgg.Registrars;
+using btr.application.ReportingContext.EntityAnalyticsAgg.Services;
 using btr.application.ReportingContext.PrincipalAnalyticsAgg;
 
 namespace btr.application.ReportingContext.EntityAnalyticsAgg.Producers
@@ -24,7 +25,6 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Producers
                 };
             }
 
-            var query = $"?supplierCode={UriEncode(supplierCode)}";
             var links = new List<ProfileEvidenceLinkDto>
             {
                 CreatePrincipalSalesOutLink(identity, entityId, null, "Faktur Item evidence"),
@@ -38,19 +38,22 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Producers
             links.Add(ResolveOmzetRelationshipEvidence(
                 SupplierRelationshipCatalog.TopProductsByOmzet, entityId, identity));
 
+            var query = $"?supplierCode={UriEncode(supplierCode)}";
             links.Add(new ProfileEvidenceLinkDto
             {
                 Category = "Purchasing",
                 Label = "Purchasing Report",
                 ReportRoute = "/reports/purchasing" + query,
-                FilterDimension = "supplierCode"
+                FilterDimension = "supplierCode",
+                LensId = EntityInvestigationLensIds.Purchasing
             });
             links.Add(new ProfileEvidenceLinkDto
             {
                 Category = "Inventory",
                 Label = "Inventory Report",
                 ReportRoute = "/reports/inventory" + query,
-                FilterDimension = "supplierCode"
+                FilterDimension = "supplierCode",
+                LensId = EntityInvestigationLensIds.Purchasing
             });
 
             return new ProfileEvidenceSectionDto
@@ -97,7 +100,8 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Producers
                 ReportRoute = route,
                 FilterDimension = SupplierEntityAnalyticsRegistrar.PrincipalSalesOutEvidenceFilterDimension,
                 RelationshipCode = relationshipCode,
-                MetricKpiId = PrincipalKpiCatalog.SalesOutId
+                MetricKpiId = PrincipalKpiCatalog.SalesOutId,
+                LensId = EntityInvestigationLensIds.SalesOut
             };
         }
 
@@ -119,7 +123,8 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Producers
                 Label = label,
                 ReportRoute = route,
                 FilterDimension = SupplierEntityAnalyticsRegistrar.PrincipalReturnEvidenceFilterDimension,
-                MetricKpiId = PrincipalKpiCatalog.TotalReturnAmountId
+                MetricKpiId = PrincipalKpiCatalog.TotalReturnAmountId,
+                LensId = EntityInvestigationLensIds.SalesOut
             };
         }
 

@@ -370,6 +370,7 @@ watch(
             :entity-ids="workspace.selectedEntityIds"
             :profiles="workspace.profiles"
             :loading="workspace.loadingProfiles"
+            :active-lens-id="workspace.activeLensId"
           />
           <Message severity="info" :closable="false" class="iw-completeness">
             You have reviewed Population Map and Current Facts. Business Drivers and Evidence are

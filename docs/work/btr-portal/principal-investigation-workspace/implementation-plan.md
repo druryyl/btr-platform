@@ -423,7 +423,7 @@ conflicts and to land after the lens model is stable.
 | PIW-08 | Purchasing relationship drivers | GO |
 | PIW-09 | Purchase-to-Sales-Out Ratio (derived metric) | GO |
 | PIW-10 | Workspace presentation refinements (tooltip/peer) | GO |
-| PIW-11 | Lens-scoped evidence presentation | PLANNED |
+| PIW-11 | Lens-scoped evidence presentation | IMPLEMENTED |
 | PIW-12 | Platform-wide Performance Signature retirement | PLANNED |
 | PIW-13 | Data Health backend data | PLANNED |
 | PIW-14 | Data Health frontend panel | PLANNED |
