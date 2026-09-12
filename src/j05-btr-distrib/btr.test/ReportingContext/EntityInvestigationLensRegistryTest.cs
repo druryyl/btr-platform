@@ -43,12 +43,14 @@ namespace btr.test.ReportingContext
                 PrincipalKpiCatalog.SalesOutId,
                 PrincipalKpiCatalog.MomGrowthId,
                 PrincipalKpiCatalog.YoyGrowthId,
+                PrincipalKpiCatalog.YoyMtdGrowthId,
                 PrincipalKpiCatalog.GoodReturnAmountId,
                 PrincipalKpiCatalog.BrokenReturnAmountId,
                 PrincipalKpiCatalog.TotalReturnAmountId,
                 PrincipalKpiCatalog.ReturnPercentageId,
                 PrincipalKpiCatalog.AchievementAmountId,
                 PrincipalKpiCatalog.AchievementPercentageId,
+                PrincipalKpiCatalog.PacingAchievementPercentageId,
                 PrincipalKpiCatalog.ActiveCustomerCountId,
                 PrincipalKpiCatalog.CustomerCoverageId
             });

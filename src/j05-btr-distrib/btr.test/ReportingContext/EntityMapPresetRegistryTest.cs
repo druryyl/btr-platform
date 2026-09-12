@@ -35,8 +35,8 @@ namespace btr.test.ReportingContext
             var preset = EntityMapPresetRegistry.TryGetPreset(EntityTypeCode.Supplier, "principal-sales-out-map");
 
             preset.Should().NotBeNull();
-            preset.AxisXKpiId.Should().Be("PRN-TGT-003");
-            preset.AxisYKpiId.Should().Be("PRN-GRW-002");
+            preset.AxisXKpiId.Should().Be("PRN-TGT-004");
+            preset.AxisYKpiId.Should().Be("PRN-GRW-003");
             preset.BubbleKpiId.Should().Be("PRN-SALES-001");
             preset.BubbleColorKpiId.Should().Be("PRN-RET-004");
             preset.FilterDimensionKpiId.Should().BeNull();
