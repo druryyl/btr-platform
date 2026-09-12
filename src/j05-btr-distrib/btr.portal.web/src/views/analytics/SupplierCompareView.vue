@@ -10,7 +10,6 @@ import CompareTrendSection from '@/components/entity-analytics/CompareTrendSecti
 import CompareRankingSection from '@/components/entity-analytics/CompareRankingSection.vue'
 import CompareAttentionSection from '@/components/entity-analytics/CompareAttentionSection.vue'
 import CompareRelationshipsSection from '@/components/entity-analytics/CompareRelationshipsSection.vue'
-import RadarCompareSection from '@/components/entity-analytics/RadarCompareSection.vue'
 import type { EntitySearchResult } from '@/models/entityAnalytics'
 import { useEntityAnalyticsStore } from '@/stores/entityAnalyticsStore'
 
@@ -172,7 +171,6 @@ watch(
         :section="store.compare.RelationshipComparison"
         :loading="store.compareLoading"
       />
-      <RadarCompareSection :section="store.compare.RadarComparison" />
     </div>
   </DashboardDetailLayout>
 </template>

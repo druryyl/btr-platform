@@ -424,7 +424,7 @@ conflicts and to land after the lens model is stable.
 | PIW-09 | Purchase-to-Sales-Out Ratio (derived metric) | GO |
 | PIW-10 | Workspace presentation refinements (tooltip/peer) | GO |
 | PIW-11 | Lens-scoped evidence presentation | IMPLEMENTED |
-| PIW-12 | Platform-wide Performance Signature retirement | PLANNED |
+| PIW-12 | Platform-wide Performance Signature retirement | GO |
 | PIW-13 | Data Health backend data | PLANNED |
 | PIW-14 | Data Health frontend panel | PLANNED |
 | PIW-15 | Knowledge and terminology synchronization | PLANNED |
@@ -446,6 +446,7 @@ IN REVIEW → GO`).
 | PIW-08 | 2026-09-12 | GO | None blocking. INFO-001: purchasing drivers (`TopPurchasedItems`, `PurchaseHistory`) are declarative catalog registrations; no snapshot production/rendering added — consistent with FEASIBILITY §10 ("no additional model") and PIW-03's deferred "catalog registration" note. INFO-002: `PurchaseHistory` is a time-series driver and carries no `TargetEntityType`; inert until a resolution mechanism is introduced (out of slice scope). INFO-003: 11 pre-existing `btr.test.ReportingContext` failures at the parent commit (cash-flow, customer pack, field activity, sales report, inventory-risk, collection, `SupplierEntityAnalyticsProducerTest` fixture missing `RelationshipProjection`) are unrelated; no new failures introduced | N/A |
 | PIW-09 | 2026-09-12 | GO | None blocking. INFO-001: the approved `≈ 1.0` band carries no numeric tolerance in FEASIBILITY GAP-005 / Architecture §8.3; implementation keys bands off the approved `1.0` boundary (exact `1.0` → Balanced) and displays the three-band guide, introducing no new threshold. INFO-002: the lens DTO now also projects `DerivedMetricIds` (PIW-04 exposed the lens config without it); minimal read-only projection of the approved PIW-03 model, needed for config-driven lens scoping. INFO-003: pre-existing `btr.test.ReportingContext` failures unchanged; no new failures | N/A |
 | PIW-10 | 2026-09-12 | GO | None blocking. INFO-001: the population map backend now projects a read-only `PopulationMapResponseDto.DimensionLabel` from the approved `IDimensionLabelRegistry` (outside the §3 impact inventory, which lists only `PopulationMapTooltip.vue`); bounded read-only projection required to satisfy Architecture §7.6 — a data-driven, non-generic dimension label that keeps dimensioned entity types (Customer/Item/Salesman) intact while leaving Principal undimensioned — reusing the same accepted precedent as PIW-09 INFO-002. INFO-002: the Item map tooltip now shows the registry label ("Supplier" for the `SupplierName` dimension; "Category" is the correct label when the Category dimension is active) instead of the previous hardcoded generic "Category" fallback; terminology is data-driven from the approved registry. Pre-existing `btr.test.ReportingContext` failures unchanged (11); no new failures | N/A |
+| PIW-12 | 2026-09-12 | GO | None blocking. INFO-001: the retired wrapper components `ProfileRadarSection.vue` / `RadarCompareSection.vue` were deleted; the underlying `PerformanceSignatureSection.vue` / `PerformanceSignatureChart.vue` / `PerformanceSignatureScoreTable.vue` remain as unreferenced (orphaned) components — not listed in the §3 impact inventory, so removal is out of slice scope; grep confirms zero importers. INFO-002: `models/entityAnalytics.ts` retains the `Radar` / `RadarComparison` API-contract types (backend response contract still carries them; L5 composition is out of this slice's scope per AC4) — they are data types, not a rendered surface. Verified: no entity profile, compare, evidence, or router view imports the retired surface; `BTRPD_EntityAnalytics_Radar` / L5 history untouched | N/A |
 
 ---
 
@@ -710,3 +711,33 @@ wires the shared `IDimensionLabelRegistry` and registers Supplier). Full fronten
 (VS MSBuild, `btr.test.csproj`) succeeds; focused engine tests 6/6 pass; full `btr.test.ReportingContext`
 failures remain at the pre-existing 11 (cash-flow, customer pack, field activity, sales report,
 inventory-risk, collection, `SupplierEntityAnalyticsProducerTest` fixture), no new failures.
+
+### PIW-12 verification note
+
+Retired the Performance Signature (Radar) surface for all entity types per ADR-EA-001 and
+ADR-PIW-012 (frontend-only slice; radar axis registration / L5 signature composition explicitly
+out of scope):
+
+- `ValidationStagePanel.vue`: removed the single-entity "Performance Signature" block and its
+  `ProfileRadarSection` import; the panel now renders Evidence only. The lens-scoped evidence
+  filtering added by PIW-11 is unchanged.
+- `EntityPerformanceProfileShell.vue`: removed the `ProfileRadarSection` embed and import.
+- All four compare views (`CustomerCompareView`, `SalesmanCompareView`, `ItemCompareView`,
+  `SupplierCompareView`): removed the `RadarCompareSection` embed and import.
+- Deleted the retired wrapper components `ProfileRadarSection.vue` and `RadarCompareSection.vue`;
+  their underlying `PerformanceSignatureSection.vue` / `PerformanceSignatureChart.vue` /
+  `PerformanceSignatureScoreTable.vue` remain but are now unreferenced (no dependents remain,
+  verified by grep).
+
+Acceptance criteria: `ValidationStagePanel.vue` no longer renders the "Performance Signature"
+block; `ProfileRadarSection` / `RadarCompareSection` are removed from the profile shell and all
+four compare views; a repo-wide grep confirms no entity profile, compare, or evidence route
+renders or imports the retired surface (the only remaining `Radar`/`PerformanceSignature`
+identifiers are the API-contract model types in `models/entityAnalytics.ts` and the unreferenced
+underlying components); L5 snapshot history is untouched (no DELEETE/removal of
+`BTRPD_EntityAnalytics_Radar`); radar axis registration / L5 signature composition was not
+modified. No replacement radar was introduced.
+
+Full frontend build (`vue-tsc -b && vite build`) passes; full frontend tests 37 files / 287 tests
+pass. No backend files were changed; backend build and `btr.test.ReportingContext` status are
+unaffected by this slice.

@@ -8,7 +8,6 @@ import ProfileOverviewSection from '@/components/entity-analytics/ProfileOvervie
 import ProfileKpiSummarySection from '@/components/entity-analytics/ProfileKpiSummarySection.vue'
 import ProfileComparisonSection from '@/components/entity-analytics/ProfileComparisonSection.vue'
 import ProfileTrendSection from '@/components/entity-analytics/ProfileTrendSection.vue'
-import ProfileRadarSection from '@/components/entity-analytics/ProfileRadarSection.vue'
 import ProfileRankingHistorySection from '@/components/entity-analytics/ProfileRankingHistorySection.vue'
 import ProfileAttentionHistorySection from '@/components/entity-analytics/ProfileAttentionHistorySection.vue'
 import ProfileRelatedEntitiesSection from '@/components/entity-analytics/ProfileRelatedEntitiesSection.vue'
@@ -156,11 +155,6 @@ const workspaceRoute = computed(() => {
       />
       <ProfileComparisonSection :section="profile?.Comparison" :loading="loading" />
       <ProfileTrendSection :section="profile?.Trend" :loading="loading" />
-      <ProfileRadarSection
-        :section="profile?.Radar"
-        :loading="loading"
-        :entity-label="profile?.Overview?.DisplayName"
-      />
       <ProfileRankingHistorySection :section="profile?.Ranking" :loading="loading" />
       <ProfileAttentionHistorySection :section="profile?.Attention" :loading="loading" />
       <ProfileRelatedEntitiesSection
