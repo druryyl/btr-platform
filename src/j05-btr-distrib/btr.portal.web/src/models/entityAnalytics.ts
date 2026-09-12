@@ -444,6 +444,7 @@ export interface PopulationMapPoint {
   IsActive: boolean
   ActiveAttentionCount: number
   MatchesFilter: boolean
+  IsLowConfidence?: boolean
   BubbleValue?: number | null
   FormattedBubbleValue?: string | null
   BubbleColorValue?: number | null

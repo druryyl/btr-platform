@@ -83,6 +83,8 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Queries
 
         public bool MatchesFilter { get; set; }
 
+        public bool IsLowConfidence { get; set; }
+
         public decimal? BubbleValue { get; set; }
 
         public string FormattedBubbleValue { get; set; }

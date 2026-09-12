@@ -182,6 +182,44 @@ namespace btr.test.ReportingContext
             result.DimensionLabel.Should().BeNull();
         }
 
+        [Fact]
+        public void BuildPopulationMap_FlagsLowConfidence_WhenAxisValueSuppressed()
+        {
+            SeedEntity(
+                entityId: "C010",
+                entityCode: "CUST010",
+                displayName: "Low Confidence Customer",
+                axisX: null,
+                axisY: 250m);
+
+            var result = _engine.BuildPopulationMap(new PopulationMapRequest
+            {
+                EntityType = EntityTypeCode.Customer
+            });
+
+            var point = result.Points.Single(p => p.EntityId == "C010");
+            point.IsLowConfidence.Should().BeTrue();
+        }
+
+        [Fact]
+        public void BuildPopulationMap_DoesNotFlagLowConfidence_WhenBothAxisValuesPresent()
+        {
+            SeedEntity(
+                entityId: "C011",
+                entityCode: "CUST011",
+                displayName: "Confident Customer",
+                axisX: 120m,
+                axisY: 250m);
+
+            var result = _engine.BuildPopulationMap(new PopulationMapRequest
+            {
+                EntityType = EntityTypeCode.Customer
+            });
+
+            var point = result.Points.Single(p => p.EntityId == "C011");
+            point.IsLowConfidence.Should().BeFalse();
+        }
+
         private void SeedPopulation(int count)
         {
             for (var i = 1; i <= count; i++)
@@ -199,8 +237,8 @@ namespace btr.test.ReportingContext
             string entityId,
             string entityCode,
             string displayName,
-            decimal axisX,
-            decimal axisY,
+            decimal? axisX,
+            decimal? axisY,
             string dimensionValue = "Jakarta",
             int attentionCount = 0,
             string entityType = null)

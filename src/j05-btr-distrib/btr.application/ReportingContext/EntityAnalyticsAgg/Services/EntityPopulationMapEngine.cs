@@ -113,6 +113,7 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Services
                     IsActive = row.IsActive,
                     ActiveAttentionCount = attentionCount,
                     MatchesFilter = matchesFilter,
+                    IsLowConfidence = !axisX.HasValue || !axisY.HasValue,
                     BubbleValue = bubbleValue,
                     FormattedBubbleValue = bubbleMeta == null
                         ? null
