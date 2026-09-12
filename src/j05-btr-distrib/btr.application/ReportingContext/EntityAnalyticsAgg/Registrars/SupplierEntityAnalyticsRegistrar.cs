@@ -40,8 +40,10 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Registrars
                 PrincipalKpiCatalog.TargetId,
                 PrincipalKpiCatalog.AchievementAmountId,
                 PrincipalKpiCatalog.AchievementPercentageId,
+                PrincipalKpiCatalog.PacingAchievementPercentageId,
                 PrincipalKpiCatalog.MomGrowthId,
                 PrincipalKpiCatalog.YoyGrowthId,
+                PrincipalKpiCatalog.YoyMtdGrowthId,
                 PrincipalKpiCatalog.PurchaseInId,
                 PrincipalKpiCatalog.InventoryValueId,
                 PrincipalKpiCatalog.InventoryDaysId,
@@ -346,6 +348,64 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Registrars
                 ApplicableEntityTypes = new[] { EntityTypeCode.Supplier },
                 DefinitionVersion = 1,
                 IntroducedVersion = "PCM-046"
+            });
+
+            kpiRegistry.RegisterMetadata(new EntityKpiMetadata
+            {
+                KpiId = PrincipalKpiCatalog.PacingAchievementPercentageId,
+                Category = EntityKpiCategory.Financial,
+                DisplayName = "Pacing Achievement %",
+                Description = "PRN-TGT-004 Pacing Achievement Percentage = Actual Sales MTD ÷ Expected Target MTD × 100, where Expected Target MTD = Monthly Target × (Elapsed Days ÷ Days In Month). Sourced from stored PRN-SALES-001 and stored PRN-TGT-001 plus the runtime Business Date period context. Pacing is linear; the value is null when the expected target is not greater than zero. PRN-TGT-004 is a supporting ranking KPI and does not change PRN-TGT-003 Achievement Percentage. It is not Net Sales.",
+                PeriodSemantics = "MTD",
+                TimeGrain = "Month",
+                Unit = "Percent",
+                ValueType = "Numeric",
+                AggregationType = "LastValue",
+                Direction = "HigherIsBetter",
+                NormalizationRule = "None",
+                VisualizationType = "Card",
+                TrendEligible = true,
+                RankEligible = true,
+                RadarEligible = false,
+                DisplayPrecision = 4,
+                NullableBehavior = "ShowEmpty",
+                EvidenceRoute = PrincipalTargetEvidenceRoute,
+                EvidenceFilterDimension = PrincipalTargetEvidenceFilterDimension,
+                SourceDomain = PrincipalAchievementSnapshot.Domain,
+                ApplicableEntityTypes = new[] { EntityTypeCode.Supplier },
+                DefaultAxisRole = "X",
+                MinimumElapsedDays = 6,
+                DefinitionVersion = 1,
+                IntroducedVersion = "PSOM-03"
+            });
+
+            kpiRegistry.RegisterMetadata(new EntityKpiMetadata
+            {
+                KpiId = PrincipalKpiCatalog.YoyMtdGrowthId,
+                Category = EntityKpiCategory.Growth,
+                DisplayName = "YoY MTD Growth %",
+                Description = "PRN-GRW-003 Year-over-Year MTD Growth Percentage = (current year MTD PRN-SALES-001 − prior year MTD PRN-SALES-001) ÷ prior year MTD PRN-SALES-001 × 100 when the prior-year MTD is greater than zero; otherwise null. Current-year and prior-year windows use equivalent elapsed days aligned on the Business Date. PRN-GRW-003 is a supporting ranking KPI and does not change PRN-GRW-002 Year-over-Year Growth Percentage. It is not Net Sales.",
+                PeriodSemantics = "MTD",
+                TimeGrain = "Month",
+                Unit = "Percent",
+                ValueType = "Numeric",
+                AggregationType = "LastValue",
+                Direction = "HigherIsBetter",
+                NormalizationRule = "None",
+                VisualizationType = "Card",
+                TrendEligible = false,
+                RankEligible = true,
+                RadarEligible = false,
+                DisplayPrecision = 4,
+                NullableBehavior = "ShowEmpty",
+                EvidenceRoute = PrincipalSalesOutEvidenceRoute,
+                EvidenceFilterDimension = PrincipalSalesOutEvidenceFilterDimension,
+                SourceDomain = PrincipalYoyGrowthSnapshot.Domain,
+                ApplicableEntityTypes = new[] { EntityTypeCode.Supplier },
+                DefaultAxisRole = "Y",
+                MinimumBaseValue = 1000000m,
+                DefinitionVersion = 1,
+                IntroducedVersion = "PSOM-03"
             });
 
             kpiRegistry.RegisterMetadata(new EntityKpiMetadata
