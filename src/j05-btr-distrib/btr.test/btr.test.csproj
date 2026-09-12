@@ -217,6 +217,7 @@
     <Compile Include="ReportingContext\EntityRankingCalculatorTest.cs" />
     <Compile Include="ReportingContext\EntityPeerDistributionBinBuilderTest.cs" />
     <Compile Include="ReportingContext\PeerGroupLabelFormatterTest.cs" />
+    <Compile Include="ReportingContext\PrincipalConfidenceGuardTest.cs" />
     <Compile Include="ReportingContext\PeerGroupRuleCatalogTest.cs" />
     <Compile Include="ReportingContext\PrincipalKpiCatalogTest.cs" />
     <Compile Include="ReportingContext\PrincipalSalesOutAggregatorTest.cs" />

@@ -39,6 +39,9 @@ namespace btr.application.ReportingContext.PrincipalAnalyticsAgg.Models
 
         public decimal? PacingAchievementPercentage { get; set; }
 
+        /// <summary>Normal or LowConfidence; set by the confidence guard (PSOM-07).</summary>
+        public string ConfidenceStatus { get; set; }
+
         public int SortOrder { get; set; }
     }
 }

@@ -695,6 +695,7 @@
     <Compile Include="ReportingContext\PrincipalAnalyticsAgg\Queries\GetPrincipalReturnEvidenceQuery.cs" />
     <Compile Include="ReportingContext\PrincipalAnalyticsAgg\Queries\GetPrincipalSalesOutEvidenceQuery.cs" />
     <Compile Include="ReportingContext\PrincipalAnalyticsAgg\Models\AnalyticsPeriodContext.cs" />
+    <Compile Include="ReportingContext\PrincipalAnalyticsAgg\Models\KpiConfidenceStatus.cs" />
     <Compile Include="ReportingContext\PrincipalAnalyticsAgg\Models\CustomerPrincipalRelationshipResult.cs" />
     <Compile Include="ReportingContext\PrincipalAnalyticsAgg\Models\PrincipalSalesOutAggregateResult.cs" />
     <Compile Include="ReportingContext\PrincipalAnalyticsAgg\Models\PrincipalPurchaseInAggregateResult.cs" />
@@ -720,6 +721,7 @@
     <Compile Include="ReportingContext\PrincipalAnalyticsAgg\Services\PrincipalReturnHistoryComposer.cs" />
     <Compile Include="ReportingContext\PrincipalAnalyticsAgg\Services\PrincipalReturnPercentageComposer.cs" />
     <Compile Include="ReportingContext\PrincipalAnalyticsAgg\Services\PrincipalAchievementComposer.cs" />
+    <Compile Include="ReportingContext\PrincipalAnalyticsAgg\Services\PrincipalConfidenceGuard.cs" />
     <Compile Include="ReportingContext\PrincipalAnalyticsAgg\Services\PrincipalPacingAchievementComposer.cs" />
     <Compile Include="ReportingContext\PrincipalAnalyticsAgg\Services\PrincipalMomGrowthComposer.cs" />
     <Compile Include="ReportingContext\PrincipalAnalyticsAgg\Services\PrincipalYoyGrowthComposer.cs" />
