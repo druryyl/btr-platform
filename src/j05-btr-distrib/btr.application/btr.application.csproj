@@ -705,6 +705,7 @@
     <Compile Include="ReportingContext\PrincipalAnalyticsAgg\Models\PrincipalPacingAchievementResult.cs" />
     <Compile Include="ReportingContext\PrincipalAnalyticsAgg\Models\PrincipalMomGrowthResult.cs" />
     <Compile Include="ReportingContext\PrincipalAnalyticsAgg\Models\PrincipalYoyGrowthResult.cs" />
+    <Compile Include="ReportingContext\PrincipalAnalyticsAgg\Models\PrincipalYoyMtdGrowthResult.cs" />
     <Compile Include="ReportingContext\PrincipalAnalyticsAgg\Models\PrincipalSalesmanContributionResult.cs" />
     <Compile Include="ReportingContext\PrincipalAnalyticsAgg\Models\PrincipalInventoryAggregateResult.cs" />
     <Compile Include="ReportingContext\PrincipalAnalyticsAgg\Models\PrincipalTargetAggregateResult.cs" />
@@ -722,6 +723,7 @@
     <Compile Include="ReportingContext\PrincipalAnalyticsAgg\Services\PrincipalPacingAchievementComposer.cs" />
     <Compile Include="ReportingContext\PrincipalAnalyticsAgg\Services\PrincipalMomGrowthComposer.cs" />
     <Compile Include="ReportingContext\PrincipalAnalyticsAgg\Services\PrincipalYoyGrowthComposer.cs" />
+    <Compile Include="ReportingContext\PrincipalAnalyticsAgg\Services\PrincipalYoyMtdGrowthComposer.cs" />
     <Compile Include="ReportingContext\PrincipalAnalyticsAgg\Services\PrincipalSalesmanContributionComposer.cs" />
     <Compile Include="ReportingContext\PrincipalAnalyticsAgg\Services\PrincipalInventoryAggregator.cs" />
     <Compile Include="ReportingContext\PrincipalAnalyticsAgg\Services\PrincipalTargetAggregator.cs" />
