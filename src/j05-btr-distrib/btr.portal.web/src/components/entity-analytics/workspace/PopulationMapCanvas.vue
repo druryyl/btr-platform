@@ -213,11 +213,22 @@ function resizeCanvas() {
 
   const rect = container.getBoundingClientRect()
   const dpr = window.devicePixelRatio || 1
-  canvas.width = Math.max(rect.width * dpr, 1)
-  canvas.height = Math.max(rect.height * dpr, 1)
-  canvas.style.width = `${rect.width}px`
-  canvas.style.height = `${rect.height}px`
-  draw()
+  const bitmapWidth = Math.max(rect.width * dpr, 1)
+  const bitmapHeight = Math.max(rect.height * dpr, 1)
+  const styleWidth = `${rect.width}px`
+  const styleHeight = `${rect.height}px`
+  const sizeChanged =
+    canvas.width !== bitmapWidth
+    || canvas.height !== bitmapHeight
+    || canvas.style.width !== styleWidth
+    || canvas.style.height !== styleHeight
+
+  canvas.width = bitmapWidth
+  canvas.height = bitmapHeight
+  canvas.style.width = styleWidth
+  canvas.style.height = styleHeight
+
+  if (sizeChanged) draw()
 }
 
 function getPointFlags(point: PopulationMapPoint): PointDrawFlags {
