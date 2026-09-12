@@ -994,7 +994,15 @@ namespace btr.distrib.SalesContext.FakturAgg
                 if (choice == FakturPreviewChoice.Cancel)
                     return;
 
-                //  Persist only after explicit confirmation (D-003/D-005)
+                //  SL-06 (D-005/D-007/D-011/D-012): post-save finalize.
+                //  Persist only after explicit SAVE / SAVE & PRINT confirmation.
+                //  Any failure below shows the save failure and produces no
+                //  print output (print stays last). SAVE closes without any
+                //  print action; SAVE & PRINT reloads the persisted Faktur and
+                //  prints that reloaded final version (never the in-memory draft).
+                //  Only the saved Faktur is the official document; the draft
+                //  preview is never printed as final. No auto-print on preview
+                //  open; no preview logging/audit; template selection unchanged.
                 var faktur = _saveFakturWorker.Execute(req);
                 var customer = _customerDal.GetData(faktur);
                 SavePiutang(faktur);
@@ -1007,17 +1015,29 @@ namespace btr.distrib.SalesContext.FakturAgg
                     .Build();
                 LastIdLabel.Text = $@"{fakturDb.FakturId} - {fakturDb.FakturCode}".Trim();
 
-                //  SAVE persists without printing; SAVE & PRINT prints the
-                //  finalized document (final reload/print refined in SL-06)
+                //  AC1: SAVE persists and closes without invoking any print action.
                 if (choice == FakturPreviewChoice.Save)
                     return;
 
+                //  AC2/AC5: SAVE & PRINT prints the reloaded persisted version
+                //  (final generated number for NEW included), not the draft.
+                //  Refresh display dependencies from the persisted version;
+                //  fall back to the save-time customer if the reload read fails.
+                CustomerModel persistedCustomer;
+                try
+                {
+                    persistedCustomer = _customerDal.GetData(fakturDb);
+                }
+                catch (KeyNotFoundException)
+                {
+                    persistedCustomer = customer;
+                }
                 var user = _userDal.GetData(fakturDb) ?? new UserModel
                 {
                     UserId = fakturDb.UserId,
                     UserName = fakturDb.UserId
                 };
-                var fakturPrintout = new FakturPrintOutDto(fakturDb, customer, user, isKlaim);
+                var fakturPrintout = new FakturPrintOutDto(fakturDb, persistedCustomer, user, isKlaim);
                 PrintFakturRdlc(fakturPrintout);
             }
             catch (KeyNotFoundException ex)
@@ -1296,6 +1316,11 @@ namespace btr.distrib.SalesContext.FakturAgg
             };
             var rdlcViewerForm = new RdlcViewerForm();
             rdlcViewerForm.SetReportData(printOutTemplate, listDataset);
+            //  SL-06 (D-012): final print viewer shows the persisted final
+            //  number, visually distinct from the [DRAFT] preview. No SAVE
+            //  panel here (read-only final); toolbar print stays available.
+            //  Template/CLIENT_ID selection above is unchanged (D-005 review focus).
+            rdlcViewerForm.Text = $"Faktur Print (FINAL) - {faktur.FakturCode}";
             rdlcViewerForm.ShowDialog();
         }
 
