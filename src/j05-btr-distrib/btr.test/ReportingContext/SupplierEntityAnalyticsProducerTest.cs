@@ -10,6 +10,10 @@ using btr.application.ReportingContext.EntityAnalyticsAgg.Options;
 using btr.application.ReportingContext.EntityAnalyticsAgg.Producers;
 using btr.application.ReportingContext.EntityAnalyticsAgg.Registrars;
 using btr.application.ReportingContext.EntityAnalyticsAgg.Services;
+using btr.application.ReportingContext.PrincipalAnalyticsAgg;
+using btr.application.ReportingContext.PrincipalAnalyticsAgg.Contracts;
+using btr.application.ReportingContext.PrincipalAnalyticsAgg.Models;
+using btr.application.ReportingContext.PrincipalAnalyticsAgg.Services;
 using FluentAssertions;
 using Xunit;
 
@@ -129,6 +133,193 @@ namespace btr.test.ReportingContext
             registry.TryGetMetadata("PU-KPI-001", out var purchase).Should().BeTrue();
             purchase.TrendEligible.Should().BeTrue();
             purchase.RankEligible.Should().BeTrue();
+        }
+
+        [Fact]
+        public void Produce_ExposesPacingAchievementAndYoyMtdGrowthToL0()
+        {
+            var repository = new RecordingRepository();
+            var producer = CreateTimeAwareProducer(
+                repository,
+                salesOut: SalesOut(2026, 6, OwnedSalesOut("S001", "Principal A", 1000m)),
+                target: Targets(2026, 6, TargetRow("S001", "Principal A", 800m)),
+                periodYear: 2026,
+                currentRangeAmount: 1_500_000m,
+                priorRangeAmount: 1_000_000m);
+            var generatedAt = new DateTime(2026, 6, 15, 10, 0, 0);
+
+            producer.Produce(CreateContext(generatedAt, CreatePortfolioSupplier()));
+
+            repository.Rows.Should().ContainSingle(r =>
+                r.EntityId == "S001"
+                && r.KpiId == PrincipalKpiCatalog.PacingAchievementPercentageId
+                && r.NumericValue == 250m);
+            repository.Rows.Should().ContainSingle(r =>
+                r.EntityId == "S001"
+                && r.KpiId == PrincipalKpiCatalog.YoyMtdGrowthId
+                && r.NumericValue == 50m);
+        }
+
+        [Fact]
+        public void Produce_SuppressesTimeAwareKpisWhenConfidenceGuardsBreached()
+        {
+            var repository = new RecordingRepository();
+            var producer = CreateTimeAwareProducer(
+                repository,
+                salesOut: SalesOut(2026, 6, OwnedSalesOut("S001", "Principal A", 1000m)),
+                target: Targets(2026, 6, TargetRow("S001", "Principal A", 800m)),
+                periodYear: 2026,
+                currentRangeAmount: 1200m,
+                priorRangeAmount: 500_000m);
+            var generatedAt = new DateTime(2026, 6, 3, 10, 0, 0);
+            producer.Produce(CreateContext(generatedAt, CreatePortfolioSupplier()));
+
+            repository.Rows.Should().ContainSingle(r =>
+                r.EntityId == "S001"
+                && r.KpiId == PrincipalKpiCatalog.PacingAchievementPercentageId
+                && r.NumericValue == null);
+            repository.Rows.Should().ContainSingle(r =>
+                r.EntityId == "S001"
+                && r.KpiId == PrincipalKpiCatalog.YoyMtdGrowthId
+                && r.NumericValue == null);
+        }
+
+        [Fact]
+        public void Produce_TimeAwareKpisDoNotAlterExistingPrincipalKpis()
+        {
+            var repository = new RecordingRepository();
+            var producer = CreateTimeAwareProducer(
+                repository,
+                salesOut: SalesOut(2026, 6, OwnedSalesOut("S001", "Principal A", 1000m)),
+                target: Targets(2026, 6, TargetRow("S001", "Principal A", 800m)),
+                periodYear: 2026,
+                currentRangeAmount: 1_500_000m,
+                priorRangeAmount: 1_000_000m);
+            var generatedAt = new DateTime(2026, 6, 15, 10, 0, 0);
+
+            producer.Produce(CreateContext(generatedAt, CreatePortfolioSupplier()));
+
+            repository.Rows.Should().ContainSingle(r =>
+                r.EntityId == "S001" && r.KpiId == PrincipalKpiCatalog.SalesOutId && r.NumericValue == 1000m);
+            repository.Rows.Should().ContainSingle(r =>
+                r.EntityId == "S001" && r.KpiId == PrincipalKpiCatalog.TargetId && r.NumericValue == 800m);
+
+            var duplicates = repository.Rows
+                .GroupBy(r => new { r.EntityId, r.KpiId })
+                .Where(g => g.Count() > 1)
+                .Select(g => $"{g.Key.EntityId}/{g.Key.KpiId}")
+                .ToList();
+            duplicates.Should().BeEmpty();
+        }
+
+        private static SupplierEntityAnalyticsProducer CreateTimeAwareProducer(
+            RecordingRepository repository,
+            PrincipalSalesOutAggregateResult salesOut,
+            PrincipalTargetAggregateResult target,
+            int periodYear,
+            decimal currentRangeAmount,
+            decimal priorRangeAmount)
+        {
+            var entityTypes = new EntityTypeRegistry();
+            entityTypes.Register(new EntityTypeRegistration
+            {
+                EntityTypeCode = EntityTypeCode.Supplier,
+                DisplayName = "Supplier",
+                KpiPackId = SupplierEntityAnalyticsRegistrar.KpiPackId,
+                RelationshipPackId = SupplierRelationshipCatalog.PackId,
+                PeerGroupRuleId = PeerGroupResolver.SupplierAllActive
+            });
+
+            var registry = new EntityAnalyticsKpiRegistry(entityTypes);
+            new SupplierEntityAnalyticsRegistrar().Register(
+                entityTypes,
+                registry,
+                new EntityAnalyticsDimensionLabelRegistry());
+
+            var rankingEngine = new EntityRankingEngine(
+                repository,
+                registry,
+                entityTypes,
+                Microsoft.Extensions.Options.Options.Create(new EntityAnalyticsOptions()));
+
+            var attentionSignals = new EntityAttentionSignalRegistry();
+            SupplierAttentionSignalCatalog.Register(attentionSignals);
+
+            return new SupplierEntityAnalyticsProducer(
+                repository,
+                registry,
+                new NoOpMonthCloseService(),
+                rankingEngine,
+                new EntityAttentionEngine(repository),
+                new EntityRelationshipEngine(
+                    repository,
+                    new EntityRelationshipDefinitionRegistry(entityTypes),
+                    entityTypes),
+                new EntityRadarEngine(repository, registry, entityTypes),
+                attentionSignals,
+                new FakeSalesOutSnapshotDal(salesOut),
+                null,
+                null,
+                new FakeTargetSnapshotDal(target),
+                null,
+                null,
+                null,
+                null,
+                null,
+                new PrincipalPacingAchievementComposer(),
+                new PrincipalYoyMtdGrowthComposer(
+                    new FakeRangeEvidenceDal(periodYear, currentRangeAmount, priorRangeAmount)),
+                new PrincipalConfidenceGuard(registry));
+        }
+
+        private static PrincipalSalesOutAggregateResult SalesOut(
+            int year,
+            int month,
+            params PrincipalSalesOutRow[] rows)
+        {
+            return new PrincipalSalesOutAggregateResult
+            {
+                KpiId = PrincipalKpiCatalog.SalesOutId,
+                PeriodYear = year,
+                PeriodMonth = month,
+                Principals = rows.ToList()
+            };
+        }
+
+        private static PrincipalSalesOutRow OwnedSalesOut(string supplierId, string name, decimal amount)
+        {
+            return new PrincipalSalesOutRow
+            {
+                KpiId = PrincipalKpiCatalog.SalesOutId,
+                SupplierId = supplierId,
+                SupplierName = name,
+                SalesOutAmount = amount
+            };
+        }
+
+        private static PrincipalTargetAggregateResult Targets(
+            int year,
+            int month,
+            params PrincipalTargetRow[] rows)
+        {
+            return new PrincipalTargetAggregateResult
+            {
+                KpiId = PrincipalKpiCatalog.TargetId,
+                PeriodYear = year,
+                PeriodMonth = month,
+                Principals = rows.ToList()
+            };
+        }
+
+        private static PrincipalTargetRow TargetRow(string supplierId, string name, decimal targetAmount)
+        {
+            return new PrincipalTargetRow
+            {
+                KpiId = PrincipalKpiCatalog.TargetId,
+                SupplierId = supplierId,
+                SupplierName = name,
+                TargetAmount = targetAmount
+            };
         }
 
         private static SupplierEntityAnalyticsProducer CreateProducer(RecordingRepository repository)
@@ -276,6 +467,71 @@ namespace btr.test.ReportingContext
                 PercentOfInventory = 12m,
                 IsActiveMtd = true
             };
+        }
+
+        private sealed class FakeSalesOutSnapshotDal : IPrincipalSalesOutSnapshotDal
+        {
+            public FakeSalesOutSnapshotDal(PrincipalSalesOutAggregateResult current)
+            {
+                Current = current;
+            }
+
+            public PrincipalSalesOutAggregateResult Current { get; set; }
+
+            public PrincipalSalesOutAggregateResult GetCurrent() => Current;
+
+            public void ReplaceCurrent(PrincipalSalesOutAggregateResult result, string refreshLogId)
+            {
+                Current = result;
+            }
+        }
+
+        private sealed class FakeTargetSnapshotDal : IPrincipalTargetSnapshotDal
+        {
+            public FakeTargetSnapshotDal(PrincipalTargetAggregateResult current)
+            {
+                Current = current;
+            }
+
+            public PrincipalTargetAggregateResult Current { get; set; }
+
+            public PrincipalTargetAggregateResult GetCurrent() => Current;
+
+            public void ReplaceCurrent(PrincipalTargetAggregateResult result, string refreshLogId)
+            {
+                Current = result;
+            }
+        }
+
+        private sealed class FakeRangeEvidenceDal : IPrincipalSalesOutRangeEvidenceDal
+        {
+            private readonly int _periodYear;
+            private readonly decimal _currentAmount;
+            private readonly decimal _priorAmount;
+
+            public FakeRangeEvidenceDal(int periodYear, decimal currentAmount, decimal priorAmount)
+            {
+                _periodYear = periodYear;
+                _currentAmount = currentAmount;
+                _priorAmount = priorAmount;
+            }
+
+            public IReadOnlyList<PrincipalSalesOutRangeEvidenceRow> ListSalesOutByRange(
+                DateTime startDate,
+                DateTime endDate)
+            {
+                var amount = startDate.Year == _periodYear ? _currentAmount : _priorAmount;
+                return new List<PrincipalSalesOutRangeEvidenceRow>
+                {
+                    new PrincipalSalesOutRangeEvidenceRow
+                    {
+                        SupplierId = "S001",
+                        SupplierName = "Principal A",
+                        SalesOutAmount = amount,
+                        LineCount = 1
+                    }
+                };
+            }
         }
 
         private sealed class NoOpMonthCloseService : IEntityAnalyticsMonthCloseService

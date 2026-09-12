@@ -12,6 +12,7 @@ using btr.application.ReportingContext.EntityAnalyticsAgg.Services;
 using btr.application.ReportingContext.PrincipalAnalyticsAgg;
 using btr.application.ReportingContext.PrincipalAnalyticsAgg.Contracts;
 using btr.application.ReportingContext.PrincipalAnalyticsAgg.Models;
+using btr.application.ReportingContext.PrincipalAnalyticsAgg.Services;
 using btr.nuna.Domain;
 
 namespace btr.application.ReportingContext.EntityAnalyticsAgg.Producers
@@ -39,6 +40,9 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Producers
         private readonly IPrincipalYoyGrowthSnapshotDal _yoyGrowthSnapshotDal;
         private readonly IPrincipalPurchaseInSnapshotDal _purchaseInSnapshotDal;
         private readonly IPrincipalInventorySnapshotDal _inventorySnapshotDal;
+        private readonly PrincipalPacingAchievementComposer _pacingAchievementComposer;
+        private readonly PrincipalYoyMtdGrowthComposer _yoyMtdGrowthComposer;
+        private readonly PrincipalConfidenceGuard _confidenceGuard;
 
         public SupplierEntityAnalyticsProducer(
             IEntityAnalyticsRepository repository,
@@ -57,7 +61,10 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Producers
             IPrincipalMomGrowthSnapshotDal momGrowthSnapshotDal = null,
             IPrincipalYoyGrowthSnapshotDal yoyGrowthSnapshotDal = null,
             IPrincipalPurchaseInSnapshotDal purchaseInSnapshotDal = null,
-            IPrincipalInventorySnapshotDal inventorySnapshotDal = null)
+            IPrincipalInventorySnapshotDal inventorySnapshotDal = null,
+            PrincipalPacingAchievementComposer pacingAchievementComposer = null,
+            PrincipalYoyMtdGrowthComposer yoyMtdGrowthComposer = null,
+            PrincipalConfidenceGuard confidenceGuard = null)
         {
             _repository = repository;
             _kpiRegistry = kpiRegistry;
@@ -76,6 +83,9 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Producers
             _yoyGrowthSnapshotDal = yoyGrowthSnapshotDal;
             _purchaseInSnapshotDal = purchaseInSnapshotDal;
             _inventorySnapshotDal = inventorySnapshotDal;
+            _pacingAchievementComposer = pacingAchievementComposer;
+            _yoyMtdGrowthComposer = yoyMtdGrowthComposer;
+            _confidenceGuard = confidenceGuard;
         }
 
         public void Produce(EntityAnalyticsProduceContext context)
@@ -95,6 +105,7 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Producers
             var yoyGrowth = ReadOwnedYoyGrowth(periodYear, periodMonth);
             var purchaseIn = ReadOwnedPurchaseIn(periodYear, periodMonth);
             var inventory = ReadOwnedInventory();
+            var timeAwareKpis = ReadTimeAwareKpis(context);
 
             if (portfolio == null || portfolio.Count == 0)
             {
@@ -134,6 +145,9 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Producers
                 AppendSnapshotOnlyInventory(
                     retainedRows, retainedMonthly, periodYear, periodMonth, context.GeneratedAt, inventory);
                 RetainPersistedInventory(retainedRows, context.GeneratedAt, inventory);
+                AppendSnapshotOnlyTimeAwareKpis(
+                    retainedRows, retainedMonthly, periodYear, periodMonth, context.GeneratedAt, timeAwareKpis);
+                RetainPersistedTimeAwareKpis(retainedRows, context.GeneratedAt, timeAwareKpis);
 
                 EntityAnalyticsProducerReplaySupport.PersistL0(
                     _repository, context, EntityTypeCode.Supplier, retainedRows);
@@ -182,6 +196,7 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Producers
                 ComposeYoyGrowth(rows, entityId, entityCode, periodYear, periodMonth, generatedAt, yoyGrowth);
                 ComposePurchaseIn(rows, monthlyRows, entityId, entityCode, periodYear, periodMonth, generatedAt, purchaseIn);
                 ComposeInventory(rows, monthlyRows, entityId, entityCode, periodYear, periodMonth, generatedAt, inventory);
+                ComposeTimeAwareKpis(rows, monthlyRows, entityId, entityCode, periodYear, periodMonth, generatedAt, timeAwareKpis);
                 signalsByEntity[entityId] = BuildAttentionSnapshots(
                     entityId,
                     entityCode,
@@ -207,6 +222,8 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Producers
             RetainPersistedPurchaseIn(rows, context.GeneratedAt, purchaseIn);
             AppendSnapshotOnlyInventory(rows, monthlyRows, periodYear, periodMonth, context.GeneratedAt, inventory);
             RetainPersistedInventory(rows, context.GeneratedAt, inventory);
+            AppendSnapshotOnlyTimeAwareKpis(rows, monthlyRows, periodYear, periodMonth, context.GeneratedAt, timeAwareKpis);
+            RetainPersistedTimeAwareKpis(rows, context.GeneratedAt, timeAwareKpis);
 
             EntityAnalyticsProducerReplaySupport.PersistL0(_repository, context, EntityTypeCode.Supplier, rows);
 
@@ -1259,6 +1276,230 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Producers
             }
         }
 
+        private TimeAwareKpiComposition ReadTimeAwareKpis(EntityAnalyticsProduceContext context)
+        {
+            var existingPacing = _repository.GetCurrentKpiPopulation(
+                EntityTypeCode.Supplier,
+                PrincipalKpiCatalog.PacingAchievementPercentageId);
+            var existingYoyMtd = _repository.GetCurrentKpiPopulation(
+                EntityTypeCode.Supplier,
+                PrincipalKpiCatalog.YoyMtdGrowthId);
+
+            var pacingBySupplierId = new Dictionary<string, PrincipalPacingAchievementRow>(StringComparer.OrdinalIgnoreCase);
+            var yoyMtdBySupplierId = new Dictionary<string, PrincipalYoyMtdGrowthRow>(StringComparer.OrdinalIgnoreCase);
+
+            if (_pacingAchievementComposer == null && _yoyMtdGrowthComposer == null)
+            {
+                return new TimeAwareKpiComposition(
+                    false, pacingBySupplierId, yoyMtdBySupplierId, existingPacing, existingYoyMtd);
+            }
+
+            var businessDate = context.BusinessDate == default
+                ? context.GeneratedAt.Date
+                : context.BusinessDate.Date;
+            var period = AnalyticsPeriodCalculator.Create(businessDate, context.GeneratedAt);
+
+            if (_pacingAchievementComposer != null)
+            {
+                var pacing = _pacingAchievementComposer.Compose(
+                    _targetSnapshotDal?.GetCurrent(),
+                    _salesOutSnapshotDal?.GetCurrent(),
+                    period,
+                    context.GeneratedAt);
+                _confidenceGuard?.ApplyPacingElapsedDaysGuards(pacing, period.ElapsedDays);
+                IndexPacingAchievement(pacingBySupplierId, pacing);
+            }
+
+            if (_yoyMtdGrowthComposer != null)
+            {
+                var yoyMtd = _yoyMtdGrowthComposer.Compose(period, context.GeneratedAt);
+                _confidenceGuard?.ApplyYoyMtdBaseGuards(yoyMtd);
+                IndexYoyMtdGrowth(yoyMtdBySupplierId, yoyMtd);
+            }
+
+            return new TimeAwareKpiComposition(
+                true, pacingBySupplierId, yoyMtdBySupplierId, existingPacing, existingYoyMtd);
+        }
+
+        private static void IndexPacingAchievement(
+            IDictionary<string, PrincipalPacingAchievementRow> index,
+            PrincipalPacingAchievementResult result)
+        {
+            foreach (var row in result?.Principals ?? new List<PrincipalPacingAchievementRow>())
+            {
+                if (row == null || string.IsNullOrWhiteSpace(row.SupplierId))
+                    continue;
+
+                var supplierId = row.SupplierId.Trim();
+                if (!index.ContainsKey(supplierId))
+                    index[supplierId] = row;
+            }
+        }
+
+        private static void IndexYoyMtdGrowth(
+            IDictionary<string, PrincipalYoyMtdGrowthRow> index,
+            PrincipalYoyMtdGrowthResult result)
+        {
+            foreach (var row in result?.Principals ?? new List<PrincipalYoyMtdGrowthRow>())
+            {
+                if (row == null || string.IsNullOrWhiteSpace(row.SupplierId))
+                    continue;
+
+                var supplierId = row.SupplierId.Trim();
+                if (!index.ContainsKey(supplierId))
+                    index[supplierId] = row;
+            }
+        }
+
+        private void ComposeTimeAwareKpis(
+            ICollection<EntityAnalyticsCurrentRow> rows,
+            ICollection<EntityAnalyticsMonthlyRow> monthlyRows,
+            string entityId,
+            string entityCode,
+            int periodYear,
+            int periodMonth,
+            DateTime generatedAt,
+            TimeAwareKpiComposition timeAware)
+        {
+            if (timeAware.Available)
+            {
+                if (timeAware.PacingBySupplierId.TryGetValue(entityId, out var pacing))
+                {
+                    AddPacingAchievementRow(rows, monthlyRows, entityId, entityCode,
+                        pacing.PacingAchievementPercentage, periodYear, periodMonth, generatedAt);
+                }
+
+                if (timeAware.YoyMtdBySupplierId.TryGetValue(entityId, out var yoyMtd))
+                {
+                    AddYoyMtdGrowthRow(rows, monthlyRows, entityId, entityCode,
+                        yoyMtd.YoyMtdGrowthPercentage, periodYear, periodMonth, generatedAt);
+                }
+
+                return;
+            }
+
+            var persistedPacing = FindExistingMetric(timeAware.ExistingPacing, entityId);
+            if (persistedPacing != null)
+            {
+                AddPacingAchievementRow(rows, monthlyRows, entityId, entityCode,
+                    persistedPacing.NumericValue, 0, 0, generatedAt);
+            }
+
+            var persistedYoyMtd = FindExistingMetric(timeAware.ExistingYoyMtd, entityId);
+            if (persistedYoyMtd != null)
+            {
+                AddYoyMtdGrowthRow(rows, monthlyRows, entityId, entityCode,
+                    persistedYoyMtd.NumericValue, 0, 0, generatedAt);
+            }
+        }
+
+        private void AppendSnapshotOnlyTimeAwareKpis(
+            ICollection<EntityAnalyticsCurrentRow> rows,
+            ICollection<EntityAnalyticsMonthlyRow> monthlyRows,
+            int periodYear,
+            int periodMonth,
+            DateTime generatedAt,
+            TimeAwareKpiComposition timeAware)
+        {
+            if (!timeAware.Available)
+                return;
+
+            foreach (var pacing in timeAware.PacingBySupplierId.Values)
+            {
+                var entityId = pacing.SupplierId.Trim();
+                if (ContainsKpi(rows, entityId, PrincipalKpiCatalog.PacingAchievementPercentageId))
+                    continue;
+
+                EnsureIdentity(rows, entityId, entityId, pacing.SupplierName, generatedAt);
+                AddPacingAchievementRow(rows, monthlyRows, entityId, entityId,
+                    pacing.PacingAchievementPercentage, periodYear, periodMonth, generatedAt);
+            }
+
+            foreach (var yoyMtd in timeAware.YoyMtdBySupplierId.Values)
+            {
+                var entityId = yoyMtd.SupplierId.Trim();
+                if (ContainsKpi(rows, entityId, PrincipalKpiCatalog.YoyMtdGrowthId))
+                    continue;
+
+                EnsureIdentity(rows, entityId, entityId, yoyMtd.SupplierName, generatedAt);
+                AddYoyMtdGrowthRow(rows, monthlyRows, entityId, entityId,
+                    yoyMtd.YoyMtdGrowthPercentage, periodYear, periodMonth, generatedAt);
+            }
+        }
+
+        private void RetainPersistedTimeAwareKpis(
+            ICollection<EntityAnalyticsCurrentRow> rows,
+            DateTime generatedAt,
+            TimeAwareKpiComposition timeAware)
+        {
+            if (timeAware.Available)
+                return;
+
+            foreach (var persisted in timeAware.ExistingPacing)
+            {
+                if (string.IsNullOrWhiteSpace(persisted.EntityId))
+                    continue;
+
+                var entityId = persisted.EntityId.Trim();
+                if (ContainsKpi(rows, entityId, PrincipalKpiCatalog.PacingAchievementPercentageId))
+                    continue;
+
+                var entityCode = string.IsNullOrWhiteSpace(persisted.EntityCode) ? entityId : persisted.EntityCode.Trim();
+                CopyIdentity(rows, entityId, entityCode, generatedAt);
+                AddPacingAchievementRow(rows, null, entityId, entityCode, persisted.NumericValue, 0, 0, generatedAt);
+            }
+
+            foreach (var persisted in timeAware.ExistingYoyMtd)
+            {
+                if (string.IsNullOrWhiteSpace(persisted.EntityId))
+                    continue;
+
+                var entityId = persisted.EntityId.Trim();
+                if (ContainsKpi(rows, entityId, PrincipalKpiCatalog.YoyMtdGrowthId))
+                    continue;
+
+                var entityCode = string.IsNullOrWhiteSpace(persisted.EntityCode) ? entityId : persisted.EntityCode.Trim();
+                CopyIdentity(rows, entityId, entityCode, generatedAt);
+                AddYoyMtdGrowthRow(rows, null, entityId, entityCode, persisted.NumericValue, 0, 0, generatedAt);
+            }
+        }
+
+        private static EntityAnalyticsPeriodMetricRow FindExistingMetric(
+            IReadOnlyList<EntityAnalyticsPeriodMetricRow> existing,
+            string entityId)
+        {
+            return existing.FirstOrDefault(row =>
+                string.Equals(row.EntityId, entityId, StringComparison.OrdinalIgnoreCase));
+        }
+
+        private void AddPacingAchievementRow(
+            ICollection<EntityAnalyticsCurrentRow> rows,
+            ICollection<EntityAnalyticsMonthlyRow> monthlyRows,
+            string entityId,
+            string entityCode,
+            decimal? percentage,
+            int periodYear,
+            int periodMonth,
+            DateTime generatedAt)
+        {
+            AddKpiRow(rows, monthlyRows, entityId, entityCode,
+                PrincipalKpiCatalog.PacingAchievementPercentageId, percentage, periodYear, periodMonth, generatedAt);
+        }
+
+        private void AddYoyMtdGrowthRow(
+            ICollection<EntityAnalyticsCurrentRow> rows,
+            ICollection<EntityAnalyticsMonthlyRow> monthlyRows,
+            string entityId,
+            string entityCode,
+            decimal? percentage,
+            int periodYear,
+            int periodMonth,
+            DateTime generatedAt)
+        {
+            AddKpiRow(rows, monthlyRows, entityId, entityCode,
+                PrincipalKpiCatalog.YoyMtdGrowthId, percentage, periodYear, periodMonth, generatedAt);
+        }
+
         private void AddInventoryRows(
             ICollection<EntityAnalyticsCurrentRow> rows,
             ICollection<EntityAnalyticsMonthlyRow> monthlyRows,
@@ -1730,6 +1971,33 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Producers
             public IReadOnlyList<EntityAnalyticsPeriodMetricRow> Existing => ExistingValue
                 .Concat(ExistingDays)
                 .ToList();
+        }
+
+        private sealed class TimeAwareKpiComposition
+        {
+            public TimeAwareKpiComposition(
+                bool available,
+                IReadOnlyDictionary<string, PrincipalPacingAchievementRow> pacingBySupplierId,
+                IReadOnlyDictionary<string, PrincipalYoyMtdGrowthRow> yoyMtdBySupplierId,
+                IReadOnlyList<EntityAnalyticsPeriodMetricRow> existingPacing,
+                IReadOnlyList<EntityAnalyticsPeriodMetricRow> existingYoyMtd)
+            {
+                Available = available;
+                PacingBySupplierId = pacingBySupplierId ?? new Dictionary<string, PrincipalPacingAchievementRow>(StringComparer.OrdinalIgnoreCase);
+                YoyMtdBySupplierId = yoyMtdBySupplierId ?? new Dictionary<string, PrincipalYoyMtdGrowthRow>(StringComparer.OrdinalIgnoreCase);
+                ExistingPacing = existingPacing ?? Array.Empty<EntityAnalyticsPeriodMetricRow>();
+                ExistingYoyMtd = existingYoyMtd ?? Array.Empty<EntityAnalyticsPeriodMetricRow>();
+            }
+
+            public bool Available { get; }
+
+            public IReadOnlyDictionary<string, PrincipalPacingAchievementRow> PacingBySupplierId { get; }
+
+            public IReadOnlyDictionary<string, PrincipalYoyMtdGrowthRow> YoyMtdBySupplierId { get; }
+
+            public IReadOnlyList<EntityAnalyticsPeriodMetricRow> ExistingPacing { get; }
+
+            public IReadOnlyList<EntityAnalyticsPeriodMetricRow> ExistingYoyMtd { get; }
         }
 
         private IEnumerable<EntityAnalyticsMonthlyRow> BuildMonthlyRows(
