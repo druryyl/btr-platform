@@ -324,7 +324,7 @@ Prove the re-ordered flow across NEW, EDIT, Faktur Klaim, and voided modes: prev
 | SL-04 | GO | 2026-09-12: SL-04 implemented (Save as preview entry point; shared validation + shared construction; SAVE / SAVE & PRINT / Cancel dialog; persist-only-after-confirm) | 2026-09-12: GO — all 6 ACs verified, no findings above INFO | — |
 | SL-05 | GO | 2026-09-12: SL-05 implemented (mode-aware draft title; void-only Preview/Print with read-only viewer; EDIT/Klaim via shared path) | 2026-09-12: GO — all 6 ACs verified, no findings above INFO | — |
 | SL-06 | GO | 2026-09-12: SL-06 implemented (SAVE closes without print; SAVE & PRINT reloads persisted Faktur + refreshes customer/user and prints final with FINAL title; failed save shows message with no print; no auto-print; no audit/paper-control artifacts) | 2026-09-12: GO — all 5 ACs verified, no findings above INFO | — |
-| SL-07 | PLANNED | — | — | — |
+| SL-07 | GO | 2026-09-12: SL-07 implemented (cross-mode regression + side-effect-free verification; verification-only, no production code change; btr.application builds 0W/0E) | 2026-09-12: GO — all 6 ACs verified, no findings above INFO | — |
 
 Lifecycle per slice:
 
