@@ -7,6 +7,13 @@ using System.Windows.Forms;
 
 namespace btr.distrib.SalesContext.FakturAgg
 {
+    public enum FakturPreviewChoice
+    {
+        Cancel,
+        Save,
+        SaveAndPrint
+    }
+
     public partial class RdlcViewerForm : Form
     {
         private string _reportName;
@@ -14,6 +21,12 @@ namespace btr.distrib.SalesContext.FakturAgg
         private bool _isLandscape;
         private PaperSize _currentPaperSize;
         private ToolStripButton _paperSizeButton;
+
+        /// <summary>
+        /// Preview dialog outcome (SL-04, D-003/D-005).
+        /// Defaults to Cancel so closing the dialog persists nothing.
+        /// </summary>
+        public FakturPreviewChoice PreviewChoice { get; private set; } = FakturPreviewChoice.Cancel;
 
         // Define standard paper sizes
         private readonly PaperSize _letterSize = new PaperSize("Letter", 850, 1100);
@@ -25,6 +38,41 @@ namespace btr.distrib.SalesContext.FakturAgg
             TheViewer.Print += TheViewer_Print;
             _currentPaperSize = _letterSize;
             AddCustomToolbarButton();
+            SaveButton.Click += SaveButton_Click;
+            SavePrintButton.Click += SavePrintButton_Click;
+            CancelPreviewButton.Click += CancelPreviewButton_Click;
+        }
+
+        /// <summary>
+        /// Opt-in SAVE / SAVE &amp; PRINT / Cancel actions for the Faktur
+        /// preview-before-save dialog (SL-04, D-003/D-005).
+        /// Other RdlcViewerForm callers are unaffected (panel stays hidden).
+        /// </summary>
+        public void EnableSaveConfirm()
+        {
+            PanelBottom.Visible = true;
+            PreviewChoice = FakturPreviewChoice.Cancel;
+        }
+
+        private void SaveButton_Click(object sender, EventArgs e)
+        {
+            PreviewChoice = FakturPreviewChoice.Save;
+            DialogResult = DialogResult.OK;
+            Close();
+        }
+
+        private void SavePrintButton_Click(object sender, EventArgs e)
+        {
+            PreviewChoice = FakturPreviewChoice.SaveAndPrint;
+            DialogResult = DialogResult.OK;
+            Close();
+        }
+
+        private void CancelPreviewButton_Click(object sender, EventArgs e)
+        {
+            PreviewChoice = FakturPreviewChoice.Cancel;
+            DialogResult = DialogResult.Cancel;
+            Close();
         }
 
         private void AddCustomToolbarButton()
