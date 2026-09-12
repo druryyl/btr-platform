@@ -48,6 +48,8 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Queries
 
         public string ActiveFilterDescription { get; set; }
 
+        public string DimensionLabel { get; set; }
+
         public DateTime? GeneratedAt { get; set; }
 
         public List<PopulationMapPointDto> Points { get; set; } = new List<PopulationMapPointDto>();

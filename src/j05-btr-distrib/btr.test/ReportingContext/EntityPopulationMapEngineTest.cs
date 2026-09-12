@@ -16,6 +16,7 @@ namespace btr.test.ReportingContext
         private readonly PopulationMapTestRepository _repository = new PopulationMapTestRepository();
         private readonly EntityTypeRegistry _entityTypes = new EntityTypeRegistry();
         private readonly EntityAnalyticsKpiRegistry _kpiRegistry;
+        private readonly EntityAnalyticsDimensionLabelRegistry _dimensionLabels = new EntityAnalyticsDimensionLabelRegistry();
         private readonly EntityPopulationMapEngine _engine;
         private static readonly DateTime GeneratedAt = new DateTime(2026, 6, 24, 8, 0, 0);
 
@@ -28,16 +29,28 @@ namespace btr.test.ReportingContext
                 KpiPackId = CustomerEntityAnalyticsRegistrar.KpiPackId,
                 PeerGroupRuleId = PeerGroupResolver.CustomerWilayah
             });
+            _entityTypes.Register(new EntityTypeRegistration
+            {
+                EntityTypeCode = EntityTypeCode.Supplier,
+                DisplayName = "Supplier",
+                KpiPackId = SupplierEntityAnalyticsRegistrar.KpiPackId,
+                PeerGroupRuleId = PeerGroupResolver.SupplierAllActive
+            });
             _kpiRegistry = new EntityAnalyticsKpiRegistry(_entityTypes);
             new CustomerEntityAnalyticsRegistrar().Register(
                 _entityTypes,
                 _kpiRegistry,
-                new EntityAnalyticsDimensionLabelRegistry());
+                _dimensionLabels);
+            new SupplierEntityAnalyticsRegistrar().Register(
+                _entityTypes,
+                _kpiRegistry,
+                _dimensionLabels);
             _engine = new EntityPopulationMapEngine(
                 _repository,
                 _kpiRegistry,
                 _entityTypes,
-                new EntityKpiEnvelopeFormatter());
+                new EntityKpiEnvelopeFormatter(),
+                _dimensionLabels);
         }
 
         [Fact]
@@ -129,6 +142,46 @@ namespace btr.test.ReportingContext
             point.IsActive.Should().BeTrue();
         }
 
+        [Fact]
+        public void BuildPopulationMap_ProjectsDimensionLabel_ForDimensionedEntityType()
+        {
+            SeedEntity(
+                entityId: "C005",
+                entityCode: "CUST005",
+                displayName: "Dimensioned Customer",
+                axisX: 100m,
+                axisY: 200m,
+                dimensionValue: "Bandung");
+
+            var result = _engine.BuildPopulationMap(new PopulationMapRequest
+            {
+                EntityType = EntityTypeCode.Customer
+            });
+
+            result.DimensionLabel.Should().Be("Wilayah");
+            result.Points.Single(p => p.EntityId == "C005").DimensionValue.Should().Be("Bandung");
+        }
+
+        [Fact]
+        public void BuildPopulationMap_LeavesDimensionLabelNull_ForUndimensionedEntityType()
+        {
+            SeedEntity(
+                entityId: "S001",
+                entityCode: "SUP001",
+                displayName: "Alpha Principal",
+                axisX: 100m,
+                axisY: 200m,
+                dimensionValue: null,
+                entityType: EntityTypeCode.Supplier);
+
+            var result = _engine.BuildPopulationMap(new PopulationMapRequest
+            {
+                EntityType = EntityTypeCode.Supplier
+            });
+
+            result.DimensionLabel.Should().BeNull();
+        }
+
         private void SeedPopulation(int count)
         {
             for (var i = 1; i <= count; i++)
@@ -149,11 +202,14 @@ namespace btr.test.ReportingContext
             decimal axisX,
             decimal axisY,
             string dimensionValue = "Jakarta",
-            int attentionCount = 0)
+            int attentionCount = 0,
+            string entityType = null)
         {
+            entityType = entityType ?? EntityTypeCode.Customer;
+
             _repository.CurrentRows.Add(new EntityAnalyticsCurrentRow
             {
-                EntityType = EntityTypeCode.Customer,
+                EntityType = entityType,
                 EntityId = entityId,
                 EntityCode = entityCode,
                 KpiId = EntityAnalyticsMetaKpiIds.IsActive,
@@ -165,7 +221,7 @@ namespace btr.test.ReportingContext
             {
                 _repository.CurrentRows.Add(new EntityAnalyticsCurrentRow
                 {
-                    EntityType = EntityTypeCode.Customer,
+                    EntityType = entityType,
                     EntityId = entityId,
                     EntityCode = entityCode,
                     KpiId = EntityAnalyticsMetaKpiIds.DisplayName,
@@ -178,7 +234,7 @@ namespace btr.test.ReportingContext
             {
                 _repository.CurrentRows.Add(new EntityAnalyticsCurrentRow
                 {
-                    EntityType = EntityTypeCode.Customer,
+                    EntityType = entityType,
                     EntityId = entityId,
                     EntityCode = entityCode,
                     KpiId = EntityAnalyticsMetaKpiIds.Wilayah,
@@ -189,7 +245,7 @@ namespace btr.test.ReportingContext
 
             _repository.CurrentRows.Add(new EntityAnalyticsCurrentRow
             {
-                EntityType = EntityTypeCode.Customer,
+                EntityType = entityType,
                 EntityId = entityId,
                 EntityCode = entityCode,
                 KpiId = "CU-KPI-009",
@@ -199,7 +255,7 @@ namespace btr.test.ReportingContext
 
             _repository.CurrentRows.Add(new EntityAnalyticsCurrentRow
             {
-                EntityType = EntityTypeCode.Customer,
+                EntityType = entityType,
                 EntityId = entityId,
                 EntityCode = entityCode,
                 KpiId = "CU-KPI-010",
@@ -211,7 +267,7 @@ namespace btr.test.ReportingContext
             {
                 _repository.AttentionRows.Add(new EntityAnalyticsAttentionEventRow
                 {
-                    EntityType = EntityTypeCode.Customer,
+                    EntityType = entityType,
                     EntityId = entityId,
                     EntityCode = entityCode,
                     SignalCode = $"SIG-{entityId}-{i}",

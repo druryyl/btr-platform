@@ -422,7 +422,7 @@ conflicts and to land after the lens model is stable.
 | PIW-07 | Sales-Out attention categories | GO |
 | PIW-08 | Purchasing relationship drivers | GO |
 | PIW-09 | Purchase-to-Sales-Out Ratio (derived metric) | GO |
-| PIW-10 | Workspace presentation refinements (tooltip/peer) | PLANNED |
+| PIW-10 | Workspace presentation refinements (tooltip/peer) | GO |
 | PIW-11 | Lens-scoped evidence presentation | PLANNED |
 | PIW-12 | Platform-wide Performance Signature retirement | PLANNED |
 | PIW-13 | Data Health backend data | PLANNED |
@@ -445,6 +445,7 @@ IN REVIEW → GO`).
 | PIW-07 | 2026-09-12 | GO | None blocking. INFO-001: five Sales-Out categories registered with new self-descriptive signal codes; no existing EX01/EX02 code maps 1:1 to a category, so code reuse was not applicable — engine/computation untouched, no new attention engine. INFO-002: `dotnet build` of the sln requires VS MSBuild (dotnet SDK lacks VS web-application targets); build/test ran under VS 2022 MSBuild, previously established convention | N/A |
 | PIW-08 | 2026-09-12 | GO | None blocking. INFO-001: purchasing drivers (`TopPurchasedItems`, `PurchaseHistory`) are declarative catalog registrations; no snapshot production/rendering added — consistent with FEASIBILITY §10 ("no additional model") and PIW-03's deferred "catalog registration" note. INFO-002: `PurchaseHistory` is a time-series driver and carries no `TargetEntityType`; inert until a resolution mechanism is introduced (out of slice scope). INFO-003: 11 pre-existing `btr.test.ReportingContext` failures at the parent commit (cash-flow, customer pack, field activity, sales report, inventory-risk, collection, `SupplierEntityAnalyticsProducerTest` fixture missing `RelationshipProjection`) are unrelated; no new failures introduced | N/A |
 | PIW-09 | 2026-09-12 | GO | None blocking. INFO-001: the approved `≈ 1.0` band carries no numeric tolerance in FEASIBILITY GAP-005 / Architecture §8.3; implementation keys bands off the approved `1.0` boundary (exact `1.0` → Balanced) and displays the three-band guide, introducing no new threshold. INFO-002: the lens DTO now also projects `DerivedMetricIds` (PIW-04 exposed the lens config without it); minimal read-only projection of the approved PIW-03 model, needed for config-driven lens scoping. INFO-003: pre-existing `btr.test.ReportingContext` failures unchanged; no new failures | N/A |
+| PIW-10 | 2026-09-12 | GO | None blocking. INFO-001: the population map backend now projects a read-only `PopulationMapResponseDto.DimensionLabel` from the approved `IDimensionLabelRegistry` (outside the §3 impact inventory, which lists only `PopulationMapTooltip.vue`); bounded read-only projection required to satisfy Architecture §7.6 — a data-driven, non-generic dimension label that keeps dimensioned entity types (Customer/Item/Salesman) intact while leaving Principal undimensioned — reusing the same accepted precedent as PIW-09 INFO-002. INFO-002: the Item map tooltip now shows the registry label ("Supplier" for the `SupplierName` dimension; "Category" is the correct label when the Category dimension is active) instead of the previous hardcoded generic "Category" fallback; terminology is data-driven from the approved registry. Pre-existing `btr.test.ReportingContext` failures unchanged (11); no new failures | N/A |
 
 ---
 
@@ -667,3 +668,45 @@ selection, unknown-id ignore, non-KPI treatment) plus the updated
 `GetInvestigationLensesHandlerTest.DerivedMetricIds_AreExposedPerLens` passes. Full frontend tests
 36 files / 281 tests pass; full frontend build (`vue-tsc -b && vite build`) passes; backend build
 (VS MSBuild, `btr.test.csproj`) succeeds; focused backend lens tests 9/9 pass.
+
+### PIW-10 verification note
+
+Applied the tooltip dimension presentation rule and confirmed the Principal peer selector stays
+hidden:
+
+- Backend projection: `EntityPopulationMapEngine` now resolves the population dimension label from
+  the existing `IDimensionLabelRegistry` (per entity type + effective dimension KPI id) and projects
+  it as read-only `PopulationMapResponseDto.DimensionLabel`. The effective dimension is unchanged
+  (`preset.FilterDimensionKpiId` else the registered peer-group rule); `Supplier` presets are
+  undimensioned (`FilterDimensionKpiId = null`, peer rule `supplier-all-active`), so the label is
+  `null` for Principal. No new entity type, KPI ID, registry entry, persistence, or write path —
+  bounded read-only projection, consistent with the accepted PIW-05/PIW-09 precedent
+  (INFO-001 below).
+- Frontend: the tooltip's dimension row is now data-driven. New pure service
+  `btr.portal.web/src/services/populationTooltip.ts` (`resolveTooltipDimensionRow`) returns a
+  `{ label, value }` row only when both a population-level dimension label and a point value exist,
+  and hides the row otherwise. `PopulationMapTooltip.vue` consumes it via a computed — the hardcoded
+  generic "Category" label is removed. For Principal, `DimensionLabel` is `null`, so the dimension
+  row never renders; dimensioned entity types (Customer "Wilayah", Item "Supplier", Salesman
+  "Wilayah") keep their registry label.
+
+Acceptance criteria: (1) `PopulationMapTooltip.vue` hides the dimension row and never shows the
+generic "Category" label when no meaningful Principal dimension exists (IW-GAP-015); verified by
+`populationTooltip.spec.ts` (6 tests) and the backend null-label projection. (2) The Peer Group
+Selector is not rendered for Supplier, and the `supplier-all-active` peer population remains in
+effect (ADR-PIW-007); verified via the existing
+`investigationWorkspaceStore.spec.ts` "keeps the Peer Group Selector hidden for the Principal
+entity type" test (Supplier, > 1 peer rules → `showPeerGroupSelector` false) — no selector change
+was needed, and the backend peer catalog/engine still resolves `supplier-all-active` to the
+undimensioned all-active population.
+
+Focused tests: frontend `populationTooltip.spec.ts` (6 tests: Principal no-dimension hide,
+missing point value hide, missing label hide, null/undefined guards, label+value rendering,
+blank labels/values) plus the store peer-selector test; backend `EntityPopulationMapEngineTest`
+(+2 tests: `BuildPopulationMap_ProjectsDimensionLabel_ForDimensionedEntityType` → "Wilayah",
+`BuildPopulationMap_LeavesDimensionLabelNull_ForUndimensionedEntityType` → null; the fixture now
+wires the shared `IDimensionLabelRegistry` and registers Supplier). Full frontend tests
+37 files / 287 tests pass; full frontend build (`vue-tsc -b && vite build`) passes; backend build
+(VS MSBuild, `btr.test.csproj`) succeeds; focused engine tests 6/6 pass; full `btr.test.ReportingContext`
+failures remain at the pre-existing 11 (cash-flow, customer pack, field activity, sales report,
+inventory-risk, collection, `SupplierEntityAnalyticsProducerTest` fixture), no new failures.

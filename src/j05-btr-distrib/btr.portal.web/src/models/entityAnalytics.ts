@@ -424,6 +424,7 @@ export interface PopulationMapResponse {
   TotalPopulationCount: number
   FilteredPopulationCount: number
   ActiveFilterDescription: string | null
+  DimensionLabel: string | null
   GeneratedAt: string | null
   Points: PopulationMapPoint[]
 }

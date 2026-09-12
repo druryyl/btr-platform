@@ -16,17 +16,20 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Services
         private readonly IKpiRegistry _kpiRegistry;
         private readonly IEntityTypeRegistry _entityTypes;
         private readonly EntityKpiEnvelopeFormatter _formatter;
+        private readonly IDimensionLabelRegistry _dimensionLabels;
 
         public EntityPopulationMapEngine(
             IEntityAnalyticsRepository repository,
             IKpiRegistry kpiRegistry,
             IEntityTypeRegistry entityTypes,
-            EntityKpiEnvelopeFormatter formatter)
+            EntityKpiEnvelopeFormatter formatter,
+            IDimensionLabelRegistry dimensionLabels)
         {
             _repository = repository;
             _kpiRegistry = kpiRegistry;
             _entityTypes = entityTypes;
             _formatter = formatter;
+            _dimensionLabels = dimensionLabels;
         }
 
         public PopulationMapResponseDto BuildPopulationMap(PopulationMapRequest request)
@@ -53,6 +56,7 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Services
             var dimensionKpiId = preset.FilterDimensionKpiId
                 ?? PeerGroupResolver.ResolveDimensionKpiId(
                     _entityTypes.TryGet(request.EntityType, out var reg) ? reg.PeerGroupRuleId : null);
+            var dimensionLabel = ResolveDimensionLabel(request.EntityType, dimensionKpiId);
 
             var population = _repository.GetActivePopulation(request.EntityType, dimensionKpiId);
             var axisXValues = GetKpiValueMap(request.EntityType, preset.AxisXKpiId);
@@ -146,6 +150,7 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Services
                 TotalPopulationCount = population.Count,
                 FilteredPopulationCount = filteredCount,
                 ActiveFilterDescription = BuildFilterDescription(request, filteredCount, population.Count),
+                DimensionLabel = dimensionLabel,
                 GeneratedAt = generatedAt,
                 Points = points
             };
@@ -216,6 +221,16 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Services
         private EntityKpiMetadata ResolveMetadata(string kpiId)
         {
             return _kpiRegistry.TryGetMetadata(kpiId, out var metadata) ? metadata : null;
+        }
+
+        private string ResolveDimensionLabel(string entityType, string dimensionKpiId)
+        {
+            if (string.IsNullOrWhiteSpace(dimensionKpiId))
+                return null;
+
+            return _dimensionLabels.TryGetLabel(entityType, dimensionKpiId, out var label)
+                ? label
+                : null;
         }
 
         private static string BuildFilterDescription(
