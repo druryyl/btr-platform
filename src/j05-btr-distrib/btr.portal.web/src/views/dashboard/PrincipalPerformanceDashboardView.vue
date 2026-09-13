@@ -6,10 +6,12 @@ import Button from 'primevue/button'
 import DashboardDetailLayout from '@/components/dashboard/DashboardDetailLayout.vue'
 import DashboardMetric from '@/components/dashboard/primitives/DashboardMetric.vue'
 import PrincipalDataCompletenessIndicator from '@/components/dashboard/PrincipalDataCompletenessIndicator.vue'
+import PrincipalPortfolioOverview from '@/components/dashboard/PrincipalPortfolioOverview.vue'
 import Top10RankingTable from '@/components/dashboard/Top10RankingTable.vue'
 import { formatCurrency, formatCurrencyCompact, formatNumber, formatPercent } from '@/services/formatters'
 import { contributionPercentage } from '@/services/principalContribution'
 import { principalDataCompleteness } from '@/services/principalDataCompleteness'
+import { portfolioOverview } from '@/services/principalPortfolio'
 import type { PrincipalPerformanceRankingItem, PrincipalSalesmanContributionItem } from '@/models/dashboard'
 import { useDashboardStore } from '@/stores/dashboardStore'
 
@@ -309,6 +311,12 @@ const dataCompleteness = computed(() => {
   return principalDataCompleteness(page)
 })
 
+const portfolioOverviewData = computed(() => {
+  const page = dashboard.principalPerformance
+  if (!page) return null
+  return portfolioOverview(page)
+})
+
 function onRankingClick(row: Record<string, unknown>): void {
   const item = row as unknown as PrincipalPerformanceRankingItem
   if (!item.SupplierId) return
@@ -380,6 +388,8 @@ onMounted(() => {
     </p>
 
     <PrincipalDataCompletenessIndicator :completeness="dataCompleteness" />
+
+    <PrincipalPortfolioOverview :overview="portfolioOverviewData" />
 
     <div v-if="rankingOptions.length > 1" class="principal-performance__ranking-selector">
       <label for="ranking-kpi-select" class="principal-performance__ranking-label">

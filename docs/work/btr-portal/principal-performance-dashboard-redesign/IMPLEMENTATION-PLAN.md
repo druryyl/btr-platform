@@ -542,7 +542,7 @@ cases, and integration/chart risk — not business importance.
 | PPD-05 | Data Completeness summary | 2 | GO |
 | PPD-06 | Shared "No Data" presentation helper | 1 | GO |
 | PPD-07 | Header: period, data updated at, data completeness | 2 | GO |
-| PPD-08 | Portfolio Overview KPI cards | 2 | PLANNED |
+| PPD-08 | Portfolio Overview KPI cards | 2 | GO |
 | PPD-09 | Opportunity & Risk Board cards | 3 | PLANNED |
 | PPD-10 | Achievement Gap Leaderboard | 3 | PLANNED |
 | PPD-11 | Coverage & Reach Analysis | 4 | PLANNED |
@@ -606,7 +606,10 @@ Entry format:
     Verified all PPD-07 acceptance criteria, feasibility authority compliance (GAP-007 page-level only, OQ-8 No Data), and scope; period + GeneratedAt reuse preserved, completeness renders Coverage/Target/Return/Contribution; build (vue-tsc) and full suite (413 tests) pass; no findings; status GO.
 
 ### Slice-ID: PPD-08
-_No entries yet._
+1. [Implementation 2026-09-13 21:00]
+    Created PrincipalPortfolioOverview.vue (five tiles via PPD-03 portfolioOverview + PPD-06 No Data rule; Portfolio Achievement % primary, coverage population note, return as quality-ratio/higher-is-worse risk treatment; no Total Active Customers / Average Return %) and integrated into PrincipalPerformanceDashboardView.vue after completeness indicator; build (vue-tsc) and full suite (413 tests) pass; status IMPLEMENTED.
+2. [Review 2026-09-13 21:05]
+    Verified all PPD-08 acceptance criteria, feasibility authority compliance (GAP-001/002/003, OQ-8 No Data, blueprint §5/§13), and scope; five tiles with primary achievement emphasis, coverage population note, return quality-ratio risk treatment, no customer-total/average-return; build (vue-tsc) and full suite (413 tests) pass; no findings; status GO.
 
 ### Slice-ID: PPD-09
 _No entries yet._
