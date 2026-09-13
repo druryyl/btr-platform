@@ -540,7 +540,7 @@ cases, and integration/chart risk — not business importance.
 | PPD-03 | Portfolio overview aggregates | 2 | GO |
 | PPD-04 | Opportunity & Risk rule engine | 3 | GO |
 | PPD-05 | Data Completeness summary | 2 | GO |
-| PPD-06 | Shared "No Data" presentation helper | 1 | PLANNED |
+| PPD-06 | Shared "No Data" presentation helper | 1 | GO |
 | PPD-07 | Header: period, data updated at, data completeness | 2 | PLANNED |
 | PPD-08 | Portfolio Overview KPI cards | 2 | PLANNED |
 | PPD-09 | Opportunity & Risk Board cards | 3 | PLANNED |
@@ -594,7 +594,10 @@ Entry format:
    Verified all PPD-05 acceptance criteria, feasibility authority compliance (OQ-8, GAP-007), and scope; build (vue-tsc) and full suite (408 tests) pass; no findings; status GO.
 
 ### Slice-ID: PPD-06
-_No entries yet._
+1. [Implementation 2026-09-13 20:43]
+    Implemented shared No Data helper in services/principalNoData.ts (NO_DATA_LABEL, isMissingValue, formatWithNoData, orNoData) with unit tests for null/undefined/zero/passthrough; existing formatPercent/DashboardMetric '—' behavior untouched; status IMPLEMENTED.
+2. [Review 2026-09-13 20:45]
+    Verified all PPD-06 acceptance criteria, feasibility authority compliance (OQ-8, blueprint §14), and scope; existing PRN-SALES-001 '—' behavior preserved; build (vue-tsc) and full suite (413 tests) pass; no findings; status GO.
 
 ### Slice-ID: PPD-07
 _No entries yet._
