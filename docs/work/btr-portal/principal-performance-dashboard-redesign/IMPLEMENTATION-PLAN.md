@@ -543,7 +543,7 @@ cases, and integration/chart risk — not business importance.
 | PPD-06 | Shared "No Data" presentation helper | 1 | GO |
 | PPD-07 | Header: period, data updated at, data completeness | 2 | GO |
 | PPD-08 | Portfolio Overview KPI cards | 2 | GO |
-| PPD-09 | Opportunity & Risk Board cards | 3 | PLANNED |
+| PPD-09 | Opportunity & Risk Board cards | 3 | GO |
 | PPD-10 | Achievement Gap Leaderboard | 3 | IMPLEMENTED |
 | PPD-11 | Coverage & Reach Analysis | 4 | PLANNED |
 | PPD-12 | Return Risk Analysis | 3 | PLANNED |
@@ -612,7 +612,10 @@ Entry format:
     Verified all PPD-08 acceptance criteria, feasibility authority compliance (GAP-001/002/003, OQ-8 No Data, blueprint §5/§13), and scope; five tiles with primary achievement emphasis, coverage population note, return quality-ratio risk treatment, no customer-total/average-return; build (vue-tsc) and full suite (413 tests) pass; no findings; status GO.
 
 ### Slice-ID: PPD-09
-_No entries yet._
+1. [Implementation 2026-09-13 21:25]
+   Created PrincipalOpportunityRiskBoard.vue (two-column Opportunities/Risks board via PPD-04 opportunityRiskBoard + PPD-06 No Data rule; direct dependency grouping through principalDependencies; max 5 per side, severity-priority ordering, per-card category/supporting KPI/percentile/population/interpretation, no alerting, no independent thresholds) and integrated it directly below the Portfolio Overview in PrincipalPerformanceDashboardView.vue; build (vue-tsc) and full suite (413 tests) pass; status IMPLEMENTED.
+2. [Review 2026-09-13 21:30]
+   Verified all PPD-09 acceptance criteria (two-column left/right placement directly below Portfolio Overview; max 5 per side with severity-priority ordering; principal/category/supporting-KPI/percentile/population/interpretation on every card; opportunity left, return-risk/dependency-risk/underperforming right; no alert records and no independent thresholds; population size visible), feasibility authority compliance (GAP-006 relative percentiles, OQ-9 prioritization-only), and scope (no backend/service/model change); build (vue-tsc) and full suite (413 tests) pass; no critical/major findings; status GO.
 
 ### Slice-ID: PPD-10
 1. [Implementation 2026-09-13 21:15]

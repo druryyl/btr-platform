@@ -7,6 +7,7 @@ import DashboardDetailLayout from '@/components/dashboard/DashboardDetailLayout.
 import DashboardMetric from '@/components/dashboard/primitives/DashboardMetric.vue'
 import PrincipalDataCompletenessIndicator from '@/components/dashboard/PrincipalDataCompletenessIndicator.vue'
 import PrincipalPortfolioOverview from '@/components/dashboard/PrincipalPortfolioOverview.vue'
+import PrincipalOpportunityRiskBoard from '@/components/dashboard/PrincipalOpportunityRiskBoard.vue'
 import PrincipalAchievementGapLeaderboard from '@/components/dashboard/PrincipalAchievementGapLeaderboard.vue'
 import Top10RankingTable from '@/components/dashboard/Top10RankingTable.vue'
 import { formatCurrency, formatCurrencyCompact, formatNumber, formatPercent } from '@/services/formatters'
@@ -322,6 +323,12 @@ const achievementGapRanking = computed(
   () => (dashboard.principalPerformance?.Ranking ?? []) as PrincipalPerformanceRankingItem[],
 )
 
+const salesmanContributions = computed(
+  () =>
+    (dashboard.principalPerformance?.SalesmanContributions ??
+      []) as PrincipalSalesmanContributionItem[],
+)
+
 function onRankingClick(row: Record<string, unknown>): void {
   const item = row as unknown as PrincipalPerformanceRankingItem
   if (!item.SupplierId) return
@@ -395,6 +402,12 @@ onMounted(() => {
     <PrincipalDataCompletenessIndicator :completeness="dataCompleteness" />
 
     <PrincipalPortfolioOverview :overview="portfolioOverviewData" />
+
+    <PrincipalOpportunityRiskBoard
+      :ranking="achievementGapRanking"
+      :contributions="salesmanContributions"
+      :loading="dashboard.loading"
+    />
 
     <PrincipalAchievementGapLeaderboard
       :ranking="achievementGapRanking"
