@@ -5,9 +5,11 @@ import Select from 'primevue/select'
 import Button from 'primevue/button'
 import DashboardDetailLayout from '@/components/dashboard/DashboardDetailLayout.vue'
 import DashboardMetric from '@/components/dashboard/primitives/DashboardMetric.vue'
+import PrincipalDataCompletenessIndicator from '@/components/dashboard/PrincipalDataCompletenessIndicator.vue'
 import Top10RankingTable from '@/components/dashboard/Top10RankingTable.vue'
 import { formatCurrency, formatCurrencyCompact, formatNumber, formatPercent } from '@/services/formatters'
 import { contributionPercentage } from '@/services/principalContribution'
+import { principalDataCompleteness } from '@/services/principalDataCompleteness'
 import type { PrincipalPerformanceRankingItem, PrincipalSalesmanContributionItem } from '@/models/dashboard'
 import { useDashboardStore } from '@/stores/dashboardStore'
 
@@ -301,6 +303,12 @@ const periodLabel = computed(() => {
   return new Intl.DateTimeFormat('id-ID', { month: 'long', year: 'numeric' }).format(month)
 })
 
+const dataCompleteness = computed(() => {
+  const page = dashboard.principalPerformance
+  if (!page) return null
+  return principalDataCompleteness(page)
+})
+
 function onRankingClick(row: Record<string, unknown>): void {
   const item = row as unknown as PrincipalPerformanceRankingItem
   if (!item.SupplierId) return
@@ -370,6 +378,8 @@ onMounted(() => {
     <p class="principal-performance__period">
       {{ periodLabel }}. Default ranking uses Principal Sales-Out.
     </p>
+
+    <PrincipalDataCompletenessIndicator :completeness="dataCompleteness" />
 
     <div v-if="rankingOptions.length > 1" class="principal-performance__ranking-selector">
       <label for="ranking-kpi-select" class="principal-performance__ranking-label">
