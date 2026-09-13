@@ -9,6 +9,7 @@ import PrincipalDataCompletenessIndicator from '@/components/dashboard/Principal
 import PrincipalPortfolioOverview from '@/components/dashboard/PrincipalPortfolioOverview.vue'
 import PrincipalOpportunityRiskBoard from '@/components/dashboard/PrincipalOpportunityRiskBoard.vue'
 import PrincipalAchievementGapLeaderboard from '@/components/dashboard/PrincipalAchievementGapLeaderboard.vue'
+import PrincipalCoverageReachAnalysis from '@/components/dashboard/PrincipalCoverageReachAnalysis.vue'
 import Top10RankingTable from '@/components/dashboard/Top10RankingTable.vue'
 import { formatCurrency, formatCurrencyCompact, formatNumber, formatPercent } from '@/services/formatters'
 import { contributionPercentage } from '@/services/principalContribution'
@@ -410,6 +411,12 @@ onMounted(() => {
     />
 
     <PrincipalAchievementGapLeaderboard
+      :ranking="achievementGapRanking"
+      :loading="dashboard.loading"
+    />
+
+    <PrincipalCoverageReachAnalysis
+      class="principal-performance__section"
       :ranking="achievementGapRanking"
       :loading="dashboard.loading"
     />

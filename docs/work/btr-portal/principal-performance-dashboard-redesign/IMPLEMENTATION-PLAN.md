@@ -545,7 +545,7 @@ cases, and integration/chart risk — not business importance.
 | PPD-08 | Portfolio Overview KPI cards | 2 | GO |
 | PPD-09 | Opportunity & Risk Board cards | 3 | GO |
 | PPD-10 | Achievement Gap Leaderboard | 3 | GO |
-| PPD-11 | Coverage & Reach Analysis | 4 | PLANNED |
+| PPD-11 | Coverage & Reach Analysis | 4 | GO |
 | PPD-12 | Return Risk Analysis | 3 | PLANNED |
 | PPD-13 | Salesman Dependency Analysis | 5 | PLANNED |
 | PPD-14 | Principal Detail Table | 4 | PLANNED |
@@ -626,7 +626,10 @@ Entry format:
    Independent re-review of PrincipalAchievementGapLeaderboard.vue against FEASIBILITY ASSESSMENT and UX-BLUEPRINT §7. All six acceptance criteria PASS: ranked bar list (not table) sorted descending by governed Ranking[].AchievementAmount (PRN-TGT-002) consumed as-is with no Target-Sales recalculation; Rank/Principal/Gap Amount/Achievement %/Sales/Target shown; null rows sorted stably last via PPD-06 "No Data" (never 0); top-3 emphasis; stored-ratio scaling via formatPercent. Authority (OQ-6, OQ-8) and scope (frontend-only, no service/backend/model change) verified; reproduced build (vue-tsc + vite) and full suite (413 tests) pass. TRACK-001 MINOR: tracker status column had stayed IMPLEMENTED while entry 2 already recorded a GO; reconciled to GO by this review. INFO only: rank null label is a literal instead of NO_DATA_LABEL; gap bar uses primary color rather than the "higher is worse" semantic; descending-by-gap may run opposite to the blueprint's stated purpose, but implementation matches the approved plan and requires no change. No critical/major findings; status GO.
 
 ### Slice-ID: PPD-11
-_No entries yet._
+1. [Implementation 2026-09-13 21:07]
+   Created PrincipalCoverageReachAnalysis.vue (chart.js scatter of X=Coverage % vs Y=Achievement % from stored Ranking[].CoveragePercentage/AchievementPercentage scaled to percent; opportunity candidates Coverage P>=70 AND Achievement P<=40 highlighted via PPD-04 opportunityEntries; null coverage/achievement excluded from the scatter and percentiles and rendered "No Data" via PPD-06 in the supporting table: Principal, Active Customer, Total Customer, Coverage %, Achievement %; ranked-population disclosure) and integrated it into PrincipalPerformanceDashboardView.vue after the Achievement Gap Leaderboard; build (vue-tsc + vite) and full suite (413 tests) pass; status IMPLEMENTED.
+2. [Review 2026-09-13 21:10]
+   Verified all five PPD-11 acceptance criteria PASS: chart.js `scatter` with X=Coverage % and Y=Achievement % (stored CoveragePercentage/AchievementPercentage scaled x100); opportunity candidates auto-highlighted (Coverage P>=70 AND Achievement P<=40) via the approved PPD-04 rule engine; supporting table below the chart shows Principal/Active Customer/Total Customer/Coverage %/Achievement %; null coverage or achievement is excluded from the scatter and from percentile computation and renders "No Data" (PPD-06) in the table; Coverage % uses stored Ranking[].CoveragePercentage. Feasibility authority compliance (GAP-006 relative percentiles, population-skew disclosure) and scope (frontend-only; one new presentational component plus view wiring; no backend/model/store change) verified; reproduced build (vue-tsc + vite) and full suite (413 tests) pass. No critical/major findings. INFO only: the component reuses PPD-04 `opportunityEntries` instead of calling PPD-01 `percentileRank` directly, which keeps the opportunity rule single-sourced and introduces no new thresholds. Status GO.
 
 ### Slice-ID: PPD-12
 _No entries yet._
