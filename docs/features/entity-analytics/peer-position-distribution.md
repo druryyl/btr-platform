@@ -22,9 +22,9 @@ Bins are built server-side by `EntityPeerDistributionEngine` / `EntityPeerDistri
 | --- | --- | --- |
 | `IDR` | Rupiah segments | Fixed first bin **0 – 100,000**; mid edges from equal-count (quantile) cuts snapped to a **1-2-5 × 10^n** ladder; forced high-end edges **50M → 100M → 200M → 500M** (when below peer max); last edge = peer max |
 | `Days` | Calendar segments | Week/month ladder **0 → 7 → 14 → 21 → 30 → 60 → 90 → 120 → 180 → 270 → 365**, clipped below peer max; when max &gt; 365 the last bin is **365 – peer max** |
-| Any other unit | Linear | Equal-width bins on raw value (min → max) |
+| Any other unit | Fenced nice-linear | Adaptive count by population (N≤30→8, N≤100→12, else 20); 1-2-5 × 10ⁿ nice edges; Tukey-fence overflow/underflow buckets flagged `IsOverflow` |
 
-Default target bin count: **20** (IDR/Days use semantic ladders; count may differ).
+Default target bin count: **20** (IDR/Days use semantic ladders; count may differ). Linear-path KPIs use an adaptive ceiling instead (see below).
 
 ### Why IDR uses round Rupiah segments
 
@@ -47,9 +47,22 @@ The Days scheme:
 2. Uses **month-scale** edges mid term (30 / 60 / 90 / 120 / 180 / 270).
 3. Forces a **≥ 1 year** last band starting at **365** when peer max exceeds one year.
 
+### Why Linear uses fenced nice bins with overflow buckets
+
+Percent, count, and ratio KPIs used raw equal-width min→max bins, so one extreme outlier (e.g. a single 663% Pacing among twenty principals) dictated the resolution of all 20 bars: the bulk collapsed into one bin and the rest sat empty.
+
+The Linear scheme:
+
+1. Caps bulk bin count by population (N≤30→8, N≤100→12, else 20) so bins never approach observations.
+2. Snaps edges to a **1-2-5 × 10ⁿ** ladder (80, 90, 100, … instead of 83.17, 96.44, …).
+3. Detects extremes with **Tukey fences** (Q3 + 1.5·IQR, symmetric both tails; minimum 10 peers) and isolates them in flagged overflow buckets (`BinStart = nice cap → peer max`, `IsOverflow = true`) instead of stretching the bulk scale.
+4. Reports an executive one-liner (`DistributionSummary`, e.g. "19 of 20 suppliers below 200. 1 supplier exceeds 200."); null when unremarkable.
+
+The fence is an implementation mechanism only — the chart shows business ranges plus a distinctly tinted `≥ cap` band, and the selected entity keeps its own comparison color when it is the outlier.
+
 ### Labels and edges
 
-Bin edges and labels are always **business units**. IDR internal edges are on the nice ladder (including the forced high-end steps); Days edges are on the calendar ladder. The final bin may end at the observed peer max (not necessarily ladder-aligned).
+Bin edges and labels are always **business units**. IDR internal edges are on the nice ladder (including the forced high-end steps); Days edges are on the calendar ladder; Linear bulk edges are on the 1-2-5 ladder. The final bin may end at the observed peer max (not necessarily ladder-aligned). Overflow buckets render as open-ended `≥ cap` bands.
 
 **Population Map:** When an axis unit is `Days`, tick labels reuse the calendar ladder (`0, 7, 14, 21, 30, 60, 90, 120, 180, 270, 365`). When an axis unit is `IDR`, tick labels use a **1-2-5 × 10^n** Rupiah ladder (K/M/B). For IDR axes, log projection applies a **zero-anchored compression** (`IDR_PROJECTION_FLOOR` = Rp 10,000): zero projects at the axis origin (tick `0`), the 0–10K band collapses into a tiny zero-anchored space, and the ladder starts at Rp 10,000 so sub-floor labels do not clutter; tooltips still show the true business value. For Days axes, log projection also applies a **365-day ceiling** (`DAYS_PROJECTION_CAP`) so extreme values (e.g. 10k Days of Supply) do not stretch the scale; tooltips still show the true business value. The top tick shows **365+** when any peer exceeds one year.
 
@@ -118,4 +131,4 @@ Investigation Workspace Peer Position lets users choose how Item peers are forme
 | Days Since Last Faktur | Days | Calendar segments |
 | Inventory Value | IDR | Rupiah segments |
 
-Percent / count Peer Position KPIs remain linear.
+Percent / count Peer Position KPIs use fenced nice-linear bins (adaptive count, Tukey-fence overflow buckets).

@@ -38,7 +38,7 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Services
             return $"{countLabel} {Pluralize(entityType, peerGroupSize)}";
         }
 
-        private static string Pluralize(string entityType, int count)
+        public static string Pluralize(string entityType, int count)
         {
             var singular = count == 1;
 

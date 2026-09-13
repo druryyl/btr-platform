@@ -164,6 +164,8 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Queries
         public string FormattedPeerRange { get; set; }
 
         public List<PeerDistributionBinDto> Bins { get; set; } = new List<PeerDistributionBinDto>();
+
+        public string DistributionSummary { get; set; }
     }
 
     public class PeerDistributionBinDto
@@ -177,6 +179,8 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Queries
         public int Count { get; set; }
 
         public string Label { get; set; }
+
+        public bool IsOverflow { get; set; }
     }
 
     public class MapPresetDto

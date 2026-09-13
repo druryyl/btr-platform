@@ -185,6 +185,9 @@ namespace btr.test.ReportingContext
             pacing.Description.Should().Contain("Actual Sales MTD");
             pacing.DefaultAxisRole.Should().Be("X");
             pacing.MinimumElapsedDays.Should().HaveValue();
+            pacing.TrendEligible.Should().BeFalse("PRN-TGT-004 is a BusinessDate-dependent pacing KPI for current-period evaluation and is not trended historically; historical achievement uses PRN-TGT-003");
+            pacing.RankEligible.Should().BeTrue("PRN-TGT-004 remains a supporting ranking KPI");
+            pacing.RadarEligible.Should().BeFalse();
         }
 
         [Fact]

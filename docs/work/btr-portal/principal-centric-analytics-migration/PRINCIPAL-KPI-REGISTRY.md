@@ -68,6 +68,9 @@ Return Item
 > This document introduces no independent formula; consumers resolve labels, units, and
 > formatting from the registered identifiers.
 > `PRN-TGT-003` remains unchanged (full-month Achievement %, SA04/ranking use preserved).
+> `PRN-TGT-004` is a BusinessDate-dependent pacing KPI intended for current-period
+> evaluation (`TrendEligible=false`); it is not trended historically.
+> Historical achievement analysis is represented by `PRN-TGT-003`.
 
 ### Rules
 

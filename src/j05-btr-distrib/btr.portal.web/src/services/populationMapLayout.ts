@@ -7,6 +7,7 @@ import {
   IDR_PROJECTION_FLOOR,
   isDaysAxisUnit,
   isIdrAxisUnit,
+  isPercentAxisUnit,
 } from '@/services/populationProjection/robustStats'
 import { formatNumber } from '@/services/formatters'
 
@@ -465,7 +466,60 @@ export function buildDaysCalendarAxisTicks(
   })
 }
 
-/** Resolve axis ticks: Days calendar, IDR 1-2-5, otherwise percentile fallback. */
+/**
+ * Build Percent axis tick labels from 1-2-5 × 10ⁿ nice steps within
+ * [dataMin, dataMax], projected with the same log + robust-norm transform used
+ * for scatter points (labels only; points unchanged).
+ *
+ * Replaces raw percentile guides (e.g. 75.044, -11.702) with proper numbers:
+ * integers normally, up to 1 trimmed decimal only when the span is very small.
+ */
+export function buildPercentNiceAxisTicks(
+  norm: { center: number; scale: number },
+  unit: string | null | undefined,
+  dataMin: number,
+  dataMax: number,
+  targetTicks = 6,
+): ProjectionAxisTick[] {
+  if (!Number.isFinite(norm.center) || !Number.isFinite(norm.scale)) {
+    return []
+  }
+  if (!Number.isFinite(dataMin) || !Number.isFinite(dataMax)) {
+    return []
+  }
+  const min = Math.min(dataMin, dataMax)
+  const max = Math.max(dataMin, dataMax)
+  const scale = Math.abs(norm.scale) < 1e-12 ? 1e-12 : norm.scale
+
+  const ticks = generateLinearAxisTicks(min, max, targetTicks).map((businessValue) => {
+    const logValue = businessToProjectedLog(businessValue, unit)
+    return {
+      businessValue,
+      projectionValue: (logValue - norm.center) / scale,
+    }
+  })
+
+  // Guarantee a labelled gridline on the negative side: coarse nice steps can
+  // skip a small negative tail entirely (e.g. data −2…45 with step 10 yields
+  // ticks 0…40), leaving below-zero points with no number or line. The extra
+  // tick stays within [min, 0) so it always lands inside the visible plot.
+  if (min < 0 && ticks.every((t) => t.businessValue >= 0)) {
+    const ceilMin = Math.ceil(min)
+    const extra = ceilMin < 0 ? ceilMin : Math.round(min * 10) / 10
+    if (extra < 0 && ticks.every((t) => Math.abs(t.businessValue - extra) > 1e-9)) {
+      const logValue = businessToProjectedLog(extra, unit)
+      ticks.push({
+        businessValue: extra,
+        projectionValue: (logValue - norm.center) / scale,
+      })
+      ticks.sort((a, b) => a.businessValue - b.businessValue)
+    }
+  }
+
+  return ticks
+}
+
+/** Resolve axis ticks: Days calendar, IDR 1-2-5, Percent nice steps, otherwise percentile fallback. */
 export function resolvePopulationAxisTicks(
   unit: string | null | undefined,
   norm: { center: number; scale: number },
@@ -478,6 +532,9 @@ export function resolvePopulationAxisTicks(
   }
   if (isIdrAxisUnit(unit)) {
     return buildIdrNiceAxisTicks(norm, dataMin, dataMax)
+  }
+  if (isPercentAxisUnit(unit)) {
+    return buildPercentNiceAxisTicks(norm, unit, dataMin, dataMax)
   }
   return fallback
 }
@@ -606,6 +663,86 @@ export function resolvePacingQuadrantForPoint(
 ): PacingQuadrant | null {
   if (isLowConfidencePoint(point)) return null
   return classifyPacingQuadrant(point.AxisX, point.AxisY)
+}
+
+/**
+ * Low-confidence strip lane (chart displays flagged entities with a visual clue).
+ *
+ * Flagged entities carry NULL X and/or Y (GAP-007 suppression), so they have no
+ * scatter position and are excluded from projection/regression/bounds/quadrants.
+ * The canvas renders them in a dedicated bottom lane instead of dropping them.
+ */
+export interface LowConfidenceStripItem {
+  point: PopulationMapPoint
+  screenX: number
+  screenY: number
+  index: number
+}
+
+export const LOW_CONFIDENCE_STRIP_HEIGHT = 32
+export const LOW_CONFIDENCE_STRIP_EDGE_PAD = 16
+export const LOW_CONFIDENCE_STRIP_LABEL = 'Low confidence — not classified'
+
+/** All flagged points, including those with NULL axes (never plottable). */
+export function getLowConfidencePoints(points: PopulationMapPoint[]): PopulationMapPoint[] {
+  return points.filter(isLowConfidencePoint)
+}
+
+export function partitionMapPoints(points: PopulationMapPoint[]): {
+  plottable: PopulationMapPoint[]
+  lowConfidence: PopulationMapPoint[]
+} {
+  const lowConfidence = getLowConfidencePoints(points)
+  const flagged = new Set(lowConfidence)
+  return { plottable: points.filter((p) => !flagged.has(p)), lowConfidence }
+}
+
+/**
+ * Evenly space strip items across the plot width on a single row near the
+ * bottom edge. Pure layout — no canvas dependency, fully unit-testable.
+ */
+export function layoutLowConfidenceStrip(
+  points: PopulationMapPoint[],
+  transform: MapTransform,
+  options?: { stripHeight?: number; edgePad?: number },
+): LowConfidenceStripItem[] {
+  if (!points.length) return []
+  const stripHeight = options?.stripHeight ?? LOW_CONFIDENCE_STRIP_HEIGHT
+  const edgePad = options?.edgePad ?? LOW_CONFIDENCE_STRIP_EDGE_PAD
+  const { offsetX, offsetY, plotWidth, plotHeight } = transform
+  const screenY = offsetY + plotHeight - stripHeight / 2
+
+  if (points.length === 1) {
+    return [{ point: points[0], screenX: offsetX + plotWidth / 2, screenY, index: 0 }]
+  }
+
+  const usable = Math.max(plotWidth - edgePad * 2, 1)
+  return points.map((point, i) => ({
+    point,
+    screenX: offsetX + edgePad + (i * usable) / (points.length - 1),
+    screenY,
+    index: i,
+  }))
+}
+
+export function findNearestStripItem(
+  items: LowConfidenceStripItem[],
+  x: number,
+  y: number,
+  radius = 12,
+): LowConfidenceStripItem | null {
+  let best: LowConfidenceStripItem | null = null
+  let bestDist = radius * radius
+  for (const item of items) {
+    const dx = item.screenX - x
+    const dy = item.screenY - y
+    const dist = dx * dx + dy * dy
+    if (dist <= bestDist) {
+      bestDist = dist
+      best = item
+    }
+  }
+  return best
 }
 
 export function generateProjectionAxisGuides(

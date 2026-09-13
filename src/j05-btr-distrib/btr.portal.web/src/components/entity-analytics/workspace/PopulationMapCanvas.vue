@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
+import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
 import type { PopulationMapPoint, PopulationMapResponse } from '@/models/entityAnalytics'
 import {
   buildEntityColorMap,
@@ -43,11 +43,14 @@ import {
   dataToScreen,
   ensureZeroTick,
   findNearestPoint,
+  findNearestStripItem,
   formatAxisTickValue,
   generateProjectionAxisGuides,
-  generateProjectionGridTicks,
   isBusinessZeroWithinBounds,
   isLowConfidencePoint,
+  layoutLowConfidenceStrip,
+  LOW_CONFIDENCE_STRIP_HEIGHT,
+  LOW_CONFIDENCE_STRIP_LABEL,
   PACING_QUADRANT_LABELS,
   PRINCIPAL_SALES_OUT_MAP_PRESET_ID,
   resolveBusinessZeroProjection,
@@ -60,6 +63,7 @@ import {
   resolveBusinessAttentionTier,
   resolveLabelPlacements,
   resolveVisualTier,
+  type LowConfidenceStripItem,
   type MapTransform,
   type PlottedPoint,
   type ResolvedLabel,
@@ -88,8 +92,45 @@ const emit = defineEmits<{
 
 const canvasRef = ref<HTMLCanvasElement | null>(null)
 const containerRef = ref<HTMLDivElement | null>(null)
+const tooltipRef = ref<HTMLElement | null>(null)
 const hovered = ref<PopulationMapPoint | null>(null)
 const tooltipPos = ref({ x: 0, y: 0 })
+const lastMouse = ref({ x: 0, y: 0 })
+
+const TOOLTIP_CURSOR_GAP = 12
+const TOOLTIP_EDGE_PAD = 4
+
+/**
+ * Keep the tooltip fully inside the chart container. The wrap sits inside an
+ * `overflow: hidden` shell, so a tooltip placed blindly below/right of the
+ * cursor gets clipped — most visibly for strip-lane points at the bottom edge.
+ * Falls back above/left of the cursor when there is no room below/right.
+ */
+function adjustTooltipPosition() {
+  const container = containerRef.value
+  const tip = tooltipRef.value
+  const { x, y } = lastMouse.value
+  if (!container || !tip) {
+    tooltipPos.value = { x: x + TOOLTIP_CURSOR_GAP, y: y + TOOLTIP_CURSOR_GAP }
+    return
+  }
+  const rect = container.getBoundingClientRect()
+  const w = tip.offsetWidth
+  const h = tip.offsetHeight
+
+  let left = x + TOOLTIP_CURSOR_GAP
+  let top = y + TOOLTIP_CURSOR_GAP
+  if (left + w > rect.width - TOOLTIP_EDGE_PAD) {
+    left = x - w - TOOLTIP_CURSOR_GAP
+  }
+  if (top + h > rect.height - TOOLTIP_EDGE_PAD) {
+    top = y - h - TOOLTIP_CURSOR_GAP
+  }
+  tooltipPos.value = {
+    x: Math.max(left, TOOLTIP_EDGE_PAD),
+    y: Math.max(top, TOOLTIP_EDGE_PAD),
+  }
+}
 
 const colorMap = computed(() => buildEntityColorMap(props.selectedEntityIds))
 const selectedSet = computed(() => new Set(props.selectedEntityIds))
@@ -103,9 +144,20 @@ const isFixedQuadrantPreset = computed(
   () => props.population?.PresetId === PRINCIPAL_SALES_OUT_MAP_PRESET_ID,
 )
 
-/** PSOM-14 (GAP-007): low-confidence entities are excluded from quadrant classification. */
-const lowConfidenceCount = computed(
-  () => (props.population?.Points ?? []).filter((p) => isLowConfidencePoint(p)).length,
+/**
+ * Flagged entities displayed in the bottom strip lane with a visual clue.
+ * Includes NULL-axis points (never plottable) — same MatchesFilter/search
+ * visibility rules as the scatter points.
+ */
+const lowConfidenceRenderable = computed(() =>
+  (props.population?.Points ?? []).filter(
+    (p) =>
+      isLowConfidencePoint(p)
+      && p.MatchesFilter
+      && (searchSet.value.size === 0
+        || selectedSet.value.has(p.EntityId)
+        || searchSet.value.has(p.EntityId)),
+  ),
 )
 
 const bubbleColorScale = computed(() => {
@@ -181,10 +233,12 @@ const showEmptyState = computed(
   () =>
     !props.loading
     && props.population != null
-    && renderablePoints.value.length === 0,
+    && renderablePoints.value.length === 0
+    && lowConfidenceRenderable.value.length === 0,
 )
 
 let plottedCache: PlottedPoint[] = []
+let stripCache: LowConfidenceStripItem[] = []
 let spatialIndexCache: SpatialIndex | null = null
 let resizeObserver: ResizeObserver | null = null
 
@@ -224,25 +278,62 @@ function getVisualTier(item: PlottedPoint): VisualPointTier {
   return resolveVisualTier(item.analyzed, businessTier)
 }
 
-/** PSOM-14 (GAP-007): low-confidence points render as distinct hollow markers. */
+/** Low-confidence strip lane: flagged entities (NULL axes) render as hollow dashed markers. */
 const LOW_CONFIDENCE_POINT_COLOR = WORKSPACE_NEUTRAL_POINT
-const LOW_CONFIDENCE_POINT_OPACITY = 0.4
-const LOW_CONFIDENCE_POINT_RADIUS = WORKSPACE_NORMAL_RADIUS
-const LOW_CONFIDENCE_POINT_STROKE_WIDTH = 1.25
+const LOW_CONFIDENCE_POINT_OPACITY = 0.75
+const LOW_CONFIDENCE_POINT_RADIUS = WORKSPACE_NORMAL_RADIUS + 1
+const LOW_CONFIDENCE_POINT_STROKE_WIDTH = 1.5
+const LOW_CONFIDENCE_POINT_DASH: number[] = [4, 3]
+const LOW_CONFIDENCE_LANE_FILL = 'rgba(255, 255, 255, 0.78)'
+const LOW_CONFIDENCE_LANE_DIVIDER = 'rgba(148, 163, 184, 0.55)'
 
-function drawLowConfidencePoints(ctx: CanvasRenderingContext2D) {
-  for (const item of plottedCache) {
-    if (!isLowConfidencePoint(item.point)) continue
+function drawLowConfidenceLane(ctx: CanvasRenderingContext2D, transform: MapTransform) {
+  if (!stripCache.length) return
+  const { offsetX, offsetY, plotWidth, plotHeight } = transform
+  const laneTop = offsetY + plotHeight - LOW_CONFIDENCE_STRIP_HEIGHT
+
+  ctx.save()
+  ctx.beginPath()
+  ctx.rect(offsetX, offsetY, plotWidth, plotHeight)
+  ctx.clip()
+
+  ctx.globalAlpha = 1
+  ctx.fillStyle = LOW_CONFIDENCE_LANE_FILL
+  ctx.fillRect(offsetX, laneTop, plotWidth, LOW_CONFIDENCE_STRIP_HEIGHT)
+
+  ctx.strokeStyle = LOW_CONFIDENCE_LANE_DIVIDER
+  ctx.lineWidth = 1
+  ctx.setLineDash([5, 4])
+  ctx.beginPath()
+  ctx.moveTo(offsetX, laneTop)
+  ctx.lineTo(offsetX + plotWidth, laneTop)
+  ctx.stroke()
+  ctx.setLineDash([])
+
+  ctx.font = '600 10px system-ui, sans-serif'
+  ctx.fillStyle = WORKSPACE_MAP_QUADRANT_LABEL
+  ctx.fillText(LOW_CONFIDENCE_STRIP_LABEL, offsetX + 8, laneTop + 14)
+
+  ctx.restore()
+}
+
+function drawLowConfidenceMarkers(ctx: CanvasRenderingContext2D) {
+  for (const item of stripCache) {
     const flags = getPointFlags(item.point)
     if (flags.isSelected || flags.isSearchMatch) continue
 
-    ctx.globalAlpha = LOW_CONFIDENCE_POINT_OPACITY
+    let alpha = LOW_CONFIDENCE_POINT_OPACITY
+    if (flags.dimPopulation && !flags.isSelected) {
+      alpha = Math.min(alpha, 0.4)
+    }
+    ctx.globalAlpha = alpha
     ctx.beginPath()
     ctx.arc(item.screenX, item.screenY, LOW_CONFIDENCE_POINT_RADIUS, 0, Math.PI * 2)
     ctx.strokeStyle = LOW_CONFIDENCE_POINT_COLOR
     ctx.lineWidth = LOW_CONFIDENCE_POINT_STROKE_WIDTH
-    ctx.setLineDash([])
+    ctx.setLineDash(LOW_CONFIDENCE_POINT_DASH)
     ctx.stroke()
+    ctx.setLineDash([])
   }
   ctx.globalAlpha = 1
 }
@@ -545,7 +636,6 @@ function drawAxes(
   if (!projection) return
 
   const { offsetX, offsetY, plotWidth, plotHeight, bounds } = transform
-  const gridTicks = generateProjectionGridTicks(bounds)
   const guides = generateProjectionAxisGuides(projection)
 
   const entities = [...projection.entities.values()]
@@ -584,8 +674,12 @@ function drawAxes(
   ctx.font = '500 10px system-ui, sans-serif'
   ctx.fillStyle = WORKSPACE_MAP_TICK_COLOR
 
-  for (const tick of gridTicks.xTicks) {
-    const x = projectionToScreenX(tick, transform)
+  // Gridlines are anchored to the labelled business ticks, so every number
+  // sits right beside/below its own visible scale line. (Previously the lines
+  // were evenly spaced in projection space while labels sat at business-tick
+  // positions, so numbers floated with no adjacent line.)
+  for (const tick of xTicks) {
+    const x = projectionToScreenX(tick.projectionValue, transform)
     if (x < offsetX || x > offsetX + plotWidth) continue
 
     ctx.beginPath()
@@ -594,8 +688,8 @@ function drawAxes(
     ctx.stroke()
   }
 
-  for (const tick of gridTicks.yTicks) {
-    const y = projectionToScreenY(tick, transform)
+  for (const tick of yTicks) {
+    const y = projectionToScreenY(tick.projectionValue, transform)
     if (y < offsetY || y > offsetY + plotHeight) continue
 
     ctx.beginPath()
@@ -796,11 +890,29 @@ function drawSearchHighlights(ctx: CanvasRenderingContext2D) {
     ctx.stroke()
     ctx.globalAlpha = 1
   }
+
+  for (const item of stripCache) {
+    const flags = getPointFlags(item.point)
+    if (!flags.isSearchMatch || flags.isSelected) continue
+
+    const radius = LOW_CONFIDENCE_POINT_RADIUS + WORKSPACE_SEARCH_RADIUS_BONUS
+    ctx.globalAlpha = 1
+    drawFilledCircle(ctx, item.screenX, item.screenY, radius + 1.5, '#ffffff')
+    ctx.beginPath()
+    ctx.arc(item.screenX, item.screenY, radius, 0, Math.PI * 2)
+    ctx.strokeStyle = LOW_CONFIDENCE_POINT_COLOR
+    ctx.lineWidth = LOW_CONFIDENCE_POINT_STROKE_WIDTH
+    ctx.setLineDash(LOW_CONFIDENCE_POINT_DASH)
+    ctx.stroke()
+    ctx.setLineDash([])
+    ctx.globalAlpha = 1
+  }
 }
 
 function drawSelectedEntities(ctx: CanvasRenderingContext2D) {
   for (const id of props.selectedEntityIds) {
     const plot = plottedCache.find((p) => p.point.EntityId === id)
+      ?? stripCache.find((p) => p.point.EntityId === id)
     if (!plot) continue
 
     const palette = colorMap.value.get(id)
@@ -813,7 +925,18 @@ function drawSelectedEntities(ctx: CanvasRenderingContext2D) {
 }
 
 function collectLabelCandidates() {
-  return buildAutoLabelCandidates(plottedCache, {
+  const combined: PlottedPoint[] = [
+    ...plottedCache,
+    ...stripCache.map((s) => ({
+      point: s.point,
+      screenX: s.screenX,
+      screenY: s.screenY,
+      index: s.index,
+      analyzed: undefined,
+      labelPriority: 30,
+    })),
+  ]
+  return buildAutoLabelCandidates(combined, {
     selectedIds: selectedSet.value,
     searchIds: searchSet.value,
     hoveredId: hovered.value?.EntityId ?? null,
@@ -857,7 +980,24 @@ function drawHoverOverlay(ctx: CanvasRenderingContext2D) {
   if (!hovered.value) return
 
   const plot = plottedCache.find((p) => p.point.EntityId === hovered.value?.EntityId)
+    ?? stripCache.find((p) => p.point.EntityId === hovered.value?.EntityId)
   if (!plot) return
+
+  if (isLowConfidencePoint(plot.point)) {
+    const flags = getPointFlags(plot.point)
+    if (!flags.isSelected) {
+      ctx.globalAlpha = WORKSPACE_HOVER_POINT_OPACITY
+      drawFilledCircle(
+        ctx,
+        plot.screenX,
+        plot.screenY,
+        LOW_CONFIDENCE_POINT_RADIUS + WORKSPACE_HOVER_ENLARGE,
+        WORKSPACE_HOVER_POINT,
+      )
+      ctx.globalAlpha = 1
+    }
+    return
+  }
 
   const flags = getPointFlags(plot.point)
   ctx.globalAlpha = 1
@@ -904,8 +1044,13 @@ function draw() {
   const transform = buildTransform(width, height, bounds)
   plottedCache = plotPoints(renderablePoints.value, transform, projection)
   spatialIndexCache = buildSpatialIndex(plottedCache)
+  stripCache = layoutLowConfidenceStrip(lowConfidenceRenderable.value, transform)
 
-  if (hovered.value && !plottedCache.some((p) => p.point.EntityId === hovered.value?.EntityId)) {
+  if (
+    hovered.value
+    && !plottedCache.some((p) => p.point.EntityId === hovered.value?.EntityId)
+    && !stripCache.some((p) => p.point.EntityId === hovered.value?.EntityId)
+  ) {
     hovered.value = null
     emit('hover', null)
   }
@@ -921,11 +1066,12 @@ function draw() {
   } else {
     drawRegionLabels(ctx, transform)
   }
+  drawLowConfidenceLane(ctx, transform)
   drawBatchedTierPoints(ctx, 'normal')
-  drawLowConfidencePoints(ctx)
   drawEmphasisTierPass(ctx, 'watch')
   drawEmphasisTierPass(ctx, 'attention')
   drawEmphasisTierPass(ctx, 'critical')
+  drawLowConfidenceMarkers(ctx)
   drawSearchHighlights(ctx)
   drawSelectedEntities(ctx)
   drawLabels(ctx)
@@ -941,7 +1087,21 @@ function onPointerMove(event: MouseEvent) {
   const y = event.clientY - rect.top
 
   const nearest = findNearestPoint(plottedCache, x, y, 10, spatialIndexCache)
-  const next = nearest?.point ?? null
+  const nearestStrip = findNearestStripItem(stripCache, x, y, 12)
+  let next: PopulationMapPoint | null = nearest?.point ?? null
+  if (nearestStrip) {
+    if (!nearest) {
+      next = nearestStrip.point
+    } else {
+      const dxS = nearestStrip.screenX - x
+      const dyS = nearestStrip.screenY - y
+      const dxP = nearest.screenX - x
+      const dyP = nearest.screenY - y
+      if (dxS * dxS + dyS * dyS <= dxP * dxP + dyP * dyP) {
+        next = nearestStrip.point
+      }
+    }
+  }
 
   if (hovered.value?.EntityId !== next?.EntityId) {
     hovered.value = next
@@ -950,7 +1110,11 @@ function onPointerMove(event: MouseEvent) {
   }
 
   if (next) {
-    tooltipPos.value = { x: x + 12, y: y + 12 }
+    lastMouse.value = { x, y }
+    tooltipPos.value = { x: x + TOOLTIP_CURSOR_GAP, y: y + TOOLTIP_CURSOR_GAP }
+    // Tooltip content/size renders after hover state commits; re-clamp so it
+    // never overflows the (overflow: hidden) chart container.
+    void nextTick(() => adjustTooltipPosition())
   }
 }
 
@@ -964,8 +1128,17 @@ function onPointerDown(event: MouseEvent) {
   const x = event.clientX - rect.left
   const y = event.clientY - rect.top
   const nearest = findNearestPoint(plottedCache, x, y, 12, spatialIndexCache)
+  const nearestStrip = findNearestStripItem(stripCache, x, y, 14)
 
-  if (nearest) {
+  if (nearestStrip && (!nearest || (() => {
+    const dxS = nearestStrip.screenX - x
+    const dyS = nearestStrip.screenY - y
+    const dxP = nearest.screenX - x
+    const dyP = nearest.screenY - y
+    return dxS * dxS + dyS * dyS <= dxP * dxP + dyP * dyP
+  })())) {
+    emit('select', nearestStrip.point)
+  } else if (nearest) {
     emit('select', nearest.point)
   }
 }
@@ -1033,16 +1206,8 @@ onUnmounted(() => {
       Bubble color: {{ population?.BubbleColorLabel ?? population?.BubbleColorKpiId }}
     </div>
     <div
-      v-if="isFixedQuadrantPreset && lowConfidenceCount > 0"
-      class="iw-map-confidence-note"
-      role="note"
-    >
-      {{ lowConfidenceCount }}
-      low-confidence {{ lowConfidenceCount === 1 ? 'entity' : 'entities' }}
-      excluded from quadrants
-    </div>
-    <div
       v-if="hovered"
+      ref="tooltipRef"
       class="iw-tooltip"
       :style="{ left: `${tooltipPos.x}px`, top: `${tooltipPos.y}px` }"
     >

@@ -1823,7 +1823,7 @@ GROUP BY EntityId";
             const string sql = @"
 SELECT c.EntityId,
        c.EntityCode,
-       TRY_CAST(c.TextValue AS DECIMAL(18,4)) AS NumericValue,
+       COALESCE(c.NumericValue, TRY_CAST(c.TextValue AS DECIMAL(18,4))) AS NumericValue,
        CASE WHEN COALESCE(active.NumericValue, 1) > 0 THEN 1 ELSE 0 END AS IsActive
 FROM BTRPD_EntityAnalytics_Current c
 LEFT JOIN BTRPD_EntityAnalytics_Current active

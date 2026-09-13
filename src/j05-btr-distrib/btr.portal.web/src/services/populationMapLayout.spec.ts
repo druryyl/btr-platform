@@ -6,6 +6,7 @@ import {
   buildAutoLabelCandidates,
   buildDaysCalendarAxisTicks,
   buildIdrNiceAxisTicks,
+  buildPercentNiceAxisTicks,
   buildTransform,
   classifyPacingQuadrant,
   computeBounds,
@@ -14,18 +15,24 @@ import {
   DAYS_CALENDAR_EDGES,
   DAYS_YEAR_EDGE,
   ensureZeroTick,
+  findNearestStripItem,
   formatAxisTickValue,
   generateIdrNiceEdges,
   generateLinearAxisTicks,
   generateProjectionAxisGuides,
   generateProjectionGridTicks,
+  getLowConfidencePoints,
   isBusinessZeroWithinBounds,
   isDaysAxisUnit,
   isIdrAxisUnit,
   isLowConfidencePoint,
+  layoutLowConfidenceStrip,
+  LOW_CONFIDENCE_STRIP_HEIGHT,
+  partitionMapPoints,
   plotPoints,
   projectionToScreenX,
   resolveBusinessAttentionTier,
+  resolveBusinessProjection,
   resolveBusinessZeroProjection,
   resolveLabelPlacements,
   resolvePacingQuadrantBoundaries,
@@ -281,8 +288,91 @@ describe('resolvePopulationAxisTicks', () => {
     expect(ticks.map((t) => t.businessValue)).toEqual([0, 7, 14, 21, 30, 60, 90])
   })
 
+  it('returns nice Percent ticks instead of raw percentile fallback', () => {
+    const ticks = resolvePopulationAxisTicks('Percent', norm, 0, 100, fallback)
+    expect(ticks).not.toBe(fallback)
+    expect(ticks.length).toBeGreaterThan(0)
+    for (const t of ticks) {
+      expect(Number.isInteger(t.businessValue)).toBe(true)
+    }
+  })
+
   it('returns fallback for other units', () => {
-    expect(resolvePopulationAxisTicks('Percent', norm, 0, 100, fallback)).toBe(fallback)
+    expect(resolvePopulationAxisTicks('Count', norm, 0, 100, fallback)).toBe(fallback)
+  })
+})
+
+describe('buildPercentNiceAxisTicks', () => {
+  const norm = { center: 6, scale: 1 }
+
+  it('emits clean integer steps for a pacing-like span (60…663)', () => {
+    const ticks = buildPercentNiceAxisTicks(norm, 'Percent', 60, 663)
+    expect(ticks.length).toBeGreaterThan(0)
+    const values = ticks.map((t) => t.businessValue)
+    expect(values).toEqual([...values].sort((a, b) => a - b))
+    for (const v of values) {
+      expect(Number.isInteger(v)).toBe(true)
+      expect(v).toBeGreaterThanOrEqual(0)
+      expect(v).toBeLessThanOrEqual(700)
+    }
+    // No awkward decimals like 75.044.
+    for (const v of values) {
+      expect(String(v)).not.toMatch(/\.\d{2,}/)
+    }
+  })
+
+  it('covers negative growth spans with clean steps and zero when in range', () => {
+    const ticks = buildPercentNiceAxisTicks(norm, 'Percent', -12, 2)
+    const values = ticks.map((t) => t.businessValue)
+    expect(values).toContain(0)
+    for (const v of values) {
+      expect(String(v)).not.toMatch(/\.\d{2,}/)
+    }
+  })
+
+  it('aligns tick projections with the plotted transform', () => {
+    const ticks = buildPercentNiceAxisTicks(norm, 'Percent', 60, 130)
+    for (const t of ticks) {
+      expect(t.projectionValue).toBeCloseTo(
+        resolveBusinessProjection(norm, 'Percent', t.businessValue),
+        9,
+      )
+    }
+  })
+
+  it('adds a negative tick when coarse steps skip a small negative tail', () => {
+    const ticks = buildPercentNiceAxisTicks(norm, 'Percent', -2, 45)
+    const values = ticks.map((t) => t.businessValue)
+    expect(values).toContain(-2)
+    expect(values).toEqual([...values].sort((a, b) => a - b))
+    expect(new Set(values).size).toBe(values.length)
+    for (const t of ticks) {
+      expect(t.projectionValue).toBeCloseTo(
+        resolveBusinessProjection(norm, 'Percent', t.businessValue),
+        9,
+      )
+    }
+  })
+
+  it('adds a one-decimal negative tick for a fractional tail', () => {
+    const ticks = buildPercentNiceAxisTicks(norm, 'Percent', -0.3, 5)
+    const values = ticks.map((t) => t.businessValue)
+    expect(values.some((v) => v < 0)).toBe(true)
+    expect(new Set(values).size).toBe(values.length)
+  })
+
+  it('does not duplicate when negatives are already labelled', () => {
+    const ticks = buildPercentNiceAxisTicks(norm, 'Percent', -25, 40)
+    const values = ticks.map((t) => t.businessValue)
+    expect(values.some((v) => v < 0)).toBe(true)
+    expect(new Set(values).size).toBe(values.length)
+  })
+
+  it('returns empty ticks for non-finite norm or range', () => {
+    expect(
+      buildPercentNiceAxisTicks({ center: NaN, scale: 1 }, 'Percent', 0, 100),
+    ).toEqual([])
+    expect(buildPercentNiceAxisTicks(norm, 'Percent', NaN, 100)).toEqual([])
   })
 })
 
@@ -750,5 +840,62 @@ describe('low-confidence quadrant exclusion (PSOM-14)', () => {
     expect(isLowConfidencePoint(makePoint({ IsLowConfidence: true }))).toBe(true)
     expect(isLowConfidencePoint(makePoint({ IsLowConfidence: false }))).toBe(false)
     expect(isLowConfidencePoint(makePoint())).toBe(false)
+  })
+})
+
+describe('low-confidence strip lane', () => {
+  it('partitions flagged points including NULL-axis entities', () => {
+    const points = [
+      makePoint({ EntityId: 'ok', AxisX: 120, AxisY: 10 }),
+      makePoint({ EntityId: 'nullX', AxisX: null, AxisY: 10, IsLowConfidence: true }),
+      makePoint({ EntityId: 'nullY', AxisX: 80, AxisY: null, IsLowConfidence: true }),
+      makePoint({ EntityId: 'nullBoth', AxisX: null, AxisY: null, IsLowConfidence: true }),
+    ]
+    const { plottable, lowConfidence } = partitionMapPoints(points)
+    expect(plottable.map((p) => p.EntityId)).toEqual(['ok'])
+    expect(lowConfidence.map((p) => p.EntityId)).toEqual(['nullX', 'nullY', 'nullBoth'])
+    expect(getLowConfidencePoints(points)).toHaveLength(3)
+    for (const p of lowConfidence) {
+      expect(resolvePacingQuadrantForPoint(p)).toBeNull()
+    }
+  })
+
+  it('lays out strip items on a single bottom row inside the plot', () => {
+    const points = [
+      makePoint({ EntityId: 'a', AxisX: null, AxisY: null, IsLowConfidence: true }),
+      makePoint({ EntityId: 'b', AxisX: null, AxisY: 5, IsLowConfidence: true }),
+      makePoint({ EntityId: 'c', AxisX: 80, AxisY: null, IsLowConfidence: true }),
+    ]
+    const transform = buildTransform(800, 600, { minX: 0, maxX: 1, minY: 0, maxY: 1 })
+    const items = layoutLowConfidenceStrip(points, transform)
+
+    expect(items).toHaveLength(3)
+    const expectedY = transform.offsetY + transform.plotHeight - LOW_CONFIDENCE_STRIP_HEIGHT / 2
+    for (const item of items) {
+      expect(item.screenY).toBeCloseTo(expectedY, 9)
+      expect(item.screenX).toBeGreaterThanOrEqual(transform.offsetX)
+      expect(item.screenX).toBeLessThanOrEqual(transform.offsetX + transform.plotWidth)
+    }
+    expect(items[0].screenX).toBeLessThan(items[1].screenX)
+    expect(items[1].screenX).toBeLessThan(items[2].screenX)
+  })
+
+  it('returns no strip items when nothing is flagged', () => {
+    const transform = buildTransform(800, 600, { minX: 0, maxX: 1, minY: 0, maxY: 1 })
+    expect(layoutLowConfidenceStrip([], transform)).toEqual([])
+    expect(
+      layoutLowConfidenceStrip([makePoint({ EntityId: 'ok', AxisX: 120, AxisY: 10 })], transform),
+    ).toHaveLength(1)
+  })
+
+  it('hit-tests strip markers by proximity', () => {
+    const transform = buildTransform(800, 600, { minX: 0, maxX: 1, minY: 0, maxY: 1 })
+    const points = [
+      makePoint({ EntityId: 'a', AxisX: null, AxisY: null, IsLowConfidence: true }),
+      makePoint({ EntityId: 'b', AxisX: null, AxisY: null, IsLowConfidence: true }),
+    ]
+    const items = layoutLowConfidenceStrip(points, transform)
+    expect(findNearestStripItem(items, items[0].screenX, items[0].screenY, 12)?.point.EntityId).toBe('a')
+    expect(findNearestStripItem(items, -100, -100, 12)).toBeNull()
   })
 })

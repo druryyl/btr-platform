@@ -61,7 +61,7 @@ const dimensionRow = computed(() => resolveTooltipDimensionRow(props.point, prop
 
     <div v-if="isLowConfidencePoint(point)" class="iw-map-tooltip__section">
       <div class="iw-map-tooltip__label">Confidence</div>
-      <div class="iw-map-tooltip__value">Low confidence — excluded from quadrants</div>
+      <div class="iw-map-tooltip__value">Low confidence — shown separately, not classified</div>
     </div>
 
     <div v-if="analyzed" class="iw-map-tooltip__section">

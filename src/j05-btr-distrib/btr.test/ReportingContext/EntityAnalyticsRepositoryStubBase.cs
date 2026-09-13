@@ -818,8 +818,9 @@ namespace btr.test.ReportingContext
                     && string.Equals(r.KpiId, dimensionKpiId, StringComparison.OrdinalIgnoreCase))
                 .Select(r =>
                 {
-                    decimal? numeric = null;
-                    if (!string.IsNullOrWhiteSpace(r.TextValue)
+                    decimal? numeric = r.NumericValue;
+                    if (!numeric.HasValue
+                        && !string.IsNullOrWhiteSpace(r.TextValue)
                         && decimal.TryParse(r.TextValue, out var parsed))
                     {
                         numeric = parsed;

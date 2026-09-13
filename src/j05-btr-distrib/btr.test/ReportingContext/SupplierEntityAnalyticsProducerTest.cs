@@ -212,6 +212,29 @@ namespace btr.test.ReportingContext
             duplicates.Should().BeEmpty();
         }
 
+        [Fact]
+        public void Produce_PacingAchievementWritesL0ButNotL1()
+        {
+            var repository = new RecordingRepository();
+            var producer = CreateTimeAwareProducer(
+                repository,
+                salesOut: SalesOut(2026, 6, OwnedSalesOut("S001", "Principal A", 1000m)),
+                target: Targets(2026, 6, TargetRow("S001", "Principal A", 800m)),
+                periodYear: 2026,
+                currentRangeAmount: 1_500_000m,
+                priorRangeAmount: 1_000_000m);
+            var generatedAt = new DateTime(2026, 6, 15, 10, 0, 0);
+
+            producer.Produce(CreateContext(generatedAt, CreatePortfolioSupplier()));
+
+            repository.Rows.Should().ContainSingle(r =>
+                r.EntityId == "S001"
+                && r.KpiId == PrincipalKpiCatalog.PacingAchievementPercentageId
+                && r.NumericValue == 250m);
+            repository.MonthlyRows.Should().NotContain(r =>
+                r.KpiId == PrincipalKpiCatalog.PacingAchievementPercentageId);
+        }
+
         private static SupplierEntityAnalyticsProducer CreateTimeAwareProducer(
             RecordingRepository repository,
             PrincipalSalesOutAggregateResult salesOut,

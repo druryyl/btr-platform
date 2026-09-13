@@ -119,19 +119,143 @@ namespace btr.test.ReportingContext
         }
 
         [Fact]
-        public void BuildBins_NonIdr_UsesLinearEqualWidth()
+        public void BuildBins_NonIdr_UsesAdaptiveNiceLinearBins()
         {
             var values = new List<decimal> { 0m, 10m, 20m, 30m, 40m, 50m, 60m, 70m, 80m, 90m, 100m };
 
+            // N=11 → band cap 8 (requested 10): nice step 20 over [0, 100].
             var bins = EntityPeerDistributionBinBuilder.BuildBins(values, 10, "%");
 
-            bins.Should().HaveCount(10);
+            bins.Should().HaveCount(5);
             bins[0].BinStart.Should().Be(0m);
-            bins[0].BinEnd.Should().Be(10m);
-            bins[1].BinStart.Should().Be(10m);
-            bins[1].BinEnd.Should().Be(20m);
+            bins[0].BinEnd.Should().Be(20m);
+            bins[1].BinStart.Should().Be(20m);
+            bins[1].BinEnd.Should().Be(40m);
             bins.Last().BinEnd.Should().Be(100m);
+            bins.Should().OnlyContain(b => !b.IsOverflow);
+            bins.Select(b => b.Count).Should().Equal(2, 2, 2, 2, 3);
             bins.Sum(b => b.Count).Should().Be(values.Count);
+        }
+
+        [Fact]
+        public void BuildBins_Linear_Outlier_CreatesOverflowBin()
+        {
+            var values = new List<decimal>
+            {
+                80m, 83m, 85m, 88m, 90m, 92m, 95m, 97m, 100m, 102m,
+                105m, 107m, 110m, 112m, 115m, 117m, 119m, 120m, 140m, 663m
+            };
+
+            var bins = EntityPeerDistributionBinBuilder.BuildBins(values, 20, "Percent");
+
+            // Tukey fence ≈ 151.5 isolates 663; nice cap 200; bulk [80, 200] at step 20.
+            bins.Should().HaveCount(7);
+            var overflow = bins.Last();
+            overflow.IsOverflow.Should().BeTrue();
+            overflow.BinStart.Should().Be(200m);
+            overflow.BinEnd.Should().Be(663m);
+            overflow.Count.Should().Be(1);
+            overflow.Label.Should().StartWith("≥");
+
+            bins.Take(6).Should().OnlyContain(b => !b.IsOverflow);
+            bins.Take(6).Count(b => b.Count > 0).Should().BeGreaterThanOrEqualTo(3);
+            bins.Sum(b => b.Count).Should().Be(values.Count);
+            bins.Take(6).Should().NotContain(b => b.BinStart < 150m && b.BinEnd > 200m,
+                "no bulk bin may span into the overflow range");
+        }
+
+        [Fact]
+        public void BuildBins_Linear_NegativeOutlier_CreatesUnderflowBin()
+        {
+            var values = new List<decimal> { -300m }
+                .Concat(new List<decimal>
+                {
+                    80m, 83m, 85m, 88m, 90m, 92m, 95m, 97m, 100m, 102m,
+                    105m, 107m, 110m, 112m, 115m, 117m, 119m, 120m, 140m
+                })
+                .OrderBy(v => v)
+                .ToList();
+
+            var bins = EntityPeerDistributionBinBuilder.BuildBins(values, 20, "Percent");
+
+            var underflow = bins.First();
+            underflow.IsOverflow.Should().BeTrue();
+            underflow.BinStart.Should().Be(-300m);
+            underflow.BinEnd.Should().Be(50m);
+            underflow.Count.Should().Be(1);
+
+            bins.Skip(1).Count(b => b.Count > 0).Should().BeGreaterThanOrEqualTo(3);
+            bins.Sum(b => b.Count).Should().Be(values.Count);
+        }
+
+        [Fact]
+        public void BuildBins_Linear_WideBimodal_NoOverflow()
+        {
+            // Tukey fences (-150.5 / 263.5) cover the whole spread → plain nice bins.
+            var values = new List<decimal> { 0m, 1m, 2m, 3m, 4m, 5m }
+                .Concat(Enumerable.Range(100, 14).Select(i => (decimal)i))
+                .OrderBy(v => v)
+                .ToList();
+
+            var bins = EntityPeerDistributionBinBuilder.BuildBins(values, 20, "Percent");
+
+            bins.Should().OnlyContain(b => !b.IsOverflow);
+            bins.Sum(b => b.Count).Should().Be(values.Count);
+        }
+
+        [Fact]
+        public void BuildBins_Linear_SmallN_SkipsFencing()
+        {
+            var values = new List<decimal> { 80m, 90m, 100m, 110m, 663m };
+
+            var bins = EntityPeerDistributionBinBuilder.BuildBins(values, 20, "Percent");
+
+            bins.Should().OnlyContain(b => !b.IsOverflow);
+            bins.Sum(b => b.Count).Should().Be(values.Count);
+        }
+
+        [Theory]
+        [InlineData(20, 20, 8)]
+        [InlineData(11, 10, 8)]
+        [InlineData(50, 20, 12)]
+        [InlineData(200, 20, 20)]
+        [InlineData(200, 5, 5)]
+        public void ResolveEffectiveBinCount_AppliesPopulationBands(
+            int peerCount, int requested, int expected)
+        {
+            EntityPeerDistributionBinBuilder.ResolveEffectiveBinCount(peerCount, requested)
+                .Should().Be(expected);
+        }
+
+        [Theory]
+        [InlineData(151.5, 200)]
+        [InlineData(100, 100)]
+        [InlineData(91175000, 100000000)]
+        [InlineData(50.5, 50)]
+        [InlineData(94, 50)]
+        [InlineData(0.3, 0.5)]
+        public void NiceCeilFloor_SnapToLadder(double input, double expectedCeil)
+        {
+            EntityPeerDistributionBinBuilder.NiceCeil((decimal)input)
+                .Should().Be((decimal)expectedCeil);
+        }
+
+        [Fact]
+        public void NiceFloor_SnapsDownToLadder()
+        {
+            EntityPeerDistributionBinBuilder.NiceFloor(50.5m).Should().Be(50m);
+            EntityPeerDistributionBinBuilder.NiceFloor(200m).Should().Be(200m);
+            EntityPeerDistributionBinBuilder.NiceFloor(0.3m).Should().Be(0.2m);
+        }
+
+        [Fact]
+        public void Quartile_InterpolatesSortedValues()
+        {
+            var values = new List<decimal> { 0m, 10m, 20m, 30m, 40m, 50m, 60m, 70m, 80m, 90m, 100m };
+
+            EntityPeerDistributionBinBuilder.Quartile(values, 0.25).Should().Be(25m);
+            EntityPeerDistributionBinBuilder.Quartile(values, 0.5).Should().Be(50m);
+            EntityPeerDistributionBinBuilder.Quartile(values, 0.75).Should().Be(75m);
         }
 
         [Fact]

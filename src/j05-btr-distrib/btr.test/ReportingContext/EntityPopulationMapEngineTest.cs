@@ -220,6 +220,74 @@ namespace btr.test.ReportingContext
             point.IsLowConfidence.Should().BeFalse();
         }
 
+        [Fact]
+        public void BuildPopulationMap_PopulatesAxisY_FromNumericDimensionValue()
+        {
+            SeedSupplierWithInventoryDimension(
+                entityId: "SP001",
+                entityCode: "SUP001",
+                displayName: "Supplier One",
+                axisX: 500_000_000m,
+                inventoryNumericValue: 400_000_000m,
+                inventoryTextValue: null);
+
+            var result = _engine.BuildPopulationMap(new PopulationMapRequest
+            {
+                EntityType = EntityTypeCode.Supplier,
+                PresetId = "purchase-exposure-map"
+            });
+
+            var point = result.Points.Single(p => p.EntityId == "SP001");
+            point.AxisX.Should().Be(500_000_000m);
+            point.AxisY.Should().Be(400_000_000m);
+            point.AxisYPercentile.Should().NotBeNull();
+            point.IsLowConfidence.Should().BeFalse();
+        }
+
+        [Fact]
+        public void BuildPopulationMap_PopulatesAxisY_FromNumericTextDimensionValue()
+        {
+            SeedSupplierWithInventoryDimension(
+                entityId: "SP002",
+                entityCode: "SUP002",
+                displayName: "Supplier Two",
+                axisX: 250_000_000m,
+                inventoryNumericValue: null,
+                inventoryTextValue: "150000000");
+
+            var result = _engine.BuildPopulationMap(new PopulationMapRequest
+            {
+                EntityType = EntityTypeCode.Supplier,
+                PresetId = "purchase-exposure-map"
+            });
+
+            var point = result.Points.Single(p => p.EntityId == "SP002");
+            point.AxisY.Should().Be(150_000_000m);
+            point.IsLowConfidence.Should().BeFalse();
+        }
+
+        [Fact]
+        public void BuildPopulationMap_FlagsLowConfidence_WhenDimensionValueIsNotNumeric()
+        {
+            SeedSupplierWithInventoryDimension(
+                entityId: "SP003",
+                entityCode: "SUP003",
+                displayName: "Supplier Three",
+                axisX: 100_000_000m,
+                inventoryNumericValue: null,
+                inventoryTextValue: "N/A");
+
+            var result = _engine.BuildPopulationMap(new PopulationMapRequest
+            {
+                EntityType = EntityTypeCode.Supplier,
+                PresetId = "purchase-exposure-map"
+            });
+
+            var point = result.Points.Single(p => p.EntityId == "SP003");
+            point.AxisY.Should().BeNull();
+            point.IsLowConfidence.Should().BeTrue();
+        }
+
         private void SeedPopulation(int count)
         {
             for (var i = 1; i <= count; i++)
@@ -230,6 +298,62 @@ namespace btr.test.ReportingContext
                     displayName: $"Customer {i}",
                     axisX: 100m + i,
                     axisY: 200m + i);
+            }
+        }
+
+        private void SeedSupplierWithInventoryDimension(
+            string entityId,
+            string entityCode,
+            string displayName,
+            decimal? axisX,
+            decimal? inventoryNumericValue,
+            string inventoryTextValue)
+        {
+            _repository.CurrentRows.Add(new EntityAnalyticsCurrentRow
+            {
+                EntityType = EntityTypeCode.Supplier,
+                EntityId = entityId,
+                EntityCode = entityCode,
+                KpiId = EntityAnalyticsMetaKpiIds.IsActive,
+                NumericValue = 1m,
+                GeneratedAt = GeneratedAt
+            });
+
+            if (!string.IsNullOrWhiteSpace(displayName))
+            {
+                _repository.CurrentRows.Add(new EntityAnalyticsCurrentRow
+                {
+                    EntityType = EntityTypeCode.Supplier,
+                    EntityId = entityId,
+                    EntityCode = entityCode,
+                    KpiId = EntityAnalyticsMetaKpiIds.DisplayName,
+                    TextValue = displayName,
+                    GeneratedAt = GeneratedAt
+                });
+            }
+
+            _repository.CurrentRows.Add(new EntityAnalyticsCurrentRow
+            {
+                EntityType = EntityTypeCode.Supplier,
+                EntityId = entityId,
+                EntityCode = entityCode,
+                KpiId = "PU-KPI-001",
+                NumericValue = axisX,
+                GeneratedAt = GeneratedAt
+            });
+
+            if (inventoryNumericValue.HasValue || inventoryTextValue != null)
+            {
+                _repository.CurrentRows.Add(new EntityAnalyticsCurrentRow
+                {
+                    EntityType = EntityTypeCode.Supplier,
+                    EntityId = entityId,
+                    EntityCode = entityCode,
+                    KpiId = EntityAnalyticsMetaKpiIds.InventoryValue,
+                    NumericValue = inventoryNumericValue,
+                    TextValue = inventoryTextValue,
+                    GeneratedAt = GeneratedAt
+                });
             }
         }
 

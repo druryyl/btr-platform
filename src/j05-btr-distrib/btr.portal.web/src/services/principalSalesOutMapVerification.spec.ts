@@ -8,11 +8,14 @@ import {
   computeBounds,
   ensureZeroTick,
   generateProjectionAxisGuides,
+  getLowConfidencePoints,
   isBusinessZeroWithinBounds,
   isLowConfidencePoint,
+  layoutLowConfidenceStrip,
   PACING_QUADRANT_LABELS,
   PACING_QUADRANT_X_THRESHOLD,
   PACING_QUADRANT_Y_THRESHOLD,
+  partitionMapPoints,
   plotPoints,
   PRINCIPAL_SALES_OUT_MAP_PRESET_ID,
   projectionToScreenY,
@@ -250,6 +253,35 @@ describe('Principal Sales-Out Map time-aware KPI verification (PSOM-16)', () => 
       }
 
       expect(resolvePacingQuadrantForPoint(makePoint({ AxisX: 120, AxisY: 20 }))).toBe('star')
+    })
+
+    it('keeps NULL-axis low-confidence entities out of projection but available for the strip lane', () => {
+      const points = [
+        makePoint({ EntityId: 'star', AxisX: 120, AxisY: 15 }),
+        makePoint({ EntityId: 'suppressedY', AxisX: 80, AxisY: null, IsLowConfidence: true }),
+        makePoint({ EntityId: 'suppressedBoth', AxisX: null, AxisY: null, IsLowConfidence: true }),
+      ]
+      const projection = projectPercent(points)
+      // Suppressed entities never enter projection/statistics.
+      expect(projection.entities.has('suppressedY')).toBe(false)
+      expect(projection.entities.has('suppressedBoth')).toBe(false)
+
+      const bounds = computeBounds(projection)
+      const transform = buildTransform(800, 600, bounds)
+      expect(plotPoints(points, transform, projection).map((p) => p.point.EntityId)).toEqual(['star'])
+
+      // ...but the strip lane still displays them with no quadrant.
+      const { lowConfidence } = partitionMapPoints(points)
+      expect(getLowConfidencePoints(points).map((p) => p.EntityId)).toEqual([
+        'suppressedY',
+        'suppressedBoth',
+      ])
+      const strip = layoutLowConfidenceStrip(lowConfidence, transform)
+      expect(strip).toHaveLength(2)
+      for (const item of strip) {
+        expect(isLowConfidencePoint(item.point)).toBe(true)
+        expect(resolvePacingQuadrantForPoint(item.point)).toBeNull()
+      }
     })
   })
 })

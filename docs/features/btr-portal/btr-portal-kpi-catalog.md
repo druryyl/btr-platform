@@ -7074,6 +7074,7 @@ Jumlah **Target Principal** per Principal dan bulan. Bukan Sales-Out dan bukan a
 Pencapaian Principal yang **time-aware** terhadap target yang dipace secara linear sampai tanggal bisnis berjalan. Supporting KPI untuk map/kuadran bisnis dan profil; bukan pengganti Sales-Out, bukan pengganti `PRN-TGT-003`, dan bukan Net Sales.
 
 - Dihitung dinamis dari Monthly Target (`PRN-TGT-001`) dan konteks periode runtime (Business Date); tidak ada tabel/kolom/skema/proyeksi baru.
+- **BusinessDate-dependent, evaluasi periode berjalan:** KPI ini untuk evaluasi bulan berjalan (apakah on-plan hari ini?) dan **tidak ditrend secara historis** (`TrendEligible=false`). Analisis achievement historis diwakili oleh `PRN-TGT-003`.
 - Audience: Owner, GM, Sales management (pengguna Investigation Workspace + profil Principal).
 - Sumber: snapshot tersimpan `PRN-SALES-001` + `PRN-TGT-001` dan period context runtime.
 
@@ -7093,6 +7094,7 @@ Pencapaian Principal yang **time-aware** terhadap target yang dipace secara line
 
 * Harian pada `principal-sales-out-map` (sumbu X) dan profil Principal → drill-down evidence Sales-Out MTD.
 - SA04 tidak memakai KPI ini (SA04 tetap memakai `PRN-TGT-003`; OQ-007).
+- Tidak muncul di Trend / Trend Comparison / Cross-Period Comparison (bukan KPI historis); untuk tren achievement bulanan gunakan `PRN-TGT-003`.
 
 <a id="prn-grw-001"></a>
 ## PRN-GRW-001 — Month-over-Month Growth Percentage

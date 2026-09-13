@@ -470,6 +470,7 @@ export interface PeerDistributionResponse {
   PeerMax: number | null
   FormattedPeerRange: string
   Bins: PeerDistributionBin[]
+  DistributionSummary?: string | null
 }
 
 export interface PeerGroupRule {
@@ -491,6 +492,7 @@ export interface PeerDistributionBin {
   BinEnd: number
   Count: number
   Label: string
+  IsOverflow?: boolean
 }
 
 export interface InvestigationLensesResponse {
