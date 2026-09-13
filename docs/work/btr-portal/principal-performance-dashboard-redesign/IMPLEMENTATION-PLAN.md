@@ -538,7 +538,7 @@ cases, and integration/chart risk — not business importance.
 | PPD-01 | Percentile-rank helper | 2 | GO |
 | PPD-02 | Salesman dependency analytics | 3 | GO |
 | PPD-03 | Portfolio overview aggregates | 2 | GO |
-| PPD-04 | Opportunity & Risk rule engine | 3 | PLANNED |
+| PPD-04 | Opportunity & Risk rule engine | 3 | GO |
 | PPD-05 | Data Completeness summary | 2 | PLANNED |
 | PPD-06 | Shared "No Data" presentation helper | 1 | PLANNED |
 | PPD-07 | Header: period, data updated at, data completeness | 2 | PLANNED |
@@ -582,7 +582,10 @@ Entry format:
    Verified all PPD-03 acceptance criteria, feasibility authority compliance, GAP-001/002/003 compliance, and scope; build (vue-tsc) and full suite (382 tests) pass; no findings; status GO.
 
 ### Slice-ID: PPD-04
-_No entries yet._
+1. [Implementation 2026-09-13 20:33]
+   Implemented percentile-based opportunity/risk rule engine in services/principalOpportunityRisk.ts (opportunityEntries, returnRiskEntries, dependencyRiskEntries, underperformingEntries, opportunityRiskBoard) with approved thresholds and missing-metric exclusion; 21 unit tests pass; status IMPLEMENTED.
+2. [Review 2026-09-13 20:34]
+   Verified all PPD-04 acceptance criteria, feasibility authority compliance (relative thresholds, no alerting engine), and scope; boundary/missing/coexistence tests present; build (vue-tsc) and full suite (403 tests) pass; no findings; status GO.
 
 ### Slice-ID: PPD-05
 _No entries yet._
