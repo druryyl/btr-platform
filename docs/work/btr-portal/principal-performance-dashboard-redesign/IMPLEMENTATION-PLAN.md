@@ -537,7 +537,7 @@ cases, and integration/chart risk — not business importance.
 | --- | --- | --- | --- |
 | PPD-01 | Percentile-rank helper | 2 | GO |
 | PPD-02 | Salesman dependency analytics | 3 | GO |
-| PPD-03 | Portfolio overview aggregates | 2 | PLANNED |
+| PPD-03 | Portfolio overview aggregates | 2 | GO |
 | PPD-04 | Opportunity & Risk rule engine | 3 | PLANNED |
 | PPD-05 | Data Completeness summary | 2 | PLANNED |
 | PPD-06 | Shared "No Data" presentation helper | 1 | PLANNED |
@@ -576,7 +576,10 @@ Entry format:
    Verified all PPD-02 acceptance criteria, feasibility authority compliance, GAP-004/005/008 compliance, and scope; build (vue-tsc) and full suite (368 tests) pass; no findings; status GO.
 
 ### Slice-ID: PPD-03
-_No entries yet._
+1. [Implementation 2026-09-13 20:27]
+   Implemented portfolioCoverage + portfolioOverview in services/principalPortfolio.ts with unit tests; status IMPLEMENTED.
+2. [Review 2026-09-13 20:28]
+   Verified all PPD-03 acceptance criteria, feasibility authority compliance, GAP-001/002/003 compliance, and scope; build (vue-tsc) and full suite (382 tests) pass; no findings; status GO.
 
 ### Slice-ID: PPD-04
 _No entries yet._
