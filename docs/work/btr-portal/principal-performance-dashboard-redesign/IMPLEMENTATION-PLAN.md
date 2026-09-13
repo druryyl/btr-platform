@@ -536,7 +536,7 @@ cases, and integration/chart risk — not business importance.
 | SLICE-ID | SLICE NAME | COMPLEXITY | STATUS |
 | --- | --- | --- | --- |
 | PPD-01 | Percentile-rank helper | 2 | GO |
-| PPD-02 | Salesman dependency analytics | 3 | PLANNED |
+| PPD-02 | Salesman dependency analytics | 3 | GO |
 | PPD-03 | Portfolio overview aggregates | 2 | PLANNED |
 | PPD-04 | Opportunity & Risk rule engine | 3 | PLANNED |
 | PPD-05 | Data Completeness summary | 2 | PLANNED |
@@ -570,7 +570,10 @@ Entry format:
    Verified all acceptance criteria, feasibility authority compliance, and scope; no findings; status GO.
 
 ### Slice-ID: PPD-02
-_No entries yet._
+1. [Implementation 2026-09-13 20:16]
+   Extended services/principalContribution.ts with contributionShare, contributionCoverage, and principalDependencies (grouping, normalized share, max-ratio, distinct count, top contributor, ordered distribution, dependency rank); 23 unit tests pass; status IMPLEMENTED.
+2. [Review 2026-09-13 20:17]
+   Verified all PPD-02 acceptance criteria, feasibility authority compliance, GAP-004/005/008 compliance, and scope; build (vue-tsc) and full suite (368 tests) pass; no findings; status GO.
 
 ### Slice-ID: PPD-03
 _No entries yet._
