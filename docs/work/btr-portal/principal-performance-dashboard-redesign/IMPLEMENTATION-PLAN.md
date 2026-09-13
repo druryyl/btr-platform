@@ -546,7 +546,7 @@ cases, and integration/chart risk — not business importance.
 | PPD-09 | Opportunity & Risk Board cards | 3 | GO |
 | PPD-10 | Achievement Gap Leaderboard | 3 | GO |
 | PPD-11 | Coverage & Reach Analysis | 4 | GO |
-| PPD-12 | Return Risk Analysis | 3 | PLANNED |
+| PPD-12 | Return Risk Analysis | 3 | GO |
 | PPD-13 | Salesman Dependency Analysis | 5 | PLANNED |
 | PPD-14 | Principal Detail Table | 4 | PLANNED |
 | PPD-15 | Dashboard composition & preservation | 4 | PLANNED |
@@ -632,7 +632,10 @@ Entry format:
    Verified all five PPD-11 acceptance criteria PASS: chart.js `scatter` with X=Coverage % and Y=Achievement % (stored CoveragePercentage/AchievementPercentage scaled x100); opportunity candidates auto-highlighted (Coverage P>=70 AND Achievement P<=40) via the approved PPD-04 rule engine; supporting table below the chart shows Principal/Active Customer/Total Customer/Coverage %/Achievement %; null coverage or achievement is excluded from the scatter and from percentile computation and renders "No Data" (PPD-06) in the table; Coverage % uses stored Ranking[].CoveragePercentage. Feasibility authority compliance (GAP-006 relative percentiles, population-skew disclosure) and scope (frontend-only; one new presentational component plus view wiring; no backend/model/store change) verified; reproduced build (vue-tsc + vite) and full suite (413 tests) pass. No critical/major findings. INFO only: the component reuses PPD-04 `opportunityEntries` instead of calling PPD-01 `percentileRank` directly, which keeps the opportunity rule single-sourced and introduces no new thresholds. Status GO.
 
 ### Slice-ID: PPD-12
-_No entries yet._
+1. [Implementation 2026-09-13 21:14]
+   Created PrincipalReturnRiskAnalysis.vue (ranked horizontal bar chart via chart.js `bar` with `indexAxis: 'y'` — not pie/donut — plus a Return Amount / Return % sort toggle; risk principals highlighted where Return percentile >= 80 from the approved PPD-04 `returnRiskEntries` rule engine; supporting table Principal/Return Amount/Return %/Good Return/Broken Return using PPD-06 "No Data" for null snapshots, which are excluded from the ranking chart and percentile computation; GR-001 note that returns stay independent of Sales-Out and Return % is a quality ratio, not a deduction or Net Sales) and integrated it into PrincipalPerformanceDashboardView.vue after the Coverage & Reach Analysis; build (vue-tsc + vite) and full suite (413 tests) pass; status IMPLEMENTED.
+2. [Review 2026-09-13 21:20]
+   Verified all five PPD-12 acceptance criteria PASS: ranked `bar` chart (not pie/donut) with Return Amount/Return % SelectButton sort; risk highlight at Return percentile >= 80 via the single-sourced PPD-04 returnRiskEntries (GAP-006 relative threshold); supporting table columns Principal/Return Amount/Return %/Good Return/Broken Return; returns kept independent of Sales-Out with Return % labeled a quality ratio, not a deduction or Net Sales (GR-001); null return snapshots render PPD-06 "No Data" and are excluded from the chart ranking and percentile computation (OQ-8). Feasibility authority compliance and scope (frontend-only; one new presentational component plus view wiring; no backend/model/store/service change) verified; reproduced build (vue-tsc + vite) and full suite (413 tests) pass. No critical/major findings. INFO only: PrincipalCoverageReachAnalysis.vue (PPD-11) is still untracked in git even though the view imports it; commit it separately to keep the tree buildable. Status GO.
 
 ### Slice-ID: PPD-13
 _No entries yet._

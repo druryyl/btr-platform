@@ -10,6 +10,7 @@ import PrincipalPortfolioOverview from '@/components/dashboard/PrincipalPortfoli
 import PrincipalOpportunityRiskBoard from '@/components/dashboard/PrincipalOpportunityRiskBoard.vue'
 import PrincipalAchievementGapLeaderboard from '@/components/dashboard/PrincipalAchievementGapLeaderboard.vue'
 import PrincipalCoverageReachAnalysis from '@/components/dashboard/PrincipalCoverageReachAnalysis.vue'
+import PrincipalReturnRiskAnalysis from '@/components/dashboard/PrincipalReturnRiskAnalysis.vue'
 import Top10RankingTable from '@/components/dashboard/Top10RankingTable.vue'
 import { formatCurrency, formatCurrencyCompact, formatNumber, formatPercent } from '@/services/formatters'
 import { contributionPercentage } from '@/services/principalContribution'
@@ -416,6 +417,12 @@ onMounted(() => {
     />
 
     <PrincipalCoverageReachAnalysis
+      class="principal-performance__section"
+      :ranking="achievementGapRanking"
+      :loading="dashboard.loading"
+    />
+
+    <PrincipalReturnRiskAnalysis
       class="principal-performance__section"
       :ranking="achievementGapRanking"
       :loading="dashboard.loading"
