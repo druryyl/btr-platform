@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
   <PropertyGroup>
@@ -497,6 +497,7 @@
     <Compile Include="ReportingContext\EntityAnalyticsAgg\Producers\SalesmanEntityAnalyticsProducer.cs" />
     <Compile Include="ReportingContext\EntityAnalyticsAgg\Producers\SupplierEntityAnalyticsEvidenceResolver.cs" />
     <Compile Include="ReportingContext\EntityAnalyticsAgg\Producers\SupplierEntityAnalyticsProduceInput.cs" />
+    <Compile Include="ReportingContext\EntityAnalyticsAgg\Producers\SupplierPrincipalReplayResult.cs" />
     <Compile Include="ReportingContext\EntityAnalyticsAgg\Producers\SupplierEntityAnalyticsProducer.cs" />
     <Compile Include="ReportingContext\EntityAnalyticsAgg\Producers\ItemEntityAnalyticsEvidenceResolver.cs" />
     <Compile Include="ReportingContext\EntityAnalyticsAgg\Producers\ItemEntityAnalyticsProduceInput.cs" />
@@ -555,6 +556,7 @@
     <Compile Include="ReportingContext\EntityAnalyticsAgg\Backfill\Models\SalesmanReplayDataBundle.cs" />
     <Compile Include="ReportingContext\EntityAnalyticsAgg\Backfill\Models\SupplierReplayDataBundle.cs" />
     <Compile Include="ReportingContext\EntityAnalyticsAgg\Backfill\Services\EntityAnalyticsReplayAggregateService.cs" />
+    <Compile Include="ReportingContext\EntityAnalyticsAgg\Backfill\Services\SupplierPrincipalReplayAggregator.cs" />
     <Compile Include="ReportingContext\EntityAnalyticsAgg\Backfill\Services\EntityAnalyticsReplayEntityCountHelper.cs" />
     <Compile Include="ReportingContext\EntityAnalyticsAgg\Backfill\Services\SalesmanReplayPeriodHandler.cs" />
     <Compile Include="ReportingContext\EntityAnalyticsAgg\Backfill\Sources\SalesmanRepHistoryBackfillSource.cs" />

@@ -3,10 +3,12 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading;
+using btr.application.Portal;
 using btr.application.ReportingContext.DashboardSnapshotAgg.Progress;
 using btr.application.ReportingContext.DashboardSnapshotAgg.UseCases;
 using btr.application.ReportingContext.PrincipalAnalyticsAgg;
 using btr.application.ReportingContext.PrincipalAnalyticsAgg.UseCases;
+using btr.application.SupportContext.TglJamAgg;
 using btr.application.ReportingContext.EntityAnalyticsAgg.Backfill.UseCases;
 using btr.infrastructure.Helpers;
 using btr.portal.worker.Progress;
@@ -57,6 +59,7 @@ namespace btr.portal.worker
 
                     using (var scope = serviceProvider.CreateScope())
                     {
+                        LogBusinessDateContext(scope.ServiceProvider);
                         ExecuteRefresh(scope.ServiceProvider, domain, triggeredBy, args);
                     }
 
@@ -169,6 +172,33 @@ namespace btr.portal.worker
             sw.Stop();
             _stepDurations[stepId] = sw.Elapsed;
             _reporter.StepCompleted(stepId, new WorkerProgressStepInfo { Duration = sw.Elapsed });
+        }
+
+        private void LogBusinessDateContext(IServiceProvider serviceProvider)
+        {
+            var businessDateProvider = serviceProvider.GetRequiredService<IBusinessDateProvider>();
+            var tglJamDal = serviceProvider.GetRequiredService<ITglJamDal>();
+
+            // Throws when Presentation.Enabled=true without a valid BusinessDate (fail-fast per presentation-mode spec).
+            var businessDate = businessDateProvider.Today;
+            var systemDate = tglJamDal.Now;
+
+            Logger.Info(
+                "Business date context. IsPresentationActive={IsPresentationActive}, BusinessDate={BusinessDate}, SystemDate={SystemDate}",
+                businessDateProvider.IsPresentationActive,
+                businessDate.ToString("yyyy-MM-dd"),
+                systemDate.ToString("yyyy-MM-dd"));
+
+            Console.Out.WriteLine(
+                $"Business date: {businessDate:yyyy-MM-dd} (Presentation active: {businessDateProvider.IsPresentationActive}) | System date: {systemDate:yyyy-MM-dd}");
+
+            if (businessDate.Date != systemDate.Date)
+            {
+                Logger.Warn(
+                    "BusinessDate differs from system date. Materialized snapshots will use BusinessDate; GeneratedAt/refresh logs keep system time. BusinessDate={BusinessDate}, SystemDate={SystemDate}",
+                    businessDate.ToString("yyyy-MM-dd"),
+                    systemDate.ToString("yyyy-MM-dd"));
+            }
         }
 
         private void ExecuteRefresh(IServiceProvider serviceProvider, string domain, string triggeredBy, string[] args)

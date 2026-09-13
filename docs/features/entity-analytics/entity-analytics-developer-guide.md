@@ -795,6 +795,63 @@ Ensure the entity-type mutex blocks concurrent live `InventoryRisk` refresh duri
 
 
 
+## Historical Backfill — Supplier Principal KPIs
+
+Supplier replay reconstructs closed-month history for the Principal KPI family
+using the same live aggregators/composers as the live Principal snapshot workers
+(formula fidelity — no replay-specific KPI math).
+
+Covered KPIs: `PRN-SALES-001`, `PRN-RET-001..004`, `PRN-TGT-001..003`, `PRN-PUR-001`.
+
+Explicit non-goals: `PRN-TGT-004`, `PRN-GRW-*`, `PRN-INV-*`, `PRN-CUS-*`
+(separate semantic decisions; never emitted by replay).
+
+Ownership: replay owns closed months (`IsClosed=1` via
+`ReplaceMonthlyHistoryForPeriod`); live `PurchasingManagement` workers own the
+current open month (`IsClosed=0`). Replay never writes `BTRPD_Principal*`
+snapshots and never writes L0 CURRENT (`PersistL0` is a no-op in replay).
+
+Missing-target rule: when a supplier-month has no
+`BTR_SalesPersonPrincipalTarget` evidence, replay writes no `PRN-TGT-001/002/003`
+rows at all (absent, not zero), so the UI shows "no target available" instead of
+an achievement calculation against zero.
+
+
+
+```text
+
+btr.portal.worker --domain EntityAnalyticsHistoricalBackfill \
+
+  --entity-type Supplier --from-period 2025-06 --to-period 2026-05 \
+
+  --confirm BACKFILL
+
+```
+
+
+
+Recommended sequence:
+
+1. Dry-run: `--dry-run --entity-type Supplier --from-period 2025-06 --to-period 2026-05`
+
+2. Reconciliation: compare replay output for a sample supplier against live
+snapshots for overlapping months; every variance must be explained (late voids,
+`BTR_Brg.SupplierId` master moves, post-close target edits) before production
+
+3. Execute with `--confirm BACKFILL` (resumable per checkpoint; idempotent rerun
+per month via `--force`)
+
+
+
+Attribution caveat: history is recomputed with the **current** `BTR_Brg.SupplierId`
+item master (same limitation as the live Principal history workers).
+
+
+
+---
+
+
+
 ## Historical Backfill — Checkpoint & Resume (M32.B1.8)
 
 

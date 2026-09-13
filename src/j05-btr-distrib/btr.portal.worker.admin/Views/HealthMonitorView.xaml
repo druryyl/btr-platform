@@ -1,0 +1,150 @@
+<UserControl x:Class="btr.portal.worker.admin.Views.HealthMonitorView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:local="clr-namespace:btr.portal.worker.admin.Views"
+             xmlns:conv="clr-namespace:btr.portal.worker.admin.Converters"
+             mc:Ignorable="d"
+             d:DesignHeight="600" d:DesignWidth="900">
+
+    <UserControl.Resources>
+        <conv:StatusToColorConverter x:Key="StatusToColorConverter"/>
+        <conv:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter"/>
+        <conv:NullToVisibilityConverter x:Key="NullToVisibilityConverter"/>
+    </UserControl.Resources>
+
+    <Grid Background="{StaticResource BackgroundBrush}">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <Border Grid.Row="0" Style="{StaticResource CardStyle}">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <StackPanel Grid.Column="0">
+                    <TextBlock Text="Dashboard Snapshot Health" Style="{StaticResource HeaderTextStyle}"/>
+                    <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
+                        <TextBlock Text="Overall Status: " FontWeight="SemiBold" FontSize="14"/>
+                        <Border Style="{StaticResource StatusBadgeStyle}"
+                                Background="{Binding OverallStatusBrush}">
+                            <TextBlock Text="{Binding OverallStatus}" FontWeight="Bold"
+                                       Foreground="White" FontSize="12"/>
+                        </Border>
+                        <TextBlock Text="{Binding LastChecked, StringFormat=' Last checked: {0:HH:mm:ss}'}"
+                                   Foreground="{StaticResource TextSecondaryBrush}" FontSize="12"
+                                   VerticalAlignment="Center" Margin="16,0,0,0"/>
+                    </StackPanel>
+                </StackPanel>
+
+                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                    <ToggleButton Content="Auto-Refresh" IsChecked="{Binding AutoRefreshEnabled}"
+                                  Margin="0,0,8,0" Padding="12,6"/>
+                    <Button Content="Refresh Now" Command="{Binding RefreshCommand}"
+                            IsEnabled="{Binding IsLoading, Converter={StaticResource BoolToVisibilityConverter}, ConverterParameter=invert}"
+                            Style="{StaticResource PrimaryButtonStyle}"/>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <TextBlock Grid.Row="1" Text="{Binding ErrorMessage}" Foreground="{StaticResource StatusErrorBrush}"
+                   FontWeight="Medium" Margin="16,0,16,8" TextWrapping="Wrap"
+                   Visibility="{Binding ErrorMessage, Converter={StaticResource NullToVisibilityConverter}, ConverterParameter=invert}"/>
+
+        <DataGrid Grid.Row="2" ItemsSource="{Binding Domains}" AutoGenerateColumns="False"
+                  IsReadOnly="True" GridLinesVisibility="Horizontal"
+                  Background="{StaticResource SurfaceBrush}"
+                  BorderBrush="{StaticResource BorderBrush}"
+                  HeadersVisibility="Column" CanUserResizeColumns="True"
+                  SelectionMode="Single">
+            <DataGrid.ColumnHeaderStyle>
+                <Style TargetType="DataGridColumnHeader">
+                    <Setter Property="Background" Value="#F9FAFB"/>
+                    <Setter Property="Foreground" Value="{StaticResource TextSecondaryBrush}"/>
+                    <Setter Property="FontWeight" Value="SemiBold"/>
+                    <Setter Property="FontSize" Value="11"/>
+                    <Setter Property="Padding" Value="12,8"/>
+                    <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}"/>
+                    <Setter Property="BorderThickness" Value="0,0,1,1"/>
+                </Style>
+            </DataGrid.ColumnHeaderStyle>
+            <DataGrid.Columns>
+                <DataGridTextColumn Header="Domain" Binding="{Binding Domain}" Width="140"/>
+                <DataGridTemplateColumn Header="Status" Width="100">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <Border Style="{StaticResource StatusBadgeStyle}"
+                                    Background="{Binding LastRefresh.Status, Converter={StaticResource StatusToColorConverter}}">
+                                <TextBlock Text="{Binding LastRefresh.Status}" Foreground="White"
+                                           FontWeight="Bold" FontSize="11"/>
+                            </Border>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+                <DataGridTextColumn Header="Last Refresh" Width="150">
+                    <DataGridTextColumn.Binding>
+                        <Binding Path="LastRefresh.CompletedAt" StringFormat="{}{0:yyyy-MM-dd HH:mm:ss}"/>
+                    </DataGridTextColumn.Binding>
+                </DataGridTextColumn>
+                <DataGridTextColumn Header="Duration" Binding="{Binding LastRefresh.DurationMs, StringFormat='{}{0:N0} ms'}" Width="90"/>
+                <DataGridTextColumn Header="Triggered By" Binding="{Binding LastRefresh.TriggeredBy}" Width="90"/>
+                <DataGridTextColumn Header="Interval (min)" Binding="{Binding IntervalMinutes}" Width="90"/>
+                <DataGridTemplateColumn Header="Health" Width="80">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <TextBlock FontWeight="Bold">
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="Foreground" Value="{StaticResource StatusOkBrush}"/>
+                                        <Setter Property="Text" Value="Healthy"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsStale}" Value="True">
+                                                <Setter Property="Foreground" Value="{StaticResource StatusWarningBrush}"/>
+                                                <Setter Property="Text" Value="Stale"/>
+                                            </DataTrigger>
+                                            <DataTrigger Binding="{Binding LastRefresh.Status}" Value="Failed">
+                                                <Setter Property="Foreground" Value="{StaticResource StatusErrorBrush}"/>
+                                                <Setter Property="Text" Value="Failed"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+                <DataGridTextColumn Header="Error" Binding="{Binding LastRefresh.ErrorMessage}" Width="*"/>
+            </DataGrid.Columns>
+            <DataGrid.RowStyle>
+                <Style TargetType="DataGridRow">
+                    <Setter Property="Padding" Value="0,4"/>
+                </Style>
+            </DataGrid.RowStyle>
+        </DataGrid>
+
+        <Border Grid.Row="3" Background="{StaticResource SurfaceBrush}" BorderBrush="{StaticResource BorderBrush}"
+                BorderThickness="0,1,0,0" Padding="16,8">
+            <TextBlock Foreground="{StaticResource TextSecondaryBrush}" FontSize="11">
+                <Run Text="Polling interval: 30s | Showing "/>
+                <Run Text="{Binding Domains.Count, Mode=OneWay}"/>
+                <Run Text=" domains"/>
+            </TextBlock>
+        </Border>
+
+        <Border Grid.Row="2" Background="#80FFFFFF"
+                Visibility="{Binding IsLoading, Converter={StaticResource BoolToVisibilityConverter}}">
+            <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                <ProgressBar IsIndeterminate="True" Width="200" Height="4"/>
+                <TextBlock Text="Loading health data..." Margin="0,8,0,0"
+                           Foreground="{StaticResource TextSecondaryBrush}"/>
+            </StackPanel>
+        </Border>
+    </Grid>
+</UserControl>

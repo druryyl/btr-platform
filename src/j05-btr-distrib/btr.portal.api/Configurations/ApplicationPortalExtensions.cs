@@ -183,6 +183,7 @@ namespace btr.portal.api.Configurations
             services.AddScoped<IEntityAnalyticsReplayDataLoader, ItemReplayDataLoader>();
             services.AddScoped<IEntityAnalyticsReplayDataLoaderResolver, EntityAnalyticsReplayDataLoaderResolver>();
             services.AddScoped<IEntityAnalyticsReplayAggregateService, EntityAnalyticsReplayAggregateService>();
+            services.AddScoped<SupplierPrincipalReplayAggregator>();
             services.AddScoped<ISalesmanRepHistoryBackfillSource, SalesmanRepHistoryBackfillSource>();
             services.AddScoped<ISalesmanReplayPeriodHandler, SalesmanReplayPeriodHandler>();
             services.AddScoped<IEntityAnalyticsProducer, CustomerEntityAnalyticsProducer>();

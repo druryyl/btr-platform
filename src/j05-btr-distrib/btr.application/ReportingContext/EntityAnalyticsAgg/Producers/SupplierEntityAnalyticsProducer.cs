@@ -96,14 +96,15 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Producers
             var input = context.DomainInput as SupplierEntityAnalyticsProduceInput;
             var portfolio = input?.ManagementAggregate?.Portfolio;
             var (periodYear, periodMonth) = EntityAnalyticsProducerReplaySupport.ResolvePeriod(context);
-            var salesOut = ReadOwnedSalesOut(periodYear, periodMonth);
-            var returns = ReadOwnedReturns(periodYear, periodMonth);
-            var returnPercentage = ReadOwnedReturnPercentage(periodYear, periodMonth);
-            var target = ReadOwnedTarget(periodYear, periodMonth);
-            var achievement = ReadOwnedAchievement(periodYear, periodMonth);
+            var replayPrincipal = ResolveReplayPrincipal(input, context, periodYear, periodMonth);
+            var salesOut = ReadOwnedSalesOut(periodYear, periodMonth, replayPrincipal);
+            var returns = ReadOwnedReturns(periodYear, periodMonth, replayPrincipal);
+            var returnPercentage = ReadOwnedReturnPercentage(periodYear, periodMonth, replayPrincipal);
+            var target = ReadOwnedTarget(periodYear, periodMonth, replayPrincipal);
+            var achievement = ReadOwnedAchievement(periodYear, periodMonth, replayPrincipal);
             var momGrowth = ReadOwnedMomGrowth(periodYear, periodMonth);
             var yoyGrowth = ReadOwnedYoyGrowth(periodYear, periodMonth);
-            var purchaseIn = ReadOwnedPurchaseIn(periodYear, periodMonth);
+            var purchaseIn = ReadOwnedPurchaseIn(periodYear, periodMonth, replayPrincipal);
             var inventory = ReadOwnedInventory();
             var timeAwareKpis = ReadTimeAwareKpis(context);
 
@@ -265,13 +266,35 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Producers
                 context.Replay);
         }
 
-        private SalesOutComposition ReadOwnedSalesOut(int periodYear, int periodMonth)
+        /// <summary>
+        /// Returns the Principal replay aggregates when this is a replay context for the
+        /// resolved period; otherwise null (live path keeps reading the snapshot DALs).
+        /// Replay owns closed months; live workers own the current open month.
+        /// </summary>
+        private static SupplierPrincipalReplayResult ResolveReplayPrincipal(
+            SupplierEntityAnalyticsProduceInput input,
+            EntityAnalyticsProduceContext context,
+            int periodYear,
+            int periodMonth)
+        {
+            if (context?.Replay == null)
+                return null;
+
+            var replay = input?.PrincipalReplay;
+            if (replay == null || !replay.MatchesPeriod(periodYear, periodMonth))
+                return null;
+
+            return replay;
+        }
+
+        private SalesOutComposition ReadOwnedSalesOut(
+            int periodYear, int periodMonth, SupplierPrincipalReplayResult replayPrincipal = null)
         {
             var existing = _repository.GetCurrentKpiPopulation(
                 EntityTypeCode.Supplier,
                 PrincipalKpiCatalog.SalesOutId);
 
-            var snapshot = _salesOutSnapshotDal?.GetCurrent();
+            var snapshot = replayPrincipal?.SalesOut ?? _salesOutSnapshotDal?.GetCurrent();
             var matchesPeriod = snapshot != null
                 && string.Equals(snapshot.KpiId, PrincipalKpiCatalog.SalesOutId, StringComparison.OrdinalIgnoreCase)
                 && snapshot.PeriodYear == periodYear
@@ -373,7 +396,8 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Producers
             }
         }
 
-        private ReturnComposition ReadOwnedReturns(int periodYear, int periodMonth)
+        private ReturnComposition ReadOwnedReturns(
+            int periodYear, int periodMonth, SupplierPrincipalReplayResult replayPrincipal = null)
         {
             var existingGood = _repository.GetCurrentKpiPopulation(
                 EntityTypeCode.Supplier,
@@ -385,7 +409,7 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Producers
                 EntityTypeCode.Supplier,
                 PrincipalKpiCatalog.TotalReturnAmountId);
 
-            var snapshot = _returnSnapshotDal?.GetCurrent();
+            var snapshot = replayPrincipal?.Returns ?? _returnSnapshotDal?.GetCurrent();
             var matchesPeriod = snapshot != null
                 && snapshot.PeriodYear == periodYear
                 && snapshot.PeriodMonth == periodMonth;
@@ -405,13 +429,14 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Producers
             return new ReturnComposition(matchesPeriod, bySupplierId, existingGood, existingBroken, existingTotal);
         }
 
-        private ReturnPercentageComposition ReadOwnedReturnPercentage(int periodYear, int periodMonth)
+        private ReturnPercentageComposition ReadOwnedReturnPercentage(
+            int periodYear, int periodMonth, SupplierPrincipalReplayResult replayPrincipal = null)
         {
             var existing = _repository.GetCurrentKpiPopulation(
                 EntityTypeCode.Supplier,
                 PrincipalKpiCatalog.ReturnPercentageId);
 
-            var snapshot = _returnPercentageSnapshotDal?.GetCurrent();
+            var snapshot = replayPrincipal?.ReturnPercentage ?? _returnPercentageSnapshotDal?.GetCurrent();
             var matchesPeriod = snapshot != null
                 && string.Equals(snapshot.ReturnPercentageKpiId, PrincipalKpiCatalog.ReturnPercentageId, StringComparison.OrdinalIgnoreCase)
                 && snapshot.PeriodYear == periodYear
@@ -606,13 +631,14 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Producers
             }
         }
 
-        private TargetComposition ReadOwnedTarget(int periodYear, int periodMonth)
+        private TargetComposition ReadOwnedTarget(
+            int periodYear, int periodMonth, SupplierPrincipalReplayResult replayPrincipal = null)
         {
             var existing = _repository.GetCurrentKpiPopulation(
                 EntityTypeCode.Supplier,
                 PrincipalKpiCatalog.TargetId);
 
-            var snapshot = _targetSnapshotDal?.GetCurrent();
+            var snapshot = replayPrincipal?.Targets ?? _targetSnapshotDal?.GetCurrent();
             var matchesPeriod = snapshot != null
                 && string.Equals(snapshot.KpiId, PrincipalKpiCatalog.TargetId, StringComparison.OrdinalIgnoreCase)
                 && snapshot.PeriodYear == periodYear
@@ -633,7 +659,8 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Producers
             return new TargetComposition(matchesPeriod, bySupplierId, existing);
         }
 
-        private AchievementComposition ReadOwnedAchievement(int periodYear, int periodMonth)
+        private AchievementComposition ReadOwnedAchievement(
+            int periodYear, int periodMonth, SupplierPrincipalReplayResult replayPrincipal = null)
         {
             var existingAmount = _repository.GetCurrentKpiPopulation(
                 EntityTypeCode.Supplier,
@@ -642,7 +669,7 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Producers
                 EntityTypeCode.Supplier,
                 PrincipalKpiCatalog.AchievementPercentageId);
 
-            var snapshot = _achievementSnapshotDal?.GetCurrent();
+            var snapshot = replayPrincipal?.Achievement ?? _achievementSnapshotDal?.GetCurrent();
             var matchesPeriod = snapshot != null
                 && string.Equals(snapshot.AchievementAmountKpiId, PrincipalKpiCatalog.AchievementAmountId, StringComparison.OrdinalIgnoreCase)
                 && string.Equals(snapshot.AchievementPercentageKpiId, PrincipalKpiCatalog.AchievementPercentageId, StringComparison.OrdinalIgnoreCase)
@@ -1029,13 +1056,14 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Producers
             }
         }
 
-        private PurchaseInComposition ReadOwnedPurchaseIn(int periodYear, int periodMonth)
+        private PurchaseInComposition ReadOwnedPurchaseIn(
+            int periodYear, int periodMonth, SupplierPrincipalReplayResult replayPrincipal = null)
         {
             var existing = _repository.GetCurrentKpiPopulation(
                 EntityTypeCode.Supplier,
                 PrincipalKpiCatalog.PurchaseInId);
 
-            var snapshot = _purchaseInSnapshotDal?.GetCurrent();
+            var snapshot = replayPrincipal?.PurchaseIn ?? _purchaseInSnapshotDal?.GetCurrent();
             var matchesPeriod = snapshot != null
                 && string.Equals(snapshot.KpiId, PrincipalKpiCatalog.PurchaseInId, StringComparison.OrdinalIgnoreCase)
                 && snapshot.PeriodYear == periodYear

@@ -1,0 +1,165 @@
+<UserControl x:Class="btr.portal.worker.admin.Views.RefreshControlView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             mc:Ignorable="d"
+             d:DesignHeight="700" d:DesignWidth="900">
+
+    <UserControl.Resources>
+        <conv:NullToVisibilityConverter x:Key="NullToVisibilityConverter"
+             xmlns:conv="clr-namespace:btr.portal.worker.admin.Converters"/>
+    </UserControl.Resources>
+
+    <Grid Background="{StaticResource BackgroundBrush}">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <Border Grid.Row="0" Style="{StaticResource CardStyle}">
+            <StackPanel>
+                <TextBlock Text="Manual Refresh" Style="{StaticResource HeaderTextStyle}"/>
+                <Separator Margin="0,8"/>
+
+                <Grid Margin="0,8,0,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="200"/>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <TextBlock Grid.Row="0" Grid.Column="0" Text="Domain:" VerticalAlignment="Center"
+                               Margin="0,0,12,0" FontWeight="Medium"/>
+                    <ComboBox Grid.Row="0" Grid.Column="1" ItemsSource="{Binding AvailableDomains}"
+                              SelectedItem="{Binding SelectedDomain}" Padding="8,4"/>
+
+                    <StackPanel Grid.Row="0" Grid.Column="3" Orientation="Horizontal" HorizontalAlignment="Right">
+                        <Button Content="Refresh Now" Command="{Binding RefreshCommand}"
+                                IsEnabled="{Binding IsRefreshing, Converter={StaticResource NullToVisibilityConverter}, ConverterParameter=invert}"
+                                Style="{StaticResource PrimaryButtonStyle}" Margin="0,0,8,0"/>
+                        <Button Content="Cancel" Command="{Binding CancelWorkerCommand}"
+                                Style="{StaticResource DangerButtonStyle}"/>
+                    </StackPanel>
+
+                    <CheckBox Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2"
+                              Content="Launch local worker executable (instead of API call)"
+                              IsChecked="{Binding UseLocalWorker}" Margin="0,12,0,0"/>
+
+                    <TextBlock Grid.Row="2" Grid.Column="0" Text="Worker Path:" VerticalAlignment="Center"
+                               Margin="0,8,12,0" FontWeight="Medium"
+                               Visibility="{Binding UseLocalWorker, Converter={StaticResource NullToVisibilityConverter}, ConverterParameter=invert}"/>
+                    <TextBox Grid.Row="2" Grid.Column="1" Grid.ColumnSpan="3"
+                             Text="{Binding WorkerExePath, UpdateSourceTrigger=PropertyChanged}"
+                             Padding="8,4" Margin="0,8,0,0"
+                             Visibility="{Binding UseLocalWorker, Converter={StaticResource NullToVisibilityConverter}, ConverterParameter=invert}"/>
+                </Grid>
+
+                <TextBlock Text="{Binding StatusMessage}" Margin="0,12,0,0" FontWeight="Medium"
+                           Foreground="{StaticResource StatusInfoBrush}" TextWrapping="Wrap"/>
+            </StackPanel>
+        </Border>
+
+        <Border Grid.Row="1" Style="{StaticResource CardStyle}"
+                Visibility="{Binding IsBackfillDomain, Converter={StaticResource NullToVisibilityConverter}, ConverterParameter=invert}">
+            <StackPanel>
+                <TextBlock Text="Entity Analytics Historical Backfill Options" Style="{StaticResource SubHeaderTextStyle}"/>
+                <Separator Margin="0,8"/>
+
+                <Grid Margin="0,8,0,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <StackPanel Grid.Row="0" Grid.Column="0" Margin="0,0,12,8">
+                        <TextBlock Text="Entity Type" Style="{StaticResource LabelTextStyle}"/>
+                        <ComboBox ItemsSource="{Binding EntityTypes}" SelectedItem="{Binding BackfillEntityType}" Padding="6,4"/>
+                    </StackPanel>
+
+                    <StackPanel Grid.Row="0" Grid.Column="1" Margin="0,0,12,8">
+                        <TextBlock Text="Layers" Style="{StaticResource LabelTextStyle}"/>
+                        <TextBox Text="{Binding BackfillLayers}" Padding="6,4"/>
+                    </StackPanel>
+
+                    <StackPanel Grid.Row="0" Grid.Column="2" Margin="0,0,0,8">
+                        <TextBlock Text="Batch Size" Style="{StaticResource LabelTextStyle}"/>
+                        <TextBox Text="{Binding BackfillBatchSize}" Padding="6,4"/>
+                    </StackPanel>
+
+                    <StackPanel Grid.Row="1" Grid.Column="0" Margin="0,0,12,8">
+                        <TextBlock Text="From Period (Year)" Style="{StaticResource LabelTextStyle}"/>
+                        <TextBox Text="{Binding BackfillFromYear}" Padding="6,4"/>
+                    </StackPanel>
+
+                    <StackPanel Grid.Row="1" Grid.Column="1" Margin="0,0,12,8">
+                        <TextBlock Text="From Period (Month)" Style="{StaticResource LabelTextStyle}"/>
+                        <TextBox Text="{Binding BackfillFromMonth}" Padding="6,4"/>
+                    </StackPanel>
+
+                    <StackPanel Grid.Row="1" Grid.Column="2" Margin="0,0,0,8">
+                        <TextBlock Text="Confirm Token" Style="{StaticResource LabelTextStyle}"/>
+                        <TextBox Text="{Binding BackfillConfirmToken}" Padding="6,4"/>
+                    </StackPanel>
+
+                    <StackPanel Grid.Row="2" Grid.Column="0" Margin="0,0,12,8">
+                        <TextBlock Text="To Period (Year)" Style="{StaticResource LabelTextStyle}"/>
+                        <TextBox Text="{Binding BackfillToYear}" Padding="6,4"/>
+                    </StackPanel>
+
+                    <StackPanel Grid.Row="2" Grid.Column="1" Margin="0,0,12,8">
+                        <TextBlock Text="To Period (Month)" Style="{StaticResource LabelTextStyle}"/>
+                        <TextBox Text="{Binding BackfillToMonth}" Padding="6,4"/>
+                    </StackPanel>
+                </Grid>
+
+                <WrapPanel Margin="0,8,0,0">
+                    <CheckBox Content="Resume" IsChecked="{Binding BackfillResume}" Margin="0,0,16,4"/>
+                    <CheckBox Content="Restart" IsChecked="{Binding BackfillRestart}" Margin="0,0,16,4"/>
+                    <CheckBox Content="Force" IsChecked="{Binding BackfillForce}" Margin="0,0,16,4"/>
+                    <CheckBox Content="Dry Run" IsChecked="{Binding BackfillDryRun}" Margin="0,0,16,4"/>
+                    <CheckBox Content="Continue On Error" IsChecked="{Binding BackfillContinueOnError}" Margin="0,0,16,4"/>
+                    <CheckBox Content="Skip Live Mutex Check" IsChecked="{Binding BackfillSkipMutex}"/>
+                </WrapPanel>
+            </StackPanel>
+        </Border>
+
+        <Border Grid.Row="2" Style="{StaticResource CardStyle}" Padding="16,8">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <TextBlock Text="Worker Console Output" Style="{StaticResource SubHeaderTextStyle}"
+                           VerticalAlignment="Center"/>
+                <Button Grid.Column="1" Content="Clear" Command="{Binding ClearOutputCommand}"
+                        Padding="12,4"/>
+            </Grid>
+        </Border>
+
+        <Border Grid.Row="3" Background="#1F2937" CornerRadius="8" Padding="12" Margin="0,0,0,12">
+            <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto">
+                <TextBox Text="{Binding ConsoleOutput, Mode=OneWay}"
+                         Background="Transparent" Foreground="#E5E7EB"
+                         FontFamily="Consolas" FontSize="12"
+                         IsReadOnly="True" TextWrapping="Wrap"
+                         BorderThickness="0"/>
+            </ScrollViewer>
+        </Border>
+    </Grid>
+</UserControl>
