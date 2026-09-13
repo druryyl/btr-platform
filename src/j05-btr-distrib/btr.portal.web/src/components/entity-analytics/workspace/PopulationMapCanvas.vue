@@ -47,6 +47,7 @@ import {
   generateProjectionAxisGuides,
   generateProjectionGridTicks,
   isBusinessZeroWithinBounds,
+  isLowConfidencePoint,
   PACING_QUADRANT_LABELS,
   PRINCIPAL_SALES_OUT_MAP_PRESET_ID,
   resolveBusinessZeroProjection,
@@ -100,6 +101,11 @@ const hasBubbleColorEncoding = computed(() => !!props.population?.BubbleColorKpi
 /** PSOM-13 (GAP-006): fixed business quadrants replace statistical regions for this preset. */
 const isFixedQuadrantPreset = computed(
   () => props.population?.PresetId === PRINCIPAL_SALES_OUT_MAP_PRESET_ID,
+)
+
+/** PSOM-14 (GAP-007): low-confidence entities are excluded from quadrant classification. */
+const lowConfidenceCount = computed(
+  () => (props.population?.Points ?? []).filter((p) => isLowConfidencePoint(p)).length,
 )
 
 const bubbleColorScale = computed(() => {
@@ -218,6 +224,29 @@ function getVisualTier(item: PlottedPoint): VisualPointTier {
   return resolveVisualTier(item.analyzed, businessTier)
 }
 
+/** PSOM-14 (GAP-007): low-confidence points render as distinct hollow markers. */
+const LOW_CONFIDENCE_POINT_COLOR = WORKSPACE_NEUTRAL_POINT
+const LOW_CONFIDENCE_POINT_OPACITY = 0.4
+const LOW_CONFIDENCE_POINT_RADIUS = WORKSPACE_NORMAL_RADIUS
+const LOW_CONFIDENCE_POINT_STROKE_WIDTH = 1.25
+
+function drawLowConfidencePoints(ctx: CanvasRenderingContext2D) {
+  for (const item of plottedCache) {
+    if (!isLowConfidencePoint(item.point)) continue
+    const flags = getPointFlags(item.point)
+    if (flags.isSelected || flags.isSearchMatch) continue
+
+    ctx.globalAlpha = LOW_CONFIDENCE_POINT_OPACITY
+    ctx.beginPath()
+    ctx.arc(item.screenX, item.screenY, LOW_CONFIDENCE_POINT_RADIUS, 0, Math.PI * 2)
+    ctx.strokeStyle = LOW_CONFIDENCE_POINT_COLOR
+    ctx.lineWidth = LOW_CONFIDENCE_POINT_STROKE_WIDTH
+    ctx.setLineDash([])
+    ctx.stroke()
+  }
+  ctx.globalAlpha = 1
+}
+
 function resizeCanvas() {
   const canvas = canvasRef.value
   const container = containerRef.value
@@ -294,6 +323,7 @@ function drawBatchedTierPoints(ctx: CanvasRenderingContext2D, tier: VisualPointT
   for (const item of plottedCache) {
     const flags = getPointFlags(item.point)
     if (flags.isSelected || flags.isSearchMatch) continue
+    if (isLowConfidencePoint(item.point)) continue
     if (getVisualTier(item) !== tier) continue
 
     // PIW-05: normal-tier points carry the preset bubble color (e.g. Return %);
@@ -323,6 +353,7 @@ function drawBatchedTierPoints(ctx: CanvasRenderingContext2D, tier: VisualPointT
     for (const item of plottedCache) {
       const flags = getPointFlags(item.point)
       if (flags.isSelected || flags.isSearchMatch) continue
+      if (isLowConfidencePoint(item.point)) continue
       if (getVisualTier(item) !== tier) continue
       const fill = resolveBubbleFill(item.point)
       if (!fill) continue
@@ -738,6 +769,7 @@ function drawEmphasisTierPass(
   for (const item of plottedCache) {
     const flags = getPointFlags(item.point)
     if (flags.isSelected || flags.isSearchMatch) continue
+    if (isLowConfidencePoint(item.point)) continue
     if (getVisualTier(item) !== tier) continue
     drawTieredPoint(ctx, item, tier, flags)
   }
@@ -890,6 +922,7 @@ function draw() {
     drawRegionLabels(ctx, transform)
   }
   drawBatchedTierPoints(ctx, 'normal')
+  drawLowConfidencePoints(ctx)
   drawEmphasisTierPass(ctx, 'watch')
   drawEmphasisTierPass(ctx, 'attention')
   drawEmphasisTierPass(ctx, 'critical')
@@ -998,6 +1031,15 @@ onUnmounted(() => {
       role="note"
     >
       Bubble color: {{ population?.BubbleColorLabel ?? population?.BubbleColorKpiId }}
+    </div>
+    <div
+      v-if="isFixedQuadrantPreset && lowConfidenceCount > 0"
+      class="iw-map-confidence-note"
+      role="note"
+    >
+      {{ lowConfidenceCount }}
+      low-confidence {{ lowConfidenceCount === 1 ? 'entity' : 'entities' }}
+      excluded from quadrants
     </div>
     <div
       v-if="hovered"

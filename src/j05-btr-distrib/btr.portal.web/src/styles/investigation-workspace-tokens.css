@@ -163,6 +163,21 @@
   pointer-events: none;
 }
 
+.iw-map-confidence-note {
+  position: absolute;
+  bottom: 0.5rem;
+  left: 0.5rem;
+  z-index: 2;
+  max-width: calc(100% - 1rem);
+  padding: 0.25rem 0.625rem;
+  border-radius: 0.375rem;
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid #e2e8f0;
+  font-size: 0.75rem;
+  color: var(--iw-text-secondary);
+  pointer-events: none;
+}
+
 @keyframes iw-shimmer {
   0% { background-position: 200% 0; }
   100% { background-position: -200% 0; }

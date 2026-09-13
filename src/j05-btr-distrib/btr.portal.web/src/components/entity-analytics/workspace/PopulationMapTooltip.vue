@@ -3,7 +3,7 @@ import { computed } from 'vue'
 import type { PopulationMapPoint, PopulationMapResponse } from '@/models/entityAnalytics'
 import type { AnalyzedPoint } from '@/services/populationProjection/populationProjectionEngine'
 import { formatStatisticalClass } from '@/services/populationProjection/populationProjectionEngine'
-import { resolveBusinessAttentionTier } from '@/services/populationMapLayout'
+import { isLowConfidencePoint, resolveBusinessAttentionTier } from '@/services/populationMapLayout'
 import { resolveTooltipDimensionRow } from '@/services/populationTooltip'
 
 const props = defineProps<{
@@ -57,6 +57,11 @@ const dimensionRow = computed(() => resolveTooltipDimensionRow(props.point, prop
     <div v-if="analyzed" class="iw-map-tooltip__section">
       <div class="iw-map-tooltip__label">Classification</div>
       <div class="iw-map-tooltip__value">{{ formatStatisticalClass(analyzed.statisticalClass) }}</div>
+    </div>
+
+    <div v-if="isLowConfidencePoint(point)" class="iw-map-tooltip__section">
+      <div class="iw-map-tooltip__label">Confidence</div>
+      <div class="iw-map-tooltip__value">Low confidence — excluded from quadrants</div>
     </div>
 
     <div v-if="analyzed" class="iw-map-tooltip__section">

@@ -589,6 +589,25 @@ export function classifyPacingQuadrant(
   return 'declining'
 }
 
+/** PSOM-14 (GAP-007): a point flagged low-confidence is excluded from classification. */
+export function isLowConfidencePoint(point: PopulationMapPoint): boolean {
+  return point.IsLowConfidence === true
+}
+
+/**
+ * PSOM-14 (GAP-007) — point-level business quadrant resolution.
+ *
+ * Low-confidence entities never participate in quadrant classification: a point
+ * flagged `IsLowConfidence` is assigned no quadrant. Non-flagged points classify
+ * normally through the fixed business thresholds (PSOM-13).
+ */
+export function resolvePacingQuadrantForPoint(
+  point: PopulationMapPoint,
+): PacingQuadrant | null {
+  if (isLowConfidencePoint(point)) return null
+  return classifyPacingQuadrant(point.AxisX, point.AxisY)
+}
+
 export function generateProjectionAxisGuides(
   projection: PopulationProjectionResult,
 ): { xTicks: ProjectionAxisTick[]; yTicks: ProjectionAxisTick[] } {

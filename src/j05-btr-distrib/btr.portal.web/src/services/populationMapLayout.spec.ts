@@ -22,12 +22,14 @@ import {
   isBusinessZeroWithinBounds,
   isDaysAxisUnit,
   isIdrAxisUnit,
+  isLowConfidencePoint,
   plotPoints,
   projectionToScreenX,
   resolveBusinessAttentionTier,
   resolveBusinessZeroProjection,
   resolveLabelPlacements,
   resolvePacingQuadrantBoundaries,
+  resolvePacingQuadrantForPoint,
   resolvePopulationAxisTicks,
   resolveVisualTier,
   formatBinRangeLabel,
@@ -709,5 +711,44 @@ describe('fixed business quadrants (PSOM-13)', () => {
 
     expect(boundaryX).toBeNull()
     expect(boundaryY).toBeNull()
+  })
+})
+
+describe('low-confidence quadrant exclusion (PSOM-14)', () => {
+  it('does not assign any business quadrant to low-confidence points', () => {
+    expect(
+      resolvePacingQuadrantForPoint(makePoint({ AxisX: 120, AxisY: 10, IsLowConfidence: true })),
+    ).toBeNull()
+    expect(
+      resolvePacingQuadrantForPoint(makePoint({ AxisX: 80, AxisY: 10, IsLowConfidence: true })),
+    ).toBeNull()
+    expect(
+      resolvePacingQuadrantForPoint(makePoint({ AxisX: 120, AxisY: -10, IsLowConfidence: true })),
+    ).toBeNull()
+    expect(
+      resolvePacingQuadrantForPoint(makePoint({ AxisX: 80, AxisY: -10, IsLowConfidence: true })),
+    ).toBeNull()
+  })
+
+  it('classifies non-flagged points normally', () => {
+    expect(resolvePacingQuadrantForPoint(makePoint({ AxisX: 120, AxisY: 10 }))).toBe('star')
+    expect(resolvePacingQuadrantForPoint(makePoint({ AxisX: 80, AxisY: 10 }))).toBe('growing')
+    expect(resolvePacingQuadrantForPoint(makePoint({ AxisX: 120, AxisY: -10 }))).toBe('steady')
+    expect(resolvePacingQuadrantForPoint(makePoint({ AxisX: 80, AxisY: -10 }))).toBe('declining')
+  })
+
+  it('treats an absent confidence flag as not low-confidence', () => {
+    expect(resolvePacingQuadrantForPoint(makePoint({ AxisX: 120, AxisY: 10 }))).toBe('star')
+    expect(
+      resolvePacingQuadrantForPoint(
+        makePoint({ AxisX: 120, AxisY: 10, IsLowConfidence: undefined }),
+      ),
+    ).toBe('star')
+  })
+
+  it('reports the low-confidence state', () => {
+    expect(isLowConfidencePoint(makePoint({ IsLowConfidence: true }))).toBe(true)
+    expect(isLowConfidencePoint(makePoint({ IsLowConfidence: false }))).toBe(false)
+    expect(isLowConfidencePoint(makePoint())).toBe(false)
   })
 })
