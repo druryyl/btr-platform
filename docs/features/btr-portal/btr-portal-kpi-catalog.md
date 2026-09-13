@@ -60,9 +60,9 @@ Pembaca harus dapat menjawab untuk setiap KPI:
 | IN-KPI-001 – 027 | Inventory lifecycle | 27 |
 | PU-KPI-001 – 014 | Purchasing | 14 |
 | OP-KPI-001 – 012 | Locations | 12 |
-| PRN-SALES-001, PRN-RET-001 – 004, PRN-TGT-001 – 003, PRN-GRW-001 – 002, PRN-CUS-001 – 002, PRN-PUR-001, PRN-INV-001 – 002 | Principal Analytics (Registry v1) | 15 |
+| PRN-SALES-001, PRN-RET-001 – 004, PRN-TGT-001 – 004, PRN-GRW-001 – 003, PRN-CUS-001 – 002, PRN-PUR-001, PRN-INV-001 – 002 | Principal Analytics (Registry v1 + PSOM time-aware extension) | 17 |
 
-**Total:** ~229 entri terindeks (termasuk sub-bucket aging, payment mix, ranking pattern, dan ref lintas-menu).
+**Total:** ~231 entri terindeks (termasuk sub-bucket aging, payment mix, ranking pattern, dan ref lintas-menu).
 
 ---
 
@@ -398,8 +398,10 @@ Navigasi cepat ke setiap entri KPI di §6. Klik kode KPI untuk loncat ke definis
 - [PRN-TGT-001 — Principal Target](#prn-tgt-001)
 - [PRN-TGT-002 — Achievement Amount](#prn-tgt-002)
 - [PRN-TGT-003 — Achievement Percentage](#prn-tgt-003)
+- [PRN-TGT-004 — Pacing Achievement %](#prn-tgt-004)
 - [PRN-GRW-001 — Month-over-Month Growth Percentage](#prn-grw-001)
 - [PRN-GRW-002 — Year-over-Year Growth Percentage](#prn-grw-002)
+- [PRN-GRW-003 — YoY MTD Growth %](#prn-grw-003)
 - [PRN-CUS-001 — Active Customer Count](#prn-cus-001)
 - [PRN-CUS-002 — Customer Coverage Percentage](#prn-cus-002)
 - [PRN-PUR-001 — Purchase-In](#prn-pur-001)
@@ -6799,6 +6801,8 @@ Warehouse × Signal rows: Inactive With Stock, No Sales With Inventory, concentr
 
 Bagian ini adalah sinkronisasi katalog permanen ke **Principal KPI Registry v1** dan guardrail implementasi **GR-001** (perlindungan semantik Return) serta **GR-002** (proyeksi relasi Customer–Principal). Hierarki ranking: otoritatif `PRN-SALES-001`; pendukung (`supporting`) hanya `PRN-RET-004`, `PRN-TGT-003`, `PRN-GRW-001`, `PRN-GRW-002`. `PRN-PUR-001`, `PRN-INV-001`, `PRN-INV-002`, `PRN-CUS-001`, dan `PRN-CUS-002` bukan ranking KPI performa Principal. Tidak ada composite Principal Health Score dan tidak ada KPI Net Sales pada V1. ID `PR-KPI-*` dan `CP-KPI-*` ditarik (withdrawn) dan tidak boleh dipakai. Klasifikasi kategori entity memakai kategori Supplier yang sudah ada; label user-facing memakai Principal. Istilah teknis tetap `Supplier` / `SupplierId`.
 
+Governance KPI Registry (GAP-009 / PSOM): KPI Registry adalah sumber otoritatif untuk identifier, display name, unit, formatting, deskripsi, axis mapping, dan confidence threshold. KPI baru `PRN-TGT-004` (`Pacing Achievement %`, unit `Percent`) dan `PRN-GRW-003` (`YoY MTD Growth %`, unit `Percent`) didaftarkan di KPI Registry (`PrincipalKpiCatalog` + `SupplierEntityAnalyticsRegistrar`) sebelum dikonsumsi oleh `principal-sales-out-map` preset, Sales-Out lens, profil Principal, maupun ekspor. Katalog ini dan konfigurasi lens mereferensikan identifier terdaftar saja dan tidak memelihara nama/formula independen. `PRN-TGT-003` dan `PRN-GRW-002` tidak berubah (pemakaian SA04/ranking dipertahankan; lihat entri masing-masing).
+
 <a id="prn-sales-001"></a>
 ## PRN-SALES-001 — Principal Sales-Out
 
@@ -7050,6 +7054,46 @@ Jumlah **Target Principal** per Principal dan bulan. Bukan Sales-Out dan bukan a
 
 * SA04 panel target & achievement dan kontrol supporting ranking (default tetap `PRN-SALES-001`).
 
+> Tidak berubah oleh PSOM (Option B): definisi, rumus, dan konsumen `PRN-TGT-003` tetap seperti di atas. Varian time-aware tersedia sebagai `PRN-TGT-004` di bawah dan tidak menggantikan KPI ini.
+
+<a id="prn-tgt-004"></a>
+## PRN-TGT-004 — Pacing Achievement %
+
+**Location**
+
+- Principal Investigation Workspace — `principal-sales-out-map` preset (sumbu X)
+- Sales-Out investigation lens (`KpiIds` mencakup identifier terdaftar ini)
+- Principal Entity Analytics profile (target pack, time-aware)
+
+**Sumber otoritatif:** KPI Registry (`PrincipalKpiCatalog.PacingAchievementPercentageId` + `SupplierEntityAnalyticsRegistrar` metadata). Display name terdaftar: **Pacing Achievement %**. Unit terdaftar: **Percent**. Katalog ini mereferensikan identifier terdaftar dan tidak memelihara nama/formula independen.
+
+---
+
+### WHAT
+
+Pencapaian Principal yang **time-aware** terhadap target yang dipace secara linear sampai tanggal bisnis berjalan. Supporting KPI untuk map/kuadran bisnis dan profil; bukan pengganti Sales-Out, bukan pengganti `PRN-TGT-003`, dan bukan Net Sales.
+
+- Dihitung dinamis dari Monthly Target (`PRN-TGT-001`) dan konteks periode runtime (Business Date); tidak ada tabel/kolom/skema/proyeksi baru.
+- Audience: Owner, GM, Sales management (pengguna Investigation Workspace + profil Principal).
+- Sumber: snapshot tersimpan `PRN-SALES-001` + `PRN-TGT-001` dan period context runtime.
+
+### HOW
+
+* Rumus terdaftar: `Actual Sales MTD ÷ (Monthly Target × Elapsed Days ÷ Days In Month) × 100` bila expected target > 0; selain itu null (lihat `PrincipalKpiCatalog` / metadata registrar untuk definisi otoritatif).
+- Evidence: `PRN-SALES-001`, `PRN-TGT-001`, dan Business Date (elapsed/days-in-month diturunkan saat runtime, tidak dipersist).
+- Pacing linear; null bila monthly target ≤ 0. Guard confidence: null + `LowConfidence` bila elapsed days di bawah ambang metadata (`MinimumElapsedDays`); ambang tidak di-hard-code di kalkulasi.
+- Axis mapping terdaftar: sumbu X pada `principal-sales-out-map`. Didaftarkan sebelum dikonsumsi map/lens/profile/ekspor (GAP-009).
+
+### WHY
+
+* Menjawab "apakah kita on-plan pada titik bulan ini?" pada hari apa pun — tanpa bias rendah intra-month dari pembanding full-month.
+- Klasifikasi kuadran bisnis memakai ambang tetap `X = 100%`.
+
+### WHEN
+
+* Harian pada `principal-sales-out-map` (sumbu X) dan profil Principal → drill-down evidence Sales-Out MTD.
+- SA04 tidak memakai KPI ini (SA04 tetap memakai `PRN-TGT-003`; OQ-007).
+
 <a id="prn-grw-001"></a>
 ## PRN-GRW-001 — Month-over-Month Growth Percentage
 
@@ -7105,6 +7149,45 @@ Pertumbuhan tahunan Principal dari Sales-Out (bulan yang sama tahun sebelumnya).
 ### WHEN
 
 * SA04 panel growth dan kontrol supporting ranking.
+
+> Tidak berubah oleh PSOM (Option B): definisi, rumus, dan konsumen `PRN-GRW-002` tetap seperti di atas (month-grain YoY). Varian time-aware tersedia sebagai `PRN-GRW-003` di bawah dan tidak menggantikan KPI ini.
+
+<a id="prn-grw-003"></a>
+## PRN-GRW-003 — YoY MTD Growth %
+
+**Location**
+
+- Principal Investigation Workspace — `principal-sales-out-map` preset (sumbu Y)
+- Sales-Out investigation lens (`KpiIds` mencakup identifier terdaftar ini)
+- Principal Entity Analytics profile (growth pack, time-aware)
+
+**Sumber otoritatif:** KPI Registry (`PrincipalKpiCatalog.YoyMtdGrowthId` + `SupplierEntityAnalyticsRegistrar` metadata). Display name terdaftar: **YoY MTD Growth %**. Unit terdaftar: **Percent**. Katalog ini mereferensikan identifier terdaftar dan tidak memelihara nama/formula independen.
+
+---
+
+### WHAT
+
+Pertumbuhan YoY Principal yang **time-aware**: MTD tahun berjalan vs MTD tahun sebelumnya pada jendela elapsed-day yang ekuivalen (selaras Business Date). Supporting KPI untuk map/kuadran bisnis dan profil; bukan pengganti Sales-Out, bukan pengganti `PRN-GRW-002`, dan bukan Net Sales.
+
+- Dihitung dinamis dari fakta transaksional Sales-Out per rentang tanggal (current-year MTD + prior-year equivalent MTD); tidak ada tabel/kolom/skema/backfill baru. Histori `BTRPD_PrincipalSalesOutHistory` tetap month-grain dan tidak diubah.
+- Audience: Owner, GM, Sales management (pengguna Investigation Workspace + profil Principal).
+
+### HOW
+
+* Rumus terdaftar: `(current year MTD PRN-SALES-001 − prior year MTD PRN-SALES-001) ÷ prior year MTD PRN-SALES-001 × 100` bila prior-year MTD > 0; selain itu null (lihat `PrincipalKpiCatalog` / metadata registrar untuk definisi otoritatif).
+- Kedua jendela memakai elapsed day ekuivalen yang selaras Business Date (ujung prior-year di-clamp ke hari valid terakhir; aman leap-year). Null bila prior-year MTD ≤ 0 (tanpa persentase artifisial).
+- Guard confidence: null + `LowConfidence` bila prior-year MTD di bawah ambang metadata (`MinimumBaseValue`); ambang tidak di-hard-code di kalkulasi. Entitas low-confidence dikecualikan dari klasifikasi kuadran.
+- Axis mapping terdaftar: sumbu Y pada `principal-sales-out-map`. Didaftarkan sebelum dikonsumsi map/lens/profile/ekspor (GAP-009).
+
+### WHY
+
+* Perbandingan like-for-like pada hari apa pun — tanpa bias negatif sistematis dari pembanding full-month.
+- Klasifikasi kuadran bisnis memakai ambang tetap `Y = 0%`.
+
+### WHEN
+
+* Harian pada `principal-sales-out-map` (sumbu Y, signed; nilai negatif di bawah garis `Y=0`) dan profil Principal → drill-down evidence range Sales-Out.
+* SA04 tidak memakai KPI ini (SA04 tetap memakai `PRN-GRW-002`; OQ-007).
 
 <a id="prn-cus-001"></a>
 ## PRN-CUS-001 — Active Customer Count

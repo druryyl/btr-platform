@@ -55,11 +55,19 @@ Return Item
 
 # Target & Achievement Domain
 
-| KPI ID      | KPI Name               | Description                            |
-| ----------- | ---------------------- | -------------------------------------- |
-| PRN-TGT-001 | Principal Target       | Sum of Salesman Principal Targets      |
-| PRN-TGT-002 | Achievement Amount     | Principal Sales-Out versus Target      |
-| PRN-TGT-003 | Achievement Percentage | Principal Sales-Out ÷ Principal Target |
+| KPI ID      | KPI Name               | Description                            | Unit    |
+| ----------- | ---------------------- | -------------------------------------- | ------- |
+| PRN-TGT-001 | Principal Target       | Sum of Salesman Principal Targets      | IDR     |
+| PRN-TGT-002 | Achievement Amount     | Principal Sales-Out versus Target      | IDR     |
+| PRN-TGT-003 | Achievement Percentage | Principal Sales-Out ÷ Principal Target | Ratio |
+| PRN-TGT-004 | Pacing Achievement %   | Time-aware pacing achievement (MTD actual vs paced target) | Percent |
+
+> `PRN-TGT-004` registered display name is **Pacing Achievement %**, unit **Percent**.
+> Definition, formatting, axis mapping (`X`), and confidence threshold (`MinimumElapsedDays`)
+> are sourced from the KPI Registry (`SupplierEntityAnalyticsRegistrar` / `PrincipalKpiCatalog`).
+> This document introduces no independent formula; consumers resolve labels, units, and
+> formatting from the registered identifiers.
+> `PRN-TGT-003` remains unchanged (full-month Achievement %, SA04/ranking use preserved).
 
 ### Rules
 
@@ -146,10 +154,18 @@ Customer × Principal Relationship Snapshot
 
 # Growth Domain
 
-| KPI ID      | KPI Name                           | Description              |
-| ----------- | ---------------------------------- | ------------------------ |
-| PRN-GRW-001 | Month-over-Month Growth Percentage | Monthly Principal growth |
-| PRN-GRW-002 | Year-over-Year Growth Percentage   | Annual Principal growth  |
+| KPI ID      | KPI Name                           | Description              | Unit    |
+| ----------- | ---------------------------------- | ------------------------ | ------- |
+| PRN-GRW-001 | Month-over-Month Growth Percentage | Monthly Principal growth | Percent |
+| PRN-GRW-002 | Year-over-Year Growth Percentage   | Annual Principal growth  | Percent |
+| PRN-GRW-003 | YoY MTD Growth %                   | Time-aware YoY MTD growth (equivalent elapsed-day windows) | Percent |
+
+> `PRN-GRW-003` registered display name is **YoY MTD Growth %**, unit **Percent**.
+> Definition, formatting, axis mapping (`Y`), and confidence threshold (`MinimumBaseValue`)
+> are sourced from the KPI Registry (`SupplierEntityAnalyticsRegistrar` / `PrincipalKpiCatalog`).
+> This document introduces no independent formula; consumers resolve labels, units, and
+> formatting from the registered identifiers.
+> `PRN-GRW-002` remains unchanged (month-grain YoY Growth %, SA04/ranking use preserved).
 
 ### Rules
 
@@ -174,6 +190,31 @@ PRN-TGT-003   Achievement Percentage
 PRN-GRW-001   MoM Growth %
 PRN-GRW-002   YoY Growth %
 ```
+
+`PRN-TGT-003` and `PRN-GRW-002` remain unchanged.
+
+### Time-Aware Map KPIs (PSOM)
+
+```text
+PRN-TGT-004   Pacing Achievement %
+PRN-GRW-003   YoY MTD Growth %
+```
+
+Consumed by the `principal-sales-out-map` preset (X = `PRN-TGT-004`, Y = `PRN-GRW-003`),
+the Sales-Out investigation lens, and the Principal Profile only.
+
+---
+
+# Governance (GAP-009)
+
+The KPI Registry is the authoritative source of KPI identifiers, display names, units,
+formatting, descriptions, axis mappings, and confidence thresholds.
+
+New KPIs (`PRN-TGT-004`, `PRN-GRW-003`) were registered in the KPI Registry
+(`PrincipalKpiCatalog` + `SupplierEntityAnalyticsRegistrar`) before consumption by
+maps, lenses, profiles, or exports. Catalog documentation and lens configuration
+reference the registered KPI identifiers only and maintain no independent KPI names
+or formulas.
 
 ---
 
