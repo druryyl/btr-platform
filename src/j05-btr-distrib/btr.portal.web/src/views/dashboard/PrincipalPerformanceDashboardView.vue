@@ -7,6 +7,7 @@ import DashboardDetailLayout from '@/components/dashboard/DashboardDetailLayout.
 import DashboardMetric from '@/components/dashboard/primitives/DashboardMetric.vue'
 import PrincipalDataCompletenessIndicator from '@/components/dashboard/PrincipalDataCompletenessIndicator.vue'
 import PrincipalPortfolioOverview from '@/components/dashboard/PrincipalPortfolioOverview.vue'
+import PrincipalAchievementGapLeaderboard from '@/components/dashboard/PrincipalAchievementGapLeaderboard.vue'
 import Top10RankingTable from '@/components/dashboard/Top10RankingTable.vue'
 import { formatCurrency, formatCurrencyCompact, formatNumber, formatPercent } from '@/services/formatters'
 import { contributionPercentage } from '@/services/principalContribution'
@@ -317,6 +318,10 @@ const portfolioOverviewData = computed(() => {
   return portfolioOverview(page)
 })
 
+const achievementGapRanking = computed(
+  () => (dashboard.principalPerformance?.Ranking ?? []) as PrincipalPerformanceRankingItem[],
+)
+
 function onRankingClick(row: Record<string, unknown>): void {
   const item = row as unknown as PrincipalPerformanceRankingItem
   if (!item.SupplierId) return
@@ -390,6 +395,11 @@ onMounted(() => {
     <PrincipalDataCompletenessIndicator :completeness="dataCompleteness" />
 
     <PrincipalPortfolioOverview :overview="portfolioOverviewData" />
+
+    <PrincipalAchievementGapLeaderboard
+      :ranking="achievementGapRanking"
+      :loading="dashboard.loading"
+    />
 
     <div v-if="rankingOptions.length > 1" class="principal-performance__ranking-selector">
       <label for="ranking-kpi-select" class="principal-performance__ranking-label">
