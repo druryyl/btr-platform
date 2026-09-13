@@ -539,7 +539,7 @@ cases, and integration/chart risk — not business importance.
 | PPD-02 | Salesman dependency analytics | 3 | GO |
 | PPD-03 | Portfolio overview aggregates | 2 | GO |
 | PPD-04 | Opportunity & Risk rule engine | 3 | GO |
-| PPD-05 | Data Completeness summary | 2 | PLANNED |
+| PPD-05 | Data Completeness summary | 2 | GO |
 | PPD-06 | Shared "No Data" presentation helper | 1 | PLANNED |
 | PPD-07 | Header: period, data updated at, data completeness | 2 | PLANNED |
 | PPD-08 | Portfolio Overview KPI cards | 2 | PLANNED |
@@ -588,7 +588,10 @@ Entry format:
    Verified all PPD-04 acceptance criteria, feasibility authority compliance (relative thresholds, no alerting engine), and scope; boundary/missing/coexistence tests present; build (vue-tsc) and full suite (403 tests) pass; no findings; status GO.
 
 ### Slice-ID: PPD-05
-_No entries yet._
+1. [Implementation 2026-09-13 20:37]
+   Implemented principalDataCompleteness in services/principalDataCompleteness.ts (target/return/growth/coverage/contribution metrics from *IsAvailable flags, *ExceptionCount passthrough, and non-null ranking row counts; null percentage for empty population, zero never fabricated); 5 unit tests pass; status IMPLEMENTED.
+2. [Review 2026-09-13 20:40]
+   Verified all PPD-05 acceptance criteria, feasibility authority compliance (OQ-8, GAP-007), and scope; build (vue-tsc) and full suite (408 tests) pass; no findings; status GO.
 
 ### Slice-ID: PPD-06
 _No entries yet._
