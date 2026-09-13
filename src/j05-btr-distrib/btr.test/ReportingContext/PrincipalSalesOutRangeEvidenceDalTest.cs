@@ -1,5 +1,6 @@
 using System;
 using System.Linq;
+using System.Text.RegularExpressions;
 using btr.application.ReportingContext.PrincipalAnalyticsAgg.Contracts;
 using btr.infrastructure.ReportingContext.PrincipalAnalyticsAgg;
 using FluentAssertions;
@@ -9,6 +10,21 @@ namespace btr.test.ReportingContext
 {
     public class PrincipalSalesOutRangeEvidenceDalTest
     {
+        private static readonly string[] SharedSalesOutAggregationFragments =
+        {
+            "FROM BTR_Faktur f",
+            "INNER JOIN BTR_FakturItem fi ON f.FakturId = fi.FakturId",
+            "INNER JOIN BTR_Brg b ON fi.BrgId = b.BrgId",
+            "INNER JOIN BTR_Supplier sup ON b.SupplierId = sup.SupplierId",
+            "f.VoidDate = '3000-01-01'",
+            "LTRIM(RTRIM(ISNULL(b.SupplierId, ''))) <> ''",
+            "LTRIM(RTRIM(ISNULL(sup.SupplierId, ''))) <> ''",
+            "LTRIM(RTRIM(sup.SupplierId)) AS SupplierId",
+            "MAX(LTRIM(RTRIM(ISNULL(sup.SupplierName, '')))) AS SupplierName",
+            "SUM(ISNULL(fi.SubTotal, 0) - ISNULL(fi.DiscRp, 0)) AS SalesOutAmount",
+            "COUNT(*) AS LineCount"
+        };
+
         [Fact]
         public void Contract_ExposesInclusiveBusinessDateRangeReturningPerPrincipalRows()
         {
@@ -61,6 +77,41 @@ namespace btr.test.ReportingContext
             sql.Should().NotContain("PpnRp");
             sql.Should().NotContain("DppRp");
             sql.Should().NotContain("Purchasing");
+        }
+
+        [Fact]
+        public void FullMonthRange_ReconcilesToMonthGrainHistory_OnSharedAttributionAndAggregation()
+        {
+            var rangeSql = Normalize(PrincipalSalesOutRangeEvidenceDal.ListSalesOutByRangeSql);
+            var historySql = Normalize(PrincipalSalesOutHistoryEvidenceDal.ListMonthlySalesOutHistorySql);
+
+            foreach (var fragment in SharedSalesOutAggregationFragments)
+            {
+                rangeSql.Should().Contain(fragment);
+                historySql.Should().Contain(fragment);
+            }
+        }
+
+        [Fact]
+        public void FullMonthRange_DiffersFromHistoryOnlyByInclusiveWindowAndMonthGrouping()
+        {
+            var rangeSql = Normalize(PrincipalSalesOutRangeEvidenceDal.ListSalesOutByRangeSql);
+            var historySql = Normalize(PrincipalSalesOutHistoryEvidenceDal.ListMonthlySalesOutHistorySql);
+
+            rangeSql.Should().Contain("f.FakturDate BETWEEN @StartDate AND @EndDate");
+            rangeSql.Should().NotContain("f.FakturDate < '3000-01-01'");
+            historySql.Should().Contain("f.FakturDate < '3000-01-01'");
+            historySql.Should().NotContain("@StartDate");
+            historySql.Should().NotContain("@EndDate");
+
+            rangeSql.Should().Contain("GROUP BY LTRIM(RTRIM(sup.SupplierId))");
+            historySql.Should().Contain(
+                "GROUP BY YEAR(f.FakturDate), MONTH(f.FakturDate), LTRIM(RTRIM(sup.SupplierId))");
+        }
+
+        private static string Normalize(string sql)
+        {
+            return Regex.Replace(sql ?? string.Empty, @"\s+", " ").Trim();
         }
     }
 }
