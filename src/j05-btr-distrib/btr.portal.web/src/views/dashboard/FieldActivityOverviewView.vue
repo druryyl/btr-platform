@@ -17,6 +17,7 @@ import FieldActivitySalesmanTable from '@/components/field-activity/FieldActivit
 import FieldActivityTeamKpiStrip from '@/components/field-activity/FieldActivityTeamKpiStrip.vue'
 import FieldActivityTeamTrendChart from '@/components/field-activity/FieldActivityTeamTrendChart.vue'
 import FieldActivityWilayahChart from '@/components/field-activity/FieldActivityWilayahChart.vue'
+import RevenueConcentrationStrip from '@/components/field-activity/RevenueConcentrationStrip.vue'
 import { getFieldActivityOverview } from '@/api/fieldActivityApi'
 import { getApiErrorMessage } from '@/api/httpClient'
 import type {
@@ -141,10 +142,6 @@ const effectiveChartItems = computed(() =>
 
 const ordersChartItems = computed(() =>
   toComparisonItems(overview.value?.Salesmen ?? [], (row) => row.OrdersCount),
-)
-
-const omzetChartItems = computed(() =>
-  toComparisonItems(overview.value?.Salesmen ?? [], (row) => Number(row.OmzetAmount)),
 )
 
 const piutangDashboardRoute = computed(
@@ -291,15 +288,7 @@ onMounted(() => {
 
     <!-- C. Outcomes — revenue distribution + territory & financial health -->
     <section class="field-activity-overview__section" aria-label="Outcomes">
-      <div class="field-activity-overview__charts">
-        <FieldActivityComparisonChart
-          title="Order Value"
-          :items="omzetChartItems"
-          :loading="loading"
-          value-kind="currency"
-          @bar-click="navigateToDetail"
-        />
-      </div>
+      <RevenueConcentrationStrip :salesmen="overview?.Salesmen ?? []" :loading="loading" />
 
       <FieldActivityWilayahChart
         :items="overview?.WilayahBreakdown ?? []"
