@@ -896,7 +896,7 @@ Lifecycle: PLANNED → IN IMPLEMENTATION → IMPLEMENTED → IN REVIEW → GO
 | SFO-P1-04 | GO | 2026-09-14: fieldActivityScoreboard.ts (rankScoreboardRows, classifyScoreboardAttention, displayRank, columnBarMax, barWidthPercent) + spec (31 tests) | 2026-09-14: GO — all AC pass; test 495, build OK | — |
 | SFO-P1-05 | GO | 2026-09-14: FieldActivitySalesmanTable.vue restructured into Salesman Scoreboard (ColumnGroup ACTIVITY/PRODUCTIVITY/OUTCOME/SIGNAL, retained columns, scrollable sticky header ~10 rows, pagination removed; search, initial sort, drill preserved) | 2026-09-14: GO — all AC pass; ColumnGroup + native sticky thead verified via SSR structural check; test 495, build OK | — |
 | SFO-P1-06 | GO | 2026-09-14: FieldActivitySalesmanTable.vue — Rank-by Select (five options, default Order Value), rankScoreboardRows ordering, displayRank-driven # column, header sorting removed | 2026-09-14: GO — all AC pass; bounded ranking, no free-form sort, display rank correct; test 495, build OK (INFO: attention map wiring deferred to SFO-P1-08) | — |
-| SFO-P1-07 | PLANNED | — | — | — |
+| SFO-P1-07 | GO | 2026-09-14: FieldActivitySalesmanTable.vue — CSS in-cell data bars on Execution %, Eff. Rate, Orders, Order Value scaled to filtered column max via columnBarMax/barWidthPercent; bands retained; bars aria-hidden | 2026-09-14: GO — all AC pass; bars scaled to filtered max, decorative, bands retained, no new dependency; test 495, build OK | — |
 | SFO-P1-08 | PLANNED | — | — | — |
 | SFO-P1-09 | PLANNED | — | — | — |
 | SFO-P1-10 | PLANNED | — | — | — |

@@ -20,6 +20,8 @@ import {
 import {
   DEFAULT_SCOREBOARD_RANK_MODE,
   SCOREBOARD_RANK_OPTIONS,
+  barWidthPercent,
+  columnBarMax,
   displayRank,
   rankScoreboardRows,
   type ScoreboardRankMode,
@@ -52,8 +54,21 @@ const rankedRows = computed(() => rankScoreboardRows(filteredRows.value, rankMod
 
 const rankBySalesPersonId = computed(() => displayRank(rankedRows.value))
 
+const executionBarMax = computed(() =>
+  columnBarMax(filteredRows.value, (row) => row.VisitExecutionPercent),
+)
+const effectiveCallRateBarMax = computed(() =>
+  columnBarMax(filteredRows.value, (row) => row.EffectiveCallRate),
+)
+const ordersBarMax = computed(() => columnBarMax(filteredRows.value, (row) => row.OrdersCount))
+const orderValueBarMax = computed(() => columnBarMax(filteredRows.value, (row) => row.OmzetAmount))
+
 function displayRankFor(row: FieldActivitySalesmanOverviewRow): number | undefined {
   return rankBySalesPersonId.value.get(row.SalesPersonId)
+}
+
+function barWidth(value: number | null, max: number): string {
+  return `${barWidthPercent(value, max)}%`
 }
 
 function onRowClick(event: { data: FieldActivitySalesmanOverviewRow }): void {
@@ -135,9 +150,19 @@ function onRowClick(event: { data: FieldActivitySalesmanOverviewRow }): void {
           </Column>
           <Column field="VisitExecutionPercent">
             <template #body="{ data }">
-              <span :class="bandClass(executionBand(data.VisitExecutionPercent))">
-                {{ formatPercent(data.VisitExecutionPercent) }}
-              </span>
+              <div class="field-activity-salesman-table__bar-cell">
+                <span
+                  class="field-activity-salesman-table__bar"
+                  :style="{ width: barWidth(data.VisitExecutionPercent, executionBarMax) }"
+                  aria-hidden="true"
+                />
+                <span
+                  class="field-activity-salesman-table__bar-value"
+                  :class="bandClass(executionBand(data.VisitExecutionPercent))"
+                >
+                  {{ formatPercent(data.VisitExecutionPercent) }}
+                </span>
+              </div>
             </template>
           </Column>
           <Column field="MissedVisits" />
@@ -147,14 +172,48 @@ function onRowClick(event: { data: FieldActivitySalesmanOverviewRow }): void {
           </Column>
           <Column field="EffectiveCallRate">
             <template #body="{ data }">
-              <span :class="bandClass(effectiveCallBand(data.EffectiveCallRate))">
-                {{ formatPercent(data.EffectiveCallRate) }}
-              </span>
+              <div class="field-activity-salesman-table__bar-cell">
+                <span
+                  class="field-activity-salesman-table__bar"
+                  :style="{ width: barWidth(data.EffectiveCallRate, effectiveCallRateBarMax) }"
+                  aria-hidden="true"
+                />
+                <span
+                  class="field-activity-salesman-table__bar-value"
+                  :class="bandClass(effectiveCallBand(data.EffectiveCallRate))"
+                >
+                  {{ formatPercent(data.EffectiveCallRate) }}
+                </span>
+              </div>
             </template>
           </Column>
-          <Column field="OrdersCount" />
+          <Column field="OrdersCount">
+            <template #body="{ data }">
+              <div class="field-activity-salesman-table__bar-cell">
+                <span
+                  class="field-activity-salesman-table__bar"
+                  :style="{ width: barWidth(data.OrdersCount, ordersBarMax) }"
+                  aria-hidden="true"
+                />
+                <span class="field-activity-salesman-table__bar-value">
+                  {{ data.OrdersCount }}
+                </span>
+              </div>
+            </template>
+          </Column>
           <Column field="OmzetAmount">
-            <template #body="{ data }">{{ formatCurrency(data.OmzetAmount) }}</template>
+            <template #body="{ data }">
+              <div class="field-activity-salesman-table__bar-cell">
+                <span
+                  class="field-activity-salesman-table__bar"
+                  :style="{ width: barWidth(data.OmzetAmount, orderValueBarMax) }"
+                  aria-hidden="true"
+                />
+                <span class="field-activity-salesman-table__bar-value">
+                  {{ formatCurrency(data.OmzetAmount) }}
+                </span>
+              </div>
+            </template>
           </Column>
           <Column field="GpsValidPercent">
             <template #body="{ data }">
@@ -220,6 +279,31 @@ function onRowClick(event: { data: FieldActivitySalesmanOverviewRow }): void {
 
 :deep(.field-activity-salesman-table__grid .p-datatable-tbody > tr) {
   cursor: pointer;
+}
+
+.field-activity-salesman-table__bar-cell {
+  position: relative;
+  display: flex;
+  align-items: center;
+  min-height: 1.5rem;
+}
+
+.field-activity-salesman-table__bar {
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  height: 1.25rem;
+  max-width: 100%;
+  border-radius: var(--dashboard-radius-sm, 0.25rem);
+  background: color-mix(in srgb, var(--domain-sales-color, #2563eb) 18%, transparent);
+  transition: width var(--dashboard-transition, 175ms ease);
+  pointer-events: none;
+}
+
+.field-activity-salesman-table__bar-value {
+  position: relative;
+  font-variant-numeric: tabular-nums;
 }
 
 :deep(.field-activity-kpi-band) {
