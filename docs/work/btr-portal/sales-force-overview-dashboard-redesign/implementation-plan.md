@@ -387,7 +387,7 @@ Complexity scale: **1 = trivial**, **2 = simple**, **3 = moderate**, **4 = compl
 | --- | --- | --- | --- |
 | SFO-01 | Commercial Signal Rule Catalog classifier | 3 | GO |
 | SFO-02 | Cross-dashboard composition & collection summaries | 3 | GO |
-| SFO-03 | Collection Health (MTD) section + conditional alert chip | 2 | PLANNED |
+| SFO-03 | Collection Health (MTD) section + conditional alert chip | 2 | GO |
 | SFO-04 | Territory Financial Health & Overdue Distribution | 3 | PLANNED |
 | SFO-05 | Grouped Action Center | 4 | PLANNED |
 | SFO-06 | Overview recomposition & drill-across | 4 | PLANNED |
@@ -479,7 +479,51 @@ Entry format:
 ```
 
 ### Slice-ID: SFO-03
-*(pending)*
+
+```text
+1. [Implementation] [2026-09-14 12:47]
+   Added components/field-activity/FieldActivityCollectionHealthSection.vue: dedicated
+   "Collection Health (MTD)" section (own section, never inside the sales KPI group,
+   GAP-005) rendering Cash Collected MTD (AttentionCards.CashCollectedMtd, fallback
+   RecoverySummary.CashCollectedMtd) and Recovery vs Billing %
+   (AttentionCards.RecoveryVsBillingPercent, fallback RecoverySummary). Section carries
+   an explicit "MTD · as of <global business date>" time-context label derived from a
+   businessDate prop sourced from presentationStore.businessReferenceDate (no new
+   backend field). Conditional overdue alert chip renders only when
+   AttentionCards.ExposureRequiresAttention === true and uses the collection accent;
+   the chip is a clickable drill-across affordance emitting `alertClick` (wired in
+   SFO-06). When collection is null, IsAvailable is false, or loading has ended without
+   data, the section renders an empty/unavailable state without touching sales sections
+   (GAP-004). Values read as-is and formatted with formatCurrency / formatPercent
+   (§5.4); null percentages render "No Data", never 0. Props-based presentational
+   component (collection, businessDate, loading) per the plan's "wired with correct
+   props" (SFO-06). Build (vue-tsc + vite) passes; full suite 46 files / 449 tests pass
+   (no new spec: the project has no component-test harness — vitest environment is
+   node and no @vue/test-utils).
+2. [Review] [2026-09-14 12:48]
+   GO. All 6 acceptance criteria verified against source evidence: dedicated
+   standalone `<section class="collection-health">` titled "Collection Health (MTD)"
+   (never inside the sales KPI group, GAP-005); Cash Collected MTD resolved from
+   AttentionCards.CashCollectedMtd with RecoverySummary fallback and Recovery vs
+   Billing % from AttentionCards.RecoveryVsBillingPercent with fallback; explicit
+   "MTD · as of <global business date>" label derived from the businessDate prop
+   (presentationStore.businessReferenceDate; no new backend field); overdue alert
+   chip rendered only when AttentionCards.ExposureRequiresAttention === true (else
+   absent); unavailable/empty state when collection is null or IsAvailable is false
+   (GAP-004) isolated in its own component without touching sales sections; values
+   read as-is and formatted with formatCurrency / formatPercent (§5.4) with null
+   percentages rendering "No Data"; chip is a clickable drill-across affordance
+   emitting `alertClick` (wiring deferred to SFO-06). Planning authority
+   (FEASIBILITY ASSESSMENT) respected: frontend-only presentational component, no
+   backend/DB/KPI/model change. Scope clean (1 new file; no unrelated edits; view
+   wiring intentionally left to SFO-06). Build (vue-tsc + vite) passes; full suite
+   46 files / 449 tests pass. No critical/major findings. Note (INFO): the slice's
+   plan line "reads dashboardStore.collection directly" is realized as a
+   props-based component because the plan also requires SFO-06 to wire sections
+   "with correct props"; the ACs do not constrain the data-delivery mechanism.
+   Note (INFO): no component-level unit test exists because the project has no
+   component-test harness; the slice did not require new tests.
+```
 
 ### Slice-ID: SFO-04
 *(pending)*
