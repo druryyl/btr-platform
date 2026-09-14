@@ -389,7 +389,7 @@ Complexity scale: **1 = trivial**, **2 = simple**, **3 = moderate**, **4 = compl
 | SFO-02 | Cross-dashboard composition & collection summaries | 3 | GO |
 | SFO-03 | Collection Health (MTD) section + conditional alert chip | 2 | GO |
 | SFO-04 | Territory Financial Health & Overdue Distribution | 3 | GO |
-| SFO-05 | Grouped Action Center | 4 | PLANNED |
+| SFO-05 | Grouped Action Center | 4 | GO |
 | SFO-06 | Overview recomposition & drill-across | 4 | PLANNED |
 | SFO-07 | Regression & validation pass | 2 | PLANNED |
 
@@ -576,7 +576,73 @@ Entry format:
 ```
 
 ### Slice-ID: SFO-05
-*(pending)*
+
+```text
+1. [Implementation] [2026-09-14 13:02]
+   Added components/field-activity/FieldActivityGroupedActionCenter.vue: grouped,
+   action-first Action Center with three groups (blueprint §6). Field Execution
+   sources the existing server rankings — Needs Coaching from
+   Rankings.BottomEffectiveCallRate (lowest order conversion), Needs Plan Review
+   from Rankings.BottomVisitExecution, Needs Investigation from
+   Rankings.MostUnplannedVisits (GPS "Needs Follow-up" folded in as per-row GPS
+   valid % context from Salesmen[].GpsValidPercent; no separate list), Needs
+   Immediate Attention from Salesmen[].ActualVisits === 0 (zero activity).
+   Commercial Risk classifies via the approved pure services: Needs Collection
+   Action from collectionActionInputs().needsCollectionAction (TopOverdueSalesmen[]
+   highest overdue, sorted), Needs Credit Review from needsCreditReview() over the
+   SalesPersonId join (Revenue = OmmenAmount, OverdueExposure = joined overdue),
+   Needs Escalation from collectionActionInputs().needsEscalation
+   (AgingOver90Exposure / LegacyDebtCount). Recognition renders
+   recognitionCandidates() as a compact chip strip, never a scoreboard. Every
+   signal carries a sales-manager action label (coach / review / investigate /
+   contact / collect / review credit / escalate); no finance action labels.
+   Commercial Risk and Recognition names are drill-across affordances emitting
+   commercialRiskClick (signalKey + salesPersonId + investigation) and
+   recognitionClick (wired in SFO-06); Field Execution items emit salesmanClick.
+   Collection-derived groups show an unavailable state when
+   collection.IsAvailable is false/null (GAP-004). Removed the obsolete
+   components/field-activity/FieldActivityRankingGrid.vue and updated
+   FieldActivityOverviewView.vue to render the new component (minimal compile
+   fix; :salesmen / :rankings / :loading wired, :collection and full drill-across
+   wiring intentionally deferred to SFO-06 per the plan). Build (vue-tsc + vite)
+   passes; full suite 46 files / 449 tests pass (no new spec: no component-test
+   harness and the slice required no tests; the SFO-01/SFO-02 services already
+   carry the classification/join unit tests).
+2. [Review] [2026-09-14 13:05]
+   GO. All 5 acceptance criteria verified against source and build/test evidence:
+   (1) FieldActivityGroupedActionCenter.vue renders three groups — Field Execution
+   (Needs Coaching from Rankings.BottomEffectiveCallRate = lowest order conversion,
+   Needs Plan Review from Rankings.BottomVisitExecution, Needs Investigation from
+   Rankings.MostUnplannedVisits with GPS folded in as per-row GpsValidPercent
+   context and no separate "Needs Follow-up" list, Needs Immediate Attention from
+   Salesmen[].ActualVisits === 0), Commercial Risk (Needs Collection Action from
+   collectionActionInputs().needsCollectionAction, Needs Credit Review from
+   needsCreditReview(), Needs Escalation from collectionActionInputs().needsEscalation),
+   and Recognition (recognitionCandidates() as a compact chip strip, not a
+   scoreboard); Field Execution items are sourced from the existing Rankings /
+   Salesmen[] as specified. (2) Commercial Risk and Recognition signals are
+   SFO-01/SFO-02 classifications (pure services), not new KPI values. (3) Every
+   category carries a sales-manager action label (coach / review / investigate /
+   contact / collect / review credit / escalate); no finance action labels. (4)
+   Commercial Risk items are buttons emitting commercialRiskClick (signalKey +
+   salesPersonId + investigation) and Recognition chips emit recognitionClick —
+   the drill-across affordance is present and its wiring is deferred to SFO-06 per
+   the plan. (5) FieldActivityRankingGrid.vue is deleted, no references remain and
+   no dead code is left; FieldActivityOverviewView.vue is updated as the mandatory
+   compile fix. Planning authority (FEASIBILITY ASSESSMENT) respected:
+   frontend-only, collection values read as-is via the SFO-02 join (§5.4), no
+   backend/DB/model/KPI change, collection-derived groups degrade to an
+   unavailable state when IsAvailable is false/null (GAP-004). Scope clean (1 new
+   component, 1 removed component, minimal view edit + tracker; no unrelated
+   changes). Build (vue-tsc + vite) passes; full suite 46 files / 449 tests pass.
+   No critical/major findings. Note (INFO): the view's :collection prop and full
+   drill-across wiring are intentionally deferred to SFO-06 per the plan; during
+   SFO-05 the Commercial Risk group renders its unavailable state. Note (INFO):
+   Needs Investigation folds GPS as row context (no separate list), consistent
+   with the slice AC and v2.2 §6.1. Note (INFO): no component-level unit test
+   exists because the project has no component-test harness; the slice required
+   no tests and the classifier/join are covered by the SFO-01/SFO-02 specs.
+```
 
 ### Slice-ID: SFO-06
 *(pending)*

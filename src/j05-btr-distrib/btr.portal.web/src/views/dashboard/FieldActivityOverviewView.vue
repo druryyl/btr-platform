@@ -8,7 +8,7 @@ import SelectButton from 'primevue/selectbutton'
 import FieldActivityComparisonChart, {
   type FieldActivityComparisonItem,
 } from '@/components/field-activity/FieldActivityComparisonChart.vue'
-import FieldActivityRankingGrid from '@/components/field-activity/FieldActivityRankingGrid.vue'
+import FieldActivityGroupedActionCenter from '@/components/field-activity/FieldActivityGroupedActionCenter.vue'
 import FieldActivitySalesmanTable from '@/components/field-activity/FieldActivitySalesmanTable.vue'
 import FieldActivityTeamKpiStrip from '@/components/field-activity/FieldActivityTeamKpiStrip.vue'
 import FieldActivityTeamTrendChart from '@/components/field-activity/FieldActivityTeamTrendChart.vue'
@@ -17,7 +17,6 @@ import { getFieldActivityOverview } from '@/api/fieldActivityApi'
 import { getApiErrorMessage } from '@/api/httpClient'
 import type {
   FieldActivityOverviewResponse,
-  FieldActivityRankingEntry,
   FieldActivitySalesmanOverviewRow,
 } from '@/models/fieldActivity'
 import { usePresentationStore } from '@/stores/presentationStore'
@@ -162,10 +161,6 @@ function navigateToDetail(salesPersonId: string): void {
   })
 }
 
-function onRankingClick(entry: FieldActivityRankingEntry): void {
-  navigateToDetail(entry.SalesPersonId)
-}
-
 onMounted(() => {
   applyDatePreset('today')
 })
@@ -249,10 +244,12 @@ onMounted(() => {
       />
     </section>
 
-    <FieldActivityRankingGrid
+    <FieldActivityGroupedActionCenter
+      :salesmen="overview?.Salesmen ?? []"
       :rankings="overview?.Rankings ?? null"
       :loading="loading"
-      @row-click="onRankingClick"
+      @salesman-click="navigateToDetail"
+      @recognition-click="navigateToDetail"
     />
 
     <FieldActivityTeamTrendChart
