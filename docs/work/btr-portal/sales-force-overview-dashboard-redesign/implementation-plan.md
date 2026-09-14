@@ -391,7 +391,7 @@ Complexity scale: **1 = trivial**, **2 = simple**, **3 = moderate**, **4 = compl
 | SFO-04 | Territory Financial Health & Overdue Distribution | 3 | GO |
 | SFO-05 | Grouped Action Center | 4 | GO |
 | SFO-06 | Overview recomposition & drill-across | 4 | GO |
-| SFO-07 | Regression & validation pass | 2 | PLANNED |
+| SFO-07 | Regression & validation pass | 2 | GO |
 
 ---
 
@@ -730,4 +730,74 @@ Entry format:
 ```
 
 ### Slice-ID: SFO-07
-*(pending)*
+
+```text
+1. [Implementation] [2026-09-14 13:08]
+   Regression & validation pass; no source change (validation-only slice).
+   `npm run build` (vue-tsc -b && vite build) passes (1151 modules, built in
+   2.48s). `npm run test` (vitest run) passes: 46 files / 449 tests, including
+   the SFO-01 commercialSignalRules.spec.ts (18) and SFO-02
+   fieldActivityCollectionComposition.spec.ts (18). Verified against source:
+   collection KPIs (CashCollectedMtd / RecoveryVsBillingPercent) render only in
+   FieldActivityCollectionHealthSection.vue (the other matches are the pre-existing
+   Collection Dashboard / Cash Flow Forecast views); Active Salesmen reads
+   TeamKpis.ActiveSalesmenCount only (FieldActivityTeamKpiStrip.vue) and is never
+   redefined as ActualVisits > 0 (GAP-007); Rule Catalog outputs are
+   classifications (CommercialSignalClassification), never KPI values; Action
+   Center keeps three groups and sales-manager action labels; collection values
+   are read as-is (no re-derivation, §5.4); and each collection section degrades
+   to an unavailable state when collection is null / IsAvailable is false (GAP-004).
+   Scope of SFO-02..SFO-06 confirmed frontend-only (portal components/services/
+   view + tracker); no store, model, or backend change attributable to this slice.
+2. [Review] [2026-09-14 13:09]
+   GO. All 6 acceptance criteria verified against source and build/test evidence:
+   (1) `npm run build` (vue-tsc -b && vite build) passes (1151 modules, built in
+   2.48s) and `npm run test` passes (46 files / 449 tests, incl. SFO-01
+   commercialSignalRules.spec.ts 18 and SFO-02
+   fieldActivityCollectionComposition.spec.ts 18) — PASS.
+   (2) Blueprint v2.2 Success Criteria are answerable from the top sections
+   without drill-down: Status (TeamKpiStrip: planned/actual/execution/effective
+   calls/orders/order value + Collection Health) answers executing-visit-plans,
+   orders-generating-revenue, cash-keeping-pace, receivables-health; Performance
+   (Visit Execution %, Effective Call Rate, Orders Generated) answers
+   visits-generating-orders; Outcomes (Order Value, SalesmanTable, Territory
+   Performance two-group chart + C.3 Overdue Distribution) answers best territory
+   and selling-but-not-paying; Action Center answers which salespeople need which
+   intervention (coach / plan review / investigate / collect / credit / escalate
+   labels) and who deserves recognition (Recognition strip); Trends answers
+   improving/declining — PASS.
+   (3) Collection KPIs (CashCollectedMtd / RecoveryVsBillingPercent) render only
+   in FieldActivityCollectionHealthSection.vue; the remaining repository matches
+   belong to the pre-existing Collection Dashboard and Cash Flow Forecast views.
+   Within the Sales Force Overview, Collection Health is its own `<section>` and
+   never shares a KPI group with the sales TeamKpiStrip (GAP-005) — PASS.
+   (4) Collection values are read as-is from DashboardCollectionResponse with no
+   re-derivation (commercialSignalRules and fieldActivityCollectionComposition are
+   pure classifiers/join; §5.4); Active Salesmen reads
+   TeamKpis.ActiveSalesmenCount in FieldActivityTeamKpiStrip.vue and is never
+   redefined as ActualVisits > 0 (GAP-007); Rule Catalog output is a
+   CommercialSignalClassification (key + label + rationale), never a KPI value;
+   Action Center carries only sales-manager action labels — PASS.
+   (5) Each collection surface degrades independently: CollectionHealthSection
+   renders its unavailable state when collection is null / IsAvailable is false
+   (GAP-004), GroupedActionCenter shows the same for Commercial Risk/Recognition,
+   and WilayahChart's financial group/C.3 show the empty state; sales sections are
+   unaffected — PASS.
+   (6) No backend, store (beyond the reused dashboardStore.loadCollection()), or
+   model change: the SFO-02..SFO-06 delta under btr.portal.web is limited to the
+   two new pure services (+ specs), two new components, the extended
+   FieldActivityWilayahChart, the recomposed FieldActivityOverviewView, and the
+   removed FieldActivityRankingGrid (no dead references remain); the tracker is the
+   only non-portal file — PASS.
+   Planning authority (FEASIBILITY ASSESSMENT) respected: frontend-only composition
+   of the two existing APIs, no merged endpoint, no KPI/threshold re-definition.
+   Scope clean (validation-only slice, no source change). No critical/major
+   findings. Note (INFO): the SFO-01 commit (08974789) swept in pre-existing
+   unrelated btr.visitplan.worker / VisitPlanAgg backend changes and working docs;
+   they predate this feature's review and were accepted at SFO-01, and no SFO slice
+   introduced a backend change attributable to the dashboard. Note (INFO): the
+   manual 30-second verification is a source-evidence assessment (no browser run in
+   this environment); all five decision sections are present, wired, and ordered.
+```
+
+
