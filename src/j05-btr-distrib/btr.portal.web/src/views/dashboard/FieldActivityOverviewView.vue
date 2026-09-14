@@ -7,9 +7,6 @@ import Message from 'primevue/message'
 import SelectButton from 'primevue/selectbutton'
 import ExecutionFunnel from '@/components/field-activity/ExecutionFunnel.vue'
 import FieldActivityCollectionHealthSection from '@/components/field-activity/FieldActivityCollectionHealthSection.vue'
-import FieldActivityComparisonChart, {
-  type FieldActivityComparisonItem,
-} from '@/components/field-activity/FieldActivityComparisonChart.vue'
 import FieldActivityGroupedActionCenter, {
   type CommercialRiskClickPayload,
 } from '@/components/field-activity/FieldActivityGroupedActionCenter.vue'
@@ -20,10 +17,7 @@ import FieldActivityWilayahChart from '@/components/field-activity/FieldActivity
 import RevenueConcentrationStrip from '@/components/field-activity/RevenueConcentrationStrip.vue'
 import { getFieldActivityOverview } from '@/api/fieldActivityApi'
 import { getApiErrorMessage } from '@/api/httpClient'
-import type {
-  FieldActivityOverviewResponse,
-  FieldActivitySalesmanOverviewRow,
-} from '@/models/fieldActivity'
+import type { FieldActivityOverviewResponse } from '@/models/fieldActivity'
 import { navigateToDashboard, navigateToInvestigation } from '@/services/navigateToInvestigation'
 import { useDashboardStore } from '@/stores/dashboardStore'
 import { usePresentationStore } from '@/stores/presentationStore'
@@ -113,36 +107,6 @@ const planBanner = computed(() => {
   }
   return `No visit plan data before ${overview.value.Meta.VisitPlanGoLiveDate}. Planned KPIs show zero for earlier dates.`
 })
-
-function chartLabel(row: FieldActivitySalesmanOverviewRow): string {
-  return `${row.SalesPersonCode} · ${row.SalesPersonName}`
-}
-
-function toComparisonItems(
-  rows: FieldActivitySalesmanOverviewRow[],
-  valueSelector: (row: FieldActivitySalesmanOverviewRow) => number,
-): FieldActivityComparisonItem[] {
-  return rows
-    .filter((row) => row.HasEmail)
-    .map((row) => ({
-      label: chartLabel(row),
-      value: valueSelector(row),
-      salesPersonId: row.SalesPersonId,
-    }))
-    .sort((a, b) => b.value - a.value)
-}
-
-const executionChartItems = computed(() =>
-  toComparisonItems(overview.value?.Salesmen ?? [], (row) => row.VisitExecutionPercent ?? 0),
-)
-
-const effectiveChartItems = computed(() =>
-  toComparisonItems(overview.value?.Salesmen ?? [], (row) => row.EffectiveCallRate ?? 0),
-)
-
-const ordersChartItems = computed(() =>
-  toComparisonItems(overview.value?.Salesmen ?? [], (row) => row.OrdersCount),
-)
 
 const piutangDashboardRoute = computed(
   () => dashboard.collection?.Navigation?.PiutangDashboardRoute ?? null,
@@ -260,30 +224,6 @@ onMounted(() => {
         :loading="loading"
         @row-click="(row) => navigateToDetail(row.SalesPersonId)"
       />
-
-      <div class="field-activity-overview__charts">
-        <FieldActivityComparisonChart
-          title="Visit Execution %"
-          :items="executionChartItems"
-          :loading="loading"
-          value-kind="percent"
-          @bar-click="navigateToDetail"
-        />
-        <FieldActivityComparisonChart
-          title="Effective Call Rate"
-          :items="effectiveChartItems"
-          :loading="loading"
-          value-kind="percent"
-          @bar-click="navigateToDetail"
-        />
-        <FieldActivityComparisonChart
-          title="Orders Generated"
-          :items="ordersChartItems"
-          :loading="loading"
-          value-kind="number"
-          @bar-click="navigateToDetail"
-        />
-      </div>
     </section>
 
     <!-- C. Outcomes — revenue distribution + territory & financial health -->
@@ -356,11 +296,5 @@ onMounted(() => {
   display: flex;
   flex-direction: column;
   gap: 1rem;
-}
-
-.field-activity-overview__charts {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(20rem, 1fr));
-  gap: 0.75rem;
 }
 </style>
