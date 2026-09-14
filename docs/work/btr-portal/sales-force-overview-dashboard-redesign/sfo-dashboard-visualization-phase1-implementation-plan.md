@@ -895,7 +895,7 @@ Lifecycle: PLANNED → IN IMPLEMENTATION → IMPLEMENTED → IN REVIEW → GO
 | SFO-P1-03 | GO | 2026-09-14: ExecutionFunnel mounted in Performance section (additive, above chart grid) | 2026-09-14: GO — additive-only, DOM order correct; test 464, build OK | — |
 | SFO-P1-04 | GO | 2026-09-14: fieldActivityScoreboard.ts (rankScoreboardRows, classifyScoreboardAttention, displayRank, columnBarMax, barWidthPercent) + spec (31 tests) | 2026-09-14: GO — all AC pass; test 495, build OK | — |
 | SFO-P1-05 | GO | 2026-09-14: FieldActivitySalesmanTable.vue restructured into Salesman Scoreboard (ColumnGroup ACTIVITY/PRODUCTIVITY/OUTCOME/SIGNAL, retained columns, scrollable sticky header ~10 rows, pagination removed; search, initial sort, drill preserved) | 2026-09-14: GO — all AC pass; ColumnGroup + native sticky thead verified via SSR structural check; test 495, build OK | — |
-| SFO-P1-06 | PLANNED | — | — | — |
+| SFO-P1-06 | GO | 2026-09-14: FieldActivitySalesmanTable.vue — Rank-by Select (five options, default Order Value), rankScoreboardRows ordering, displayRank-driven # column, header sorting removed | 2026-09-14: GO — all AC pass; bounded ranking, no free-form sort, display rank correct; test 495, build OK (INFO: attention map wiring deferred to SFO-P1-08) | — |
 | SFO-P1-07 | PLANNED | — | — | — |
 | SFO-P1-08 | PLANNED | — | — | — |
 | SFO-P1-09 | PLANNED | — | — | — |

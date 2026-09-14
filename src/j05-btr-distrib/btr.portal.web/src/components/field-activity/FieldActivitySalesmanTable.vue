@@ -6,6 +6,7 @@ import ColumnGroup from 'primevue/columngroup'
 import DataTable from 'primevue/datatable'
 import InputText from 'primevue/inputtext'
 import Row from 'primevue/row'
+import Select from 'primevue/select'
 import Tag from 'primevue/tag'
 import type { FieldActivitySalesmanOverviewRow } from '@/models/fieldActivity'
 import {
@@ -16,6 +17,13 @@ import {
   statusLabel,
   statusSeverity,
 } from '@/services/fieldActivityKpiBands'
+import {
+  DEFAULT_SCOREBOARD_RANK_MODE,
+  SCOREBOARD_RANK_OPTIONS,
+  displayRank,
+  rankScoreboardRows,
+  type ScoreboardRankMode,
+} from '@/services/fieldActivityScoreboard'
 import { formatCurrency, formatNumber, formatPercent } from '@/services/formatters'
 
 const props = defineProps<{
@@ -28,6 +36,8 @@ const emit = defineEmits<{
 }>()
 
 const globalFilter = ref('')
+const rankMode = ref<ScoreboardRankMode>(DEFAULT_SCOREBOARD_RANK_MODE)
+const rankOptions = [...SCOREBOARD_RANK_OPTIONS]
 
 const filteredRows = computed(() => {
   const query = globalFilter.value.trim().toLowerCase()
@@ -37,6 +47,14 @@ const filteredRows = computed(() => {
     `${row.SalesPersonCode} ${row.SalesPersonName}`.toLowerCase().includes(query),
   )
 })
+
+const rankedRows = computed(() => rankScoreboardRows(filteredRows.value, rankMode.value))
+
+const rankBySalesPersonId = computed(() => displayRank(rankedRows.value))
+
+function displayRankFor(row: FieldActivitySalesmanOverviewRow): number | undefined {
+  return rankBySalesPersonId.value.get(row.SalesPersonId)
+}
 
 function onRowClick(event: { data: FieldActivitySalesmanOverviewRow }): void {
   emit('rowClick', event.data)
@@ -48,53 +66,65 @@ function onRowClick(event: { data: FieldActivitySalesmanOverviewRow }): void {
     <template #title>
       <div class="field-activity-salesman-table__header">
         <span>Salesman Scoreboard</span>
-        <span class="p-input-icon-left field-activity-salesman-table__search">
-          <i class="pi pi-search" />
-          <InputText v-model="globalFilter" placeholder="Search code or name" />
-        </span>
+        <div class="field-activity-salesman-table__controls">
+          <label class="field-activity-salesman-table__rank-field" for="salesman-scoreboard-rank">
+            Rank by
+          </label>
+          <Select
+            input-id="salesman-scoreboard-rank"
+            v-model="rankMode"
+            :options="rankOptions"
+            option-label="label"
+            option-value="mode"
+            class="field-activity-salesman-table__rank-select"
+          />
+          <span class="p-input-icon-left field-activity-salesman-table__search">
+            <i class="pi pi-search" />
+            <InputText v-model="globalFilter" placeholder="Search code or name" />
+          </span>
+        </div>
       </div>
     </template>
 
     <template #content>
       <div class="field-activity-salesman-table__table-panel">
         <DataTable
-          :value="filteredRows"
+          :value="rankedRows"
           :loading="loading"
           striped-rows
           scrollable
           scroll-height="flex"
-          sort-field="VisitExecutionPercent"
-          :sort-order="1"
-          removable-sort
           class="field-activity-salesman-table__grid"
           @row-click="onRowClick"
         >
           <ColumnGroup type="header">
             <Row>
-              <Column header="#" field="Rank" :rowspan="2" sortable style="width: 4rem" />
-              <Column header="Code" field="SalesPersonCode" :rowspan="2" sortable />
-              <Column header="Name" field="SalesPersonName" :rowspan="2" sortable />
+              <Column header="#" field="Rank" :rowspan="2" style="width: 4rem" />
+              <Column header="Code" field="SalesPersonCode" :rowspan="2" />
+              <Column header="Name" field="SalesPersonName" :rowspan="2" />
               <Column header="ACTIVITY" :colspan="5" />
               <Column header="PRODUCTIVITY" :colspan="2" />
               <Column header="OUTCOME" :colspan="2" />
               <Column header="SIGNAL" :colspan="2" />
             </Row>
             <Row>
-              <Column header="Planned" field="PlannedVisits" sortable />
-              <Column header="Actual" field="ActualVisits" sortable />
-              <Column header="Execution %" field="VisitExecutionPercent" sortable />
-              <Column header="Missed" field="MissedVisits" sortable />
-              <Column header="Unplanned" field="UnplannedVisits" sortable />
-              <Column header="Effective" field="EffectiveCalls" sortable />
-              <Column header="Eff. Rate" field="EffectiveCallRate" sortable />
-              <Column header="Orders" field="OrdersCount" sortable />
-              <Column header="Order Value" field="OmzetAmount" sortable />
-              <Column header="GPS Valid %" field="GpsValidPercent" sortable />
-              <Column header="Status" field="StatusCode" sortable />
+              <Column header="Planned" field="PlannedVisits" />
+              <Column header="Actual" field="ActualVisits" />
+              <Column header="Execution %" field="VisitExecutionPercent" />
+              <Column header="Missed" field="MissedVisits" />
+              <Column header="Unplanned" field="UnplannedVisits" />
+              <Column header="Effective" field="EffectiveCalls" />
+              <Column header="Eff. Rate" field="EffectiveCallRate" />
+              <Column header="Orders" field="OrdersCount" />
+              <Column header="Order Value" field="OmzetAmount" />
+              <Column header="GPS Valid %" field="GpsValidPercent" />
+              <Column header="Status" field="StatusCode" />
             </Row>
           </ColumnGroup>
 
-          <Column field="Rank" style="width: 4rem" />
+          <Column field="Rank" style="width: 4rem">
+            <template #body="{ data }">{{ displayRankFor(data) }}</template>
+          </Column>
           <Column field="SalesPersonCode" />
           <Column field="SalesPersonName" />
           <Column field="PlannedVisits">
@@ -154,6 +184,22 @@ function onRowClick(event: { data: FieldActivitySalesmanOverviewRow }): void {
   align-items: center;
   justify-content: space-between;
   gap: 0.75rem;
+}
+
+.field-activity-salesman-table__controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.field-activity-salesman-table__rank-field {
+  font-size: 0.875rem;
+  color: var(--p-text-muted-color, #64748b);
+}
+
+.field-activity-salesman-table__rank-select {
+  min-width: 12rem;
 }
 
 .field-activity-salesman-table__search {
