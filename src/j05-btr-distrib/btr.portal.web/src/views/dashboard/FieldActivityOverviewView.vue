@@ -226,6 +226,19 @@ onMounted(() => {
       />
     </section>
 
+    <!-- D. Action Center — grouped, action-first interventions -->
+    <section class="field-activity-overview__section" aria-label="Action Center">
+      <FieldActivityGroupedActionCenter
+        :salesmen="overview?.Salesmen ?? []"
+        :rankings="overview?.Rankings ?? null"
+        :collection="dashboard.collection"
+        :loading="loading"
+        @salesman-click="navigateToDetail"
+        @commercial-risk-click="onCommercialRiskClick"
+        @recognition-click="navigateToDetail"
+      />
+    </section>
+
     <!-- C. Outcomes — revenue distribution + territory & financial health -->
     <section class="field-activity-overview__section" aria-label="Outcomes">
       <RevenueConcentrationStrip :salesmen="overview?.Salesmen ?? []" :loading="loading" />
@@ -237,19 +250,6 @@ onMounted(() => {
         :collection-available="dashboard.collection?.IsAvailable === true"
         :business-date="presentation.businessReferenceDate"
         :loading="loading"
-      />
-    </section>
-
-    <!-- D. Action Center — grouped, action-first interventions -->
-    <section class="field-activity-overview__section" aria-label="Action Center">
-      <FieldActivityGroupedActionCenter
-        :salesmen="overview?.Salesmen ?? []"
-        :rankings="overview?.Rankings ?? null"
-        :collection="dashboard.collection"
-        :loading="loading"
-        @salesman-click="navigateToDetail"
-        @commercial-risk-click="onCommercialRiskClick"
-        @recognition-click="navigateToDetail"
       />
     </section>
 
