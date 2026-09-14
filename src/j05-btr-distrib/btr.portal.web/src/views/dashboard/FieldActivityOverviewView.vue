@@ -296,6 +296,7 @@ onMounted(() => {
 
       <FieldActivitySalesmanTable
         :rows="overview?.Salesmen ?? []"
+        :collection="dashboard.collection"
         :loading="loading"
         @row-click="(row) => navigateToDetail(row.SalesPersonId)"
       />
