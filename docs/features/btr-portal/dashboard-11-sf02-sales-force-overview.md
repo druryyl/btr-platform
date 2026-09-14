@@ -24,12 +24,14 @@ All monetary values are in IDR.
 Management should normally read the dashboard in this order:
 
 1. Select the relevant date and confirm the plan-data message.
-2. Scan the KPI groups: Field Execution, Productivity, and Quality.
-3. Review the Salesman Performance table for individual exceptions.
-4. Compare the four salesman charts.
-5. Use the rankings to identify the strongest and weakest performers.
-6. Review Team Execution Trends and Visits by Wilayah for pattern and coverage.
-7. Open salesman detail when a KPI, row, chart, or ranking requires evidence.
+2. Scan the KPI groups in Status: Field Execution, Productivity, and Quality.
+3. Read the Execution Funnel for the team conversion narrative and the largest
+   leak.
+4. Review the Salesman Scoreboard for individual comparison.
+5. Use the Action Center to decide who needs intervention.
+6. Consult Revenue Concentration and Visits by Wilayah for context.
+7. Review Team Execution Trends for direction.
+8. Open salesman detail when a KPI, row, signal, or action requires evidence.
 
 High visit volume is not automatically good. Management should read coverage,
 productivity, and quality together:
@@ -357,84 +359,124 @@ that planning does not match the way the team works.
 - If the pattern is consistently productive, management may need to improve the
   route plan.
 
-## 5. Salesman Performance Table
+## 5. Salesman Scoreboard
 
 ### 5.1 Purpose
 
-The Salesman Performance table is the main evidence table for comparing
-individual field execution. It supports search, sorting, pagination, and
-drill-down to salesman field activity.
+The Salesman Scoreboard is the primary comparison surface for individual field
+execution. It is the promoted and redesigned version of the former Salesman
+Performance table: it now sits in the Performance section directly below the
+Execution Funnel and supports search, a bounded "Rank by" ranking, and
+drill-down to salesman field activity. Free-form column sorting and pagination
+are replaced by the single ranking control and a bounded internal scroll body
+(about ten visible rows) whose header stays visible while the body scrolls.
 
-### 5.2 Columns and Management Meaning
+### 5.2 Column Groups and Management Meaning
 
-- **Rank:** Relative position in the overview population.
+The columns are grouped in funnel order, so reading one row left to right is
+reading that salesman's Activity → Productivity → Outcome path, followed by
+quality signals.
+
+- **#:** Position in the active ranking (the display order, not the backend
+  Rank field).
 - **Salesman Code / Name:** Identifies the responsible salesperson.
-- **Planned:** Expected customer coverage.
-- **Actual:** Customers with recorded check-ins.
-- **Execution %:** Completion of planned coverage.
-- **Effective:** Visits that produced an order.
-- **Eff. Rate:** Share of actual visits that produced an order.
-- **Missed:** Planned customers not visited.
-- **Unplanned:** Customers visited outside the plan.
-- **GPS Valid %:** Credibility of recorded check-ins.
-- **Orders:** Field sales-order count.
-- **Order Value:** Value of field sales orders in IDR.
-- **Status:** Summary status for the salesman based on the displayed activity
-  indicators.
+- **ACTIVITY**
+  - **Planned:** Expected customer coverage.
+  - **Actual:** Customers with recorded check-ins.
+  - **Execution %:** Completion of planned coverage.
+  - **Missed:** Planned customers not visited.
+  - **Unplanned:** Customers visited outside the plan.
+- **PRODUCTIVITY**
+  - **Effective:** Visits that produced an order.
+  - **Eff. Rate:** Share of actual visits that produced an order.
+- **OUTCOME**
+  - **Orders:** Field sales-order count.
+  - **Order Value:** Value of field sales orders in IDR.
+- **SIGNAL**
+  - **Attention:** Action signals for the salesman, reusing the commercial
+    signal rules shown in the Action Center ("Needs Collection Action", "Needs
+    Credit Review"); rows with none show "—".
+  - **GPS Valid %:** Credibility of recorded check-ins.
+  - **Status:** Summary status for the salesman based on the displayed activity
+    indicators.
+
+The Execution %, Eff. Rate, Orders, and Order Value cells carry an in-cell data
+bar scaled to the visible column maximum; the bar is decorative and the
+formatted value remains the readable measure.
 
 ### 5.3 How Management Should Use It
 
-Sort and compare the table to find:
+Use the "Rank by" selector to order the scoreboard by one of five options —
+Order Value (default), Orders, Effective Call Rate, Visit Execution %, or
+Attention (worst first) — and read across each row's funnel-ordered columns.
+Compare rows to find:
 
 - low Execution % and high Missed Visits;
 - high Execution % but low Eff. Rate;
 - high Unplanned Visits with weak execution;
 - high Orders or Order Value concentrated in a few salesmen;
 - weak GPS Valid % that reduces confidence in activity;
+- rows flagged in the Attention column when a collection or credit signal needs
+  action;
 - salesmen requiring a detail review or coaching conversation.
 
 The table is not a replacement for SF01 sales outcome analysis. A salesman
 may have strong field execution but weak invoiced sales, or strong invoiced
 sales but weak route compliance.
 
-## 6. Salesman Comparison Charts
+## 6. Narrative, Comparison, and Concentration Surfaces
 
-The comparison charts are horizontal bar charts. Each bar represents a salesman
-and can be used to open detailed field activity.
+The four salesman comparison charts were removed. The Execution Funnel supplies
+the team narrative, the Salesman Scoreboard (section 5) is the single comparison
+surface, and a Revenue Concentration strip preserves the concentration question
+that the Order Value chart used to answer.
 
-### 6.1 Visit Execution %
+### 6.1 Execution Funnel
 
-Ranks salesmen by route-completion percentage. Use it to identify strong route
-discipline and salesmen who repeatedly leave planned customers unvisited.
+The Execution Funnel is a five-stage horizontal conversion strip at team level,
+read left to right:
 
-### 6.2 Effective Call Rate
+```text
+Planned Visits → Actual Visits → Effective Calls → Orders → Order Value
+```
 
-Ranks salesmen by the proportion of visits producing orders. Use it to identify
-coaching opportunities in customer conversion and order-taking.
+Conversions between stages:
 
-### 6.3 Orders Generated
+- Execution Rate = Actual Visits / Planned Visits;
+- Effective Call Rate = Effective Calls / Actual Visits;
+- Order Conversion = Orders / Effective Calls;
+- Average Order Value = Order Value / Orders.
 
-Compares the number of field orders generated by each salesman. Use it to
-identify demand-generation volume, while remembering that orders are not
-Faktur.
+Each stage shows its primary value, the conversion out of it when defined, and
+its absolute leak where one exists: Missed Visits (Planned → Actual) and
+No-Order Visits (Actual → Effective Calls). A conversion is shown as "—" when
+its denominator is zero; no `NaN` or `Infinity` is displayed. The funnel uses
+plain markup and CSS, not a chart library, and has no internal scroll.
 
-### 6.4 Order Value
+Use the largest leak to read the day's main problem, because each leak names its
+own intervention:
 
-Compares the IDR value of field orders by salesman. Use it to distinguish
-transaction volume from commercial value and to identify concentration of order
-value.
+- Missed Visits: plan realism, capacity, or supervision;
+- No-Order Visits: selling quality, stock, price, or assortment;
+- Order Conversion: order capture, credit blocks, or stock-outs;
+- Average Order Value: basket size, product mix, or discounting.
 
-### 6.5 Combined Interpretation
+### 6.2 Salesman Scoreboard
 
-The four charts should be read together:
+The Salesman Scoreboard is the primary comparison surface. It carries every
+measure the removed charts showed, plus the Attention signal, in one drillable
+row per salesman. It is documented in section 5.
 
-- high Execution % and high Effective Call Rate: disciplined and productive;
-- high Execution % and low Effective Call Rate: coverage completed but
-  conversion is weak;
-- low Execution % and high Effective Call Rate: productive where visited but
-  route coverage is incomplete;
-- high Orders but low Order Value: frequent small orders;
-- low Orders but high Order Value: fewer, larger opportunities.
+### 6.3 Revenue Concentration
+
+The Revenue Concentration strip replaces the Order Value chart and answers "is
+revenue concentrated in a few individuals?" From `Salesmen[].OmzetAmount` it
+shows the Top-1 and Top-3 shares of total order value and a single 100% stacked
+bar of the named top three salesmen plus an "Others" remainder. It has no
+internal scroll, and the scoreboard row click remains the drill affordance.
+
+Concentration changes the intervention: a high Top-3 share indicates key-person
+risk, while a spread distribution indicates a broader pattern.
 
 ## 7. Performance Rankings
 
@@ -613,9 +655,10 @@ the reviewed encyclopedia and are therefore intentionally marked
 - Orders
 - Order Value
 
-Rankings, comparison charts, trends, the Salesman Performance table, and Visits
-by Wilayah are analytical presentation sections. They use the underlying
-measures above and are not assigned invented KPI codes.
+Rankings, the Execution Funnel, the Salesman Scoreboard, the Revenue
+Concentration strip, trends, and Visits by Wilayah are analytical presentation
+sections. They use the underlying measures above and are not assigned invented
+KPI codes.
 
 ## 13. Related Menus
 

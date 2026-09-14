@@ -99,7 +99,7 @@ BUSINESS DOMAINS (what is being measured)
                               ‖  every KPI maps to exactly one domain
                               ‖
 DECISION FLOW (how it is read, top to bottom)
-        Status → Performance → Outcomes → Action Center → Trends
+        Status → Performance → Action Center → Outcomes → Trends
 ```
 
 - The **four domains** are the *content spine*: every KPI is tagged to one
@@ -140,20 +140,24 @@ three parallel columns (see §7 roadmap and §4 interaction note).
 ├──────────────────────────────────────────────────────────────────┤
 │ A. STATUS — Operating & Commercial Health                        │
 ├──────────────────────────────────────────────────────────────────┤
-│ B. PERFORMANCE — Execution Funnel + Quality                      │
-├──────────────────────────────────────────────────────────────────┤
-│ C. OUTCOMES — Revenue Distribution, Territory & Financial Health │
+│ B. PERFORMANCE — Execution Funnel + Salesman Scoreboard          │
 ├──────────────────────────────────────────────────────────────────┤
 │ D. ACTION CENTER — What Should I Do?                             │
+├──────────────────────────────────────────────────────────────────┤
+│ C. OUTCOMES — Revenue Concentration, Territory & Financial Health│
 ├──────────────────────────────────────────────────────────────────┤
 │ E. TRENDS — Trend Analysis                                       │
 └──────────────────────────────────────────────────────────────────┘
 ```
 
-The five-section decision flow from v2.1 is preserved unchanged. The only
-structural additions are: (a) a "Commercial Health" cluster in Status, (b) a
-"Financial Health" measure group in Territory, and (c) collection/credit
-categories in the Action Center.
+The five sections and their A–E labels are preserved, but the display order of
+Outcomes (C) and Action Center (D) is inverted per visualization review v1.0
+§3.2–§3.3, so that "compare → act" is one contiguous motion. Performance (B) now
+holds the Execution Funnel and the promoted Salesman Scoreboard; the three
+redundant salesman ranking charts are removed. Outcomes (C) leads with the
+Revenue Concentration strip. The v2.2 structural additions remain: a
+"Commercial Health" cluster in Status, a "Financial Health" measure group in
+Territory, and collection/credit categories in the Action Center.
 
 ## 3.2 Domain → section mapping
 
@@ -266,29 +270,42 @@ Six KPI cards with primary/secondary hierarchy (unchanged), plus a compact
 
 ---
 
-## B. Performance — Execution Funnel + Quality
+## B. Performance — Execution Funnel + Salesman Scoreboard
 
-### B.1 Execution Funnel (unchanged)
+A Salesman Scoreboard also lives in this section, directly below the funnel; it
+is the promoted comparison surface documented in the SF02 feature doc
+(`docs/features/btr-portal/dashboard-11-sf02-sales-force-overview.md` §5).
 
-The funnel remains the clean sales conversion narrative. **Collection is not a
-funnel stage** — collection has a different denominator (billing/piutang, not
-visits) and forcing it into the funnel would produce meaningless math.
+### B.1 Execution Funnel
+
+The funnel is the clean sales conversion narrative. **Collection is not a funnel
+stage** — collection has a different denominator (billing/piutang, not visits)
+and forcing it into the funnel would produce meaningless math.
 
 ```text
 Planned Visits
-      ↓
+      ↓  Execution Rate = Actual Visits / Planned Visits
 Actual Visits
-      ↓
+      ↓  Effective Call Rate = Effective Calls / Actual Visits
+Effective Calls
+      ↓  Order Conversion = Orders / Effective Calls
 Orders
-      ↓
-Revenue
+      ↓  Average Order Value = Order Value / Orders
+Order Value
 ```
 
 | Conversion | Formula | Question Answered |
 | --- | --- | --- |
 | Execution Rate | Actual Visits / Planned Visits | Are plans being executed? |
-| Order Conversion | Orders / Actual Visits | Are visits generating orders? |
-| Revenue per Visit | Revenue / Actual Visits | What is the revenue productivity? |
+| Effective Call Rate | Effective Calls / Actual Visits | Are visits converting into orders? |
+| Order Conversion | Orders / Effective Calls | Are productive visits becoming orders? |
+| Average Order Value | Order Value / Orders | What is the value per order? |
+
+Each stage shows its primary value and, where one exists, its absolute leak:
+Missed Visits (Planned → Actual) and No-Order Visits
+(Actual Visits − Effective Calls). The earlier four-stage spec, marked
+"(unchanged)", had never been built and omitted Effective Calls; the five-stage
+funnel above is the corrected, shipped design (visualization review v1.0 §2.1).
 
 ### B.2 Execution Quality (unchanged)
 
@@ -306,13 +323,18 @@ is a sales funnel and its value is clean conversion math.
 
 ---
 
-## C. Outcomes — Revenue Distribution, Territory & Financial Health
+## C. Outcomes — Revenue Concentration, Territory & Financial Health
 
-### C.1 Revenue Distribution (unchanged)
+### C.1 Revenue Concentration
 
-Contribution chart showing revenue concentration within the team.
+A compact concentration strip replaces the former Order Value comparison chart
+and answers "is revenue concentrated in a few individuals?" It shows the Top-1
+and Top-3 shares of total order value and a single 100% stacked bar of the named
+top three salesmen plus an "Others" remainder.
 
 ```text
+Top 1 = 40% of order value    Top 3 = 66% of order value
+
 Tiara      ████████████ 40%
 Mala       ████         17%
 Anggar     ██            9%
@@ -648,7 +670,7 @@ Each KPI appears in exactly one primary location. **Domain** column is new.
 | KPI | Domain | Primary Location |
 | --- | --- | --- |
 | Revenue | Sales | A. Status (Primary) |
-| Revenue per Visit | Sales | A. Status (subtitle) + B. Funnel (conversion) |
+| Revenue per Visit | Sales | A. Status (subtitle) |
 | Visit Execution % | Coverage | A. Status (Primary) |
 | Orders | Sales | A. Status (Primary) |
 | Active Salesmen | Coverage | A. Status (Secondary) |
@@ -659,17 +681,20 @@ Each KPI appears in exactly one primary location. **Domain** column is new.
 | Cash Collected per Active Salesman | Collection | A. Status (subtitle) |
 | Recovery vs Billing % | Collection | A. Status (Commercial Health) + E. Trends |
 | Overdue Exposure (flag) | Portfolio | A. Status (conditional alert chip) |
-| Planned / Actual Visits | Coverage | B. Funnel |
-| Execution / Order Conversion / Rev-per-Visit | Coverage / Sales | B. Funnel (conversions) |
-| Missed / Unplanned / No-Order / GPS | Coverage | B. Quality |
-| Revenue by Salesman | Sales | C.1 Revenue Distribution |
-| Territory Sales Measures | Coverage / Sales | C.2 Territory (Sales Activity) |
-| Territory Collections / Overdue | Collection / Portfolio | C.2 Territory (Financial Health) |
-| Overdue Distribution / Concentration | Portfolio | C.3 Overdue Distribution |
+| Planned / Actual / Effective Calls / Orders / Order Value | Coverage / Sales | B. Execution Funnel (stages) |
+| Execution Rate / Effective Call Rate / Order Conversion / Average Order Value | Coverage / Sales | B. Execution Funnel (conversions) |
+| Missed / No-Order Visits | Coverage | B. Execution Funnel (leaks) |
+| Unplanned Visits / GPS Valid Rate | Coverage | B. Execution Quality |
+| Salesman comparison measures (Execution %, Eff. Rate, Orders, Order Value, Missed, Unplanned, GPS, Status) | Coverage / Sales | B. Salesman Scoreboard |
+| Attention (Needs Collection Action / Needs Credit Review) | Collection / Portfolio | B. Salesman Scoreboard (SIGNAL) |
 | Needs Coaching / Plan Review / Investigation / Immediate Attention | Coverage / Sales | D. Action Center (Field Execution) |
 | Needs Collection Action | Collection | D. Action Center (Commercial Risk) |
 | Needs Credit Review / Needs Escalation | Portfolio | D. Action Center (Commercial Risk) |
 | Recognition Candidates | Sales + Collection + Portfolio | D. Action Center (Recognition) |
+| Revenue by Salesman | Sales | C. Revenue Concentration |
+| Territory Sales Measures | Coverage / Sales | C.2 Territory (Sales Activity) |
+| Territory Collections / Overdue | Collection / Portfolio | C.2 Territory (Financial Health) |
+| Overdue Distribution / Concentration | Portfolio | C.3 Overdue Distribution |
 | Sales + Collection Trends | All | E. Trends |
 
 ---
