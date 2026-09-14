@@ -1,0 +1,152 @@
+{
+    "Status": "string",
+    "Code": 0,
+    "Message": null,
+    "Data": {
+        "IsAvailable": true,
+        "IsDataFresh": true,
+        "GeneratedAt": "string (ISO 8601 datetime)",
+        "AttentionCards": {
+            "OverdueExposure": 0.0,
+            "AgingOver90Exposure": 0.0,
+            "OverdueConcentrationPercent": 0.0,
+            "ExposureRequiresAttention": true,
+            "CashCollectedMtd": 0.0,
+            "RecoveryVsBillingPercent": 0.0,
+            "RecoveryRequiresAttention": true,
+            "LegacyDebtCount": 0,
+            "PortfolioRequiresAttention": true
+        },
+        "RecoverySummary": {
+            "CashCollectedMtd": 0.0,
+            "RecoveryVsBillingPercent": 0.0,
+            "PaymentMixCashAmount": 0.0,
+            "PaymentMixGiroAmount": 0.0,
+            "PaymentMixAdjustmentAmount": 0.0,
+            "PaymentMixCashPercent": 0.0,
+            "PaymentMixGiroPercent": 0.0,
+            "PaymentMixAdjustmentPercent": 0.0
+        },
+        "AgingRiskSummary": [
+            {
+                "BucketKey": "string",
+                "BucketLabel": "string",
+                "Amount": 0.0,
+                "SortOrder": 0
+            }
+        ],
+        "AttentionList": [
+            {
+                "EntityType": "string",
+                "EntityCode": "string",
+                "EntityName": "string",
+                "SignalKey": "string",
+                "SignalLabel": "string",
+                "ValueAmount": 0.0,
+                "ValueText": "string",
+                "WilayahName": "string",
+                "ReportRoute": "string | null",
+                "Investigation": {
+                    "SignalKey": "string",
+                    "SignalLabel": "string",
+                    "EntityType": "string",
+                    "EntityId": "string",
+                    "EntityName": "string",
+                    "DashboardRoute": "string",
+                    "ReportRoute": "string | null",
+                    "SuggestedQuery": {
+                        "FreeText": "string | null",
+                        "CustomerId": "string | null",
+                        "SalesmanId": "string | null",
+                        "BrgId": "string | null",
+                        "WarehouseId": "string | null",
+                        "SupplierId": "string | null",
+                        "PeriodMode": "string | null",
+                        "PostingFilter": "string | null"
+                    },
+                    "InvestigationSteps": [],
+                    "DesktopNextStep": "string | null"
+                }
+            }
+        ],
+        "TopOverdueCustomers": [
+            {
+                "Rank": 0,
+                "EntityCode": "string",
+                "EntityName": "string",
+                "Amount": 0.0,
+                "PercentOfTotal": 0.0,
+                "ReportRoute": "string | null",
+                "Investigation": {
+                    "SignalKey": "string",
+                    "SignalLabel": "string",
+                    "EntityType": "string",
+                    "EntityId": "string",
+                    "EntityName": "string",
+                    "DashboardRoute": "string",
+                    "ReportRoute": "string | null",
+                    "SuggestedQuery": {
+                        "FreeText": "string | null",
+                        "CustomerId": "string | null",
+                        "SalesmanId": "string | null",
+                        "BrgId": "string | null",
+                        "WarehouseId": "string | null",
+                        "SupplierId": "string | null",
+                        "PeriodMode": "string | null",
+                        "PostingFilter": "string | null"
+                    },
+                    "InvestigationSteps": [],
+                    "DesktopNextStep": "string | null"
+                }
+            }
+        ],
+        "TopOverdueSalesmen": [
+            {
+                "Rank": 0,
+                "EntityCode": "string",
+                "EntityName": "string",
+                "Amount": 0.0,
+                "PercentOfTotal": 0.0,
+                "ReportRoute": "string | null",
+                "Investigation": {
+                    "SignalKey": "string",
+                    "SignalLabel": "string",
+                    "EntityType": "string",
+                    "EntityId": "string",
+                    "EntityName": "string",
+                    "DashboardRoute": "string",
+                    "ReportRoute": "string | null",
+                    "SuggestedQuery": {
+                        "FreeText": "string | null",
+                        "CustomerId": "string | null",
+                        "SalesmanId": "string | null",
+                        "BrgId": "string | null",
+                        "WarehouseId": "string | null",
+                        "SupplierId": "string | null",
+                        "PeriodMode": "string | null",
+                        "PostingFilter": "string | null"
+                    },
+                    "InvestigationSteps": [],
+                    "DesktopNextStep": "string | null"
+                }
+            }
+        ],
+        "TopOverdueWilayah": [
+            {
+                "Rank": 0,
+                "EntityCode": "string",
+                "EntityName": "string",
+                "Amount": 0.0,
+                "PercentOfTotal": 0.0,
+                "ReportRoute": "string | null",
+                "Investigation": "object | null"
+            }
+        ],
+        "Navigation": {
+            "PiutangDashboardRoute": "string",
+            "CustomerDashboardRoute": "string",
+            "SalesmanDashboardRoute": "string",
+            "PiutangReportRoute": "string"
+        }
+    }
+}
