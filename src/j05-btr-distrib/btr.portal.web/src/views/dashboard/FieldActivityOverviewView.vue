@@ -253,9 +253,16 @@ onMounted(() => {
       />
     </section>
 
-    <!-- B. Performance — execution funnel + quality -->
+    <!-- B. Performance — execution funnel + salesman scoreboard + quality -->
     <section class="field-activity-overview__section" aria-label="Performance">
       <ExecutionFunnel :kpis="overview?.TeamKpis ?? null" :loading="loading" />
+
+      <FieldActivitySalesmanTable
+        :rows="overview?.Salesmen ?? []"
+        :collection="dashboard.collection"
+        :loading="loading"
+        @row-click="(row) => navigateToDetail(row.SalesPersonId)"
+      />
 
       <div class="field-activity-overview__charts">
         <FieldActivityComparisonChart
@@ -293,13 +300,6 @@ onMounted(() => {
           @bar-click="navigateToDetail"
         />
       </div>
-
-      <FieldActivitySalesmanTable
-        :rows="overview?.Salesmen ?? []"
-        :collection="dashboard.collection"
-        :loading="loading"
-        @row-click="(row) => navigateToDetail(row.SalesPersonId)"
-      />
 
       <FieldActivityWilayahChart
         :items="overview?.WilayahBreakdown ?? []"
