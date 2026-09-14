@@ -5,6 +5,7 @@ import Button from 'primevue/button'
 import DatePicker from 'primevue/datepicker'
 import Message from 'primevue/message'
 import SelectButton from 'primevue/selectbutton'
+import ExecutionFunnel from '@/components/field-activity/ExecutionFunnel.vue'
 import FieldActivityCollectionHealthSection from '@/components/field-activity/FieldActivityCollectionHealthSection.vue'
 import FieldActivityComparisonChart, {
   type FieldActivityComparisonItem,
@@ -254,6 +255,8 @@ onMounted(() => {
 
     <!-- B. Performance — execution funnel + quality -->
     <section class="field-activity-overview__section" aria-label="Performance">
+      <ExecutionFunnel :kpis="overview?.TeamKpis ?? null" :loading="loading" />
+
       <div class="field-activity-overview__charts">
         <FieldActivityComparisonChart
           title="Visit Execution %"
