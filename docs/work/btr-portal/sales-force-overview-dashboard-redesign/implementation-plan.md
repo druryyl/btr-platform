@@ -388,7 +388,7 @@ Complexity scale: **1 = trivial**, **2 = simple**, **3 = moderate**, **4 = compl
 | SFO-01 | Commercial Signal Rule Catalog classifier | 3 | GO |
 | SFO-02 | Cross-dashboard composition & collection summaries | 3 | GO |
 | SFO-03 | Collection Health (MTD) section + conditional alert chip | 2 | GO |
-| SFO-04 | Territory Financial Health & Overdue Distribution | 3 | PLANNED |
+| SFO-04 | Territory Financial Health & Overdue Distribution | 3 | GO |
 | SFO-05 | Grouped Action Center | 4 | PLANNED |
 | SFO-06 | Overview recomposition & drill-across | 4 | PLANNED |
 | SFO-07 | Regression & validation pass | 2 | PLANNED |
@@ -526,7 +526,54 @@ Entry format:
 ```
 
 ### Slice-ID: SFO-04
-*(pending)*
+
+```text
+1. [Implementation] [2026-09-14 12:53]
+   Extended components/field-activity/FieldActivityWilayahChart.vue into "Territory
+   Performance" with a two-group measure toggle (SelectButton): Group 1 Sales Activity
+   (default) — Actual Visits (default), Orders, Revenue, Order Conversion Rate — and
+   Group 2 Financial Health — Overdue Exposure, Overdue Concentration. Financial
+   Health reads props.topOverdueWilayah as-is (§5.4) and carries the explicit
+   stock-vs-flow time-context label "Outstanding as of <global business date>"; it
+   exposes only overdue-family measures (GAP-002 — no Collection Amount by Territory).
+   Sales measures reuse the existing WilayahBreakdown for Actual Visits (existing sales
+   behavior preserved/default daily sales view) and derive Orders/Revenue/Order
+   Conversion from props.salesmanRows aggregated per WilayahName (Order Conversion =
+   weighted EffectiveCalls/ActualVisits, matching TeamKpis.EffectiveCallRate). A C.3
+   Overdue Distribution contribution-style view renders TopOverdueWilayah[]
+   (EntityName + Amount + PercentOfTotal) as proportional bars under the Financial
+   Health group. Empty/unavailable collection data renders an empty/unavailable state
+   (collectionAvailable prop, default true) without affecting the sales view (GAP-004).
+   New props are optional (salesmanRows, topOverdueWilayah, collectionAvailable,
+   businessDate) so the existing FieldActivityOverviewView call site keeps compiling;
+   full props wiring is deferred to SFO-06 per the plan. Build (vue-tsc + vite) passes;
+   full suite 46 files / 449 tests pass (no new spec: no component-test harness, and the
+   slice required no tests).
+2. [Review] [2026-09-14 12:56]
+   GO. All 5 acceptance criteria verified against source and build/test evidence:
+   (1) two-group SelectButton toggle replaces the flat measure list — Group 1 Sales
+   Activity (default) exposes Actual Visits (default), Orders, Revenue, Order
+   Conversion, and Group 2 Financial Health exposes Overdue Exposure and Overdue
+   Concentration per Wilayah (GAP-002 compliant; no Collection Amount by Territory);
+   (2) Financial Health carries the explicit stock-vs-flow label "Outstanding as of
+   <business date>" (businessDate prop, "Outstanding as of today" fallback); (3) the
+   C.3 Overdue Distribution contribution view renders TopOverdueWilayah[]
+   (EntityName + Amount + PercentOfTotal) as proportional bars; (4) the default view
+   remains the daily sales (Actual Visits) view — collection content is confined to
+   the Financial Health group; (5) empty/unavailable collection renders an
+   empty/unavailable state (collectionAvailable prop; default true) in the financial
+   group and C.3 area, leaving the sales view unaffected (GAP-004). Planning authority
+   (FEASIBILITY ASSESSMENT) respected: frontend-only extend of one existing component,
+   collection values read as-is from TopOverdueWilayah (§5.4), no backend/DB/KPI/model
+   change. Scope clean (1 modified component + tracker; optional props keep
+   FieldActivityOverviewView compiling; SFO-06 wiring explicitly deferred by the plan).
+   Build (vue-tsc + vite) passes; full suite 46 files / 449 tests pass. No
+   critical/major findings. Note (INFO): Sales Activity Orders/Revenue/Conversion and
+   the Financial Health group render empty until SFO-06 supplies salesmanRows /
+   topOverdueWilayah — expected per the plan's deferred wiring. Note (INFO): C.3 is
+   intentionally nested under the Financial Health group so the default sales view is
+   not diluted.
+```
 
 ### Slice-ID: SFO-05
 *(pending)*
