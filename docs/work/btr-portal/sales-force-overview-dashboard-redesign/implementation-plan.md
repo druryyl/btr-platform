@@ -386,7 +386,7 @@ Complexity scale: **1 = trivial**, **2 = simple**, **3 = moderate**, **4 = compl
 | SLICE-ID | SLICE NAME | COMPLEXITY | STATUS |
 | --- | --- | --- | --- |
 | SFO-01 | Commercial Signal Rule Catalog classifier | 3 | GO |
-| SFO-02 | Cross-dashboard composition & collection summaries | 3 | PLANNED |
+| SFO-02 | Cross-dashboard composition & collection summaries | 3 | GO |
 | SFO-03 | Collection Health (MTD) section + conditional alert chip | 2 | PLANNED |
 | SFO-04 | Territory Financial Health & Overdue Distribution | 3 | PLANNED |
 | SFO-05 | Grouped Action Center | 4 | PLANNED |
@@ -435,7 +435,48 @@ Entry format:
 
 
 ### Slice-ID: SFO-02
-*(pending)*
+
+```text
+1. [Implementation] [2026-09-14 12:44]
+   Added services/fieldActivityCollectionComposition.ts (pure helpers): 
+   joinSalesmenToCollection joins SFO Salesmen[].SalesPersonId to Collection 
+   TopOverdueSalesmen[].Investigation.EntityId (GAP-003A) — EntityCode/EntityName 
+   are display-only fallbacks and name is never the join key; 
+   territoryFinancialHealth returns per-Wilayah Overdue Exposure (Amount) + Overdue 
+   Concentration (PercentOfTotal) plus the page-level Aging Risk summary 
+   (AttentionCards.AgingOver90Exposure + AgingRiskSummary[]); overdueDistribution 
+   returns the C.3 contribution list (name + amount + PercentOfTotal); 
+   collectionActionInputs surfaces Needs Collection Action (TopOverdueSalesmen[], 
+   sorted by highest overdue) and Needs Escalation 
+   (AttentionCards.AgingOver90Exposure / LegacyDebtCount). All values read as-is 
+   from DashboardCollectionResponse (§5.4); no Collection Amount by Territory 
+   (GAP-002). Added services/fieldActivityCollectionComposition.spec.ts (18 tests: 
+   join by Investigation.EntityId, name-not-a-join-key, missing overdue row, 
+   duplicate EntityId, empty TopOverdueWilayah, null PercentOfTotal, aging risk, 
+   escalation inputs, unavailable AttentionCards). Build (vue-tsc + vite) passes; 
+   full suite 46 files / 449 tests pass.
+2. [Review] [2026-09-14 12:45]
+   GO. All 6 acceptance criteria verified against source and test evidence:
+   joinSalesmenToCollection joins on salesmen[].SalesPersonId ↔ 
+   TopOverdueSalesmen[].Investigation.EntityId with EntityCode/EntityName used for 
+   display only and name never a join key (GAP-003A); territoryFinancialHealth 
+   returns per-Wilayah Overdue Exposure (Amount) + Overdue Concentration 
+   (PercentOfTotal) with a page-level Aging Risk summary from 
+   AttentionCards.AgingOver90Exposure / AgingRiskSummary[] and no Collection Amount 
+   by Territory (GAP-002); overdueDistribution returns the C.3 contribution list 
+   (name + amount + PercentOfTotal); collectionActionInputs surfaces Needs Collection 
+   Action (highest overdue by salesman, from TopOverdueSalesmen[]) and Needs 
+   Escalation (AgingOver90Exposure, LegacyDebtCount) inputs; all values read as-is 
+   from DashboardCollectionResponse with no re-computation (§5.4); 18 unit tests 
+   cover join by Investigation.EntityId, salesman without an overdue row, empty 
+   TopOverdueWilayah, null PercentOfTotal (plus name-key, duplicate-EntityId, and 
+   unavailable-cards cases). Planning authority (FEASIBILITY ASSESSMENT) respected: 
+   pure frontend helpers, no backend/DB/KPI change. Scope clean (2 new files; no 
+   unrelated edits). Build and full suite (46 files / 449 tests) pass. No 
+   critical/major findings. Note (INFO): territoryFinancialHealth accepts an 
+   optional third agingRiskSummary argument because AgingRiskSummary[] is not 
+   reachable via AttentionCards — required to satisfy the AC's stated source.
+```
 
 ### Slice-ID: SFO-03
 *(pending)*
