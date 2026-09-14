@@ -390,7 +390,7 @@ Complexity scale: **1 = trivial**, **2 = simple**, **3 = moderate**, **4 = compl
 | SFO-03 | Collection Health (MTD) section + conditional alert chip | 2 | GO |
 | SFO-04 | Territory Financial Health & Overdue Distribution | 3 | GO |
 | SFO-05 | Grouped Action Center | 4 | GO |
-| SFO-06 | Overview recomposition & drill-across | 4 | PLANNED |
+| SFO-06 | Overview recomposition & drill-across | 4 | GO |
 | SFO-07 | Regression & validation pass | 2 | PLANNED |
 
 ---
@@ -645,7 +645,89 @@ Entry format:
 ```
 
 ### Slice-ID: SFO-06
-*(pending)*
+
+```text
+1. [Implementation] [2026-09-14 13:05]
+   Recomposed views/dashboard/FieldActivityOverviewView.vue into the 5-section
+   decision flow: Status (FieldActivityTeamKpiStrip + the dedicated
+   FieldActivityCollectionHealthSection) → Performance (Visit Execution %,
+   Effective Call Rate, Orders Generated comparison charts) → Outcomes (Order
+   Value / revenue-distribution chart + FieldActivitySalesmanTable + extended
+   FieldActivityWilayahChart) → Action Center (FieldActivityGroupedActionCenter)
+   → Trends (sales-only FieldActivityTeamTrendChart). Each top-level section is a
+   <section> wrapper; Collection Health remains its own component (never inside
+   the sales KPI group, GAP-005). Added useDashboardStore and invoked
+   dashboardStore.loadCollection() in onMounted alongside the existing
+   loadOverview() (non-blocking: both are fire-and-forget), and on Refresh.
+   Wired the new sections with correct props: Collection Health gets
+   :collection=dashboard.collection, :business-date=presentation.businessReferenceDate,
+   :loading=dashboard.loading, @alert-click; WilayahChart gets :salesman-rows,
+   :top-overdue-wilayah=dashboard.collection.TopOverdueWilayah,
+   :collection-available=dashboard.collection.IsAvailable === true, :business-date;
+   GroupedActionCenter gets :collection=dashboard.collection plus
+   @commercial-risk-click. Drill-across (GAP-006): onCollectionAlertClick and
+   onCommercialRiskClick navigate to the Piutang Dashboard via
+   navigateToDashboard(router, collection.Navigation.PiutangDashboardRoute); where
+   the Commercial Risk payload carries Investigation metadata,
+   navigateToInvestigation(router, investigation, 'Sales Force Overview') is used.
+   Sales KPIs/Active Salesmen remain the existing source fields (GAP-007, no
+   ActiveSalesmenCount redefinition); sales-only components are unchanged. Only
+   FieldActivityOverviewView.vue was modified. Build (vue-tsc + vite) passes; full
+   suite 46 files / 449 tests pass (no new spec: no component-test harness and the
+   slice required none; the composed pure services already carry SFO-01/SFO-02
+   tests).
+2. [Review] [2026-09-14 13:07]
+   GO. All 7 acceptance criteria verified against source and build/test evidence:
+   (1) Page order reflects the 5-section decision flow — exactly five top-level
+   <section> wrappers in order: Status (aria-label="Status", TeamKpiStrip +
+   CollectionHealthSection), Performance (Visit Execution %, Effective Call Rate,
+   Orders Generated comparison charts), Outcomes (Order Value / revenue
+   distribution chart + SalesmanTable + WilayahChart), Action Center
+   (GroupedActionCenter), Trends (TeamTrendChart); the Action Center and Trends
+   sections are correctly after Outcomes and Trends is last.
+   (2) loadOverview() and dashboardStore.loadCollection() are both invoked —
+   onMounted calls applyDatePreset('today') (watch → loadOverview) and
+   void dashboard.loadCollection(); the collection call is fire-and-forget and is
+   not awaited, so sales sections are never blocked (collection loading is passed
+   only to the collection component).
+   (3) New sections wired with correct props — CollectionHealthSection
+   (:collection, :business-date, :loading, @alert-click), GroupedActionCenter
+   (:salesmen, :rankings, :collection, :loading, @salesman-click,
+   @commercial-risk-click, @recognition-click), WilayahChart (:items,
+   :salesman-rows, :top-overdue-wilayah, :collection-available, :business-date,
+   :loading); prop names match the SFO-03/SFO-04/SFO-05 component contracts and
+   the project compiles.
+   (4) Drill-across (GAP-006) — onCollectionAlertClick and onCommercialRiskClick
+   navigate via navigateToDashboard(router, dashboard.collection.Navigation.
+   PiutangDashboardRoute); where the Commercial Risk payload carries Investigation
+   metadata, navigateToInvestigation(router, payload.investigation, 'Sales Force
+   Overview') is used, matching the AC's precedence rule.
+   (5) Active Salesmen and all sales KPIs remain the existing source fields —
+   TeamKpiStrip is unchanged and reads kpis.ActiveSalesmenCount; the view never
+   redefines ActiveSalesmenCount as ActualVisits > 0 (GAP-007).
+   (6) Sales-only components remain functionally unchanged — git status shows only
+   FieldActivityOverviewView.vue and the tracker modified; TeamKpiStrip,
+   TeamTrendChart, SalesmanTable and ComparisonChart are untouched and receive the
+   same props/events as before.
+   (7) Sales loading/error use the existing loading/loadError (Message + component
+   loading props); the collection section degrades on its own (dashboard.loading +
+   the component's IsAvailable/null unavailable state) without touching sales
+   sections (GAP-004). Planning authority (FEASIBILITY ASSESSMENT) respected:
+   frontend-only, no backend/DB/model change; collection consumed read-only via
+   the existing dashboardStore.loadCollection() and Navigation.PiutangDashboardRoute
+   (§5.4, GAP-006). Scope clean (1 modified view + tracker; no unrelated edits).
+   Build (vue-tsc + vite) passes; full suite 46 files / 449 tests pass.
+   No critical/major findings. Note (INFO): the Investigation source label is a
+   view-local literal ('Sales Force Overview') rather than
+   resolveInvestigationSourceLabel('/dashboard/field-activity'); adding that map
+   entry is outside the plan's file list and the AC does not constrain the label,
+   so the literal was used. Note (INFO): Refresh now reloads both the sales
+   overview and the collection API as a natural consequence of composition; the
+   ACs require both calls and do not forbid the refresh wiring. Note (INFO): the
+   Outcomes group uses the per-salesman Order Value chart as "revenue distribution"
+   and the SalesmanTable as the distribution detail, with WilayahChart providing
+   territory + financial health.
+```
 
 ### Slice-ID: SFO-07
 *(pending)*
