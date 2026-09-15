@@ -10,10 +10,12 @@ using System.ComponentModel;
 using System.Linq;
 using System.Windows.Forms;
 using btr.application.BrgContext.BrgAgg;
+using btr.application.BrgContext.BrgBarcodeAgg;
 using btr.application.BrgContext.HargaTypeAgg;
 using btr.application.BrgContext.JenisBrgAgg;
 using btr.application.InventoryContext.StokBalanceAgg;
 using btr.domain.BrgContext.BrgAgg;
+using btr.domain.BrgContext.BrgBarcodeAgg;
 using btr.domain.BrgContext.HargaTypeAgg;
 using btr.domain.InventoryContext.StokBalanceAgg;
 using btr.domain.InventoryContext.WarehouseAgg;
@@ -22,7 +24,11 @@ using btr.nuna.Domain;
 using System.Drawing;
 using btr.application.BrgContext.KategoriAgg;
 using btr.application.InventoryContext.WarehouseAgg;
+using btr.application.SupportContext.UserAgg;
+using btr.distrib.InventoryContext.BrgBarcodeAgg;
+using btr.distrib.SharedForm;
 using ClosedXML.Excel;
+using MediatR;
 using Syncfusion.DataSource.Extensions;
 
 namespace btr.distrib.InventoryContext.BrgAgg
@@ -46,11 +52,25 @@ namespace btr.distrib.InventoryContext.BrgAgg
         private readonly IStokBalanceBuilder _stokBalanceBuilder;
 
         private readonly IBrgWriter _writer;
+        private readonly IUserDal _userDal;
 
         private readonly BindingList<BrgFormSatuanDto> _listSatuan = new BindingList<BrgFormSatuanDto>();
         private readonly BindingList<BrgFormHargaDto> _listHarga = new BindingList<BrgFormHargaDto>();
         private readonly BindingList<BrgFormStokDto> _listStok = new BindingList<BrgFormStokDto>();
         private readonly BindingList<BrgFormBrgDto> _listBrg = new BindingList<BrgFormBrgDto>();
+        private readonly BindingList<BrgBarcodeFormBarcodeDto> _listBarcode = new BindingList<BrgBarcodeFormBarcodeDto>();
+
+        private readonly IMediator _mediator;
+        private readonly Dictionary<string, string> _barcodeSnapshot = new Dictionary<string, string>();
+
+        private const string SystemAdministratorRoleId = "SYSAD";
+        private static readonly string[] LifecycleRoleNames =
+        {
+            "Office Admin",
+            "System Administrator"
+        };
+
+        private bool _canManageLifecycle;
 
         public BrgForm(
             IBrowser<SupplierBrowserView> supplierBrowser,
@@ -64,7 +84,8 @@ namespace btr.distrib.InventoryContext.BrgAgg
             IBrgDal brgDal, 
             IBrgBuilder brgBuilder, 
             IStokBalanceBuilder stokBalanceBuilder, 
-            IBrgWriter writer, IBrgSatuanDal brgSatuanDal, IBrgHargaDal brgHargaDal)
+            IBrgWriter writer, IBrgSatuanDal brgSatuanDal, IBrgHargaDal brgHargaDal,
+            IUserDal userDal, IMediator mediator)
         {
             InitializeComponent();
             RegisterEventHandler();
@@ -84,16 +105,21 @@ namespace btr.distrib.InventoryContext.BrgAgg
             _brgSatuanDal = brgSatuanDal;
             _brgHargaDal = brgHargaDal;
             _brgBrowser = brgBrowser;
+            _mediator = mediator;
+            _userDal = userDal;
 
             InitJenisBrg();
             InitGridSatuan();
             InitGridHarga();
             InitGridStok();
             InitGridBrg();
+            InitGridBarcode();
         }
 
         private void RegisterEventHandler()
         {
+            Load += BrgForm_Load;
+
             SupplierButton.Click += SupplierButton_Click;
             SupplierIdText.Validated += SupplierIdText_Validated;
 
@@ -110,6 +136,16 @@ namespace btr.distrib.InventoryContext.BrgAgg
             BrgGrid.CellDoubleClick += BrgGrid_CellDoubleClick;
             
             ExcelButton.Click += ExcelButton_Click;
+
+            AddBarcodeButton.Click += AddBarcodeButton_Click;
+            EditBarcodeButton.Click += EditBarcodeButton_Click;
+            ActivateBarcodeButton.Click += ActivateBarcodeButton_Click;
+            DeactivateBarcodeButton.Click += DeactivateBarcodeButton_Click;
+            BarcodeGrid.CellBeginEdit += BarcodeGrid_CellBeginEdit;
+            BarcodeGrid.CellDoubleClick += BarcodeGrid_CellDoubleClick;
+            BarcodeGrid.CellFormatting += BarcodeGrid_CellFormatting;
+            BarcodeGrid.DataError += BarcodeGrid_DataError;
+            BarcodeGrid.SelectionChanged += BarcodeGrid_SelectionChanged;
 
         }
 
@@ -212,6 +248,10 @@ namespace btr.distrib.InventoryContext.BrgAgg
             _listSatuan.Clear();
             ResetGridHarga();
             ResetGridStok();
+
+            _listBarcode.Clear();
+            _barcodeSnapshot.Clear();
+            BarcodeGrid.Refresh();
         }
 
         private void ShowData(string brgId)
@@ -275,6 +315,9 @@ namespace btr.distrib.InventoryContext.BrgAgg
                 item.SetQty(stok.Qty);
             }
             StokGrid.Refresh();
+
+            //  SCR-DESK-002: all mappings for the loaded Item (UC-004)
+            LoadBarcodes(brgId);
         }
 
         #region SEARCH-TEXT
@@ -581,8 +624,320 @@ namespace btr.distrib.InventoryContext.BrgAgg
                     .Build();
 
             _writer.Save(ref brg);
+
+            //  SCR-DESK-002: barcode changes participate in the form's save;
+            //  persistence goes through BrgBarcodeWriter (P-03)
+            try
+            {
+                SaveBarcodeChanges(brg.BrgId);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message, @"Validation Warning",
+                    MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
             ClearForm();
             InitGridBrg();
+        }
+        #endregion
+
+        #region GRID-BARCODE
+        private void InitGridBarcode()
+        {
+            BarcodeGrid.AllowUserToAddRows = false;
+            BarcodeGrid.AllowUserToDeleteRows = false;
+            BarcodeGrid.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
+            BarcodeGrid.MultiSelect = false;
+
+            var binding = new BindingSource();
+            binding.DataSource = _listBarcode;
+            BarcodeGrid.DataSource = binding;
+            BarcodeGrid.Refresh();
+
+            BarcodeGrid.Columns.SetDefaultCellStyle(Color.Beige);
+            BarcodeGrid.Columns.GetCol("BrgBarcodeId").Visible = false;
+            BarcodeGrid.Columns.GetCol("BrgId").Visible = false;
+            BarcodeGrid.Columns.GetCol("BrgCode").Visible = false;
+            BarcodeGrid.Columns.GetCol("BrgName").Visible = false;
+            BarcodeGrid.Columns.GetCol("ModifiedBy").Visible = false;
+
+            BarcodeGrid.Columns.GetCol("BarcodeValue").HeaderText = "Barcode";
+            BarcodeGrid.Columns.GetCol("BarcodeValue").Width = 170;
+            BarcodeGrid.Columns.GetCol("IsAktif").HeaderText = "Status";
+            BarcodeGrid.Columns.GetCol("IsAktif").Width = 80;
+            BarcodeGrid.Columns.GetCol("IsAktif").ReadOnly = true;
+            BarcodeGrid.Columns.GetCol("ModifiedDate").HeaderText = "Modified";
+            BarcodeGrid.Columns.GetCol("ModifiedDate").Width = 130;
+            BarcodeGrid.Columns.GetCol("ModifiedDate").ReadOnly = true;
+            BarcodeGrid.Columns.GetCol("ModifiedDate").DefaultCellStyle.Format = "ddd, dd-MMM-yyyy HH:mm";
+
+            //  Unit is restricted to the Item's own units (IR-01)
+            var unitColumn = BarcodeGrid.Columns.GetCol("Satuan");
+            var unitIndex = unitColumn.Index;
+            BarcodeGrid.Columns.Remove(unitColumn);
+            BarcodeGrid.Columns.Insert(unitIndex, new DataGridViewComboBoxColumn
+            {
+                Name = "Satuan",
+                HeaderText = "Unit",
+                DataPropertyName = "Satuan",
+                Width = 90,
+                FlatStyle = FlatStyle.Flat,
+                DisplayStyle = DataGridViewComboBoxDisplayStyle.DropDownButton
+            });
+        }
+
+        private void LoadBarcodes(string brgId)
+        {
+            _listBarcode.RaiseListChangedEvents = false;
+            try
+            {
+                _listBarcode.Clear();
+                _barcodeSnapshot.Clear();
+
+                var listBarcode = _mediator
+                                      .Send(new ListBrgBarcodeByBrgQuery(brgId))
+                                      .GetAwaiter().GetResult()
+                                  ?? Enumerable.Empty<BrgBarcodeModel>();
+                foreach (var item in listBarcode.OrderBy(x => x.BarcodeValue))
+                {
+                    _listBarcode.Add(new BrgBarcodeFormBarcodeDto(item.BrgBarcodeId,
+                        item.BarcodeValue, item.BrgId, item.BrgCode, item.BrgName,
+                        item.Satuan, item.IsAktif, item.ModifiedBy, item.ModifiedDate));
+                    _barcodeSnapshot[item.BrgBarcodeId] = item.Satuan ?? string.Empty;
+                }
+            }
+            finally
+            {
+                _listBarcode.RaiseListChangedEvents = true;
+                _listBarcode.ResetBindings();
+            }
+
+            LoadBarcodeUnitColumn(brgId);
+            BarcodeGrid.Refresh();
+            UpdateBarcodeButtons();
+        }
+
+        private void LoadBarcodeUnitColumn(string brgId)
+        {
+            if (!(BarcodeGrid.Columns.GetCol("Satuan") is DataGridViewComboBoxColumn unitColumn))
+                return;
+
+            var items = new List<string> { string.Empty };
+            if (!string.IsNullOrWhiteSpace(brgId))
+            {
+                var listSatuan = _brgSatuanDal
+                                     .ListData((IBrgKey)new BrgModel(brgId))?.ToList()
+                                 ?? new List<BrgSatuanModel>();
+                items.AddRange(listSatuan
+                    .OrderBy(x => x.Conversion)
+                    .Select(x => x.Satuan)
+                    .Where(x => !string.IsNullOrWhiteSpace(x)));
+            }
+            unitColumn.DataSource = items;
+        }
+
+        private void SaveBarcodeChanges(string brgId)
+        {
+            if (BarcodeGrid.IsCurrentCellInEditMode)
+                BarcodeGrid.EndEdit();
+
+            var userId = CurrentUserId;
+
+            //  UC-002: new mappings are registered Active (INV-06)
+            var newRows = _listBarcode
+                .Where(x => string.IsNullOrWhiteSpace(x.BrgBarcodeId))
+                .Where(x => !string.IsNullOrWhiteSpace(
+                    BrgBarcodeModel.BarcodeValueKey(x.BarcodeValue)))
+                .ToList();
+            foreach (var row in newRows)
+                _mediator.Send(new RegisterBrgBarcodeCommand(row.BarcodeValue, brgId,
+                    row.Satuan ?? string.Empty, userId)).GetAwaiter().GetResult();
+
+            //  UC-003: correction changes Unit only; identity is preserved (INV-07)
+            var correctedRows = _listBarcode
+                .Where(x => !string.IsNullOrWhiteSpace(x.BrgBarcodeId))
+                .Where(x => _barcodeSnapshot.TryGetValue(x.BrgBarcodeId, out var satuan)
+                            && !string.Equals(satuan, x.Satuan ?? string.Empty,
+                                StringComparison.Ordinal))
+                .ToList();
+            foreach (var row in correctedRows)
+                _mediator.Send(new CorrectBrgBarcodeCommand(row.BrgBarcodeId, brgId,
+                    row.Satuan ?? string.Empty, userId)).GetAwaiter().GetResult();
+        }
+
+        private void AddBarcodeButton_Click(object sender, EventArgs e)
+        {
+            var brgId = (BrgIdText.Text ?? string.Empty).Trim();
+            if (brgId.Length == 0)
+            {
+                MessageBox.Show(@"Pilih atau simpan Item terlebih dahulu.",
+                    @"Information", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+
+            _listBarcode.Add(new BrgBarcodeFormBarcodeDto(string.Empty, string.Empty,
+                brgId, BrgCodeText.Text, BrgNameText.Text, string.Empty, true,
+                string.Empty, default(DateTime)));
+            BarcodeGrid.Refresh();
+
+            var rowIndex = BarcodeGrid.Rows.Count - 1;
+            BarcodeGrid.CurrentCell = BarcodeGrid.Rows[rowIndex].Cells["BarcodeValue"];
+            BarcodeGrid.BeginEdit(true);
+            UpdateBarcodeButtons();
+        }
+
+        private void EditBarcodeButton_Click(object sender, EventArgs e)
+        {
+            if (BarcodeGrid.CurrentRow is null)
+                return;
+            BeginEditBarcodeRow(BarcodeGrid.CurrentRow.Index);
+        }
+
+        private void BeginEditBarcodeRow(int rowIndex)
+        {
+            var row = BarcodeGrid.Rows[rowIndex];
+            var columnName = string.IsNullOrWhiteSpace(GetRowBarcodeId(row))
+                ? "BarcodeValue"
+                : "Satuan";
+            BarcodeGrid.CurrentCell = row.Cells[columnName];
+            BarcodeGrid.BeginEdit(true);
+        }
+
+        private void ActivateBarcodeButton_Click(object sender, EventArgs e)
+        {
+            var row = SelectedBarcodeRow();
+            if (row is null || string.IsNullOrWhiteSpace(row.BrgBarcodeId))
+                return;
+            if (!_canManageLifecycle)
+                return;
+
+            try
+            {
+                _mediator.Send(new ActivateBrgBarcodeCommand(row.BrgBarcodeId, CurrentUserId))
+                    .GetAwaiter().GetResult();
+                LoadBarcodes((BrgIdText.Text ?? string.Empty).Trim());
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message, @"Validation Warning",
+                    MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            }
+        }
+
+        private void DeactivateBarcodeButton_Click(object sender, EventArgs e)
+        {
+            var row = SelectedBarcodeRow();
+            if (row is null || string.IsNullOrWhiteSpace(row.BrgBarcodeId))
+                return;
+            if (!_canManageLifecycle)
+                return;
+
+            try
+            {
+                _mediator.Send(new DeactivateBrgBarcodeCommand(row.BrgBarcodeId, CurrentUserId))
+                    .GetAwaiter().GetResult();
+                LoadBarcodes((BrgIdText.Text ?? string.Empty).Trim());
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message, @"Validation Warning",
+                    MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            }
+        }
+
+        private void BarcodeGrid_CellBeginEdit(object sender, DataGridViewCellCancelEventArgs e)
+        {
+            if (e.RowIndex < 0 || e.ColumnIndex < 0)
+                return;
+
+            var row = BarcodeGrid.Rows[e.RowIndex];
+            var columnName = BarcodeGrid.Columns[e.ColumnIndex].Name;
+
+            //  the barcode value is never editable for a persisted mapping (INV-07)
+            if (columnName == "BarcodeValue" && !string.IsNullOrWhiteSpace(GetRowBarcodeId(row)))
+                e.Cancel = true;
+        }
+
+        private void BarcodeGrid_CellDoubleClick(object sender, DataGridViewCellEventArgs e)
+        {
+            if (e.RowIndex < 0)
+                return;
+            BeginEditBarcodeRow(e.RowIndex);
+        }
+
+        private void BarcodeGrid_CellFormatting(object sender, DataGridViewCellFormattingEventArgs e)
+        {
+            if (e.RowIndex < 0 || e.ColumnIndex < 0)
+                return;
+            if (BarcodeGrid.Columns[e.ColumnIndex].Name != "IsAktif")
+                return;
+
+            e.Value = e.Value is bool isAktif && isAktif ? "Aktif" : "Non-Aktif";
+            e.FormattingApplied = true;
+        }
+
+        private void BarcodeGrid_DataError(object sender, DataGridViewDataErrorEventArgs e)
+        {
+            //  unit values outside the Item's list are suppressed here; the
+            //  authoritative validation happens in the Main Office (INV-05)
+            e.ThrowException = false;
+        }
+
+        private void BarcodeGrid_SelectionChanged(object sender, EventArgs e)
+            => UpdateBarcodeButtons();
+
+        private void BrgForm_Load(object sender, EventArgs e)
+        {
+            //  BQ-6 / IR-D5: only Office Admin and System Administrator may
+            //  manage the barcode lifecycle
+            _canManageLifecycle = ResolveCanManageLifecycle();
+            UpdateBarcodeButtons();
+        }
+
+        private bool ResolveCanManageLifecycle()
+        {
+            var mainForm = MdiParent as MainForm;
+            if (mainForm?.UserId is null)
+                return false;
+
+            var user = _userDal.GetData(mainForm.UserId);
+            if (user is null)
+                return false;
+
+            if (string.Equals(user.RoleId, SystemAdministratorRoleId,
+                    StringComparison.OrdinalIgnoreCase))
+                return true;
+
+            return !string.IsNullOrWhiteSpace(user.RoleName)
+                   && LifecycleRoleNames.Any(role => string.Equals(user.RoleName,
+                       role, StringComparison.OrdinalIgnoreCase));
+        }
+
+        private void UpdateBarcodeButtons()
+        {
+            var row = SelectedBarcodeRow();
+            var persisted = row != null && !string.IsNullOrWhiteSpace(row.BrgBarcodeId);
+
+            EditBarcodeButton.Enabled = row != null;
+            ActivateBarcodeButton.Enabled = persisted && !row.IsAktif && _canManageLifecycle;
+            DeactivateBarcodeButton.Enabled = persisted && row.IsAktif && _canManageLifecycle;
+        }
+
+        private BrgBarcodeFormBarcodeDto SelectedBarcodeRow()
+            => BarcodeGrid.CurrentRow?.DataBoundItem as BrgBarcodeFormBarcodeDto;
+
+        private static string GetRowBarcodeId(DataGridViewRow row)
+            => row.Cells["BrgBarcodeId"].Value?.ToString() ?? string.Empty;
+
+        private string CurrentUserId
+        {
+            get
+            {
+                var mainForm = MdiParent as MainForm;
+                return mainForm?.UserId?.UserId ?? string.Empty;
+            }
         }
         #endregion
 
