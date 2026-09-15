@@ -135,6 +135,11 @@
     <Compile Include="BrgContext\BrgBarcodeAgg\CorrectBrgBarcodeCommand.cs" />
     <Compile Include="BrgContext\BrgBarcodeAgg\ActivateBrgBarcodeCommand.cs" />
     <Compile Include="BrgContext\BrgBarcodeAgg\DeactivateBrgBarcodeCommand.cs" />
+    <Compile Include="BrgContext\BrgBarcodeAgg\GetBrgBarcodeQuery.cs" />
+    <Compile Include="BrgContext\BrgBarcodeAgg\GetBrgBarcodeByValueQuery.cs" />
+    <Compile Include="BrgContext\BrgBarcodeAgg\ListBrgBarcodeByBrgQuery.cs" />
+    <Compile Include="BrgContext\BrgBarcodeAgg\ListBrgBarcodeQuery.cs" />
+    <Compile Include="BrgContext\BrgBarcodeAgg\ListBrgBarcodeChangedQuery.cs" />
     <Compile Include="BrgContext\BrgStokViewAgg\Contracts\IBrgStokViewDal.cs" />
     <Compile Include="BrgContext\HargaTypeAgg\IHargaTypeDal.cs" />
     <Compile Include="BrgContext\JenisBrgAgg\IJenisBrgDal.cs" />
