@@ -56,11 +56,17 @@
   <Import Condition="'$(SQLDBExtensionsRefPath)' == ''" Project="$(MSBuildExtensionsPath)\Microsoft\VisualStudio\v$(VisualStudioVersion)\SSDT\Microsoft.Data.Tools.Schema.SqlTasks.targets" />
   <ItemGroup>
     <Folder Include="Properties" />
+    <Folder Include="BarcodeContext" />
+    <Folder Include="Scripts" />
     <Folder Include="SalesContext" />
     <Folder Include="LocationContext" />
     <Folder Include="WarehouseContext" />
   </ItemGroup>
   <ItemGroup>
+    <Build Include="BarcodeContext\BTRADE_BrgBarcode.sql" />
+    <Build Include="BarcodeContext\BTRADE_BarcodeRegistrationRequest.sql" />
+    <Build Include="BarcodeContext\BTRADE_Location.sql" />
+    <Build Include="BarcodeContext\BTRADE_User.sql" />
     <Build Include="SalesContext\BTRADE_Brg.sql" />
     <Build Include="SalesContext\BTRADE_Customer.sql" />
     <Build Include="SalesContext\BTRADE_Faktur.sql" />
@@ -74,5 +80,8 @@
     <Build Include="WarehouseContext\BTRADE_PackingOrder.sql" />
     <Build Include="WarehouseContext\BTRADE_PackingOrderItem.sql" />
     <Build Include="WarehouseContext\BTRADE_PackingOrderDepo.sql" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Scripts\Upgrade_Barcode_Registry.sql" />
   </ItemGroup>
 </Project>

@@ -664,7 +664,7 @@ S5.4..S5.10 ─ S5.11
 | S2.2 | GO | 2 | `btr.distrib` |
 | S2.3 | GO | 3 | `btr.distrib` |
 | S2.4 | GO | 1 | `btr.sql` / `btr.distrib` |
-| S3.1 | PLANNED | 2 | `btrade.sqldb` |
+| S3.1 | GO | 2 | `btrade.sqldb` |
 | S3.2 | PLANNED | 2 | `btrade.domain` / `btrade.application` |
 | S3.3 | PLANNED | 2 | `btrade.infrastructure` |
 | S3.4 | PLANNED | 3 | `btrade.application` |
