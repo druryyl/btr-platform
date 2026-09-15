@@ -674,8 +674,8 @@ S5.4..S5.10 ─ S5.11
 | S4.1 | GO | 2 | `j07-btrade-sync` |
 | S4.2 | GO | 4 | `j07-btrade-sync` |
 | S4.3 | GO | 5 | `j07-btrade-sync` |
-| S4.4 | PLANNED | 3 | `j07-btrade-sync` |
-| S4.5 | PLANNED | 3 | `j07-btrade-sync` |
+| S4.4 | GO | 3 | `j07-btrade-sync` |
+| S4.5 | GO | 3 | `j07-btrade-sync` |
 | S5.1 | PLANNED | 5 | BGud |
 | S5.2 | PLANNED | 3 | BGud |
 | S5.3 | PLANNED | 5 | BGud |
@@ -690,6 +690,16 @@ S5.4..S5.10 ─ S5.11
 
 Lifecycle: `PLANNED → IN IMPLEMENTATION → IMPLEMENTED → IN REVIEW → GO` (or
 `NO-GO → REMEDIATION → IN REVIEW → GO`).
+
+### 8.1 Review History
+
+| Slice | Date | Result | Findings | Remediation |
+| ----- | ---- | ------ | -------- | ----------- |
+| S3.2 | 2026-09-16 | GO | None blocking. **INFO-001:** Architecture §5.3 names no key interface for `BarcodeRegistrationRequestType`, but the §7.2-mandated `IDelete<>` / `IGetDataMayBe<>` composition requires one; `IBarcodeRegistrationRequestKey` (`BarcodeRegistrationId`) was realized by convention, mirroring existing `IOrderKey` / `ICheckInKey`. No business or architecture decision introduced. **INFO-002:** no automated test project targets `btrade.domain` / `btrade.application`; verification was by build (`dotnet build btrade.application.csproj` → 0 errors). | None required. |
+| S3.6 | 2026-09-16 | GO | None blocking. **INFO-001:** the slice required supporting components not named in the §3 impact inventory — `UserType` / `LocationType` (`btrade.domain`) and read-only `IUserDal` / `ILocationDal` + Dapper DALs (`btrade.infrastructure`) — as direct prerequisites for `BTRADE_User` verification and `BTRADE_Location` resolution; no unauthorized scope expansion. **INFO-002:** JWT issuance uses `JsonWebTokenHandler` (`Microsoft.IdentityModel.JsonWebTokens` 8.0.1, already in the graph via MediatR 13) because the legacy `JwtSecurityTokenHandler` (`System.IdentityModel.Tokens.Jwt` 6.35.0) throws `TypeLoadException` against `Microsoft.IdentityModel.Tokens` 8.0.1 under the net6.0 runtime; output remains standard HS256 with the configured issuer/audience/key. **INFO-003:** token validation should follow the same IdentityModel generation — `JwtBearer` 6.0.36 default validators use the legacy handler; verify end-to-end with a real token on the authenticated endpoint path (S3.7). | None required for S3.6. INFO-003 remains a verification watch item for the authenticated path. |
+| S3.7 | 2026-09-16 | GO | None blocking. **INFO-001:** `BarcodeSyncRequest` carries `BarcodeType[]`, whose shape includes a `ServerId` member; item-level values are inert because the handler overrides them with the JWT-resolved tenant, and `BarcodeType[]` is mandated by Architecture §8.1. **INFO-002:** the §19.2 response envelopes (`BarcodeSyncResponse`, `BarcodeRegistrationSubmitResponse`) are not produced; the source command/query contracts are S3.4/S3.5 (GO) and S3.7 acceptance criteria do not specify response shape. **INFO-003:** I-09 does not accept the optional `clientRequestId` filter from Architecture §17.2; it returns all of the caller's own requests. **INFO-004:** no automated test project targets `btrade.webapi`; verification was by build plus live unauthenticated route probing (7 routes → 401). | None required. Scope: `UserSyncCommand` + `IUserDal` write members were direct prerequisites for I-08; I-06/I-07 were pre-existing and untouched. Findings retained here; the standalone review report was deleted. |
+| S4.4 | 2026-09-16 | GO | None blocking. **INFO-001:** the sync client attaches no JWT on I-08, though Architecture §9.1 requires the operator account to present one. Not introduced by S4.4 and identical to accepted S4.2 (I-01) / S4.3 (I-02/I-03); client token acquisition is not owned by any planned slice. **INFO-002:** `UserType` / `UserDal` are supporting components not named in the §3 impact inventory, required to read `BTR_User` for the projection. | N/A for S4.4. INFO-001 is a cross-cutting architecture item to be tracked separately. |
+| S4.5 | 2026-09-16 | GO | None blocking. **INFO-001:** the run is triggered by a new operator-initiated `Sync Barcode` button in `SyncForm`; Architecture §8.1 only mandates that publish is part of the operator-initiated master-data synchronization run, so the concrete UI trigger is an implementation detail, not a new decision. **INFO-002:** the three steps run sequentially with `await` (`user projection → registration relay → barcode publish`); relay precedes publish per §8.2. A failed step is logged (red) and does not abort the remaining steps; watermark/ack advance only inside the step that committed (S4.2/S4.3). **INFO-003:** no automated test project targets `j07-btrade-sync` (net48 WinForms); verification was by `MSBuild /t:Rebuild` → exit 0 (only pre-existing CS0436/CS0108 warnings, none in `SyncForm.cs` / `SyncForm.Designer.cs`). **INFO-004:** S4.4's `UserType` / `UserDal` / `UserSyncService` remain uncommitted in the working tree; S4.5 depends on them. | None required. |
 
 ---
 

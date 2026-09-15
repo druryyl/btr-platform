@@ -165,6 +165,7 @@
     <Compile Include="Model\PackingOrderItemModel.cs" />
     <Compile Include="Model\PackingOrderModel.cs" />
     <Compile Include="Model\SalesPersonType.cs" />
+    <Compile Include="Model\UserType.cs" />
     <Compile Include="Model\WilayahType.cs" />
     <Compile Include="Repository\BrgBarcodeDal.cs" />
     <Compile Include="Repository\CheckInDal.cs" />
@@ -175,9 +176,11 @@
     <Compile Include="Repository\PackingOrderDepoDal.cs" />
     <Compile Include="Repository\PackingOrderItemDal.cs" />
     <Compile Include="Repository\SalesPersonDal.cs" />
+    <Compile Include="Repository\UserDal.cs" />
     <Compile Include="Repository\WilayahDal.cs" />
     <Compile Include="Service\BarcodeSyncService.cs" />
     <Compile Include="Service\BarcodeRegistrationRelayService.cs" />
+    <Compile Include="Service\UserSyncService.cs" />
     <Compile Include="Service\BrgSyncService.cs" />
     <Compile Include="Model\BrgType.cs" />
     <Compile Include="Service\PackingOrderUploadSvc.cs" />

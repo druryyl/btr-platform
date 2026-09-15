@@ -26,6 +26,9 @@ namespace j07_btrade_sync
         private readonly CustomerClearUpdateFlagService _customerClearUpdateFlagService;
         private readonly CheckInIncrementalDownloadService _checkInDownloadService;
         private readonly PackingOrderUploadSvc _packingOrderUploadSvc;
+        private readonly BarcodeSyncService _barcodeSyncService;
+        private readonly BarcodeRegistrationRelayService _barcodeRegistrationRelayService;
+        private readonly UserSyncService _userSyncService;
 
         private readonly BrgDal _brgDal;
         private readonly CustomerDal _customerDal;
@@ -37,6 +40,7 @@ namespace j07_btrade_sync
         private readonly CheckInDal _checkInDal;
         private readonly PackingOrderDal _packingOrderDal;
         private readonly PackingOrderItemDal _packingOrderItemDal;
+        private readonly UserDal _userDal;
 
         private Timer timerClock = new Timer();
         private System.Timers.Timer processingTimer;
@@ -63,6 +67,9 @@ namespace j07_btrade_sync
             _customerClearUpdateFlagService = new CustomerClearUpdateFlagService();
             _checkInDownloadService = new CheckInIncrementalDownloadService();
             _packingOrderUploadSvc = new PackingOrderUploadSvc();
+            _barcodeSyncService = new BarcodeSyncService();
+            _barcodeRegistrationRelayService = new BarcodeRegistrationRelayService();
+            _userSyncService = new UserSyncService();
 
             _brgDal = new BrgDal();
             _customerDal = new CustomerDal();
@@ -75,6 +82,7 @@ namespace j07_btrade_sync
             _registryHelper = new RegistryHelper();
             _packingOrderDal = new PackingOrderDal();
             _packingOrderItemDal = new PackingOrderItemDal();
+            _userDal = new UserDal();
             LoadConfig();
 
             InitializeTimer();
@@ -109,6 +117,7 @@ namespace j07_btrade_sync
             SyncBrgButton.Click += SyncBrgButton_Click;
             SyncCustomerButton.Click += SyncCustomerButton_Click;
             SyncSalesPersonBotton.Click += SyncSalesPersonButton_Click;
+            SyncBarcodeButton.Click += SyncBarcodeButton_Click;
 
             // Create context menu
             ContextMenuStrip menu = new ContextMenuStrip();
@@ -448,6 +457,39 @@ namespace j07_btrade_sync
                 }
             });
         }
+        private async void SyncBarcodeButton_Click(object sender, EventArgs e)
+        {
+            LogMessage("Sync Barcode Registry started...", Color.Green);
+
+            //  ONE SYNCHRONIZATION RUN (8.1 / 8.2), executed in a fixed order:
+            //  user projection (IR-05) -> registration relay (8.2) ->
+            //  barcode publish (8.1). Relay runs before publish so that newly
+            //  accepted registrations are published by the following publish.
+            //  A failing step is surfaced and does not abort the run; watermark
+            //  and ack state only advance inside the step that committed.
+
+            //  1. USER PROJECTION (IR-05 / I-08)
+            var userResult = await _userSyncService.SyncUser(_userDal.ListData().ToList());
+            if (userResult.Item1)
+                LogMessage("User projection done", Color.Green);
+            else
+                LogMessage($"User projection failed: {userResult.Item2}", Color.Red);
+
+            //  2. REGISTRATION RELAY (8.2 / I-02, I-03)
+            var relayResult = await _barcodeRegistrationRelayService.SyncRegistration();
+            if (relayResult.Item1)
+                LogMessage("Registration relay done", Color.Green);
+            else
+                LogMessage($"Registration relay failed: {relayResult.Item2}", Color.Red);
+
+            //  3. BARCODE PUBLISH (8.1 / I-01)
+            var publishResult = await _barcodeSyncService.SyncBarcode();
+            if (publishResult.Item1)
+                LogMessage("Barcode publish done", Color.Green);
+            else
+                LogMessage($"Barcode publish failed: {publishResult.Item2}", Color.Red);
+        }
+
         private void ProcessPackingOrder(int periodeLength)
         {
             if (!_uploadPackingOrder)
