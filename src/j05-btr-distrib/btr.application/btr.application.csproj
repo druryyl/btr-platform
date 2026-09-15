@@ -128,7 +128,13 @@
     <Compile Include="BrgContext\BrgAgg\GetBrgQuery.cs" />
     <Compile Include="BrgContext\BrgAgg\BrgBuilder.cs" />
     <Compile Include="BrgContext\BrgBarcodeAgg\IBrgBarcodeDal.cs" />
+    <Compile Include="BrgContext\BrgBarcodeAgg\BrgBarcodeBuilder.cs" />
     <Compile Include="BrgContext\BrgBarcodeAgg\BrgBarcodeValidator.cs" />
+    <Compile Include="BrgContext\BrgBarcodeAgg\BrgBarcodeWriter.cs" />
+    <Compile Include="BrgContext\BrgBarcodeAgg\RegisterBrgBarcodeCommand.cs" />
+    <Compile Include="BrgContext\BrgBarcodeAgg\CorrectBrgBarcodeCommand.cs" />
+    <Compile Include="BrgContext\BrgBarcodeAgg\ActivateBrgBarcodeCommand.cs" />
+    <Compile Include="BrgContext\BrgBarcodeAgg\DeactivateBrgBarcodeCommand.cs" />
     <Compile Include="BrgContext\BrgStokViewAgg\Contracts\IBrgStokViewDal.cs" />
     <Compile Include="BrgContext\HargaTypeAgg\IHargaTypeDal.cs" />
     <Compile Include="BrgContext\JenisBrgAgg\IJenisBrgDal.cs" />

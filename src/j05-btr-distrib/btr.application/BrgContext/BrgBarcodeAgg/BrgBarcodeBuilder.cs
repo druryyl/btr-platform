@@ -89,7 +89,7 @@ namespace btr.application.BrgContext.BrgBarcodeAgg
             if (_aggRoot.BrgId.IsNullOrEmpty())
                 throw new ArgumentException("Brg must be set before Satuan");
 
-            var listSatuan = _brgSatuanDal.ListData(new BrgModel(_aggRoot.BrgId))?.ToList()
+            var listSatuan = _brgSatuanDal.ListData((IBrgKey)new BrgModel(_aggRoot.BrgId))?.ToList()
                              ?? new List<BrgSatuanModel>();
             if (!listSatuan.Any(x => x.Satuan == satuan))
                 throw new ArgumentException($"Satuan not found for Brg ({satuan})");
