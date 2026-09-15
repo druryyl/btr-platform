@@ -129,7 +129,7 @@ here so the planner does not invent decisions.
 | # | Item | Blocks slice |
 | - | ---- | ------------ |
 | C-1 | Confirm activation/deactivation is Desktop-only (no BGud screen) | S5 (BGud inventory) |
-| C-2 | Confirm credential projection approach for token issuance | S4.5 (token issuance) |
+| C-2 | **CONFIRMED (S3.6):** the Cloud verifies credentials against the replicated `BTRADE_User` verification projection (IR-05) and resolves `ServerId` from `BTRADE_Location`; no Cloud user store is introduced. The projection is populated by `UserSyncCommand`/I-08 (S4.4); the Cloud never validates business rules, only the SHA-256 credential parity with `LoginForm.cs`. | S3.6 (token issuance) |
 | C-3 | Resolve transport security (release-blocking, not planning-blocking) | None (release gate) |
 | C-4 | Update `BARCODE-REGISTRY-DOMAIN.md` (Knowledge Curator pass) | Knowledge sync (parallel) |
 | C-5 | Produce `BARCODE-REGISTRY-WORKFLOW.md` if required by artifact chain | Knowledge sync (parallel) |
@@ -669,7 +669,7 @@ S5.4..S5.10 ─ S5.11
 | S3.3 | GO | 2 | `btrade.infrastructure` |
 | S3.4 | GO | 3 | `btrade.application` |
 | S3.5 | GO | 3 | `btrade.application` |
-| S3.6 | PLANNED | 5 | `btrade.application` / `btrade.webapi` |
+| S3.6 | GO | 5 | `btrade.application` / `btrade.webapi` |
 | S3.7 | PLANNED | 4 | `btrade.webapi` |
 | S4.1 | PLANNED | 2 | `j07-btrade-sync` |
 | S4.2 | PLANNED | 4 | `j07-btrade-sync` |

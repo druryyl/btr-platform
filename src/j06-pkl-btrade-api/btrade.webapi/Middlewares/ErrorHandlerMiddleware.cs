@@ -38,6 +38,10 @@ public class ErrorHandlerMiddleware
                     response.StatusCode = (int)HttpStatusCode.BadRequest;
                     status = "Bad Request";
                     break;
+                case UnauthorizedAccessException:
+                    response.StatusCode = (int)HttpStatusCode.Unauthorized;
+                    status = "Unauthorized";
+                    break;
                 case KeyNotFoundException:
                     // not found error
                     response.StatusCode = (int)HttpStatusCode.BadRequest;

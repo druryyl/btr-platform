@@ -1,5 +1,7 @@
 ﻿using System.Reflection;
 using System.Text;
+using btrade.application.Contract;
+using btrade.webapi.Infrastructure;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
@@ -32,6 +34,9 @@ public static class PresentationService
             });
         });
         
+        services.Configure<JwtOptions>(configuration.GetSection(JwtOptions.SectionName));
+        services.AddScoped<IJwtTokenService, JwtTokenService>();
+
         services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJwtBearer(options =>
         {
             options.RequireHttpsMetadata = false;
