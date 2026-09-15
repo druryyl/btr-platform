@@ -667,7 +667,7 @@ S5.4..S5.10 ─ S5.11
 | S3.1 | GO | 2 | `btrade.sqldb` |
 | S3.2 | GO | 2 | `btrade.domain` / `btrade.application` |
 | S3.3 | GO | 2 | `btrade.infrastructure` |
-| S3.4 | PLANNED | 3 | `btrade.application` |
+| S3.4 | GO | 3 | `btrade.application` |
 | S3.5 | PLANNED | 3 | `btrade.application` |
 | S3.6 | PLANNED | 5 | `btrade.application` / `btrade.webapi` |
 | S3.7 | PLANNED | 4 | `btrade.webapi` |
