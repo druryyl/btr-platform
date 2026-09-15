@@ -652,7 +652,7 @@ S5.4..S5.10 ─ S5.11
 
 | Slice | Status | Complexity | System |
 | ----- | ------ | ---------- | ------ |
-| S1.1 | PLANNED | 1 | `btr.sql` |
+| S1.1 | IMPLEMENTED | 1 | `btr.sql` |
 | S1.2 | PLANNED | 2 | `btr.domain` |
 | S1.3 | PLANNED | 3 | `btr.application` / `btr.infrastructure` |
 | S1.4 | PLANNED | 3 | `btr.application` |

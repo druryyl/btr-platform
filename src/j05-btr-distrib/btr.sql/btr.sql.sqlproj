@@ -97,6 +97,7 @@
     <Build Include="Tables\SalesContext\BTR_SalesOmzetTarget.sql" />
     <Build Include="Tables\SalesContext\BTR_SalesOmzetHealthWeekly.sql" />
     <Build Include="Tables\BrgContext\BTR_BrgHarga.sql" />
+    <Build Include="Tables\BrgContext\BTR_BrgBarcode.sql" />
     <Build Include="Tables\BrgContext\BTR_Kategori.sql" />
     <Build Include="Tables\BrgContext\BTR_HargaType.sql" />
     <Build Include="Tables\InventoryContext\BTR_StokBalanceWarehouse.sql" />
@@ -264,5 +265,6 @@
     <None Include="Scripts\Upgrade_PCM022_PrincipalCustomerCoverage.sql" />
     <None Include="Scripts\Create_BTR_SalesPersonSupplier.sql" />
     <None Include="Scripts\Create_BTR_SalesPersonPrincipalTarget.sql" />
+    <None Include="Scripts\Upgrade_Barcode_Registry.sql" />
   </ItemGroup>
 </Project>
