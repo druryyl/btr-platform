@@ -673,7 +673,7 @@ S5.4..S5.10 ─ S5.11
 | S3.7 | GO | 4 | `btrade.webapi` |
 | S4.1 | GO | 2 | `j07-btrade-sync` |
 | S4.2 | GO | 4 | `j07-btrade-sync` |
-| S4.3 | PLANNED | 5 | `j07-btrade-sync` |
+| S4.3 | GO | 5 | `j07-btrade-sync` |
 | S4.4 | PLANNED | 3 | `j07-btrade-sync` |
 | S4.5 | PLANNED | 3 | `j07-btrade-sync` |
 | S5.1 | PLANNED | 5 | BGud |

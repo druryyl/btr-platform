@@ -40,7 +40,7 @@ namespace j07_btrade_sync.Repository
             }
         }
 
-        public void Delete(IPackingOrderKey key)
+        public void Delete(j07_btrade_sync.Model.IPackingOrderKey key)
         {
             const string sql = @"
                 DELETE FROM BTR_PackingOrderItem
@@ -56,7 +56,7 @@ namespace j07_btrade_sync.Repository
             }
         }
 
-        public IEnumerable<PackingOrderItemDto> ListData(IPackingOrderKey filter)
+        public IEnumerable<PackingOrderItemDto> ListData(j07_btrade_sync.Model.IPackingOrderKey filter)
         {
             const string sql = @"
                 SELECT
