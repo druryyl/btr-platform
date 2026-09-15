@@ -529,7 +529,7 @@ mapping, shaped for bulk download and local caching. It mirrors the existing
 Location: `btrade.domain/BarcodeFeature/`
 
 ```text
-BarcodeRegistrationRequestType
+BarcodeRegistrationRequestType : IBarcodeRegistrationRequestKey
     BarcodeRegistrationId   string    // ULID, PK
     ClientRequestId         string    // device-generated idempotency key
     ServerId                string    // resolved server-side from JWT context
@@ -541,6 +541,17 @@ BarcodeRegistrationRequestType
     Status                  string    // PENDING | ACCEPTED | REJECTED
     ProcessedAt             DateTime?
     ProcessedNote           string
+```
+
+Key interface, mirroring `IBarcodeKey` (§5.2). It is declared because the DAL
+composition mandated in §7.2 (`IDelete<>`, `IGetDataMayBe<>`) requires a key
+type for this entity:
+
+```csharp
+public interface IBarcodeRegistrationRequestKey
+{
+    string BarcodeRegistrationId { get; }
+}
 ```
 
 #### Purpose
@@ -876,7 +887,9 @@ Supporting components, mirroring the `Brg` pattern:
 
 DAL contracts: `btrade.application/Contract/IBarcodeDal.cs`,
 `IBarcodeRegistrationDal.cs`, following `IBrgDal` composition
-(`IInsert`, `IUpdate`, `IDelete`, `IGetDataMayBe`, `IListDataMayBe`).
+(`IInsert`, `IUpdate`, `IDelete`, `IGetDataMayBe`, `IListDataMayBe`). The
+contracts are keyed by `IBarcodeKey` (§5.2) and
+`IBarcodeRegistrationRequestKey` (§5.3) respectively.
 
 ---
 

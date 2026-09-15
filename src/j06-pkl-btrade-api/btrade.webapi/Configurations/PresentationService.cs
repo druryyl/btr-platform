@@ -49,6 +49,8 @@ public static class PresentationService
                 ValidIssuer = configuration["Jwt:Issuer"],
                 IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(configuration["Jwt:Key"] ?? string.Empty))
             };
+            options.SecurityTokenValidators.Clear();
+            options.SecurityTokenValidators.Add(new JsonWebTokenSecurityTokenValidator());
         });
 
         services.AddCors(p => p.AddPolicy("corsapp", policyBuilder =>

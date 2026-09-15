@@ -402,6 +402,43 @@ model and reasoning level selected for implementation.
   - Unauthenticated calls are rejected (ADR-002).
 - **Review Focus:** Security Compliance (JWT, tenant binding); routing conventions (IR-07).
 
+#### S3.8 — Unified JWT validation stack (AUTH-VERIFY-001 remediation)
+
+- **Objective:** Remove the IdentityModel generation split that makes `JwtBearer`
+  reject every valid token (AUTH-VERIFY-001, ADR-008). Make
+  `Microsoft.IdentityModel.JsonWebTokens` the single handler library for both
+  issuance and validation by wiring a `JsonWebTokenHandler`-backed
+  `ISecurityTokenValidator` into `JwtBearerOptions.SecurityTokenValidators`. No
+  IdentityModel version change and no target-framework change.
+- **Dependencies:** S3.6, S3.7; AUTH-VERIFY-001 (§8.2); ADR-008.
+- **Complexity:** 3
+- **Acceptance Criteria:**
+  - Issuance and validation both execute on `Microsoft.IdentityModel.JsonWebTokens`
+    8.0.1; `System.IdentityModel.Tokens.Jwt` `JwtSecurityTokenHandler` is not on
+    either request path.
+  - An `[Authorize]` Barcode Registry endpoint returns `200 OK` when called with a
+    valid issued token, and `401` with no token or an invalid token — the
+    AUTH-VERIFY-001 flow: Issue Token → Call Authorized Endpoint → `200 OK`.
+  - Claims `sub`, `role`, `locationId`, `serverId` remain resolvable from the
+    authenticated principal.
+  - No `MissingMethodException` / `TypeLoadException` occurs on issuance or
+    validation.
+  - Regression protection is committed: a repeatable automated integration test
+    (`btrade.webapi.Test`) asserts anonymous → `401` and valid token → `200`
+    against an authenticated endpoint using the real `AddPresentation` JWT
+    configuration.
+  - Login response shape, claim names, tenant resolution, and all Barcode Registry
+    behavior are unchanged.
+- **Review Focus:** Security Compliance; single-generation stack (ADR-008);
+  AUTH-VERIFY-001 closure evidence.
+- **Notes:** Alternatives rejected — referencing `System.IdentityModel.Tokens.Jwt`
+  8.0.1 leaves the legacy handler on the validation path (two handler types);
+  moving `j06-pkl-btrade-api` to net8.0 for `JwtBearer`'s native `TokenHandlers` is
+  a larger deployment change and is not required for the outcome.
+
+> **Release gate:** No authenticated Barcode Registry endpoint is production-ready
+> until S3.8 is GO.
+
 ### Phase P4 — Synchronization Client
 
 #### S4.1 — Main Office read model + change feed DAL
@@ -632,6 +669,7 @@ S3.1 ─┬─ S3.2 ─ S3.3 ─┬─ S3.4 ─┐
       │                └─ S3.6 ─┘   (C-2)
       └─ (S3.6)
 
+S3.6, S3.7 ─ S3.8
 S3.7 ─ S4.2, S4.3, S4.4
 S4.1 ─ S4.2, S4.3
 S1.8 ─ S4.3
@@ -671,6 +709,7 @@ S5.4..S5.10 ─ S5.11
 | S3.5 | GO | 3 | `btrade.application` |
 | S3.6 | GO | 5 | `btrade.application` / `btrade.webapi` |
 | S3.7 | GO | 4 | `btrade.webapi` |
+| S3.8 | GO | 3 | `btrade.webapi` / `btrade.webapi.Test` |
 | S4.1 | GO | 2 | `j07-btrade-sync` |
 | S4.2 | GO | 4 | `j07-btrade-sync` |
 | S4.3 | GO | 5 | `j07-btrade-sync` |
@@ -700,6 +739,14 @@ Lifecycle: `PLANNED → IN IMPLEMENTATION → IMPLEMENTED → IN REVIEW → GO` 
 | S3.7 | 2026-09-16 | GO | None blocking. **INFO-001:** `BarcodeSyncRequest` carries `BarcodeType[]`, whose shape includes a `ServerId` member; item-level values are inert because the handler overrides them with the JWT-resolved tenant, and `BarcodeType[]` is mandated by Architecture §8.1. **INFO-002:** the §19.2 response envelopes (`BarcodeSyncResponse`, `BarcodeRegistrationSubmitResponse`) are not produced; the source command/query contracts are S3.4/S3.5 (GO) and S3.7 acceptance criteria do not specify response shape. **INFO-003:** I-09 does not accept the optional `clientRequestId` filter from Architecture §17.2; it returns all of the caller's own requests. **INFO-004:** no automated test project targets `btrade.webapi`; verification was by build plus live unauthenticated route probing (7 routes → 401). | None required. Scope: `UserSyncCommand` + `IUserDal` write members were direct prerequisites for I-08; I-06/I-07 were pre-existing and untouched. Findings retained here; the standalone review report was deleted. |
 | S4.4 | 2026-09-16 | GO | None blocking. **INFO-001:** the sync client attaches no JWT on I-08, though Architecture §9.1 requires the operator account to present one. Not introduced by S4.4 and identical to accepted S4.2 (I-01) / S4.3 (I-02/I-03); client token acquisition is not owned by any planned slice. **INFO-002:** `UserType` / `UserDal` are supporting components not named in the §3 impact inventory, required to read `BTR_User` for the projection. | N/A for S4.4. INFO-001 is a cross-cutting architecture item to be tracked separately. |
 | S4.5 | 2026-09-16 | GO | None blocking. **INFO-001:** the run is triggered by a new operator-initiated `Sync Barcode` button in `SyncForm`; Architecture §8.1 only mandates that publish is part of the operator-initiated master-data synchronization run, so the concrete UI trigger is an implementation detail, not a new decision. **INFO-002:** the three steps run sequentially with `await` (`user projection → registration relay → barcode publish`); relay precedes publish per §8.2. A failed step is logged (red) and does not abort the remaining steps; watermark/ack advance only inside the step that committed (S4.2/S4.3). **INFO-003:** no automated test project targets `j07-btrade-sync` (net48 WinForms); verification was by `MSBuild /t:Rebuild` → exit 0 (only pre-existing CS0436/CS0108 warnings, none in `SyncForm.cs` / `SyncForm.Designer.cs`). **INFO-004:** S4.4's `UserType` / `UserDal` / `UserSyncService` remain uncommitted in the working tree; S4.5 depends on them. | None required. |
+| S3.8 | 2026-09-16 | GO | None blocking. **INFO-001:** `Program.cs` gained `public partial class Program { }` solely so the new test project can use `WebApplicationFactory<Program>` (documented ASP.NET Core top-level-statements pattern); no runtime behavior change. **INFO-002:** the integration test replaces `IBarcodeDal` with a test-only `FakeBarcodeDal` (via `ConfigureTestServices`) so the real `AddPresentation` authentication pipeline is exercised without a database; test-only, no production coupling. **INFO-003:** the test project aligns `Microsoft.NET.Test.Sdk` 17.13.0 / `xunit` 2.9.3 / `xunit.runner.visualstudio` 3.0.0 with the versions already transitively referenced by `btrade.application` / `btrade.infrastructure` (pre-existing), avoiding NU1605 downgrades. **INFO-004:** `Microsoft.IdentityModel.JsonWebTokens` / `Microsoft.IdentityModel.Tokens` resolve to 8.0.1 and `System.IdentityModel.Tokens.Jwt` 6.35.0 remains in the output as a `JwtBearer` dependency but is no longer registered as a validator. | None required. |
+
+### 8.2 Verification Log
+
+| ID | Date | Task | Result | Evidence | Follow-up |
+| -- | ---- | ---- | ------ | -------- | --------- |
+| AUTH-VERIFY-001 | 2026-09-16 | Issue a JWT with `JsonWebTokenHandler` (real `JwtTokenService`), call an authenticated (`[Authorize]`) endpoint, verify `JwtBearer` accepts the token | **FAIL** | Token issued (3 segments). Under the real `AddPresentation` JwtBearer config: no token → `401`, garbage token → `401`, issued token → `401`; real `GET /api/barcodes/sync` (`[Authorize]`) → `401`. Diagnosis with identical `TokenValidationParameters`: `JsonWebTokenHandler.ValidateToken` → accepted (`IsValid=True`); `JwtSecurityTokenHandler.ValidateToken` (JwtBearer 6.0.36 default validator) → `MissingMethodException: Method not found: 'ICollection<BaseConfiguration> BaseConfigurationManager.GetValidLkgConfigurations()'`. Root cause: `System.IdentityModel.Tokens.Jwt` 6.35.0 executing against `Microsoft.IdentityModel.Tokens` 8.0.1 (via MediatR 13) — the validation-side form of S3.6 INFO-002. `JwtBearer` swallows the handler failure and reports `401`. | Separate remediation task required; out of scope for this verification. `JsonWebTokenHandler` is not an `ISecurityTokenValidator` in IdentityModel 8.0.1, so JwtBearer 6.0.36 cannot consume it directly; options are a validator adapter, an API target-framework move to use `TokenHandlers`, or aligning IdentityModel on 6.x. S3.7 acceptance (unauthenticated → 401) remains satisfied, so its GO is unaffected. See ADR-008. **Remediation: S3.8 (PLANNED).** Classification: not a planning blocker, not a Barcode Registry domain blocker, release blocker for authenticated API usage. |
+| AUTH-VERIFY-001-R | 2026-09-16 | S3.8 remediation: re-run the AUTH-VERIFY-001 flow (Issue Token → Call Authorized Endpoint → `200 OK`) against the real `AddPresentation` config with the unified `JsonWebTokenHandler` validation stack | **PASS** | `dotnet test btrade.webapi.Test` → 4/4 passed: anonymous → `401`; invalid token → `401`; token issued by the real `JwtTokenService` → `200 OK` on `GET /api/barcodes/sync`; principal exposes `sub`, `role`, `locationId`, `serverId`. Negative control: reverting the `SecurityTokenValidators` wiring reproduces the original defect (issued token → `401`). Resolved assemblies: `Microsoft.IdentityModel.JsonWebTokens` / `Microsoft.IdentityModel.Tokens` 8.0.1. No `MissingMethodException` / `TypeLoadException`. | None. AUTH-VERIFY-001 closed; release gate for authenticated Barcode Registry endpoints satisfied. |
 
 ---
 
