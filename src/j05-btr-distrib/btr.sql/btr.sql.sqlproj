@@ -252,6 +252,7 @@
     <None Include="DataSeeds\BTR_ParamNo_SalesOmzetHealthWeekly.sql" />
     <None Include="DataSeeds\BTR_ParamSistem_VisitPlan.sql" />
     <None Include="DataSeeds\BTR_RoleMenu_VisitPlan.sql" />
+    <None Include="DataSeeds\BTR_RoleMenu_BarcodeRegistry.sql" />
     <None Include="Scripts\Upgrade_PortalDashboard_GeneratedIds_ToUlid.sql" />
     <None Include="Scripts\Rename_PortalDashboard_Tables_To_BTRPD.sql" />
     <None Include="Scripts\Create_BTRPD_PortalDashboard_Tables.sql" />

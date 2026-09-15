@@ -133,7 +133,7 @@ here so the planner does not invent decisions.
 | C-3 | Resolve transport security (release-blocking, not planning-blocking) | None (release gate) |
 | C-4 | Update `BARCODE-REGISTRY-DOMAIN.md` (Knowledge Curator pass) | Knowledge sync (parallel) |
 | C-5 | Produce `BARCODE-REGISTRY-WORKFLOW.md` if required by artifact chain | Knowledge sync (parallel) |
-| C-6 | Confirm `BTR_Menu.MenuId` value and role grants | S2.4 (Desktop menu) |
+| C-6 | **CONFIRMED (S2.4):** `BTR_Menu` identifier `IM5` (GroupOrder 32, FormType `MASTR`, MenuName `IM5BrgBarcodeMenu`, Caption `IM5-Barcode`), matching the S2.1 ribbon button. `BTR_RoleMenu` grant seeded for `SYSAD` (System Administrator). The Office Admin grant is deferred to live role configuration (`XX4-RoleMenu`) because no `Office Admin` role exists in `BTR_Role` seeds. | S2.4 (Desktop menu) |
 
 ---
 
@@ -663,7 +663,7 @@ S5.4..S5.10 ─ S5.11
 | S2.1 | GO | 4 | `btr.distrib` |
 | S2.2 | GO | 2 | `btr.distrib` |
 | S2.3 | GO | 3 | `btr.distrib` |
-| S2.4 | PLANNED | 1 | `btr.sql` / `btr.distrib` |
+| S2.4 | GO | 1 | `btr.sql` / `btr.distrib` |
 | S3.1 | PLANNED | 2 | `btrade.sqldb` |
 | S3.2 | PLANNED | 2 | `btrade.domain` / `btrade.application` |
 | S3.3 | PLANNED | 2 | `btrade.infrastructure` |

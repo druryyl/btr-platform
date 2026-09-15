@@ -1,0 +1,3 @@
+IF NOT EXISTS (SELECT 1 FROM BTR_RoleMenu WHERE RoleId = 'SYSAD' AND MenuId = 'IM5')
+	INSERT INTO BTR_RoleMenu (RoleId, MenuId) VALUES ('SYSAD', 'IM5');
+GO

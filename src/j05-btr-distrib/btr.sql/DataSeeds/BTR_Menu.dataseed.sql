@@ -45,6 +45,7 @@ INSERT INTO BTR_Menu (MenuId, GroupOrder, FormType, MenuName, Caption) VALUES
 ('IM2', 32, 'MASTR', 'IM2WarehouseMenu', 'IM2-Gudang'),
 ('IM3', 32, 'MASTR', 'IM3KategoriMenu', 'IM3-Kategori'),
 ('IM4', 32, 'MASTR', 'IM4DriverMenu', 'IM4-Driver'),
+('IM5', 32, 'MASTR', 'IM5BrgBarcodeMenu', 'IM5-Barcode'),
 ('FT2', 40, 'TRS', 'FT2TagihanSalesMenu', 'FT2-Tagihan Sales'),
 ('FT4', 40, 'TRS', 'FT4TandaTerimaMenu', 'FT4-Tanda Terima'),
 ('FT1', 40, 'TRS', 'FT1LunasPiutangMenu', 'FT1-Lunas Piutang'),
