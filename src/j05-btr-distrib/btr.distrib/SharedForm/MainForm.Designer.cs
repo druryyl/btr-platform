@@ -93,6 +93,7 @@
             this.IM2WarehouseMenu = new System.Windows.Forms.RibbonButton();
             this.IM3KategoriMenu = new System.Windows.Forms.RibbonButton();
             this.IM4DriverMenu = new System.Windows.Forms.RibbonButton();
+            this.IM5BrgBarcodeMenu = new System.Windows.Forms.RibbonButton();
             this.FinanceTab = new System.Windows.Forms.RibbonTab();
             this.ribbonPanel1 = new System.Windows.Forms.RibbonPanel();
             this.FT2TagihanSalesMenu = new System.Windows.Forms.RibbonButton();
@@ -699,6 +700,7 @@
             this.InventoryMasterPanel.Items.Add(this.IM2WarehouseMenu);
             this.InventoryMasterPanel.Items.Add(this.IM3KategoriMenu);
             this.InventoryMasterPanel.Items.Add(this.IM4DriverMenu);
+            this.InventoryMasterPanel.Items.Add(this.IM5BrgBarcodeMenu);
             this.InventoryMasterPanel.Name = "InventoryMasterPanel";
             this.InventoryMasterPanel.Text = "Master Data";
             // 
@@ -737,6 +739,14 @@
             this.IM4DriverMenu.SmallImage = ((System.Drawing.Image)(resources.GetObject("IM4DriverMenu.SmallImage")));
             this.IM4DriverMenu.Text = "IM4-Driver";
             this.IM4DriverMenu.Click += new System.EventHandler(this.IM4DriverButton_Click);
+            // 
+            // IM5BrgBarcodeMenu
+            // 
+            this.IM5BrgBarcodeMenu.Image = global::btr.distrib.Properties.Resources.icons8_ingredients;
+            this.IM5BrgBarcodeMenu.LargeImage = global::btr.distrib.Properties.Resources.icons8_ingredients;
+            this.IM5BrgBarcodeMenu.Name = "IM5BrgBarcodeMenu";
+            this.IM5BrgBarcodeMenu.Text = "IM5-Barcode";
+            this.IM5BrgBarcodeMenu.Click += new System.EventHandler(this.IM5BrgBarcodeButton_Click);
             // 
             // FinanceTab
             // 
@@ -1090,6 +1100,7 @@
         private System.Windows.Forms.RibbonButton RF1ReturJualInfoMenu;
         private System.Windows.Forms.RibbonButton RT2PostingReturMenu;
         private System.Windows.Forms.RibbonButton IM4DriverMenu;
+        private System.Windows.Forms.RibbonButton IM5BrgBarcodeMenu;
         private System.Windows.Forms.RibbonButton FT3FpKeluaranMenu;
         private System.Windows.Forms.RibbonButton IF5StokPeriodikMenu;
         private System.Windows.Forms.RibbonButton PT2PostingStokMenu;

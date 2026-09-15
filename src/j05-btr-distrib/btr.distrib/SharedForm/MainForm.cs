@@ -9,6 +9,7 @@ using btr.distrib.FinanceContext.ReturBalanceAgg;
 using btr.distrib.FinanceContext.TagihanAgg;
 using btr.distrib.InventoryContext.AdjustmentAgg;
 using btr.distrib.InventoryContext.BrgAgg;
+using btr.distrib.InventoryContext.BrgBarcodeAgg;
 using btr.distrib.InventoryContext.DriverAgg;
 using btr.distrib.InventoryContext.ImportOpnameAgg;
 using btr.distrib.InventoryContext.KartuStokRpt;
@@ -591,6 +592,15 @@ namespace btr.distrib.SharedForm
             if (BringMdiChildToFrontIfLoaded<DriverForm>())
                 return;
             var form = ThisServicesProvider.GetRequiredService<DriverForm>();
+            form.StartPosition = FormStartPosition.CenterScreen;
+            form.MdiParent = this;
+            form.Show();
+        }
+        private void IM5BrgBarcodeButton_Click(object sender, EventArgs e)
+        {
+            if (BringMdiChildToFrontIfLoaded<BrgBarcodeForm>())
+                return;
+            var form = ThisServicesProvider.GetRequiredService<BrgBarcodeForm>();
             form.StartPosition = FormStartPosition.CenterScreen;
             form.MdiParent = this;
             form.Show();
