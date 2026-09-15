@@ -135,6 +135,7 @@
     <Compile Include="BrgContext\BrgBarcodeAgg\CorrectBrgBarcodeCommand.cs" />
     <Compile Include="BrgContext\BrgBarcodeAgg\ActivateBrgBarcodeCommand.cs" />
     <Compile Include="BrgContext\BrgBarcodeAgg\DeactivateBrgBarcodeCommand.cs" />
+    <Compile Include="BrgContext\BrgBarcodeAgg\ProcessBarcodeRegistrationRequestCommand.cs" />
     <Compile Include="BrgContext\BrgBarcodeAgg\GetBrgBarcodeQuery.cs" />
     <Compile Include="BrgContext\BrgBarcodeAgg\GetBrgBarcodeByValueQuery.cs" />
     <Compile Include="BrgContext\BrgBarcodeAgg\ListBrgBarcodeByBrgQuery.cs" />
