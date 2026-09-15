@@ -154,6 +154,7 @@
     <Compile Include="Repository\PackingOrderItemDal.cs" />
     <Compile Include="Repository\SalesPersonDal.cs" />
     <Compile Include="Repository\WilayahDal.cs" />
+    <Compile Include="Service\BarcodeSyncService.cs" />
     <Compile Include="Service\BrgSyncService.cs" />
     <Compile Include="Model\BrgType.cs" />
     <Compile Include="Service\PackingOrderUploadSvc.cs" />
