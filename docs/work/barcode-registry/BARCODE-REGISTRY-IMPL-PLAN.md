@@ -654,7 +654,7 @@ S5.4..S5.10 ─ S5.11
 | ----- | ------ | ---------- | ------ |
 | S1.1 | IMPLEMENTED | 1 | `btr.sql` |
 | S1.2 | IMPLEMENTED | 2 | `btr.domain` |
-| S1.3 | PLANNED | 3 | `btr.application` / `btr.infrastructure` |
+| S1.3 | GO | 3 | `btr.application` / `btr.infrastructure` |
 | S1.4 | PLANNED | 3 | `btr.application` |
 | S1.5 | PLANNED | 2 | `btr.application` |
 | S1.6 | PLANNED | 4 | `btr.application` |

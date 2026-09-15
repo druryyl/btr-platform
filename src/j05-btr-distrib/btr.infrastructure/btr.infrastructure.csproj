@@ -113,6 +113,7 @@
     <Compile Include="BrgContext\BrgAgg\BrgSatuanDal.cs" />
     <Compile Include="BrgContext\BrgAgg\BrgHargaDal.cs" />
     <Compile Include="BrgContext\BrgAgg\BrgStokViewDal.cs" />
+    <Compile Include="BrgContext\BrgBarcodeAgg\BrgBarcodeDal.cs" />
     <Compile Include="BrgContext\KategoriAgg\KategoriDal.cs" />
     <Compile Include="InventoryContext\AdjustmentAgg\AdjustmentDal.cs" />
     <Compile Include="InventoryContext\DriverAgg\DriverDal.cs" />
