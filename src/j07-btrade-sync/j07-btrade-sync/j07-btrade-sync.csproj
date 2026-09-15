@@ -133,6 +133,7 @@
     <Compile Include="KonfigurasiForm.Designer.cs">
       <DependentUpon>KonfigurasiForm.cs</DependentUpon>
     </Compile>
+    <Compile Include="Model\BrgBarcodeType.cs" />
     <Compile Include="Model\CheckInModel.cs" />
     <Compile Include="Model\CustomerLocHistModel.cs" />
     <Compile Include="Model\KategoriType.cs" />
@@ -143,6 +144,7 @@
     <Compile Include="Model\PackingOrderModel.cs" />
     <Compile Include="Model\SalesPersonType.cs" />
     <Compile Include="Model\WilayahType.cs" />
+    <Compile Include="Repository\BrgBarcodeDal.cs" />
     <Compile Include="Repository\CheckInDal.cs" />
     <Compile Include="Repository\KategoriDal.cs" />
     <Compile Include="Repository\OrderDal.cs" />
