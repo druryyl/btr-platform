@@ -119,6 +119,8 @@
     <Compile Include="InventoryContext\ReturJualAgg\ReturJualItemModel.cs" />
     <Compile Include="InventoryContext\ReturJualAgg\ReturJualItemQtyHrgModel.cs" />
     <Compile Include="InventoryContext\ReturJualAgg\ReturJualModel.cs" />
+    <Compile Include="InventoryContext\ReturnOrderAgg\ReturnOrderItemModel.cs" />
+    <Compile Include="InventoryContext\ReturnOrderAgg\ReturnOrderModel.cs" />
     <Compile Include="InventoryContext\StokBalanceAgg\StokBalanceWarehouseModel.cs" />
     <Compile Include="PurchaseContext\InvoiceAgg\IInvoiceKey.cs" />
     <Compile Include="PurchaseContext\InvoiceAgg\InvoiceDiscModel.cs" />
