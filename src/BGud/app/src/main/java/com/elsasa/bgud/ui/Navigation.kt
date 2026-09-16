@@ -21,12 +21,15 @@ import androidx.navigation.navArgument
 import com.elsasa.bgud.database.AppDatabase
 import com.elsasa.bgud.datastore.SessionPreferencesDataSource
 import com.elsasa.bgud.ui.screen.BarcodeRegistryScreen
+import com.elsasa.bgud.ui.screen.EditBarcodeScreen
 import com.elsasa.bgud.ui.screen.HomeScreen
 import com.elsasa.bgud.ui.screen.LoginScreen
 import com.elsasa.bgud.ui.screen.RegisterScreen
 import com.elsasa.bgud.ui.screen.ScanScreen
 import com.elsasa.bgud.viewmodel.BarcodeRegistryViewModel
 import com.elsasa.bgud.viewmodel.BarcodeRegistryViewModelFactory
+import com.elsasa.bgud.viewmodel.EditBarcodeViewModel
+import com.elsasa.bgud.viewmodel.EditBarcodeViewModelFactory
 import com.elsasa.bgud.viewmodel.HomeViewModel
 import com.elsasa.bgud.viewmodel.HomeViewModelFactory
 import com.elsasa.bgud.viewmodel.LoginViewModel
@@ -73,7 +76,11 @@ private const val CLOUD_BASE_URL = ""
  *   └─ Cancel ──▶ back
  *
  * barcode_registry (S5.8, SCR-MOB-005)
- *   └─ Edit Barcode ────────▶ edit?barcodeId={id} (S5.9)
+ *   └─ Edit Barcode ────────▶ edit?barcodeId={id} (S5.9, SCR-MOB-006)
+ *
+ * edit (S5.9, SCR-MOB-006)
+ *   ├─ Save ────▶ local queue ── success message ──▶ back
+ *   └─ Cancel ──▶ back
  * ```
  *
  * Start destination: `login` when no session (no valid JWT) exists,
@@ -189,8 +196,7 @@ fun AppNavigation(
         }
         composable("barcode_registry") {
             // SCR-MOB-005 (S5.8): searchable local cache list. Row action
-            // targets `edit?barcodeId={id}` (§13.2); the edit destination
-            // itself is owned by S5.9 and untouched here.
+            // targets `edit?barcodeId={id}` (§13.2, S5.9).
             val registryFactory = remember {
                 BarcodeRegistryViewModelFactory(database.barcodeDao())
             }
@@ -201,6 +207,36 @@ fun AppNavigation(
                 onEditBarcode = { barcodeId ->
                     navController.navigate("edit?barcodeId=$barcodeId")
                 },
+                onBack = { navController.popBackStack() }
+            )
+        }
+        composable(
+            route = "edit?barcodeId={barcodeId}",
+            arguments = listOf(
+                navArgument("barcodeId") {
+                    type = NavType.StringType
+                    nullable = true
+                    defaultValue = null
+                }
+            )
+        ) { backStackEntry ->
+            // SCR-MOB-006 (S5.9): correction target loaded by the cached
+            // mapping's primary key (§13.2). A missing argument yields the
+            // ViewModel's not-found state — no entry path is invented.
+            val barcodeIdArg = backStackEntry.arguments?.getString("barcodeId").orEmpty()
+            val editFactory = remember(barcodeIdArg) {
+                EditBarcodeViewModelFactory(
+                    database.barcodeDao(),
+                    database.barangDao(),
+                    database.barcodeRegistrationRequestDao(),
+                    session,
+                    barcodeIdArg
+                )
+            }
+            val editViewModel: EditBarcodeViewModel =
+                viewModel(factory = editFactory)
+            EditBarcodeScreen(
+                viewModel = editViewModel,
                 onBack = { navController.popBackStack() }
             )
         }

@@ -21,6 +21,15 @@ interface BarcodeDao {
     @Query("SELECT * FROM barcode_entity WHERE barcodeValueKey = :barcodeValueKey LIMIT 1")
     suspend fun getByKey(barcodeValueKey: String): BarcodeEntity?
 
+    /**
+     * Single-row load backing Edit Barcode (S5.9, SCR-MOB-006, §13.2
+     * `edit?barcodeId={id}`): the registry list (S5.8) navigates by the
+     * cached mapping's primary key. Supporting prerequisite not named in
+     * the §3 impact inventory; required to load the correction target.
+     */
+    @Query("SELECT * FROM barcode_entity WHERE brgBarcodeId = :brgBarcodeId LIMIT 1")
+    suspend fun getById(brgBarcodeId: String): BarcodeEntity?
+
     @Query("SELECT * FROM barcode_entity WHERE brgId = :brgId ORDER BY barcodeValue")
     fun listByBrg(brgId: String): Flow<List<BarcodeEntity>>
 
