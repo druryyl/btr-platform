@@ -1,6 +1,7 @@
 package com.elsasa.bgud.ui
 
 import android.net.ConnectivityManager
+import android.net.Uri
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.CircularProgressIndicator
@@ -19,10 +20,13 @@ import com.elsasa.bgud.database.AppDatabase
 import com.elsasa.bgud.datastore.SessionPreferencesDataSource
 import com.elsasa.bgud.ui.screen.HomeScreen
 import com.elsasa.bgud.ui.screen.LoginScreen
+import com.elsasa.bgud.ui.screen.ScanScreen
 import com.elsasa.bgud.viewmodel.HomeViewModel
 import com.elsasa.bgud.viewmodel.HomeViewModelFactory
 import com.elsasa.bgud.viewmodel.LoginViewModel
 import com.elsasa.bgud.viewmodel.LoginViewModelFactory
+import com.elsasa.bgud.viewmodel.ScanViewModel
+import com.elsasa.bgud.viewmodel.ScanViewModelFactory
 
 /**
  * Cloud API base URL (transport unresolved, C-3/R-03).
@@ -42,14 +46,23 @@ private const val CLOUD_BASE_URL = ""
  * login
  *   ├─ success ──▶ office resolution ──▶ master data synchronization ──▶ home
  *   └─ failure ──▶ login (error)
+ *
+ * home
+ *   ├─ Scan Barcode ────────▶ scan
+ *   └─ … (remaining destinations owned by S5.7..S5.11)
+ *
+ * scan
+ *   ├─ found ───────────────▶ scan (result region) ── Close ──▶ back
+ *   ├─ not found + Register ─▶ register?barcode={value} (S5.7)
+ *   └─ not found + Cancel ───▶ scan (re-armed Scanning)
  * ```
  *
  * Start destination: `login` when no session (no valid JWT) exists,
  * otherwise `home` (IR-M8: no valid JWT → all operational commands
  * blocked). The session gate re-reads the DataStore token, so a warehouse
  * change (which requires re-authentication, IR-09) returns here via logout
- * (S5.11). Remaining destinations (scan, register, registry, edit,
- * synchronization, settings) are owned by S5.6..S5.11; the home quick
+ * (S5.11). Remaining destinations (register, barcode_registry, edit,
+ * synchronization, settings) are owned by S5.7..S5.11; the home quick
  * actions and navigation rows target their §13.2 routes.
  */
 @Composable
@@ -110,6 +123,24 @@ fun AppNavigation(
                 onOpenBarcodeRegistry = { navController.navigate("barcode_registry") },
                 onOpenSynchronization = { navController.navigate("synchronization") },
                 onOpenSettings = { navController.navigate("settings") }
+            )
+        }
+        composable("scan") {
+            val scanFactory = remember {
+                ScanViewModelFactory(database.barcodeDao())
+            }
+            val scanViewModel: ScanViewModel = viewModel(factory = scanFactory)
+            ScanScreen(
+                viewModel = scanViewModel,
+                onClose = { navController.popBackStack() },
+                onRegisterBarcode = { barcodeValue ->
+                    // §13.2: not found + Register ─▶ register?barcode={value}.
+                    // The register destination (with its optional barcode
+                    // argument) is owned by S5.7; only the documented route
+                    // string is wired here, mirroring the S5.5 precedent for
+                    // not-yet-existing destinations.
+                    navController.navigate("register?barcode=${Uri.encode(barcodeValue)}")
+                }
             )
         }
     }
