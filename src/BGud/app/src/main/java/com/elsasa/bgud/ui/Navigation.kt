@@ -1,9 +1,9 @@
 package com.elsasa.bgud.ui
 
+import android.net.ConnectivityManager
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -17,7 +17,10 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import com.elsasa.bgud.database.AppDatabase
 import com.elsasa.bgud.datastore.SessionPreferencesDataSource
+import com.elsasa.bgud.ui.screen.HomeScreen
 import com.elsasa.bgud.ui.screen.LoginScreen
+import com.elsasa.bgud.viewmodel.HomeViewModel
+import com.elsasa.bgud.viewmodel.HomeViewModelFactory
 import com.elsasa.bgud.viewmodel.LoginViewModel
 import com.elsasa.bgud.viewmodel.LoginViewModelFactory
 
@@ -45,8 +48,9 @@ private const val CLOUD_BASE_URL = ""
  * otherwise `home` (IR-M8: no valid JWT → all operational commands
  * blocked). The session gate re-reads the DataStore token, so a warehouse
  * change (which requires re-authentication, IR-09) returns here via logout
- * (S5.11). Remaining destinations (home content, scan, register, registry,
- * edit, synchronization, settings) are owned by S5.5..S5.11.
+ * (S5.11). Remaining destinations (scan, register, registry, edit,
+ * synchronization, settings) are owned by S5.6..S5.11; the home quick
+ * actions and navigation rows target their §13.2 routes.
  */
 @Composable
 fun AppNavigation(
@@ -87,17 +91,26 @@ fun AppNavigation(
             )
         }
         composable("home") {
-            PlaceholderScreen("Home (S5.5)")
+            val homeFactory = remember {
+                val connectivityManager = context.getSystemService(
+                    ConnectivityManager::class.java
+                )
+                HomeViewModelFactory(
+                    session,
+                    database.barcodeRegistrationRequestDao(),
+                    connectivityManager
+                )
+            }
+            val homeViewModel: HomeViewModel = viewModel(factory = homeFactory)
+            HomeScreen(
+                viewModel = homeViewModel,
+                onScanBarcode = { navController.navigate("scan") },
+                onSearchBarcode = { navController.navigate("barcode_registry") },
+                onRegisterBarcode = { navController.navigate("register") },
+                onOpenBarcodeRegistry = { navController.navigate("barcode_registry") },
+                onOpenSynchronization = { navController.navigate("synchronization") },
+                onOpenSettings = { navController.navigate("settings") }
+            )
         }
-    }
-}
-
-@Composable
-private fun PlaceholderScreen(label: String) {
-    Box(
-        modifier = Modifier.fillMaxSize(),
-        contentAlignment = Alignment.Center
-    ) {
-        Text(text = label)
     }
 }
