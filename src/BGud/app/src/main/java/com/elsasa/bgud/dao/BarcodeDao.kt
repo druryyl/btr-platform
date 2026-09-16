@@ -27,6 +27,21 @@ interface BarcodeDao {
     @Query("SELECT * FROM barcode_entity ORDER BY brgName, barcodeValue LIMIT :limit OFFSET :offset")
     suspend fun paged(limit: Int, offset: Int): List<BarcodeEntity>
 
+    /**
+     * Registry list search backing SCR-MOB-005 (S5.8, §12.7, §20): by
+     * Barcode, Item Code, or Item Name against the local Active cache
+     * only — no network. Supporting prerequisite not named in the §3
+     * impact inventory; required for the searchable list.
+     */
+    @Query(
+        "SELECT * FROM barcode_entity " +
+            "WHERE barcodeValue LIKE '%' || :query || '%' " +
+            "OR brgCode LIKE '%' || :query || '%' " +
+            "OR brgName LIKE '%' || :query || '%' " +
+            "ORDER BY brgName, barcodeValue LIMIT :limit OFFSET :offset"
+    )
+    suspend fun search(query: String, limit: Int, offset: Int): List<BarcodeEntity>
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun upsert(barcode: BarcodeEntity)
 

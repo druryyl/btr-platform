@@ -20,10 +20,13 @@ import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import com.elsasa.bgud.database.AppDatabase
 import com.elsasa.bgud.datastore.SessionPreferencesDataSource
+import com.elsasa.bgud.ui.screen.BarcodeRegistryScreen
 import com.elsasa.bgud.ui.screen.HomeScreen
 import com.elsasa.bgud.ui.screen.LoginScreen
 import com.elsasa.bgud.ui.screen.RegisterScreen
 import com.elsasa.bgud.ui.screen.ScanScreen
+import com.elsasa.bgud.viewmodel.BarcodeRegistryViewModel
+import com.elsasa.bgud.viewmodel.BarcodeRegistryViewModelFactory
 import com.elsasa.bgud.viewmodel.HomeViewModel
 import com.elsasa.bgud.viewmodel.HomeViewModelFactory
 import com.elsasa.bgud.viewmodel.LoginViewModel
@@ -68,6 +71,9 @@ private const val CLOUD_BASE_URL = ""
  * register
  *   ├─ Save ────▶ local queue ── success message ──▶ back
  *   └─ Cancel ──▶ back
+ *
+ * barcode_registry (S5.8, SCR-MOB-005)
+ *   └─ Edit Barcode ────────▶ edit?barcodeId={id} (S5.9)
  * ```
  *
  * Start destination: `login` when no session (no valid JWT) exists,
@@ -178,6 +184,23 @@ fun AppNavigation(
                 viewModel(factory = registerFactory)
             RegisterScreen(
                 viewModel = registerViewModel,
+                onBack = { navController.popBackStack() }
+            )
+        }
+        composable("barcode_registry") {
+            // SCR-MOB-005 (S5.8): searchable local cache list. Row action
+            // targets `edit?barcodeId={id}` (§13.2); the edit destination
+            // itself is owned by S5.9 and untouched here.
+            val registryFactory = remember {
+                BarcodeRegistryViewModelFactory(database.barcodeDao())
+            }
+            val registryViewModel: BarcodeRegistryViewModel =
+                viewModel(factory = registryFactory)
+            BarcodeRegistryScreen(
+                viewModel = registryViewModel,
+                onEditBarcode = { barcodeId ->
+                    navController.navigate("edit?barcodeId=$barcodeId")
+                },
                 onBack = { navController.popBackStack() }
             )
         }
