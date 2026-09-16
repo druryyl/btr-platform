@@ -61,6 +61,7 @@
     <Folder Include="SalesContext" />
     <Folder Include="LocationContext" />
     <Folder Include="WarehouseContext" />
+    <Folder Include="ReturnOrderContext" />
   </ItemGroup>
   <ItemGroup>
     <Build Include="BarcodeContext\BTRADE_BrgBarcode.sql" />
@@ -80,8 +81,11 @@
     <Build Include="WarehouseContext\BTRADE_PackingOrder.sql" />
     <Build Include="WarehouseContext\BTRADE_PackingOrderItem.sql" />
     <Build Include="WarehouseContext\BTRADE_PackingOrderDepo.sql" />
+    <Build Include="ReturnOrderContext\BTRADE_ReturnOrder.sql" />
+    <Build Include="ReturnOrderContext\BTRADE_ReturnOrderItem.sql" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Scripts\Upgrade_Barcode_Registry.sql" />
+    <None Include="Scripts\Create_BTRADE_ReturnOrder.sql" />
   </ItemGroup>
 </Project>
