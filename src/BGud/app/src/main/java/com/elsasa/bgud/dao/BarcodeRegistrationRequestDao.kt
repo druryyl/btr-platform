@@ -25,6 +25,12 @@ interface BarcodeRegistrationRequestDao {
     @Query("SELECT COUNT(*) FROM barcode_registration_request_entity WHERE status = 'PENDING'")
     fun pendingCount(): Flow<Int>
 
+    @Query("SELECT COUNT(*) FROM barcode_registration_request_entity WHERE status = 'SYNCED'")
+    fun syncedCount(): Flow<Int>
+
+    @Query("SELECT COUNT(*) FROM barcode_registration_request_entity WHERE status = 'REJECTED'")
+    fun rejectedCount(): Flow<Int>
+
     @Insert(onConflict = OnConflictStrategy.ABORT)
     suspend fun enqueue(request: BarcodeRegistrationRequestEntity)
 

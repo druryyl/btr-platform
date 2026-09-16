@@ -26,6 +26,7 @@ import com.elsasa.bgud.ui.screen.HomeScreen
 import com.elsasa.bgud.ui.screen.LoginScreen
 import com.elsasa.bgud.ui.screen.RegisterScreen
 import com.elsasa.bgud.ui.screen.ScanScreen
+import com.elsasa.bgud.ui.screen.SynchronizationScreen
 import com.elsasa.bgud.viewmodel.BarcodeRegistryViewModel
 import com.elsasa.bgud.viewmodel.BarcodeRegistryViewModelFactory
 import com.elsasa.bgud.viewmodel.EditBarcodeViewModel
@@ -38,6 +39,8 @@ import com.elsasa.bgud.viewmodel.RegisterBarcodeViewModel
 import com.elsasa.bgud.viewmodel.RegisterBarcodeViewModelFactory
 import com.elsasa.bgud.viewmodel.ScanViewModel
 import com.elsasa.bgud.viewmodel.ScanViewModelFactory
+import com.elsasa.bgud.viewmodel.SynchronizationViewModel
+import com.elsasa.bgud.viewmodel.SynchronizationViewModelFactory
 
 /**
  * Cloud API base URL (transport unresolved, C-3/R-03).
@@ -81,15 +84,17 @@ private const val CLOUD_BASE_URL = ""
  * edit (S5.9, SCR-MOB-006)
  *   ├─ Save ────▶ local queue ── success message ──▶ back
  *   └─ Cancel ──▶ back
+ *
+ * synchronization (S5.10, SCR-MOB-007)
+ *   └─ Sync Now ──▶ sync worker ──▶ synchronization (refreshed)
  * ```
  *
  * Start destination: `login` when no session (no valid JWT) exists,
  * otherwise `home` (IR-M8: no valid JWT → all operational commands
  * blocked). The session gate re-reads the DataStore token, so a warehouse
  * change (which requires re-authentication, IR-09) returns here via logout
- * (S5.11). Remaining destinations (barcode_registry, edit,
- * synchronization, settings) are owned by S5.8..S5.11; the home quick
- * actions and navigation rows target their §13.2 routes.
+ * (S5.11). The `settings` destination is owned by S5.11; the home
+ * navigation row targets its §13.2 route.
  */
 @Composable
 fun AppNavigation(
@@ -237,6 +242,28 @@ fun AppNavigation(
                 viewModel(factory = editFactory)
             EditBarcodeScreen(
                 viewModel = editViewModel,
+                onBack = { navController.popBackStack() }
+            )
+        }
+        composable("synchronization") {
+            // SCR-MOB-007 (S5.10): sync state display + Sync Now trigger
+            // (§12.9, §14.5). Closes the S5.5 INFO-002 forward reference for
+            // this route; `settings` remains owned by S5.11.
+            val syncFactory = remember {
+                val connectivityManager = context.getSystemService(
+                    ConnectivityManager::class.java
+                )
+                SynchronizationViewModelFactory(
+                    session,
+                    database.barcodeRegistrationRequestDao(),
+                    connectivityManager,
+                    CLOUD_BASE_URL
+                )
+            }
+            val syncViewModel: SynchronizationViewModel =
+                viewModel(factory = syncFactory)
+            SynchronizationScreen(
+                viewModel = syncViewModel,
                 onBack = { navController.popBackStack() }
             )
         }
