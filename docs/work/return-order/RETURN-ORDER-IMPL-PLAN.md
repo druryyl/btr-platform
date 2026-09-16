@@ -718,7 +718,7 @@ Lifecycle: `PLANNED → IN IMPLEMENTATION → IMPLEMENTED → IN REVIEW → GO`
 
 | Slice | Status | Complexity | System |
 | ----- | ------ | ---------- | ------ |
-| S1.1 | PLANNED | 2 | `btr.sql` |
+| S1.1 | GO | 2 | `btr.sql` |
 | S1.2 | PLANNED | 2 | `btr.domain` |
 | S1.3 | PLANNED | 3 | `btr.application` / `btr.infrastructure` |
 | S1.4 | PLANNED | 3 | `btr.application` |
@@ -755,11 +755,15 @@ Lifecycle: `PLANNED → IN IMPLEMENTATION → IMPLEMENTED → IN REVIEW → GO`
 
 ### 8.1 Implementation History
 
-Populated during execution (per slice: start/end dates, implementer notes).
+| Slice | Start | End | Implementer Notes |
+| ----- | ----- | --- | ----------------- |
+| S1.1 | 2026-09-17 | 2026-09-17 | Created `BTR_ReturnOrder.sql` + `BTR_ReturnOrderItem.sql` verbatim per Arch §6.1 (no FK, IR-RO-11); registered both in `btr.sql.sqlproj`; added idempotent re-runnable upgrade script `btr.sql/Scripts/Create_BTR_ReturnOrder.sql` (`IF OBJECT_ID(...) IS NULL` guards for tables, `sys.indexes` guards for indexes). Verification: SSDT build of `btr.sql.sqlproj` succeeds (dacpac generated); upgrade script executed twice against a throwaway LocalDB database with no errors (idempotent); columns/PKs/indexes/defaults confirmed against §6.1 via `sys.columns` / `sys.indexes` / `sys.default_constraints`; zero foreign keys on both tables. No `ReturJual` object touched (INV-14). |
 
 ### 8.2 Review History
 
-Populated during review (per slice: date, result, findings, remediation).
+| Slice | Date | Result | Findings | Remediation |
+| ----- | ---- | ------ | -------- | ----------- |
+| S1.1 | 2026-09-17 | GO | None blocking. **INFO-001:** no automated test project targets `btr.sql` (SSDT project); build integrity was verified by `MSBuild /t:Build` → `btr.sql.dacpac` generated with 0 errors, and the upgrade script was executed twice against a throwaway LocalDB database (both runs exit 0, re-runnable), with schema confirmed via `sys.columns` / `sys.indexes` / `sys.default_constraints`. **INFO-002:** the DDL is intentionally duplicated between the SSDT table files (`Tables/InventoryContext/`) and the idempotent upgrade script, mirroring the accepted Barcode Registry S1.1 convention (Arch §10.1); the table files are the source of truth and the script header cross-references them. | None required. |
 
 ### 8.3 Remediation History
 

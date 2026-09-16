@@ -123,6 +123,8 @@
     <Build Include="Tables\InventoryContext\BTR_ReturJualItem.sql" />
     <Build Include="Tables\InventoryContext\BTR_ReturJualItemQtyHrg.sql" />
     <Build Include="Tables\InventoryContext\BTR_ReturJualItemDisc.sql" />
+    <Build Include="Tables\InventoryContext\BTR_ReturnOrder.sql" />
+    <Build Include="Tables\InventoryContext\BTR_ReturnOrderItem.sql" />
     <Build Include="Tables\InventoryContext\BTR_StokOp.sql" />
     <Build Include="Tables\Finance\BTR_Tagihan.sql" />
     <Build Include="Tables\Finance\BTR_TagihanFaktur.sql" />
@@ -267,5 +269,6 @@
     <None Include="Scripts\Create_BTR_SalesPersonSupplier.sql" />
     <None Include="Scripts\Create_BTR_SalesPersonPrincipalTarget.sql" />
     <None Include="Scripts\Upgrade_Barcode_Registry.sql" />
+    <None Include="Scripts\Create_BTR_ReturnOrder.sql" />
   </ItemGroup>
 </Project>
