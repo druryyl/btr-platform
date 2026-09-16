@@ -225,6 +225,8 @@
     <Compile Include="InventoryContext\ReturJualAgg\Workers\FindHrgReturJualWorker.cs" />
     <Compile Include="InventoryContext\ReturJualAgg\Workers\ReturJualBuilder.cs" />
     <Compile Include="InventoryContext\ReturJualAgg\Workers\ReturJualWriter.cs" />
+    <Compile Include="InventoryContext\ReturnOrderAgg\Contracts\IReturnOrderDal.cs" />
+    <Compile Include="InventoryContext\ReturnOrderAgg\Contracts\IReturnOrderItemDal.cs" />
     <Compile Include="InventoryContext\StokAgg\GenStokUseCase\AddStokWorker.cs" />
     <Compile Include="InventoryContext\StokAgg\GenStokUseCase\GenStokAdjustmentWorker.cs" />
     <Compile Include="InventoryContext\StokAgg\GenStokUseCase\GenStokBalanceWorker.cs" />

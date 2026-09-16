@@ -143,6 +143,8 @@
     <Compile Include="InventoryContext\ReturJualAgg\ReturJualItemQtyHrgDal.cs" />
     <Compile Include="InventoryContext\ReturJualRpt\ReturJualBrgViewDal.cs" />
     <Compile Include="InventoryContext\ReturJualRpt\ReturJualViewDal.cs" />
+    <Compile Include="InventoryContext\ReturnOrderAgg\ReturnOrderDal.cs" />
+    <Compile Include="InventoryContext\ReturnOrderAgg\ReturnOrderItemDal.cs" />
     <Compile Include="InventoryContext\StokAgg\StokDal.cs" />
     <Compile Include="InventoryContext\StokAgg\StokMutasiDal.cs" />
     <Compile Include="InventoryContext\StokBalanceAgg\StokBalanceHealthDal.cs" />
