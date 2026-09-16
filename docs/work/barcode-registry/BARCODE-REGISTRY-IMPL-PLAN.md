@@ -771,7 +771,7 @@ S5.4..S5.10 ─ S5.11
 | S4.5 | GO | 3 | `j07-btrade-sync` |
 | S4.6 | PLANNED | 4 | `j07-btrade-sync` |
 | S5.1 | GO | 5 | BGud |
-| S5.2 | PLANNED | 3 | BGud |
+| S5.2 | GO | 3 | BGud |
 | S5.3 | PLANNED | 5 | BGud |
 | S5.4 | PLANNED | 3 | BGud |
 | S5.5 | PLANNED | 2 | BGud |
@@ -802,6 +802,7 @@ Lifecycle: `PLANNED → IN IMPLEMENTATION → IMPLEMENTED → IN REVIEW → GO` 
 | S4.4 | 2026-09-16 | GO | **Revalidation (post-S3.8).** INFO-001 (no JWT on I-08) **remains and is reclassified** from INFO to MAJOR / release-blocking, because with the validator fixed it is the only remaining barrier to functional authenticated Barcode Registry integration (`UserSyncService.cs:38-42`). Not introduced by S4.4; recorded as AUTH-GAP-001 rather than reopening this slice. INFO-002 unchanged. | Cross-cutting: AUTH-GAP-001. |
 | S4.5 | 2026-09-16 | GO | **Revalidation (post-S3.8).** Run ordering (`user projection → registration relay → barcode publish`) remains correct and failures still surface without advancing watermark/ack; however the run cannot complete end-to-end while AUTH-GAP-001 is open. INFO-003 (no automated test project for `j07-btrade-sync`) unchanged. | Cross-cutting: AUTH-GAP-001. |
 | S5.1 | 2026-09-16 | GO | None blocking. **INFO-001:** `barang_entity` carries `brgCode` / `brgName` / `isAktif` / `satKecil` / `satBesar` although Architecture §6.4 names only its key (`brgId`); the fields mirror the shared `Brg` reference shape (ADR-005, `BTrade3` `Barang`) as a direct prerequisite for cached-Active validation (BQ-7) and Item Code/Name/Unit display, with full sync mapping deferred to S5.3. No business or architecture decision introduced. **INFO-002:** no automated test project targets `BGud`; verification was by `assembleDebug` → `app-debug.apk` (mandated TQ-7 stack resolves and compiles; Room KSP + DataStore included). `local.properties` (SDK path) is gitignored and untracked. | None required. Scope: Retrofit/OkHttp/Gson + CameraX/ML Kit/WorkManager are declared as dependencies only; the API client (S5.2), sync worker (S5.3), and screens (S5.4..S5.11) are untouched — `ui/Navigation.kt` is a documented placeholder. |
+| S5.2 | 2026-09-16 | GO | None blocking. **INFO-001:** `serverId` appears as a receive-only field on `LoginResult` / `BarcodeDto` / `BrgDto`; permitted use per §8.4 (display + legacy I-06 read route only, ADR-007 §8) — no request body, query, or header carries `ServerId` as a command input, and neither DataStore nor Room stores it. **INFO-002:** no automated test project targets `BGud` (same as S5.1 INFO-002); verification was by `:app:assembleDebug` → `BUILD SUCCESSFUL` with the new `network/` + `model/api/` classes present in the debug output. Envelope shape (`status`/`code`/`data`) verified by reflection against the referenced `Nuna.Lib` assembly; payload fields verified against the S3.7 controllers and use-case records. | None required. Scope: 5 new files only (`model/api/ApiModels.kt`, `network/BtradeApiService.kt`, `network/AuthInterceptor.kt`, `network/ApiClient.kt`, `datastore/SessionBinding.kt`); no existing file modified except the tracker; sync worker/repository (S5.3) and screens (S5.4..S5.11) untouched. |
 
 ### 8.2 Verification Tracker
 
