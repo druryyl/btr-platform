@@ -26,6 +26,7 @@ import com.elsasa.bgud.ui.screen.HomeScreen
 import com.elsasa.bgud.ui.screen.LoginScreen
 import com.elsasa.bgud.ui.screen.RegisterScreen
 import com.elsasa.bgud.ui.screen.ScanScreen
+import com.elsasa.bgud.ui.screen.SettingsScreen
 import com.elsasa.bgud.ui.screen.SynchronizationScreen
 import com.elsasa.bgud.viewmodel.BarcodeRegistryViewModel
 import com.elsasa.bgud.viewmodel.BarcodeRegistryViewModelFactory
@@ -39,6 +40,8 @@ import com.elsasa.bgud.viewmodel.RegisterBarcodeViewModel
 import com.elsasa.bgud.viewmodel.RegisterBarcodeViewModelFactory
 import com.elsasa.bgud.viewmodel.ScanViewModel
 import com.elsasa.bgud.viewmodel.ScanViewModelFactory
+import com.elsasa.bgud.viewmodel.SettingsViewModel
+import com.elsasa.bgud.viewmodel.SettingsViewModelFactory
 import com.elsasa.bgud.viewmodel.SynchronizationViewModel
 import com.elsasa.bgud.viewmodel.SynchronizationViewModelFactory
 
@@ -87,14 +90,21 @@ private const val CLOUD_BASE_URL = ""
  *
  * synchronization (S5.10, SCR-MOB-007)
  *   └─ Sync Now ──▶ sync worker ──▶ synchronization (refreshed)
+ *
+ * settings (S5.11, SCR-MOB-008)
+ *   ├─ Logout ──▶ session cleared ──▶ login
+ *   └─ Kembali ──▶ back
  * ```
  *
  * Start destination: `login` when no session (no valid JWT) exists,
  * otherwise `home` (IR-M8: no valid JWT → all operational commands
  * blocked). The session gate re-reads the DataStore token, so a warehouse
- * change (which requires re-authentication, IR-09) returns here via logout
- * (S5.11). The `settings` destination is owned by S5.11; the home
- * navigation row targets its §13.2 route.
+ * change (which requires re-authentication, IR-09) returns here via
+ * logout (S5.11, SCR-MOB-008): `Logout` clears the session and navigates
+ * to `login` with the back stack cleared. All §13.2 routes
+ * (`login`, `home`, `scan`, `register?barcode={value}`,
+ * `barcode_registry`, `edit?barcodeId={id}`, `synchronization`,
+ * `settings`) are wired; no forward references remain.
  */
 @Composable
 fun AppNavigation(
@@ -248,7 +258,7 @@ fun AppNavigation(
         composable("synchronization") {
             // SCR-MOB-007 (S5.10): sync state display + Sync Now trigger
             // (§12.9, §14.5). Closes the S5.5 INFO-002 forward reference for
-            // this route; `settings` remains owned by S5.11.
+            // this route; `settings` is owned by S5.11 (SCR-MOB-008).
             val syncFactory = remember {
                 val connectivityManager = context.getSystemService(
                     ConnectivityManager::class.java
@@ -264,6 +274,28 @@ fun AppNavigation(
                 viewModel(factory = syncFactory)
             SynchronizationScreen(
                 viewModel = syncViewModel,
+                onBack = { navController.popBackStack() }
+            )
+        }
+        composable("settings") {
+            // SCR-MOB-008 (S5.11): settings surface + finalized §13.2
+            // wiring. Closes the S5.5 INFO-002 forward reference for this
+            // route — all §13.2 destinations now exist. Logout clears the
+            // DataStore session so the start-destination gate returns to
+            // `login` (IR-M8, IR-09); warehouse change is logout +
+            // re-authentication.
+            val settingsFactory = remember {
+                SettingsViewModelFactory(session)
+            }
+            val settingsViewModel: SettingsViewModel =
+                viewModel(factory = settingsFactory)
+            SettingsScreen(
+                viewModel = settingsViewModel,
+                onLoggedOut = {
+                    navController.navigate("login") {
+                        popUpTo("home") { inclusive = true }
+                    }
+                },
                 onBack = { navController.popBackStack() }
             )
         }
