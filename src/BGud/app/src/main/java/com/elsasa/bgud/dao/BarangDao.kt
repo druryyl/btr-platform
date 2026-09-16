@@ -19,6 +19,18 @@ interface BarangDao {
     @Query("SELECT * FROM barang_entity WHERE brgId = :brgId LIMIT 1")
     suspend fun getById(brgId: String): BarangEntity?
 
+    /**
+     * Item search backing registration capture (S5.7, §12.6): by Item Code
+     * or Item Name against the local Barang cache only — no network.
+     */
+    @Query(
+        "SELECT * FROM barang_entity " +
+            "WHERE brgCode LIKE '%' || :query || '%' " +
+            "OR brgName LIKE '%' || :query || '%' " +
+            "ORDER BY brgName LIMIT 50"
+    )
+    suspend fun search(query: String): List<BarangEntity>
+
     @Query("SELECT * FROM barang_entity ORDER BY brgName")
     fun getAll(): Flow<List<BarangEntity>>
 

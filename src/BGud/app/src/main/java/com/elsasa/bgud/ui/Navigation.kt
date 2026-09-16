@@ -14,17 +14,22 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.navArgument
 import com.elsasa.bgud.database.AppDatabase
 import com.elsasa.bgud.datastore.SessionPreferencesDataSource
 import com.elsasa.bgud.ui.screen.HomeScreen
 import com.elsasa.bgud.ui.screen.LoginScreen
+import com.elsasa.bgud.ui.screen.RegisterScreen
 import com.elsasa.bgud.ui.screen.ScanScreen
 import com.elsasa.bgud.viewmodel.HomeViewModel
 import com.elsasa.bgud.viewmodel.HomeViewModelFactory
 import com.elsasa.bgud.viewmodel.LoginViewModel
 import com.elsasa.bgud.viewmodel.LoginViewModelFactory
+import com.elsasa.bgud.viewmodel.RegisterBarcodeViewModel
+import com.elsasa.bgud.viewmodel.RegisterBarcodeViewModelFactory
 import com.elsasa.bgud.viewmodel.ScanViewModel
 import com.elsasa.bgud.viewmodel.ScanViewModelFactory
 
@@ -49,20 +54,28 @@ private const val CLOUD_BASE_URL = ""
  *
  * home
  *   ├─ Scan Barcode ────────▶ scan
- *   └─ … (remaining destinations owned by S5.7..S5.11)
+ *   ├─ Search Barcode ──────▶ barcode_registry (S5.8)
+ *   ├─ Register Barcode ────▶ register (barcode argument optional)
+ *   ├─ Barcode Registry ────▶ barcode_registry (S5.8)
+ *   ├─ Synchronization ─────▶ synchronization (S5.10)
+ *   └─ Settings ────────────▶ settings (S5.11)
  *
  * scan
  *   ├─ found ───────────────▶ scan (result region) ── Close ──▶ back
  *   ├─ not found + Register ─▶ register?barcode={value} (S5.7)
  *   └─ not found + Cancel ───▶ scan (re-armed Scanning)
+ *
+ * register
+ *   ├─ Save ────▶ local queue ── success message ──▶ back
+ *   └─ Cancel ──▶ back
  * ```
  *
  * Start destination: `login` when no session (no valid JWT) exists,
  * otherwise `home` (IR-M8: no valid JWT → all operational commands
  * blocked). The session gate re-reads the DataStore token, so a warehouse
  * change (which requires re-authentication, IR-09) returns here via logout
- * (S5.11). Remaining destinations (register, barcode_registry, edit,
- * synchronization, settings) are owned by S5.7..S5.11; the home quick
+ * (S5.11). Remaining destinations (barcode_registry, edit,
+ * synchronization, settings) are owned by S5.8..S5.11; the home quick
  * actions and navigation rows target their §13.2 routes.
  */
 @Composable
@@ -135,12 +148,37 @@ fun AppNavigation(
                 onClose = { navController.popBackStack() },
                 onRegisterBarcode = { barcodeValue ->
                     // §13.2: not found + Register ─▶ register?barcode={value}.
-                    // The register destination (with its optional barcode
-                    // argument) is owned by S5.7; only the documented route
-                    // string is wired here, mirroring the S5.5 precedent for
-                    // not-yet-existing destinations.
                     navController.navigate("register?barcode=${Uri.encode(barcodeValue)}")
                 }
+            )
+        }
+        composable(
+            route = "register?barcode={barcode}",
+            arguments = listOf(
+                navArgument("barcode") {
+                    type = NavType.StringType
+                    nullable = true
+                    defaultValue = null
+                }
+            )
+        ) { backStackEntry ->
+            // SCR-MOB-004 (S5.7): the barcode argument is optional — the
+            // scan Not Found flow passes it, the home quick action does not.
+            val barcodeArg = backStackEntry.arguments?.getString("barcode").orEmpty()
+            val registerFactory = remember(barcodeArg) {
+                RegisterBarcodeViewModelFactory(
+                    database.barcodeDao(),
+                    database.barangDao(),
+                    database.barcodeRegistrationRequestDao(),
+                    session,
+                    barcodeArg
+                )
+            }
+            val registerViewModel: RegisterBarcodeViewModel =
+                viewModel(factory = registerFactory)
+            RegisterScreen(
+                viewModel = registerViewModel,
+                onBack = { navController.popBackStack() }
             )
         }
     }
