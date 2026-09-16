@@ -1,0 +1,768 @@
+# IMPLEMENTATION PLAN
+
+# Return Order
+
+| Field | Value |
+| ----- | ----- |
+| Deliverable | `RETURN-ORDER-IMPL-PLAN.md` |
+| Location | `docs/work/return-order/RETURN-ORDER-IMPL-PLAN.md` |
+| Method | `docs/skills/planning-skill.md` (Mode A — Architecture-Driven Planning) |
+| Planning Authority | `docs/work/return-order/RETURN-ORDER-ARCHITECTURE.md` |
+| Inputs | `RETURN-ORDER-FEASIBILITY-ASSESSMENT.md` (GAP/ADR source), `RETURN-ORDER-DOMAIN.md` (business reference) |
+| Implementation target | `src/BGud` (primary; Phase P4). Mandatory supporting changes in `src/j05-btr-distrib` (P1), `src/j06-pkl-btrade-api` (P2), `src/j07-btrade-sync` (P3) per the approved architecture |
+| Author role | Planner (Planning only) |
+| Status | **DRAFT** |
+
+> This document is a planning artifact. It translates the approved architecture
+> into implementation phases and slices. It does not implement, review,
+> redesign, or create business or architecture decisions. The architecture
+> (`RETURN-ORDER-ARCHITECTURE.md`) is authoritative: all gaps, ADRs
+> (ADR-RO-001 … ADR-RO-008), principles (P-01 … P-13), invariants
+> (INV-01 … INV-14), and interpretation-register selections (IR-RO-01 …
+> IR-RO-11) are consumed as given and are not re-decided here.
+
+---
+
+## 1. Planning Authority
+
+```text
+ARCHITECTURE
+```
+
+Reference: `docs/work/return-order/RETURN-ORDER-ARCHITECTURE.md`
+
+The architecture is authoritative. This plan does not reinterpret any
+architecture decision, invariant, or interpretation-register selection. The
+architecture settled the feasibility's non-blocking realization items
+(INFO-001/INFO-002, C-1…C-6) as technical selections IR-RO-01 … IR-RO-11;
+this plan consumes those selections directly. Where the architecture records
+confirmations (§24), they are carried as pre-implementation confirmations
+(§4), not resolved here.
+
+---
+
+## 2. Scope Summary
+
+Realize the Return Order business capability as architected: a warehouse
+operational document recorded offline in BGud, relayed through Cloud staging,
+downloaded by `j07-btrade-sync`, and imported into the Main Office, where it
+becomes the authoritative source document for Sales Return generation.
+
+1. **Main Office (`src/j05-btr-distrib`)** — the authoritative `ReturnOrder`
+   aggregate and tables `BTR_ReturnOrder` / `BTR_ReturnOrderItem` (distinct
+   from `ReturJual`), lifecycle `Synced → Imported` (IR-RO-09), ULID identity
+   `ReturnOrderId` vs business number `ReturnOrderNo` (IR-RO-01, IR-RO-07),
+   `ImportReturnOrderCommand`, `CompleteReturnOrderCommand`,
+   `GenerateSalesReturnFromReturnOrderCommand`, and the single Desktop
+   "Generate Return Order" surface (`Retur Penjualan → Generate Return Order`).
+2. **Cloud (`src/j06-pkl-btrade-api`)** — the `ReturnOrder` staging relay
+   (idempotent submit, incremental download + acknowledgement, IR-RO-08),
+   the `BTRADE_Driver` projection, and the centralized `BTR_WarehouseMapping`
+   (`WarehouseCode` → `ServerId`, resolved at login, IR-RO-04). Never an
+   authority (P-02).
+3. **`src/j07-btrade-sync`** — the incremental download service staging Return
+   Orders into the Main Office, the in-process `ImportReturnOrderCommand`
+   dispatch via `MainOfficeCommandExecutor`, and the `DriverSyncService`
+   projection uploader (IR-RO-06).
+4. **BGud (`src/BGud`, primary target)** — offline create/update/delete/search/
+   synchronize on the existing Room + Retrofit + WorkManager stack, reusing
+   Barang/Barcode item identification and Customer/SalesPerson/Driver reference
+   caches; device lifecycle `Draft → Synced` only (ADR-RO-006).
+
+Out of scope (by architecture decision, not repeated as slices): inventory
+update/valuation, customer balance, credit notes, accounting, approval/
+rejection workflow, principal claim, disposal, settlement, invoice-level
+tracking (DOMAIN §15); pricing/inventory/finance (stay in `ReturJual`,
+ADR-RO-007); direct Mobile → Main Office (ADR-RO-001); snapshot replacement
+(P-03); sync-back of `Imported`/`ReturnOrderNo` to BGud (ADR-RO-006);
+background/scheduled/realtime sync (OQ-1); hardcoded warehouse mapping in
+BGud (ADR-RO-008); a migration framework (P-12); a Return Order review/
+approval workflow (P-13).
+
+---
+
+## 3. Impact Inventory
+
+### Backend
+
+| Component | System | Source |
+| --------- | ------ | ------ |
+| `BTR_ReturnOrder` / `BTR_ReturnOrderItem` DDL + `.sqlproj` + upgrade script | `btr.sql` | Arch §6.1, §10.1 |
+| `ReturnOrderModel` / `ReturnOrderItemModel` + `IReturnOrderKey` | `btr.domain/InventoryContext/ReturnOrderAgg` | Arch §5.1 |
+| `IReturnOrderDal` contract + `ReturnOrderDal` / `ReturnOrderItemDal` (Dapper) | `btr.application` / `btr.infrastructure` | Arch §5.1, §7.1 |
+| `ReturnOrderBuilder` + `ReturnOrderValidator` + `ReturnOrderWriter` | `btr.application` | Arch §7.1 |
+| `ImportReturnOrderCommand` | `btr.application` | Arch §7.1, IR-RO-07 |
+| `CompleteReturnOrderCommand` | `btr.application` | Arch §7.1, IR-RO-05 |
+| `GenerateSalesReturnFromReturnOrderCommand` | `btr.application` | Arch §7.1, §8.5 |
+| `GetReturnOrderQuery` / `ListReturnOrderQuery` / `ListReturnOrderByCustomerQuery` | `btr.application` | Arch §7.1 |
+| `ReturnOrderType` / `ReturnOrderItemType` + `IReturnOrderKey` | `btrade.domain/ReturnOrderFeature` | Arch §5.2 |
+| `IReturnOrderDal` / `IReturnOrderItemDal` contracts + Dapper DALs | `btrade.application` / `btrade.infrastructure` | Arch §7.2 |
+| `ReturnOrderUploadCommand` / `ReturnOrderIncrementalDownloadQuery` | `btrade.application` | Arch §7.2 |
+| `BTR_WarehouseMapping` + resolution at login (`IssueTokenCommand`) | `btrade.sqldb` / `btrade.application` | Arch §6.3, IR-RO-04, §9.2 |
+| `DriverType` + `IDriverDal` / `DriverDal` + `DriverSyncCommand` + `DriverListDataQuery` | `btrade.domain` / `btrade.application` / `btrade.infrastructure` | Arch §5.3, §7.2 |
+| `ReturnOrderModel` / `ReturnOrderItemType` (sync transport) | `j07-btrade-sync/Model` | Arch §4.3 |
+| `ReturnOrderDal` / `ReturnOrderItemDal` (Main Office staging) | `j07-btrade-sync/Repository` | Arch §4.3, §8.2 |
+| `ReturnOrderIncrementalDownloadService` | `j07-btrade-sync/Service` | Arch §4.3, §8.2 |
+| `MainOfficeCommandExecutor` extension (import dispatch) | `j07-btrade-sync/Shared` | Arch §4.3, §8.2 |
+| `DriverSyncService` | `j07-btrade-sync/Service` | Arch §4.3, IR-RO-06 |
+| `j07` client authentication (JWT on I-RO-02 / I-RO-06) | `j07-btrade-sync` | Arch §9.1, §8.6 |
+| Room entities: `return_order_entity`, `return_order_item_entity`, `customer_entity`, `salesperson_entity`, `driver_entity` + DAOs + `AppDatabase` v2 migration | BGud `model/`, `dao/`, `database/` | Arch §6.4 |
+| `BtradeApiService` endpoints + DTOs (submit Return Order, Customer/SalesPerson/Driver reference) + ULID generation | BGud `network/`, `model/api/` | Arch §8.1, IR-RO-01 |
+| `ReturnOrderSyncRepository`, `ReturnOrderSyncWorker` | BGud `repository/`, `sync/` | Arch §4.4, §20 |
+| ViewModels + screens (List / Create / Detail / Edit / Synchronization) | BGud `viewmodel/`, `ui/` | Arch §11.1, §19.1 |
+
+### Database
+
+| Object | System | Source |
+| ------ | ------ | ---------- |
+| `BTR_ReturnOrder` (`ReturnOrderId` ULID `VARCHAR(26)` PK, `ReturnOrderNo`, `ReturnOrderDate`, `WarehouseCode`, `CustomerId`, optional `SalesPersonId`/`DriverId`, `Note`, `Status` `Synced`/`Imported`, audit, `RowVer`; no FK) | `btr.sql` | Arch §6.1, IR-RO-01/09/11 |
+| `BTR_ReturnOrderItem` (`(ReturnOrderId, NoUrut)` PK, `BrgId`, `BrgCode`, `Qty DECIMAL(18,2)`, `SatId`, `JenisRetur`) | `btr.sql` | Arch §6.1, IR-RO-02/03/10 |
+| Idempotent upgrade script(s) | `btr.sql/Scripts` | Arch §10.1 |
+| `BTRADE_ReturnOrder` (`(ReturnOrderId, ServerId)` PK, `StatusSync`) + `BTRADE_ReturnOrderItem` | `btrade.sqldb` | Arch §6.2, IR-RO-08 |
+| `BTR_WarehouseMapping` (`WarehouseCode` PK → `ServerId`) + seed (`GAMPING`/`CONCAT`→`JOGJA`, `MAGELANG`→`MGL`) | `btrade.sqldb` | Arch §6.3, IR-RO-04 |
+| `BTRADE_Driver` (`(DriverId, ServerId)` PK) | `btrade.sqldb` | Arch §6.3 |
+| Idempotent upgrade script(s) | `btrade.sqldb/Scripts` | Arch §10.1 |
+| Room: 5 new entities, version bump 1 → 2, non-destructive migration | BGud | Arch §6.4 |
+| DataStore keys: `serverId`, `last_customer_sync`, `last_salesperson_sync`, `last_driver_sync` | BGud `datastore/` | Arch §6.4, §8.1 |
+
+### Frontend
+
+| Component | System | Source |
+| --------- | ------ | ------ |
+| Return Order List / Create / Detail (incl. Delete) / Edit / Synchronization screens (SCR-MOB-RO-001…005) | BGud | Arch §11.1, §12 |
+| Home + Navigation wiring | BGud | Arch §13.1 |
+| `GenerateReturnOrderForm` (SCR-DESK-RO-001) — single Desktop surface | `btr.distrib` | Arch §11.2, §12.5 |
+| `BTR_Menu` / `BTR_RoleMenu` seed + ribbon wiring (`Retur Penjualan → Generate Return Order`) | `btr.sql` / `btr.distrib` | Arch §13.2, §9.3 |
+
+### Integration
+
+| # | Integration | Systems | Auth | Source |
+| - | ----------- | ------- | ---- | ------ |
+| I-RO-01 | `POST /api/return-order` (idempotent by ULID `ReturnOrderId`) | BGud → Cloud | JWT | Arch §8.1 |
+| I-RO-02 | `GET /api/ReturnOrder/incremental/{tgl1}/{tgl2}/{serverId}` + download-coupled ack | `j07-btrade-sync` → Cloud | JWT | Arch §8.2, §8.6 |
+| I-RO-03 | `GET /api/Customer/{serverId}` (existing, reused) | Cloud → BGud | Existing | Arch §8.3 |
+| I-RO-04 | `GET /api/SalesPerson/{serverId}` (existing, reused) | Cloud → BGud | Existing | Arch §8.3 |
+| I-RO-05 | `GET /api/Driver/{serverId}` (new) | Cloud → BGud | JWT | Arch §8.3 |
+| I-RO-06 | `POST /api/Driver` projection upload | `j07-btrade-sync` → Cloud | JWT | Arch §8.4 |
+| I-RO-07 | `ReturnOrderDal` staging (upsert by id, `Status = Synced`) | `j07-btrade-sync` → Main Office | in-process | Arch §8.2 |
+| I-RO-08 | `MainOfficeCommandExecutor` → `ImportReturnOrderCommand` | `j07-btrade-sync` → Main Office | in-process | Arch §8.2 |
+| I-RO-09 | `GenerateSalesReturnFromReturnOrderCommand` → `ReturJual` | Main Office (Desktop) | — | Arch §8.5 |
+| — | Login warehouse selection → `BTR_WarehouseMapping` → `ServerId` (session stores both) | BGud → Cloud | — | Arch §9.2, IR-RO-04 |
+| — | Sync triggers: Login Sync + Manual Sync Now only | BGud | — | Arch §20, OQ-1 |
+
+### Security
+
+- Reuse existing JWT + session-bound location model; no new mechanism (Arch §9.1).
+- `ServerId` never client-supplied on write payloads; resolved server-side from
+  the JWT (P-06, §9.2). `BTR_WarehouseMapping` resolves `WarehouseCode` →
+  `ServerId` at login; BGud never hardcodes it (ADR-RO-008).
+- `j07-btrade-sync` presents a JWT on I-RO-02 / I-RO-06 (Arch §9.1).
+- Role gate: Warehouse Officer (create/update/delete/sync) vs Office Admin
+  (complete Salesman/Driver + generate Sales Return) (Arch §9.3).
+
+---
+
+## 4. Pre-Implementation Confirmations
+
+These are architecture-recorded confirmations (§24), not slices. Each must be
+answered before the slice(s) that depend on it begin. They are listed here so
+the planner does not invent decisions.
+
+| # | Item | Source | Blocks |
+| - | ---- | ------ | ------ |
+| C-1 | Confirm the `ReturnOrderNo` prefix/format and sequencing configuration (`INunaCounterBL` mechanism is fixed by IR-RO-07; the concrete prefix is business data). | Arch §24, IR-RO-07, R-09 | S1.5 |
+| C-2 | Confirm the Desktop menu identifiers and role grants for the single `Generate Return Order` surface under the `Retur Penjualan` parent (`BTR_Menu.MenuId` / `BTR_RoleMenu` values). | Arch §24, §13.2, §9.3 | S1.9 |
+| C-3 | Knowledge Curator pass: update `RETURN-ORDER-DOMAIN.md` vocabulary from `Good`/`Broken` to `BAGUS`/`RUSAK` (§3, §5, §9, BR-013/BR-014). | Arch §24, R-06 | Review (parallel) |
+| C-4 | Produce `RETURN-ORDER-WORKFLOW.md` if the artifact chain requires a standalone workflow artifact. | Arch §24, §1 Inputs | Review (parallel) |
+
+---
+
+## 5. Phases
+
+| Phase | Name | System(s) | Business Value |
+| ----- | ---- | --------- | -------------- |
+| P1 | Main Office Return Order (authority, import, generate) | `j05-btr-distrib` | Return Orders can be held, numbered, completed, and consumed into Sales Return generation |
+| P2 | Cloud staging relay + Warehouse Mapping + Driver projection | `j06-pkl-btrade-api` | Return Orders can be submitted idempotently and downloaded incrementally; warehouse/tenant resolution and Driver reference data are available |
+| P3 | Synchronization client | `j07-btrade-sync` | Return Orders flow Cloud → Main Office (download → stage → import); Driver projection is populated |
+| P4 | BGud Return Order capture (primary target) | `src/BGud` | Warehouse Officers record, amend, delete (pre-sync), and synchronize Return Orders offline |
+
+Phase order respects the architecture's recorded sequencing (§24 Planner
+Guidance): Customer/SalesPerson/Driver reference caches precede capture
+(P4 internal); the centralized Warehouse Mapping precedes office import
+(P2 → P3); the Cloud relay precedes the `j07-btrade-sync` download (P2 → P3);
+the Main Office Return Order table and import command precede Generate Sales
+Return (P1 internal); import runs after download within a sync run (P3
+internal). BGud (P4) is the primary implementation target; P1–P3 are mandatory
+supporting deliverables required by ADR-RO-001/007/008.
+
+---
+
+## 6. Slices
+
+Complexity scale: **1 = Easy, 5 = Most Complex**. Complexity drives the AI
+model and reasoning level selected for implementation.
+
+### Phase P1 — Main Office Return Order
+
+#### S1.1 — `BTR_ReturnOrder` + `BTR_ReturnOrderItem` schema, sqlproj registration, upgrade script
+
+- **Objective:** Create the authoritative Return Order tables exactly per
+  architecture §6.1, register them in `btr.sql.sqlproj`, and ship an idempotent
+  upgrade script.
+- **Dependencies:** None.
+- **Complexity:** 2
+- **Acceptance Criteria:**
+  - `BTR_ReturnOrder` matches §6.1: `ReturnOrderId VARCHAR(26)` ULID PK (IR-RO-01), `ReturnOrderNo VARCHAR(20)`, `ReturnOrderDate DATETIME DEFAULT '3000-01-01'`, `WarehouseCode VARCHAR(20)`, `CustomerId VARCHAR(6)`, `SalesPersonId VARCHAR(5)`, `DriverId VARCHAR(5)`, `Note VARCHAR(100)`, `Status VARCHAR(10) DEFAULT 'Synced'`, audit columns, `RowVer ROWVERSION`; indexes `IX_BTR_ReturnOrder_Status`, `IX_BTR_ReturnOrder_CustomerId`.
+  - `BTR_ReturnOrderItem` matches §6.1: PK `(ReturnOrderId, NoUrut)`, `BrgId VARCHAR(6)`, `BrgCode VARCHAR(20)`, `Qty DECIMAL(18,2)`, `SatId VARCHAR(7)`, `JenisRetur VARCHAR(5)` (IR-RO-02/03/10). No `BrgName` column (resolved at read, §5.1).
+  - No foreign keys on either table (IR-RO-11); `ReturJual` persistence untouched (INV-14).
+  - Both tables registered in `btr.sql.sqlproj`; an idempotent upgrade script (`IF OBJECT_ID(...) IS NULL ...`) exists in `btr.sql/Scripts/` and is re-runnable.
+- **Review Focus:** Persistence Compliance (§6.1); IR-RO-01/02/03/10/11; GAP-002 separation.
+
+#### S1.2 — `ReturnOrderModel` / `ReturnOrderItemModel` + `IReturnOrderKey`
+
+- **Objective:** Create the domain model and key interface per §5.1, mirroring
+  `ReturJualModel`/`IReturJualKey` layering (P-05).
+- **Dependencies:** S1.1.
+- **Complexity:** 2
+- **Acceptance Criteria:**
+  - `ReturnOrderModel : IReturnOrderKey` with `ReturnOrderId` (ULID), `ReturnOrderNo`, `ReturnOrderDate`, `WarehouseCode`, `CustomerId`, optional `SalesPersonId`/`DriverId`, `Note`, `Status` (`Synced`/`Imported`, IR-RO-09), audit fields, `ListItem`.
+  - `ReturnOrderItemModel : IReturnOrderKey, IBrgKey` with `ReturnOrderId`, `NoUrut`, `BrgId`, `BrgCode`, `Qty` (decimal), `SatId`, `JenisRetur` (VO-01: `BAGUS`/`RUSAK`); `BrgName` resolved at read, not persisted.
+  - `IReturnOrderKey { string ReturnOrderId }`.
+  - The model carries no tenancy concept (Arch §23.1); identity (`ReturnOrderId`) and business number (`ReturnOrderNo`) are separate fields, never merged (INV-01).
+- **Review Focus:** Architecture Compliance (§5.1); P-05 layering; IR-RO-09 vocabulary; GAP-001 distinctness from `ReturJual`.
+
+#### S1.3 — `IReturnOrderDal` contract + `ReturnOrderDal` / `ReturnOrderItemDal` (Dapper)
+
+- **Objective:** Implement the DAL contract and Dapper implementations per the
+  §5.1 repository composition, mirroring `IReturJualDal` / `ReturJualDal`.
+- **Dependencies:** S1.1, S1.2.
+- **Complexity:** 3
+- **Acceptance Criteria:**
+  - `IReturnOrderDal` composes `IInsert<ReturnOrderModel>`, `IUpdate<ReturnOrderModel>`, `IGetData<ReturnOrderModel, IReturnOrderKey>`, `IListData<ReturnOrderModel>` plus specialized members `GetByReturnOrderId`, `ListByStatus(string)`, `Exists(IReturnOrderKey)` (§5.1).
+  - `ReturnOrderItemDal` uses delete-by-parent then bulk insert, mirroring `ReturJualItemDal`.
+  - Reads never touch `BTR_ReturJual` (INV-14); `ListByStatus` backs the Generate worklist via `IX_BTR_ReturnOrder_Status`.
+- **Review Focus:** Persistence Compliance (§5.1); Dapper conventions; INV-14 separation.
+
+#### S1.4 — `ReturnOrderBuilder` + `ReturnOrderValidator` + `ReturnOrderWriter`
+
+- **Objective:** Implement the supporting components mirroring `ReturJual`:
+  builder, FluentValidation validator, and single-transaction writer.
+- **Dependencies:** S1.2, S1.3.
+- **Complexity:** 3
+- **Acceptance Criteria:**
+  - `ReturnOrderBuilder` provides `Create()`, `Load(IReturnOrderKey)`, `Attach()`, field setters; resolves `BrgCode`/`BrgName` and `WarehouseName`/`CustomerName`/`SalesPersonName`/`DriverName` on read (§7.1).
+  - `ReturnOrderValidator : AbstractValidator<ReturnOrderModel>` enforces INV-02 … INV-09 (Customer exists; WarehouseCode mandatory; ≥1 item; item exists; `Qty > 0`; `(BrgId, SatId)` valid in `BTR_BrgSatuan`; `JenisRetur` `BAGUS`/`RUSAK`; Salesman/Driver optional).
+  - `ReturnOrderWriter` commits header + items in one `TransHelper.NewScope()` transaction (P-04), mirroring `ReturJualWriter.Save`.
+- **Review Focus:** Validation Ownership (§18.1); INV-02…09 coverage; P-04 single transaction.
+
+#### S1.5 — `ImportReturnOrderCommand`
+
+- **Objective:** Implement the idempotent import command: assign `ReturnOrderNo`
+  (`INunaCounterBL`, IR-RO-07), persist header + items including the captured
+  `WarehouseCode` with `Status = Synced`, in one transaction (INV-11).
+- **Dependencies:** S1.3, S1.4. C-1 (numbering prefix/format).
+- **Complexity:** 4
+- **Acceptance Criteria:**
+  - Assigns `ReturnOrderNo` via `INunaCounterBL` following the `ReturJualWriter` convention (IR-RO-07, C-1); the ULID `ReturnOrderId` is preserved as identity and idempotency key (INV-01).
+  - Validates INV-02 … INV-09 through `ReturnOrderValidator`; persists `WarehouseCode` (no office-side tenant resolution — the Cloud resolved tenancy at login, IR-RO-04) with `Status = Synced`.
+  - Re-import of an already-imported `ReturnOrderId` is a no-op that never re-numbers or duplicates (INV-11, `Exists` check).
+  - Full item list (`BrgId`, `Qty`, `SatId`, `JenisRetur`) is persisted unchanged — no small-unit normalization (INV-07, ADR-RO-003).
+  - One transaction per Return Order (P-04).
+- **Review Focus:** ADR-RO-002 (numbering authority); INV-11 idempotency; ADR-RO-003 unit fidelity; IR-RO-04 boundary.
+
+#### S1.6 — `CompleteReturnOrderCommand`
+
+- **Objective:** Implement optional Salesman/Driver completion on a `Synced`
+  order (IR-RO-05), without re-numbering or altering items.
+- **Dependencies:** S1.3, S1.4.
+- **Complexity:** 2
+- **Acceptance Criteria:**
+  - Completes `SalesPersonId`/`DriverId` on a `Synced` order only (INV-09, ADR-RO-005).
+  - Never re-numbers (`ReturnOrderNo` unchanged), never alters items or `JenisRetur`.
+  - Rejects completion of an `Imported` order (INV-10, ADR-RO-006).
+- **Review Focus:** IR-RO-05 semantics; INV-09/10; no side effects beyond the two optional fields.
+
+#### S1.7 — `GenerateSalesReturnFromReturnOrderCommand`
+
+- **Objective:** Implement Sales Return generation: group selected `Synced`
+  orders by Customer + Return Type + Salesman + Driver, delegate to the existing
+  `ReturJual` capability, and mark consumed orders `Imported` (§8.5).
+- **Dependencies:** S1.5, S1.6; existing `ReturJualBuilder`/`ReturJualWriter`. 
+- **Complexity:** 5
+- **Acceptance Criteria:**
+  - Grouping key is exactly `(CustomerId, JenisRetur, SalesPersonId, DriverId)`; one Return Order may fan out into multiple `ReturJual` documents (INV-12).
+  - Generates valid `ReturJual` header + item records via the existing builder/writer; `JenisRetur` maps directly to `ReturJual.JenisRetur` (`BAGUS`/`RUSAK`, IR-RO-02); recorded `Qty`/`SatId` flow into the existing `ReturJual` item-entry machinery (unit conversion stays there, ADR-RO-003).
+  - Resolves the authoritative `BTR_Warehouse.WarehouseId` for each generated `ReturJual` from the Return Order's `WarehouseCode` using the existing warehouse master (§8.5).
+  - Performs **no** pricing/inventory/finance (INV-13); generated documents remain completable in the existing `RT1-Retur Jual` flow.
+  - Consumed orders transition `Synced → Imported` (INV-10); regeneration of an `Imported` order is prevented (Arch §10.6).
+  - `ReturJual` persistence is never modified by this feature (INV-14).
+- **Review Focus:** ADR-RO-007 (grouping, delegation, no pricing); INV-12/13/14; IR-RO-02 mapping; §8.5 flow.
+
+#### S1.8 — Queries: `GetReturnOrderQuery`, `ListReturnOrderQuery`, `ListReturnOrderByCustomerQuery`
+
+- **Objective:** Implement the read-side queries backing the Generate surface
+  (§7.1).
+- **Dependencies:** S1.3.
+- **Complexity:** 2
+- **Acceptance Criteria:**
+  - `GetReturnOrderQuery` returns header + items by id.
+  - `ListReturnOrderQuery` returns `Synced` (not yet `Imported`) orders by date/Customer, ordered for the worklist.
+  - `ListReturnOrderByCustomerQuery` provides Customer-scoped listing.
+  - All reads are office-side and never touch `BTR_ReturJual` (INV-14).
+- **Review Focus:** Read-model correctness; INV-10 (`Imported` excluded from the Generate worklist).
+
+#### S1.9 — Desktop `GenerateReturnOrderForm` + menu/roles
+
+- **Objective:** Implement the single Return Order surface (SCR-DESK-RO-001):
+  view `Synced` orders, complete Salesman/Driver inline, select, generate;
+  wire the menu `Retur Penjualan → Generate Return Order` and role grants. No
+  review/approval screens (P-13).
+- **Dependencies:** S1.6, S1.7, S1.8. C-2 (menu identifiers/role grants).
+- **Complexity:** 4
+- **Acceptance Criteria:**
+  - `GenerateReturnOrderForm` opens as an MDI child via `BringMdiChildToFrontIfLoaded<T>()`, with the §12.5 layout (toolbar, filter panel, worklist, item detail with inline Salesman/Driver completion, result region).
+  - Worklist uses `ListReturnOrderQuery`; inline completion uses `CompleteReturnOrderCommand`; Generate uses `GenerateSalesReturnFromReturnOrderCommand`; generated `ReturJual` opens in the existing `ReturJualForm`.
+  - Interaction rules IR-D1 … IR-D3 hold: Generate requires selection; empty Salesman/Driver is allowed (optional); `Imported` orders are view-only and cannot regenerate.
+  - `BTR_Menu` row (parent `Retur Penjualan`) + `BTR_RoleMenu` grant seeded per C-2; reachable only for granted roles via `MainForm.SetupUserMenu`.
+- **Review Focus:** Workflow Compliance (view → complete → generate); GAP-006/ADR-RO-007 single-surface; IR-D1…D3; Security Compliance (role gating).
+
+### Phase P2 — Cloud Staging Relay + Warehouse Mapping + Driver Projection
+
+#### S2.1 — `BTRADE_ReturnOrder` + `BTRADE_ReturnOrderItem` schema, sqlproj registration, upgrade script
+
+- **Objective:** Create the Cloud relay tables per §6.2, register them in
+  `btrade.sqldb.sqlproj`, and ship an idempotent upgrade script.
+- **Dependencies:** None.
+- **Complexity:** 2
+- **Acceptance Criteria:**
+  - `BTRADE_ReturnOrder` matches §6.2: PK `(ReturnOrderId VARCHAR(26), ServerId VARCHAR(5))`, `ReturnOrderDate DATETIME`, `WarehouseCode`, `CustomerId` + `CustomerName`, `SalesPersonId` + `SalesPersonName`, `DriverId` + `DriverName`, `Note`, `StatusSync VARCHAR(10) DEFAULT 'TERKIRIM'` (IR-RO-08); index `IX_BTRADE_ReturnOrder_ServerId_Status`.
+  - `BTRADE_ReturnOrderItem` matches §6.2: PK `(ReturnOrderId, NoUrut)`, `BrgId`, `BrgCode`, `BrgName`, `Qty DECIMAL(18,2)`, `SatId`, `JenisRetur`.
+  - Both tables registered in `btrade.sqldb.sqlproj`; idempotent upgrade script exists in `btrade.sqldb/Scripts/` and is re-runnable.
+- **Review Focus:** Persistence Compliance (§6.2); IR-RO-01/08; relay-not-authority shaping (P-02).
+
+#### S2.2 — `ReturnOrderType` / `ReturnOrderItemType` + `IReturnOrderKey`
+
+- **Objective:** Implement the Cloud relay models per §5.2, mirroring
+  `OrderModel`/`OrderItemType` shape.
+- **Dependencies:** S2.1.
+- **Complexity:** 2
+- **Acceptance Criteria:**
+  - `ReturnOrderType : IReturnOrderKey, IServerId` with `ReturnOrderId`, `ServerId`, `ReturnOrderDate` (string `yyyy-MM-dd`), `WarehouseCode`, `CustomerId`/`CustomerName`, `SalesPersonId`/`SalesPersonName`, `DriverId`/`DriverName`, `Note`, `StatusSync` (mutable for the download transition), `ListItems`.
+  - `ReturnOrderItemType` record carries `ReturnOrderId`, `NoUrut`, `BrgId`, `BrgCode`, `BrgName`, `Qty`, `SatId`, `JenisRetur`.
+  - These types carry no validation logic (transport-only, P-02).
+- **Review Focus:** Architecture Compliance (§5.2); relay model fidelity; tenant scoping via `IServerId`.
+
+#### S2.3 — `IReturnOrderDal` / `IReturnOrderItemDal` contracts + Dapper DALs
+
+- **Objective:** Implement the relay DAL contracts and Dapper implementations,
+  mirroring `OrderDal`/`OrderItemDal` (delete-then-insert upsert, `SqlBulkCopy`
+  for items, `ServerId`-scoped listing).
+- **Dependencies:** S2.1, S2.2.
+- **Complexity:** 3
+- **Acceptance Criteria:**
+  - DALs implement the same generic composition as `IOrderDal`/`IOrderItemDal` and are auto-registered by the existing Scrutor scan.
+  - All reads/writes are scoped by `ServerId` (tenant boundary); delete-then-insert by `ReturnOrderId` supports idempotent resubmission (Arch §10.6).
+  - Known `OrderDal` schema-drift defects (`OrderNote` mismatch, `FakturId` typo) are not copied.
+- **Review Focus:** Tenant scoping; idempotent upsert; Dapper conventions.
+
+#### S2.4 — `BTR_WarehouseMapping` + login resolution (WarehouseCode → ServerId)
+
+- **Objective:** Realize the centralized Warehouse Mapping (ADR-RO-008, IR-RO-04):
+  add `BTR_WarehouseMapping` with its seed, and wire `IssueTokenCommand` to
+  resolve `ServerId` from the selected `WarehouseCode` so the session carries
+  both values (Arch §9.2).
+- **Dependencies:** None.
+- **Complexity:** 3
+- **Acceptance Criteria:**
+  - `BTR_WarehouseMapping` exists in `btrade.sqldb/WarehouseContext` (`WarehouseCode VARCHAR(20)` PK, `ServerId VARCHAR(5)`), registered in `btrade.sqldb.sqlproj`; idempotent seed (`GAMPING`→`JOGJA`, `CONCAT`→`JOGJA`, `MAGELANG`→`MGL`).
+  - Login resolves `ServerId` from the selected `WarehouseCode` via the mapping; an unmapped code fails explicitly (INV-03, R-03) — no fallback.
+  - The session carries both `WarehouseCode` and `ServerId` (§8.1, §9.2); the mapping is seed/migration data only — no maintenance UI (ADR-RO-008).
+- **Review Focus:** ADR-RO-008 / IR-RO-04 (centralized, seed-only, not hardcoded); R-03 (explicit failure on unmapped code); login/token issuance integration.
+
+#### S2.5 — `BTRADE_Driver` + `DriverType` + DAL + `DriverSyncCommand` + `DriverListDataQuery` + `DriverController`
+
+- **Objective:** Add the Driver projection (GAP-013): table, domain type, DAL,
+  sync/query use cases, and reference routes mirroring the SalesPerson pattern.
+- **Dependencies:** None.
+- **Complexity:** 3
+- **Acceptance Criteria:**
+  - `BTRADE_Driver` matches §6.3 (`(DriverId, ServerId)` PK, `DriverName`, `IsAktif`), registered in `btrade.sqldb.sqlproj` + idempotent upgrade script.
+  - `DriverType : IDriverKey, IServerId` per §5.3; `IDriverDal`/`DriverDal` mirror `SalesPersonDal`.
+  - `DriverListDataQuery` serves `GET /api/Driver/{serverId}` (I-RO-05); `DriverSyncCommand` upserts by `DriverId` + `ServerId` (delete-then-insert, mirroring `SalesPersonSyncCommand`), served by `POST /api/Driver` (I-RO-06).
+- **Review Focus:** GAP-013 closure; reference-pattern fidelity (SalesPerson); tenant scoping.
+
+#### S2.6 — `ReturnOrderUploadCommand` + `ReturnOrderIncrementalDownloadQuery`
+
+- **Objective:** Implement the submit and incremental-download use cases,
+  mirroring `OrderUploadCommandHandler` / `OrderIncrementalDownloadQueryHandler`
+  (idempotent submit; download-coupled acknowledgement, IR-RO-08).
+- **Dependencies:** S2.2, S2.3.
+- **Complexity:** 4
+- **Acceptance Criteria:**
+  - Submit stages header + items in one transaction via delete-then-insert by `ReturnOrderId`; resubmission replaces the staged copy, never duplicates (Arch §10.6). `StatusSync = TERKIRIM`.
+  - The Cloud performs no business validation and authors no authoritative state (P-02).
+  - Incremental download returns only `TERKIRIM` rows scoped to `ServerId` + periode and flips them to `DOWNLOADED` in the same transaction (acknowledgement, IR-RO-08).
+  - Items are returned with their parent; orders without items are not silently dropped.
+- **Review Focus:** Idempotency (ADR-RO-002); acknowledgement semantics (IR-RO-08); P-02 relay-never-authority.
+
+#### S2.7 — `ReturnOrderController` (submit + incremental download)
+
+- **Objective:** Implement `POST /api/return-order` and
+  `GET /api/ReturnOrder/incremental/{tgl1}/{tgl2}/{serverId}`, both JWT-
+  authenticated, with `ServerId` resolved server-side on the write path (P-06).
+- **Dependencies:** S2.6.
+- **Complexity:** 3
+- **Acceptance Criteria:**
+  - `POST /api/return-order` (I-RO-01) is `[Authorize]`; `ServerId` comes from `User.GetServerId()` — never from the request body (§8.1); the payload carries no `ServerId` (§19.3).
+  - `GET /api/ReturnOrder/incremental/{tgl1}/{tgl2}/{serverId}` (I-RO-02) is `[Authorize]`; the route shape mirrors the CheckIn/Order convention (path `serverId`).
+  - Unauthenticated calls are rejected; responses use the existing `JSendOk` envelope.
+  - Route casing: `POST /api/return-order` verbatim; the incremental route follows the existing controller convention.
+- **Review Focus:** Security Compliance (JWT, server-resolved tenant); ADR-007/P-06; routing conventions (§8.6).
+
+### Phase P3 — Synchronization Client
+
+#### S3.1 — `ReturnOrderModel` / `ReturnOrderItemType` (sync transport)
+
+- **Objective:** Add the sync-side transport models mirroring `OrderModel`/
+  `OrderItemType` (id key interface, static key factory, `ListItems`), and
+  register the new files in the non-SDK csproj (`<Compile Include>`).
+- **Dependencies:** None.
+- **Complexity:** 2
+- **Acceptance Criteria:**
+  - `ReturnOrderModel` implements `IReturnOrderKey { string ReturnOrderId }` with a `Key(string)` factory; fields mirror the cloud `ReturnOrderType` (Customer, WarehouseCode, optional Salesman/Driver, Note, `StatusSync`, items).
+  - `ReturnOrderItemType` carries `BrgId`, `BrgCode`, `BrgName`, `Qty`, `SatId`, `JenisRetur` (ADR-RO-003/004).
+  - Both files listed in `j07-btrade-sync.csproj`.
+- **Review Focus:** Transport-model fidelity; csproj registration.
+
+#### S3.2 — `ReturnOrderDal` / `ReturnOrderItemDal` (Main Office staging)
+
+- **Objective:** Implement Dapper DALs staging downloaded Return Orders into
+  `BTR_ReturnOrder`/`BTR_ReturnOrderItem` (upsert by `ReturnOrderId`,
+  `SqlBulkCopy` for items), mirroring `CheckInDal`/`OrderItemDal`.
+- **Dependencies:** S1.1 (Main Office tables), S3.1.
+- **Complexity:** 3
+- **Acceptance Criteria:**
+  - Insert/Update/GetData by `ReturnOrderId`; existence-check then insert/update (upsert-by-id; idempotent re-download).
+  - Item rows delete-then-`SqlBulkCopy` by `ReturnOrderId` (re-download never duplicates items).
+  - Staged rows carry `Status = Synced` (office vocabulary, IR-RO-09).
+  - Known `OrderDal` defects not copied.
+- **Review Focus:** Idempotent staging; staging-not-authority (numbering/mapping owned by office commands, IR-RO-07).
+
+#### S3.3 — `ReturnOrderIncrementalDownloadService`
+
+- **Objective:** Implement the cloud download service mirroring
+  `OrderIncrementalDownloadService` (RestSharp GET against I-RO-02,
+  `ApiResponse<T>` envelope, `(bool, string, List<ReturnOrderModel>)` result,
+  JWT bearer).
+- **Dependencies:** S2.7 (cloud endpoint), S3.1.
+- **Complexity:** 3
+- **Acceptance Criteria:**
+  - Fetches a periode-bounded incremental set for the configured `ServerTargetID`; returns success/error/payload exactly like the existing services.
+  - Non-success envelope status is treated as failure; empty payload is a valid result.
+  - No snapshot replacement of any local or remote store (P-03).
+- **Review Focus:** Pattern fidelity; no snapshot semantics; JWT bearer present (I-RO-02).
+
+#### S3.4 — `MainOfficeCommandExecutor` extension (import dispatch)
+
+- **Objective:** Extend the in-process executor to dispatch the office
+  `ImportReturnOrderCommand` (S1.5), so numbering and Warehouse persistence live
+  in exactly one place (Arch §4.3, IR-RO-05).
+- **Dependencies:** S1.5.
+- **Complexity:** 4
+- **Acceptance Criteria:**
+  - The executor registers the Return Order application components (DALs, builder/writer/validator, counter) alongside the existing barcode registrations and exposes the import dispatch.
+  - Import assigns `ReturnOrderNo` and persists the `WarehouseCode` through the office command only — the sync client performs no numbering or mapping (ADR-RO-002/008).
+  - Dispatch remains in-process (no HTTP/message bus).
+- **Review Focus:** Single-authority validation (IR-08 pattern); ADR-RO-002/008 authority boundaries.
+
+#### S3.5 — `DriverSyncService`
+
+- **Objective:** Populate `BTRADE_Driver` from Main Office `BTR_Driver`,
+  mirroring `SalesPersonSyncService` (IR-RO-06).
+- **Dependencies:** S2.5 (cloud Driver routes).
+- **Complexity:** 3
+- **Acceptance Criteria:**
+  - Publishes `BTR_Driver` → `BTRADE_Driver` via `POST /api/Driver` (I-RO-06), upsert by `DriverId` + `ServerId`.
+  - Mirrors the existing SalesPerson/Customer uploader service shape; idempotent re-upload.
+- **Review Focus:** IR-RO-06 fidelity; uploader-pattern reuse; idempotency.
+
+#### S3.6 — Sync client authentication (JWT on I-RO-02 / I-RO-06)
+
+- **Objective:** Enable `j07-btrade-sync` to present a JWT on the Return Order
+  write endpoints (I-RO-02, I-RO-06) per Arch §9.1, mirroring the barcode
+  registry sync-client service-account model (AUTH-GAP-001 precedent).
+- **Dependencies:** S2.4 (token issuance / mapping), S2.7 (I-RO-02), S2.5 (I-RO-06), S3.3, S3.5 (callers).
+- **Complexity:** 4
+- **Acceptance Criteria:**
+  - A dedicated service account authenticates against `POST api/Auth/login` and receives a JWT.
+  - `I-RO-02` and `I-RO-06` requests carry `Authorization: Bearer <token>`; the token is cached and refreshed on rejection (no re-login per request).
+  - `200 OK` on authenticated calls; `401` without a token.
+  - Tenant binding: the token is issued for the mapped `ServerId`; no `ServerId` is added to Return Order command payloads (P-06).
+- **Review Focus:** Security Compliance (service-account model); token lifecycle; P-06 tenant binding.
+
+#### S3.7 — `SyncForm` wiring (download → stage → import + Driver upload)
+
+- **Objective:** Wire the Return Order flow into the existing sync run:
+  `ProcessReturnOrder` executes download (S3.3) → stage (S3.2) → import (S3.4),
+  gated by a `DownloadReturnOrder` registry flag; plus the Driver upload
+  (S3.5); triggered from startup, the auto timer, and manual download buttons —
+  mirroring `ProcessOrder`/`ProcessCheckIn`.
+- **Dependencies:** S3.1, S3.2, S3.3, S3.4, S3.5, S3.6.
+- **Complexity:** 4
+- **Acceptance Criteria:**
+  - Each downloaded Return Order is processed idempotently (skip/upsert by `ReturnOrderId`); failures are logged per row without corrupting other rows.
+  - Download → stage → import run sequentially within a run; a failure never marks an order imported unless actually committed.
+  - Feature flag and triggers match existing conventions (`RegistryHelper`, constructor, timer, manual buttons, optional `KonfigurasiForm` checkbox).
+  - Existing CheckIn/Order/Barcode flows are unchanged.
+- **Review Focus:** Workflow Compliance (§8.2 ordering); idempotency across reruns; existing-behavior preservation.
+
+### Phase P4 — BGud Return Order Capture (primary implementation target)
+
+#### S4.1 — Room entities, DAOs, AppDatabase registration, migration 1 → 2
+
+- **Objective:** Add the five Room entities + DAOs per §6.4, register them in
+  `AppDatabase`, bump version to 2, and provide a **non-destructive**
+  `Migration(1, 2)` (existing barcode/barang caches and the pending queue must
+  survive).
+- **Dependencies:** None.
+- **Complexity:** 4
+- **Acceptance Criteria:**
+  - `return_order_entity` matches §6.4: `returnOrderId` (ULID string PK, IR-RO-01), `customerId`/`customerCode`/`customerName`, `warehouseCode`, `salesPersonId`/`salesPersonName`, `driverId`/`driverName`, `note`, `status` (`DRAFT`/`SYNCED`), `createdAt`, `createdBy`; index on `status`.
+  - `return_order_item_entity` matches §6.4: `returnOrderId` + `noUrut` (composite PK), `brgId`/`brgCode`/`brgName`, `qty` (REAL), `satId`, `jenisRetur` (`BAGUS`/`RUSAK`).
+  - `customer_entity` (customerId PK, customerCode, customerName, address), `salesperson_entity` (salesPersonId PK, salesPersonName), `driver_entity` (driverId PK, driverName, isAktif).
+  - DAOs expose upsert/list/delete-by-parent/search primitives; `AppDatabase` exposes all five DAOs.
+  - `Migration(1, 2)` creates only the five new tables; existing data preserved; app builds (`assembleDebug`).
+- **Review Focus:** Persistence Compliance (§6.4); migration safety (no destructive fallback); device vocabulary (ADR-RO-006).
+
+#### S4.2 — API service + DTOs (submit Return Order, reference endpoints)
+
+- **Objective:** Extend `BtradeApiService` with `POST api/return-order` and the
+  Customer/SalesPerson/Driver reference GETs, with DTOs following the existing
+  `JSendEnvelope` + PascalCase `@SerializedName` conventions (§19.3).
+- **Dependencies:** S4.1.
+- **Complexity:** 3
+- **Acceptance Criteria:**
+  - `POST api/return-order` (I-RO-01) submits the Return Order with the ULID `ReturnOrderId` as the idempotency key; **no `ServerId` appears anywhere in the request body** (§8.1, P-06).
+  - `GET api/Customer/{serverId}` (I-RO-03), `GET api/SalesPerson/{serverId}` (I-RO-04), `GET api/Driver/{serverId}` (I-RO-05) reuse the existing `serverId` path-param convention (`GET api/Brg/{serverId}` precedent).
+  - All calls attach the JWT through the existing `AuthInterceptor`; the submit DTO carries header (ReturnOrderId, ReturnOrderDate, WarehouseCode, CustomerId + names, optional Salesman/Driver, Note) + items (`BrgId`/`BrgCode`/`BrgName`, `Qty`, `SatId`, `JenisRetur`), per §8.1.
+- **Review Focus:** Security Compliance (JWT, no client-supplied `ServerId`); envelope/DTO conventions (§19.3).
+
+#### S4.3 — Reference caches download (Customer / SalesPerson / Driver) + session state
+
+- **Objective:** Implement the replace-cache download for Customer / SalesPerson
+  / Driver into Room, with DataStore last-sync timestamps and the session
+  carrying `WarehouseCode` + `ServerId` (§8.1, §9.2), mirroring the existing
+  Barang/Barcode download pattern.
+- **Dependencies:** S4.1, S4.2. Runtime source: I-RO-03/04 (existing) + I-RO-05 (S2.5).
+- **Complexity:** 4
+- **Acceptance Criteria:**
+  - Downloads replace the local cache (`deleteAll` + `upsertAll`) per reference type; timestamps advance only on committed download (`last_customer_sync`, `last_salesperson_sync`, `last_driver_sync`).
+  - Customer cache supports offline selection of the mandatory Customer (GAP-004); Salesman/Driver caches are optional data (ADR-RO-005).
+  - Session holds both `WarehouseCode` and `ServerId` (resolved at login, IR-RO-04/§9.2); reference GETs use the `ServerId` path param.
+  - Runs as part of Login Sync (OQ-1); failures never block navigation (existing login-sync semantics).
+- **Review Focus:** Cache-replace pattern fidelity; ADR-RO-005 (optional fields); §9.2 session shape; OQ-1.
+
+#### S4.4 — Return Order capture repository + validation + ULID generation
+
+- **Objective:** Implement the local capture repository: create/update/delete
+  drafts with domain rules enforced locally, generating the ULID `ReturnOrderId`
+  and stamping the session-bound `WarehouseCode`.
+- **Dependencies:** S4.1, S4.2 (ULID dependency).
+- **Complexity:** 4
+- **Acceptance Criteria:**
+  - `ReturnOrderId` is generated on the device as a **ULID** matching the platform's `Ulid.NewUlid().ToString()` format (IR-RO-01); new orders are `DRAFT`; `WarehouseCode` is stamped from the session binding (BR-005/006).
+  - Customer mandatory from the local cache (BR-001/002, GAP-004); Salesman/Driver optional (BR-013–016, ADR-RO-005).
+  - At least one item (BR-012); item exists in the cached Item Master (BR-008); `Qty > 0` (BR-010); unit mandatory, recorded as `SatId` from the item's cached unit data (BR-011, ADR-RO-003); no small-unit normalization anywhere (P-09).
+  - Per-item `JenisRetur` is exactly `BAGUS`/`RUSAK` (ADR-RO-004); mixed types allowed (DOMAIN §9).
+  - Update/delete rejected once `SYNCED` (BR-017–020); pre-sync delete is local-only and never propagates (GAP-014).
+- **Review Focus:** Business-rule enforcement (BR-001…BR-020, §18.3); IR-RO-01 ULID; P-09 unit fidelity; GAP-014 delete semantics.
+
+#### S4.5 — `ReturnOrderSyncRepository` + `ReturnOrderSyncWorker`
+
+- **Objective:** Implement the sync run: submit `DRAFT` orders
+  (`POST api/return-order`, mark `SYNCED` on success), then download the
+  reference caches; trigger points are Login Sync and Manual Sync Now only
+  (OQ-1), mirroring the `BarcodeSyncWorker` conventions (unique work, KEEP,
+  connectivity constraint, no periodic scheduling).
+- **Dependencies:** S4.3, S4.4; runtime endpoints I-RO-01 (S2.7), I-RO-05 (S2.5).
+- **Complexity:** 5
+- **Acceptance Criteria:**
+  - Each `DRAFT` order is submitted once per run; `2xx` → local `SYNCED`; failure keeps `DRAFT` and counts as failed without aborting the run.
+  - Resubmission after failure is safe (cloud idempotent on the ULID `ReturnOrderId`).
+  - Device shows only `DRAFT`/`SYNCED`; no import outcome or `ReturnOrderNo` is ever downloaded (ADR-RO-006) — there is no status refresh step.
+  - Reference downloads run after submission (mirror barcode ordering); one sync run at a time (KEEP); no background/scheduled/realtime triggers (OQ-1).
+  - `SYNCED` orders are read-only (BR-018/020).
+- **Review Focus:** Sync ordering (§20); idempotent resubmission; ADR-RO-006 (no sync-back); OQ-1 compliance.
+
+#### S4.6 — Return Order List screen (SCR-MOB-RO-001)
+
+- **Objective:** Implement the searchable local list (BC-004) with status filter
+  `Draft`/`Synced` only (ADR-RO-006), using the existing paged/debounced
+  local-search pattern.
+- **Dependencies:** S4.4.
+- **Complexity:** 2
+- **Acceptance Criteria:**
+  - Lists local Room rows with default 50 rows, load-more paging, min 3 chars, 300 ms debounce (§20); search by Customer name/date/status.
+  - Status display vocabulary is exactly `Draft`/`Synced` (§14.4).
+  - Rows open Detail; a Create action (FAB/toolbar) exists (§12.1).
+- **Review Focus:** UI State Compliance; local-only source (no network); ADR-RO-006 vocabulary.
+
+#### S4.7 — Create Return Order screen (SCR-MOB-RO-002)
+
+- **Objective:** Implement capture: mandatory Customer picker (local cache),
+  read-only session-bound Warehouse, optional Salesman/Driver pickers, Notes,
+  and item lines identified by Barcode Scan (reusing `BarcodeScannerView`) or
+  Manual Item Search (BR-009), with Qty / Unit / Return Type per line.
+- **Dependencies:** S4.1, S4.3 (caches), S4.4.
+- **Complexity:** 5
+- **Acceptance Criteria:**
+  - Customer mandatory from the local cache (BR-001/002, GAP-004); Salesman/Driver optional (ADR-RO-005); Warehouse read-only (session-bound, BR-005/006).
+  - Item identification supports Barcode Scan and Manual Item Search against local caches (BR-009), reusing `BarcodeScannerView` and the existing search pattern; no network call (§17.1, P-07).
+  - Per line: `Qty > 0` (IR-M4), unit from the item's cached unit data recorded as `SatId` (IR-M5), `JenisRetur` `BAGUS`/`RUSAK` (IR-M6); at least one valid line before Save (IR-M2, BR-012).
+  - Save writes locally only (`DRAFT`), offline-first (BG-003); Save enabled only when Customer set and ≥1 valid line (§14.1).
+- **Review Focus:** BR-001…BR-012 / IR-M1…M6 enforcement; component reuse; ADR-RO-003/004 fidelity; offline-first write.
+
+#### S4.8 — Return Order Detail screen (SCR-MOB-RO-003, incl. Delete action)
+
+- **Objective:** Implement the read-only detail view with status-gated Edit and
+  Delete actions (Delete is a `Draft`-only action on Detail, not a separate
+  screen — §11.1).
+- **Dependencies:** S4.4.
+- **Complexity:** 2
+- **Acceptance Criteria:**
+  - Shows header (Customer, Warehouse, optional Salesman/Driver, Notes, status) and item lines (Item, Qty, Unit, Return Type) (§12.3).
+  - Status shows only `Draft`/`Synced` (ADR-RO-006); Edit and Delete enabled only while `Draft` (IR-M7/M8, BR-017–020).
+  - Delete removes the order and its items in one local transaction, never propagates (GAP-014).
+- **Review Focus:** UI State Compliance (§14.2); IR-M7/M8 gating; GAP-014 local-only delete.
+
+#### S4.9 — Edit Return Order screen (SCR-MOB-RO-004)
+
+- **Objective:** Implement draft-only modification (BC-002).
+- **Dependencies:** S4.4.
+- **Complexity:** 3
+- **Acceptance Criteria:**
+  - All editable fields (Customer, optional Salesman/Driver, Notes, item lines) can be changed while `DRAFT` (§12.4).
+  - `SYNCED` orders reject entry into edit (BR-018); the UI never offers edit for `SYNCED`.
+  - Changes persist locally only; the order remains `DRAFT`.
+- **Review Focus:** BR-017/018; local-only update semantics (GAP-014).
+
+#### S4.10 — Synchronization screen extension (SCR-MOB-RO-005)
+
+- **Objective:** Extend the existing Synchronization surface with Return Order
+  sync state and the Manual Sync Now trigger (Login Sync already covered by
+  S4.3/S4.5), per §14.3 and OQ-1.
+- **Dependencies:** S4.5.
+- **Complexity:** 3
+- **Acceptance Criteria:**
+  - Shows Return Order sync state (last reference sync timestamps, pending/synced counts) alongside the existing barcode state (§19.1 `ReturnOrderSyncViewModel`).
+  - Sync Now triggers the Return Order sync worker in addition to the barcode worker; offline disables Sync Now (IR-M9, existing guard).
+  - State flow `Idle → Synchronizing → Synchronized | Failed` (§14.3); no background/scheduled/realtime sync (OQ-1).
+- **Review Focus:** UI State Compliance (§14.3); OQ-1 trigger inventory; existing synchronization behavior preserved.
+
+#### S4.11 — Home + Navigation wiring
+
+- **Objective:** Wire the Return Order entry point into Home and register all
+  new routes in `ui/Navigation.kt` following the existing string-route and
+  `ViewModelFactory` conventions (§13.1).
+- **Dependencies:** S4.6, S4.7, S4.8, S4.9, S4.10.
+- **Complexity:** 3
+- **Acceptance Criteria:**
+  - Home shows a Return Order quick action → `return_order_list`.
+  - Routes match §13.1: `return_order_list`, `return_order_create`, `return_order_detail?returnOrderId={id}`, `return_order_edit?returnOrderId={id}`; transitions and conditions per §13.1 (edit/delete gated on `Draft`).
+  - Each destination constructs its ViewModel through a hand-written `ViewModelFactory` (§19.1, existing convention).
+  - Existing routes and start-destination logic are unchanged.
+- **Review Focus:** Navigation compliance (§13.1); ViewModel/Factory convention; existing-behavior preservation.
+
+---
+
+## 7. Dependency Graph (Summary)
+
+```text
+P1 (Main Office)
+S1.1 ─ S1.2 ─ S1.3 ─ S1.4 ─ S1.5 ─ S1.6 ┐
+                                    └─ S1.7 ─ S1.9 (C-2)
+S1.3 ─ S1.8 ───────────────────────────┘
+(C-1 on S1.5)
+
+P2 (Cloud)
+S2.1 ─ S2.2 ─ S2.3 ─ S2.6 ─ S2.7
+S2.4 (independent; login resolution)
+S2.5 (independent)
+
+P3 (Sync)
+S3.1 ─┬─ S3.2 ─┐
+      └─ S3.3 ─┼─ S3.7
+S1.5 ─ S3.4 ───┤
+S2.5 ─ S3.5 ───┤
+S2.4, S2.7, S2.5, S3.3, S3.5 ─ S3.6 ─┘
+
+P4 (BGud, primary)
+S4.1 ─┬─ S4.2 ─ S4.3 ─┐
+      ├─ S4.4 ────────┼─ S4.5 ─ S4.10
+      └─ S4.4 ─ S4.6 ─┴─ S4.7, S4.8, S4.9 ─ S4.11
+
+Cross-phase:
+S1.1 → S3.2          (Main Office tables precede j07 staging DALs)
+S2.5 → S4.3          (Driver route precedes BGud Driver cache download)
+S2.7 → S3.3, S4.5    (Cloud relay endpoints precede download/submit consumers)
+S1.5 → S3.4          (office import command precedes executor extension)
+S2.4 → S3.6          (login/token issuance precedes sync-client auth)
+```
+
+---
+
+## 8. Progress Tracker
+
+Lifecycle: `PLANNED → IN IMPLEMENTATION → IMPLEMENTED → IN REVIEW → GO`
+(or `NO-GO → REMEDIATION → IN REVIEW → GO`).
+
+| Slice | Status | Complexity | System |
+| ----- | ------ | ---------- | ------ |
+| S1.1 | PLANNED | 2 | `btr.sql` |
+| S1.2 | PLANNED | 2 | `btr.domain` |
+| S1.3 | PLANNED | 3 | `btr.application` / `btr.infrastructure` |
+| S1.4 | PLANNED | 3 | `btr.application` |
+| S1.5 | PLANNED | 4 | `btr.application` |
+| S1.6 | PLANNED | 2 | `btr.application` |
+| S1.7 | PLANNED | 5 | `btr.application` |
+| S1.8 | PLANNED | 2 | `btr.application` |
+| S1.9 | PLANNED | 4 | `btr.distrib` / `btr.sql` |
+| S2.1 | PLANNED | 2 | `btrade.sqldb` |
+| S2.2 | PLANNED | 2 | `btrade.domain` |
+| S2.3 | PLANNED | 3 | `btrade.application` / `btrade.infrastructure` |
+| S2.4 | PLANNED | 3 | `btrade.sqldb` / `btrade.application` |
+| S2.5 | PLANNED | 3 | `btrade.sqldb` / `btrade.domain` / `btrade.webapi` |
+| S2.6 | PLANNED | 4 | `btrade.application` |
+| S2.7 | PLANNED | 3 | `btrade.webapi` |
+| S3.1 | PLANNED | 2 | `j07-btrade-sync` |
+| S3.2 | PLANNED | 3 | `j07-btrade-sync` |
+| S3.3 | PLANNED | 3 | `j07-btrade-sync` |
+| S3.4 | PLANNED | 4 | `j07-btrade-sync` |
+| S3.5 | PLANNED | 3 | `j07-btrade-sync` |
+| S3.6 | PLANNED | 4 | `j07-btrade-sync` |
+| S3.7 | PLANNED | 4 | `j07-btrade-sync` |
+| S4.1 | PLANNED | 4 | BGud |
+| S4.2 | PLANNED | 3 | BGud |
+| S4.3 | PLANNED | 4 | BGud |
+| S4.4 | PLANNED | 4 | BGud |
+| S4.5 | PLANNED | 5 | BGud |
+| S4.6 | PLANNED | 2 | BGud |
+| S4.7 | PLANNED | 5 | BGud |
+| S4.8 | PLANNED | 2 | BGud |
+| S4.9 | PLANNED | 3 | BGud |
+| S4.10 | PLANNED | 3 | BGud |
+| S4.11 | PLANNED | 3 | BGud |
+
+### 8.1 Implementation History
+
+Populated during execution (per slice: start/end dates, implementer notes).
+
+### 8.2 Review History
+
+Populated during review (per slice: date, result, findings, remediation).
+
+### 8.3 Remediation History
+
+Populated when a slice returns `NO-GO` (remediation record + re-review result).
+
+
