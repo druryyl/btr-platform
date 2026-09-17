@@ -14,10 +14,12 @@ namespace j07_btrade_sync.Service
     public class UserSyncService
     {
         private readonly RegistryHelper _registryHelper;
+        private readonly BtradeAuthService _authService;
 
         public UserSyncService()
         {
             _registryHelper = new RegistryHelper();
+            _authService = new BtradeAuthService();
         }
 
         //  SYNC USER (credential projection, IR-05)
@@ -35,17 +37,36 @@ namespace j07_btrade_sync.Service
 
             var requestBody = JsonSerializer.Serialize(new UserSyncRequest(listUser));
 
-            var req = new RestRequest()
-                .AddJsonBody(requestBody);
-
-            //  EXECUTE
-            var response = await client.ExecutePostAsync(req);
-            if (response.StatusCode != System.Net.HttpStatusCode.OK)
+            //  I-08 is [Authorize] (Arch §9.1): present the service-account
+            //  JWT (S3.6). The token is cached; a rejected token forces one
+            //  re-login and a single retry — never a login per request.
+            try
             {
-                return (false, response.ErrorMessage ?? response.Content);
-            }
+                var req = new RestRequest()
+                    .AddJsonBody(requestBody);
+                await _authService.AddAuthHeaderAsync(req).ConfigureAwait(false);
 
-            return (true, "");
+                //  EXECUTE
+                var response = await client.ExecutePostAsync(req);
+                if (BtradeAuthService.IsUnauthorized(response))
+                {
+                    var retry = new RestRequest()
+                        .AddJsonBody(requestBody);
+                    await _authService.AddAuthHeaderAsync(retry, true).ConfigureAwait(false);
+                    response = await client.ExecutePostAsync(retry);
+                }
+                if (response.StatusCode != System.Net.HttpStatusCode.OK)
+                {
+                    return (false, response.ErrorMessage ?? response.StatusDescription
+                        ?? response.Content);
+                }
+
+                return (true, "");
+            }
+            catch (Exception ex)
+            {
+                return (false, ex.Message);
+            }
         }
     }
 

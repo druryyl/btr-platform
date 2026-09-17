@@ -17,11 +17,13 @@ namespace j07_btrade_sync.Service
 
         private readonly RegistryHelper _registryHelper;
         private readonly BrgBarcodeDal _brgBarcodeDal;
+        private readonly BtradeAuthService _authService;
 
         public BarcodeSyncService()
         {
             _registryHelper = new RegistryHelper();
             _brgBarcodeDal = new BrgBarcodeDal();
+            _authService = new BtradeAuthService();
         }
 
         //  SYNC BARCODE (publish)
@@ -48,18 +50,39 @@ namespace j07_btrade_sync.Service
             var client = new RestClient(endpoint);
 
             var requestBody = JsonSerializer.Serialize(new BarcodeSyncCommand(listUpsert, listRemove));
-            var req = new RestRequest()
-                .AddJsonBody(requestBody)
-                .AddHeader("Content-Type", "application/json");
 
-            //  EXECUTE
-            var response = await client.ExecutePostAsync(req);
-            if (response.StatusCode != HttpStatusCode.OK)
-                return (false, response.ErrorMessage ?? response.StatusDescription);
+            //  I-01 is [Authorize] (Arch §9.1): present the service-account
+            //  JWT (S3.6). The token is cached; a rejected token forces one
+            //  re-login and a single retry — never a login per request.
+            try
+            {
+                var req = new RestRequest()
+                    .AddJsonBody(requestBody)
+                    .AddHeader("Content-Type", "application/json");
+                await _authService.AddAuthHeaderAsync(req).ConfigureAwait(false);
 
-            //  ADVANCE WATERMARK ONLY AFTER HTTP 200
-            WriteWatermark(listChanged.Last().RowVer);
-            return (true, "");
+                //  EXECUTE
+                var response = await client.ExecutePostAsync(req);
+                if (BtradeAuthService.IsUnauthorized(response))
+                {
+                    var retry = new RestRequest()
+                        .AddJsonBody(requestBody)
+                        .AddHeader("Content-Type", "application/json");
+                    await _authService.AddAuthHeaderAsync(retry, true).ConfigureAwait(false);
+                    response = await client.ExecutePostAsync(retry);
+                }
+                if (response.StatusCode != HttpStatusCode.OK)
+                    return (false, response.ErrorMessage ?? response.StatusDescription
+                        ?? response.Content);
+
+                //  ADVANCE WATERMARK ONLY AFTER HTTP 200
+                WriteWatermark(listChanged.Last().RowVer);
+                return (true, "");
+            }
+            catch (Exception ex)
+            {
+                return (false, ex.Message);
+            }
         }
 
         private byte[] ReadWatermark()

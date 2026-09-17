@@ -210,6 +210,11 @@
             0,
             0,
             0});
+            this.DppText.Minimum = new decimal(new int[] {
+            999999999,
+            0,
+            0,
+            -2147483648});
             this.DppText.Name = "DppText";
             this.DppText.ReadOnly = true;
             this.DppText.Size = new System.Drawing.Size(117, 20);
@@ -226,6 +231,11 @@
             0,
             0,
             0});
+            this.TaxText.Minimum = new decimal(new int[] {
+            999999999,
+            0,
+            0,
+            -2147483648});
             this.TaxText.Name = "TaxText";
             this.TaxText.ReadOnly = true;
             this.TaxText.Size = new System.Drawing.Size(117, 20);
@@ -282,6 +292,11 @@
             0,
             0,
             0});
+            this.UangMukaText.Minimum = new decimal(new int[] {
+            999999999,
+            0,
+            0,
+            -2147483648});
             this.UangMukaText.Name = "UangMukaText";
             this.UangMukaText.Size = new System.Drawing.Size(117, 20);
             this.UangMukaText.TabIndex = 24;
@@ -307,6 +322,11 @@
             0,
             0,
             0});
+            this.GrandTotalText.Minimum = new decimal(new int[] {
+            999999999,
+            0,
+            0,
+            -2147483648});
             this.GrandTotalText.Name = "GrandTotalText";
             this.GrandTotalText.ReadOnly = true;
             this.GrandTotalText.Size = new System.Drawing.Size(117, 20);
@@ -332,6 +352,11 @@
             0,
             0,
             0});
+            this.DiscountText.Minimum = new decimal(new int[] {
+            999999999,
+            0,
+            0,
+            -2147483648});
             this.DiscountText.Name = "DiscountText";
             this.DiscountText.ReadOnly = true;
             this.DiscountText.Size = new System.Drawing.Size(117, 20);
@@ -358,6 +383,11 @@
             0,
             0,
             0});
+            this.TotalText.Minimum = new decimal(new int[] {
+            999999999,
+            0,
+            0,
+            -2147483648});
             this.TotalText.Name = "TotalText";
             this.TotalText.ReadOnly = true;
             this.TotalText.Size = new System.Drawing.Size(117, 20);
@@ -381,14 +411,12 @@
             this.SaveButton.Name = "SaveButton";
             this.SaveButton.Size = new System.Drawing.Size(75, 23);
             this.SaveButton.TabIndex = 26;
-            this.SaveButton.Text = "Save";
+            this.SaveButton.Text = "Preview";
             this.SaveButton.UseVisualStyleBackColor = true;
             this.SaveButton.Click += new System.EventHandler(this.SaveButton_Click);
             // 
             // PreviewButton
             // 
-            //  SL-05 (D-008): voided-only preview/print entry. Hidden in normal
-            //  flow so Save remains the single primary action (D-003).
             this.PreviewButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
             this.PreviewButton.Location = new System.Drawing.Point(974, 491);
             this.PreviewButton.Name = "PreviewButton";

@@ -50,9 +50,9 @@
             this.SyncBrgButton.ForeColor = System.Drawing.Color.WhiteSmoke;
             this.SyncBrgButton.Location = new System.Drawing.Point(131, 9);
             this.SyncBrgButton.Name = "SyncBrgButton";
-            this.SyncBrgButton.Size = new System.Drawing.Size(113, 28);
+            this.SyncBrgButton.Size = new System.Drawing.Size(82, 28);
             this.SyncBrgButton.TabIndex = 0;
-            this.SyncBrgButton.Text = "Sync Barang";
+            this.SyncBrgButton.Text = "Barang";
             this.SyncBrgButton.UseVisualStyleBackColor = false;
             // 
             // SyncCustomerButton
@@ -62,11 +62,11 @@
             this.SyncCustomerButton.FlatAppearance.BorderSize = 2;
             this.SyncCustomerButton.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.SyncCustomerButton.ForeColor = System.Drawing.Color.WhiteSmoke;
-            this.SyncCustomerButton.Location = new System.Drawing.Point(250, 9);
+            this.SyncCustomerButton.Location = new System.Drawing.Point(219, 9);
             this.SyncCustomerButton.Name = "SyncCustomerButton";
-            this.SyncCustomerButton.Size = new System.Drawing.Size(102, 28);
+            this.SyncCustomerButton.Size = new System.Drawing.Size(71, 28);
             this.SyncCustomerButton.TabIndex = 1;
-            this.SyncCustomerButton.Text = "Sync Customer";
+            this.SyncCustomerButton.Text = "Customer";
             this.SyncCustomerButton.UseVisualStyleBackColor = false;
             // 
             // SyncSalesPersonBotton
@@ -76,11 +76,11 @@
             this.SyncSalesPersonBotton.FlatAppearance.BorderSize = 2;
             this.SyncSalesPersonBotton.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.SyncSalesPersonBotton.ForeColor = System.Drawing.Color.WhiteSmoke;
-            this.SyncSalesPersonBotton.Location = new System.Drawing.Point(358, 9);
+            this.SyncSalesPersonBotton.Location = new System.Drawing.Point(296, 9);
             this.SyncSalesPersonBotton.Name = "SyncSalesPersonBotton";
-            this.SyncSalesPersonBotton.Size = new System.Drawing.Size(116, 28);
+            this.SyncSalesPersonBotton.Size = new System.Drawing.Size(91, 28);
             this.SyncSalesPersonBotton.TabIndex = 2;
-            this.SyncSalesPersonBotton.Text = "Sync Sales Person";
+            this.SyncSalesPersonBotton.Text = "Sales";
             this.SyncSalesPersonBotton.UseVisualStyleBackColor = false;
             // 
             // SyncBarcodeButton
@@ -90,11 +90,11 @@
             this.SyncBarcodeButton.FlatAppearance.BorderSize = 2;
             this.SyncBarcodeButton.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.SyncBarcodeButton.ForeColor = System.Drawing.Color.WhiteSmoke;
-            this.SyncBarcodeButton.Location = new System.Drawing.Point(480, 9);
+            this.SyncBarcodeButton.Location = new System.Drawing.Point(393, 9);
             this.SyncBarcodeButton.Name = "SyncBarcodeButton";
-            this.SyncBarcodeButton.Size = new System.Drawing.Size(112, 28);
+            this.SyncBarcodeButton.Size = new System.Drawing.Size(81, 28);
             this.SyncBarcodeButton.TabIndex = 7;
-            this.SyncBarcodeButton.Text = "Sync Barcode";
+            this.SyncBarcodeButton.Text = "Barcode";
             this.SyncBarcodeButton.UseVisualStyleBackColor = false;
             // 
             // IncrementalDownloadOrderButton
@@ -126,7 +126,7 @@
             // 
             this.statusStrip1.Location = new System.Drawing.Point(0, 356);
             this.statusStrip1.Name = "statusStrip1";
-            this.statusStrip1.Size = new System.Drawing.Size(486, 22);
+            this.statusStrip1.Size = new System.Drawing.Size(490, 22);
             this.statusStrip1.TabIndex = 5;
             this.statusStrip1.Text = "statusStrip1";
             // 
@@ -153,7 +153,7 @@
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(54)))), ((int)(((byte)(79)))), ((int)(((byte)(107)))));
-            this.ClientSize = new System.Drawing.Size(604, 378);
+            this.ClientSize = new System.Drawing.Size(490, 378);
             this.Controls.Add(this.panel1);
             this.Controls.Add(this.statusStrip1);
             this.Controls.Add(this.IncrementalDownloadOrderButton);

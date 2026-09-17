@@ -14,10 +14,12 @@ namespace j07_btrade_sync.Service
     public class BarcodeRegistrationRelayService
     {
         private readonly MainOfficeCommandExecutor _mainOfficeCommand;
+        private readonly BtradeAuthService _authService;
 
         public BarcodeRegistrationRelayService()
         {
             _mainOfficeCommand = new MainOfficeCommandExecutor();
+            _authService = new BtradeAuthService();
         }
 
         //  SYNC REGISTRATION (relay + ack, 8.2 / 8.3)
@@ -62,14 +64,33 @@ namespace j07_btrade_sync.Service
                 : (true, "");
         }
 
-        private static async Task<(bool, string, List<BarcodeRegistrationRequestType>)> GetPending(
+        private async Task<(bool, string, List<BarcodeRegistrationRequestType>)> GetPending(
             string baseUrl)
         {
             var endpoint = $"{baseUrl}/api/BarcodeRegistration/pending";
             var client = new RestClient(endpoint);
 
-            var request = new RestRequest();
-            var response = await client.ExecuteGetAsync(request);
+            //  I-02 is [Authorize] (Arch §9.1): present the service-account
+            //  JWT (S3.6). The token is cached; a rejected token forces one
+            //  re-login and a single retry — never a login per request.
+            RestResponse response;
+            try
+            {
+                var request = new RestRequest();
+                await _authService.AddAuthHeaderAsync(request).ConfigureAwait(false);
+                response = await client.ExecuteGetAsync(request);
+                if (BtradeAuthService.IsUnauthorized(response))
+                {
+                    var retry = new RestRequest();
+                    await _authService.AddAuthHeaderAsync(retry, true).ConfigureAwait(false);
+                    response = await client.ExecuteGetAsync(retry);
+                }
+            }
+            catch (Exception ex)
+            {
+                return (false, ex.Message, new List<BarcodeRegistrationRequestType>());
+            }
+
             if (!response.IsSuccessful)
                 return (false, response.ErrorMessage ?? response.StatusDescription,
                     new List<BarcodeRegistrationRequestType>());
@@ -91,7 +112,7 @@ namespace j07_btrade_sync.Service
             return (true, "", apiResponse.Data ?? new List<BarcodeRegistrationRequestType>());
         }
 
-        private static async Task<(bool, string)> Ack(string baseUrl, string barcodeRegistrationId,
+        private async Task<(bool, string)> Ack(string baseUrl, string barcodeRegistrationId,
             string status, string processedNote)
         {
             var endpoint = $"{baseUrl}/api/BarcodeRegistration/ack";
@@ -99,10 +120,32 @@ namespace j07_btrade_sync.Service
 
             var requestBody = JsonSerializer.Serialize(new BarcodeRegistrationAckCommand(
                 barcodeRegistrationId, status, processedNote ?? string.Empty));
-            var request = new RestRequest()
-                .AddJsonBody(requestBody)
-                .AddHeader("Content-Type", "application/json");
-            var response = await client.ExecutePostAsync(request);
+
+            //  I-03 is [Authorize] (Arch §9.1): present the service-account
+            //  JWT (S3.6). The token is cached; a rejected token forces one
+            //  re-login and a single retry — never a login per request.
+            RestResponse response;
+            try
+            {
+                var request = new RestRequest()
+                    .AddJsonBody(requestBody)
+                    .AddHeader("Content-Type", "application/json");
+                await _authService.AddAuthHeaderAsync(request).ConfigureAwait(false);
+                response = await client.ExecutePostAsync(request);
+                if (BtradeAuthService.IsUnauthorized(response))
+                {
+                    var retry = new RestRequest()
+                        .AddJsonBody(requestBody)
+                        .AddHeader("Content-Type", "application/json");
+                    await _authService.AddAuthHeaderAsync(retry, true).ConfigureAwait(false);
+                    response = await client.ExecutePostAsync(retry);
+                }
+            }
+            catch (Exception ex)
+            {
+                return (false, ex.Message);
+            }
+
             if (!response.IsSuccessful)
                 return (false, response.ErrorMessage ?? response.StatusDescription);
 
