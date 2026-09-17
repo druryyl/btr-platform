@@ -3,10 +3,14 @@ package com.elsasa.bgud.network
 import com.elsasa.bgud.model.api.BarcodeDto
 import com.elsasa.bgud.model.api.BarcodeRegistrationSubmitRequest
 import com.elsasa.bgud.model.api.BrgDto
+import com.elsasa.bgud.model.api.CustomerDto
+import com.elsasa.bgud.model.api.DriverDto
 import com.elsasa.bgud.model.api.JSendEnvelope
 import com.elsasa.bgud.model.api.LoginRequest
 import com.elsasa.bgud.model.api.LoginResult
 import com.elsasa.bgud.model.api.RegistrationStatusDto
+import com.elsasa.bgud.model.api.ReturnOrderSubmitRequest
+import com.elsasa.bgud.model.api.SalesPersonDto
 import com.google.gson.JsonElement
 import retrofit2.http.Body
 import retrofit2.http.GET
@@ -29,8 +33,18 @@ import retrofit2.http.Path
  *   only call where the device supplies a tenant value in the path
  *   (ADR-007 §8, §8.4).
  *
- * No point-lookup endpoint exists for MVP (TQ-5); scan resolution is local
- * Room only (P-07). No `ServerId` appears on any command body.
+ * Return Order contract (Return Order Architecture §8.1, §8.3, §19.3, S4.2):
+ * - I-RO-01 `POST api/return-order` — idempotent submit keyed by the ULID
+ *   `ReturnOrderId` (IR-RO-01); JWT; body carries no `ServerId` (P-06).
+ * - I-RO-03 `GET api/Customer/{serverId}` — existing Customer download
+ *   (GAP-004); path `serverId` follows the `GET api/Brg/{serverId}` precedent.
+ * - I-RO-04 `GET api/SalesPerson/{serverId}` — existing Sales Person download
+ *   (GAP-005); same path-param convention.
+ * - I-RO-05 `GET api/Driver/{serverId}` — new Driver download (GAP-013,
+ *   S2.5); same path-param convention.
+ *
+ * Every call carries the JWT via `AuthInterceptor`; this interface declares
+ * no authentication itself. No `ServerId` appears on any command body.
  */
 interface BtradeApiService {
 
@@ -55,4 +69,22 @@ interface BtradeApiService {
     /** I-06 — existing Barang download for the login-returned `serverId`. */
     @GET("api/Brg/{serverId}")
     suspend fun brgList(@Path("serverId") serverId: String): JSendEnvelope<List<BrgDto>>
+
+    /** I-RO-01 — submit one Return Order (idempotent by ULID `ReturnOrderId`). */
+    @POST("api/return-order")
+    suspend fun submitReturnOrder(
+        @Body request: ReturnOrderSubmitRequest
+    ): JSendEnvelope<JsonElement>
+
+    /** I-RO-03 — existing Customer download for the login-returned `serverId`. */
+    @GET("api/Customer/{serverId}")
+    suspend fun customerList(@Path("serverId") serverId: String): JSendEnvelope<List<CustomerDto>>
+
+    /** I-RO-04 — existing Sales Person download for the login-returned `serverId`. */
+    @GET("api/SalesPerson/{serverId}")
+    suspend fun salesPersonList(@Path("serverId") serverId: String): JSendEnvelope<List<SalesPersonDto>>
+
+    /** I-RO-05 — Driver download for the login-returned `serverId` (S2.5). */
+    @GET("api/Driver/{serverId}")
+    suspend fun driverList(@Path("serverId") serverId: String): JSendEnvelope<List<DriverDto>>
 }

@@ -102,6 +102,107 @@ data class RegistrationStatusDto(
 )
 
 /**
+ * I-RO-01 request — `POST /api/return-order`
+ * (`ReturnOrderUploadCommand`, Return Order Architecture §8.1, §19.3).
+ *
+ * `ReturnOrderId` is the device-generated ULID idempotency key (IR-RO-01);
+ * resubmission replaces the staged copy, never duplicates (Arch §10.6).
+ * `ReturnOrderDate` is a `yyyy-MM-dd` string, mirroring the Cloud
+ * `ReturnOrderType` and the `OrderModel` string-date convention.
+ * No `ServerId` — the Cloud resolves the tenant server-side from the JWT
+ * (P-06). Items are carried in `ListItem` (singular), matching the Cloud
+ * `ReturnOrderUploadCommand` property name.
+ */
+data class ReturnOrderSubmitRequest(
+    @SerializedName("ReturnOrderId") val returnOrderId: String,
+    @SerializedName("ReturnOrderDate") val returnOrderDate: String,
+    @SerializedName("WarehouseCode") val warehouseCode: String,
+    @SerializedName("CustomerId") val customerId: String,
+    @SerializedName("CustomerName") val customerName: String = "",
+    @SerializedName("SalesPersonId") val salesPersonId: String = "",
+    @SerializedName("SalesPersonName") val salesPersonName: String = "",
+    @SerializedName("DriverId") val driverId: String = "",
+    @SerializedName("DriverName") val driverName: String = "",
+    @SerializedName("Note") val note: String = "",
+    @SerializedName("ListItem") val listItem: List<ReturnOrderItemDto> = emptyList()
+)
+
+/**
+ * I-RO-01 request item — `ReturnOrderItemType` (Return Order Architecture
+ * §5.2, §8.1).
+ *
+ * `Qty` is the physical-unit quantity (IR-RO-03); no small-unit
+ * normalization anywhere (P-09). `JenisRetur` is exactly `BAGUS` | `RUSAK`
+ * (ADR-RO-004).
+ */
+data class ReturnOrderItemDto(
+    @SerializedName("ReturnOrderId") val returnOrderId: String = "",
+    @SerializedName("NoUrut") val noUrut: Int = 0,
+    @SerializedName("BrgId") val brgId: String = "",
+    @SerializedName("BrgCode") val brgCode: String = "",
+    @SerializedName("BrgName") val brgName: String = "",
+    @SerializedName("Qty") val qty: Double = 0.0,
+    @SerializedName("SatId") val satId: String = "",
+    @SerializedName("JenisRetur") val jenisRetur: String = ""
+)
+
+/**
+ * I-RO-03 response item — `CustomerType` (existing Customer download,
+ * GAP-004, Return Order Architecture §8.3).
+ *
+ * Served by the existing route `GET /api/Customer/{serverId}` whose path
+ * value is the login-returned `serverId` (the `GET api/Brg/{serverId}`
+ * precedent). `serverId` is deserialized (the Cloud returns it) but never
+ * sent and never used for scoping; the local cache is scoped by the session
+ * binding. Full sync mapping of these fields into `customer_entity` is
+ * owned by S4.3.
+ */
+data class CustomerDto(
+    @SerializedName("CustomerId") val customerId: String = "",
+    @SerializedName("CustomerCode") val customerCode: String = "",
+    @SerializedName("CustomerName") val customerName: String = "",
+    @SerializedName("Alamat") val alamat: String = "",
+    @SerializedName("ServerId") val serverId: String = ""
+)
+
+/**
+ * I-RO-04 response item — `SalesPersonType` (existing Sales Person download,
+ * GAP-005, Return Order Architecture §8.3).
+ *
+ * Served by the existing route `GET /api/SalesPerson/{serverId}` whose path
+ * value is the login-returned `serverId` (the `GET api/Brg/{serverId}`
+ * precedent). `serverId` is deserialized (the Cloud returns it) but never
+ * sent and never used for scoping; the local cache is scoped by the session
+ * binding. Full sync mapping of these fields into `salesperson_entity` is
+ * owned by S4.3.
+ */
+data class SalesPersonDto(
+    @SerializedName("SalesPersonId") val salesPersonId: String = "",
+    @SerializedName("SalesPersonCode") val salesPersonCode: String = "",
+    @SerializedName("SalesPersonName") val salesPersonName: String = "",
+    @SerializedName("Email") val email: String = "",
+    @SerializedName("ServerId") val serverId: String = ""
+)
+
+/**
+ * I-RO-05 response item — `DriverType` (new Driver download, GAP-013,
+ * Return Order Architecture §8.3).
+ *
+ * Served by `GET /api/Driver/{serverId}` (S2.5 `DriverController`) whose
+ * path value is the login-returned `serverId` (the `GET api/Brg/{serverId}`
+ * precedent). `serverId` is deserialized (the Cloud returns it) but never
+ * sent and never used for scoping; the local cache is scoped by the session
+ * binding. Full sync mapping of these fields into `driver_entity` is owned
+ * by S4.3.
+ */
+data class DriverDto(
+    @SerializedName("DriverId") val driverId: String = "",
+    @SerializedName("DriverName") val driverName: String = "",
+    @SerializedName("IsAktif") val isAktif: Boolean = true,
+    @SerializedName("ServerId") val serverId: String = ""
+)
+
+/**
  * I-06 response item — `BrgType` (existing Barang download, ADR-005).
  *
  * Served by the legacy route `GET /api/Brg/{serverId}` whose path value is
