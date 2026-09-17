@@ -206,6 +206,7 @@
     <Compile Include="Service\CustomerUploadService.cs" />
     <Compile Include="Service\KategoriSyncService.cs" />
     <Compile Include="Service\OrderIncrementalDownloadService.cs" />
+    <Compile Include="Service\ReturnOrderIncrementalDownloadService.cs" />
     <Compile Include="Service\SalesPersonSyncService.cs" />
     <Compile Include="Service\WilayahSyncService.cs" />
     <Compile Include="Shared\MainOfficeCommandExecutor.cs" />
