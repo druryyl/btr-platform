@@ -20,6 +20,10 @@ private val Context.sessionPreferencesDataStore: DataStore<Preferences> by prefe
  * `warehouseCode` (not `ServerId`) is stored on queued requests (IR-09);
  * switching warehouse requires re-authentication and the local cache is
  * replaced for the new tenant (S5.3).
+ *
+ * Return Order reference timestamps (S4.3, Arch §6.4, §8.1): each advances
+ * only on the committed download of its own reference type, mirroring the
+ * Barang/Barcode timestamp pattern.
  */
 class SessionPreferencesDataSource(private val context: Context) {
 
@@ -30,6 +34,9 @@ class SessionPreferencesDataSource(private val context: Context) {
         private val OFFICE_CODE_KEY = stringPreferencesKey("office_code")
         private val LAST_BARANG_SYNC_KEY = longPreferencesKey("last_barang_sync")
         private val LAST_BARCODE_SYNC_KEY = longPreferencesKey("last_barcode_sync")
+        private val LAST_CUSTOMER_SYNC_KEY = longPreferencesKey("last_customer_sync")
+        private val LAST_SALESPERSON_SYNC_KEY = longPreferencesKey("last_salesperson_sync")
+        private val LAST_DRIVER_SYNC_KEY = longPreferencesKey("last_driver_sync")
     }
 
     val token: Flow<String?> = context.sessionPreferencesDataStore.data
@@ -49,6 +56,15 @@ class SessionPreferencesDataSource(private val context: Context) {
 
     val lastBarcodeSync: Flow<Long> = context.sessionPreferencesDataStore.data
         .map { it[LAST_BARCODE_SYNC_KEY] ?: 0L }
+
+    val lastCustomerSync: Flow<Long> = context.sessionPreferencesDataStore.data
+        .map { it[LAST_CUSTOMER_SYNC_KEY] ?: 0L }
+
+    val lastSalesPersonSync: Flow<Long> = context.sessionPreferencesDataStore.data
+        .map { it[LAST_SALESPERSON_SYNC_KEY] ?: 0L }
+
+    val lastDriverSync: Flow<Long> = context.sessionPreferencesDataStore.data
+        .map { it[LAST_DRIVER_SYNC_KEY] ?: 0L }
 
     suspend fun saveSession(
         token: String,
@@ -82,6 +98,24 @@ class SessionPreferencesDataSource(private val context: Context) {
     suspend fun setLastBarcodeSync(timestampMillis: Long) {
         context.sessionPreferencesDataStore.edit { preferences ->
             preferences[LAST_BARCODE_SYNC_KEY] = timestampMillis
+        }
+    }
+
+    suspend fun setLastCustomerSync(timestampMillis: Long) {
+        context.sessionPreferencesDataStore.edit { preferences ->
+            preferences[LAST_CUSTOMER_SYNC_KEY] = timestampMillis
+        }
+    }
+
+    suspend fun setLastSalesPersonSync(timestampMillis: Long) {
+        context.sessionPreferencesDataStore.edit { preferences ->
+            preferences[LAST_SALESPERSON_SYNC_KEY] = timestampMillis
+        }
+    }
+
+    suspend fun setLastDriverSync(timestampMillis: Long) {
+        context.sessionPreferencesDataStore.edit { preferences ->
+            preferences[LAST_DRIVER_SYNC_KEY] = timestampMillis
         }
     }
 

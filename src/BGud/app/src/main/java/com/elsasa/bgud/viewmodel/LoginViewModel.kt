@@ -7,6 +7,7 @@ import com.elsasa.bgud.datastore.SessionPreferencesDataSource
 import com.elsasa.bgud.model.api.LoginRequest
 import com.elsasa.bgud.network.ApiClient
 import com.elsasa.bgud.repository.BarcodeSyncRepository
+import com.elsasa.bgud.repository.ReturnOrderReferenceSyncRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -132,9 +133,12 @@ class LoginViewModel(
                     officeCode = result.serverId
                 )
                 // Login-time master data synchronization (§13.2, OQ-2,
-                // UX §13): submit → barcodes → barang → statuses (S5.3).
-                // Authenticated with the just-issued token; no DataStore I/O
-                // on the OkHttp dispatcher (fixed provider, S5.3 pattern).
+                // UX §13): submit → barcodes → barang → statuses (S5.3),
+                // then Return Order references: customer → salesperson →
+                // driver (S4.3, I-RO-03/04/05). Authenticated with the
+                // just-issued token; no DataStore I/O on the OkHttp
+                // dispatcher (fixed provider, S5.3 pattern). Reference
+                // failures never block navigation (S4.3 acceptance).
                 _isSyncing.value = true
                 try {
                     val authedApi = ApiClient.create(
@@ -149,6 +153,18 @@ class LoginViewModel(
                         session = session
                     )
                     repository.sync(result.serverId)
+                    try {
+                        val referenceRepository = ReturnOrderReferenceSyncRepository(
+                            api = authedApi,
+                            customerDao = database.customerDao(),
+                            salesPersonDao = database.salesPersonDao(),
+                            driverDao = database.driverDao(),
+                            session = session
+                        )
+                        referenceRepository.sync(result.serverId)
+                    } catch (_: Exception) {
+                        // Reference download failures never block navigation.
+                    }
                 } finally {
                     _isSyncing.value = false
                 }
