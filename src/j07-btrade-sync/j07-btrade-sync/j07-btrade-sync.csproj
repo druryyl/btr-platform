@@ -177,6 +177,8 @@
     <Compile Include="Repository\PackingOrderDal.cs" />
     <Compile Include="Repository\PackingOrderDepoDal.cs" />
     <Compile Include="Repository\PackingOrderItemDal.cs" />
+    <Compile Include="Repository\ReturnOrderDal.cs" />
+    <Compile Include="Repository\ReturnOrderItemDal.cs" />
     <Compile Include="Repository\SalesPersonDal.cs" />
     <Compile Include="Repository\UserDal.cs" />
     <Compile Include="Repository\WilayahDal.cs" />
