@@ -61,15 +61,31 @@ import com.elsasa.bgud.viewmodel.SynchronizationViewModel
 import com.elsasa.bgud.viewmodel.SynchronizationViewModelFactory
 
 /**
- * Cloud API base URL (transport unresolved, C-3/R-03).
+ * Cloud API base URL.
  *
- * No environment URL is hardcoded in the network layer (S5.2); the single
- * composition-root value is held here and passed down. It is intentionally
- * blank until deployment/transport is resolved — [LoginViewModel] reports
- * the missing configuration in the login error region instead of issuing a
- * call. Never append a tenant segment: the tenant is JWT-resolved (ADR-007).
+ * Aligned with the BTrade3 network module (`src/BTrade3`
+ * `NetworkModule.BASE_URL`), which targets the same backend host. BTrade3
+ * declares its endpoints without the `api/` segment (e.g. `Brg/{serverId}`)
+ * because its base already ends in `api/`; BGud's [BtradeApiService] declares
+ * the full path (e.g. `api/Brg/{serverId}`), so the shared prefix is
+ * `belajar-api/` here. This resolves to the same effective endpoints, e.g.
+ * `http://dev.smart-ics.com:8089/belajar-api/api/Brg/{serverId}`.
+ *
+ * The single composition-root value is held here and passed down; no
+ * environment URL is hardcoded in the network layer (S5.2). Never append a
+ * tenant segment: the tenant is JWT-resolved (ADR-007). Cleartext HTTP is
+ * permitted for this host via `res/xml/network_security_config.xml`.
  */
-private const val CLOUD_BASE_URL = ""
+private const val CLOUD_BASE_URL = "http://dev.smart-ics.com:8089/belajar-api/"
+
+/**
+ * Sentinel meaning "the session DataStore has not emitted yet".
+ *
+ * A plain `null` cannot be used for this: `null` is also the legitimate token
+ * value when no session is stored (first install, logout). Conflating
+ * "not loaded" with "no token" held the startup gate forever — the spinner bug.
+ */
+private const val SESSION_NOT_LOADED = "\u0000session-not-loaded"
 
 /**
  * Navigation graph (Architecture §13.2).
@@ -151,9 +167,9 @@ fun AppNavigation(
     val context = LocalContext.current
     val session = remember { SessionPreferencesDataSource(context) }
     val captureRepository = remember { ReturnOrderCaptureRepository(database, session) }
-    val token by session.token.collectAsState(initial = null)
+    val tokenOrLoading by session.token.collectAsState(initial = SESSION_NOT_LOADED)
 
-    if (token == null) {
+    if (tokenOrLoading == SESSION_NOT_LOADED) {
         // Session not yet read — hold the gate instead of guessing.
         Box(
             modifier = Modifier.fillMaxSize(),
@@ -164,9 +180,13 @@ fun AppNavigation(
         return
     }
 
+    // Loaded: a blank/absent token means "no session" → login. On first install
+    // and after logout this is the resolved state, not the loading spinner.
+    val hasSession = !tokenOrLoading.isNullOrBlank()
+
     NavHost(
         navController = navController,
-        startDestination = if (token.isNullOrBlank()) "login" else "home"
+        startDestination = if (hasSession) "home" else "login"
     ) {
         composable("login") {
             val factory = remember {

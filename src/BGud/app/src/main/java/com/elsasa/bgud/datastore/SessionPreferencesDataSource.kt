@@ -4,10 +4,12 @@ import android.content.Context
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.core.emptyPreferences
 import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 
@@ -39,31 +41,40 @@ class SessionPreferencesDataSource(private val context: Context) {
         private val LAST_DRIVER_SYNC_KEY = longPreferencesKey("last_driver_sync")
     }
 
-    val token: Flow<String?> = context.sessionPreferencesDataStore.data
+    /**
+     * Single source for all preference reads. A corrupted preferences file
+     * would otherwise throw `IOException` and leave the token flow unresolved
+     * forever (the startup gate would spin); recover with empty preferences so
+     * the app degrades to "no session" instead.
+     */
+    private val preferences: Flow<Preferences> = context.sessionPreferencesDataStore.data
+        .catch { emit(emptyPreferences()) }
+
+    val token: Flow<String?> = preferences
         .map { it[TOKEN_KEY] }
 
-    val userId: Flow<String?> = context.sessionPreferencesDataStore.data
+    val userId: Flow<String?> = preferences
         .map { it[USER_ID_KEY] }
 
-    val warehouseCode: Flow<String?> = context.sessionPreferencesDataStore.data
+    val warehouseCode: Flow<String?> = preferences
         .map { it[WAREHOUSE_CODE_KEY] }
 
-    val officeCode: Flow<String?> = context.sessionPreferencesDataStore.data
+    val officeCode: Flow<String?> = preferences
         .map { it[OFFICE_CODE_KEY] }
 
-    val lastBarangSync: Flow<Long> = context.sessionPreferencesDataStore.data
+    val lastBarangSync: Flow<Long> = preferences
         .map { it[LAST_BARANG_SYNC_KEY] ?: 0L }
 
-    val lastBarcodeSync: Flow<Long> = context.sessionPreferencesDataStore.data
+    val lastBarcodeSync: Flow<Long> = preferences
         .map { it[LAST_BARCODE_SYNC_KEY] ?: 0L }
 
-    val lastCustomerSync: Flow<Long> = context.sessionPreferencesDataStore.data
+    val lastCustomerSync: Flow<Long> = preferences
         .map { it[LAST_CUSTOMER_SYNC_KEY] ?: 0L }
 
-    val lastSalesPersonSync: Flow<Long> = context.sessionPreferencesDataStore.data
+    val lastSalesPersonSync: Flow<Long> = preferences
         .map { it[LAST_SALESPERSON_SYNC_KEY] ?: 0L }
 
-    val lastDriverSync: Flow<Long> = context.sessionPreferencesDataStore.data
+    val lastDriverSync: Flow<Long> = preferences
         .map { it[LAST_DRIVER_SYNC_KEY] ?: 0L }
 
     suspend fun saveSession(
@@ -120,6 +131,6 @@ class SessionPreferencesDataSource(private val context: Context) {
     }
 
     suspend fun getToken(): String? {
-        return context.sessionPreferencesDataStore.data.first()[TOKEN_KEY]
+        return preferences.first()[TOKEN_KEY]
     }
 }
