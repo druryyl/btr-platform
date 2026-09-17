@@ -161,6 +161,8 @@
     <Compile Include="Model\KategoriType.cs" />
     <Compile Include="Model\OrderItemType.cs" />
     <Compile Include="Model\OrderModel.cs" />
+    <Compile Include="Model\ReturnOrderItemType.cs" />
+    <Compile Include="Model\ReturnOrderModel.cs" />
     <Compile Include="Model\PackingOrderDepoModel.cs" />
     <Compile Include="Model\PackingOrderItemModel.cs" />
     <Compile Include="Model\PackingOrderModel.cs" />
