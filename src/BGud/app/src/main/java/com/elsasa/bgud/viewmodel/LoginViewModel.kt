@@ -8,6 +8,7 @@ import com.elsasa.bgud.model.api.LoginRequest
 import com.elsasa.bgud.network.ApiClient
 import com.elsasa.bgud.repository.BarcodeSyncRepository
 import com.elsasa.bgud.repository.ReturnOrderReferenceSyncRepository
+import com.elsasa.bgud.repository.ReturnOrderSyncRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -134,11 +135,12 @@ class LoginViewModel(
                 )
                 // Login-time master data synchronization (§13.2, OQ-2,
                 // UX §13): submit → barcodes → barang → statuses (S5.3),
-                // then Return Order references: customer → salesperson →
+                // then the Return Order run (S4.5): submit DRAFT orders
+                // (I-RO-01) → reference downloads: customer → salesperson →
                 // driver (S4.3, I-RO-03/04/05). Authenticated with the
                 // just-issued token; no DataStore I/O on the OkHttp
                 // dispatcher (fixed provider, S5.3 pattern). Reference
-                // failures never block navigation (S4.3 acceptance).
+                // failures never block navigation (S4.3/S4.5 acceptance).
                 _isSyncing.value = true
                 try {
                     val authedApi = ApiClient.create(
@@ -154,16 +156,24 @@ class LoginViewModel(
                     )
                     repository.sync(result.serverId)
                     try {
-                        val referenceRepository = ReturnOrderReferenceSyncRepository(
+                        // Return Order sync run (S4.5): submit DRAFT orders
+                        // (I-RO-01), then reference downloads (I-RO-03/04/05,
+                        // S4.3) — Arch §17.1/§20 ordering.
+                        val returnOrderSync = ReturnOrderSyncRepository(
                             api = authedApi,
-                            customerDao = database.customerDao(),
-                            salesPersonDao = database.salesPersonDao(),
-                            driverDao = database.driverDao(),
-                            session = session
+                            returnOrderDao = database.returnOrderDao(),
+                            returnOrderItemDao = database.returnOrderItemDao(),
+                            referenceSync = ReturnOrderReferenceSyncRepository(
+                                api = authedApi,
+                                customerDao = database.customerDao(),
+                                salesPersonDao = database.salesPersonDao(),
+                                driverDao = database.driverDao(),
+                                session = session
+                            )
                         )
-                        referenceRepository.sync(result.serverId)
+                        returnOrderSync.sync(result.serverId)
                     } catch (_: Exception) {
-                        // Reference download failures never block navigation.
+                        // Return Order sync failures never block navigation.
                     }
                 } finally {
                     _isSyncing.value = false
