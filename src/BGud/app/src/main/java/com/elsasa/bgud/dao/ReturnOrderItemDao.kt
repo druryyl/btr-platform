@@ -19,6 +19,14 @@ interface ReturnOrderItemDao {
     @Query("SELECT * FROM return_order_item_entity WHERE returnOrderId = :returnOrderId ORDER BY noUrut")
     fun observeByParent(returnOrderId: String): Flow<List<ReturnOrderItemEntity>>
 
+    /**
+     * Line count per order, backing the Return Order List row display
+     * (SCR-MOB-RO-001, §12.1 `item count`). Supporting prerequisite not named
+     * in the §3 impact inventory; required for the list row.
+     */
+    @Query("SELECT COUNT(*) FROM return_order_item_entity WHERE returnOrderId = :returnOrderId")
+    suspend fun countByParent(returnOrderId: String): Int
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun upsert(item: ReturnOrderItemEntity)
 

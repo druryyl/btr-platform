@@ -28,14 +28,19 @@ interface ReturnOrderDao {
     fun observeAll(): Flow<List<ReturnOrderEntity>>
 
     /**
-     * Local searchable list backing SCR-MOB-RO-001 (S4.6): by Customer name,
-     * status, or note against the local Room rows only — no network.
+     * Local searchable list backing SCR-MOB-RO-001 (S4.6, §12.1, §20): by
+     * Customer name, date, or note against the local Room rows only — no
+     * network — plus the status filter (empty `status` = all, §11.1
+     * `Draft`/`Synced` only). `createdAt` is the local capture day rendered
+     * for the search bar (same `localtime` basis as the list display).
      */
     @Query(
         "SELECT * FROM return_order_entity " +
             "WHERE (:status = '' OR status = :status) " +
             "AND (customerName LIKE '%' || :query || '%' " +
-            "OR note LIKE '%' || :query || '%') " +
+            "OR note LIKE '%' || :query || '%' " +
+            "OR date(createdAt / 1000, 'unixepoch', 'localtime') " +
+            "LIKE '%' || :query || '%') " +
             "ORDER BY createdAt DESC LIMIT :limit OFFSET :offset"
     )
     suspend fun search(query: String, status: String, limit: Int, offset: Int): List<ReturnOrderEntity>
