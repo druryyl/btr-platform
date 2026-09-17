@@ -15,10 +15,12 @@ namespace j07_btrade_sync.Service
     public class ReturnOrderIncrementalDownloadService
     {
         private readonly RegistryHelper _registryHelper;
+        private readonly BtradeAuthService _authService;
 
         public ReturnOrderIncrementalDownloadService()
         {
             _registryHelper = new RegistryHelper();
+            _authService = new BtradeAuthService();
         }
         public async Task<(bool, string, List<ReturnOrderModel>)> Execute(Periode periode)
         {
@@ -27,11 +29,35 @@ namespace j07_btrade_sync.Service
             var endpoint = $"{baseUrl}/api/ReturnOrder/incremental/{{tgl1}}/{{tgl2}}/{{serverId}}";
             var client = new RestClient(endpoint);
 
-            var request = new RestRequest()
-                .AddUrlSegment("tgl1", periode.Tgl1.ToString("yyyy-MM-dd"))
-                .AddUrlSegment("tgl2", periode.Tgl2.ToString("yyyy-MM-dd"))
-                .AddUrlSegment("serverId", serverTargetId);
-            var response = await client.ExecuteGetAsync(request);
+            //  I-RO-02 is [Authorize] (Arch §9.1): present the service-account
+            //  JWT (S3.6). The token is cached; a rejected token forces one
+            //  re-login and a single retry — never a login per request.
+            //  No ServerId is added to any Return Order payload (P-06): the
+            //  serverId url segment follows the CheckIn/Order route
+            //  convention; the tenant is bound server-side from the JWT.
+            RestResponse response;
+            try
+            {
+                var request = new RestRequest()
+                    .AddUrlSegment("tgl1", periode.Tgl1.ToString("yyyy-MM-dd"))
+                    .AddUrlSegment("tgl2", periode.Tgl2.ToString("yyyy-MM-dd"))
+                    .AddUrlSegment("serverId", serverTargetId);
+                await _authService.AddAuthHeaderAsync(request).ConfigureAwait(false);
+                response = await client.ExecuteGetAsync(request).ConfigureAwait(false);
+                if (BtradeAuthService.IsUnauthorized(response))
+                {
+                    var retry = new RestRequest()
+                        .AddUrlSegment("tgl1", periode.Tgl1.ToString("yyyy-MM-dd"))
+                        .AddUrlSegment("tgl2", periode.Tgl2.ToString("yyyy-MM-dd"))
+                        .AddUrlSegment("serverId", serverTargetId);
+                    await _authService.AddAuthHeaderAsync(retry, true).ConfigureAwait(false);
+                    response = await client.ExecuteGetAsync(retry).ConfigureAwait(false);
+                }
+            }
+            catch (Exception ex)
+            {
+                return (false, ex.Message, null);
+            }
 
             if (!response.IsSuccessful)
             {

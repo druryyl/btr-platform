@@ -186,6 +186,7 @@
     <Compile Include="Service\BarcodeRegistrationRelayService.cs" />
     <Compile Include="Service\UserSyncService.cs" />
     <Compile Include="Service\BrgSyncService.cs" />
+    <Compile Include="Service\BtradeAuthService.cs" />
     <Compile Include="Model\BrgType.cs" />
     <Compile Include="Service\PackingOrderUploadSvc.cs" />
     <Compile Include="SyncForm.cs">

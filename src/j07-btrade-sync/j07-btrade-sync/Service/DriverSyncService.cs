@@ -10,10 +10,12 @@ namespace j07_btrade_sync.Service
     public class DriverSyncService
     {
         private readonly RegistryHelper _registryHelper;
+        private readonly BtradeAuthService _authService;
 
         public DriverSyncService()
         {
             _registryHelper = new RegistryHelper();
+            _authService = new BtradeAuthService();
         }
         public async Task<(bool, string)> SyncDriver(IEnumerable<Model.DriverType> enumDriver)
         {
@@ -29,18 +31,38 @@ namespace j07_btrade_sync.Service
                 item.ServerId = serverTargetId;
 
             var requestBody = System.Text.Json.JsonSerializer.Serialize(new DriverSyncCommand(listDriver, serverTargetId));
-            var req = new RestSharp.RestRequest()
-                .AddJsonBody(requestBody);
-            
-            //  EXECUTE
-            var response = await client.ExecutePostAsync(req);
-            if (response.StatusCode != System.Net.HttpStatusCode.OK)
+
+            //  I-RO-06 is [Authorize] (Arch §9.1): present the service-account
+            //  JWT (S3.6). The token is cached; a rejected token forces one
+            //  re-login and a single retry — never a login per request.
+            //  The payload shape is unchanged (SalesPerson precedent).
+            try
             {
-                return (false, response.ErrorMessage);
+                var req = new RestSharp.RestRequest()
+                    .AddJsonBody(requestBody);
+                await _authService.AddAuthHeaderAsync(req).ConfigureAwait(false);
+
+                //  EXECUTE
+                var response = await client.ExecutePostAsync(req);
+                if (BtradeAuthService.IsUnauthorized(response))
+                {
+                    var retry = new RestSharp.RestRequest()
+                        .AddJsonBody(requestBody);
+                    await _authService.AddAuthHeaderAsync(retry, true).ConfigureAwait(false);
+                    response = await client.ExecutePostAsync(retry);
+                }
+                if (response.StatusCode != System.Net.HttpStatusCode.OK)
+                {
+                    return (false, response.ErrorMessage);
+                }
+                else
+                {
+                    return (true, "");
+                }
             }
-            else
+            catch (System.Exception ex)
             {
-                return (true, "");
+                return (false, ex.Message);
             }
         }
     }
