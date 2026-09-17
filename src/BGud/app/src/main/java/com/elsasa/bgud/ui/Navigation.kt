@@ -20,24 +20,37 @@ import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import com.elsasa.bgud.database.AppDatabase
 import com.elsasa.bgud.datastore.SessionPreferencesDataSource
+import com.elsasa.bgud.repository.ReturnOrderCaptureRepository
 import com.elsasa.bgud.ui.screen.BarcodeRegistryScreen
+import com.elsasa.bgud.ui.screen.CreateReturnOrderScreen
 import com.elsasa.bgud.ui.screen.EditBarcodeScreen
+import com.elsasa.bgud.ui.screen.EditReturnOrderScreen
 import com.elsasa.bgud.ui.screen.HomeScreen
 import com.elsasa.bgud.ui.screen.LoginScreen
 import com.elsasa.bgud.ui.screen.RegisterScreen
+import com.elsasa.bgud.ui.screen.ReturnOrderDetailScreen
+import com.elsasa.bgud.ui.screen.ReturnOrderListScreen
 import com.elsasa.bgud.ui.screen.ScanScreen
 import com.elsasa.bgud.ui.screen.SettingsScreen
 import com.elsasa.bgud.ui.screen.SynchronizationScreen
 import com.elsasa.bgud.viewmodel.BarcodeRegistryViewModel
 import com.elsasa.bgud.viewmodel.BarcodeRegistryViewModelFactory
+import com.elsasa.bgud.viewmodel.CreateReturnOrderViewModel
+import com.elsasa.bgud.viewmodel.CreateReturnOrderViewModelFactory
 import com.elsasa.bgud.viewmodel.EditBarcodeViewModel
 import com.elsasa.bgud.viewmodel.EditBarcodeViewModelFactory
+import com.elsasa.bgud.viewmodel.EditReturnOrderViewModel
+import com.elsasa.bgud.viewmodel.EditReturnOrderViewModelFactory
 import com.elsasa.bgud.viewmodel.HomeViewModel
 import com.elsasa.bgud.viewmodel.HomeViewModelFactory
 import com.elsasa.bgud.viewmodel.LoginViewModel
 import com.elsasa.bgud.viewmodel.LoginViewModelFactory
 import com.elsasa.bgud.viewmodel.RegisterBarcodeViewModel
 import com.elsasa.bgud.viewmodel.RegisterBarcodeViewModelFactory
+import com.elsasa.bgud.viewmodel.ReturnOrderDetailViewModel
+import com.elsasa.bgud.viewmodel.ReturnOrderDetailViewModelFactory
+import com.elsasa.bgud.viewmodel.ReturnOrderListViewModel
+import com.elsasa.bgud.viewmodel.ReturnOrderListViewModelFactory
 import com.elsasa.bgud.viewmodel.ReturnOrderSyncViewModel
 import com.elsasa.bgud.viewmodel.ReturnOrderSyncViewModelFactory
 import com.elsasa.bgud.viewmodel.ScanViewModel
@@ -70,6 +83,7 @@ private const val CLOUD_BASE_URL = ""
  *   ├─ Scan Barcode ────────▶ scan
  *   ├─ Search Barcode ──────▶ barcode_registry (S5.8)
  *   ├─ Register Barcode ────▶ register (barcode argument optional)
+ *   ├─ Return Order ────────▶ return_order_list (§13.1, S4.11)
  *   ├─ Barcode Registry ────▶ barcode_registry (S5.8)
  *   ├─ Synchronization ─────▶ synchronization (S5.10)
  *   └─ Settings ────────────▶ settings (S5.11)
@@ -90,6 +104,22 @@ private const val CLOUD_BASE_URL = ""
  *   ├─ Save ────▶ local queue ── success message ──▶ back
  *   └─ Cancel ──▶ back
  *
+ * return_order_list (S4.6, SCR-MOB-RO-001)
+ *   ├─ Create ─────────────▶ return_order_create (S4.7)
+ *   └─ row ────────────────▶ return_order_detail?returnOrderId={id} (S4.8)
+ *
+ * return_order_create (S4.7, SCR-MOB-RO-002)
+ *   ├─ Save ────▶ local write ──▶ back
+ *   └─ Cancel ──▶ back
+ *
+ * return_order_detail (S4.8, SCR-MOB-RO-003)
+ *   ├─ Edit (Draft) ───────▶ return_order_edit?returnOrderId={id} (S4.9)
+ *   └─ Delete (Draft) ─────▶ confirm ──▶ back
+ *
+ * return_order_edit (S4.9, SCR-MOB-RO-004)
+ *   ├─ Save ────▶ local write ──▶ back
+ *   └─ Cancel ──▶ back
+ *
  * synchronization (S5.10, SCR-MOB-007)
  *   └─ Sync Now ──▶ sync worker ──▶ synchronization (refreshed)
  *
@@ -106,7 +136,12 @@ private const val CLOUD_BASE_URL = ""
  * to `login` with the back stack cleared. All §13.2 routes
  * (`login`, `home`, `scan`, `register?barcode={value}`,
  * `barcode_registry`, `edit?barcodeId={id}`, `synchronization`,
- * `settings`) are wired; no forward references remain.
+ * `settings`) are wired; no forward references remain. The §13.1 Return
+ * Order routes (`return_order_list`, `return_order_create`,
+ * `return_order_detail?returnOrderId={id}`,
+ * `return_order_edit?returnOrderId={id}`) are wired by S4.11; Edit is
+ * reached only from Detail (which itself gates on `Draft`), and no
+ * device `Imported` state exists (ADR-RO-006).
  */
 @Composable
 fun AppNavigation(
@@ -115,6 +150,7 @@ fun AppNavigation(
 ) {
     val context = LocalContext.current
     val session = remember { SessionPreferencesDataSource(context) }
+    val captureRepository = remember { ReturnOrderCaptureRepository(database, session) }
     val token by session.token.collectAsState(initial = null)
 
     if (token == null) {
@@ -163,9 +199,122 @@ fun AppNavigation(
                 onScanBarcode = { navController.navigate("scan") },
                 onSearchBarcode = { navController.navigate("barcode_registry") },
                 onRegisterBarcode = { navController.navigate("register") },
+                onOpenReturnOrder = { navController.navigate("return_order_list") },
                 onOpenBarcodeRegistry = { navController.navigate("barcode_registry") },
                 onOpenSynchronization = { navController.navigate("synchronization") },
                 onOpenSettings = { navController.navigate("settings") }
+            )
+        }
+        composable("return_order_list") {
+            // SCR-MOB-RO-001 (S4.6): searchable local list. §13.1 wiring
+            // (S4.11): Create → `return_order_create`; a row →
+            // `return_order_detail?returnOrderId={id}`.
+            val listFactory = remember {
+                ReturnOrderListViewModelFactory(
+                    database.returnOrderDao(),
+                    database.returnOrderItemDao()
+                )
+            }
+            val listViewModel: ReturnOrderListViewModel =
+                viewModel(factory = listFactory)
+            ReturnOrderListScreen(
+                viewModel = listViewModel,
+                onOpenDetail = { returnOrderId ->
+                    navController.navigate(
+                        "return_order_detail?returnOrderId=$returnOrderId"
+                    )
+                },
+                onCreate = { navController.navigate("return_order_create") },
+                onBack = { navController.popBackStack() }
+            )
+        }
+        composable("return_order_create") {
+            // SCR-MOB-RO-002 (S4.7): offline capture; Save writes locally and
+            // returns to the list (§13.1).
+            val createFactory = remember {
+                CreateReturnOrderViewModelFactory(
+                    captureRepository,
+                    database.customerDao(),
+                    database.salesPersonDao(),
+                    database.driverDao(),
+                    database.barangDao(),
+                    database.barcodeDao(),
+                    session
+                )
+            }
+            val createViewModel: CreateReturnOrderViewModel =
+                viewModel(factory = createFactory)
+            CreateReturnOrderScreen(
+                viewModel = createViewModel,
+                onSaved = { navController.popBackStack() },
+                onCancel = { navController.popBackStack() }
+            )
+        }
+        composable(
+            route = "return_order_detail?returnOrderId={returnOrderId}",
+            arguments = listOf(
+                navArgument("returnOrderId") {
+                    type = NavType.StringType
+                    nullable = true
+                    defaultValue = null
+                }
+            )
+        ) { backStackEntry ->
+            // SCR-MOB-RO-003 (S4.8): read-only detail. A missing argument
+            // yields the ViewModel's not-found state — no entry path is
+            // invented. Edit is offered only while `Draft` (§13.1, BR-017).
+            val returnOrderIdArg =
+                backStackEntry.arguments?.getString("returnOrderId").orEmpty()
+            val detailFactory = remember(returnOrderIdArg) {
+                ReturnOrderDetailViewModelFactory(
+                    captureRepository,
+                    returnOrderIdArg
+                )
+            }
+            val detailViewModel: ReturnOrderDetailViewModel =
+                viewModel(factory = detailFactory)
+            ReturnOrderDetailScreen(
+                viewModel = detailViewModel,
+                onEdit = { returnOrderId ->
+                    navController.navigate(
+                        "return_order_edit?returnOrderId=$returnOrderId"
+                    )
+                },
+                onDeleted = { navController.popBackStack() },
+                onBack = { navController.popBackStack() }
+            )
+        }
+        composable(
+            route = "return_order_edit?returnOrderId={returnOrderId}",
+            arguments = listOf(
+                navArgument("returnOrderId") {
+                    type = NavType.StringType
+                    nullable = true
+                    defaultValue = null
+                }
+            )
+        ) { backStackEntry ->
+            // SCR-MOB-RO-004 (S4.9): Draft-only modification. A non-`Draft`
+            // order is refused by the ViewModel (`notEditable`, BR-018).
+            val returnOrderIdArg =
+                backStackEntry.arguments?.getString("returnOrderId").orEmpty()
+            val editFactory = remember(returnOrderIdArg) {
+                EditReturnOrderViewModelFactory(
+                    captureRepository,
+                    database.customerDao(),
+                    database.salesPersonDao(),
+                    database.driverDao(),
+                    database.barangDao(),
+                    database.barcodeDao(),
+                    returnOrderIdArg
+                )
+            }
+            val editViewModel: EditReturnOrderViewModel =
+                viewModel(factory = editFactory)
+            EditReturnOrderScreen(
+                viewModel = editViewModel,
+                onSaved = { navController.popBackStack() },
+                onCancel = { navController.popBackStack() }
             )
         }
         composable("scan") {

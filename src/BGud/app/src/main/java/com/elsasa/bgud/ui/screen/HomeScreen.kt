@@ -45,7 +45,8 @@ import java.util.Locale
  * Destinations `scan`, `barcode_registry`, `register`, `synchronization`,
  * and `settings` follow §13.2 (`Search Barcode` resolves to
  * `barcode_registry`; `register` carries an optional barcode argument
- * owned by S5.6/S5.7).
+ * owned by S5.6/S5.7). The `Return Order` quick action resolves to
+ * `return_order_list` (§13.1).
  */
 @Composable
 fun HomeScreen(
@@ -53,6 +54,7 @@ fun HomeScreen(
     onScanBarcode: () -> Unit,
     onSearchBarcode: () -> Unit,
     onRegisterBarcode: () -> Unit,
+    onOpenReturnOrder: () -> Unit,
     onOpenBarcodeRegistry: () -> Unit,
     onOpenSynchronization: () -> Unit,
     onOpenSettings: () -> Unit
@@ -112,6 +114,12 @@ fun HomeScreen(
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Text("Register Barcode")
+                }
+                OutlinedButton(
+                    onClick = onOpenReturnOrder,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text("Return Order")
                 }
             }
 
