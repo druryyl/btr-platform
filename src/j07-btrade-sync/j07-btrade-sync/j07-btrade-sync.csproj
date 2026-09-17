@@ -195,15 +195,18 @@
       <DependentUpon>SyncForm.cs</DependentUpon>
     </Compile>
     <Compile Include="Model\CustomerType.cs" />
+    <Compile Include="Model\DriverType.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Repository\BrgDal.cs" />
     <Compile Include="Repository\ConnStringHelper.cs" />
     <Compile Include="Repository\CustomerDal.cs" />
+    <Compile Include="Repository\DriverDal.cs" />
     <Compile Include="Service\CheckInIncrementalDownloadService.cs" />
     <Compile Include="Service\CustomerClearUpdateFlagService.cs" />
     <Compile Include="Service\CustomerDownloadUpdatedService.cs" />
     <Compile Include="Service\CustomerUploadService.cs" />
+    <Compile Include="Service\DriverSyncService.cs" />
     <Compile Include="Service\KategoriSyncService.cs" />
     <Compile Include="Service\OrderIncrementalDownloadService.cs" />
     <Compile Include="Service\ReturnOrderIncrementalDownloadService.cs" />
