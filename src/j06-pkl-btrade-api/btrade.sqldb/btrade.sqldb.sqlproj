@@ -81,11 +81,13 @@
     <Build Include="WarehouseContext\BTRADE_PackingOrder.sql" />
     <Build Include="WarehouseContext\BTRADE_PackingOrderItem.sql" />
     <Build Include="WarehouseContext\BTRADE_PackingOrderDepo.sql" />
+    <Build Include="WarehouseContext\BTR_WarehouseMapping.sql" />
     <Build Include="ReturnOrderContext\BTRADE_ReturnOrder.sql" />
     <Build Include="ReturnOrderContext\BTRADE_ReturnOrderItem.sql" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Scripts\Upgrade_Barcode_Registry.sql" />
     <None Include="Scripts\Create_BTRADE_ReturnOrder.sql" />
+    <None Include="Scripts\Create_BTR_WarehouseMapping.sql" />
   </ItemGroup>
 </Project>

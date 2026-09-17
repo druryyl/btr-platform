@@ -1,5 +1,6 @@
 using btrade.application.Contract;
 using btrade.domain.BarcodeFeature;
+using btrade.domain.WarehouseFeature;
 using MediatR;
 using System.Security.Cryptography;
 using System.Text;
@@ -24,16 +25,16 @@ public class IssueTokenCommandHandler
     : IRequestHandler<IssueTokenCommand, IssueTokenResult>
 {
     private readonly IUserDal _userDal;
-    private readonly ILocationDal _locationDal;
+    private readonly IWarehouseMappingDal _warehouseMappingDal;
     private readonly IJwtTokenService _jwtTokenService;
 
     public IssueTokenCommandHandler(
         IUserDal userDal,
-        ILocationDal locationDal,
+        IWarehouseMappingDal warehouseMappingDal,
         IJwtTokenService jwtTokenService)
     {
         _userDal = userDal;
-        _locationDal = locationDal;
+        _warehouseMappingDal = warehouseMappingDal;
         _jwtTokenService = jwtTokenService;
     }
 
@@ -46,17 +47,19 @@ public class IssueTokenCommandHandler
             HashSha256(request.Password ?? string.Empty) != user.Value.Password)
             throw new UnauthorizedAccessException("Invalid credentials");
 
-        //  ADR-007 / 9.1 — ServerId is resolved server-side from the selected
-        //  operational location; it is never supplied by the client.
-        var location = _locationDal.GetData(new LocationKey(request.LocationId ?? string.Empty));
-        if (!location.HasValue)
-            throw new ArgumentException($"Invalid location ({request.LocationId})");
+        //  ADR-RO-008 / IR-RO-04 — the selected WarehouseCode is resolved to its
+        //  tenant (ServerId) through the centralized BTR_WarehouseMapping. The
+        //  mapping is authoritative; an unmapped code fails explicitly (INV-03,
+        //  R-03) and is never silently resolved to a fallback (P-11).
+        var mapping = _warehouseMappingDal.GetData(new WarehouseMappingKey(request.LocationId ?? string.Empty));
+        if (!mapping.HasValue)
+            throw new ArgumentException($"Invalid warehouse ({request.LocationId})");
 
         var token = _jwtTokenService.GenerateToken(
             user.Value.UserId,
             user.Value.RoleId,
-            location.Value.LocationId,
-            location.Value.ServerId);
+            mapping.Value.WarehouseCode,
+            mapping.Value.ServerId);
 
         return Task.FromResult(new IssueTokenResult(
             token.Token,
@@ -64,8 +67,8 @@ public class IssueTokenCommandHandler
             user.Value.UserId,
             user.Value.UserName,
             user.Value.RoleId,
-            location.Value.LocationId,
-            location.Value.ServerId));
+            mapping.Value.WarehouseCode,
+            mapping.Value.ServerId));
     }
 
     private static string HashSha256(string password)
@@ -82,3 +85,5 @@ public class IssueTokenCommandHandler
 public record UserKey(string UserId) : IUserKey;
 
 public record LocationKey(string LocationId) : ILocationKey;
+
+public record WarehouseMappingKey(string WarehouseCode) : IWarehouseMappingKey;
