@@ -19,6 +19,7 @@ namespace j07_btrade_sync
         private bool _downloadSalesOrder;
         private bool _syncCustomerLocation;
         private bool _downloadCheckIn;
+        private bool _downloadReturnOrder;
         private bool _uploadPackingOrder;
 
         public KonfigurasiForm()
@@ -55,6 +56,7 @@ namespace j07_btrade_sync
             _downloadSalesOrder = _registryHelper.ReadString("DownloadSalesOrder", "0") == "1";
             _syncCustomerLocation = _registryHelper.ReadString("SyncCustomerLocation", "0") == "1";
             _downloadCheckIn = _registryHelper.ReadString("DownloadCheckIn", "0") == "1";
+            _downloadReturnOrder = _registryHelper.ReadString("DownloadReturnOrder", "0") == "1";
             _uploadPackingOrder = _registryHelper.ReadString("UploadPackingOrder", "0") == "1";
         }
 
@@ -64,6 +66,7 @@ namespace j07_btrade_sync
             DownloadCheckInCheckBox.Checked = _downloadCheckIn;
             SyncCustomerLocCheckBox.Checked = _syncCustomerLocation;
             DownloadCheckInCheckBox.Checked = _downloadCheckIn;
+            DownloadReturnOrderCheckBox.Checked = _downloadReturnOrder;
             UploadPackingOrderCheckBox.Checked = _uploadPackingOrder;
         }
         private void WriteConfig()
@@ -71,12 +74,14 @@ namespace j07_btrade_sync
             _downloadSalesOrder = DownloadCheckInCheckBox.Checked;
             _syncCustomerLocation = SyncCustomerLocCheckBox.Checked;
             _downloadCheckIn = DownloadCheckInCheckBox.Checked;
+            _downloadReturnOrder = DownloadReturnOrderCheckBox.Checked;
             _uploadPackingOrder = UploadPackingOrderCheckBox.Checked;
 
             _registryHelper.WriteString("ServerTargetID", ServerTargetIDText.Text);
             _registryHelper.WriteString("DownloadSalesOrder", _downloadSalesOrder ? "1" : "0");
             _registryHelper.WriteString("SyncCustomerLocation", _syncCustomerLocation ? "1" : "0");
             _registryHelper.WriteString("DownloadCheckIn", _downloadCheckIn ? "1" : "0");
+            _registryHelper.WriteString("DownloadReturnOrder", _downloadReturnOrder ? "1" : "0");
             _registryHelper.WriteString("UploadPackingOrder", _uploadPackingOrder ? "1" : "0");
 
         }

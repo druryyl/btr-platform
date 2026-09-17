@@ -36,6 +36,7 @@
             this.DownloadOrderCheckBox = new System.Windows.Forms.CheckBox();
             this.SyncCustomerLocCheckBox = new System.Windows.Forms.CheckBox();
             this.DownloadCheckInCheckBox = new System.Windows.Forms.CheckBox();
+            this.DownloadReturnOrderCheckBox = new System.Windows.Forms.CheckBox();
             this.UploadPackingOrderCheckBox = new System.Windows.Forms.CheckBox();
             this.panel1.SuspendLayout();
             this.SuspendLayout();
@@ -48,6 +49,7 @@
             this.panel1.BackColor = System.Drawing.Color.Beige;
             this.panel1.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             this.panel1.Controls.Add(this.UploadPackingOrderCheckBox);
+            this.panel1.Controls.Add(this.DownloadReturnOrderCheckBox);
             this.panel1.Controls.Add(this.DownloadCheckInCheckBox);
             this.panel1.Controls.Add(this.SyncCustomerLocCheckBox);
             this.panel1.Controls.Add(this.DownloadOrderCheckBox);
@@ -133,6 +135,16 @@
             this.DownloadCheckInCheckBox.Text = "Download Check-In";
             this.DownloadCheckInCheckBox.UseVisualStyleBackColor = true;
             // 
+            // DownloadReturnOrderCheckBox
+            // 
+            this.DownloadReturnOrderCheckBox.AutoSize = true;
+            this.DownloadReturnOrderCheckBox.Location = new System.Drawing.Point(16, 116);
+            this.DownloadReturnOrderCheckBox.Name = "DownloadReturnOrderCheckBox";
+            this.DownloadReturnOrderCheckBox.Size = new System.Drawing.Size(143, 17);
+            this.DownloadReturnOrderCheckBox.TabIndex = 6;
+            this.DownloadReturnOrderCheckBox.Text = "Download Return Order";
+            this.DownloadReturnOrderCheckBox.UseVisualStyleBackColor = true;
+            // 
             // UploadPackingOrderCheckBox
             // 
             this.UploadPackingOrderCheckBox.AutoSize = true;
@@ -172,6 +184,7 @@
         private System.Windows.Forms.CheckBox DownloadOrderCheckBox;
         private System.Windows.Forms.CheckBox SyncCustomerLocCheckBox;
         private System.Windows.Forms.CheckBox DownloadCheckInCheckBox;
+        private System.Windows.Forms.CheckBox DownloadReturnOrderCheckBox;
         private System.Windows.Forms.CheckBox UploadPackingOrderCheckBox;
     }
 }
