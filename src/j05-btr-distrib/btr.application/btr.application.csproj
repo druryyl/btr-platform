@@ -233,6 +233,9 @@
     <Compile Include="InventoryContext\ReturnOrderAgg\ImportReturnOrderCommand.cs" />
     <Compile Include="InventoryContext\ReturnOrderAgg\CompleteReturnOrderCommand.cs" />
     <Compile Include="InventoryContext\ReturnOrderAgg\GenerateSalesReturnFromReturnOrderCommand.cs" />
+    <Compile Include="InventoryContext\ReturnOrderAgg\GetReturnOrderQuery.cs" />
+    <Compile Include="InventoryContext\ReturnOrderAgg\ListReturnOrderQuery.cs" />
+    <Compile Include="InventoryContext\ReturnOrderAgg\ListReturnOrderByCustomerQuery.cs" />
     <Compile Include="InventoryContext\StokAgg\GenStokUseCase\AddStokWorker.cs" />
     <Compile Include="InventoryContext\StokAgg\GenStokUseCase\GenStokAdjustmentWorker.cs" />
     <Compile Include="InventoryContext\StokAgg\GenStokUseCase\GenStokBalanceWorker.cs" />
