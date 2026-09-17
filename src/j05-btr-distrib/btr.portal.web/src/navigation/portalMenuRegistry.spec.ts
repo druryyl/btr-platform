@@ -8,6 +8,7 @@ const expectedRouteNames = [
   'alert-center',
   'entity-analytics-home',
   'sales-dashboard',
+  'principal-performance-dashboard',
   'sales-forecast-dashboard',
   'sales-report',
   'customers-dashboard',
@@ -33,8 +34,8 @@ const expectedRouteNames = [
 ] as const
 
 describe('portalMenuRegistry', () => {
-  it('contains exactly 26 menu items', () => {
-    expect(allPortalMenuItems).toHaveLength(26)
+  it('contains exactly 27 menu items', () => {
+    expect(allPortalMenuItems).toHaveLength(27)
   })
 
   it('defines 8 domain groups in management scan order', () => {
@@ -56,9 +57,9 @@ describe('portalMenuRegistry', () => {
     const routes = allPortalMenuItems.map((item) => item.route)
     const routeNames = allPortalMenuItems.map((item) => item.routeName)
 
-    expect(new Set(codes).size).toBe(26)
-    expect(new Set(routes).size).toBe(26)
-    expect(new Set(routeNames).size).toBe(26)
+    expect(new Set(codes).size).toBe(27)
+    expect(new Set(routes).size).toBe(27)
+    expect(new Set(routeNames).size).toBe(27)
   })
 
   it('maps collection optimization to customers group as CU03', () => {
@@ -76,11 +77,22 @@ describe('portalMenuRegistry', () => {
 
   it('nests reports within domain groups', () => {
     const salesGroup = portalMenuGroups.find((g) => g.id === 'sales')
-    expect(salesGroup?.items.map((i) => i.code)).toEqual(['SA01', 'SA02', 'SA03'])
+    expect(salesGroup?.items.map((i) => i.code)).toEqual(['SA01', 'SA04', 'SA02', 'SA03'])
   })
 
-  it('provides 19 domain dashboard links excluding alert center', () => {
-    expect(getDomainDashboardLinks()).toHaveLength(19)
+  it('registers Principal Performance under Sales as SA04', () => {
+    const item = findMenuItemByRoute('/dashboard/principal-performance')
+    expect(item?.code).toBe(PortalMenuCodes.SA04)
+    expect(item?.label).toBe('Principal Performance')
+    expect(item?.groupId).toBe('sales')
+    expect(item?.routeName).toBe('principal-performance-dashboard')
+    expect(item?.code).not.toBe(PortalMenuCodes.EX03)
+    expect(item?.code).not.toBe(PortalMenuCodes.SF03)
+    expect(item?.code).not.toBe('SF04')
+  })
+
+  it('provides 20 domain dashboard links excluding alert center', () => {
+    expect(getDomainDashboardLinks()).toHaveLength(20)
     expect(getDomainDashboardLinks().some((item) => item.code === PortalMenuCodes.EX02)).toBe(false)
   })
 

@@ -34,11 +34,21 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Queries
 
         public string AxisYUnit { get; set; }
 
+        public string BubbleKpiId { get; set; }
+
+        public string BubbleColorKpiId { get; set; }
+
+        public string BubbleLabel { get; set; }
+
+        public string BubbleColorLabel { get; set; }
+
         public int TotalPopulationCount { get; set; }
 
         public int FilteredPopulationCount { get; set; }
 
         public string ActiveFilterDescription { get; set; }
+
+        public string DimensionLabel { get; set; }
 
         public DateTime? GeneratedAt { get; set; }
 
@@ -72,6 +82,16 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Queries
         public int ActiveAttentionCount { get; set; }
 
         public bool MatchesFilter { get; set; }
+
+        public bool IsLowConfidence { get; set; }
+
+        public decimal? BubbleValue { get; set; }
+
+        public string FormattedBubbleValue { get; set; }
+
+        public decimal? BubbleColorValue { get; set; }
+
+        public string FormattedBubbleColorValue { get; set; }
 
         public string SupplementaryLabel { get; set; }
 
@@ -144,6 +164,8 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Queries
         public string FormattedPeerRange { get; set; }
 
         public List<PeerDistributionBinDto> Bins { get; set; } = new List<PeerDistributionBinDto>();
+
+        public string DistributionSummary { get; set; }
     }
 
     public class PeerDistributionBinDto
@@ -157,6 +179,8 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Queries
         public int Count { get; set; }
 
         public string Label { get; set; }
+
+        public bool IsOverflow { get; set; }
     }
 
     public class MapPresetDto
@@ -174,6 +198,14 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Queries
         public string AxisXLabel { get; set; }
 
         public string AxisYLabel { get; set; }
+
+        public string BubbleKpiId { get; set; }
+
+        public string BubbleColorKpiId { get; set; }
+
+        public string BubbleLabel { get; set; }
+
+        public string BubbleColorLabel { get; set; }
 
         public bool IsDefault { get; set; }
     }

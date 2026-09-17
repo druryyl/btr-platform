@@ -5,8 +5,10 @@ import type {
   EntityAnalyticsTypesResponse,
   EntityCompareQuery,
   EntityCompareResponse,
+  EntityDataHealthResponse,
   EntityPerformanceProfileResponse,
   EntitySearchResult,
+  InvestigationLensesResponse,
   MapPresetsResponse,
   PeerDistributionResponse,
   PeerGroupRulesResponse,
@@ -81,6 +83,32 @@ export async function fetchMapPresets(entityType: string): Promise<MapPresetsRes
   )
   if (!isApiSuccess(data) || !data.Data) {
     throw new Error(data.Message ?? 'Failed to load map presets')
+  }
+  return data.Data
+}
+
+export async function fetchInvestigationLenses(
+  entityType: string,
+): Promise<InvestigationLensesResponse> {
+  const { data } = await httpClient.get<ApiResponse<InvestigationLensesResponse>>(
+    '/api/entity-analytics/lenses',
+    { params: { entityType } },
+  )
+  if (!isApiSuccess(data) || !data.Data) {
+    throw new Error(data.Message ?? 'Failed to load investigation lenses')
+  }
+  return data.Data
+}
+
+export async function fetchEntityDataHealth(
+  entityType: string,
+): Promise<EntityDataHealthResponse> {
+  const { data } = await httpClient.get<ApiResponse<EntityDataHealthResponse>>(
+    '/api/entity-analytics/data-health',
+    { params: { entityType } },
+  )
+  if (!isApiSuccess(data) || !data.Data) {
+    throw new Error(data.Message ?? 'Failed to load data health')
   }
   return data.Data
 }

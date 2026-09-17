@@ -4,6 +4,7 @@ CREATE TABLE BTRPD_InventoryBreakdown
     SnapshotKey          VARCHAR(10)   NOT NULL CONSTRAINT DF_BTRPD_InventoryBreakdown_SnapshotKey DEFAULT('CURRENT'),
     DimensionType        VARCHAR(10)   NOT NULL CONSTRAINT DF_BTRPD_InventoryBreakdown_DimensionType DEFAULT(''),
     Name                 VARCHAR(50)   NOT NULL CONSTRAINT DF_BTRPD_InventoryBreakdown_Name DEFAULT(''),
+    SupplierId           VARCHAR(5)    NOT NULL CONSTRAINT DF_BTRPD_InventoryBreakdown_SupplierId DEFAULT(''),
     InventoryValue       DECIMAL(18,2) NOT NULL CONSTRAINT DF_BTRPD_InventoryBreakdown_InventoryValue DEFAULT(0),
     IsTop10              BIT           NOT NULL CONSTRAINT DF_BTRPD_InventoryBreakdown_IsTop10 DEFAULT(0),
     Top10Rank            INT           NULL,

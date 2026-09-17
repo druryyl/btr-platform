@@ -466,5 +466,15 @@ including weekends and holidays.
 5. Review Best Case, Expected, Worst Case, and **Forecast Confidence** to
    understand the range and reliability.
 6. Use the charts to validate momentum and investigate the cause of a projected
-   miss.
+    miss.
+
+## Principal-Centric Addendum (PCM-058, implemented surfaces only)
+
+SA02 company forecast figures remain on the existing company measure. The
+Principal forecast presentation applies the existing SA02 forecast method to
+stored monthly `PRN-SALES-001` history compared with stored `PRN-TGT-001`
+(PCM-010). It is not a registry KPI, has no Principal KPI ID, and is not
+used to rank Principals. The sum of Principal forecasts is not required to
+equal the company forecast. No Principal collection forecast is shown. The
+presentation is not labeled Net Sales.
 

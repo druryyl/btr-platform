@@ -27,6 +27,7 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Backfill.Services
         private readonly DashboardInventoryOptimizationAggregator _itemOptimizationAggregator;
         private readonly DashboardItemPortfolioBuilder _itemPortfolioBuilder;
         private readonly DashboardItemRelationshipAggregator _itemRelationshipAggregator;
+        private readonly SupplierPrincipalReplayAggregator _supplierPrincipalReplayAggregator;
         private readonly DashboardSnapshotOptions _options;
 
         public EntityAnalyticsReplayAggregateService(
@@ -44,7 +45,8 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Backfill.Services
             DashboardInventoryOptimizationAggregator itemOptimizationAggregator,
             DashboardItemPortfolioBuilder itemPortfolioBuilder,
             DashboardItemRelationshipAggregator itemRelationshipAggregator,
-            DashboardSnapshotOptions options)
+            DashboardSnapshotOptions options,
+            SupplierPrincipalReplayAggregator supplierPrincipalReplayAggregator = null)
         {
             _customerAggregator = customerAggregator;
             _customerForecastAggregator = customerForecastAggregator;
@@ -60,6 +62,7 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Backfill.Services
             _itemOptimizationAggregator = itemOptimizationAggregator;
             _itemPortfolioBuilder = itemPortfolioBuilder;
             _itemRelationshipAggregator = itemRelationshipAggregator;
+            _supplierPrincipalReplayAggregator = supplierPrincipalReplayAggregator;
             _options = options ?? new DashboardSnapshotOptions();
         }
 
@@ -87,7 +90,14 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Backfill.Services
                     produceInput = AggregateSalesman((SalesmanReplayDataBundle)bundle, periode, periodEnd, generatedAt, stepPrefix);
                     break;
                 case EntityTypeCode.Supplier:
-                    produceInput = AggregateSupplier((SupplierReplayDataBundle)bundle, periode, periodEnd, generatedAt, stepPrefix);
+                    produceInput = AggregateSupplier(
+                        (SupplierReplayDataBundle)bundle,
+                        periode,
+                        periodEnd,
+                        replayContext.PeriodYear,
+                        replayContext.PeriodMonth,
+                        generatedAt,
+                        stepPrefix);
                     break;
                 case EntityTypeCode.Item:
                     produceInput = AggregateItem((ItemReplayDataBundle)bundle, periode, periodEnd, generatedAt, stepPrefix);
@@ -124,7 +134,8 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Backfill.Services
                 bundle.Customers,
                 periode,
                 periodEnd,
-                generatedAt);
+                generatedAt,
+                bundle.LastFakturWithSalesman);
 
             var forecastAggregate = _customerForecastAggregator.Aggregate(
                 bundle.PiutangRows,
@@ -216,6 +227,8 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Backfill.Services
             SupplierReplayDataBundle bundle,
             Periode periode,
             DateTime periodEnd,
+            int periodYear,
+            int periodMonth,
             DateTime generatedAt,
             string stepPrefix)
         {
@@ -237,10 +250,18 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Backfill.Services
                 periodEnd,
                 generatedAt);
 
+            SupplierPrincipalReplayResult principalReplay = null;
+            if (_supplierPrincipalReplayAggregator != null)
+            {
+                principalReplay = _supplierPrincipalReplayAggregator.Aggregate(
+                    bundle, periode, periodYear, periodMonth, generatedAt);
+            }
+
             return new SupplierEntityAnalyticsProduceInput
             {
                 ManagementAggregate = aggregate,
-                RelationshipAggregate = relationshipAggregate
+                RelationshipAggregate = relationshipAggregate,
+                PrincipalReplay = principalReplay
             };
         }
 

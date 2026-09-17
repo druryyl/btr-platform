@@ -4,6 +4,7 @@ using btr.application.ReportingContext.DashboardAlertCenterAgg.Queries;
 using btr.application.ReportingContext.DashboardAlertCenterAgg.Services;
 using btr.application.ReportingContext.DashboardSnapshotAgg;
 using btr.application.ReportingContext.DashboardSnapshotAgg.Contracts;
+using btr.application.ReportingContext.PrincipalAnalyticsAgg.Contracts;
 using Microsoft.Extensions.Options;
 
 namespace btr.infrastructure.ReportingContext.DashboardAlertCenterAgg
@@ -11,6 +12,7 @@ namespace btr.infrastructure.ReportingContext.DashboardAlertCenterAgg
     public class DashboardAlertCenterDal : IDashboardAlertCenterDal
     {
         private readonly IDashboardSalesSnapshotDal _salesSnapshotDal;
+        private readonly IPrincipalSalesOutSnapshotDal _principalSalesOutSnapshotDal;
         private readonly IDashboardPiutangSnapshotDal _piutangSnapshotDal;
         private readonly IDashboardInventorySnapshotDal _inventorySnapshotDal;
         private readonly IDashboardPurchasingSnapshotDal _purchasingSnapshotDal;
@@ -26,6 +28,7 @@ namespace btr.infrastructure.ReportingContext.DashboardAlertCenterAgg
 
         public DashboardAlertCenterDal(
             IDashboardSalesSnapshotDal salesSnapshotDal,
+            IPrincipalSalesOutSnapshotDal principalSalesOutSnapshotDal,
             IDashboardPiutangSnapshotDal piutangSnapshotDal,
             IDashboardInventorySnapshotDal inventorySnapshotDal,
             IDashboardPurchasingSnapshotDal purchasingSnapshotDal,
@@ -40,6 +43,7 @@ namespace btr.infrastructure.ReportingContext.DashboardAlertCenterAgg
             IOptions<DashboardSnapshotOptions> options)
         {
             _salesSnapshotDal = salesSnapshotDal;
+            _principalSalesOutSnapshotDal = principalSalesOutSnapshotDal;
             _piutangSnapshotDal = piutangSnapshotDal;
             _inventorySnapshotDal = inventorySnapshotDal;
             _purchasingSnapshotDal = purchasingSnapshotDal;
@@ -59,6 +63,7 @@ namespace btr.infrastructure.ReportingContext.DashboardAlertCenterAgg
             return _composer.Compose(new AlertCenterComposeInput
             {
                 Sales = _salesSnapshotDal.GetCurrent(),
+                PrincipalSalesOut = _principalSalesOutSnapshotDal.GetCurrent(),
                 Piutang = _piutangSnapshotDal.GetCurrent(),
                 Inventory = _inventorySnapshotDal.GetCurrent(),
                 Purchasing = _purchasingSnapshotDal.GetCurrent(),

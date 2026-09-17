@@ -7,6 +7,9 @@ using btr.application.ReportingContext.DashboardExecutiveAgg.Services;
 using btr.application.ReportingContext.DashboardSnapshotAgg;
 using btr.application.ReportingContext.DashboardSnapshotAgg.Models;
 using btr.application.ReportingContext.DashboardSnapshotAgg.Services;
+using btr.application.ReportingContext.PrincipalAnalyticsAgg;
+using btr.application.ReportingContext.PrincipalAnalyticsAgg.Models;
+using btr.application.ReportingContext.PrincipalAnalyticsAgg.Queries;
 using btr.application.ReportingContext.Shared;
 using NLog;
 
@@ -20,6 +23,7 @@ namespace btr.application.ReportingContext.DashboardAlertCenterAgg.Services
         private const string PiutangReportRoute = "/reports/piutang";
         private const string InventoryReportRoute = "/reports/inventory";
         private const string PurchasingReportRoute = "/reports/purchasing";
+        private const string PrincipalPerformanceRoute = "/dashboard/principal-performance";
         private const string EntityTypeCustomer = "Customer";
         private const string EntityTypeSalesman = "Salesman";
         private const string EntityTypeWilayah = "Wilayah";
@@ -48,13 +52,15 @@ namespace btr.application.ReportingContext.DashboardAlertCenterAgg.Services
                 input.Collection?.GeneratedAt,
                 input.InventoryRisk?.GeneratedAt,
                 input.PurchasingManagement?.GeneratedAt,
-                input.Location?.GeneratedAt);
+                input.Location?.GeneratedAt,
+                input.PrincipalSalesOut?.GeneratedAt);
 
             var platformAlerts = BuildPlatformAlerts(hasUnavailable, isDataFresh, overallHealth);
             var salesAchievementAlerts = BuildSalesAchievementAlerts(input.Sales);
+            var principalSalesAlerts = BuildPrincipalSalesAlerts(input.PrincipalSalesOut);
             var producerAlerts = CollectProducerAlerts(input);
             var dedupedAlerts = ApplyDeduplication(producerAlerts, input);
-            var allAlerts = salesAchievementAlerts.Concat(dedupedAlerts).ToList();
+            var allAlerts = salesAchievementAlerts.Concat(principalSalesAlerts).Concat(dedupedAlerts).ToList();
 
             var alertGroups = BuildAlertGroups(allAlerts);
             var categorySummaries = BuildCategorySummaries(allAlerts, alertGroups);
@@ -67,7 +73,8 @@ namespace btr.application.ReportingContext.DashboardAlertCenterAgg.Services
                 || input.Collection != null
                 || input.PurchasingManagement != null
                 || input.Location != null
-                || input.InventoryRisk != null;
+                || input.InventoryRisk != null
+                || input.PrincipalSalesOut != null;
 
             return new DashboardAlertCenterResponse
             {
@@ -175,6 +182,48 @@ namespace btr.application.ReportingContext.DashboardAlertCenterAgg.Services
                     SortOrder = entry?.Priority ?? 0
                 }
             };
+        }
+
+        private static IList<DashboardAlertCenterAlertRow> BuildPrincipalSalesAlerts(
+            PrincipalSalesOutAggregateResult salesOut)
+        {
+            if (salesOut == null || salesOut.KpiId != PrincipalKpiCatalog.SalesOutId)
+                return new List<DashboardAlertCenterAlertRow>();
+
+            var performance = PrincipalPerformanceComposer.Compose(salesOut);
+            if (!performance.IsAvailable || performance.KpiId != PrincipalKpiCatalog.SalesOutId)
+                return new List<DashboardAlertCenterAlertRow>();
+
+            var ranking = performance.Ranking ?? new List<PrincipalPerformanceRankingItem>();
+            if (ranking.Count == 0)
+                return new List<DashboardAlertCenterAlertRow>();
+
+            AlertCenterRegistry.TryGet(AlertCenterRegistry.SignalPrincipalSalesOut, out var entry);
+
+            return ranking
+                .Take(DashboardExecutiveComposer.ExecutiveRiskListCount)
+                .Select(row => new DashboardAlertCenterAlertRow
+                {
+                    Category = AlertCenterRegistry.CategorySales,
+                    EntityType = EntityTypePrincipal,
+                    EntityCode = row.SupplierId ?? string.Empty,
+                    EntityName = row.PrincipalName ?? string.Empty,
+                    SignalKey = AlertCenterRegistry.SignalPrincipalSalesOut,
+                    SignalLabel = entry?.DefaultLabel ?? AlertCenterRegistry.SignalPrincipalSalesOut,
+                    ValueAmount = row.PrincipalSalesOutAmount,
+                    ValueText = row.PrincipalSalesOutAmount.ToString("N0", CultureInfo.InvariantCulture),
+                    AchievementBand = null,
+                    DashboardRoute = PrincipalPerformanceRoute,
+                    ReportRoute = null,
+                    EntityFilterQuery = row.PrincipalName,
+                    SortOrder = entry?.Priority ?? 6,
+                    Investigation = InvestigationMetadataBuilder.Build(
+                        AlertCenterRegistry.SignalPrincipalSalesOut,
+                        EntityTypePrincipal,
+                        row.SupplierId,
+                        row.PrincipalName)
+                })
+                .ToList();
         }
 
         private static List<ProducerAlertRow> CollectProducerAlerts(AlertCenterComposeInput input)
@@ -655,6 +704,7 @@ namespace btr.application.ReportingContext.DashboardAlertCenterAgg.Services
             {
                 ExecutiveDashboardRoute = "/dashboard",
                 SalesDashboardRoute = "/dashboard/sales",
+                PrincipalPerformanceDashboardRoute = PrincipalPerformanceRoute,
                 PiutangDashboardRoute = "/dashboard/piutang",
                 CustomerDashboardRoute = "/dashboard/customers",
                 SalesmanDashboardRoute = "/dashboard/salesmen",
@@ -759,6 +809,8 @@ namespace btr.application.ReportingContext.DashboardAlertCenterAgg.Services
     public class AlertCenterComposeInput
     {
         public DashboardSalesAggregateResult Sales { get; set; }
+
+        public PrincipalSalesOutAggregateResult PrincipalSalesOut { get; set; }
 
         public DashboardPiutangAggregateResult Piutang { get; set; }
 

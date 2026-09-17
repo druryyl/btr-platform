@@ -36,7 +36,7 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Registrars
             RegisterDim(dimensionLabels, EntityAnalyticsMetaKpiIds.AchievementBand, "Achievement Band");
             RegisterDim(dimensionLabels, EntityAnalyticsMetaKpiIds.ActiveMtd, "Active MTD");
             RegisterDim(dimensionLabels, EntityAnalyticsMetaKpiIds.CustomerCount, "Customer Count");
-            RegisterDim(dimensionLabels, EntityAnalyticsMetaKpiIds.DormantCustomerCount, "Dormant Customer Count");
+            RegisterDim(dimensionLabels, EntityAnalyticsMetaKpiIds.DormantCustomerCount, "Last-Invoice Dormant Customers");
             RegisterDim(dimensionLabels, EntityAnalyticsMetaKpiIds.OverdueBalance, "Overdue Balance");
             RegisterDim(dimensionLabels, EntityAnalyticsMetaKpiIds.AttentionSignals, "Attention Signals");
         }
@@ -177,8 +177,8 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Registrars
             {
                 KpiId = EntityAnalyticsMetaKpiIds.CustomerCount,
                 Category = EntityKpiCategory.Portfolio,
-                DisplayName = "Portfolio",
-                Description = "Managed customer count percentile within peer group.",
+                DisplayName = "Customers",
+                Description = "Invoiced customer count percentile within peer group. Not customer ownership.",
                 PeriodSemantics = "PointInTime",
                 TimeGrain = "PointInTime",
                 Unit = "Count",

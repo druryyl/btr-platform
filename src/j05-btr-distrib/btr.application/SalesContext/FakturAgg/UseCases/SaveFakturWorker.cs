@@ -18,7 +18,6 @@ using btr.nuna.Domain;
 using Dawn;
 using MediatR;
 using Newtonsoft.Json;
-using Polly;
 
 namespace btr.application.SalesContext.FakturAgg.UseCases
 {
@@ -59,6 +58,7 @@ namespace btr.application.SalesContext.FakturAgg.UseCases
     public class SaveFakturWorker : ISaveFakturWorker
     {
         private readonly IFakturBuilder _fakturBuilder;
+        private readonly IBuildFakturAggregateWorker _aggregateBuilder;
         private readonly IFakturWriter _fakturWriter;
         private readonly IMediator _mediator;
         private readonly IGenStokFakturWorker _genStokWorker;
@@ -66,10 +66,12 @@ namespace btr.application.SalesContext.FakturAgg.UseCases
         private readonly IOrderDal _orderDal;
 
         public SaveFakturWorker(IFakturBuilder fakturBuilder,
+            IBuildFakturAggregateWorker aggregateBuilder,
             IFakturWriter fakturWriter,
             IMediator mediator, IGenStokFakturWorker genStokWorker, IOrderMapDal orderMapDal, IOrderDal orderDal)
         {
             _fakturBuilder = fakturBuilder;
+            _aggregateBuilder = aggregateBuilder;
             _fakturWriter = fakturWriter;
             _mediator = mediator;
             _genStokWorker = genStokWorker;
@@ -79,20 +81,18 @@ namespace btr.application.SalesContext.FakturAgg.UseCases
 
         public FakturModel Execute(SaveFakturRequest req)
         {
-            //  GUARD
-            Guard.Argument(() => req).NotNull()
-                .Member(x => x.FakturDate, y => y.ValidDate("yyyy-MM-dd"))
-                .Member(x => x.CustomerId, y => y.NotEmpty())
-                .Member(x => x.SalesPersonId, y => y.NotEmpty())
-                .Member(x => x.WarehouseId, y => y.NotEmpty())
-                .Member(x => x.DueDate, y => y.ValidDate("yyyy-MM-dd"));
+            //  GUARD (shared save-level validation entry for preview and save, SL-02 / D-010)
+            SaveFakturValidator.Validate(req);
 
             //  PROSES FAKTUR
             FakturModel result;
-            var fallback = Policy<FakturModel>
-                .Handle<KeyNotFoundException>()
-                .Fallback(() => null);
-            var existingFaktur = fallback.Execute(() => _fakturBuilder.Load(req).Build());
+            //  No id => NEW: number is generated later by FakturWriter at save (D-002).
+            //  Id present => EDIT: load the persisted Faktur to detect item changes.
+            //  Branch explicitly by id; do not probe with Load() (empty id would throw
+            //  KeyNotFoundException("Faktur not found ()") on the preview/save path).
+            FakturModel existingFaktur = string.IsNullOrEmpty(req.FakturId)
+                ? null
+                : _fakturBuilder.Load(req).Build();
             var order = _orderDal.GetData(OrderModel.Key(req.OrderId));
             if (order != null)
                 order.StatusSync = "TERBIT FAKTUR";
@@ -163,57 +163,9 @@ namespace btr.application.SalesContext.FakturAgg.UseCases
 
         private FakturModel SaveFaktur(SaveFakturRequest req)
         {
-            //  BUILD
-            FakturModel result;
-            if (req.FakturId.Length == 0)
-            {
-                result = _fakturBuilder.CreateNew(req).Build();
-            }
-            else
-            {
-                result = _fakturBuilder.Load(req).Build();
-                result.ListItem.Clear();
-                result.ListItemKlaim.Clear();
-            }
-
-            result = _fakturBuilder
-                .Attach(result)
-                .FakturCode(req.FakturCode)
-                .FakturDate(req.FakturDate.ToDate(DateFormatEnum.YMD))
-                .Customer(req)
-                .Order(OrderModel.Key(req.OrderId))
-                .SalesPerson(req)
-                .Warehouse(req)
-                .TglRencanaKirim(req.RencanaKirimDate.ToDate(DateFormatEnum.YMD))
-                .Driver(req)
-                .User(req)
-                .TermOfPayment((TermOfPaymentEnum)req.TermOfPayment)
-                .DueDate(req.DueDate.ToDate(DateFormatEnum.YMD))
-                .Cash(req.Cash)
-                .Note(req.Note)
-                .Build();
-
-            foreach (var item in req.ListBrg)
-            {
-                result = _fakturBuilder
-                    .Attach(result)
-                    .AddItem(item, item.StokHarga, item.QtyString, item.HrgString, item.DiscountString, item.DppProsen, item.PpnProsen, false)
-                    .Build();
-            }
-
-            foreach (var item in req.ListBrgKlaim)
-            {
-                result = _fakturBuilder
-                    .Attach(result)
-                    .AddItemKlaim(item, item.StokHarga, item.QtyString, item.HrgString, item.DiscountString, item.DppProsen, item.PpnProsen, false)
-                    .Build();
-            }
-
-
-            result = _fakturBuilder
-                .Attach(result)
-                .CalcTotal()
-                .Build();
+            //  BUILD via single shared construction path (SL-03 / D-006);
+            //  preview calls IBuildFakturAggregateWorker directly for the same aggregate
+            var result = _aggregateBuilder.Execute(req);
 
             //  APPLY
             _ = _fakturWriter.Save(result);

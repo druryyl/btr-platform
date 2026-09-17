@@ -16,6 +16,7 @@ namespace btr.test.ReportingContext
         private readonly PopulationMapTestRepository _repository = new PopulationMapTestRepository();
         private readonly EntityTypeRegistry _entityTypes = new EntityTypeRegistry();
         private readonly EntityAnalyticsKpiRegistry _kpiRegistry;
+        private readonly EntityAnalyticsDimensionLabelRegistry _dimensionLabels = new EntityAnalyticsDimensionLabelRegistry();
         private readonly EntityPopulationMapEngine _engine;
         private static readonly DateTime GeneratedAt = new DateTime(2026, 6, 24, 8, 0, 0);
 
@@ -28,16 +29,28 @@ namespace btr.test.ReportingContext
                 KpiPackId = CustomerEntityAnalyticsRegistrar.KpiPackId,
                 PeerGroupRuleId = PeerGroupResolver.CustomerWilayah
             });
+            _entityTypes.Register(new EntityTypeRegistration
+            {
+                EntityTypeCode = EntityTypeCode.Supplier,
+                DisplayName = "Supplier",
+                KpiPackId = SupplierEntityAnalyticsRegistrar.KpiPackId,
+                PeerGroupRuleId = PeerGroupResolver.SupplierAllActive
+            });
             _kpiRegistry = new EntityAnalyticsKpiRegistry(_entityTypes);
             new CustomerEntityAnalyticsRegistrar().Register(
                 _entityTypes,
                 _kpiRegistry,
-                new EntityAnalyticsDimensionLabelRegistry());
+                _dimensionLabels);
+            new SupplierEntityAnalyticsRegistrar().Register(
+                _entityTypes,
+                _kpiRegistry,
+                _dimensionLabels);
             _engine = new EntityPopulationMapEngine(
                 _repository,
                 _kpiRegistry,
                 _entityTypes,
-                new EntityKpiEnvelopeFormatter());
+                new EntityKpiEnvelopeFormatter(),
+                _dimensionLabels);
         }
 
         [Fact]
@@ -129,6 +142,152 @@ namespace btr.test.ReportingContext
             point.IsActive.Should().BeTrue();
         }
 
+        [Fact]
+        public void BuildPopulationMap_ProjectsDimensionLabel_ForDimensionedEntityType()
+        {
+            SeedEntity(
+                entityId: "C005",
+                entityCode: "CUST005",
+                displayName: "Dimensioned Customer",
+                axisX: 100m,
+                axisY: 200m,
+                dimensionValue: "Bandung");
+
+            var result = _engine.BuildPopulationMap(new PopulationMapRequest
+            {
+                EntityType = EntityTypeCode.Customer
+            });
+
+            result.DimensionLabel.Should().Be("Wilayah");
+            result.Points.Single(p => p.EntityId == "C005").DimensionValue.Should().Be("Bandung");
+        }
+
+        [Fact]
+        public void BuildPopulationMap_LeavesDimensionLabelNull_ForUndimensionedEntityType()
+        {
+            SeedEntity(
+                entityId: "S001",
+                entityCode: "SUP001",
+                displayName: "Alpha Principal",
+                axisX: 100m,
+                axisY: 200m,
+                dimensionValue: null,
+                entityType: EntityTypeCode.Supplier);
+
+            var result = _engine.BuildPopulationMap(new PopulationMapRequest
+            {
+                EntityType = EntityTypeCode.Supplier
+            });
+
+            result.DimensionLabel.Should().BeNull();
+        }
+
+        [Fact]
+        public void BuildPopulationMap_FlagsLowConfidence_WhenAxisValueSuppressed()
+        {
+            SeedEntity(
+                entityId: "C010",
+                entityCode: "CUST010",
+                displayName: "Low Confidence Customer",
+                axisX: null,
+                axisY: 250m);
+
+            var result = _engine.BuildPopulationMap(new PopulationMapRequest
+            {
+                EntityType = EntityTypeCode.Customer
+            });
+
+            var point = result.Points.Single(p => p.EntityId == "C010");
+            point.IsLowConfidence.Should().BeTrue();
+        }
+
+        [Fact]
+        public void BuildPopulationMap_DoesNotFlagLowConfidence_WhenBothAxisValuesPresent()
+        {
+            SeedEntity(
+                entityId: "C011",
+                entityCode: "CUST011",
+                displayName: "Confident Customer",
+                axisX: 120m,
+                axisY: 250m);
+
+            var result = _engine.BuildPopulationMap(new PopulationMapRequest
+            {
+                EntityType = EntityTypeCode.Customer
+            });
+
+            var point = result.Points.Single(p => p.EntityId == "C011");
+            point.IsLowConfidence.Should().BeFalse();
+        }
+
+        [Fact]
+        public void BuildPopulationMap_PopulatesAxisY_FromNumericDimensionValue()
+        {
+            SeedSupplierWithInventoryDimension(
+                entityId: "SP001",
+                entityCode: "SUP001",
+                displayName: "Supplier One",
+                axisX: 500_000_000m,
+                inventoryNumericValue: 400_000_000m,
+                inventoryTextValue: null);
+
+            var result = _engine.BuildPopulationMap(new PopulationMapRequest
+            {
+                EntityType = EntityTypeCode.Supplier,
+                PresetId = "purchase-exposure-map"
+            });
+
+            var point = result.Points.Single(p => p.EntityId == "SP001");
+            point.AxisX.Should().Be(500_000_000m);
+            point.AxisY.Should().Be(400_000_000m);
+            point.AxisYPercentile.Should().NotBeNull();
+            point.IsLowConfidence.Should().BeFalse();
+        }
+
+        [Fact]
+        public void BuildPopulationMap_PopulatesAxisY_FromNumericTextDimensionValue()
+        {
+            SeedSupplierWithInventoryDimension(
+                entityId: "SP002",
+                entityCode: "SUP002",
+                displayName: "Supplier Two",
+                axisX: 250_000_000m,
+                inventoryNumericValue: null,
+                inventoryTextValue: "150000000");
+
+            var result = _engine.BuildPopulationMap(new PopulationMapRequest
+            {
+                EntityType = EntityTypeCode.Supplier,
+                PresetId = "purchase-exposure-map"
+            });
+
+            var point = result.Points.Single(p => p.EntityId == "SP002");
+            point.AxisY.Should().Be(150_000_000m);
+            point.IsLowConfidence.Should().BeFalse();
+        }
+
+        [Fact]
+        public void BuildPopulationMap_FlagsLowConfidence_WhenDimensionValueIsNotNumeric()
+        {
+            SeedSupplierWithInventoryDimension(
+                entityId: "SP003",
+                entityCode: "SUP003",
+                displayName: "Supplier Three",
+                axisX: 100_000_000m,
+                inventoryNumericValue: null,
+                inventoryTextValue: "N/A");
+
+            var result = _engine.BuildPopulationMap(new PopulationMapRequest
+            {
+                EntityType = EntityTypeCode.Supplier,
+                PresetId = "purchase-exposure-map"
+            });
+
+            var point = result.Points.Single(p => p.EntityId == "SP003");
+            point.AxisY.Should().BeNull();
+            point.IsLowConfidence.Should().BeTrue();
+        }
+
         private void SeedPopulation(int count)
         {
             for (var i = 1; i <= count; i++)
@@ -142,18 +301,17 @@ namespace btr.test.ReportingContext
             }
         }
 
-        private void SeedEntity(
+        private void SeedSupplierWithInventoryDimension(
             string entityId,
             string entityCode,
             string displayName,
-            decimal axisX,
-            decimal axisY,
-            string dimensionValue = "Jakarta",
-            int attentionCount = 0)
+            decimal? axisX,
+            decimal? inventoryNumericValue,
+            string inventoryTextValue)
         {
             _repository.CurrentRows.Add(new EntityAnalyticsCurrentRow
             {
-                EntityType = EntityTypeCode.Customer,
+                EntityType = EntityTypeCode.Supplier,
                 EntityId = entityId,
                 EntityCode = entityCode,
                 KpiId = EntityAnalyticsMetaKpiIds.IsActive,
@@ -165,7 +323,67 @@ namespace btr.test.ReportingContext
             {
                 _repository.CurrentRows.Add(new EntityAnalyticsCurrentRow
                 {
-                    EntityType = EntityTypeCode.Customer,
+                    EntityType = EntityTypeCode.Supplier,
+                    EntityId = entityId,
+                    EntityCode = entityCode,
+                    KpiId = EntityAnalyticsMetaKpiIds.DisplayName,
+                    TextValue = displayName,
+                    GeneratedAt = GeneratedAt
+                });
+            }
+
+            _repository.CurrentRows.Add(new EntityAnalyticsCurrentRow
+            {
+                EntityType = EntityTypeCode.Supplier,
+                EntityId = entityId,
+                EntityCode = entityCode,
+                KpiId = "PU-KPI-001",
+                NumericValue = axisX,
+                GeneratedAt = GeneratedAt
+            });
+
+            if (inventoryNumericValue.HasValue || inventoryTextValue != null)
+            {
+                _repository.CurrentRows.Add(new EntityAnalyticsCurrentRow
+                {
+                    EntityType = EntityTypeCode.Supplier,
+                    EntityId = entityId,
+                    EntityCode = entityCode,
+                    KpiId = EntityAnalyticsMetaKpiIds.InventoryValue,
+                    NumericValue = inventoryNumericValue,
+                    TextValue = inventoryTextValue,
+                    GeneratedAt = GeneratedAt
+                });
+            }
+        }
+
+        private void SeedEntity(
+            string entityId,
+            string entityCode,
+            string displayName,
+            decimal? axisX,
+            decimal? axisY,
+            string dimensionValue = "Jakarta",
+            int attentionCount = 0,
+            string entityType = null)
+        {
+            entityType = entityType ?? EntityTypeCode.Customer;
+
+            _repository.CurrentRows.Add(new EntityAnalyticsCurrentRow
+            {
+                EntityType = entityType,
+                EntityId = entityId,
+                EntityCode = entityCode,
+                KpiId = EntityAnalyticsMetaKpiIds.IsActive,
+                NumericValue = 1m,
+                GeneratedAt = GeneratedAt
+            });
+
+            if (!string.IsNullOrWhiteSpace(displayName))
+            {
+                _repository.CurrentRows.Add(new EntityAnalyticsCurrentRow
+                {
+                    EntityType = entityType,
                     EntityId = entityId,
                     EntityCode = entityCode,
                     KpiId = EntityAnalyticsMetaKpiIds.DisplayName,
@@ -178,7 +396,7 @@ namespace btr.test.ReportingContext
             {
                 _repository.CurrentRows.Add(new EntityAnalyticsCurrentRow
                 {
-                    EntityType = EntityTypeCode.Customer,
+                    EntityType = entityType,
                     EntityId = entityId,
                     EntityCode = entityCode,
                     KpiId = EntityAnalyticsMetaKpiIds.Wilayah,
@@ -189,7 +407,7 @@ namespace btr.test.ReportingContext
 
             _repository.CurrentRows.Add(new EntityAnalyticsCurrentRow
             {
-                EntityType = EntityTypeCode.Customer,
+                EntityType = entityType,
                 EntityId = entityId,
                 EntityCode = entityCode,
                 KpiId = "CU-KPI-009",
@@ -199,7 +417,7 @@ namespace btr.test.ReportingContext
 
             _repository.CurrentRows.Add(new EntityAnalyticsCurrentRow
             {
-                EntityType = EntityTypeCode.Customer,
+                EntityType = entityType,
                 EntityId = entityId,
                 EntityCode = entityCode,
                 KpiId = "CU-KPI-010",
@@ -211,7 +429,7 @@ namespace btr.test.ReportingContext
             {
                 _repository.AttentionRows.Add(new EntityAnalyticsAttentionEventRow
                 {
-                    EntityType = EntityTypeCode.Customer,
+                    EntityType = entityType,
                     EntityId = entityId,
                     EntityCode = entityCode,
                     SignalCode = $"SIG-{entityId}-{i}",

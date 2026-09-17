@@ -15,11 +15,21 @@ namespace btr.visitplan.worker
         {
             LogManager.Setup().LoadConfigurationFromFile("NLog.config");
             var triggeredBy = ParseRequiredOption(args, "--triggered-by", "Scheduler");
+            var fromDate = ParseOptionalDate(args, "--from-date");
+            var toDate = ParseOptionalDate(args, "--to-date");
 
             try
             {
                 ValidateOptions(triggeredBy);
-                Logger.Info("Starting visit plan horizon maintenance. TriggeredBy={TriggeredBy}", triggeredBy);
+                if (fromDate.HasValue && toDate.HasValue && toDate.Value < fromDate.Value)
+                    throw new ArgumentException("--to-date cannot be earlier than --from-date.");
+
+                Logger.Info(
+                    "Starting visit plan horizon maintenance. TriggeredBy={TriggeredBy}, FromDate={FromDate}, ToDate={ToDate}, Backfill={Backfill}",
+                    triggeredBy,
+                    fromDate?.ToString("yyyy-MM-dd") ?? "(today)",
+                    toDate?.ToString("yyyy-MM-dd") ?? "(today+horizon)",
+                    fromDate.HasValue);
 
                 var configuration = new ConfigurationBuilder()
                     .SetBasePath(AppDomain.CurrentDomain.BaseDirectory)
@@ -34,7 +44,13 @@ namespace btr.visitplan.worker
                 using (var scope = serviceProvider.CreateScope())
                 {
                     var worker = scope.ServiceProvider.GetRequiredService<IMaintainVisitPlanHorizonWorker>();
-                    worker.Execute(new MaintainVisitPlanHorizonRequest { TriggeredBy = triggeredBy });
+                    worker.Execute(new MaintainVisitPlanHorizonRequest
+                    {
+                        TriggeredBy = triggeredBy,
+                        FromDate = fromDate,
+                        ToDate = toDate,
+                        AllowPast = fromDate.HasValue
+                    });
                 }
 
                 Logger.Info("Visit plan horizon maintenance completed successfully.");
@@ -87,6 +103,25 @@ namespace btr.visitplan.worker
             }
 
             return defaultValue;
+        }
+
+        private static DateTime? ParseOptionalDate(string[] args, string name)
+        {
+            var value = ParseRequiredOption(args, name, null);
+            if (string.IsNullOrWhiteSpace(value))
+                return null;
+
+            if (!DateTime.TryParseExact(
+                    value,
+                    "yyyy-MM-dd",
+                    System.Globalization.CultureInfo.InvariantCulture,
+                    System.Globalization.DateTimeStyles.None,
+                    out var parsed))
+            {
+                throw new ArgumentException($"Invalid value for {name}: '{value}'. Expected yyyy-MM-dd.");
+            }
+
+            return parsed.Date;
         }
     }
 }

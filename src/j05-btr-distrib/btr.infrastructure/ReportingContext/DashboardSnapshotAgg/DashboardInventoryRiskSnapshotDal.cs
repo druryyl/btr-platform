@@ -60,7 +60,7 @@ WHERE SnapshotKey = @SnapshotKey
 ORDER BY Rank";
 
             const string breakdownSql = @"
-SELECT DimensionType, Name, AtRiskValue, ItemCount, Rank, PercentOfAtRisk
+SELECT DimensionType, Name, SupplierId, AtRiskValue, ItemCount, Rank, PercentOfAtRisk
 FROM BTRPD_InventoryRiskBreakdown
 WHERE SnapshotKey = @SnapshotKey
 ORDER BY DimensionType, Rank";
@@ -325,9 +325,9 @@ VALUES (
 
             const string insertBreakdownSql = @"
 INSERT INTO BTRPD_InventoryRiskBreakdown (
-    InventoryRiskBreakdownId, SnapshotKey, DimensionType, Name, AtRiskValue, ItemCount, Rank, PercentOfAtRisk)
+    InventoryRiskBreakdownId, SnapshotKey, DimensionType, Name, SupplierId, AtRiskValue, ItemCount, Rank, PercentOfAtRisk)
 VALUES (
-    @InventoryRiskBreakdownId, @SnapshotKey, @DimensionType, @Name, @AtRiskValue, @ItemCount, @Rank, @PercentOfAtRisk)";
+    @InventoryRiskBreakdownId, @SnapshotKey, @DimensionType, @Name, @SupplierId, @AtRiskValue, @ItemCount, @Rank, @PercentOfAtRisk)";
 
             foreach (var row in result.Breakdown ?? new List<DashboardInventoryRiskBreakdownRow>())
             {
@@ -337,6 +337,7 @@ VALUES (
                     SnapshotKey,
                     DimensionType = row.DimensionType ?? string.Empty,
                     Name = row.Name ?? string.Empty,
+                    SupplierId = row.SupplierId ?? string.Empty,
                     row.AtRiskValue,
                     row.ItemCount,
                     row.Rank,
@@ -893,6 +894,7 @@ VALUES (
             {
                 DimensionType = row.DimensionType,
                 Name = row.Name,
+                SupplierId = row.SupplierId ?? string.Empty,
                 AtRiskValue = row.AtRiskValue,
                 ItemCount = row.ItemCount,
                 Rank = row.Rank,
@@ -957,6 +959,7 @@ VALUES (
         {
             public string DimensionType { get; set; }
             public string Name { get; set; }
+            public string SupplierId { get; set; }
             public decimal AtRiskValue { get; set; }
             public int ItemCount { get; set; }
             public int Rank { get; set; }

@@ -7,6 +7,7 @@ namespace btr.application.SalesContext.VisitPlanAgg.UseCases
         public string SalesPersonId { get; set; }
         public DateTime FromDate { get; set; }
         public DateTime? ToDate { get; set; }
+        public bool AllowPast { get; set; }
         public string TriggeredBy { get; set; } = "Manual";
     }
 }

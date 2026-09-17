@@ -10,7 +10,6 @@ import CompareTrendSection from '@/components/entity-analytics/CompareTrendSecti
 import CompareRankingSection from '@/components/entity-analytics/CompareRankingSection.vue'
 import CompareAttentionSection from '@/components/entity-analytics/CompareAttentionSection.vue'
 import CompareRelationshipsSection from '@/components/entity-analytics/CompareRelationshipsSection.vue'
-import RadarCompareSection from '@/components/entity-analytics/RadarCompareSection.vue'
 import type { EntitySearchResult } from '@/models/entityAnalytics'
 import { useEntityAnalyticsStore } from '@/stores/entityAnalyticsStore'
 
@@ -101,7 +100,7 @@ watch(
 
 <template>
   <DashboardDetailLayout
-    title="Compare Suppliers"
+    title="Compare Principals"
     subtitle="Side-by-side KPI, trend, ranking, attention, and relationship comparison"
     :loading="store.compareLoading"
     :error="store.compareError"
@@ -117,7 +116,7 @@ watch(
         <EntityPicker
           v-model="slots[index]"
           :entity-type="ENTITY_TYPE"
-          :placeholder="`Supplier ${index + 1}`"
+          :placeholder="`Principal ${index + 1}`"
         />
         <Button
           v-if="slots.length > MIN_ENTITIES"
@@ -172,7 +171,6 @@ watch(
         :section="store.compare.RelationshipComparison"
         :loading="store.compareLoading"
       />
-      <RadarCompareSection :section="store.compare.RadarComparison" />
     </div>
   </DashboardDetailLayout>
 </template>

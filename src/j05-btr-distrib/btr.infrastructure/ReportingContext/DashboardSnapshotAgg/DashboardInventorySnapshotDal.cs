@@ -18,6 +18,8 @@ namespace btr.infrastructure.ReportingContext.DashboardSnapshotAgg
     {
         private const string SnapshotKey = "CURRENT";
 
+        public const string PrincipalPerformanceRoute = "/dashboard/principal-performance";
+
         private readonly DatabaseOptions _opt;
 
         public DashboardInventorySnapshotDal(IOptions<DatabaseOptions> opt)
@@ -33,7 +35,7 @@ FROM BTRPD_InventoryKpi
 WHERE SnapshotKey = @SnapshotKey";
 
             const string breakdownSql = @"
-SELECT DimensionType, Name, InventoryValue, IsTop10, Top10Rank
+SELECT DimensionType, Name, SupplierId, InventoryValue, IsTop10, Top10Rank
 FROM BTRPD_InventoryBreakdown
 WHERE SnapshotKey = @SnapshotKey
 ORDER BY DimensionType, InventoryValue DESC, Name";
@@ -55,6 +57,7 @@ ORDER BY DimensionType, InventoryValue DESC, Name";
                     {
                         DimensionType = r.DimensionType,
                         Name = r.Name,
+                        SupplierId = r.SupplierId ?? string.Empty,
                         InventoryValue = r.InventoryValue,
                         IsTop10 = r.IsTop10,
                         Top10Rank = r.Top10Rank
@@ -101,9 +104,9 @@ WHEN NOT MATCHED THEN
 
                 const string insertBreakdownSql = @"
 INSERT INTO BTRPD_InventoryBreakdown (
-    InventoryBreakdownId, SnapshotKey, DimensionType, Name, InventoryValue, IsTop10, Top10Rank)
+    InventoryBreakdownId, SnapshotKey, DimensionType, Name, SupplierId, InventoryValue, IsTop10, Top10Rank)
 VALUES (
-    @InventoryBreakdownId, @SnapshotKey, @DimensionType, @Name, @InventoryValue, @IsTop10, @Top10Rank)";
+    @InventoryBreakdownId, @SnapshotKey, @DimensionType, @Name, @SupplierId, @InventoryValue, @IsTop10, @Top10Rank)";
 
                 foreach (var row in result.Breakdown ?? new List<DashboardInventoryBreakdownRow>())
                 {
@@ -113,6 +116,7 @@ VALUES (
                         SnapshotKey,
                         row.DimensionType,
                         Name = row.Name ?? string.Empty,
+                        SupplierId = row.SupplierId ?? string.Empty,
                         row.InventoryValue,
                         IsTop10 = row.IsTop10 ? 1 : 0,
                         row.Top10Rank
@@ -148,6 +152,8 @@ VALUES (
                 {
                     Rank = r.Top10Rank ?? 0,
                     Name = r.Name,
+                    SupplierId = r.SupplierId,
+                    DashboardRoute = PrincipalPerformanceRoute,
                     InventoryValue = r.InventoryValue,
                     Investigation = InvestigationMetadataBuilder.Build(
                         InvestigationRegistry.SignalLegacyTopSupplier,
@@ -174,6 +180,8 @@ VALUES (
             => ranking.Select(r => new DashboardInventoryBreakdownItem
             {
                 Name = r.Name,
+                SupplierId = r.SupplierId ?? string.Empty,
+                DashboardRoute = r.DashboardRoute,
                 InventoryValue = r.InventoryValue
             }).ToList();
 
@@ -190,6 +198,7 @@ VALUES (
         {
             public string DimensionType { get; set; }
             public string Name { get; set; }
+            public string SupplierId { get; set; }
             public decimal InventoryValue { get; set; }
             public bool IsTop10 { get; set; }
             public int? Top10Rank { get; set; }

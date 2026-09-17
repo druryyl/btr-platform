@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { RouterLink } from 'vue-router'
 import type { MapPreset } from '@/models/entityAnalytics'
+import { getEntityDisplayLabel } from '@/navigation/entityAnalyticsNavigation'
 
 defineProps<{
   entityType: string
@@ -14,7 +15,7 @@ defineProps<{
   <nav class="iw-breadcrumb" aria-label="Investigation breadcrumb">
     <RouterLink to="/analytics" class="iw-breadcrumb__link">Entity Analytics</RouterLink>
     <span class="iw-breadcrumb__sep">/</span>
-    <span class="iw-breadcrumb__current">{{ entityType }}</span>
+    <span class="iw-breadcrumb__current">{{ getEntityDisplayLabel(entityType) }}</span>
     <template v-if="preset">
       <span class="iw-breadcrumb__sep">/</span>
       <span class="iw-breadcrumb__current">{{ preset.DisplayName }}</span>

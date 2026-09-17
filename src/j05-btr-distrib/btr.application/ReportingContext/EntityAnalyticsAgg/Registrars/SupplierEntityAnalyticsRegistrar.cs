@@ -2,12 +2,25 @@ using System.Collections.Generic;
 using btr.application.ReportingContext.EntityAnalyticsAgg.Contracts;
 using btr.application.ReportingContext.EntityAnalyticsAgg.Models;
 using btr.application.ReportingContext.EntityAnalyticsAgg.Services;
+using btr.application.ReportingContext.PrincipalAnalyticsAgg;
 
 namespace btr.application.ReportingContext.EntityAnalyticsAgg.Registrars
 {
     public class SupplierEntityAnalyticsRegistrar : IEntityAnalyticsRegistrar
     {
         public const string KpiPackId = "supplier-default";
+
+        public const string PrincipalSalesOutEvidenceRoute = "/dashboard/principal-performance/evidence";
+
+        public const string PrincipalSalesOutEvidenceFilterDimension = "supplierId";
+
+        public const string PrincipalReturnEvidenceRoute = "/dashboard/principal-performance/return-evidence";
+
+        public const string PrincipalReturnEvidenceFilterDimension = "supplierId";
+
+        public const string PrincipalTargetEvidenceRoute = "/dashboard/principal-performance";
+
+        public const string PrincipalTargetEvidenceFilterDimension = "supplierId";
 
         public void Register(
             IEntityTypeRegistry entityTypes,
@@ -19,6 +32,21 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Registrars
 
             kpiRegistry.RegisterPack(KpiPackId, new[]
             {
+                PrincipalKpiCatalog.SalesOutId,
+                PrincipalKpiCatalog.GoodReturnAmountId,
+                PrincipalKpiCatalog.BrokenReturnAmountId,
+                PrincipalKpiCatalog.TotalReturnAmountId,
+                PrincipalKpiCatalog.ReturnPercentageId,
+                PrincipalKpiCatalog.TargetId,
+                PrincipalKpiCatalog.AchievementAmountId,
+                PrincipalKpiCatalog.AchievementPercentageId,
+                PrincipalKpiCatalog.PacingAchievementPercentageId,
+                PrincipalKpiCatalog.MomGrowthId,
+                PrincipalKpiCatalog.YoyGrowthId,
+                PrincipalKpiCatalog.YoyMtdGrowthId,
+                PrincipalKpiCatalog.PurchaseInId,
+                PrincipalKpiCatalog.InventoryValueId,
+                PrincipalKpiCatalog.InventoryDaysId,
                 "PU-KPI-001",
                 "PU-KPI-002",
                 "PU-KPI-003",
@@ -50,10 +78,10 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Registrars
         {
             kpiRegistry.RegisterMetadata(new EntityKpiMetadata
             {
-                KpiId = "PU-KPI-001",
+                KpiId = PrincipalKpiCatalog.SalesOutId,
                 Category = EntityKpiCategory.Financial,
-                DisplayName = "MTD Purchase",
-                Description = "Supplier MTD purchase spend (same semantics as PU01 principal exposure row).",
+                DisplayName = "Principal Sales-Out",
+                Description = "PRN-SALES-001 Principal Sales-Out (DPP) from Faktur Item. Returns, Claims, and Inventory Adjustments are not deducted. Returns do not reduce or redefine Principal Sales-Out. Tax and header totals are excluded. Totals are not required to reconcile to Faktur GrandTotal. This is the commercial performance and default ranking KPI. It is not Purchase-In, Net Sales, or a Principal Health Score.",
                 PeriodSemantics = "MTD",
                 TimeGrain = "Month",
                 Unit = "IDR",
@@ -69,6 +97,415 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Registrars
                 RadarDisplayName = "Performance",
                 SignatureDimensionKey = EntityAnalyticsSignatureDimensions.Performance,
                 RadarValueSource = RadarValueSource.L0Kpi,
+                DisplayPrecision = 0,
+                NullableBehavior = "ShowEmpty",
+                EvidenceRoute = PrincipalSalesOutEvidenceRoute,
+                EvidenceFilterDimension = PrincipalSalesOutEvidenceFilterDimension,
+                SourceDomain = PrincipalSalesOutSnapshot.Domain,
+                ApplicableEntityTypes = new[] { EntityTypeCode.Supplier },
+                DefinitionVersion = 1,
+                IntroducedVersion = "PCM-015"
+            });
+
+            kpiRegistry.RegisterMetadata(new EntityKpiMetadata
+            {
+                KpiId = PrincipalKpiCatalog.GoodReturnAmountId,
+                Category = EntityKpiCategory.Quality,
+                DisplayName = "Good Return Amount",
+                Description = "PRN-RET-001 Good Return Amount from Return Item. Returns are independent KPIs and never reduce, replace, or redefine PRN-SALES-001. Evidence grain is Return Item. This is not Principal Sales-Out and not Net Sales.",
+                PeriodSemantics = "MTD",
+                TimeGrain = "Month",
+                Unit = "IDR",
+                ValueType = "Numeric",
+                AggregationType = "Sum",
+                Direction = "LowerIsBetter",
+                NormalizationRule = "None",
+                VisualizationType = "Card",
+                TrendEligible = true,
+                RankEligible = false,
+                RadarEligible = false,
+                DisplayPrecision = 0,
+                NullableBehavior = "ShowEmpty",
+                EvidenceRoute = PrincipalReturnEvidenceRoute,
+                EvidenceFilterDimension = PrincipalReturnEvidenceFilterDimension,
+                SourceDomain = PrincipalReturnSnapshot.Domain,
+                ApplicableEntityTypes = new[] { EntityTypeCode.Supplier },
+                DefinitionVersion = 1,
+                IntroducedVersion = "PCM-047"
+            });
+
+            kpiRegistry.RegisterMetadata(new EntityKpiMetadata
+            {
+                KpiId = PrincipalKpiCatalog.BrokenReturnAmountId,
+                Category = EntityKpiCategory.Quality,
+                DisplayName = "Broken Return Amount",
+                Description = "PRN-RET-002 Broken Return Amount from Return Item. Returns are independent KPIs and never reduce, replace, or redefine PRN-SALES-001. Evidence grain is Return Item. This is not Principal Sales-Out and not Net Sales.",
+                PeriodSemantics = "MTD",
+                TimeGrain = "Month",
+                Unit = "IDR",
+                ValueType = "Numeric",
+                AggregationType = "Sum",
+                Direction = "LowerIsBetter",
+                NormalizationRule = "None",
+                VisualizationType = "Card",
+                TrendEligible = true,
+                RankEligible = false,
+                RadarEligible = false,
+                DisplayPrecision = 0,
+                NullableBehavior = "ShowEmpty",
+                EvidenceRoute = PrincipalReturnEvidenceRoute,
+                EvidenceFilterDimension = PrincipalReturnEvidenceFilterDimension,
+                SourceDomain = PrincipalReturnSnapshot.Domain,
+                ApplicableEntityTypes = new[] { EntityTypeCode.Supplier },
+                DefinitionVersion = 1,
+                IntroducedVersion = "PCM-047"
+            });
+
+            kpiRegistry.RegisterMetadata(new EntityKpiMetadata
+            {
+                KpiId = PrincipalKpiCatalog.TotalReturnAmountId,
+                Category = EntityKpiCategory.Quality,
+                DisplayName = "Total Return Amount",
+                Description = "PRN-RET-003 Total Return Amount (Good Return + Broken Return) from Return Item. Returns are independent KPIs and never reduce, replace, or redefine PRN-SALES-001. Evidence grain is Return Item. This is not Principal Sales-Out and not Net Sales.",
+                PeriodSemantics = "MTD",
+                TimeGrain = "Month",
+                Unit = "IDR",
+                ValueType = "Numeric",
+                AggregationType = "Sum",
+                Direction = "LowerIsBetter",
+                NormalizationRule = "None",
+                VisualizationType = "Card",
+                TrendEligible = true,
+                RankEligible = false,
+                RadarEligible = false,
+                DisplayPrecision = 0,
+                NullableBehavior = "ShowEmpty",
+                EvidenceRoute = PrincipalReturnEvidenceRoute,
+                EvidenceFilterDimension = PrincipalReturnEvidenceFilterDimension,
+                SourceDomain = PrincipalReturnSnapshot.Domain,
+                ApplicableEntityTypes = new[] { EntityTypeCode.Supplier },
+                DefinitionVersion = 1,
+                IntroducedVersion = "PCM-047"
+            });
+
+            kpiRegistry.RegisterMetadata(new EntityKpiMetadata
+            {
+                KpiId = PrincipalKpiCatalog.ReturnPercentageId,
+                Category = EntityKpiCategory.Quality,
+                DisplayName = "Return Percentage",
+                Description = "PRN-RET-004 Return Percentage (Return Amount ÷ Sales-Out) when stored PRN-SALES-001 is greater than zero; otherwise null. Return Percentage is a quality and supporting ranking indicator only. It is not a deduction from Sales-Out and not Net Sales. Returns never reduce Principal Sales-Out.",
+                PeriodSemantics = "MTD",
+                TimeGrain = "Month",
+                Unit = "Ratio",
+                ValueType = "Numeric",
+                AggregationType = "LastValue",
+                Direction = "LowerIsBetter",
+                NormalizationRule = "None",
+                VisualizationType = "Card",
+                TrendEligible = true,
+                RankEligible = true,
+                RadarEligible = false,
+                DisplayPrecision = 6,
+                NullableBehavior = "ShowEmpty",
+                EvidenceRoute = PrincipalReturnEvidenceRoute,
+                EvidenceFilterDimension = PrincipalReturnEvidenceFilterDimension,
+                SourceDomain = PrincipalReturnPercentageSnapshot.Domain,
+                ApplicableEntityTypes = new[] { EntityTypeCode.Supplier },
+                DefinitionVersion = 1,
+                IntroducedVersion = "PCM-047"
+            });
+
+            kpiRegistry.RegisterMetadata(new EntityKpiMetadata
+            {
+                KpiId = PrincipalKpiCatalog.TargetId,
+                Category = EntityKpiCategory.Financial,
+                DisplayName = "Principal Target",
+                Description = "PRN-TGT-001 Principal Target (Sum of Salesman Principal Targets) from SalesPersonPrincipalTarget. Target is derived, not independently maintained. This is not Principal Sales-Out and not Net Sales.",
+                PeriodSemantics = "MTD",
+                TimeGrain = "Month",
+                Unit = "IDR",
+                ValueType = "Numeric",
+                AggregationType = "Sum",
+                Direction = "HigherIsBetter",
+                NormalizationRule = "None",
+                VisualizationType = "Card",
+                TrendEligible = true,
+                RankEligible = false,
+                RadarEligible = false,
+                DisplayPrecision = 0,
+                NullableBehavior = "ShowEmpty",
+                EvidenceRoute = PrincipalTargetEvidenceRoute,
+                EvidenceFilterDimension = PrincipalTargetEvidenceFilterDimension,
+                SourceDomain = PrincipalTargetSnapshot.Domain,
+                ApplicableEntityTypes = new[] { EntityTypeCode.Supplier },
+                DefinitionVersion = 1,
+                IntroducedVersion = "PCM-048"
+            });
+
+            kpiRegistry.RegisterMetadata(new EntityKpiMetadata
+            {
+                KpiId = PrincipalKpiCatalog.AchievementAmountId,
+                Category = EntityKpiCategory.Financial,
+                DisplayName = "Achievement Amount",
+                Description = "PRN-TGT-002 Achievement Amount (Principal Sales-Out versus Target) from stored PRN-SALES-001 and stored PRN-TGT-001. This is not a copy of Sales-Out, does not deduct returns, and is not Net Sales.",
+                PeriodSemantics = "MTD",
+                TimeGrain = "Month",
+                Unit = "IDR",
+                ValueType = "Numeric",
+                AggregationType = "Sum",
+                Direction = "HigherIsBetter",
+                NormalizationRule = "None",
+                VisualizationType = "Card",
+                TrendEligible = true,
+                RankEligible = false,
+                RadarEligible = false,
+                DisplayPrecision = 0,
+                NullableBehavior = "ShowEmpty",
+                EvidenceRoute = PrincipalTargetEvidenceRoute,
+                EvidenceFilterDimension = PrincipalTargetEvidenceFilterDimension,
+                SourceDomain = PrincipalAchievementSnapshot.Domain,
+                ApplicableEntityTypes = new[] { EntityTypeCode.Supplier },
+                DefinitionVersion = 1,
+                IntroducedVersion = "PCM-048"
+            });
+
+            kpiRegistry.RegisterMetadata(new EntityKpiMetadata
+            {
+                KpiId = PrincipalKpiCatalog.AchievementPercentageId,
+                Category = EntityKpiCategory.Financial,
+                DisplayName = "Achievement Percentage",
+                Description = "PRN-TGT-003 Achievement Percentage (Principal Sales-Out ÷ Principal Target) when stored PRN-TGT-001 is greater than zero; otherwise null. Achievement Percentage is a supporting ranking KPI only. It is not a replacement for Principal Sales-Out and not Net Sales.",
+                PeriodSemantics = "MTD",
+                TimeGrain = "Month",
+                Unit = "Ratio",
+                ValueType = "Numeric",
+                AggregationType = "LastValue",
+                Direction = "HigherIsBetter",
+                NormalizationRule = "None",
+                VisualizationType = "Card",
+                TrendEligible = true,
+                RankEligible = true,
+                RadarEligible = false,
+                DisplayPrecision = 6,
+                NullableBehavior = "ShowEmpty",
+                EvidenceRoute = PrincipalTargetEvidenceRoute,
+                EvidenceFilterDimension = PrincipalTargetEvidenceFilterDimension,
+                SourceDomain = PrincipalAchievementSnapshot.Domain,
+                ApplicableEntityTypes = new[] { EntityTypeCode.Supplier },
+                DefinitionVersion = 1,
+                IntroducedVersion = "PCM-048"
+            });
+
+            kpiRegistry.RegisterMetadata(new EntityKpiMetadata
+            {
+                KpiId = PrincipalKpiCatalog.MomGrowthId,
+                Category = EntityKpiCategory.Growth,
+                DisplayName = "Month-over-Month Growth Percentage",
+                Description = "PRN-GRW-001 Month-over-Month Growth Percentage from stored PRN-SALES-001 history. Growth is computed from Principal Sales-Out only. It does not use Purchase-In, returns, claims, or inventory adjustments. PRN-GRW-001 is a supporting ranking KPI and is not a replacement for Principal Sales-Out. It is not Net Sales.",
+                PeriodSemantics = "MTD",
+                TimeGrain = "Month",
+                Unit = "Percent",
+                ValueType = "Numeric",
+                AggregationType = "LastValue",
+                Direction = "HigherIsBetter",
+                NormalizationRule = "None",
+                VisualizationType = "Card",
+                TrendEligible = false,
+                RankEligible = true,
+                RadarEligible = false,
+                DisplayPrecision = 4,
+                NullableBehavior = "ShowEmpty",
+                EvidenceRoute = PrincipalSalesOutEvidenceRoute,
+                EvidenceFilterDimension = PrincipalSalesOutEvidenceFilterDimension,
+                SourceDomain = PrincipalMomGrowthSnapshot.Domain,
+                ApplicableEntityTypes = new[] { EntityTypeCode.Supplier },
+                DefinitionVersion = 1,
+                IntroducedVersion = "PCM-046"
+            });
+
+            kpiRegistry.RegisterMetadata(new EntityKpiMetadata
+            {
+                KpiId = PrincipalKpiCatalog.YoyGrowthId,
+                Category = EntityKpiCategory.Growth,
+                DisplayName = "Year-over-Year Growth Percentage",
+                Description = "PRN-GRW-002 Year-over-Year Growth Percentage from stored PRN-SALES-001 history. Growth is computed from Principal Sales-Out only. It does not use Purchase-In, returns, claims, or inventory adjustments. PRN-GRW-002 is a supporting ranking KPI and is not a replacement for Principal Sales-Out. It is not Net Sales.",
+                PeriodSemantics = "MTD",
+                TimeGrain = "Month",
+                Unit = "Percent",
+                ValueType = "Numeric",
+                AggregationType = "LastValue",
+                Direction = "HigherIsBetter",
+                NormalizationRule = "None",
+                VisualizationType = "Card",
+                TrendEligible = false,
+                RankEligible = true,
+                RadarEligible = false,
+                DisplayPrecision = 4,
+                NullableBehavior = "ShowEmpty",
+                EvidenceRoute = PrincipalSalesOutEvidenceRoute,
+                EvidenceFilterDimension = PrincipalSalesOutEvidenceFilterDimension,
+                SourceDomain = PrincipalYoyGrowthSnapshot.Domain,
+                ApplicableEntityTypes = new[] { EntityTypeCode.Supplier },
+                DefinitionVersion = 1,
+                IntroducedVersion = "PCM-046"
+            });
+
+            kpiRegistry.RegisterMetadata(new EntityKpiMetadata
+            {
+                KpiId = PrincipalKpiCatalog.PacingAchievementPercentageId,
+                Category = EntityKpiCategory.Financial,
+                DisplayName = "Pacing Achievement %",
+                Description = "PRN-TGT-004 Pacing Achievement Percentage = Actual Sales MTD ÷ Expected Target MTD × 100, where Expected Target MTD = Monthly Target × (Elapsed Days ÷ Days In Month). Sourced from stored PRN-SALES-001 and stored PRN-TGT-001 plus the runtime Business Date period context. Pacing is linear; the value is null when the expected target is not greater than zero. PRN-TGT-004 is a BusinessDate-dependent pacing KPI for current-period evaluation and is not trended historically (TrendEligible=false); historical achievement analysis uses PRN-TGT-003 Achievement Percentage. PRN-TGT-004 is a supporting ranking KPI and does not change PRN-TGT-003 Achievement Percentage. It is not Net Sales.",
+                PeriodSemantics = "MTD",
+                TimeGrain = "Month",
+                Unit = "Percent",
+                ValueType = "Numeric",
+                AggregationType = "LastValue",
+                Direction = "HigherIsBetter",
+                NormalizationRule = "None",
+                VisualizationType = "Card",
+                TrendEligible = false,
+                RankEligible = true,
+                RadarEligible = false,
+                DisplayPrecision = 4,
+                NullableBehavior = "ShowEmpty",
+                EvidenceRoute = PrincipalTargetEvidenceRoute,
+                EvidenceFilterDimension = PrincipalTargetEvidenceFilterDimension,
+                SourceDomain = PrincipalAchievementSnapshot.Domain,
+                ApplicableEntityTypes = new[] { EntityTypeCode.Supplier },
+                DefaultAxisRole = "X",
+                MinimumElapsedDays = 6,
+                DefinitionVersion = 1,
+                IntroducedVersion = "PSOM-03"
+            });
+
+            kpiRegistry.RegisterMetadata(new EntityKpiMetadata
+            {
+                KpiId = PrincipalKpiCatalog.YoyMtdGrowthId,
+                Category = EntityKpiCategory.Growth,
+                DisplayName = "YoY MTD Growth %",
+                Description = "PRN-GRW-003 Year-over-Year MTD Growth Percentage = (current year MTD PRN-SALES-001 − prior year MTD PRN-SALES-001) ÷ prior year MTD PRN-SALES-001 × 100 when the prior-year MTD is greater than zero; otherwise null. Current-year and prior-year windows use equivalent elapsed days aligned on the Business Date. PRN-GRW-003 is a supporting ranking KPI and does not change PRN-GRW-002 Year-over-Year Growth Percentage. It is not Net Sales.",
+                PeriodSemantics = "MTD",
+                TimeGrain = "Month",
+                Unit = "Percent",
+                ValueType = "Numeric",
+                AggregationType = "LastValue",
+                Direction = "HigherIsBetter",
+                NormalizationRule = "None",
+                VisualizationType = "Card",
+                TrendEligible = false,
+                RankEligible = true,
+                RadarEligible = false,
+                DisplayPrecision = 4,
+                NullableBehavior = "ShowEmpty",
+                EvidenceRoute = PrincipalSalesOutEvidenceRoute,
+                EvidenceFilterDimension = PrincipalSalesOutEvidenceFilterDimension,
+                SourceDomain = PrincipalYoyGrowthSnapshot.Domain,
+                ApplicableEntityTypes = new[] { EntityTypeCode.Supplier },
+                DefaultAxisRole = "Y",
+                MinimumBaseValue = 1000000m,
+                DefinitionVersion = 1,
+                IntroducedVersion = "PSOM-03"
+            });
+
+            kpiRegistry.RegisterMetadata(new EntityKpiMetadata
+            {
+                KpiId = PrincipalKpiCatalog.PurchaseInId,
+                Category = EntityKpiCategory.Financial,
+                DisplayName = "Purchase-In",
+                Description = "PRN-PUR-001 Purchase-In from Purchase Detail. Purchase-In remains independent from Sales-Out and is not used as the Principal performance ranking KPI. It does not change PRN-SALES-001, PRN-GRW-001, or PRN-GRW-002. Evidence grain is Purchase Detail. This is not Principal Sales-Out and not Net Sales.",
+                PeriodSemantics = "MTD",
+                TimeGrain = "Month",
+                Unit = "IDR",
+                ValueType = "Numeric",
+                AggregationType = "Sum",
+                Direction = "Neutral",
+                NormalizationRule = "None",
+                VisualizationType = "Card",
+                TrendEligible = true,
+                RankEligible = false,
+                RadarEligible = false,
+                DisplayPrecision = 0,
+                NullableBehavior = "ShowEmpty",
+                EvidenceRoute = "/reports/purchasing",
+                EvidenceFilterDimension = "supplierCode",
+                SourceDomain = PrincipalPurchaseInSnapshot.Domain,
+                ApplicableEntityTypes = new[] { EntityTypeCode.Supplier },
+                DefinitionVersion = 1,
+                IntroducedVersion = "PCM-052"
+            });
+
+            kpiRegistry.RegisterMetadata(new EntityKpiMetadata
+            {
+                KpiId = PrincipalKpiCatalog.InventoryValueId,
+                Category = EntityKpiCategory.Portfolio,
+                DisplayName = "Inventory Value",
+                Description = "PRN-INV-001 Inventory Value from Inventory Snapshot. Inventory KPIs are independent operational indicators and do not modify Sales-Out performance. PRN-INV-001 is not a Principal performance ranking KPI and does not change PRN-SALES-001. Evidence grain is Inventory Snapshot. This is not Principal Sales-Out and not Net Sales.",
+                PeriodSemantics = "PointInTime",
+                TimeGrain = "PointInTime",
+                Unit = "IDR",
+                ValueType = "Numeric",
+                AggregationType = "LastValue",
+                Direction = "Neutral",
+                NormalizationRule = "None",
+                VisualizationType = "Card",
+                TrendEligible = false,
+                RankEligible = false,
+                RadarEligible = false,
+                DisplayPrecision = 0,
+                NullableBehavior = "ShowEmpty",
+                EvidenceRoute = "/reports/inventory",
+                EvidenceFilterDimension = "supplierCode",
+                SourceDomain = PrincipalInventorySnapshot.Domain,
+                ApplicableEntityTypes = new[] { EntityTypeCode.Supplier },
+                DefinitionVersion = 1,
+                IntroducedVersion = "PCM-053"
+            });
+
+            kpiRegistry.RegisterMetadata(new EntityKpiMetadata
+            {
+                KpiId = PrincipalKpiCatalog.InventoryDaysId,
+                Category = EntityKpiCategory.Portfolio,
+                DisplayName = "Inventory Days",
+                Description = "PRN-INV-002 Inventory Days from Inventory Snapshot. Inventory KPIs are independent operational indicators and do not modify Sales-Out performance. PRN-INV-002 is not a Principal performance ranking KPI and does not change PRN-SALES-001. Evidence grain is Inventory Snapshot. This is not Principal Sales-Out and not Net Sales.",
+                PeriodSemantics = "PointInTime",
+                TimeGrain = "PointInTime",
+                Unit = "Days",
+                ValueType = "Numeric",
+                AggregationType = "LastValue",
+                Direction = "Neutral",
+                NormalizationRule = "None",
+                VisualizationType = "Card",
+                TrendEligible = false,
+                RankEligible = false,
+                RadarEligible = false,
+                DisplayPrecision = 2,
+                NullableBehavior = "ShowEmpty",
+                EvidenceRoute = "/reports/inventory",
+                EvidenceFilterDimension = "supplierCode",
+                SourceDomain = PrincipalInventorySnapshot.Domain,
+                ApplicableEntityTypes = new[] { EntityTypeCode.Supplier },
+                DefinitionVersion = 1,
+                IntroducedVersion = "PCM-053"
+            });
+
+            kpiRegistry.RegisterMetadata(new EntityKpiMetadata
+            {
+                KpiId = "PU-KPI-001",
+                Category = EntityKpiCategory.Financial,
+                DisplayName = "MTD Purchase",
+                Description = "Supplier MTD purchase spend (same semantics as PU01 principal exposure row).",
+                PeriodSemantics = "MTD",
+                TimeGrain = "Month",
+                Unit = "IDR",
+                ValueType = "Numeric",
+                AggregationType = "Sum",
+                Direction = "HigherIsBetter",
+                NormalizationRule = "None",
+                VisualizationType = "Card",
+                TrendEligible = true,
+                RankEligible = true,
+                RadarEligible = false,
                 DisplayPrecision = 0,
                 NullableBehavior = "ShowEmpty",
                 EvidenceRoute = "/reports/purchasing",
@@ -147,7 +584,7 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Registrars
                 KpiId = EntityAnalyticsRadarAxisIds.GrowthMom,
                 Category = EntityKpiCategory.Growth,
                 DisplayName = "Growth",
-                Description = "MoM purchase growth percentile within peer group.",
+                Description = "MoM Principal Sales-Out growth percentile within peer group from PRN-GRW-001.",
                 PeriodSemantics = "MTD",
                 TimeGrain = "Month",
                 Unit = "Percent",
@@ -160,12 +597,12 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Registrars
                 RadarAxisOrder = 2,
                 RadarDisplayName = "Growth",
                 SignatureDimensionKey = EntityAnalyticsSignatureDimensions.Growth,
-                RadarValueSource = RadarValueSource.L1MomGrowthPercent,
-                RadarSourceKpiId = "PU-KPI-001",
+                RadarValueSource = RadarValueSource.L0Kpi,
+                RadarSourceKpiId = PrincipalKpiCatalog.MomGrowthId,
                 DisplayPrecision = 1,
                 NullableBehavior = "Omit",
                 ApplicableEntityTypes = new[] { EntityTypeCode.Supplier },
-                DefinitionVersion = 1,
+                DefinitionVersion = 2,
                 IntroducedVersion = "M32.10"
             });
 

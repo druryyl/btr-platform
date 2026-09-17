@@ -25,7 +25,13 @@ namespace j07_btrade_sync
         private readonly CustomerDownloadUpdatedService _customerDownloadUpdatedService;
         private readonly CustomerClearUpdateFlagService _customerClearUpdateFlagService;
         private readonly CheckInIncrementalDownloadService _checkInDownloadService;
+        private readonly ReturnOrderIncrementalDownloadService _returnOrderDownloadService;
         private readonly PackingOrderUploadSvc _packingOrderUploadSvc;
+        private readonly BarcodeSyncService _barcodeSyncService;
+        private readonly BarcodeRegistrationRelayService _barcodeRegistrationRelayService;
+        private readonly UserSyncService _userSyncService;
+        private readonly DriverSyncService _driverSyncService;
+        private readonly MainOfficeCommandExecutor _mainOfficeCommand;
 
         private readonly BrgDal _brgDal;
         private readonly CustomerDal _customerDal;
@@ -35,8 +41,12 @@ namespace j07_btrade_sync
         private readonly OrderDal _orderDal;
         private readonly OrderItemDal _orderItemDal;
         private readonly CheckInDal _checkInDal;
+        private readonly ReturnOrderDal _returnOrderDal;
+        private readonly ReturnOrderItemDal _returnOrderItemDal;
+        private readonly DriverDal _driverDal;
         private readonly PackingOrderDal _packingOrderDal;
         private readonly PackingOrderItemDal _packingOrderItemDal;
+        private readonly UserDal _userDal;
 
         private Timer timerClock = new Timer();
         private System.Timers.Timer processingTimer;
@@ -47,6 +57,7 @@ namespace j07_btrade_sync
         private bool _downloadSalesOrder;
         private bool _syncCustomerLocation;
         private bool _downloadCheckIn;
+        private bool _downloadReturnOrder;
         private bool _uploadPackingOrder;
 
         public SyncForm()
@@ -62,7 +73,13 @@ namespace j07_btrade_sync
             _customerDownloadUpdatedService = new CustomerDownloadUpdatedService();
             _customerClearUpdateFlagService = new CustomerClearUpdateFlagService();
             _checkInDownloadService = new CheckInIncrementalDownloadService();
+            _returnOrderDownloadService = new ReturnOrderIncrementalDownloadService();
             _packingOrderUploadSvc = new PackingOrderUploadSvc();
+            _barcodeSyncService = new BarcodeSyncService();
+            _barcodeRegistrationRelayService = new BarcodeRegistrationRelayService();
+            _userSyncService = new UserSyncService();
+            _driverSyncService = new DriverSyncService();
+            _mainOfficeCommand = new MainOfficeCommandExecutor();
 
             _brgDal = new BrgDal();
             _customerDal = new CustomerDal();
@@ -72,9 +89,13 @@ namespace j07_btrade_sync
             _orderDal = new OrderDal();
             _orderItemDal = new OrderItemDal();
             _checkInDal = new CheckInDal();
+            _returnOrderDal = new ReturnOrderDal();
+            _returnOrderItemDal = new ReturnOrderItemDal();
+            _driverDal = new DriverDal();
             _registryHelper = new RegistryHelper();
             _packingOrderDal = new PackingOrderDal();
             _packingOrderItemDal = new PackingOrderItemDal();
+            _userDal = new UserDal();
             LoadConfig();
 
             InitializeTimer();
@@ -83,6 +104,7 @@ namespace j07_btrade_sync
             LogMessage("BTrade Sync started.");
             ProcessOrder(RANGE_PERIODE);
             ProcessCheckIn(RANGE_PERIODE);
+            ProcessReturnOrder(RANGE_PERIODE);
             ProcessPackingOrder(RANGE_PERIODE);
             
             ShowServerTarget();
@@ -96,6 +118,7 @@ namespace j07_btrade_sync
             _downloadSalesOrder = _registryHelper.ReadString("DownloadSalesOrder", "0") == "1";
             _syncCustomerLocation = _registryHelper.ReadString("SyncCustomerLocation", "0") == "1";
             _downloadCheckIn = _registryHelper.ReadString("DownloadCheckIn", "0") == "1";
+            _downloadReturnOrder = _registryHelper.ReadString("DownloadReturnOrder", "0") == "1";
             _uploadPackingOrder = _registryHelper.ReadString("UploadPackingOrder", "0") == "1";
         }
         private void ShowServerTarget()
@@ -109,6 +132,7 @@ namespace j07_btrade_sync
             SyncBrgButton.Click += SyncBrgButton_Click;
             SyncCustomerButton.Click += SyncCustomerButton_Click;
             SyncSalesPersonBotton.Click += SyncSalesPersonButton_Click;
+            SyncBarcodeButton.Click += SyncBarcodeButton_Click;
 
             // Create context menu
             ContextMenuStrip menu = new ContextMenuStrip();
@@ -263,6 +287,113 @@ namespace j07_btrade_sync
             processingTimer.AutoReset = false; // We'll manually restart after processing
             processingTimer.Start();
         }
+
+        //  S3.7 — Return Order sync run (Arch §4.3, §8.2, §20): the Driver
+        //  projection upload (S3.5 / I-RO-06), then download (S3.3 / I-RO-02)
+        //  → stage (S3.2 / I-RO-07) → in-process import (S3.4 / I-RO-08),
+        //  mirroring ProcessOrder/ProcessCheckIn. Gated by the
+        //  DownloadReturnOrder registry flag.
+        private async void ProcessReturnOrder(int periodeLength)
+        {
+            if (!_downloadReturnOrder)
+                return;
+
+            if (periodeLength > 0)
+                periodeLength = periodeLength * -1;
+
+            //  DRIVER PROJECTION UPLOAD (S3.5 / I-RO-06). Uploaded before the
+            //  download so the device Driver reference cache (I-RO-05) is
+            //  refreshed by the same run; a failure is logged and never
+            //  blocks the Return Order flow.
+            await ProcessDriverUpload();
+
+            try
+            {
+                LogMessage("Starting return-order processing cycle...");
+                var today = DateTime.Now.Date;
+                var startDate = today.AddDays(periodeLength);
+                var periode = new Periode(startDate, today);
+                var result = await _returnOrderDownloadService.Execute(periode);
+
+                if (!result.Item1)
+                {
+                    LogMessage($"Return order download failed: {result.Item2}", Color.Red);
+                    return;
+                }
+
+                var listReturnOrder = result.Item3;
+                if (listReturnOrder == null || !listReturnOrder.Any())
+                {
+                    LogMessage("No return orders found");
+                    return;
+                }
+
+                //  DOWNLOAD → STAGE → IMPORT run sequentially per order. The
+                //  stage is an idempotent upsert by ReturnOrderId (I-RO-07) and
+                //  the import is dispatched in-process (I-RO-08): numbering
+                //  (ReturnOrderNo) stays office-side (ADR-RO-002/008). A row
+                //  failure is logged and the remaining rows still process; a
+                //  failed import leaves the order staged, never falsely
+                //  imported (INV-11).
+                var userId = _registryHelper.ReadString("SyncUserId");
+                foreach (var returnOrder in listReturnOrder)
+                {
+                    try
+                    {
+                        var returnOrderDb = _returnOrderDal.GetData(returnOrder);
+                        if (returnOrderDb != null)
+                        {
+                            _returnOrderDal.Update(returnOrder);
+                            _returnOrderItemDal.Delete(returnOrder);
+                            _returnOrderItemDal.Insert(returnOrder.ListItems);
+                            LogMessage($"Updated return order {returnOrder.CustomerName} ...", Color.Blue);
+                        }
+                        else
+                        {
+                            _returnOrderDal.Insert(returnOrder);
+                            _returnOrderItemDal.Delete(returnOrder);
+                            _returnOrderItemDal.Insert(returnOrder.ListItems);
+                            LogMessage($"Staged return order {returnOrder.CustomerName} ...", Color.Blue);
+                        }
+
+                        var importResult = await _mainOfficeCommand.ImportReturnOrder(returnOrder, userId);
+                        LogMessage($"Imported return order {importResult.ReturnOrderNo} ...", Color.Blue);
+                    }
+                    catch (Exception ex)
+                    {
+                        LogMessage($"RETURN ORDER ERROR [{returnOrder.ReturnOrderId}]: {ex.Message}", Color.Red);
+                    }
+                }
+                LogMessage("Return order download done");
+            }
+            catch (Exception ex)
+            {
+                LogMessage($"RETURN ORDER ERROR: {ex.Message}", Color.Red);
+            }
+        }
+
+        //  S3.5 / I-RO-06 — Driver projection upload, mirroring the
+        //  SalesPerson uploader shape (list from the Main Office master, POST
+        //  to the Cloud; the Cloud upserts by DriverId + ServerId, so a
+        //  re-upload is idempotent).
+        private async Task ProcessDriverUpload()
+        {
+            try
+            {
+                LogMessage("Upload Driver started...", Color.Green);
+                var listDriver = _driverDal.ListData().ToList();
+                var result = await _driverSyncService.SyncDriver(listDriver);
+                if (result.Item1)
+                    LogMessage("Driver upload done", Color.Green);
+                else
+                    LogMessage($"Driver upload failed: {result.Item2}", Color.Red);
+            }
+            catch (Exception ex)
+            {
+                LogMessage($"DRIVER ERROR: {ex.Message}", Color.Red);
+            }
+        }
+
         private void InitializeClock()
         {
             var timeLabel = new ToolStripStatusLabel();
@@ -289,6 +420,7 @@ namespace j07_btrade_sync
                 await Task.Run(() => ProcessOrder(RANGE_PERIODE)); // Run processing on background thread
                 await Task.Run(() => ProcessCustomer());
                 await Task.Run(() => ProcessCheckIn(RANGE_PERIODE));
+                await Task.Run(() => ProcessReturnOrder(RANGE_PERIODE));
                 await Task.Run(() => ProcessPackingOrder(RANGE_PERIODE));
             }
             catch (Exception ex)
@@ -312,6 +444,7 @@ namespace j07_btrade_sync
             ProcessOrder(-3);
             ProcessCustomer();
             ProcessCheckIn(-3);
+            ProcessReturnOrder(-3);
             ProcessPackingOrder(-3);
         }
         private void ExtenderdDownloadOrderButton_Click(object sender, EventArgs e)
@@ -320,6 +453,7 @@ namespace j07_btrade_sync
             ProcessOrder(-6);
             ProcessCustomer();
             ProcessCheckIn(-6);
+            ProcessReturnOrder(-6);
             ProcessPackingOrder(-6);
         }
 
@@ -448,6 +582,39 @@ namespace j07_btrade_sync
                 }
             });
         }
+        private async void SyncBarcodeButton_Click(object sender, EventArgs e)
+        {
+            LogMessage("Sync Barcode Registry started...", Color.Green);
+
+            //  ONE SYNCHRONIZATION RUN (8.1 / 8.2), executed in a fixed order:
+            //  user projection (IR-05) -> registration relay (8.2) ->
+            //  barcode publish (8.1). Relay runs before publish so that newly
+            //  accepted registrations are published by the following publish.
+            //  A failing step is surfaced and does not abort the run; watermark
+            //  and ack state only advance inside the step that committed.
+
+            //  1. USER PROJECTION (IR-05 / I-08)
+            var userResult = await _userSyncService.SyncUser(_userDal.ListData().ToList());
+            if (userResult.Item1)
+                LogMessage("User projection done", Color.Green);
+            else
+                LogMessage($"User projection failed: {userResult.Item2}", Color.Red);
+
+            //  2. REGISTRATION RELAY (8.2 / I-02, I-03)
+            var relayResult = await _barcodeRegistrationRelayService.SyncRegistration();
+            if (relayResult.Item1)
+                LogMessage("Registration relay done", Color.Green);
+            else
+                LogMessage($"Registration relay failed: {relayResult.Item2}", Color.Red);
+
+            //  3. BARCODE PUBLISH (8.1 / I-01)
+            var publishResult = await _barcodeSyncService.SyncBarcode();
+            if (publishResult.Item1)
+                LogMessage("Barcode publish done", Color.Green);
+            else
+                LogMessage($"Barcode publish failed: {publishResult.Item2}", Color.Red);
+        }
+
         private void ProcessPackingOrder(int periodeLength)
         {
             if (!_uploadPackingOrder)

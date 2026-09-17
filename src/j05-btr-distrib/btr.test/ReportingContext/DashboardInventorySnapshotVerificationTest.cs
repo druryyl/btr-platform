@@ -24,9 +24,9 @@ namespace btr.test.ReportingContext
                 Row("BRG001", "Gudang Utama", 100, 10_000m, "Cat A", "Sup A"),
                 Row("BRG001", "Gudang Cabang", 50, 10_000m, "Cat A", "Sup A"),
                 Row("BRG001", "In-Transit", 25, 10_000m, "Cat A", "Sup A"),
-                Row("BRG002", "Gudang Utama", 20, 5_000m, "Cat B", "Sup B"),
-                Row("BRG003", "Gudang Utama", 10, 1_000m, null, "Sup C"),
-                Row("BRG004", "Gudang Utama", 0, 8_000m, "Cat D", "Sup D"),
+                Row("BRG002", "Gudang Utama", 20, 5_000m, "Cat B", "Sup B", "S-02"),
+                Row("BRG003", "Gudang Utama", 10, 1_000m, null, "Sup C", "S-03"),
+                Row("BRG004", "Gudang Utama", 0, 8_000m, "Cat D", "Sup D", "S-04"),
             };
 
             var aggregator = new DashboardInventoryAggregator();
@@ -62,6 +62,7 @@ namespace btr.test.ReportingContext
                 live.TopSuppliers[i].Name.Should().Be(aggregateTopSuppliers[i].Name);
                 live.TopSuppliers[i].InventoryValue.Should().Be(aggregateTopSuppliers[i].InventoryValue);
                 live.TopSuppliers[i].Rank.Should().Be(aggregateTopSuppliers[i].Rank);
+                live.TopSuppliers[i].SupplierId.Should().Be(aggregateTopSuppliers[i].SupplierId);
             }
         }
 
@@ -76,6 +77,7 @@ namespace btr.test.ReportingContext
                 {
                     Rank = r.Top10Rank ?? 0,
                     Name = r.Name,
+                    SupplierId = r.SupplierId,
                     InventoryValue = r.InventoryValue
                 })
                 .ToList();
@@ -87,7 +89,8 @@ namespace btr.test.ReportingContext
             int qty,
             decimal hpp,
             string kategoriName,
-            string supplierName)
+            string supplierName,
+            string supplierId = null)
         {
             return new StokBalanceView
             {
@@ -97,6 +100,7 @@ namespace btr.test.ReportingContext
                 Hpp = hpp,
                 KategoriName = kategoriName,
                 SupplierName = supplierName,
+                SupplierId = supplierId,
             };
         }
 

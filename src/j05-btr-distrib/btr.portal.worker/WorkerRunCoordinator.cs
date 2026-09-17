@@ -3,8 +3,12 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading;
+using btr.application.Portal;
 using btr.application.ReportingContext.DashboardSnapshotAgg.Progress;
 using btr.application.ReportingContext.DashboardSnapshotAgg.UseCases;
+using btr.application.ReportingContext.PrincipalAnalyticsAgg;
+using btr.application.ReportingContext.PrincipalAnalyticsAgg.UseCases;
+using btr.application.SupportContext.TglJamAgg;
 using btr.application.ReportingContext.EntityAnalyticsAgg.Backfill.UseCases;
 using btr.infrastructure.Helpers;
 using btr.portal.worker.Progress;
@@ -55,6 +59,7 @@ namespace btr.portal.worker
 
                     using (var scope = serviceProvider.CreateScope())
                     {
+                        LogBusinessDateContext(scope.ServiceProvider);
                         ExecuteRefresh(scope.ServiceProvider, domain, triggeredBy, args);
                     }
 
@@ -169,6 +174,33 @@ namespace btr.portal.worker
             _reporter.StepCompleted(stepId, new WorkerProgressStepInfo { Duration = sw.Elapsed });
         }
 
+        private void LogBusinessDateContext(IServiceProvider serviceProvider)
+        {
+            var businessDateProvider = serviceProvider.GetRequiredService<IBusinessDateProvider>();
+            var tglJamDal = serviceProvider.GetRequiredService<ITglJamDal>();
+
+            // Throws when Presentation.Enabled=true without a valid BusinessDate (fail-fast per presentation-mode spec).
+            var businessDate = businessDateProvider.Today;
+            var systemDate = tglJamDal.Now;
+
+            Logger.Info(
+                "Business date context. IsPresentationActive={IsPresentationActive}, BusinessDate={BusinessDate}, SystemDate={SystemDate}",
+                businessDateProvider.IsPresentationActive,
+                businessDate.ToString("yyyy-MM-dd"),
+                systemDate.ToString("yyyy-MM-dd"));
+
+            Console.Out.WriteLine(
+                $"Business date: {businessDate:yyyy-MM-dd} (Presentation active: {businessDateProvider.IsPresentationActive}) | System date: {systemDate:yyyy-MM-dd}");
+
+            if (businessDate.Date != systemDate.Date)
+            {
+                Logger.Warn(
+                    "BusinessDate differs from system date. Materialized snapshots will use BusinessDate; GeneratedAt/refresh logs keep system time. BusinessDate={BusinessDate}, SystemDate={SystemDate}",
+                    businessDate.ToString("yyyy-MM-dd"),
+                    systemDate.ToString("yyyy-MM-dd"));
+            }
+        }
+
         private void ExecuteRefresh(IServiceProvider serviceProvider, string domain, string triggeredBy, string[] args)
         {
             switch (domain.ToUpperInvariant())
@@ -210,6 +242,16 @@ namespace btr.portal.worker
                     });
                     break;
 
+                case "PRINCIPALINVENTORY":
+                    RunDomain(serviceProvider, PrincipalInventorySnapshot.Domain, triggeredBy, sp =>
+                    {
+                        var worker = sp.GetRequiredService<IRefreshPrincipalInventorySnapshotWorker>();
+                        var request = new RefreshPrincipalInventorySnapshotRequest { TriggeredBy = triggeredBy };
+                        worker.Execute(request);
+                        return request.Result?.DurationMs ?? 0;
+                    });
+                    break;
+
                 case "SALES":
                     RunDomain(serviceProvider, "Sales", triggeredBy, sp =>
                     {
@@ -220,11 +262,131 @@ namespace btr.portal.worker
                     });
                     break;
 
+                case "PRINCIPALSALESOUT":
+                    RunDomain(serviceProvider, PrincipalSalesOutSnapshot.Domain, triggeredBy, sp =>
+                    {
+                        var worker = sp.GetRequiredService<IRefreshPrincipalSalesOutSnapshotWorker>();
+                        var request = new RefreshPrincipalSalesOutSnapshotRequest { TriggeredBy = triggeredBy };
+                        worker.Execute(request);
+                        return request.Result?.DurationMs ?? 0;
+                    });
+                    break;
+
+                case "PRINCIPALRETURN":
+                    RunDomain(serviceProvider, PrincipalReturnSnapshot.Domain, triggeredBy, sp =>
+                    {
+                        var worker = sp.GetRequiredService<IRefreshPrincipalReturnSnapshotWorker>();
+                        var request = new RefreshPrincipalReturnSnapshotRequest { TriggeredBy = triggeredBy };
+                        worker.Execute(request);
+                        return request.Result?.DurationMs ?? 0;
+                    });
+                    break;
+
+                case "PRNRETURNPERCENTAGE":
+                    RunDomain(serviceProvider, PrincipalReturnPercentageSnapshot.Domain, triggeredBy, sp =>
+                    {
+                        var worker = sp.GetRequiredService<IRefreshPrincipalReturnPercentageSnapshotWorker>();
+                        var request = new RefreshPrincipalReturnPercentageSnapshotRequest { TriggeredBy = triggeredBy };
+                        worker.Execute(request);
+                        return request.Result?.DurationMs ?? 0;
+                    });
+                    break;
+
+                case "PRNSALESOUTHISTORY":
+                    RunDomain(serviceProvider, PrincipalSalesOutHistory.Domain, triggeredBy, sp =>
+                    {
+                        var worker = sp.GetRequiredService<IRefreshPrincipalSalesOutHistoryWorker>();
+                        var request = new RefreshPrincipalSalesOutHistoryRequest { TriggeredBy = triggeredBy };
+                        worker.Execute(request);
+                        return request.Result?.DurationMs ?? 0;
+                    });
+                    break;
+
+                case "PRNRETURNHISTORY":
+                    RunDomain(serviceProvider, PrincipalReturnHistory.Domain, triggeredBy, sp =>
+                    {
+                        var worker = sp.GetRequiredService<IRefreshPrincipalReturnHistoryWorker>();
+                        var request = new RefreshPrincipalReturnHistoryRequest { TriggeredBy = triggeredBy };
+                        worker.Execute(request);
+                        return request.Result?.DurationMs ?? 0;
+                    });
+                    break;
+
+                case "PRINCIPALTARGET":
+                    RunDomain(serviceProvider, PrincipalTargetSnapshot.Domain, triggeredBy, sp =>
+                    {
+                        var worker = sp.GetRequiredService<IRefreshPrincipalTargetSnapshotWorker>();
+                        var request = new RefreshPrincipalTargetSnapshotRequest { TriggeredBy = triggeredBy };
+                        worker.Execute(request);
+                        return request.Result?.DurationMs ?? 0;
+                    });
+                    break;
+
+                case "PRNACHIEVEMENT":
+                    RunDomain(serviceProvider, PrincipalAchievementSnapshot.Domain, triggeredBy, sp =>
+                    {
+                        var worker = sp.GetRequiredService<IRefreshPrincipalAchievementSnapshotWorker>();
+                        var request = new RefreshPrincipalAchievementSnapshotRequest { TriggeredBy = triggeredBy };
+                        worker.Execute(request);
+                        return request.Result?.DurationMs ?? 0;
+                    });
+                    break;
+
+                case "PRNSALESMANCONTRIBUTION":
+                    RunDomain(serviceProvider, PrincipalSalesmanContributionSnapshot.Domain, triggeredBy, sp =>
+                    {
+                        var worker = sp.GetRequiredService<IRefreshPrincipalSalesmanContributionSnapshotWorker>();
+                        var request = new RefreshPrincipalSalesmanContributionSnapshotRequest { TriggeredBy = triggeredBy };
+                        worker.Execute(request);
+                        return request.Result?.DurationMs ?? 0;
+                    });
+                    break;
+
+                case "PRNCUSRELATIONSHIP":
+                    RunDomain(serviceProvider, CustomerPrincipalRelationship.Domain, triggeredBy, sp =>
+                    {
+                        var worker = sp.GetRequiredService<IRefreshCustomerPrincipalRelationshipWorker>();
+                        var request = new RefreshCustomerPrincipalRelationshipRequest { TriggeredBy = triggeredBy };
+                        worker.Execute(request);
+                        return request.Result?.DurationMs ?? 0;
+                    });
+                    break;
+
+                case "PRNACTIVECUSTOMER":
+                    RunDomain(serviceProvider, PrincipalActiveCustomerSnapshot.Domain, triggeredBy, sp =>
+                    {
+                        var worker = sp.GetRequiredService<IRefreshPrincipalActiveCustomerSnapshotWorker>();
+                        var request = new RefreshPrincipalActiveCustomerSnapshotRequest { TriggeredBy = triggeredBy };
+                        worker.Execute(request);
+                        return request.Result?.DurationMs ?? 0;
+                    });
+                    break;
+
+                case "PRNCUSTOMERCOVERAGE":
+                    RunDomain(serviceProvider, PrincipalCustomerCoverageSnapshot.Domain, triggeredBy, sp =>
+                    {
+                        var worker = sp.GetRequiredService<IRefreshPrincipalCustomerCoverageSnapshotWorker>();
+                        var request = new RefreshPrincipalCustomerCoverageSnapshotRequest { TriggeredBy = triggeredBy };
+                        worker.Execute(request);
+                        return request.Result?.DurationMs ?? 0;
+                    });
+                    break;
+
                 case "PURCHASING":
                     RunDomain(serviceProvider, "Purchasing", triggeredBy, sp =>
                     {
                         var worker = sp.GetRequiredService<IRefreshDashboardPurchasingSnapshotWorker>();
                         var request = new RefreshDashboardPurchasingSnapshotRequest { TriggeredBy = triggeredBy };
+                        worker.Execute(request);
+                        return request.Result?.DurationMs ?? 0;
+                    });
+                    break;
+
+                case "PRINCIPALPURCHASEIN":
+                    RunDomain(serviceProvider, PrincipalPurchaseInSnapshot.Domain, triggeredBy, sp =>
+                    {
+                        var worker = sp.GetRequiredService<IRefreshPrincipalPurchaseInSnapshotWorker>();
+                        var request = new RefreshPrincipalPurchaseInSnapshotRequest { TriggeredBy = triggeredBy };
                         worker.Execute(request);
                         return request.Result?.DurationMs ?? 0;
                     });
@@ -433,9 +595,22 @@ namespace btr.portal.worker
         {
             var validDomains = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
             {
-                "All", "Sales", "Piutang", "Inventory", "InventoryRisk", "Purchasing",
+                "All", "Sales", "Piutang", "Inventory", "InventoryRisk",
+                PrincipalInventorySnapshot.Domain,
+                PrincipalReturnSnapshot.Domain,
+                PrincipalReturnPercentageSnapshot.Domain,
+                "Purchasing",
+                PrincipalPurchaseInSnapshot.Domain,
                 "PurchasingManagement", "Customer", "Salesman", "Collection", "FieldActivity", "Location",
-                "EntityAnalyticsHistoricalBackfill"
+                "EntityAnalyticsHistoricalBackfill", CustomerPrincipalRelationship.Domain,
+                PrincipalActiveCustomerSnapshot.Domain,
+                PrincipalCustomerCoverageSnapshot.Domain,
+                PrincipalReturnHistory.Domain,
+                PrincipalAchievementSnapshot.Domain,
+                PrincipalSalesOutSnapshot.Domain,
+                PrincipalSalesOutHistory.Domain,
+                PrincipalTargetSnapshot.Domain,
+                PrincipalSalesmanContributionSnapshot.Domain
             };
 
             var validTriggers = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
@@ -445,7 +620,7 @@ namespace btr.portal.worker
 
             if (!validDomains.Contains(domain))
                 throw new ArgumentException(
-                    $"Invalid --domain '{domain}'. Expected All, Sales, Piutang, Inventory, InventoryRisk, Purchasing, PurchasingManagement, Customer, Salesman, Collection, FieldActivity, Location, or EntityAnalyticsHistoricalBackfill.");
+                    $"Invalid --domain '{domain}'. Expected All, Sales, Piutang, Inventory, InventoryRisk, PrincipalInventory, PrincipalReturn, PrnReturnPercentage, PrnReturnHistory, PrnSalesOutHistory, PrincipalSalesOut, PrincipalTarget, PrnSalesmanContribution, PrnAchievement, PrnActiveCustomer, PrnCustomerCoverage, PrnCusRelationship, Purchasing, PrincipalPurchaseIn, PurchasingManagement, Customer, Salesman, Collection, FieldActivity, Location, or EntityAnalyticsHistoricalBackfill.");
 
             if (!validTriggers.Contains(triggeredBy))
                 throw new ArgumentException(

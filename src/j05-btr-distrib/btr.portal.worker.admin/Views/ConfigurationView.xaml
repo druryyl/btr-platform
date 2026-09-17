@@ -1,0 +1,125 @@
+<UserControl x:Class="btr.portal.worker.admin.Views.ConfigurationView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             mc:Ignorable="d"
+             d:DesignHeight="700" d:DesignWidth="900">
+
+    <ScrollViewer Background="{StaticResource BackgroundBrush}" VerticalScrollBarVisibility="Auto">
+        <StackPanel Margin="0,0,0,24">
+
+            <Border Style="{StaticResource CardStyle}">
+                <StackPanel>
+                    <TextBlock Text="API Connection" Style="{StaticResource HeaderTextStyle}"/>
+                    <Separator Margin="0,8"/>
+
+                    <Grid Margin="0,8,0,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+
+                        <TextBlock Grid.Row="0" Grid.Column="0" Text="API Base URL:" VerticalAlignment="Center"
+                                   Margin="0,0,12,0" FontWeight="Medium"/>
+                        <TextBox Grid.Row="0" Grid.Column="1" Grid.ColumnSpan="2"
+                                 Text="{Binding ApiBaseUrl, UpdateSourceTrigger=PropertyChanged}" Padding="8,4"/>
+
+                        <TextBlock Grid.Row="1" Grid.Column="0" Text="API Timeout (sec):" VerticalAlignment="Center"
+                                   Margin="0,8,12,0" FontWeight="Medium"/>
+                        <TextBox Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="2"
+                                 Text="{Binding ApiTimeoutSeconds}" Padding="8,4" Margin="0,8,0,0"/>
+
+                        <TextBlock Grid.Row="2" Grid.Column="0" Text="Worker EXE Path:" VerticalAlignment="Center"
+                                   Margin="0,8,12,0" FontWeight="Medium"/>
+                        <TextBox Grid.Row="2" Grid.Column="1" Grid.ColumnSpan="2"
+                                 Text="{Binding WorkerExePath, UpdateSourceTrigger=PropertyChanged}" Padding="8,4" Margin="0,8,0,0"/>
+
+                        <TextBlock Grid.Row="3" Grid.Column="0" Text="Health Poll (sec):" VerticalAlignment="Center"
+                                   Margin="0,8,12,0" FontWeight="Medium"/>
+                        <TextBox Grid.Row="3" Grid.Column="1" Grid.ColumnSpan="2"
+                                 Text="{Binding HealthPollIntervalSeconds}" Padding="8,4" Margin="0,8,0,0"/>
+
+                        <StackPanel Grid.Row="4" Grid.Column="0" Grid.ColumnSpan="3" Orientation="Horizontal" Margin="0,16,0,0">
+                            <Button Content="Test Connection" Command="{Binding TestConnectionCommand}"
+                                    Style="{StaticResource PrimaryButtonStyle}" Margin="0,0,8,0"/>
+                            <Button Content="Save Settings" Command="{Binding SaveSettingsCommand}"
+                                    Style="{StaticResource PrimaryButtonStyle}" Margin="0,0,8,0"/>
+                            <Button Content="Reload" Command="{Binding LoadSettingsCommand}"
+                                    Padding="16,8"/>
+                        </StackPanel>
+
+                        <TextBlock Grid.Row="5" Grid.Column="0" Grid.ColumnSpan="3"
+                                   Text="{Binding ConnectionStatus}" Margin="0,12,0,0"
+                                   FontWeight="Medium" Foreground="{StaticResource StatusInfoBrush}"
+                                   TextWrapping="Wrap"/>
+                    </Grid>
+                </StackPanel>
+            </Border>
+
+            <Border Style="{StaticResource CardStyle}">
+                <StackPanel>
+                    <TextBlock Text="Snapshot Refresh Intervals" Style="{StaticResource HeaderTextStyle}"/>
+                    <Separator Margin="0,8"/>
+
+                    <Grid Margin="0,8,0,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+
+                        <local:IntervalDisplay Grid.Row="0" Grid.Column="0" Label="Piutang"
+                                                Minutes="{Binding ConfigSettings.PiutangIntervalMinutes}"
+                                                xmlns:local="clr-namespace:btr.portal.worker.admin.Views"/>
+                        <local:IntervalDisplay Grid.Row="0" Grid.Column="1" Label="Sales"
+                                                Minutes="{Binding ConfigSettings.SalesIntervalMinutes}"
+                                                xmlns:local="clr-namespace:btr.portal.worker.admin.Views"/>
+                        <local:IntervalDisplay Grid.Row="0" Grid.Column="2" Label="Inventory"
+                                                Minutes="{Binding ConfigSettings.InventoryIntervalMinutes}"
+                                                xmlns:local="clr-namespace:btr.portal.worker.admin.Views"/>
+                        <local:IntervalDisplay Grid.Row="1" Grid.Column="0" Label="Inventory Risk"
+                                                Minutes="{Binding ConfigSettings.InventoryRiskIntervalMinutes}"
+                                                xmlns:local="clr-namespace:btr.portal.worker.admin.Views"/>
+                        <local:IntervalDisplay Grid.Row="1" Grid.Column="1" Label="Purchasing"
+                                                Minutes="{Binding ConfigSettings.PurchasingIntervalMinutes}"
+                                                xmlns:local="clr-namespace:btr.portal.worker.admin.Views"/>
+                        <local:IntervalDisplay Grid.Row="1" Grid.Column="2" Label="Purchasing Mgmt"
+                                                Minutes="{Binding ConfigSettings.PurchasingManagementIntervalMinutes}"
+                                                xmlns:local="clr-namespace:btr.portal.worker.admin.Views"/>
+                        <local:IntervalDisplay Grid.Row="2" Grid.Column="0" Label="Customer"
+                                                Minutes="{Binding ConfigSettings.CustomerIntervalMinutes}"
+                                                xmlns:local="clr-namespace:btr.portal.worker.admin.Views"/>
+                        <local:IntervalDisplay Grid.Row="2" Grid.Column="1" Label="Salesman"
+                                                Minutes="{Binding ConfigSettings.SalesmanIntervalMinutes}"
+                                                xmlns:local="clr-namespace:btr.portal.worker.admin.Views"/>
+                        <local:IntervalDisplay Grid.Row="2" Grid.Column="2" Label="Collection"
+                                                Minutes="{Binding ConfigSettings.CollectionIntervalMinutes}"
+                                                xmlns:local="clr-namespace:btr.portal.worker.admin.Views"/>
+                        <local:IntervalDisplay Grid.Row="3" Grid.Column="0" Label="Field Activity"
+                                                Minutes="{Binding ConfigSettings.FieldActivityIntervalMinutes}"
+                                                xmlns:local="clr-namespace:btr.portal.worker.admin.Views"/>
+                        <local:IntervalDisplay Grid.Row="3" Grid.Column="1" Label="Location"
+                                                Minutes="{Binding ConfigSettings.LocationIntervalMinutes}"
+                                                xmlns:local="clr-namespace:btr.portal.worker.admin.Views"/>
+                    </Grid>
+                </StackPanel>
+            </Border>
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

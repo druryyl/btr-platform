@@ -70,8 +70,29 @@
     <Reference Include="F23.StringSimilarity, Version=6.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\packages\F23.StringSimilarity.6.0.0\lib\netstandard2.0\F23.StringSimilarity.dll</HintPath>
     </Reference>
+    <Reference Include="FluentValidation, Version=11.0.0.0, Culture=neutral, PublicKeyToken=7de548da2fbae0f0, processorArchitecture=MSIL">
+      <HintPath>..\packages\FluentValidation.11.6.0\lib\netstandard2.0\FluentValidation.dll</HintPath>
+    </Reference>
+    <Reference Include="MediatR, Version=12.0.0.0, Culture=neutral, PublicKeyToken=bb9a41a5e8aaa7e2, processorArchitecture=MSIL">
+      <HintPath>..\packages\MediatR.12.1.1\lib\netstandard2.0\MediatR.dll</HintPath>
+    </Reference>
+    <Reference Include="MediatR.Contracts, Version=2.0.1.0, Culture=neutral, PublicKeyToken=bb9a41a5e8aaa7e2, processorArchitecture=MSIL">
+      <HintPath>..\packages\MediatR.Contracts.2.0.1\lib\netstandard2.0\MediatR.Contracts.dll</HintPath>
+    </Reference>
     <Reference Include="Microsoft.Bcl.AsyncInterfaces, Version=9.0.0.1, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
       <HintPath>..\packages\Microsoft.Bcl.AsyncInterfaces.9.0.1\lib\net462\Microsoft.Bcl.AsyncInterfaces.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.Extensions.DependencyInjection, Version=7.0.0.0, Culture=neutral, PublicKeyToken=adb9793829ddae60, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.Extensions.DependencyInjection.7.0.0\lib\net462\Microsoft.Extensions.DependencyInjection.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.Extensions.DependencyInjection.Abstractions, Version=7.0.0.0, Culture=neutral, PublicKeyToken=adb9793829ddae60, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.Extensions.DependencyInjection.Abstractions.7.0.0\lib\net462\Microsoft.Extensions.DependencyInjection.Abstractions.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.Extensions.Options, Version=7.0.0.1, Culture=neutral, PublicKeyToken=adb9793829ddae60, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.Extensions.Options.7.0.1\lib\net462\Microsoft.Extensions.Options.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.Extensions.Primitives, Version=7.0.0.0, Culture=neutral, PublicKeyToken=adb9793829ddae60, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.Extensions.Primitives.7.0.0\lib\net462\Microsoft.Extensions.Primitives.dll</HintPath>
     </Reference>
     <Reference Include="Nuna.Lib, Version=3.3.155.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\packages\Nuna.Lib.NetStandard.3.3.155\lib\netstandard2.0\Nuna.Lib.dll</HintPath>
@@ -133,16 +154,22 @@
     <Compile Include="KonfigurasiForm.Designer.cs">
       <DependentUpon>KonfigurasiForm.cs</DependentUpon>
     </Compile>
+    <Compile Include="Model\BrgBarcodeType.cs" />
+    <Compile Include="Model\BarcodeRegistrationRequestType.cs" />
     <Compile Include="Model\CheckInModel.cs" />
     <Compile Include="Model\CustomerLocHistModel.cs" />
     <Compile Include="Model\KategoriType.cs" />
     <Compile Include="Model\OrderItemType.cs" />
     <Compile Include="Model\OrderModel.cs" />
+    <Compile Include="Model\ReturnOrderItemType.cs" />
+    <Compile Include="Model\ReturnOrderModel.cs" />
     <Compile Include="Model\PackingOrderDepoModel.cs" />
     <Compile Include="Model\PackingOrderItemModel.cs" />
     <Compile Include="Model\PackingOrderModel.cs" />
     <Compile Include="Model\SalesPersonType.cs" />
+    <Compile Include="Model\UserType.cs" />
     <Compile Include="Model\WilayahType.cs" />
+    <Compile Include="Repository\BrgBarcodeDal.cs" />
     <Compile Include="Repository\CheckInDal.cs" />
     <Compile Include="Repository\KategoriDal.cs" />
     <Compile Include="Repository\OrderDal.cs" />
@@ -150,9 +177,16 @@
     <Compile Include="Repository\PackingOrderDal.cs" />
     <Compile Include="Repository\PackingOrderDepoDal.cs" />
     <Compile Include="Repository\PackingOrderItemDal.cs" />
+    <Compile Include="Repository\ReturnOrderDal.cs" />
+    <Compile Include="Repository\ReturnOrderItemDal.cs" />
     <Compile Include="Repository\SalesPersonDal.cs" />
+    <Compile Include="Repository\UserDal.cs" />
     <Compile Include="Repository\WilayahDal.cs" />
+    <Compile Include="Service\BarcodeSyncService.cs" />
+    <Compile Include="Service\BarcodeRegistrationRelayService.cs" />
+    <Compile Include="Service\UserSyncService.cs" />
     <Compile Include="Service\BrgSyncService.cs" />
+    <Compile Include="Service\BtradeAuthService.cs" />
     <Compile Include="Model\BrgType.cs" />
     <Compile Include="Service\PackingOrderUploadSvc.cs" />
     <Compile Include="SyncForm.cs">
@@ -162,19 +196,24 @@
       <DependentUpon>SyncForm.cs</DependentUpon>
     </Compile>
     <Compile Include="Model\CustomerType.cs" />
+    <Compile Include="Model\DriverType.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Repository\BrgDal.cs" />
     <Compile Include="Repository\ConnStringHelper.cs" />
     <Compile Include="Repository\CustomerDal.cs" />
+    <Compile Include="Repository\DriverDal.cs" />
     <Compile Include="Service\CheckInIncrementalDownloadService.cs" />
     <Compile Include="Service\CustomerClearUpdateFlagService.cs" />
     <Compile Include="Service\CustomerDownloadUpdatedService.cs" />
     <Compile Include="Service\CustomerUploadService.cs" />
+    <Compile Include="Service\DriverSyncService.cs" />
     <Compile Include="Service\KategoriSyncService.cs" />
     <Compile Include="Service\OrderIncrementalDownloadService.cs" />
+    <Compile Include="Service\ReturnOrderIncrementalDownloadService.cs" />
     <Compile Include="Service\SalesPersonSyncService.cs" />
     <Compile Include="Service\WilayahSyncService.cs" />
+    <Compile Include="Shared\MainOfficeCommandExecutor.cs" />
     <Compile Include="Shared\RegistryHelper.cs" />
     <EmbeddedResource Include="SyncForm.resx">
       <DependentUpon>SyncForm.cs</DependentUpon>
@@ -220,6 +259,24 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="icons8_synchronize.ico" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\j05-btr-distrib\btr.application\btr.application.csproj">
+      <Project>{ba660e24-397d-4d9b-9e71-729736588205}</Project>
+      <Name>btr.application</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\j05-btr-distrib\btr.domain\btr.domain.csproj">
+      <Project>{1f2c4331-cc07-49c6-860e-e6ba55a66b12}</Project>
+      <Name>btr.domain</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\j05-btr-distrib\btr.infrastructure\btr.infrastructure.csproj">
+      <Project>{bd420c25-6a06-47cb-b011-2e302f902335}</Project>
+      <Name>btr.infrastructure</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\j05-btr-distrib\btr.nuna\btr.nuna.csproj">
+      <Project>{ef0be179-091d-4477-a5e5-7e39910057c3}</Project>
+      <Name>btr.nuna</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

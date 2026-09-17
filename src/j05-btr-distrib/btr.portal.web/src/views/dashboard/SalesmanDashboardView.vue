@@ -154,6 +154,15 @@ onMounted(() => {
       :is-data-fresh="dashboard.salesman.IsDataFresh"
     />
 
+    <section class="salesman-dashboard__disclosure" aria-label="Salesman attribution disclosure">
+      <h2>Attribution disclosure</h2>
+      <ul>
+        <li>Coaching, target allocation, invoiced contribution, and assigned Principal mix remain on this page.</li>
+        <li>Last-invoice dormant customers are the last invoicing Salesman, not a customer portfolio owned by the Salesman.</li>
+        <li>Open piutang and overdue amounts are invoice-attributed exposure, not an owned or assigned customer book.</li>
+      </ul>
+    </section>
+
     <nav class="salesman-dashboard__section-nav" aria-label="Dashboard sections">
       <a
         v-for="item in sectionNavItems"
@@ -213,7 +222,7 @@ onMounted(() => {
         </SalesmanAttentionCardGroup>
 
         <SalesmanAttentionCardGroup
-          title="Portfolio"
+          title="Customer recency"
           icon="pi pi-briefcase"
           href="#salesman-attention-list"
           :loading="dashboard.loading"
@@ -222,7 +231,7 @@ onMounted(() => {
           @anchor-navigate="setAttentionSignalFilter('DormantCustomerPortfolio')"
         >
           <div class="metric">
-            <span class="metric__label">Dormant Portfolio</span>
+            <span class="metric__label">Last-invoice dormant</span>
             <span class="metric__value">
               {{ cards ? formatNumber(cards.DormantPortfolioCount) : '—' }}
             </span>
@@ -333,6 +342,27 @@ onMounted(() => {
 <style scoped>
 .salesman-dashboard__banner {
   margin-bottom: 1rem;
+}
+
+.salesman-dashboard__disclosure {
+  margin-bottom: 1.5rem;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--p-content-border-color);
+  border-radius: var(--p-content-border-radius);
+}
+
+.salesman-dashboard__disclosure h2 {
+  margin: 0 0 0.5rem;
+  font-size: 1rem;
+}
+
+.salesman-dashboard__disclosure ul {
+  margin: 0;
+  padding-left: 1.25rem;
+}
+
+.salesman-dashboard__disclosure li + li {
+  margin-top: 0.25rem;
 }
 
 .salesman-dashboard__section-nav {

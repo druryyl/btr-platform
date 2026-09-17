@@ -1,6 +1,7 @@
 using System;
 using btr.application.ReportingContext.DashboardSnapshotAgg.Commands;
 using btr.application.ReportingContext.DashboardSnapshotAgg.UseCases;
+using btr.application.ReportingContext.PrincipalAnalyticsAgg.UseCases;
 using FluentAssertions;
 using Xunit;
 
@@ -67,7 +68,7 @@ namespace btr.test.ReportingContext
                 default).GetAwaiter().GetResult();
 
             act.Should().Throw<ArgumentException>()
-                .WithMessage("*Domain must be All, Piutang, Inventory, InventoryRisk, Sales, Purchasing, PurchasingManagement, Customer, Salesman, Collection, FieldActivity, or Location*");
+                .WithMessage("*Domain must be All, Piutang, Inventory, InventoryRisk, PrincipalInventory, Sales, PrincipalSalesOut, PrincipalReturn, PrnReturnPercentage, PrnSalesOutHistory, PrnReturnHistory, PrincipalTarget, PrnAchievement, PrnMomGrowth, PrnYoyGrowth, PrnCusRelationship, PrnActiveCustomer, PrnCustomerCoverage, Purchasing, PrincipalPurchaseIn, PurchasingManagement, Customer, Salesman, Collection, FieldActivity, or Location*");
         }
 
         [Fact]
@@ -126,8 +127,23 @@ namespace btr.test.ReportingContext
             StubPiutangWorker piutangWorker = null,
             StubInventoryWorker inventoryWorker = null,
             StubInventoryRiskWorker inventoryRiskWorker = null,
+            StubPrincipalInventoryWorker principalInventoryWorker = null,
             StubSalesWorker salesWorker = null,
+            StubPrincipalSalesOutWorker principalSalesOutWorker = null,
+            StubPrincipalReturnWorker principalReturnWorker = null,
+            StubPrincipalReturnPercentageWorker principalReturnPercentageWorker = null,
+            StubPrincipalSalesOutHistoryWorker principalSalesOutHistoryWorker = null,
+            StubPrincipalReturnHistoryWorker principalReturnHistoryWorker = null,
+            StubPrincipalTargetWorker principalTargetWorker = null,
+            StubPrincipalAchievementWorker principalAchievementWorker = null,
+            StubPrincipalMomGrowthWorker principalMomGrowthWorker = null,
+            StubPrincipalYoyGrowthWorker principalYoyGrowthWorker = null,
+            StubPrincipalSalesmanContributionWorker principalSalesmanContributionWorker = null,
+            StubCustomerPrincipalRelationshipWorker customerPrincipalRelationshipWorker = null,
+            StubPrincipalActiveCustomerWorker principalActiveCustomerWorker = null,
+            StubPrincipalCustomerCoverageWorker principalCustomerCoverageWorker = null,
             StubPurchasingWorker purchasingWorker = null,
+            StubPrincipalPurchaseInWorker principalPurchaseInWorker = null,
             StubPurchasingManagementWorker purchasingManagementWorker = null,
             StubCustomerWorker customerWorker = null,
             StubSalesmanWorker salesmanWorker = null,
@@ -140,8 +156,23 @@ namespace btr.test.ReportingContext
                 piutangWorker ?? new StubPiutangWorker(),
                 inventoryWorker ?? new StubInventoryWorker(),
                 inventoryRiskWorker ?? new StubInventoryRiskWorker(),
+                principalInventoryWorker ?? new StubPrincipalInventoryWorker(),
                 salesWorker ?? new StubSalesWorker(),
+                principalSalesOutWorker ?? new StubPrincipalSalesOutWorker(),
+                principalReturnWorker ?? new StubPrincipalReturnWorker(),
+                principalReturnPercentageWorker ?? new StubPrincipalReturnPercentageWorker(),
+                principalSalesOutHistoryWorker ?? new StubPrincipalSalesOutHistoryWorker(),
+                principalReturnHistoryWorker ?? new StubPrincipalReturnHistoryWorker(),
+                principalTargetWorker ?? new StubPrincipalTargetWorker(),
+                principalAchievementWorker ?? new StubPrincipalAchievementWorker(),
+                principalMomGrowthWorker ?? new StubPrincipalMomGrowthWorker(),
+                principalYoyGrowthWorker ?? new StubPrincipalYoyGrowthWorker(),
+                principalSalesmanContributionWorker ?? new StubPrincipalSalesmanContributionWorker(),
+                customerPrincipalRelationshipWorker ?? new StubCustomerPrincipalRelationshipWorker(),
+                principalActiveCustomerWorker ?? new StubPrincipalActiveCustomerWorker(),
+                principalCustomerCoverageWorker ?? new StubPrincipalCustomerCoverageWorker(),
                 purchasingWorker ?? new StubPurchasingWorker(),
+                principalPurchaseInWorker ?? new StubPrincipalPurchaseInWorker(),
                 purchasingManagementWorker ?? new StubPurchasingManagementWorker(),
                 customerWorker ?? new StubCustomerWorker(),
                 salesmanWorker ?? new StubSalesmanWorker(),
@@ -206,6 +237,111 @@ namespace btr.test.ReportingContext
         private sealed class StubSalesWorker : IRefreshDashboardSalesSnapshotWorker
         {
             public void Execute(RefreshDashboardSalesSnapshotRequest request)
+            {
+            }
+        }
+
+        private sealed class StubPrincipalSalesOutHistoryWorker : IRefreshPrincipalSalesOutHistoryWorker
+        {
+            public void Execute(RefreshPrincipalSalesOutHistoryRequest request)
+            {
+            }
+        }
+
+        private sealed class StubPrincipalReturnHistoryWorker : IRefreshPrincipalReturnHistoryWorker
+        {
+            public void Execute(RefreshPrincipalReturnHistoryRequest request)
+            {
+            }
+        }
+
+        private sealed class StubPrincipalInventoryWorker : IRefreshPrincipalInventorySnapshotWorker
+        {
+            public void Execute(RefreshPrincipalInventorySnapshotRequest request)
+            {
+            }
+        }
+
+        private sealed class StubPrincipalPurchaseInWorker : IRefreshPrincipalPurchaseInSnapshotWorker
+        {
+            public void Execute(RefreshPrincipalPurchaseInSnapshotRequest request)
+            {
+            }
+        }
+
+        private sealed class StubPrincipalTargetWorker : IRefreshPrincipalTargetSnapshotWorker
+        {
+            public void Execute(RefreshPrincipalTargetSnapshotRequest request)
+            {
+            }
+        }
+
+        private sealed class StubPrincipalAchievementWorker : IRefreshPrincipalAchievementSnapshotWorker
+        {
+            public void Execute(RefreshPrincipalAchievementSnapshotRequest request)
+            {
+            }
+        }
+
+        private sealed class StubPrincipalMomGrowthWorker : IRefreshPrincipalMomGrowthSnapshotWorker
+        {
+            public void Execute(RefreshPrincipalMomGrowthSnapshotRequest request)
+            {
+            }
+        }
+
+        private sealed class StubPrincipalYoyGrowthWorker : IRefreshPrincipalYoyGrowthSnapshotWorker
+        {
+            public void Execute(RefreshPrincipalYoyGrowthSnapshotRequest request)
+            {
+            }
+        }
+
+        private sealed class StubPrincipalSalesmanContributionWorker : IRefreshPrincipalSalesmanContributionSnapshotWorker
+        {
+            public void Execute(RefreshPrincipalSalesmanContributionSnapshotRequest request)
+            {
+            }
+        }
+
+        private sealed class StubPrincipalActiveCustomerWorker : IRefreshPrincipalActiveCustomerSnapshotWorker
+        {
+            public void Execute(RefreshPrincipalActiveCustomerSnapshotRequest request)
+            {
+            }
+        }
+
+        private sealed class StubPrincipalCustomerCoverageWorker : IRefreshPrincipalCustomerCoverageSnapshotWorker
+        {
+            public void Execute(RefreshPrincipalCustomerCoverageSnapshotRequest request)
+            {
+            }
+        }
+
+        private sealed class StubCustomerPrincipalRelationshipWorker : IRefreshCustomerPrincipalRelationshipWorker
+        {
+            public void Execute(RefreshCustomerPrincipalRelationshipRequest request)
+            {
+            }
+        }
+
+        private sealed class StubPrincipalReturnWorker : IRefreshPrincipalReturnSnapshotWorker
+        {
+            public void Execute(RefreshPrincipalReturnSnapshotRequest request)
+            {
+            }
+        }
+
+        private sealed class StubPrincipalReturnPercentageWorker : IRefreshPrincipalReturnPercentageSnapshotWorker
+        {
+            public void Execute(RefreshPrincipalReturnPercentageSnapshotRequest request)
+            {
+            }
+        }
+
+        private sealed class StubPrincipalSalesOutWorker : IRefreshPrincipalSalesOutSnapshotWorker
+        {
+            public void Execute(RefreshPrincipalSalesOutSnapshotRequest request)
             {
             }
         }

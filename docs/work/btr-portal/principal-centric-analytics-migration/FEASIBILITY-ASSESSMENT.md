@@ -8,7 +8,7 @@
 | Assessment date | 2026-09-07 |
 | Requested decision | NO-GO / minor changes / moderate redesign / major redesign |
 | Evidence boundary | Repository artifacts, source code, and SQL definitions at assessment time; production-data profiling is an implementation validation activity per GAP-007 |
-| Planning handoff | Not ready until remaining blocking business and technical decisions in sections 9 and 11 are resolved |
+| Planning handoff | Ready — all blocking business and technical decisions in sections 9 and 11 are resolved; proceed to implementation planning |
 
 ---
 
@@ -43,7 +43,7 @@ However:
 - No constraint verifies that a Faktur's Salesman is assigned to every Principal represented by its items.
 - Customer-to-Principal is **transaction-derived**, not master data (**confirmed by GAP-003**). It is inferred from item sales through `FakturItem → Brg.SupplierId`.
 - Historical Principal attribution uses the **Item master** (`BTR_Brg.SupplierId`); each Item belongs to exactly one Principal, treated as immutable for analytics (**confirmed by GAP-004**). No invoice-time Principal snapshot will be introduced in this initiative.
-- Company sales use Faktur-header `GrandTotal`, while existing Principal sales-out logic sums Faktur-item `Total`. Mixed-Principal Fakturs therefore need an explicit **sales** reconciliation policy (GAP-019 remains open).
+- Company sales use Faktur-header `GrandTotal`, while existing Principal sales-out logic sums Faktur-item `Total`. Mixed-Principal Fakturs therefore need an explicit **sales** reconciliation policy (**resolved by GAP-019**): line-item amounts are the authoritative Principal sales measure; header totals are not allocated and reconciliation to `GrandTotal` is not required.
 - Accounts Receivable, open balance, collection performance, and credit exposure remain **Customer-level only**; they are not attributed to Principals (**confirmed by GAP-005**).
 - Several Customer analytics paths present a single last-invoicing Salesman as if it were the Customer's assigned Salesman.
 - Supplier Entity Analytics is currently produced by the Purchasing Management worker and its core trend KPIs represent **purchase-in**, not sales-out. Extending it is not a metadata-only change.
@@ -172,7 +172,7 @@ See sections 5.1 through 5.7 for full architectural consequences.
 | A-004 | Principal should replace Salesman on all management surfaces. | Field activity, route, visit, order, and coaching are intrinsically Salesman-grained. |
 | A-005 | Production-data profiling must complete before any planning may begin. | **Superseded** by GAP-007; profiling is required during implementation validation, not as a prerequisite business decision. |
 | A-006 | Principal reassignment for existing Items is a supported or frequent business scenario requiring invoice-time attribution. | **Disproven as in-scope requirement** by GAP-004 assumption; Item master attribution is approved for this initiative. TQ-003 remains a validation check. |
-| A-007 | Principal visibility should be limited by Salesman assignment. | Portal currently has no role/data-scope model, and intended audiences are unresolved. |
+| A-007 | Principal visibility should be limited by Salesman assignment. | **Not adopted** per BQ-008 and GAP-018: existing role-based commercial visibility applies — any user authorized to access commercial analytics may view all Principals; no Principal-specific visibility limits in this initiative; architecture remains extensible for future Principal-level rules. |
 
 ### 3.2 Current business and data flow
 
@@ -283,6 +283,11 @@ New KPI groups that would emerge:
    - stock-out/overstock/at-risk context
    - customer breadth and concentration
    - assignment/target coverage quality
+4. **Principal Returns** (independent of Sales; do not reduce Sales-Out)
+   - Good Return Amount
+   - Broken Return Amount
+   - Total Return Amount
+   - Return Rate (%) — usable as a quality indicator and radar axis
 
 Explicitly excluded by GAP-005 (not in scope for this initiative):
 
@@ -292,7 +297,6 @@ Explicitly excluded by GAP-005 (not in scope for this initiative):
 Also excluded pending other decisions:
 
 - Principal margin when cost/rebate/claim semantics are not approved.
-- Net Principal sales after returns unless return attribution and period policy are defined.
 
 ### 4.3 Business question and Navigation Playbook impact
 
@@ -438,7 +442,7 @@ Principal financial attribution is resolved by GAP-005: AR, open balance, collec
 
 Historical Salesman–Principal responsibility is resolved by GAP-006: monthly `BTR_SalesPersonPrincipalTarget` records; no effective-dated assignment model in this initiative.
 
-Principal **sales** line-total to Faktur-header reconciliation remains open under GAP-019.
+Principal **sales** line-total to Faktur-header reconciliation is **resolved by GAP-019**: line-item amounts are the authoritative Principal sales measure; header-level totals are not allocated across Principals and reconciliation to Faktur-header `GrandTotal` is not required.
 
 ### 4.9 Security and integration impact
 
@@ -470,22 +474,22 @@ External-system impact is unproven. BTrade/mobile and sync flows use Salesman an
 | GAP-005 | Data | **Resolved** | Financial metrics remain Customer-level; no Principal open-balance allocation. See section 5.5. |
 | GAP-006 | Data | **Resolved** | Historical Salesman–Principal responsibility uses monthly target records; no effective-dated assignment model. See section 5.6. |
 | GAP-007 | Data | **Resolved** | Production profiling is implementation validation; approved assumptions allow planning to proceed. See section 5.7. |
-| GAP-008 | Functional | Open | No Principal sales performance dashboard, forecast, attention list, or sales-out evidence report exists. |
-| GAP-009 | Functional | Open | No full Customer × Principal lifecycle/history/portfolio analytics exists. |
-| GAP-010 | Functional | Open | Supplier Entity Analytics performance and growth currently mean purchase-in, not sales-out. |
-| GAP-011 | Technical | Open | Supplier Entity Analytics has a single Purchasing-owned replace producer; cross-worker KPI composition is unresolved. |
+| GAP-008 | Functional | **Resolved** | Principal sales performance dashboards, target tracking, and attention capabilities are reoriented as part of the migration, not introduced as a prerequisite capability set. See section 5.8. |
+| GAP-009 | Functional | **Resolved** | Customer × Principal lifecycle/portfolio analytics are reoriented as part of the migration; no parallel capability set or master data model is introduced. See section 5.9. |
+| GAP-010 | Functional | **Resolved** | Supplier/Principal Entity Analytics reoriented to represent sales-out performance of Principal products in the market; purchase-in analytics remain valid but outside Principal-centric performance scope. See section 5.10. |
+| GAP-011 | Technical | **Resolved** | Principal Entity Analytics remains the authoritative aggregation layer; cross-worker KPI composition is an implementation concern. See section 5.11. |
 | GAP-012 | Technical | **Resolved** | Historical Principal attribution uses Item master per GAP-004; invoice-time persistence is out of scope for this initiative. |
-| GAP-013 | UX | Open | Principal commercial performance has no primary navigation path. |
-| GAP-014 | UX | Open | Customer pages and Entity Analytics show one Salesman in ways that imply assignment/ownership. |
-| GAP-015 | Reporting | Open | Sales Report Faktur grain cannot prove Principal line amounts on mixed-Principal Fakturs. |
-| GAP-016 | Catalog | Open | KPI entity classification cannot represent Company, Transaction, Location, or Relationship grain accurately. |
-| GAP-017 | Governance | Open | Principal/Supplier terminology is equivalent in foundation knowledge but labels vary by surface; commercial naming rules are not fixed. |
-| GAP-018 | Security | Open | Principal-scoped visibility has no current authorization model. |
-| GAP-019 | Quality | Open | Principal line-total sales and Faktur-header GrandTotal reconciliation policy is not defined. |
-| GAP-020 | Functional | Open | Returns, claims, discounts, tax, and net-sales treatment at Principal grain are not approved. |
-| GAP-021 | Technical | Open | Principal `SalesOutAmount` is transient in Purchasing Management and has no first-class KPI/history persistence. |
-| GAP-022 | Quality | Open | Supplier omzet relationship metadata points to purchase/Salesman KPI IDs rather than a Principal sales-out KPI. |
-| GAP-023 | Governance | Open | EX03/SF03/SF04 navigation code reservations conflict across current registry and roadmap artifacts. |
+| GAP-013 | UX | **Resolved** | Principal commercial performance must have a clear primary navigation path; detailed navigation structure is an implementation planning concern. See section 5.12. |
+| GAP-014 | UX | **Resolved** | Customer pages and Entity Analytics shall not imply exclusive ownership based on a single displayed Salesman; interpreted as commercial attribution, not ownership. See section 5.13. |
+| GAP-015 | Reporting | **Resolved** | Principal sales attribution is calculated from Faktur line items, not Faktur header totals; mixed-Principal Fakturs are supported by line-item aggregation. See section 5.14. |
+| GAP-016 | Catalog | **Resolved** | KPI entity classification framework redesign is out of scope; existing classifications used where practical. See section 5.15. |
+| GAP-017 | Governance | **Resolved** | Principal is the standard user-facing term; Supplier retained technically where practical; no distinction recognized. See section 5.16. |
+| GAP-018 | Security | **Resolved** | Principal-scoped authorization not introduced; Principal is an analytical dimension, not a security boundary. See section 5.17. |
+| GAP-019 | Quality | **Resolved** | Principal sales are line-item authoritative; header totals not allocated; reconciliation to Grand Total not required. See section 5.18. |
+| GAP-020 | Functional | **Resolved** | Principal performance measured using Sales-Out (DPP); sales and returns are independent KPIs; returns do not reduce the authoritative Sales KPI; tax/freight/rounding excluded. See section 5.19. |
+| GAP-021 | Technical | **Resolved** | Principal `SalesOutAmount` established as first-class measure from transaction history; persistence strategy is implementation concern. See section 5.20. |
+| GAP-022 | Quality | **Resolved** | Principal omzet and performance measurements realigned to sales-out KPIs from customer transactions; metadata implementation is planning concern. See section 5.21. |
+| GAP-023 | Governance | **Resolved** | Navigation codes governed by single authoritative registry; conflicts resolved during implementation planning; no feasibility impact. See section 5.22. |
 
 ### 5.1 GAP-001 — Salesman–Principal responsibility cardinality and meaning
 
@@ -551,7 +555,7 @@ Field Activity metrics are attributed to the Salesman who actually performs the 
 - Preserve and strengthen SF02/SF03 field-activity surfaces on performer attribution.
 - Align SA01, SF01, target/achievement, bonus, and invoice-attributed piutang KPIs to portfolio-owner semantics.
 - Introduce explicit coverage/substitute reporting only if operational evidence exists; do not infer commercial reassignment from visits or routes alone.
-- Rename misleading labels such as “Assigned Salesman” to portfolio-owner or commercial-attribution wording where the source is Faktur `SalesPersonId`.
+- Rename misleading labels such as "Assigned Salesman" to portfolio-owner or commercial-attribution wording where the source is Faktur `SalesPersonId`.
 - Entity Analytics Customer relationships that imply singular ownership require rework per GAP-001 and GAP-002 together.
 
 ### 5.3 GAP-003 — Customer–Principal relationship definition
@@ -575,7 +579,7 @@ Management cannot manually assign a Customer to a Principal before any purchase 
 **Architectural consequences**
 
 1. Customer–Principal is a **derived analytical relationship**, not a master-data entity or pre-purchase assignment.
-2. Existing `TopPrincipalsByOmzet` and line-rollup patterns align with the approved model but must be extended to full history/portfolio scope where required (GAP-009 remains open functionally).
+2. Existing `TopPrincipalsByOmzet` and line-rollup patterns align with the approved model but must be extended to full history/portfolio scope where required; GAP-009 is resolved as a reorientation scope, not a future-add capability.
 3. Option D (authoritative Customer–Principal master assignment) is **not** the target state for this migration.
 4. Principal reach, dormancy, cross-sell, and portfolio-gap analytics must use transaction evidence and approved historical windows; they cannot rely on intended or planned assignments.
 5. No UI, workflow, or integration should introduce pre-purchase Customer–Principal linking.
@@ -585,7 +589,7 @@ Management cannot manually assign a Customer to a Principal before any purchase 
 - Build Customer–Principal projections from Faktur item sales with explicit attribution and historical-window policy.
 - Do not add `CustomerPrincipal` master tables or manual assignment screens unless a future separate domain initiative overturns GAP-003.
 - Extend Customer and Supplier Entity Analytics relationship materialization beyond Top-N where portfolio questions require full pair population.
-- Principal-specific Customer decline/dormancy KPIs remain dependent on pair history implementation and TQ-006 active-window definition.
+- Principal-specific Customer decline/dormancy KPIs depend on pair history implementation; the active-window policy is resolved by TQ-006 (Active = transaction within previous 6 months; Dormant = no transaction within previous 6 months; history retained indefinitely).
 - Reject any design that treats transaction-derived purchase history as commercial ownership or pre-sale commitment.
 
 ### 5.4 GAP-004 — Item–Principal attribution and historical reporting
@@ -720,6 +724,492 @@ Mixed-Principal invoices, assignment exceptions, Item–Supplier changes, and ot
 - Treat any required remediation of master data or historical anomalies as scoped follow-up, not a feasibility blocker.
 - Keep section 9 validation checks as mandatory implementation inputs even though they are no longer planning prerequisites.
 
+### 5.8 GAP-008 — Principal sales performance dashboard and related capabilities
+
+| Field | Value |
+| --- | --- |
+| Status | **Resolved** |
+| Decision date | 2026-09-07 |
+| Resolves | GAP-008 |
+
+**Decision**
+
+The Principal-centric initiative is a **migration of the primary analytical dimension from Salesman to Principal**, not the introduction of a separate set of Principal capabilities.
+
+Existing Salesman-centric dashboards, KPIs, rankings, target tracking, performance monitoring, and attention-oriented capabilities shall be reviewed and, where appropriate, **reoriented to use Principal as the primary business dimension**.
+
+No additional Principal-specific capability set is required as a prerequisite for the migration. Capability additions, removals, consolidations, or replacements shall be determined during implementation planning based on the final Principal-centric navigation and KPI model.
+
+**Architectural consequences**
+
+1. The initiative does not create a parallel Principal capability surface that must exist before Salesman-centric surfaces are migrated or retired.
+2. Principal sales performance dashboards, forecast, attention list, and sales-out evidence reports are **outputs of the migration**, not prerequisites for it.
+3. Existing Salesman-centric surfaces (SA01, SF01, etc.) will be evaluated for reorientation, replacement, or preservation during implementation planning.
+4. The final Principal-centric navigation and KPI model will determine which existing capabilities are retained, modified, or removed.
+5. Implementation planning must define the disposition of each existing Salesman-centric capability rather than assuming all Principal capabilities must be built from scratch.
+
+**Planning implications**
+
+- Frame GAP-008 as a migration scope question, not a new-build requirement.
+- During implementation planning, inventory each existing Salesman-centric capability and decide its Principal-centric disposition: reorient, replace, consolidate, or remove.
+- Do not block feasibility or planning on the absence of a standalone Principal sales dashboard; it will emerge from the reorientation work.
+- Use section 4.1 (Dashboard disposition) as the starting inventory for capability decisions.
+- The navigation registry and KPI catalog redesign will determine the final Principal-centric surface layout.
+
+### 5.9 GAP-009 — Customer × Principal lifecycle/history/portfolio analytics reorientation
+
+| Field | Value |
+| --- | --- |
+| Status | **Resolved** |
+| Decision date | 2026-09-07 |
+| Resolves | GAP-009 |
+
+**Decision**
+
+The Principal-centric initiative is a migration of the primary analytical dimension from Salesman to Principal.
+
+Existing customer lifecycle, portfolio, retention, growth, penetration, and history analytics shall be reviewed and reoriented from a Salesman-centric perspective to a **Customer × Principal perspective** where business value justifies the capability.
+
+No separate Customer × Principal capability set will be introduced in parallel with existing Salesman-centric capabilities. The implementation planning phase shall determine which existing capabilities are migrated, replaced, consolidated, or retired as part of the Principal-centric redesign.
+
+No separate Customer–Principal master data model will be introduced. All Customer × Principal analytics shall continue to be derived from transaction history.
+
+**Architectural consequences**
+
+1. Customer lifecycle, portfolio, retention, growth, penetration, and history analytics are **reoriented**, not replaced by a parallel capability surface.
+2. The Customer × Principal perspective replaces Salesman-centric ownership interpretations where justified by business value; implementation planning determines the final disposition of each capability.
+3. No master assignment table or pre-purchase Customer–Principal relationship model is introduced; all analytics remain transaction-derived per GAP-003.
+4. Existing Salesman-centric customer analytics that imply singular ownership or exclusive responsibility must be reworked to reflect portfolio-owner attribution (GAP-002) or removed where no longer valid.
+5. The migration approach means customer-side surfaces evolve together with Principal-centric redesign rather than waiting for a separate Customer × Principal feature build.
+
+**Planning implications**
+
+- Treat GAP-009 as a reorientation scope during implementation planning, not a future-add capability.
+- Inventory existing customer lifecycle, portfolio, retention, growth, penetration, and history analytics; decide disposition per surface: reorient to Customer × Principal, migrate, consolidate, or retire.
+- Ensure reoriented analytics use the same transaction-derived evidence path approved by GAP-003 and GAP-004.
+- Do not introduce parallel Customer × Principal master tables, assignment workflows, or pre-purchase linking during this initiative.
+- Use section 4.1 (Dashboard disposition) and the Customer surface reviews (CU01–CU05) as the starting point for capability decisions.
+
+### 5.10 GAP-010 — Supplier Entity Analytics sales-out versus purchase-in semantics
+
+| Field | Value |
+| --- | --- |
+| Status | **Resolved** |
+| Decision date | 2026-09-07 |
+| Resolves | GAP-010 |
+
+**Decision**
+
+Within the Principal-centric redesign, Supplier/Principal Entity Analytics shall represent **sales-out performance of Principal products in the market** and shall not be interpreted as purchase-in performance from suppliers.
+
+Existing Supplier-centric capabilities, KPIs, dashboards, and analytics shall be reviewed and reoriented where necessary to ensure that performance, growth, contribution, ranking, and portfolio measurements are based on **customer sales transactions**.
+
+Purchase-in analytics remain valid operational capabilities but are outside the scope of Principal-centric performance measurement.
+
+**Architectural consequences**
+
+1. Supplier/Principal Entity Analytics primary performance KPIs, growth axes, and radar dimensions must be reoriented from purchase-in to sales-out metrics.
+2. Existing purchase-in KPIs (MTD Purchase, purchase growth, purchase invoice count, posted percent) are preserved but reclassified as purchasing/procurement analytics, not Principal sales performance.
+3. The Supplier Entity Analytics producer must incorporate sales-out evidence from the Sales domain; this is not a metadata relabeling and requires cross-domain data composition (**GAP-011 resolved**: composition mechanism is an implementation concern; Principal Entity Analytics remains the authoritative aggregation layer).
+4. Sales-out relationship metrics (Top Customers, Top Salesmen, Top Items by item-line sales) already exist but are currently secondary to purchase-in KPIs; they become the primary Principal performance measures.
+5. Navigation, evidence routes, and drill-down paths for Supplier/Principal surfaces must lead to sales-out evidence where the context is Principal commercial performance.
+
+**Planning implications**
+
+- Inventory all existing Supplier Entity Analytics KPIs, growth axes, radar dimensions, and relationship metrics; classify each as sales-out or purchase-in.
+- Reorient Principal-facing Supplier Entity Analytics surfaces to sales-out as the primary performance view; retain purchase-in as a separate operational context.
+- Ensure the Supplier Entity Analytics producer has access to sales evidence; resolve cross-domain composition ownership per GAP-011.
+- Do not remove or degrade purchase-in analytics; relocate them to a purchasing-specific performance context where they remain operationally valid.
+- Use the Principal-centric KPI catalog redesign (GAP-016) to formally separate sales-out and purchase-in KPIs by domain and grain.
+
+### 5.11 GAP-011 — Principal Entity Analytics cross-worker KPI composition
+
+| Field | Value |
+| --- | --- |
+| Status | **Resolved** |
+| Decision date | 2026-09-07 |
+| Resolves | GAP-011 |
+
+**Decision**
+
+Principal Entity Analytics shall remain the **authoritative aggregation layer** for Principal-centric KPIs and business measurements.
+
+The composition of Principal KPIs from multiple workers, projections, or data producers is an **implementation concern** and is outside the scope of this feasibility assessment.
+
+Implementation planning and architecture design shall determine the most appropriate mechanism for composing Principal analytics while preserving a **single authoritative Principal analytics view** for portal consumers.
+
+**Architectural consequences**
+
+1. The requirement for a single authoritative Principal analytics view is a **design constraint**, not an implementation blocker; the feasibility assessment does not resolve the specific composition mechanism.
+2. Cross-worker KPI composition (Sales, Purchasing, Inventory contributing to Supplier/Principal Entity Analytics) is deferred to implementation architecture.
+3. The current single-producer model (Purchasing-owned SupplierEntityAnalyticsProducer) is recognized as insufficient for sales-out KPI composition but is not a feasibility-level decision to restructure.
+4. Historical replay, snapshot management, and refresh ordering for a multi-source Principal analytics view are implementation concerns.
+5. Portal consumers shall see one Principal analytics profile regardless of how many workers contribute data; composition transparency is a technical design goal.
+
+**Planning implications**
+
+- Do not block feasibility or planning on the specific cross-worker composition mechanism.
+- Include multi-source Principal Entity Analytics composition as an early implementation architecture workstream.
+- Ensure the implementation plan addresses snapshot ownership, merge/replace semantics, and refresh ordering when multiple workers contribute to one Principal analytics profile.
+- Preserve the requirement that the portal sees a single authoritative Principal view; no partial or conflicting profiles should be exposed to consumers.
+- Use section 5.10 (GAP-010) as the semantic driver: sales-out and purchase-in are separate domains that may compose into one Principal analytics profile.
+
+### 5.12 GAP-013 — Principal commercial performance navigation path
+
+| Field | Value |
+| --- | --- |
+| Status | **Resolved** |
+| Decision date | 2026-09-07 |
+| Resolves | GAP-013 |
+
+**Decision**
+
+The Principal-centric initiative establishes Principal as the **primary commercial performance dimension** within the portal.
+
+Navigation, dashboards, KPIs, rankings, attention-oriented capabilities, and analytical journeys shall be reviewed and reoriented where appropriate to ensure Principal commercial performance can be accessed through a **clear primary navigation path**.
+
+The detailed navigation structure is an implementation planning concern and is outside the scope of this feasibility assessment.
+
+**Architectural consequences**
+
+1. Principal commercial performance must be discoverable through the portal navigation; it cannot be hidden behind Purchasing or Entity Analytics alone.
+2. The detailed navigation placement (new domain group, repositioned menu item, or enhanced Entity Analytics entry) is deferred to implementation planning.
+3. Existing navigation code reservations (EX03, SF03, SF04 per GAP-023) do not block this decision; the requirement is that Principal commercial performance has a primary path, not that a specific code is assigned now.
+4. Navigation design must respect the dual-axis model (GAP-002): commercial portfolio performance and operational field execution remain separate journeys.
+5. Sales Force navigation remains valid for execution and coaching; Principal navigation covers commercial portfolio performance, target, forecast, and relationship health.
+
+**Planning implications**
+
+- Require Principal commercial performance to have a clear, primary navigation path in the implementation plan; do not leave it discoverable only through cross-links or Entity Analytics drill-down.
+- Evaluate navigation placement during implementation planning using the options assessed in section 4.4.
+- Resolve navigation code reservation conflicts (GAP-023) before finalizing the navigation registry.
+- Ensure the Principal navigation path does not duplicate or conflict with existing Purchasing (PU01) or Entity Analytics (EX03) surfaces.
+
+### 5.13 GAP-014 — Customer pages and Entity Analytics Salesman ownership implication
+
+| Field | Value |
+| --- | --- |
+| Status | **Resolved** |
+| Decision date | 2026-09-07 |
+| Resolves | GAP-014 |
+
+**Decision**
+
+Customer pages, dashboards, and Entity Analytics shall **not imply exclusive Customer ownership** based solely on a single displayed Salesman.
+
+The Principal-centric initiative recognizes that Customer commercial activity may span multiple Principals and multiple Salesman responsibilities.
+
+Existing Customer-centric capabilities shall be reviewed and updated where necessary to ensure that displayed Salesman information is interpreted as **commercial attribution or portfolio responsibility** rather than exclusive Customer ownership.
+
+The detailed presentation and navigation changes are implementation planning concerns and are outside the scope of this feasibility assessment.
+
+**Architectural consequences**
+
+1. Customer Entity Analytics `AssignedSalesman` label and singular Salesman dimension (F-009, F-014) are **inconsistent** with the approved model; they must be reworked to reflect commercial attribution on transactions, not master ownership.
+2. `CustomerLastFaktur` single-Salesman display (F-008) remains valid as a recency indicator but must not imply exclusive ownership; labeling must clarify it is the last-invoicing Salesman, not the Customer's assigned Salesman.
+3. Customer portfolio analytics that use a single Salesman as filter or owner must be reinterpreted under GAP-002: the Salesman on each Faktur is the portfolio owner for that transaction, not for the Customer account.
+4. Presentation changes are deferred to implementation planning; the feasibility-level requirement is that ownership implication is corrected, not the specific UI mechanism.
+
+**Planning implications**
+
+- Include Customer Entity Analytics `AssignedSalesman` semantic correction as a mandatory implementation item.
+- Review all Customer pages (CU01–CU05) for single-Salesman ownership implication; correct labels and interpretation guidance.
+- Use GAP-001 and GAP-002 as the governing rules: Customer is not owned by Salesman; Salesman attribution is per-transaction portfolio owner.
+- Detailed UI and navigation changes are deferred to implementation planning.
+
+### 5.14 GAP-015 — Principal sales attribution evidence grain
+
+| Field | Value |
+| --- | --- |
+| Status | **Resolved** |
+| Decision date | 2026-09-07 |
+| Resolves | GAP-015 |
+
+**Decision**
+
+Principal sales attribution shall be calculated from **Faktur line items**, not from Faktur header totals.
+
+Each Faktur Item is attributed to exactly one Principal through its associated Item master data. Mixed-Principal Fakturs are therefore supported by **aggregating sales at the line-item level**.
+
+No allocation of Faktur header totals across Principals will be introduced in the current initiative.
+
+**Architectural consequences**
+
+1. Principal sales-out KPIs are derived from `FakturItem.Total` grouped by `Brg.SupplierId`; they are not derived from `Faktur.GrandTotal`.
+2. Mixed-Principal Fakturs do not require header-level allocation; each line item contributes to its Principal independently.
+3. Company-level sales totals remain header-derived; Principal line totals may not reconcile exactly to `Faktur.GrandTotal` due to discounts, tax, returns, and rounding. Reconciliation is **resolved by GAP-019**: Principal sales use line-item amounts exclusively; header totals are not allocated and reconciliation to `GrandTotal` is not required.
+4. Reports that currently display Faktur-header `GrandTotal` as a Salesman-attributed total must be reinterpreted when filtered or decomposed by Principal; the line-item grain is the only evidence that supports Principal decomposition.
+5. The existing `FakturPrincipalOmzetDal` line-aggregation pattern is consistent with this decision and may serve as the evidence basis.
+
+**Planning implications**
+
+- Use line-item aggregation as the standard evidence path for all Principal sales-out KPIs, dashboards, reports, and Entity Analytics.
+- Do not allocate Faktur header totals across Principals; the line-item grain is the approved attribution path.
+- Document the line-item to header reconciliation gap explicitly in KPI definitions and report footnotes; resolve reconciliation semantics per GAP-019.
+- Preserve company-level totals from header `GrandTotal` for company surfaces; do not force company totals through line-item aggregation unless explicitly validated.
+
+### 5.15 GAP-016 — KPI entity classification framework scope
+
+| Field | Value |
+| --- | --- |
+| Status | **Resolved** |
+| Decision date | 2026-09-07 |
+| Resolves | GAP-016 |
+
+**Decision**
+
+The current initiative is limited to **migrating the primary analytical dimension from Salesman to Principal** and does not include a redesign of the KPI Entity Analytics classification framework.
+
+Existing entity classifications shall continue to be used where practical for Principal-centric analytics. More advanced classifications involving Company, Transaction, Location, or Relationship analytical grains may be introduced in future enhancements if required by business capabilities.
+
+The absence of these classifications is **not considered a blocker** for the Principal-centric redesign.
+
+**Architectural consequences**
+
+1. The existing four-entity forced classification (Customer, Salesman, Item, Supplier) remains the catalog structure for this initiative; it is imperfect but functional.
+2. Company, Transaction, Location, and Relationship analytical grains are recognized as necessary for accurate classification but are deferred to future catalog enhancements.
+3. Principal-centric KPIs will be classified under existing entity categories (Supplier, Customer, Salesman) where practical; new classification taxonomy is not required before Principal analytics can be delivered.
+4. KPI metadata (source, grain, attribution) is documented in definitions rather than enforced by classification; implementation planning should ensure KPI definitions carry explicit grain information.
+5. A future KPI taxonomy redesign may reorganize entities by analytical grain (Company, Transaction, Location, Relationship) instead of by business entity; this is a separate initiative.
+
+**Planning implications**
+
+- Do not block Principal-centric KPI or dashboard delivery on KPI classification framework redesign.
+- Use existing entity categories for Principal KPIs; annotate KPI definitions with explicit grain and attribution metadata.
+- Include KPI classification framework redesign as a future roadmap item if business capabilities require it.
+- Ensure the KPI catalog carries sufficient metadata (grain, attribution, source domain) to support future reclassification without silent semantic change.
+
+### 5.16 GAP-017 — Principal versus Supplier terminology governance
+
+| Field | Value |
+| --- | --- |
+| Status | **Resolved** |
+| Decision date | 2026-09-07 |
+| Resolves | GAP-017 |
+
+**Decision**
+
+For the Principal-centric redesign, **Principal** is established as the standard business and user-facing term.
+
+Existing technical artifacts, database structures, and identifiers that use the term **Supplier** may be retained where practical, but shall be interpreted as representing the same business concept.
+
+Portal navigation, dashboards, KPIs, reports, documentation, and business communications shall use **Principal** consistently unless a specific technical context requires otherwise.
+
+No separate distinction between Principal and Supplier is recognized within the scope of the current initiative.
+
+**Architectural consequences**
+
+1. All user-facing surfaces (dashboards, KPIs, navigation, reports, documentation) shall use **Principal** as the standard label.
+2. Database table names, column names, identifiers, and technical artifacts may retain `Supplier`/`SupplierId` where renaming is impractical; these are implementation details, not business terminology.
+3. No Principal/Supplier equivalence table, mapping, or translation layer is required; they are the same business concept.
+4. `BTR_SalesPersonSupplier`, `BTR_SalesPersonPrincipalTarget`, `Brg.SupplierId`, and similar technical identifiers remain as-is; user-facing interpretation uses Principal.
+5. Foundation knowledge artifacts (DOMAIN.md) may be updated to formalize the terminology standard if the Product Owner requests it.
+
+**Planning implications**
+
+- Use **Principal** consistently in all new and revised user-facing surfaces, KPI definitions, documentation, and business communications.
+- Do not rename database objects or technical identifiers unless explicitly requested as part of a separate schema modernization effort.
+- Ensure KPI metadata, dashboard labels, and report headers use Principal; technical column/table references may continue using Supplier identifiers.
+- No separate Principal/Supplier equivalence logic is required in implementation.
+
+### 5.17 GAP-018 — Principal-scoped authorization and visibility
+
+| Field | Value |
+| --- | --- |
+| Status | **Resolved** |
+| Decision date | 2026-09-07 |
+| Resolves | GAP-018 |
+
+**Decision**
+
+The Principal-centric redesign **does not introduce Principal-scoped authorization**.
+
+Principal is an **analytical and reporting dimension**, not a security boundary. Existing portal authorization and visibility rules shall remain unchanged unless future business requirements explicitly require Principal-level access restrictions.
+
+The absence of Principal-scoped visibility controls is **not considered a blocker** for the Principal-centric migration.
+
+**Architectural consequences**
+
+1. All authenticated portal users retain their current data access; no Principal-level row security or data-scope restriction is introduced.
+2. Principal is treated as a reporting/business dimension (like Item or Customer), not as a security boundary (like Company or Branch).
+3. Principal-scoped authorization, if ever required, is a **separate initiative** with its own RBAC, data-scope, and user-to-identity design.
+4. Navigation and KPI visibility remain governed by existing portal authorization; no Principal filter or scope is injected into the access model.
+
+**Planning implications**
+
+- Do not introduce Principal-level row security, menu visibility, or data-scope filtering during this initiative.
+- Preserve existing portal authorization and visibility rules; Principal analytics are accessible to all authorized users.
+- Include Principal-scoped authorization as a future roadmap item only if business requirements explicitly require it.
+- Do not design or implement Principal-level access controls, role assignments, or data-scope logic in implementation planning.
+
+### 5.18 GAP-019 — Principal sales-to-Faktur-header reconciliation policy
+
+| Field | Value |
+| --- | --- |
+| Status | **Resolved** |
+| Decision date | 2026-09-07 |
+| Resolves | GAP-019 |
+
+**Decision**
+
+Principal sales performance shall be calculated from **Faktur line-item amounts** and attributed to Principals at the item level.
+
+Faktur header-level values such as Grand Total, taxes, rounding adjustments, freight charges, and other invoice-level adjustments are **not considered Principal attribution measures** and shall not be allocated across Principals.
+
+As a result, aggregated Principal sales totals are **not required to reconcile to Faktur header Grand Totals**. Principal analytics shall use line-level sales values as the authoritative source for sales-out performance measurement.
+
+**Architectural consequences**
+
+1. Principal sales-out KPIs use `FakturItem.Total` as the authoritative measure; `Faktur.GrandTotal` is not used for Principal attribution.
+2. Tax, rounding, freight, discount, and other invoice-level adjustments are not split across Principals; they remain at the Faktur or company level.
+3. Aggregated Principal line totals may differ from company `GrandTotal` totals; this is expected and does not indicate data error.
+4. KPI definitions, dashboard footnotes, and report headers must disclose the line-item evidence grain and the expected gap with header totals.
+5. Company-level surfaces may continue to use header `GrandTotal` where appropriate; the line-item grain is required only for Principal decomposition.
+
+**Planning implications**
+
+- Use line-level sales values as the authoritative source for all Principal sales-out KPIs, dashboards, and reports.
+- Do not allocate Faktur header adjustments across Principals; disclose the expected line-to-header gap explicitly.
+- Document the reconciliation gap in KPI definitions, evidence routes, and report footnotes.
+- Preserve company-level totals from header `GrandTotal` for company surfaces; do not force company totals through line-item aggregation unless explicitly validated.
+
+### 5.19 GAP-020 — Principal sales measure definition and returns model
+
+| Field | Value |
+| --- | --- |
+| Status | **Resolved** |
+| Decision date | 2026-09-07 |
+| Resolves | GAP-020 |
+
+**Decision**
+
+Principal commercial performance shall be measured using **Principal Sales-Out (DPP)** at the Principal level.
+
+Principal Sales-Out is defined as sales transaction amounts attributed to a Principal after deducting **commercial discounts** attributable to the sale, and **before tax**.
+
+**Sales and Returns are independent KPIs.** Good Returns and Broken Returns are tracked separately and **do not automatically reduce** the authoritative Principal Sales KPI. Entity Analytics shall evaluate both dimensions independently through trends, rankings, attention signals, and comparison views. Return Rate (%) may be used as a quality indicator and radar axis.
+
+Tax, freight, rounding adjustments, and other non-commercial invoice-level amounts are **not considered Principal sales performance measures** and shall be excluded from Principal performance calculations.
+
+Returns shall be modeled as separate KPIs, including (where applicable):
+
+- Good Return Amount
+- Broken Return Amount
+- Total Return Amount
+- Return Rate (%)
+
+The detailed calculation formulas for Principal KPIs shall be standardized during implementation planning and applied consistently across all Principal-centric analytics and dashboards.
+
+**Architectural consequences**
+
+1. Principal sales-out KPIs are computed as Sales-Out (DPP): line-item sales amounts after commercial discounts, before tax; they are **not** reduced by returns, claims, or other post-sale adjustments.
+2. Returns (Good Return, Broken Return, Total Return, Return Rate) are **separate independent KPIs**; they may be used in rankings, attention signals, radar dimensions, relationship analytics, and quality indicators, but do not modify the authoritative Principal Sales KPI.
+3. Tax, freight, rounding, and other invoice-level adjustments are excluded from Principal performance measures (consistent with GAP-019).
+4. Return and claim attribution to a Principal requires a defined line-item or principal-identifiable relationship; the detailed formula is standardized during implementation planning.
+5. All Principal-centric dashboards and KPIs must use the same Sales-Out (DPP) definition to avoid inconsistent numbers across surfaces.
+6. Company-level sales totals and Principal Sales-Out may differ; the gap is expected and documented per GAP-019 reconciliation policy.
+
+**Planning implications**
+
+- Standardize the Principal Sales-Out (DPP) calculation formula during implementation planning and apply it consistently.
+- Model Returns as independent KPIs; do not subtract returns from the authoritative Sales-Out measure.
+- Define how returns are attributed to a Principal (via line-item, item master, or principal-identifiable sales evidence).
+- Ensure tax, freight, and rounding are excluded from all Principal performance KPIs.
+- Document the Sales-Out (DPP) and Returns KPI definitions in KPI metadata, dashboard documentation, and report footnotes.
+
+### 5.20 GAP-021 — Principal SalesOutAmount as first-class performance measure
+
+| Field | Value |
+| --- | --- |
+| Status | **Resolved** |
+| Decision date | 2026-09-07 |
+| Resolves | GAP-021 |
+
+**Decision**
+
+Principal `SalesOutAmount` is established as a **first-class Principal performance measure** derived from sales transaction history.
+
+The authoritative source for Principal sales performance remains **transaction-level sales data attributed to Principals**. Historical trends, rankings, forecasts, and other Principal-centric analytics shall be based on this authoritative sales history.
+
+The persistence, projection, caching, or historical storage strategy for Principal KPI values is an **implementation architecture concern** and is outside the scope of this feasibility assessment.
+
+**Architectural consequences**
+
+1. `SalesOutAmount` is no longer a transient in-memory value in Purchasing Management; it is a recognized Principal performance measure.
+2. The authoritative source of Principal sales performance is transaction-level sales evidence (line-item attribution per GAP-015), not Purchasing Management in-memory computation.
+3. Historical trends, rankings, and forecasts derive from the same authoritative sales history; they are not dependent on a specific projection implementation.
+4. Whether Principal KPI values are persisted in a snapshot table, computed on demand, cached, or materialized in a projection is an implementation architecture decision.
+5. The first-class measure status does not by itself prescribe the storage mechanism; implementation planning determines persistence strategy.
+
+**Planning implications**
+
+- Establish Principal `SalesOutAmount` as a first-class KPI computed from authoritative transaction-level sales history.
+- Basis all Principal trends, rankings, forecasts, and Entity Analytics on transaction sales history, not transient in-memory values.
+- Evaluate persistence, projection, caching, and historical storage strategy during implementation architecture design.
+- Do not block feasibility or planning on the specific storage mechanism; it is an implementation concern.
+
+### 5.21 GAP-022 — Principal omzet KPI metadata realignment
+
+| Field | Value |
+| --- | --- |
+| Status | **Resolved** |
+| Decision date | 2026-09-07 |
+| Resolves | GAP-022 |
+
+**Decision**
+
+Within the Principal-centric redesign, Principal omzet and related performance measurements shall be defined using **Principal sales-out KPIs derived from customer sales transactions**.
+
+Any existing KPI relationships, metadata mappings, or analytical references that associate Supplier/Principal omzet with **purchase-oriented KPIs** or **Salesman-oriented KPIs** shall be reviewed and realigned to the approved Principal sales-out performance model.
+
+The detailed KPI metadata implementation is an implementation planning concern and is outside the scope of this feasibility assessment.
+
+**Architectural consequences**
+
+1. Supplier/Principal omzet relationship metadata must reference a Principal sales-out KPI, not a purchase KPI (e.g., PU-KPI-001) or Salesman KPI (e.g., SF-KPI-008).
+2. Existing mismatched relationships (F-020: `TopCustomersByOmzet` referencing purchase KPI; other omzet relationships referencing Salesman KPI) must be realigned to the approved sales-out model.
+3. The realignment covers KPI relationship metadata, evidence routes, and analytical references, not just display labels.
+4. The specific KPI ID assignment and metadata update mechanism is an implementation planning concern.
+5. Realigned metadata must be consistent across Entity Analytics relationship catalogs, evidence resolvers, and KPI catalog definitions.
+
+**Planning implications**
+
+- Audit all Supplier/Principal omzet relationship metadata and realign references to Principal sales-out KPIs.
+- Replace purchase- and Salesman-oriented KPI references with the approved Principal sales-out KPI IDs.
+- Ensure relationship catalogs, evidence resolvers, and KPI definitions are updated consistently.
+- Include the detailed KPI metadata implementation in the implementation plan; it is an implementation concern, not a feasibility blocker.
+
+### 5.22 GAP-023 — Navigation code registry governance
+
+| Field | Value |
+| --- | --- |
+| Status | **Resolved** |
+| Decision date | 2026-09-07 |
+| Resolves | GAP-023 |
+
+**Decision**
+
+Navigation code identifiers (including EXxx, SFxx, and related capability codes) shall be governed by a **single authoritative navigation registry**.
+
+Any conflicts between current registry definitions, roadmap reservations, implementation plans, or other artifacts shall be resolved during **implementation planning and documentation consolidation**.
+
+Navigation code conflicts are considered documentation and governance issues and **do not affect the feasibility** of the Principal-centric redesign.
+
+**Architectural consequences**
+
+1. A single authoritative navigation registry is the source of truth for all navigation code identifiers; any other artifact (roadmap, implementation plan, draft) is not authoritative until consolidated.
+2. Existing EX03/SF03/SF04 reservations conflicts (F-015, section 4.4) are documentation inconsistencies to be consolidated, not architectural blockers.
+3. The navigation code assignment for the new Principal commercial performance path (GAP-013) is deferred until the registry is made canonical.
+4. The portal navigation implementation must follow the consolidated registry; no new code should be selected before consolidation.
+5. Resolution is an implementation planning and documentation responsibility, not a feasibility decision.
+
+**Planning implications**
+
+- Consolidate all navigation code definitions and reservations into a single authoritative registry during implementation planning.
+- Resolve EX03, SF03, SF04 and related conflicts before assigning any new Principal navigation codes.
+- Treat navigation code conflicts as documentation/governance work; they do not block the Principal-centric redesign.
+- Ensure the single registry becomes the reference for portal menu implementation, roadmap, and feature documentation.
+
 ---
 
 ## 6. Solution Options
@@ -825,6 +1315,7 @@ The following constraints are mandatory:
 9. Customer–Principal relationships must be derived from sales transaction history only; no pre-purchase master assignment (GAP-003).
 10. Principal analytics exclude AR, open balance, collection performance, and credit exposure; no open-balance allocation across Principals (GAP-005).
 11. Historical Salesman–Principal responsibility uses monthly `BTR_SalesPersonPrincipalTarget` records; no effective-dated assignment model (GAP-006).
+12. Principal analytics use a multi-KPI model: Sales (Sales-Out DPP), Returns, Inventory, and Target are independent KPIs; Returns do not reduce the authoritative Sales KPI and are analyzed separately (GAP-020, BQ-006).
 
 ---
 
@@ -852,6 +1343,8 @@ The following constraints are mandatory:
 
 ## 9. Open Questions
 
+**All questions in this section are resolved.** Business questions BQ-001–BQ-010 and blocking technical questions TQ-006, TQ-007, TQ-009, TQ-010 carry approved answers with no remaining blocking decisions. Implementation-validation TQs (TQ-001–TQ-005, TQ-008) are resolved as implementation-time data profiling and validation activities (GAP-007); no Product Owner decision is required. Operational questions OQ-001–OQ-004 carry approved answers.
+
 ### Business questions — blocking
 
 | ID | Status | Question |
@@ -859,44 +1352,46 @@ The following constraints are mandatory:
 | BQ-001 | **Resolved** | What does “Salesman is responsible for a Principal” mean: exclusive ownership, assignment eligibility, target allocation, or current work assignment? **Answer (GAP-001):** commercial responsibility for an assigned Principal portfolio; not exclusive Customer ownership. |
 | BQ-002 | **Resolved** | Can one Salesman be responsible for multiple Principals and one Principal for multiple Salesmen? If yes, how is management accountability divided? **Answer (GAP-001):** yes, many-to-many; Salesman accountability is performance within assigned Principals, not divided Customer ownership. |
 | BQ-003 | **Resolved** | Is Customer–Principal an observed purchase relationship or a maintained commercial assignment? **Answer (GAP-003):** transaction-derived purchase relationship only; not maintained master data; no manual pre-purchase assignment. |
-| BQ-004 | Open | What is the authoritative Principal target: a Principal goal, or the sum of Salesman × Principal allocations? |
-| BQ-005 | Open | How should discounts, tax, claims, bonuses, and other header/line differences be allocated to Principal sales-out? |
-| BQ-006 | Open | Must Principal analytics be gross sales, net of returns, or another approved sales measure? |
+| BQ-004 | **Resolved** | What is the authoritative Principal target: a Principal goal, or the sum of Salesman × Principal allocations? **Answer:** Principal Target is derived from the sum of Salesman allocations. No standalone Principal Target authority exists in Phase 1. Future planning initiatives may introduce an independent Principal planning model if required. |
+| BQ-005 | **Resolved** | How should discounts, tax, claims, bonuses, and other header/line differences be allocated to Principal sales-out? **Answer:** Principal Sales-Out is defined as Sales-Out (DPP), calculated after commercial discounts and before tax. Tax is excluded from all Principal performance KPIs. Claims, rebates, and other post-sale adjustments remain separate KPIs and do not modify the authoritative Principal Sales-Out measure. |
+| BQ-006 | **Resolved** | Must Principal analytics be gross sales, net of returns, or another approved sales measure? **Answer:** Separate Sales and Returns Measures — Principal Analytics shall treat Sales and Returns as independent KPIs. The authoritative Principal Sales KPI is Sales-Out (DPP). Good Returns and Broken Returns are tracked separately and do not automatically reduce the authoritative Sales KPI. Entity Analytics shall evaluate both dimensions independently through trends, rankings, attention signals, and comparison views. Return Rate (%) may be used as a quality indicator and radar axis. |
 | BQ-007 | **Resolved** | Should receivable and collection remain Customer/company-only, or must the business define Principal allocation for mixed invoices and payments? **Answer (GAP-005):** remain Customer/company-only; no Principal allocation of open balances in this initiative. |
-| BQ-008 | Open | Who uses Principal commercial analytics and who may see which Principals? |
-| BQ-009 | Open | Should “Principal” replace user-facing “Supplier” consistently while retaining `SupplierId` technically? |
+| BQ-008 | **Resolved** | Who uses Principal commercial analytics and who may see which Principals? **Answer:** Role-Based Commercial Visibility (Phase 1 Simplification) — Principal Analytics inherits the existing commercial analytics visibility model. Any user authorized to access commercial analytics may view all Principals. No Principal-specific authorization or ownership restrictions will be introduced in this initiative. The architecture should remain extensible for future Principal-level visibility rules if business requirements emerge. |
+| BQ-009 | **Resolved** | Should “Principal” replace user-facing “Supplier” consistently while retaining `SupplierId` technically? **Answer (Principal vs Supplier Terminology):** Use **Principal** as the standard business term in all user-facing screens, dashboards, analytics, KPI catalogs, reports, and documentation. `SupplierId` remains the existing technical identifier in the database, codebase, APIs, and integrations. No technical renaming or database migration is required as part of this initiative. **Rule:** Principal = user-facing terminology; Supplier/SupplierId = internal technical terminology. |
 | BQ-010 | **Resolved** | Which current Salesman decisions are true coaching/work-assignment decisions and must remain? **Answer (GAP-002):** field activity and coaching use the operational performer dimension; commercial decisions (revenue, target, performance, bonus) use the portfolio owner on the transaction. |
 
 ### Technical/data questions — blocking
 
 | ID | Question |
 | --- | --- |
-| TQ-006 | What active/history window defines a Customer–Principal relationship and its dormant state? |
-| TQ-007 | Can Supplier Entity Analytics safely compose multiple domain inputs under one refresh/freshness contract, or does the producer model need an approved extension? |
-| TQ-009 | Which report grain will serve as evidence for Principal sales and pair KPIs? |
-| TQ-010 | Which canonical KPI ID and semantics should replace the mismatched Supplier omzet relationship metadata? |
+| TQ-006 | **Resolved.** What active/history window defines a Customer–Principal relationship and its dormant state? **Answer:** A Customer–Principal relationship is established by the existence of at least one historical transaction between the Customer and the Principal. Relationship history is retained indefinitely and is never removed by inactivity. Relationship status is determined by the most recent transaction date: **Active Relationship** = last transaction within the previous 6 months; **Dormant Relationship** = no transaction within the previous 6 months. This rule applies consistently across Customer Coverage, Customer Lifecycle, Relationship Analytics, and Entity Analytics features. |
+| TQ-007 | **Resolved.** Can Supplier Entity Analytics safely compose multiple domain inputs under one refresh/freshness contract, or does the producer model need an approved extension? **Answer:** Supplier (Principal) Entity Analytics may compose KPIs originating from multiple domains under a single Entity Analytics refresh and freshness contract. Each source domain remains the authoritative owner of its data and KPI calculations. Entity Analytics acts as a composition and presentation layer only. No producer-model extension is required for this initiative. Any future requirements for cross-domain orchestration, dependency management, or independent freshness guarantees shall be evaluated separately. |
+| TQ-009 | **Resolved.** Which report grain will serve as evidence for Principal sales and pair KPIs? **Answer:** The authoritative evidence grain for Principal Sales and related commercial KPIs shall be the Invoice Item (Faktur Item) level. Principal ownership is determined from the sold item/product, and all Principal analytics must be traceable to the underlying Invoice Item records. Higher-level reports (Invoice, Daily, Monthly, Customer, Principal) are analytical aggregations only. Invoice Item remains the canonical audit and drill-down evidence source. |
+| TQ-010 | **Resolved.** Which canonical KPI ID and semantics should replace the mismatched Supplier omzet relationship metadata? **Answer:** The existing Supplier omzet relationship metadata shall be updated to reference a dedicated Principal commercial KPI rather than legacy Salesman or Purchasing KPI identifiers. A single canonical Principal Sales-Out KPI shall be established as the authoritative commercial performance measure for Principal Entity Analytics, relationships, rankings, dashboards, and related reporting. All Supplier/Principal omzet relationship metadata shall reference this canonical KPI to ensure consistent semantics across the analytics platform. |
 
 ### Technical/data questions — implementation validation (GAP-007)
 
-These are required during implementation planning and early build validation. They are **not** prerequisites for planning readiness.
+These are required during implementation planning and early build validation. They are **not** prerequisites for planning readiness. **All implementation-validation questions (TQ-001 through TQ-005, TQ-008) are resolved as implementation-time data profiling and validation activities.** Their answers influence implementation effort, data quality remediation, and migration planning, but do not affect the feasibility conclusion, target architecture, or approved Principal-centric analytics model. No Product Owner decision is required; the implementation team shall validate and document the findings during delivery.
 
 | ID | Question |
 | --- | --- |
-| TQ-001 | What percentage of non-void Fakturs contain items from multiple Principals? |
-| TQ-002 | What percentage of Faktur Salesman × item Principal pairs lack a matching `BTR_SalesPersonPrincipalTarget` record for the transaction month? |
-| TQ-003 | How often has an item's `SupplierId` changed, and is any historical source available? |
-| TQ-004 | How closely does `SUM(FakturItem.Total)` reconcile to Faktur `GrandTotal`, by Faktur and period? |
-| TQ-005 | How many Customers transact with more than one Salesman and more than one Principal per month/year? |
-| TQ-008 | What is the expected Customer × Principal population and 36-month backfill volume? |
+| TQ-001 | **Resolved (implementation-time data profiling).** What percentage of non-void Fakturs contain items from multiple Principals? **Answer:** This is an implementation-time data profiling activity rather than an open design decision. The implementation team shall measure the percentage of non-void Fakturs containing items from multiple Principals and document the findings during delivery. The result does not affect the approved architecture because Principal attribution and evidence reporting are based on Invoice Item granularity (TQ-009). No additional business or architectural decision is required. |
+| TQ-002 | **Resolved (implementation-time data profiling and data quality assessment).** What percentage of Faktur Salesman × item Principal pairs lack a matching `BTR_SalesPersonPrincipalTarget` record for the transaction month? **Answer:** This is classified as implementation-time data profiling and data quality assessment rather than an open design decision. The implementation team shall measure the percentage of Faktur Salesman × Principal transaction pairs that lack a matching `BTR_SalesPersonPrincipalTarget` record for the transaction month and document the findings. The result does not affect the approved Principal-centric architecture. Any identified gaps shall be handled through implementation-time validation, reporting, or data quality rules as appropriate. |
+| TQ-003 | **Resolved (implementation-time data profiling and validation).** How often has an item's `SupplierId` changed, and is any historical source available? **Answer:** This question is classified as an implementation-time data profiling and validation activity. The answer influences implementation effort, data quality remediation, and migration planning, but does not affect the feasibility conclusion, target architecture, or approved Principal-centric analytics model. No Product Owner decision is required. The implementation team shall validate and document the findings during delivery. |
+| TQ-004 | **Resolved (implementation-time data profiling and validation).** How closely does `SUM(FakturItem.Total)` reconcile to Faktur `GrandTotal`, by Faktur and period? **Answer:** This question is classified as an implementation-time data profiling and validation activity. The answer influences implementation effort, data quality remediation, and migration planning, but does not affect the feasibility conclusion, target architecture, or approved Principal-centric analytics model. No Product Owner decision is required. The implementation team shall validate and document the findings during delivery. |
+| TQ-005 | **Resolved (implementation-time data profiling and validation).** How many Customers transact with more than one Salesman and more than one Principal per month/year? **Answer:** This question is classified as an implementation-time data profiling and validation activity. The answer influences implementation effort, data quality remediation, and migration planning, but does not affect the feasibility conclusion, target architecture, or approved Principal-centric analytics model. No Product Owner decision is required. The implementation team shall validate and document the findings during delivery. |
+| TQ-008 | **Resolved (implementation-time data profiling and validation).** What is the expected Customer × Principal population and 36-month backfill volume? **Answer:** This question is classified as an implementation-time data profiling and validation activity. The answer influences implementation effort, data quality remediation, and migration planning, but does not affect the feasibility conclusion, target architecture, or approved Principal-centric analytics model. No Product Owner decision is required. The implementation team shall validate and document the findings during delivery. |
 
 ### Operational questions
 
+Phase 1 operational impacts with approved resolutions (OQ-001 through OQ-004).
+
 | ID | Question |
 | --- | --- |
-| OQ-001 | Will existing Salesman dashboards run in parallel while terminology and Principal analytics are validated? |
-| OQ-002 | Which team maintains Salesman–Principal assignments and resolves unassigned/invalid sales? |
-| OQ-003 | How will users distinguish Principal sales-out, purchase-in, inventory, and target metrics in training/SOPs? |
-| OQ-004 | What historical limitations are acceptable to management? |
+| OQ-001 | **Resolved.** Will existing Salesman dashboards run in parallel while terminology and Principal analytics are validated? **Answer:** Existing Salesman dashboards shall remain available. The Principal-centric initiative introduces additional Principal Analytics and does not replace Salesman Analytics. Salesman and Principal dashboards serve different analytical purposes and may coexist indefinitely. No temporary parallel-run validation period or dashboard replacement strategy is required. |
+| OQ-002 | **Resolved.** Which team maintains Salesman–Principal assignments and resolves unassigned/invalid sales? **Answer:** Salesman–Principal assignment maintenance is owned by the Commercial/Sales Management function. The system shall identify and report unassigned or invalid Salesman–Principal mappings, but responsibility for reviewing and correcting assignment data remains with the business owners of the commercial structure. No additional governance model is required for this initiative; existing commercial master data ownership applies. |
+| OQ-003 | **Resolved.** How will users distinguish Principal sales-out, purchase-in, inventory, and target metrics in training/SOPs? **Answer:** Principal Analytics shall use explicit KPI names and definitions rather than generic terms such as "Supplier Omzet" or "Principal Omzet". Training materials, SOPs, dashboards, KPI catalogs, and reports shall consistently distinguish: Principal Sales-Out, Principal Purchase-In, Principal Inventory, Principal Target, Principal Achievement, and Principal Returns. No additional governance or architectural changes are required. Consistent KPI naming and KPI catalog definitions are sufficient to prevent ambiguity. (Cross-reference: TQ-010 establishes the single canonical Principal Sales-Out KPI as the authoritative commercial performance measure.) |
+| OQ-004 | **Resolved.** What historical limitations are acceptable to management? **Answer:** The Principal-centric initiative does not require perfect historical reconstruction. Current and future reporting periods shall be accurate according to the approved Principal attribution model. Historical periods shall be reconstructed using the best available data and may contain known limitations where complete attribution evidence is unavailable. Historical data quality limitations are acceptable provided they are documented and do not affect the accuracy of current and future analytics. |
 
 ### Required data-validation checks during implementation planning (GAP-007)
 
@@ -1002,33 +1497,33 @@ This inventory identifies what planning must consider; it does not prescribe imp
 ### Status
 
 ```text
-NOT READY
+READY
 ```
 
 ### Blocking issues
 
 1. ~~The proposed responsibility cardinality is not validated and is not enforced by the schema.~~ **Resolved by GAP-001.** Historical responsibility derivation resolved by GAP-006.
-2. ~~Customer–Principal has not been defined as observed behavior versus maintained commercial assignment.~~ **Resolved by GAP-003.** Transaction-derived only; active/history window policy remains open (TQ-006).
-3. Principal sales amount and Faktur-header reconciliation rules are unresolved.
-4. Principal target authority and allocation rules are unresolved.
+2. ~~Customer–Principal has not been defined as observed behavior versus maintained commercial assignment.~~ **Resolved by GAP-003.** Transaction-derived only; active/history window policy resolved by TQ-006 (Active = transaction within previous 6 months; Dormant = no transaction within previous 6 months; history retained indefinitely).
+3. ~~Principal sales amount and Faktur-header reconciliation rules are unresolved.~~ **Resolved by GAP-019.** Principal sales use line-item amounts exclusively; header totals are not allocated and reconciliation to `GrandTotal` is not required.
+4. ~~Principal target authority and allocation rules are unresolved.~~ **Resolved by BQ-004.** Principal Target is derived from the sum of Salesman allocations; no standalone Principal Target authority exists in Phase 1.
 5. ~~Principal receivable/collection scope is unresolved and currently unsupported.~~ **Resolved by GAP-005.** Financial metrics remain Customer-level; Principal financial KPIs are out of scope.
 6. ~~Historical Principal attribution reliability is unknown.~~ **Resolved by GAP-004.** Item-master attribution approved; immutability assumption documented; TQ-003 remains a validation check.
-7. The Supplier Entity Analytics cross-domain producer ownership model is unresolved.
+7. ~~The Supplier Entity Analytics cross-domain producer ownership model is unresolved.~~ **Resolved by GAP-011 and TQ-007.** Principal Entity Analytics remains the authoritative aggregation layer; cross-domain composition under a single refresh/freshness contract is approved with each source domain authoritative for its own KPIs; no producer-model extension required.
 8. ~~Production-data profiling required by section 9 has not been completed.~~ **Resolved by GAP-007.** Profiling is an implementation validation activity and is not a planning prerequisite.
-9. Navigation ownership and intended audience for Principal commercial analytics are unapproved.
+9. ~~Navigation ownership and intended audience for Principal commercial analytics are unapproved.~~ **Resolved by GAP-013, GAP-018, GAP-023, and BQ-008.** Principal commercial performance requires a clear primary navigation path (GAP-013); detailed navigation structure is an implementation planning concern; navigation codes are governed by a single authoritative registry resolved during implementation planning (GAP-023); no Principal-scoped authorization is introduced and all authorized commercial users may view all Principals (GAP-018, BQ-008).
 
 ### Conditions for planning readiness
 
 Planning may begin when:
 
-- BQ-004 through BQ-006 and BQ-008 through BQ-009 have approved answers. (BQ-001, BQ-002 resolved by GAP-001; BQ-003 resolved by GAP-003; BQ-007 resolved by GAP-005; BQ-010 resolved by GAP-002.)
+- ~~BQ-004 through BQ-006 and BQ-008 through BQ-009 have approved answers.~~ **Resolved:** BQ-004 (target = sum of Salesman allocations, Phase 1), BQ-005 (Sales-Out DPP after commercial discounts, before tax), BQ-006 (Sales-Out DPP as authoritative measure; Sales and Returns are independent KPIs), BQ-008 (role-based commercial visibility; all Principals visible to authorized commercial users), BQ-009 (Principal is user-facing term; SupplierId remains technical). (BQ-001, BQ-002 resolved by GAP-001; BQ-003 resolved by GAP-003; BQ-007 resolved by GAP-005; BQ-010 resolved by GAP-002.)
 - ~~TQ-001 through TQ-005 and TQ-008 have measured results.~~ **Resolved by GAP-007:** these are implementation validation activities, not planning prerequisites.
-- A canonical KPI grain/attribution matrix is approved. (Commercial vs field-activity classification approved by GAP-002; Customer–Principal as transaction-derived relationship approved by GAP-003; Item–Principal via immutable Item master approved by GAP-004; Customer-only financial metrics approved by GAP-005; monthly target-based Salesman–Principal historical responsibility approved by GAP-006; production profiling deferred to implementation validation per GAP-007; technical matrix still required.)
-- A Principal sales-to-company reconciliation rule is approved.
+- A canonical KPI grain/attribution matrix is approved. (Commercial vs field-activity classification approved by GAP-002; Customer–Principal as transaction-derived relationship approved by GAP-003; Item–Principal via immutable Item master approved by GAP-004; Customer-only financial metrics approved by GAP-005; monthly target-based Salesman–Principal historical responsibility approved by GAP-006; production profiling deferred to implementation validation per GAP-007; technical matrix resolved by TQ-009 (Invoice Item is the canonical evidence grain), TQ-010 (single canonical Principal Sales-Out KPI), GAP-019 (line-item authoritative; no header reconciliation), GAP-020 (Sales-Out DPP as authoritative measure; sales and returns are independent KPIs), and BQ-005/BQ-006 (measure definition).)
+- ~~A Principal sales-to-company reconciliation rule is approved.~~ **Resolved by GAP-019.** Line-item amounts are authoritative for Principal sales; header totals are not allocated and reconciliation to `GrandTotal` is not required.
 - ~~Customer–Principal is approved as either observed analytical relationship or maintained domain relationship.~~ **Resolved by GAP-003:** transaction-derived analytical relationship only.
 - ~~Principal collection KPIs are explicitly excluded or supported by an approved allocation rule.~~ **Resolved by GAP-005:** Principal financial/collection/credit KPIs are excluded; no open-balance allocation.
-- One navigation/product responsibility model is selected.
-- Entity Analytics has an approved multi-domain Supplier composition boundary.
+- ~~One navigation/product responsibility model is selected.~~ **Resolved by GAP-013.** Principal commercial performance requires a clear primary navigation path; the detailed navigation structure is an implementation planning concern, resolved against a single authoritative navigation registry (GAP-023).
+- ~~Entity Analytics has an approved multi-domain Supplier composition boundary.~~ **Resolved by TQ-007 and GAP-011.** Multiple domain inputs compose under a single Entity Analytics refresh/freshness contract; source domains remain authoritative for their own KPIs; Entity Analytics acts as composition and presentation layer.
 
 ### Planner guidance
 
@@ -1101,10 +1596,10 @@ The plan must not:
 | Question | Assessment |
 | --- | --- |
 | Is the portal wholly Salesman-centric? | No. It is mixed, but Sales, Sales Force, parts of Customer/Finance, KPI classification, and navigation questions embed Salesman-centric assumptions. |
-| Is the proposed model proven? | Partially. Approved business assumptions (GAP-001–GAP-007) support planning; remaining open items are sales reconciliation, target authority, navigation, and Entity Analytics composition. |
+| Is the proposed model proven? | Partially proven. Approved business decisions (GAP-001–GAP-023) and resolved open questions (BQ-001–BQ-010, TQ-006, TQ-007, TQ-009, TQ-010) support planning; sales reconciliation, target authority, navigation, and Entity Analytics composition were resolved during this assessment. |
 | What is Salesman–Principal responsibility? | **Many-to-many commercial portfolio assignment (GAP-001).** Historical period responsibility is derived from monthly `BTR_SalesPersonPrincipalTarget` records (GAP-006). Principal is the primary commercial responsibility dimension; Customer is not owned by Salesman. |
 | How are Salesman attribution dimensions defined? | **Commercial attribution is unified under the portfolio owner on the transaction (GAP-002, 2026-09-07T20:30:00+07:00).** Field activity is a separate operational dimension attributed to the performer. |
-| Can Principal sales analytics be built? | Yes for line-derived current/historical sales, subject to attribution and reconciliation decisions. |
+| Can Principal sales analytics be built? | Yes for line-derived current/historical sales. Attribution evidence grain is resolved (TQ-009: Invoice Item), sales measure is resolved (GAP-020, BQ-005, BQ-006: Sales-Out DPP as the authoritative measure; sales and returns are independent KPIs), reconciliation is resolved (GAP-019: line-item authoritative; no header reconciliation required). |
 | Can Principal piutang/collection analytics be built safely now? | **No, and not in scope.** GAP-005 confines AR, open balance, collection performance, and credit exposure to Customer-level metrics. |
 | What Principal financial metrics are in scope? | **None in this initiative (GAP-005, 2026-09-07).** Principal analytics are limited to sales, growth, product, portfolio, and market-performance from sales transactions. |
 | Should Customer–Principal be first-class? | Not as a new Entity Analytics entity type now; yes as a first-class **transaction-derived** analytical relationship/projection with pair-scoped evidence and history (GAP-003). |
@@ -1114,4 +1609,4 @@ The plan must not:
 | Does production profiling block planning? | **No (GAP-007, 2026-09-07).** Proceed on approved assumptions; profile during implementation validation; material findings handled separately. |
 | Should Salesman analytics be removed? | No. Reposition them around execution, attribution, allocation, and coaching. |
 | Overall recommendation | GO with major redesign. |
-| Planning readiness | NOT READY. |
+| Planning readiness | READY. |

@@ -62,7 +62,7 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.Services
                     {
                         CustomerCode = g.Key,
                         CustomerName = first.CustomerName?.Trim() ?? g.Key,
-                        Total = g.Sum(x => x.LineTotal)
+                        Total = g.Sum(x => x.LineSalesOut)
                     };
                 })
                 .OrderByDescending(x => x.Total)
@@ -92,7 +92,7 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.Services
                         SalesPersonId = g.Key,
                         SalesPersonCode = first.SalesPersonCode?.Trim() ?? g.Key,
                         SalesPersonName = first.SalesPersonName?.Trim() ?? first.SalesPersonCode?.Trim() ?? g.Key,
-                        Total = g.Sum(x => x.LineTotal)
+                        Total = g.Sum(x => x.LineSalesOut)
                     };
                 })
                 .OrderByDescending(x => x.Total)
@@ -123,7 +123,7 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.Services
                         BrgId = g.Key,
                         BrgCode = first.BrgCode?.Trim() ?? g.Key,
                         BrgName = first.BrgName?.Trim() ?? g.Key,
-                        Total = g.Sum(x => x.LineTotal)
+                        Total = g.Sum(x => x.LineSalesOut)
                     };
                 })
                 .OrderByDescending(x => x.Total)

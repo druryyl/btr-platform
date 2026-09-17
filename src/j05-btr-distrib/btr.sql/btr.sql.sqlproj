@@ -97,6 +97,7 @@
     <Build Include="Tables\SalesContext\BTR_SalesOmzetTarget.sql" />
     <Build Include="Tables\SalesContext\BTR_SalesOmzetHealthWeekly.sql" />
     <Build Include="Tables\BrgContext\BTR_BrgHarga.sql" />
+    <Build Include="Tables\BrgContext\BTR_BrgBarcode.sql" />
     <Build Include="Tables\BrgContext\BTR_Kategori.sql" />
     <Build Include="Tables\BrgContext\BTR_HargaType.sql" />
     <Build Include="Tables\InventoryContext\BTR_StokBalanceWarehouse.sql" />
@@ -122,6 +123,8 @@
     <Build Include="Tables\InventoryContext\BTR_ReturJualItem.sql" />
     <Build Include="Tables\InventoryContext\BTR_ReturJualItemQtyHrg.sql" />
     <Build Include="Tables\InventoryContext\BTR_ReturJualItemDisc.sql" />
+    <Build Include="Tables\InventoryContext\BTR_ReturnOrder.sql" />
+    <Build Include="Tables\InventoryContext\BTR_ReturnOrderItem.sql" />
     <Build Include="Tables\InventoryContext\BTR_StokOp.sql" />
     <Build Include="Tables\Finance\BTR_Tagihan.sql" />
     <Build Include="Tables\Finance\BTR_TagihanFaktur.sql" />
@@ -191,6 +194,10 @@
     <Build Include="Tables\ReportingContext\BTRPD_InventoryOptimizationPriorityDist.sql" />
     <Build Include="Tables\ReportingContext\BTRPD_InventoryOptimizationActionHeat.sql" />
     <Build Include="Tables\ReportingContext\BTRPD_SalesTopSalesman.sql" />
+    <Build Include="Tables\ReportingContext\BTRPD_PrincipalPurchaseInKpi.sql" />
+    <Build Include="Tables\ReportingContext\BTRPD_PrincipalPurchaseIn.sql" />
+    <Build Include="Tables\ReportingContext\BTRPD_PrincipalInventoryKpi.sql" />
+    <Build Include="Tables\ReportingContext\BTRPD_PrincipalInventory.sql" />
     <Build Include="Tables\ReportingContext\BTRPD_PurchasingKpi.sql" />
     <Build Include="Tables\ReportingContext\BTRPD_PurchasingWeekTrend.sql" />
     <Build Include="Tables\ReportingContext\BTRPD_PurchasingPostingStatus.sql" />
@@ -247,13 +254,22 @@
     <None Include="DataSeeds\BTR_ParamNo_SalesOmzetHealthWeekly.sql" />
     <None Include="DataSeeds\BTR_ParamSistem_VisitPlan.sql" />
     <None Include="DataSeeds\BTR_RoleMenu_VisitPlan.sql" />
+    <None Include="DataSeeds\BTR_RoleMenu_BarcodeRegistry.sql" />
+    <None Include="DataSeeds\BTR_RoleMenu_ReturnOrder.sql" />
     <None Include="Scripts\Upgrade_PortalDashboard_GeneratedIds_ToUlid.sql" />
     <None Include="Scripts\Rename_PortalDashboard_Tables_To_BTRPD.sql" />
     <None Include="Scripts\Create_BTRPD_PortalDashboard_Tables.sql" />
     <None Include="Scripts\Upgrade_M14_PiutangDashboard_V2.sql" />
     <None Include="Scripts\Upgrade_M29_CustomerRiskForecast.sql" />
     <None Include="Scripts\Upgrade_M18_SalesmenPerformance_V2.sql" />
+    <None Include="Scripts\Upgrade_PCM037_Cu01LastInvoicingSalesman.sql" />
+    <None Include="Scripts\Upgrade_PCM020_PrincipalPurchaseIn.sql" />
+    <None Include="Scripts\Upgrade_PCM021_PrincipalInventory.sql" />
+    <None Include="Scripts\Upgrade_PCM051_InventoryCrossLink.sql" />
+    <None Include="Scripts\Upgrade_PCM022_PrincipalCustomerCoverage.sql" />
     <None Include="Scripts\Create_BTR_SalesPersonSupplier.sql" />
     <None Include="Scripts\Create_BTR_SalesPersonPrincipalTarget.sql" />
+    <None Include="Scripts\Upgrade_Barcode_Registry.sql" />
+    <None Include="Scripts\Create_BTR_ReturnOrder.sql" />
   </ItemGroup>
 </Project>

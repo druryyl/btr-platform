@@ -117,6 +117,11 @@ namespace btr.test.SalesContext
                 DeleteCalls.Add((salesPersonId, fromDate, toDate));
             }
 
+            public void DeleteRange(string salesPersonId, DateTime fromDate, DateTime toDate)
+            {
+                DeleteCalls.Add((salesPersonId, fromDate, toDate));
+            }
+
             public void BulkInsert(IEnumerable<VisitPlanModel> rows)
             {
                 InsertedRows.AddRange(rows);

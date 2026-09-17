@@ -141,7 +141,7 @@ namespace btr.application.ReportingContext.Shared
                     "/dashboard/salesmen", PiutangReportRoute, "Next validation: Piutang Tracker (FT5)", PeriodModeAllOpenBalances),
                 Entry(DashboardSalesmanAggregator.SignalCustomerConcentration, "Customer Concentration", InvestigationMetadataBuilder.EntityTypeSalesman,
                     "/dashboard/salesmen", SalesReportRoute, "Next validation: Sales Omzet Chart (RO2)", PeriodModeCurrentMonth),
-                Entry(DashboardSalesmanAggregator.SignalDormantCustomerPortfolio, "Dormant Customer Portfolio", InvestigationMetadataBuilder.EntityTypeSalesman,
+                Entry(DashboardSalesmanAggregator.SignalDormantCustomerPortfolio, DashboardSalesmanAggregator.LabelLastInvoiceDormantCustomers, InvestigationMetadataBuilder.EntityTypeSalesman,
                     "/dashboard/salesmen", SalesReportRoute, "Next validation: Sales Omzet Chart (RO2)", PeriodModeCurrentMonth),
 
                 // Collection
@@ -233,10 +233,14 @@ namespace btr.application.ReportingContext.Shared
                     "/dashboard/salesmen", PiutangReportRoute, "Next validation: Piutang Tracker (FT5)", PeriodModeAllOpenBalances),
                 Entry(SignalRankingCollectionTopOverdueCustomer, "Top Overdue Customer", InvestigationMetadataBuilder.EntityTypeCustomer,
                     "/dashboard/collection", PiutangReportRoute, "Next validation: Piutang Tracker (FT5)", PeriodModeAllOpenBalances),
-                Entry(SignalRankingCollectionTopOverdueSalesman, "Top Overdue Salesman", InvestigationMetadataBuilder.EntityTypeSalesman,
+                Entry(SignalRankingCollectionTopOverdueSalesman, "Invoice-Attributed Overdue Salesman", InvestigationMetadataBuilder.EntityTypeSalesman,
                     "/dashboard/collection", PiutangReportRoute, "Next validation: Piutang Tracker (FT5)", PeriodModeAllOpenBalances),
                 Entry(SignalRankingTopPrincipal, "Top Principal", InvestigationMetadataBuilder.EntityTypePrincipal,
                     "/dashboard/purchasing", PurchasingReportRoute, null, PeriodModeCurrentMonth),
+
+                // Principal Sales-Out (PCM-050)
+                Entry(DashboardAlertCenterAgg.Services.AlertCenterRegistry.SignalPrincipalSalesOut, "Principal Sales-Out", InvestigationMetadataBuilder.EntityTypePrincipal,
+                    "/dashboard/principal-performance", SalesReportRoute, null, PeriodModeCurrentMonth),
 
                 // Customer portfolio (M31)
                 Entry(PortfolioActionCollect, "Collect", InvestigationMetadataBuilder.EntityTypeCustomer,

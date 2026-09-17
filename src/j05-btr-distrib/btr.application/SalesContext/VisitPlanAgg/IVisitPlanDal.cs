@@ -36,6 +36,7 @@ namespace btr.application.SalesContext.VisitPlanAgg
         IEnumerable<VisitPlanModel> ListData(VisitPlanDateRangeFilter filter);
         IEnumerable<string> ListSalesPersonIdsWithRoutes();
         void DeleteFuture(string salesPersonId, DateTime fromDate, DateTime toDate);
+        void DeleteRange(string salesPersonId, DateTime fromDate, DateTime toDate);
         void BulkInsert(IEnumerable<VisitPlanModel> rows);
     }
 }

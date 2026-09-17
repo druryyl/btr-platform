@@ -6,6 +6,11 @@ import { createChartOptions } from '@/services/chartLayout'
 import SelectButton from 'primevue/selectbutton'
 import ProgressSpinner from 'primevue/progressspinner'
 import type { DashboardCollectionOptimizationWorkloadItem } from '@/models/dashboard'
+import {
+  CU03_ROUTED_SALESMAN_NOTE,
+  CU03_SALESMAN_WORKLOAD_LABEL,
+  CU03_SALESMAN_WORKLOAD_TYPE,
+} from '@/services/collectionOptimizationRouting'
 
 const props = defineProps<{
   workload: DashboardCollectionOptimizationWorkloadItem[]
@@ -13,7 +18,10 @@ const props = defineProps<{
 }>()
 
 const workloadType = ref('Wilayah')
-const typeOptions = ['Wilayah', 'Salesman']
+const typeOptions = [
+  { label: 'Wilayah', value: 'Wilayah' },
+  { label: CU03_SALESMAN_WORKLOAD_LABEL, value: CU03_SALESMAN_WORKLOAD_TYPE },
+]
 
 const filtered = computed(() =>
   (props.workload ?? []).filter((item) => item.WorkloadType === workloadType.value),
@@ -43,8 +51,22 @@ const chartOptions = computed(() =>
   <Card class="collection-optimization-workload-chart portal-chart-card">
     <template #title>
       <div class="collection-optimization-workload-chart__header">
-        <span>Workload</span>
-        <SelectButton v-model="workloadType" :options="typeOptions" size="small" />
+        <div>
+          <span>Workload</span>
+          <p
+            v-if="workloadType === CU03_SALESMAN_WORKLOAD_TYPE"
+            class="collection-optimization-workload-chart__note"
+          >
+            {{ CU03_ROUTED_SALESMAN_NOTE }}
+          </p>
+        </div>
+        <SelectButton
+          v-model="workloadType"
+          :options="typeOptions"
+          option-label="label"
+          option-value="value"
+          size="small"
+        />
       </div>
     </template>
     <template #content>
@@ -60,6 +82,14 @@ const chartOptions = computed(() =>
 </template>
 
 <style scoped>
+.collection-optimization-workload-chart__note {
+  margin: 0.35rem 0 0;
+  font-size: 0.875rem;
+  font-weight: 400;
+  line-height: 1.5;
+  color: var(--p-text-muted-color);
+}
+
 .collection-optimization-workload-chart__header {
   display: flex;
   align-items: center;

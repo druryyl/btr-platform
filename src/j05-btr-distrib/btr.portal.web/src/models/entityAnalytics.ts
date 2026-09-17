@@ -354,6 +354,7 @@ export interface ProfileRelationshipBlock {
   RelationshipLabel: string
   DisplayName: string
   TargetEntityType: string
+  MetricKpiId?: string | null
   Rows: ProfileRelatedEntityRow[]
 }
 
@@ -367,6 +368,8 @@ export interface ProfileRelatedEntityRow {
   TargetEntityName: string
   MetricValue: number | null
   ProfileRoute: string
+  RelationshipStatus?: string | null
+  LastTransactionDate?: string | null
 }
 
 export interface ProfileEvidenceSection extends ProfileSectionBase {
@@ -378,6 +381,9 @@ export interface ProfileEvidenceLink {
   Label: string
   ReportRoute: string
   FilterDimension: string
+  RelationshipCode?: string | null
+  MetricKpiId?: string | null
+  LensId?: string | null
 }
 
 // --- M32R Investigation Workspace ---
@@ -395,6 +401,10 @@ export interface MapPreset {
   AxisYKpiId: string
   AxisXLabel: string
   AxisYLabel: string
+  BubbleKpiId?: string | null
+  BubbleColorKpiId?: string | null
+  BubbleLabel?: string | null
+  BubbleColorLabel?: string | null
   IsDefault: boolean
 }
 
@@ -408,9 +418,14 @@ export interface PopulationMapResponse {
   AxisYLabel: string
   AxisXUnit: string | null
   AxisYUnit: string | null
+  BubbleKpiId?: string | null
+  BubbleColorKpiId?: string | null
+  BubbleLabel?: string | null
+  BubbleColorLabel?: string | null
   TotalPopulationCount: number
   FilteredPopulationCount: number
   ActiveFilterDescription: string | null
+  DimensionLabel: string | null
   GeneratedAt: string | null
   Points: PopulationMapPoint[]
 }
@@ -429,6 +444,11 @@ export interface PopulationMapPoint {
   IsActive: boolean
   ActiveAttentionCount: number
   MatchesFilter: boolean
+  IsLowConfidence?: boolean
+  BubbleValue?: number | null
+  FormattedBubbleValue?: string | null
+  BubbleColorValue?: number | null
+  FormattedBubbleColorValue?: string | null
   SupplementaryLabel?: string | null
   FormattedSupplementaryValue?: string | null
 }
@@ -450,6 +470,7 @@ export interface PeerDistributionResponse {
   PeerMax: number | null
   FormattedPeerRange: string
   Bins: PeerDistributionBin[]
+  DistributionSummary?: string | null
 }
 
 export interface PeerGroupRule {
@@ -471,6 +492,37 @@ export interface PeerDistributionBin {
   BinEnd: number
   Count: number
   Label: string
+  IsOverflow?: boolean
+}
+
+export interface InvestigationLensesResponse {
+  EntityType: string
+  DefaultLensId: string | null
+  Lenses: InvestigationLens[]
+}
+
+export interface EntityDataHealthResponse {
+  IsAvailable: boolean
+  EntityType: string
+  PeriodYear: number | null
+  PeriodMonth: number | null
+  GeneratedAt: string | null
+  TargetCoveragePercentage: number | null
+  PrincipalsMissingTargetCount: number
+  UnknownPrincipalExceptionCount: number
+  UnknownPrincipalExceptionAmount: number
+}
+
+export interface InvestigationLens {
+  LensId: string
+  DisplayName: string
+  IsDefault: boolean
+  DefaultPresetId: string | null
+  KpiIds: string[]
+  DerivedMetricIds: string[]
+  AttentionCategories: string[]
+  RelationshipDrivers: string[]
+  EvidenceRoutes: string[]
 }
 
 export interface WorkspaceSelectedEntity {

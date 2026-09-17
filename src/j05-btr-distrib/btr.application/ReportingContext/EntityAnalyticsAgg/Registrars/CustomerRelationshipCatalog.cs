@@ -1,6 +1,8 @@
+using System;
 using System.Collections.Generic;
 using btr.application.ReportingContext.EntityAnalyticsAgg.Contracts;
 using btr.application.ReportingContext.EntityAnalyticsAgg.Models;
+using btr.application.ReportingContext.PrincipalAnalyticsAgg;
 
 namespace btr.application.ReportingContext.EntityAnalyticsAgg.Registrars
 {
@@ -11,6 +13,13 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Registrars
         public const string TopItemsByOmzet = "TopItemsByOmzet";
         public const string TopPrincipalsByOmzet = "TopPrincipalsByOmzet";
 
+        public const string SalesOmzetMetricKpiId = PrincipalKpiCatalog.SalesOutId;
+
+        public static bool IsSalesOmzetRelationship(string relationshipCode)
+        {
+            return string.Equals(relationshipCode, TopPrincipalsByOmzet, StringComparison.OrdinalIgnoreCase);
+        }
+
         public static void Register(IRelationshipDefinitionRegistry registry)
         {
             if (registry == null)
@@ -19,7 +28,7 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Registrars
             registry.Register(EntityTypeCode.Customer, new RelationshipDefinition
             {
                 RelationshipCode = AssignedSalesman,
-                DisplayName = "Assigned Salesman",
+                DisplayName = "Last Invoicing Salesman",
                 TargetEntityType = EntityTypeCode.Salesman,
                 PeriodSemantics = "MTD",
                 TopN = 1
@@ -40,7 +49,7 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Registrars
                 RelationshipCode = TopPrincipalsByOmzet,
                 DisplayName = "Top Principals",
                 TargetEntityType = EntityTypeCode.Supplier,
-                MetricKpiId = "CU-KPI-009",
+                MetricKpiId = SalesOmzetMetricKpiId,
                 PeriodSemantics = "MTD",
                 TopN = 10
             });

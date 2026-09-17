@@ -11,11 +11,14 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Services
     /// IDR: fixed first bin 0–100,000, quantile cuts snapped to a 1-2-5 Rupiah ladder,
     /// then forced high-end edges 50M / 100M / 200M / 500M before peer max.
     /// Days: week/month calendar ladder ending with 365 → peer max.
-    /// Other units: linear equal-width bins.
+    /// Other units: adaptive-count nice-linear bins with Tukey-fence overflow isolation.
     /// </summary>
     public static class EntityPeerDistributionBinBuilder
     {
         public const int DefaultBinCount = 20;
+
+        /// <summary>Minimum peers required before Tukey fencing applies (fences are noise below this).</summary>
+        public const int MinPeersForFencing = 10;
 
         /// <summary>Fixed first IDR segment end (and floor for remaining ladder).</summary>
         public const decimal IdrFirstBinEnd = 100_000m;
@@ -262,33 +265,203 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Services
                 edges.Add(edge);
         }
 
+        /// <summary>
+        /// Adaptive bulk bin-count ceiling by peer population size, so the bin count
+        /// never approaches the observation count for small peer groups.
+        /// </summary>
+        public static int ResolveEffectiveBinCount(int peerCount, int requestedCount)
+        {
+            var bandCap = peerCount <= 30 ? 8 : peerCount <= 100 ? 12 : DefaultBinCount;
+            return Math.Max(1, Math.Min(requestedCount, bandCap));
+        }
+
+        /// <summary>
+        /// Linear-interpolated quartile of pre-sorted values (same interpolation style
+        /// as the IDR quantile cuts). Values must be sorted ascending.
+        /// </summary>
+        public static decimal Quartile(IReadOnlyList<decimal> sortedValues, double quantile)
+        {
+            if (sortedValues == null || sortedValues.Count == 0)
+                throw new ArgumentException("Values are required.", nameof(sortedValues));
+            if (sortedValues.Count == 1)
+                return sortedValues[0];
+
+            var pos = quantile * (sortedValues.Count - 1);
+            var low = (int)Math.Floor(pos);
+            var high = Math.Min(sortedValues.Count - 1, low + 1);
+            var frac = (decimal)(pos - low);
+            return sortedValues[low] + ((sortedValues[high] - sortedValues[low]) * frac);
+        }
+
+        private static readonly int[] GenericNiceMantissas = { 1, 2, 5, 10 };
+
+        private static decimal DecimalPow10(int exp)
+        {
+            if (exp >= 0)
+            {
+                decimal result = 1m;
+                for (var i = 0; i < exp; i++)
+                    result *= 10m;
+                return result;
+            }
+
+            decimal fraction = 1m;
+            for (var i = 0; i < -exp; i++)
+                fraction /= 10m;
+            return fraction;
+        }
+
+        private static IEnumerable<decimal> EnumerateNiceLadder(decimal magnitude)
+        {
+            // Exact decimal powers (0.1, 0.01, …) — never double-based Math.Pow,
+            // so fractional ladder steps compare exactly in tests and labels.
+            var d = (double)magnitude;
+            var exp = (int)Math.Floor(Math.Log10(d));
+            var seen = new HashSet<decimal>();
+            for (var e = exp - 2; e <= exp + 2; e++)
+            {
+                var scale = DecimalPow10(e);
+                foreach (var m in GenericNiceMantissas)
+                {
+                    var candidate = m * scale;
+                    if (candidate > 0 && seen.Add(candidate))
+                        yield return candidate;
+                }
+            }
+        }
+
+        /// <summary>Smallest 1-2-5 × 10ⁿ step at or above the value (sign-aware).</summary>
+        public static decimal NiceCeil(decimal value)
+        {
+            if (value == 0m)
+                return 0m;
+            var abs = Math.Abs(value);
+            var best = abs;
+            var found = false;
+            foreach (var candidate in EnumerateNiceLadder(abs))
+            {
+                if (candidate >= abs && (!found || candidate < best))
+                {
+                    best = candidate;
+                    found = true;
+                }
+            }
+            if (!found)
+                best = abs;
+            return value > 0 ? best : -best;
+        }
+
+        /// <summary>Largest 1-2-5 × 10ⁿ step at or below the value (sign-aware).</summary>
+        public static decimal NiceFloor(decimal value)
+        {
+            if (value == 0m)
+                return 0m;
+            var abs = Math.Abs(value);
+            var best = abs;
+            var found = false;
+            foreach (var candidate in EnumerateNiceLadder(abs))
+            {
+                if (candidate <= abs && (!found || candidate > best))
+                {
+                    best = candidate;
+                    found = true;
+                }
+            }
+            if (!found)
+                best = abs;
+            return value > 0 ? best : -best;
+        }
+
         private static List<PeerDistributionBinDto> BuildLinearBins(
             IReadOnlyList<decimal> values,
             int binCount,
             decimal min,
             decimal max)
         {
-            var span = max - min;
-            var width = span / binCount;
-            var bins = new List<PeerDistributionBinDto>(binCount);
+            var effectiveCount = ResolveEffectiveBinCount(values.Count, binCount);
 
-            for (var i = 0; i < binCount; i++)
+            // Tukey-fence outlier isolation (both tails). The fence is an implementation
+            // mechanism only; the chart shows business ranges plus flagged overflow bins.
+            decimal? cap = null;
+            decimal? floor = null;
+            if (values.Count >= MinPeersForFencing)
             {
-                var start = min + (width * i);
-                var end = i == binCount - 1 ? max : min + (width * (i + 1));
-                var count = CountInRange(values, start, end, isLast: i == binCount - 1);
+                var q1 = Quartile(values, 0.25);
+                var q3 = Quartile(values, 0.75);
+                var iqr = q3 - q1;
+                if (iqr > 0)
+                {
+                    var hiFence = q3 + (1.5m * iqr);
+                    var loFence = q1 - (1.5m * iqr);
 
+                    var niceCap = NiceCeil(hiFence);
+                    if (values.Any(v => v > hiFence) && niceCap < max)
+                        cap = niceCap;
+
+                    var niceFloor = NiceFloor(loFence);
+                    if (values.Any(v => v < loFence) && niceFloor > min)
+                        floor = niceFloor;
+                }
+            }
+
+            var bulkStart = floor ?? min;
+            var bulkEnd = cap ?? max;
+            var step = NiceCeil((bulkEnd - bulkStart) / effectiveCount);
+            if (step <= 0)
+                step = bulkEnd - bulkStart;
+
+            // Outer bulk edges clamp to the fenced bounds so bulk bins never overlap
+            // the overflow/underflow buckets (counts would otherwise double-book).
+            // Without adjacent overflow buckets the start snaps outward to a nice edge.
+            var edges = new List<decimal>();
+            var cursor = floor.HasValue ? floor.Value : Math.Floor(bulkStart / step) * step;
+            while (cursor < bulkEnd)
+            {
+                edges.Add(cursor);
+                cursor += step;
+            }
+            edges.Add(bulkEnd);
+
+            var bins = new List<PeerDistributionBinDto>();
+            if (floor.HasValue)
+            {
                 bins.Add(new PeerDistributionBinDto
                 {
-                    BinIndex = i,
-                    BinStart = start,
-                    BinEnd = end,
-                    Count = count,
-                    Label = FormatRangeLabel(start, end)
+                    BinIndex = bins.Count,
+                    BinStart = min,
+                    BinEnd = floor.Value,
+                    Count = CountInRange(values, min, floor.Value, isLast: false),
+                    Label = FormatRangeLabel(min, floor.Value),
+                    IsOverflow = true
+                });
+            }
+
+            var bulkBins = BuildBinsFromEdges(values, edges);
+            foreach (var bin in bulkBins)
+            {
+                bin.BinIndex = bins.Count;
+                bins.Add(bin);
+            }
+
+            if (cap.HasValue)
+            {
+                bins.Add(new PeerDistributionBinDto
+                {
+                    BinIndex = bins.Count,
+                    BinStart = cap.Value,
+                    BinEnd = max,
+                    Count = CountInRange(values, cap.Value, max, isLast: true),
+                    Label = FormatOverflowLabel(cap.Value),
+                    IsOverflow = true
                 });
             }
 
             return bins;
+        }
+
+        private static string FormatOverflowLabel(decimal cap)
+        {
+            return $"≥ {FormatEdgeLabel(cap)}";
         }
 
         private static int CountInRange(
@@ -315,9 +488,16 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Services
             return count;
         }
 
+        private static string FormatEdgeLabel(decimal value)
+        {
+            if (value == Math.Truncate(value))
+                return value.ToString("N0", CultureInfo.InvariantCulture);
+            return value.ToString("0.##", CultureInfo.InvariantCulture);
+        }
+
         private static string FormatRangeLabel(decimal start, decimal end)
         {
-            return $"{start:N0} – {end:N0}";
+            return $"{FormatEdgeLabel(start)} – {FormatEdgeLabel(end)}";
         }
     }
 }

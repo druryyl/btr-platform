@@ -4,13 +4,13 @@ import Chart from 'primevue/chart'
 import { fetchPeerDistribution } from '@/api/entityAnalyticsApi'
 import type { PeerDistributionResponse, PopulationMapPoint, WorkspaceSelectedEntity } from '@/models/entityAnalytics'
 import { createChartOptions } from '@/services/chartLayout'
-import { formatBinRangeLabel } from '@/services/populationMapLayout'
 import { resolvePeerGroupLabel, peerGroupDimensionHeading } from '@/services/peerGroupLabel'
 import { buildEntityColorMap } from '@/composables/useComparisonColors'
 import {
   buildPeerBarColors,
   buildPeerBinMarkers,
   ensurePeerBinMarkerPluginRegistered,
+  formatPeerBinLabel,
   peerBinMarkerPlugin,
   PEER_BIN_NEUTRAL_FILL,
 } from '@/services/peerPositionChart'
@@ -91,7 +91,7 @@ const chartData = computed(() => {
 
   return {
     labels: first.Bins.map((b, i, bins) =>
-      formatBinRangeLabel(b.BinStart, b.BinEnd, unit, i === bins.length - 1),
+      formatPeerBinLabel(b, unit, i === bins.length - 1),
     ),
     datasets: [
       {
@@ -127,6 +127,10 @@ const chartOptions = computed(() =>
 
 const firstKpiLabel = computed(
   () => distributions.value[props.entityIds[0]]?.KpiDisplayName ?? 'Peer Position',
+)
+
+const distributionSummary = computed(
+  () => distributions.value[props.entityIds[0]]?.DistributionSummary ?? null,
 )
 
 const summaryLines = computed(() =>
@@ -264,6 +268,7 @@ watch(
           </p>
         </div>
         <p class="iw-meta">Peer range: {{ summaryLines[0]?.range }}</p>
+        <p v-if="distributionSummary" class="iw-meta">{{ distributionSummary }}</p>
       </div>
       <div v-if="chartData" class="portal-chart-canvas portal-chart-canvas--compact">
         <Chart

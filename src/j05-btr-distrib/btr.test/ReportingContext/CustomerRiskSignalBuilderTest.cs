@@ -106,6 +106,35 @@ namespace btr.test.ReportingContext
                 .Should().Be(1);
         }
 
+        [Fact]
+        public void LowRecoveryExplanation_UsesInvoiceAttribution_NotAssignedOwner()
+        {
+            CustomerRiskSignalBuilder.LowRecoveryCustomerExplanation
+                .Should().Contain("Last invoicing Salesman");
+            CustomerRiskSignalBuilder.LowRecoveryCustomerExplanation
+                .Should().Contain("invoice attribution");
+            CustomerRiskSignalBuilder.LowRecoveryCustomerExplanation
+                .Should().Contain("not Customer ownership");
+            CustomerRiskSignalBuilder.LowRecoveryCustomerExplanation
+                .Should().NotContain("Assigned salesman");
+
+            var context = BaseContext();
+            context.SalesPersonId = "SP1";
+            context.OverdueBalance = 1_000_000m;
+
+            var rows = CustomerRiskSignalBuilder.Build(
+                context,
+                DefaultOptions,
+                0m,
+                new DateTime(2026, 6, 15),
+                new HashSet<string>(),
+                new HashSet<string> { "SP1" });
+
+            var row = rows.Single(r => r.SignalKey == CustomerRiskSignalBuilder.SignalLowRecoveryCustomer);
+            row.Explanation.Should().Be(CustomerRiskSignalBuilder.LowRecoveryCustomerExplanation);
+            row.SignalLabel.Should().Be("Low Recovery Customer");
+        }
+
         private static CustomerRiskForecastContext BaseContext() =>
             new CustomerRiskForecastContext
             {

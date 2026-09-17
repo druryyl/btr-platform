@@ -20,13 +20,18 @@ const props = defineProps<{
   clickable?: boolean
   clickHint?: string
   domain?: DashboardDomain
+  currencyFields?: string[]
+  selectedField?: string
+  selectedValue?: string
 }>()
 
 const emit = defineEmits<{
   rowClick: [row: Record<string, unknown>]
 }>()
 
-const numericFields = computed(() => new Set([props.valueField, props.percentField].filter(Boolean)))
+const numericFields = computed(
+  () => new Set([props.valueField, props.percentField, ...(props.currencyFields ?? [])].filter(Boolean)),
+)
 
 function onRowClick(event: { data: object }): void {
   if (!props.clickable) return
@@ -34,7 +39,8 @@ function onRowClick(event: { data: object }): void {
 }
 
 function formatCell(field: string, value: unknown, valueField: string, percentField?: string): string {
-  if (field === valueField) {
+  const isCurrency = field === valueField || (props.currencyFields ?? []).includes(field)
+  if (isCurrency) {
     if (value == null) return formatDashboardEmpty('no-data')
     return formatCurrency(value as number)
   }
@@ -51,7 +57,14 @@ function isNumericField(field: string): boolean {
 }
 
 function rowClass(data: object): string | undefined {
-  const rank = (data as Record<string, unknown>).Rank
+  const row = data as Record<string, unknown>
+  const rank = row.Rank
+
+  if (props.selectedField && props.selectedValue != null && props.selectedValue !== '') {
+    const selected = String(row[props.selectedField] ?? '')
+    if (selected === props.selectedValue) return 'dashboard-table-row--selected'
+  }
+
   if (rank === 1) return 'dashboard-table-row--top'
   return undefined
 }
@@ -221,6 +234,14 @@ function parseRank(value: unknown): number | null {
 
 .dashboard-table :deep(.dashboard-table-row--top) {
   background: var(--dashboard-table-row-top) !important;
+}
+
+.dashboard-table :deep(.dashboard-table-row--selected) {
+  background: color-mix(
+    in srgb,
+    var(--dashboard-domain-color, #2563eb) 14%,
+    var(--dashboard-table-row-hover)
+  ) !important;
 }
 
 .dashboard-table :deep(.dashboard-table__numeric) {

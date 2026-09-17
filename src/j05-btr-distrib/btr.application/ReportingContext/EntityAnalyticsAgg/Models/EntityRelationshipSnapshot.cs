@@ -1,3 +1,5 @@
+using System;
+
 namespace btr.application.ReportingContext.EntityAnalyticsAgg.Models
 {
     /// <summary>Normalized relationship row emitted by an entity producer at refresh time.</summary>
@@ -18,5 +20,9 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Models
         public string TargetDisplayName { get; set; }
 
         public decimal? MetricValue { get; set; }
+
+        public string RelationshipStatus { get; set; }
+
+        public DateTime? LastTransactionDate { get; set; }
     }
 }

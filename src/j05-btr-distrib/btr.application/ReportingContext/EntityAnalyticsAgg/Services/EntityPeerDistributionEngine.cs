@@ -96,6 +96,12 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Services
                 EntityPeerDistributionBinBuilder.DefaultBinCount,
                 metadata.Unit);
 
+            var distributionSummary = BuildDistributionSummaryForBins(
+                request.EntityType,
+                peerValues.Count,
+                bins,
+                value => _formatter.FormatValue(value, null, metadata));
+
             return new PeerDistributionResponseDto
             {
                 EntityType = request.EntityType,
@@ -117,8 +123,79 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Services
                 PeerMin = peerValues.Count > 0 ? peerValues.First() : (decimal?)null,
                 PeerMax = peerValues.Count > 0 ? peerValues.Last() : (decimal?)null,
                 FormattedPeerRange = FormatPeerRange(peerValues, metadata),
-                Bins = bins
+                Bins = bins,
+                DistributionSummary = distributionSummary
             };
+        }
+
+        private static string BuildDistributionSummaryForBins(
+            string entityType,
+            int peerCount,
+            IReadOnlyList<PeerDistributionBinDto> bins,
+            Func<decimal, string> formatValue)
+        {
+            if (bins == null || bins.Count == 0)
+                return null;
+
+            var hasUnderflow = bins[0].IsOverflow;
+            var hasOverflow = bins[bins.Count - 1].IsOverflow && bins.Count > 1;
+            if (!hasUnderflow && !hasOverflow)
+                return null;
+
+            var underflowCount = hasUnderflow ? bins[0].Count : 0;
+            var overflowCount = hasOverflow ? bins[bins.Count - 1].Count : 0;
+            var floorText = hasUnderflow ? formatValue(bins[0].BinEnd) : null;
+            var capText = hasOverflow ? formatValue(bins[bins.Count - 1].BinStart) : null;
+
+            return BuildDistributionSummary(
+                entityType,
+                peerCount,
+                underflowCount,
+                overflowCount,
+                floorText,
+                capText);
+        }
+
+        /// <summary>
+        /// Executive one-liner describing a fenced distribution (pure; unit-testable).
+        /// Returns null when no overflow/underflow bucket exists.
+        /// </summary>
+        public static string BuildDistributionSummary(
+            string entityType,
+            int peerCount,
+            int underflowCount,
+            int overflowCount,
+            string floorText,
+            string capText)
+        {
+            if (underflowCount <= 0 && overflowCount <= 0)
+                return null;
+
+            var bulkCount = peerCount - underflowCount - overflowCount;
+            var bulkNoun = PeerGroupLabelFormatter.Pluralize(entityType, bulkCount);
+            var sentences = new List<string>();
+
+            if (overflowCount > 0 && underflowCount > 0)
+                sentences.Add($"{bulkCount} of {peerCount} {bulkNoun} between {floorText} and {capText}.");
+            else if (overflowCount > 0)
+                sentences.Add($"{bulkCount} of {peerCount} {bulkNoun} below {capText}.");
+            else
+                sentences.Add($"{bulkCount} of {peerCount} {bulkNoun} above {floorText}.");
+
+            if (overflowCount > 0)
+            {
+                var noun = PeerGroupLabelFormatter.Pluralize(entityType, overflowCount);
+                var verb = overflowCount == 1 ? "exceeds" : "exceed";
+                sentences.Add($"{overflowCount} {noun} {verb} {capText}.");
+            }
+
+            if (underflowCount > 0)
+            {
+                var noun = PeerGroupLabelFormatter.Pluralize(entityType, underflowCount);
+                sentences.Add($"{underflowCount} {noun} below {floorText}.");
+            }
+
+            return string.Join(" ", sentences);
         }
 
         private string FormatPeerRange(IReadOnlyList<decimal> peerValues, EntityKpiMetadata metadata)

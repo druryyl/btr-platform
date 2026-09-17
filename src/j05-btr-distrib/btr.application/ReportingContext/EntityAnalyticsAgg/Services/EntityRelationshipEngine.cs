@@ -92,7 +92,9 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Services
                         PeriodYear = periodYear,
                         PeriodMonth = periodMonth,
                         Rank = i + 1,
-                        GeneratedAt = generatedAt
+                        GeneratedAt = generatedAt,
+                        RelationshipStatus = snapshot.RelationshipStatus,
+                        LastTransactionDate = snapshot.LastTransactionDate
                     });
                 }
             }
@@ -159,6 +161,7 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Services
                     RelationshipLabel = definition.DisplayName,
                     DisplayName = definition.DisplayName,
                     TargetEntityType = definition.TargetEntityType,
+                    MetricKpiId = definition.MetricKpiId,
                     Rows = blockRows.Select(r => MapRow(r, definition.TargetEntityType)).ToList()
                 });
             }
@@ -208,7 +211,9 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Services
                 ProfileRoute = EntityAnalyticsRouteBuilder.BuildProfileRoute(
                     _entityTypes,
                     targetEntityType,
-                    row.TargetEntityId)
+                    row.TargetEntityId),
+                RelationshipStatus = row.RelationshipStatus,
+                LastTransactionDate = row.LastTransactionDate
             };
         }
 

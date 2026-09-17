@@ -1,6 +1,11 @@
 <script setup lang="ts">
 import Select from 'primevue/select'
 import SelectButton from 'primevue/selectbutton'
+import {
+  CU04_LAST_INVOICING_SALESMAN_FILTER_ALL,
+  CU04_LAST_INVOICING_SALESMAN_LABEL,
+  CU04_LAST_INVOICING_SALESMAN_NOTE,
+} from '@/services/customerAnalyticsAttribution'
 import type { CustomerPortfolioFilterState } from '@/services/customerPortfolioSignals'
 import {
   CUSTOMER_PORTFOLIO_ACTION_LABELS,
@@ -89,13 +94,14 @@ function mapOptions(values: string[], allLabel: string, labelMap?: Record<string
       />
       <Select
         v-model="filters.salesman"
-        :options="mapOptions(options.salesman, 'All Salesmen')"
+        :options="mapOptions(options.salesman, CU04_LAST_INVOICING_SALESMAN_FILTER_ALL)"
         option-label="label"
         option-value="value"
-        placeholder="Salesman"
+        :placeholder="CU04_LAST_INVOICING_SALESMAN_LABEL"
         class="customer-portfolio-filter-bar__select"
       />
     </div>
+    <p class="customer-portfolio-filter-bar__note">{{ CU04_LAST_INVOICING_SALESMAN_NOTE }}</p>
   </section>
 </template>
 
@@ -128,6 +134,13 @@ function mapOptions(values: string[], allLabel: string, labelMap?: Record<string
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 0.75rem;
+}
+
+.customer-portfolio-filter-bar__note {
+  margin: 0;
+  font-size: 0.8125rem;
+  line-height: 1.4;
+  color: var(--p-text-muted-color);
 }
 
 .customer-portfolio-filter-bar__select {

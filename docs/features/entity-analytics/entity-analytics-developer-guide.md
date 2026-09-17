@@ -32,6 +32,8 @@ Entity Analytics is a **platform layer** that materializes per-entity KPI snapsh
 
 **Current status (M32.11):** Customer, **Salesman**, **Supplier**, and **Item** are enabled entity types. L0–L5 platform layers, Comparison Engine, Search API, and Radar Engine are implemented on Customer; Salesman (M32.9), Supplier (M32.10), and Item (M32.11) adopt the full pipeline via entity packs.
 
+**Terminology:** `Supplier` is the technical entity type; **Principal** is the user-facing term across navigation, workspace titles, profile pages, compare views, labels, KPI descriptions, and user documentation. Technical identifiers remain `Supplier` — `EntityTypeCode.Supplier`, `SupplierId`, the `/analytics/suppliers/{id}` route template, registrar/producer classes, and snapshot tables.
+
 
 
 ```text
@@ -561,29 +563,38 @@ Reference: [m32.9-implementation-summary.md](../../work/btr-portal/entity-analyt
 
 No changes required to platform engines, `EntityPerformanceProfileComposer`, or `EntityAnalyticsController`.
 
-Example: **Supplier** (M32.10 entity pack) — **implemented**
+Example: **Supplier** (M32.10 entity pack) — **implemented, extended by Principal-centric analytics (PCM-015–PCM-055)**. Supplier is the technical identity; **Principal** is its user-facing presentation across navigation, workspace titles, and labels (technical identifiers unchanged).
 
 Reference: [m32.10-implementation-summary.md](../../work/btr-portal/entity-analytics/m32.10-implementation-summary.md)
 
 1. **Platform registrar** — `EntityTypeCode.Supplier` metadata in `EntityAnalyticsPlatformRegistrar` (`supplier-default`, `supplier-relationships`, route `/analytics/suppliers/{id}`).
 
-2. **`SupplierEntityAnalyticsRegistrar`** — KPI pack PU-KPI-001/002/003 + radar/meta axes; dimension labels.
+2. **`SupplierEntityAnalyticsRegistrar`** — Principal KPI packs on the Supplier/Principal profile (one pack per slice; no composite score):
+   - Sales-Out pack: `PRN-SALES-001` (authoritative Principal performance and default ranking KPI; independent of Returns).
+   - Returns pack: `PRN-RET-001`, `PRN-RET-002`, `PRN-RET-003`, `PRN-RET-004` (Return Percentage is a quality ratio and supporting ranking KPI only; never a deduction from Sales-Out; never Net Sales).
+   - Target pack: `PRN-TGT-001`, `PRN-TGT-002`, `PRN-TGT-003`.
+   - Growth pack: `PRN-GRW-001`, `PRN-GRW-002` (from stored `PRN-SALES-001` history only).
+   - Purchase pack: `PRN-PUR-001` (labeled Purchase-In; never a performance or ranking KPI).
+   - Inventory pack: `PRN-INV-001`, `PRN-INV-002` (operational indicators; never performance or ranking KPIs).
 
-3. **`SupplierEntityAnalyticsProducer`** — maps `DashboardPurchasingManagementAggregateResult.Portfolio` to L0; L0→L5 orchestration (`EntityId = SupplierId`, `EntityCode = SupplierCode`).
+3. **`SupplierEntityAnalyticsProducer`** — the single writer of the Supplier/Principal Entity Analytics profile; maps owned Principal snapshots to L0; L0→L5 orchestration (`EntityId = SupplierId`, `EntityCode = SupplierCode`).
+   - Reads owned snapshots only (Sales-Out, returns, return percentage, target, achievement, MoM/YoY growth, purchase-in, inventory). Never recomputes `PRN-SALES-001` from Purchasing Management in-memory `SalesOutAmount` or from purchase data. Never writes a source KPI from a consumer pack.
+   - A purchase or inventory refresh never erases persisted `PRN-SALES-001`.
+   - Ranking hierarchy: default `PRN-SALES-001`; supporting rankings only `PRN-RET-004`, `PRN-TGT-003`, `PRN-GRW-001`, `PRN-GRW-002`. No Net Sales and no Principal Health Score.
 
-4. **`SupplierEntityAnalyticsProduceInput`** — wraps management aggregate + `DashboardSupplierRelationshipAggregateResult`.
+4. **`SupplierEntityAnalyticsProduceInput`** — wraps management aggregate + `DashboardSupplierRelationshipAggregateResult` plus the projection-sourced relationship input for Principal/Customer pairs.
 
-5. **Worker hook** — `RefreshDashboardPurchasingManagementSnapshotWorker` calls orchestrator after domain save (loads `ISupplierDal`, `ISupplierMtdItemRollupDal`, relationship aggregator first).
+5. **Worker hook** — `RefreshDashboardPurchasingManagementSnapshotWorker` calls orchestrator after domain save (loads `ISupplierDal`, `ISupplierMtdItemRollupDal`, relationship aggregator, owned Principal snapshots, and `BTRPD_CustomerPrincipalRelationship` first). Refresh order: source snapshots and the relationship projection complete before this Principal Entity Analytics refresh.
 
-6. **`SupplierEntityAnalyticsEvidenceResolver`** — `/reports/purchasing`, `/reports/inventory` with `supplierCode` filter.
+6. **`SupplierEntityAnalyticsEvidenceResolver`** — Faktur Item evidence for `PRN-SALES-001` (Principal omzet relationships); Return Item evidence for return KPIs. Purchase/inventory evidence stays on purchasing/inventory reports and is never presented as Sales-Out evidence.
 
-7. **Attention / relationship catalogs** — `SupplierAttentionSignalCatalog`, `SupplierRelationshipCatalog`.
+7. **Attention / relationship catalogs** — `SupplierAttentionSignalCatalog`, `SupplierRelationshipCatalog` (registered in bootstrap). Relationship presentation consumes `BTRPD_CustomerPrincipalRelationship`: relationship existence, last transaction date, Active/Dormant status, and pair-attributed `PRN-SALES-001` are read from the projection, never recomputed from raw transactions. Pair Sales-Out is not reduced by returns. No Customer–Principal entity type and no master assignment table exist.
 
 8. **Enable** — `Supplier` in `EntityAnalytics.EnabledEntityTypes` (API + worker).
 
 9. **Register DI** — `AddSingleton<IEntityAnalyticsRegistrar, SupplierEntityAnalyticsRegistrar>()`.
 
-10. **Frontend** — `SupplierProfileView.vue`, `SupplierCompareView.vue`, PU01 `ProfileRoute` links.
+10. **Frontend** — `SupplierProfileView.vue` (renders "Principal Profile"), `SupplierCompareView.vue` (renders "Compare Principals"), and the investigation workspace renders "Principal Investigation Workspace" for `Supplier`; PU01 `ProfileRoute` links. Relationship rows show Active/Dormant status badge and last transaction date when the projection provides them.
 
 Example: **Item** (M32.11 entity pack) — **implemented**
 
@@ -777,6 +788,63 @@ To replace a bad month:
 
 
 Ensure the entity-type mutex blocks concurrent live `InventoryRisk` refresh during Item backfill.
+
+
+
+---
+
+
+
+## Historical Backfill — Supplier Principal KPIs
+
+Supplier replay reconstructs closed-month history for the Principal KPI family
+using the same live aggregators/composers as the live Principal snapshot workers
+(formula fidelity — no replay-specific KPI math).
+
+Covered KPIs: `PRN-SALES-001`, `PRN-RET-001..004`, `PRN-TGT-001..003`, `PRN-PUR-001`.
+
+Explicit non-goals: `PRN-TGT-004`, `PRN-GRW-*`, `PRN-INV-*`, `PRN-CUS-*`
+(separate semantic decisions; never emitted by replay).
+
+Ownership: replay owns closed months (`IsClosed=1` via
+`ReplaceMonthlyHistoryForPeriod`); live `PurchasingManagement` workers own the
+current open month (`IsClosed=0`). Replay never writes `BTRPD_Principal*`
+snapshots and never writes L0 CURRENT (`PersistL0` is a no-op in replay).
+
+Missing-target rule: when a supplier-month has no
+`BTR_SalesPersonPrincipalTarget` evidence, replay writes no `PRN-TGT-001/002/003`
+rows at all (absent, not zero), so the UI shows "no target available" instead of
+an achievement calculation against zero.
+
+
+
+```text
+
+btr.portal.worker --domain EntityAnalyticsHistoricalBackfill \
+
+  --entity-type Supplier --from-period 2025-06 --to-period 2026-05 \
+
+  --confirm BACKFILL
+
+```
+
+
+
+Recommended sequence:
+
+1. Dry-run: `--dry-run --entity-type Supplier --from-period 2025-06 --to-period 2026-05`
+
+2. Reconciliation: compare replay output for a sample supplier against live
+snapshots for overlapping months; every variance must be explained (late voids,
+`BTR_Brg.SupplierId` master moves, post-close target edits) before production
+
+3. Execute with `--confirm BACKFILL` (resumable per checkpoint; idempotent rerun
+per month via `--force`)
+
+
+
+Attribution caveat: history is recomputed with the **current** `BTR_Brg.SupplierId`
+item master (same limitation as the live Principal history workers).
 
 
 

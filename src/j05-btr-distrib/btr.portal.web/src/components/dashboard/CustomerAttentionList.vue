@@ -17,6 +17,10 @@ import {
   filterCustomerAttentionItems,
 } from '@/services/customerAttentionSignals'
 import { resolveInvestigationSourceLabel } from '@/services/investigationSourceLabels'
+import {
+  CU01_LAST_INVOICING_SALESMAN_LABEL,
+  CU01_LAST_INVOICING_SALESMAN_NOTE,
+} from '@/services/customerAnalyticsAttribution'
 import { navigateToInvestigation } from '@/services/navigateToInvestigation'
 
 const props = defineProps<{
@@ -122,6 +126,7 @@ function openProfile(item: DashboardCustomerAttentionItem): void {
           />
           <p class="customer-attention-list__hint">
             Cards count customers; this list counts customer × signal rows.
+            {{ CU01_LAST_INVOICING_SALESMAN_NOTE }}
           </p>
         </div>
 
@@ -154,6 +159,14 @@ function openProfile(item: DashboardCustomerAttentionItem): void {
               </template>
             </Column>
             <Column field="CustomerName" header="Customer" />
+            <Column
+              field="LastInvoicingSalesmanName"
+              :header="CU01_LAST_INVOICING_SALESMAN_LABEL"
+            >
+              <template #body="{ data }">
+                {{ data.LastInvoicingSalesmanName?.trim() || '—' }}
+              </template>
+            </Column>
             <Column field="SignalLabel" header="Signal" />
             <Column header="Value">
               <template #body="{ data }">

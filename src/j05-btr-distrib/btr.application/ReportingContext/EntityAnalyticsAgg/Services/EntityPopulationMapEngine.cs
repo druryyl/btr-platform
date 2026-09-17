@@ -16,17 +16,20 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Services
         private readonly IKpiRegistry _kpiRegistry;
         private readonly IEntityTypeRegistry _entityTypes;
         private readonly EntityKpiEnvelopeFormatter _formatter;
+        private readonly IDimensionLabelRegistry _dimensionLabels;
 
         public EntityPopulationMapEngine(
             IEntityAnalyticsRepository repository,
             IKpiRegistry kpiRegistry,
             IEntityTypeRegistry entityTypes,
-            EntityKpiEnvelopeFormatter formatter)
+            EntityKpiEnvelopeFormatter formatter,
+            IDimensionLabelRegistry dimensionLabels)
         {
             _repository = repository;
             _kpiRegistry = kpiRegistry;
             _entityTypes = entityTypes;
             _formatter = formatter;
+            _dimensionLabels = dimensionLabels;
         }
 
         public PopulationMapResponseDto BuildPopulationMap(PopulationMapRequest request)
@@ -53,6 +56,7 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Services
             var dimensionKpiId = preset.FilterDimensionKpiId
                 ?? PeerGroupResolver.ResolveDimensionKpiId(
                     _entityTypes.TryGet(request.EntityType, out var reg) ? reg.PeerGroupRuleId : null);
+            var dimensionLabel = ResolveDimensionLabel(request.EntityType, dimensionKpiId);
 
             var population = _repository.GetActivePopulation(request.EntityType, dimensionKpiId);
             var axisXValues = GetKpiValueMap(request.EntityType, preset.AxisXKpiId);
@@ -61,6 +65,14 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Services
             var supplementaryValues = string.IsNullOrWhiteSpace(preset.TooltipSupplementaryKpiId)
                 ? new Dictionary<string, decimal?>(StringComparer.OrdinalIgnoreCase)
                 : GetKpiValueMap(request.EntityType, preset.TooltipSupplementaryKpiId);
+            var bubbleMeta = ResolveMetadata(preset.BubbleKpiId);
+            var bubbleValues = string.IsNullOrWhiteSpace(preset.BubbleKpiId)
+                ? new Dictionary<string, decimal?>(StringComparer.OrdinalIgnoreCase)
+                : GetKpiValueMap(request.EntityType, preset.BubbleKpiId);
+            var bubbleColorMeta = ResolveMetadata(preset.BubbleColorKpiId);
+            var bubbleColorValues = string.IsNullOrWhiteSpace(preset.BubbleColorKpiId)
+                ? new Dictionary<string, decimal?>(StringComparer.OrdinalIgnoreCase)
+                : GetKpiValueMap(request.EntityType, preset.BubbleColorKpiId);
             var attentionCounts = _repository.GetActiveAttentionCounts(request.EntityType);
             var generatedAt = _repository.GetLatestGeneratedAtForEntityType(request.EntityType);
 
@@ -76,6 +88,8 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Services
                 axisXValues.TryGetValue(row.EntityId, out var axisX);
                 axisYValues.TryGetValue(row.EntityId, out var axisY);
                 supplementaryValues.TryGetValue(row.EntityId, out var supplementaryValue);
+                bubbleValues.TryGetValue(row.EntityId, out var bubbleValue);
+                bubbleColorValues.TryGetValue(row.EntityId, out var bubbleColorValue);
                 attentionCounts.TryGetValue(row.EntityId, out var attentionCount);
 
                 var matchesFilter = MatchesFilter(
@@ -99,6 +113,15 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Services
                     IsActive = row.IsActive,
                     ActiveAttentionCount = attentionCount,
                     MatchesFilter = matchesFilter,
+                    IsLowConfidence = !axisX.HasValue || !axisY.HasValue,
+                    BubbleValue = bubbleValue,
+                    FormattedBubbleValue = bubbleMeta == null
+                        ? null
+                        : FormatValue(bubbleValue, bubbleMeta),
+                    BubbleColorValue = bubbleColorValue,
+                    FormattedBubbleColorValue = bubbleColorMeta == null
+                        ? null
+                        : FormatValue(bubbleColorValue, bubbleColorMeta),
                     SupplementaryLabel = supplementaryMeta?.DisplayName,
                     FormattedSupplementaryValue = supplementaryMeta == null
                         ? null
@@ -121,9 +144,14 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Services
                 AxisYLabel = axisYMeta?.DisplayName ?? preset.AxisYKpiId,
                 AxisXUnit = axisXMeta?.Unit,
                 AxisYUnit = axisYMeta?.Unit,
+                BubbleKpiId = preset.BubbleKpiId,
+                BubbleColorKpiId = preset.BubbleColorKpiId,
+                BubbleLabel = bubbleMeta?.DisplayName ?? preset.BubbleKpiId,
+                BubbleColorLabel = bubbleColorMeta?.DisplayName ?? preset.BubbleColorKpiId,
                 TotalPopulationCount = population.Count,
                 FilteredPopulationCount = filteredCount,
                 ActiveFilterDescription = BuildFilterDescription(request, filteredCount, population.Count),
+                DimensionLabel = dimensionLabel,
                 GeneratedAt = generatedAt,
                 Points = points
             };
@@ -194,6 +222,16 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Services
         private EntityKpiMetadata ResolveMetadata(string kpiId)
         {
             return _kpiRegistry.TryGetMetadata(kpiId, out var metadata) ? metadata : null;
+        }
+
+        private string ResolveDimensionLabel(string entityType, string dimensionKpiId)
+        {
+            if (string.IsNullOrWhiteSpace(dimensionKpiId))
+                return null;
+
+            return _dimensionLabels.TryGetLabel(entityType, dimensionKpiId, out var label)
+                ? label
+                : null;
         }
 
         private static string BuildFilterDescription(

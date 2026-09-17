@@ -71,6 +71,7 @@ namespace btr.distrib.SalesContext.FakturAgg
         private readonly IUserDal _userDal;
         private readonly IFakturBuilder _fakturBuilder;
         private readonly ISaveFakturWorker _saveFakturWorker;
+        private readonly IBuildFakturAggregateWorker _aggregateBuilder;
         private readonly ICreateFakturItemWorker _createItemWorker;
         private readonly IPiutangBuilder _piutangBuilder;
         private readonly IPiutangWriter _piutangWriter;
@@ -112,7 +113,8 @@ namespace btr.distrib.SalesContext.FakturAgg
             IPiutangDal piutangDal,
             IPackingOrderRepo packingOrderRepo,
             IDepoDal depoDal,
-            IFakturItemDal fakturItemDal)
+            IFakturItemDal fakturItemDal,
+            IBuildFakturAggregateWorker aggregateBuilder)
         {
             InitializeComponent();
             _warehouseBrowser = warehouseBrowser;
@@ -131,6 +133,7 @@ namespace btr.distrib.SalesContext.FakturAgg
             _brgDal = brgDal;
             _fakturBuilder = fakturBuilder;
             _saveFakturWorker = saveFakturWorker;
+            _aggregateBuilder = aggregateBuilder;
             _createItemWorker = createItemWorker;
             _piutangBuilder = piutangBuilder;
             _piutangWriter = piutangWriter;
@@ -197,6 +200,7 @@ namespace btr.distrib.SalesContext.FakturAgg
             FakturItemGrid.RowPostPaint += DataGridViewExtensions.DataGridView_RowPostPaint;
 
             NewButton.Click += NewButton_Click;
+            PreviewButton.Click += PreviewVoidButton_Click;
             UangMukaText.KeyDown += UangMukaText_KeyDown;
             CopyItemJualButton.Click += CopyItemJualButton_Click;
 
@@ -447,6 +451,9 @@ namespace btr.distrib.SalesContext.FakturAgg
             return true;
         }
         
+        //  SL-05 (D-008): voided keeps Save unavailable; Preview / Print
+        //  stays available via a void-only button. Normal modes keep Save
+        //  as the single primary action (D-003).
         private void ShowAsVoid(FakturModel faktur)
         {
             this.BackColor = Color.RosyBrown;
@@ -454,6 +461,7 @@ namespace btr.distrib.SalesContext.FakturAgg
             CancelLabel.Text = $@"Faktur sudah DIBATALKAN \noleh {faktur.UserIdVoid} \npada {faktur.VoidDate:ddd, dd MMM yyyy}";
             VoidPanel.Visible = true;
             SaveButton.Visible = false;
+            PreviewButton.Visible = true;
         }
         
         private void ShowAsActive()
@@ -462,6 +470,7 @@ namespace btr.distrib.SalesContext.FakturAgg
 
             VoidPanel.Visible = false;
             SaveButton.Visible = true;
+            PreviewButton.Visible = false;
         }
         #endregion
 
@@ -915,14 +924,89 @@ namespace btr.distrib.SalesContext.FakturAgg
         #endregion
 
         #region SAVE
+        //  SL-04 (D-003): Save is the preview entry point. Runs shared
+        //  validation, opens the preview dialog, and persists only after
+        //  explicit SAVE or SAVE & PRINT confirmation (D-005).
+        //  Cancel/close persists nothing (D-007). No dedicated Preview
+        //  button; Save remains the single primary action.
         private void SaveButton_Click(object sender, EventArgs e)
         {
             try
             {
-                var faktur = SaveFaktur();
+                //  Shared request mapping used identically by preview and save (D-006)
+                var req = BuildSaveFakturRequest();
+
+                //  Shared save-level validation first; invalid Faktur shows
+                //  the message and is not previewed (D-010)
+                try
+                {
+                    SaveFakturValidator.Validate(req);
+                }
+                catch (KeyNotFoundException ex)
+                {
+                    MessageBox.Show(ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    return;
+                }
+                catch (ArgumentException ex)
+                {
+                    MessageBox.Show(ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    return;
+                }
+
+                //  Side-effect-free preview aggregate via the single shared
+                //  construction path (D-001/D-006/D-007): reads + CalcTotal
+                //  only; no writer/genstok/piutang/packing/commit/counter
+                FakturModel previewAggregate;
+                try
+                {
+                    previewAggregate = _aggregateBuilder.Execute(req);
+                }
+                catch (KeyNotFoundException ex)
+                {
+                    MessageBox.Show(ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    return;
+                }
+                catch (ArgumentException ex)
+                {
+                    MessageBox.Show(ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    return;
+                }
+
+                //  Preview reads only (null-safe DTO covers missing optional data, D-004)
+                CustomerModel previewCustomer = null;
+                try
+                {
+                    previewCustomer = _customerDal.GetData(previewAggregate);
+                }
+                catch (KeyNotFoundException)
+                {
+                }
+                var previewUser = _userDal.GetData(previewAggregate) ?? new UserModel
+                {
+                    UserId = previewAggregate.UserId,
+                    UserName = previewAggregate.UserId
+                };
+                var isKlaim = FakturKlaimRadio.Checked;
+                var previewDto = new FakturPrintOutDto(previewAggregate, previewCustomer, previewUser, isKlaim);
+                var choice = ShowPreviewDialog(previewDto);
+
+                //  Cancel / Back to Edit (or dialog close) persists nothing (D-007)
+                if (choice == FakturPreviewChoice.Cancel)
+                    return;
+
+                //  SL-06 (D-005/D-007/D-011/D-012): post-save finalize.
+                //  Persist only after explicit SAVE / SAVE & PRINT confirmation.
+                //  Any failure below shows the save failure and produces no
+                //  print output (print stays last). SAVE closes without any
+                //  print action; SAVE & PRINT reloads the persisted Faktur and
+                //  prints that reloaded final version (never the in-memory draft).
+                //  Only the saved Faktur is the official document; the draft
+                //  preview is never printed as final. No auto-print on preview
+                //  open; no preview logging/audit; template selection unchanged.
+                var faktur = _saveFakturWorker.Execute(req);
                 var customer = _customerDal.GetData(faktur);
                 SavePiutang(faktur);
-                SavePackingOrder(faktur,customer);
+                SavePackingOrder(faktur, customer);
 
                 ClearForm();
 
@@ -930,13 +1014,30 @@ namespace btr.distrib.SalesContext.FakturAgg
                     .Load(faktur)
                     .Build();
                 LastIdLabel.Text = $@"{fakturDb.FakturId} - {fakturDb.FakturCode}".Trim();
+
+                //  AC1: SAVE persists and closes without invoking any print action.
+                if (choice == FakturPreviewChoice.Save)
+                    return;
+
+                //  AC2/AC5: SAVE & PRINT prints the reloaded persisted version
+                //  (final generated number for NEW included), not the draft.
+                //  Refresh display dependencies from the persisted version;
+                //  fall back to the save-time customer if the reload read fails.
+                CustomerModel persistedCustomer;
+                try
+                {
+                    persistedCustomer = _customerDal.GetData(fakturDb);
+                }
+                catch (KeyNotFoundException)
+                {
+                    persistedCustomer = customer;
+                }
                 var user = _userDal.GetData(fakturDb) ?? new UserModel
                 {
                     UserId = fakturDb.UserId,
                     UserName = fakturDb.UserId
                 };
-                var isKlaim = FakturKlaimRadio.Checked;
-                var fakturPrintout = new FakturPrintOutDto(fakturDb, customer, user, isKlaim);
+                var fakturPrintout = new FakturPrintOutDto(fakturDb, persistedCustomer, user, isKlaim);
                 PrintFakturRdlc(fakturPrintout);
             }
             catch (KeyNotFoundException ex)
@@ -953,7 +1054,140 @@ namespace btr.distrib.SalesContext.FakturAgg
             }
         }
 
+        //  SL-05 (D-002/D-008/D-011): mode-aware preview number. NEW with empty
+        //  code shows [DRAFT] (DTO fallback) and the dialog is titled DRAFT so
+        //  the draft is visually distinguishable from the final; NEW with a
+        //  pre-selected open code and EDIT show that code verbatim. EDIT is
+        //  built from the current form state (unsaved modifications included);
+        //  save preserves the existing FakturId/FakturCode via writer
+        //  skip-empty behavior (no regeneration). Klaim follows its
+        //  corresponding NEW/EDIT mode with business rules unchanged.
+        private FakturPreviewChoice ShowPreviewDialog(FakturPrintOutDto previewDto)
+        {
+            var fakturJualDataset = new ReportDataSource("FakturJualDataset", new List<FakturPrintOutDto> { previewDto });
+            var fakturJualItemDataset = new ReportDataSource("FakturJualItemDataset", previewDto.ListItem);
+            var clientId = _paramSistemDal.GetData(new ParamSistemModel("CLIENT_ID"))?.ParamValue ?? string.Empty;
+
+            var printOutTemplate = string.Empty;
+            switch (clientId)
+            {
+                case "BTR-YK":
+                    printOutTemplate = "FakturPrintOut-Yk";
+                    break;
+                case "BTR-MGL":
+                    printOutTemplate = "FakturPrintOut-Mgl";
+                    break;
+                default:
+                    break;
+            }
+
+            var listDataset = new List<ReportDataSource>
+            {
+                fakturJualDataset,
+                fakturJualItemDataset
+            };
+            var fakturSavePreviewForm = new FakturSavePreviewForm();
+            fakturSavePreviewForm.SetReportData(printOutTemplate, listDataset);
+            var isDraft = (previewDto.FakturCode ?? string.Empty).Contains("[DRAFT]");
+            fakturSavePreviewForm.Text = isDraft
+                ? "Faktur Preview - [DRAFT] (draft, not yet saved)"
+                : $"Faktur Preview - {previewDto.FakturCode}";
+            fakturSavePreviewForm.ShowDialog();
+            return fakturSavePreviewForm.PreviewChoice;
+        }
+
+        //  SL-05 (D-008): voided Faktur allows preview/print with save
+        //  unavailable. Read-only viewer (no SAVE panel); toolbar print stays
+        //  available. Side-effect free: shared construction + reads only, no
+        //  writer/genstok/piutang/packing/commit/counter (D-007).
+        private void PreviewVoidButton_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                var req = BuildSaveFakturRequest();
+                FakturModel previewAggregate;
+                try
+                {
+                    previewAggregate = _aggregateBuilder.Execute(req);
+                }
+                catch (KeyNotFoundException ex)
+                {
+                    MessageBox.Show(ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    return;
+                }
+                catch (ArgumentException ex)
+                {
+                    MessageBox.Show(ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    return;
+                }
+
+                CustomerModel previewCustomer = null;
+                try
+                {
+                    previewCustomer = _customerDal.GetData(previewAggregate);
+                }
+                catch (KeyNotFoundException)
+                {
+                }
+                var previewUser = _userDal.GetData(previewAggregate) ?? new UserModel
+                {
+                    UserId = previewAggregate.UserId,
+                    UserName = previewAggregate.UserId
+                };
+                var isKlaim = FakturKlaimRadio.Checked;
+                var previewDto = new FakturPrintOutDto(previewAggregate, previewCustomer, previewUser, isKlaim);
+                ShowReadOnlyPreview(previewDto);
+            }
+            catch (KeyNotFoundException ex)
+            {
+                MessageBox.Show(ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+            catch (ArgumentException ex)
+            {
+                MessageBox.Show(ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        private void ShowReadOnlyPreview(FakturPrintOutDto previewDto)
+        {
+            var fakturJualDataset = new ReportDataSource("FakturJualDataset", new List<FakturPrintOutDto> { previewDto });
+            var fakturJualItemDataset = new ReportDataSource("FakturJualItemDataset", previewDto.ListItem);
+            var clientId = _paramSistemDal.GetData(new ParamSistemModel("CLIENT_ID"))?.ParamValue ?? string.Empty;
+
+            var printOutTemplate = string.Empty;
+            switch (clientId)
+            {
+                case "BTR-YK":
+                    printOutTemplate = "FakturPrintOut-Yk";
+                    break;
+                case "BTR-MGL":
+                    printOutTemplate = "FakturPrintOut-Mgl";
+                    break;
+                default:
+                    break;
+            }
+
+            var listDataset = new List<ReportDataSource>
+            {
+                fakturJualDataset,
+                fakturJualItemDataset
+            };
+            var rdlcViewerForm = new RdlcViewerForm();
+            rdlcViewerForm.SetReportData(printOutTemplate, listDataset);
+            rdlcViewerForm.Text = $"Faktur Preview (VOID) - {previewDto.FakturCode}";
+            rdlcViewerForm.ShowDialog();
+        }
+
         private FakturModel SaveFaktur()
+        {
+            var req = BuildSaveFakturRequest();
+            var result = _saveFakturWorker.Execute(req);
+            return result;
+        }
+
+        //  Single Form Input → SaveFakturRequest mapping shared by preview
+        //  and save (D-006); no preview-specific mapping permitted.
+        private SaveFakturRequest BuildSaveFakturRequest()
         {
             var mainform = (MainForm)this.Parent.Parent;
             var cmd = new SaveFakturRequest
@@ -1004,8 +1238,7 @@ namespace btr.distrib.SalesContext.FakturAgg
                 }).ToList();
             cmd.ListBrgKlaim = listItemKlaim;
 
-            var result = _saveFakturWorker.Execute(cmd);
-            return result;
+            return cmd;
         }
 
         private void SavePiutang(FakturModel faktur)
@@ -1080,9 +1313,19 @@ namespace btr.distrib.SalesContext.FakturAgg
                 fakturJualDataset,
                 fakturJualItemDataset
             };
-            var rdlcViewerForm = new RdlcViewerForm();
-            rdlcViewerForm.SetReportData(printOutTemplate, listDataset);
-            rdlcViewerForm.ShowDialog();
+            //  SAVE & PRINT prints silently to the default printer with no
+            //  second preview window. The draft preview (ShowPreviewDialog)
+            //  is the only visual verification step. Print failures show a
+            //  message but never roll back the already-committed save.
+            try
+            {
+                RdlcViewerForm.PrintDirect(printOutTemplate, listDataset);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Faktur tersimpan, tetapi cetak gagal: {ex.Message}",
+                    "Print Gagal", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            }
         }
 
         internal void ShowKlaim()

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using btr.application.ReportingContext.DashboardCustomerPortfolioAgg.Contracts;
+using btr.application.ReportingContext.PrincipalAnalyticsAgg.Contracts;
 using MediatR;
 
 namespace btr.application.ReportingContext.DashboardCustomerPortfolioAgg.Queries
@@ -44,6 +45,47 @@ namespace btr.application.ReportingContext.DashboardCustomerPortfolioAgg.Queries
 
         public IReadOnlyList<DashboardCustomerPortfolioWilayahDto> WilayahBreakdown { get; set; }
             = new List<DashboardCustomerPortfolioWilayahDto>();
+
+        public DashboardCustomerPortfolioPrincipalMix PrincipalMix { get; set; }
+            = new DashboardCustomerPortfolioPrincipalMix();
+    }
+
+    public class DashboardCustomerPortfolioPrincipalMix
+    {
+        public bool IsAvailable { get; set; }
+
+        public string KpiId { get; set; }
+
+        public string Note { get; set; }
+
+        public IList<string> Disclosures { get; set; }
+            = new List<string>();
+
+        public IList<DashboardCustomerPortfolioPrincipalMixCustomer> Customers { get; set; }
+            = new List<DashboardCustomerPortfolioPrincipalMixCustomer>();
+    }
+
+    public class DashboardCustomerPortfolioPrincipalMixCustomer
+    {
+        public string CustomerCode { get; set; }
+
+        public string CustomerName { get; set; }
+
+        public IList<DashboardCustomerPortfolioPrincipalMixPair> Principals { get; set; }
+            = new List<DashboardCustomerPortfolioPrincipalMixPair>();
+    }
+
+    public class DashboardCustomerPortfolioPrincipalMixPair
+    {
+        public string SupplierId { get; set; }
+
+        public string PrincipalName { get; set; }
+
+        public string RelationshipStatus { get; set; }
+
+        public string KpiId { get; set; }
+
+        public decimal PairSalesOutAmount { get; set; }
     }
 
     public class DashboardCustomerPortfolioKpiDto
@@ -278,17 +320,26 @@ namespace btr.application.ReportingContext.DashboardCustomerPortfolioAgg.Queries
         : IRequestHandler<GetDashboardCustomerPortfolioQuery, DashboardCustomerPortfolioResponse>
     {
         private readonly IDashboardCustomerPortfolioDal _dal;
+        private readonly ICustomerPrincipalRelationshipDal _relationshipDal;
 
-        public GetDashboardCustomerPortfolioHandler(IDashboardCustomerPortfolioDal dal)
+        public GetDashboardCustomerPortfolioHandler(
+            IDashboardCustomerPortfolioDal dal,
+            ICustomerPrincipalRelationshipDal relationshipDal)
         {
             _dal = dal;
+            _relationshipDal = relationshipDal;
         }
 
         public Task<DashboardCustomerPortfolioResponse> Handle(
             GetDashboardCustomerPortfolioQuery request,
             CancellationToken cancellationToken)
         {
-            return Task.FromResult(_dal.GetCurrent());
+            var response = _dal.GetCurrent();
+            var customerCodes = CustomerPortfolioPrincipalMixComposer.CollectPriorityCustomerCodes(response);
+            response.PrincipalMix = CustomerPortfolioPrincipalMixComposer.Compose(
+                response,
+                _relationshipDal.ListPairsForCustomerCodes(customerCodes));
+            return Task.FromResult(response);
         }
     }
 }

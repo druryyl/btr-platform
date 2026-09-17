@@ -33,19 +33,20 @@ FROM BTRPD_CustomerKpi
 WHERE SnapshotKey = @SnapshotKey";
 
             const string topOmzetSql = @"
-SELECT Rank, CustomerId, CustomerCode, CustomerName, OmzetAmount, PercentOfTotal
+SELECT Rank, CustomerId, CustomerCode, CustomerName, OmzetAmount, PercentOfTotal, LastInvoicingSalesmanName
 FROM BTRPD_CustomerTopOmzet
 WHERE SnapshotKey = @SnapshotKey
 ORDER BY Rank";
 
             const string topPiutangSql = @"
-SELECT Rank, CustomerId, CustomerCode, CustomerName, OutstandingBalance, PercentOfTotal
+SELECT Rank, CustomerId, CustomerCode, CustomerName, OutstandingBalance, PercentOfTotal, LastInvoicingSalesmanName
 FROM BTRPD_CustomerTopPiutang
 WHERE SnapshotKey = @SnapshotKey
 ORDER BY Rank";
 
             const string attentionSql = @"
-SELECT CustomerId, CustomerCode, CustomerName, SignalKey, SignalLabel, ValueAmount, ValueText, WilayahName, SortOrder
+SELECT CustomerId, CustomerCode, CustomerName, SignalKey, SignalLabel, ValueAmount, ValueText, WilayahName,
+       LastInvoicingSalesmanName, SortOrder
 FROM BTRPD_CustomerAttention
 WHERE SnapshotKey = @SnapshotKey
 ORDER BY SortOrder";
@@ -89,7 +90,8 @@ ORDER BY SegmentType, SortOrder";
                         CustomerCode = r.CustomerCode,
                         CustomerName = r.CustomerName,
                         OmzetAmount = r.OmzetAmount,
-                        PercentOfTotal = r.PercentOfTotal
+                        PercentOfTotal = r.PercentOfTotal,
+                        LastInvoicingSalesmanName = r.LastInvoicingSalesmanName
                     }).ToList(),
                     TopPiutang = topPiutang.Select(r => new DashboardCustomerTopPiutangRow
                     {
@@ -98,7 +100,8 @@ ORDER BY SegmentType, SortOrder";
                         CustomerCode = r.CustomerCode,
                         CustomerName = r.CustomerName,
                         OutstandingBalance = r.OutstandingBalance,
-                        PercentOfTotal = r.PercentOfTotal
+                        PercentOfTotal = r.PercentOfTotal,
+                        LastInvoicingSalesmanName = r.LastInvoicingSalesmanName
                     }).ToList(),
                     AttentionList = attention.Select(r => new DashboardCustomerAttentionRow
                     {
@@ -110,6 +113,7 @@ ORDER BY SegmentType, SortOrder";
                         ValueAmount = r.ValueAmount,
                         ValueText = r.ValueText,
                         WilayahName = r.WilayahName,
+                        LastInvoicingSalesmanName = r.LastInvoicingSalesmanName,
                         SortOrder = r.SortOrder
                     }).ToList(),
                     Segmentation = segmentation.Select(r => new DashboardCustomerSegmentationRow
@@ -256,9 +260,11 @@ WHEN NOT MATCHED THEN
 
                 const string insertTopOmzetSql = @"
 INSERT INTO BTRPD_CustomerTopOmzet (
-    CustomerTopOmzetId, SnapshotKey, Rank, CustomerId, CustomerCode, CustomerName, OmzetAmount, PercentOfTotal)
+    CustomerTopOmzetId, SnapshotKey, Rank, CustomerId, CustomerCode, CustomerName, OmzetAmount, PercentOfTotal,
+    LastInvoicingSalesmanName)
 VALUES (
-    @CustomerTopOmzetId, @SnapshotKey, @Rank, @CustomerId, @CustomerCode, @CustomerName, @OmzetAmount, @PercentOfTotal)";
+    @CustomerTopOmzetId, @SnapshotKey, @Rank, @CustomerId, @CustomerCode, @CustomerName, @OmzetAmount, @PercentOfTotal,
+    @LastInvoicingSalesmanName)";
 
                 foreach (var row in result.TopOmzet ?? new List<DashboardCustomerTopOmzetRow>())
                 {
@@ -271,15 +277,18 @@ VALUES (
                         CustomerCode = row.CustomerCode ?? string.Empty,
                         CustomerName = row.CustomerName ?? string.Empty,
                         row.OmzetAmount,
-                        row.PercentOfTotal
+                        row.PercentOfTotal,
+                        LastInvoicingSalesmanName = row.LastInvoicingSalesmanName ?? string.Empty
                     }, transaction);
                 }
 
                 const string insertTopPiutangSql = @"
 INSERT INTO BTRPD_CustomerTopPiutang (
-    CustomerTopPiutangId, SnapshotKey, Rank, CustomerId, CustomerCode, CustomerName, OutstandingBalance, PercentOfTotal)
+    CustomerTopPiutangId, SnapshotKey, Rank, CustomerId, CustomerCode, CustomerName, OutstandingBalance, PercentOfTotal,
+    LastInvoicingSalesmanName)
 VALUES (
-    @CustomerTopPiutangId, @SnapshotKey, @Rank, @CustomerId, @CustomerCode, @CustomerName, @OutstandingBalance, @PercentOfTotal)";
+    @CustomerTopPiutangId, @SnapshotKey, @Rank, @CustomerId, @CustomerCode, @CustomerName, @OutstandingBalance, @PercentOfTotal,
+    @LastInvoicingSalesmanName)";
 
                 foreach (var row in result.TopPiutang ?? new List<DashboardCustomerTopPiutangRow>())
                 {
@@ -292,17 +301,18 @@ VALUES (
                         CustomerCode = row.CustomerCode ?? string.Empty,
                         CustomerName = row.CustomerName ?? string.Empty,
                         row.OutstandingBalance,
-                        row.PercentOfTotal
+                        row.PercentOfTotal,
+                        LastInvoicingSalesmanName = row.LastInvoicingSalesmanName ?? string.Empty
                     }, transaction);
                 }
 
                 const string insertAttentionSql = @"
 INSERT INTO BTRPD_CustomerAttention (
     CustomerAttentionId, SnapshotKey, CustomerId, CustomerCode, CustomerName, SignalKey, SignalLabel,
-    ValueAmount, ValueText, WilayahName, SortOrder)
+    ValueAmount, ValueText, WilayahName, LastInvoicingSalesmanName, SortOrder)
 VALUES (
     @CustomerAttentionId, @SnapshotKey, @CustomerId, @CustomerCode, @CustomerName, @SignalKey, @SignalLabel,
-    @ValueAmount, @ValueText, @WilayahName, @SortOrder)";
+    @ValueAmount, @ValueText, @WilayahName, @LastInvoicingSalesmanName, @SortOrder)";
 
                 foreach (var row in result.AttentionList ?? new List<DashboardCustomerAttentionRow>())
                 {
@@ -318,6 +328,7 @@ VALUES (
                         row.ValueAmount,
                         ValueText = row.ValueText ?? string.Empty,
                         WilayahName = row.WilayahName ?? string.Empty,
+                        LastInvoicingSalesmanName = row.LastInvoicingSalesmanName ?? string.Empty,
                         row.SortOrder
                     }, transaction);
                 }
@@ -1162,6 +1173,7 @@ VALUES (
             public string CustomerName { get; set; }
             public decimal OmzetAmount { get; set; }
             public decimal? PercentOfTotal { get; set; }
+            public string LastInvoicingSalesmanName { get; set; }
         }
 
         private sealed class TopPiutangRow
@@ -1172,6 +1184,7 @@ VALUES (
             public string CustomerName { get; set; }
             public decimal OutstandingBalance { get; set; }
             public decimal? PercentOfTotal { get; set; }
+            public string LastInvoicingSalesmanName { get; set; }
         }
 
         private sealed class AttentionRow
@@ -1184,6 +1197,7 @@ VALUES (
             public decimal? ValueAmount { get; set; }
             public string ValueText { get; set; }
             public string WilayahName { get; set; }
+            public string LastInvoicingSalesmanName { get; set; }
             public int SortOrder { get; set; }
         }
 

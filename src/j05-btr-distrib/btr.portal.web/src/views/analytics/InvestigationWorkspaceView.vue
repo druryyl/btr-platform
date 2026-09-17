@@ -3,6 +3,7 @@ import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import Button from 'primevue/button'
 import Select from 'primevue/select'
+import SelectButton from 'primevue/selectbutton'
 import Message from 'primevue/message'
 import DashboardDetailLayout from '@/components/dashboard/DashboardDetailLayout.vue'
 import WorkspaceBreadcrumb from '@/components/entity-analytics/workspace/WorkspaceBreadcrumb.vue'
@@ -14,6 +15,8 @@ import PopulationSearchField from '@/components/entity-analytics/workspace/Popul
 import ScopeIndicator from '@/components/entity-analytics/workspace/ScopeIndicator.vue'
 import EntityIdentityPanel from '@/components/entity-analytics/workspace/EntityIdentityPanel.vue'
 import WorkspaceKpiSummarySection from '@/components/entity-analytics/workspace/WorkspaceKpiSummarySection.vue'
+import WorkspaceDerivedMetricsSection from '@/components/entity-analytics/workspace/WorkspaceDerivedMetricsSection.vue'
+import WorkspaceDataHealthSection from '@/components/entity-analytics/workspace/WorkspaceDataHealthSection.vue'
 import ComparisonLegend from '@/components/entity-analytics/workspace/ComparisonLegend.vue'
 import PeerPositionPanel from '@/components/entity-analytics/workspace/PeerPositionPanel.vue'
 import PeerGroupSelector from '@/components/entity-analytics/workspace/PeerGroupSelector.vue'
@@ -26,6 +29,7 @@ import ComparisonLimitDialog from '@/components/entity-analytics/workspace/Compa
 import type { PopulationMapPoint } from '@/models/entityAnalytics'
 import { buildWorkspaceQuery, parseWorkspaceUrlState } from '@/services/investigationWorkspaceUrl'
 import { buildWorkspaceRoute } from '@/navigation/investigationWorkspaceNavigation'
+import { getEntityDisplayLabel } from '@/navigation/entityAnalyticsNavigation'
 import { useEntityAnalyticsStore } from '@/stores/entityAnalyticsStore'
 import { useInvestigationWorkspaceStore } from '@/stores/investigationWorkspaceStore'
 
@@ -53,6 +57,16 @@ const entityTypeOptions = computed(() =>
 )
 
 const isInvestigation = computed(() => workspace.mode === 'investigation')
+
+const entityLabel = computed(() => getEntityDisplayLabel(workspace.entityType))
+
+const workspaceTitle = computed(() =>
+  workspace.entityType === 'Supplier' ? 'Principal Investigation Workspace' : 'Investigation Workspace',
+)
+
+const lensOptions = computed(() =>
+  workspace.lenses.map((lens) => ({ label: lens.DisplayName, value: lens.LensId })),
+)
 
 const primaryKpiId = computed(
   () => workspace.activePreset?.AxisYKpiId ?? workspace.population?.AxisYKpiId ?? '',
@@ -112,6 +126,10 @@ function onEntityTypeChange(type: string) {
 
 function onPresetChange(presetId: string) {
   void workspace.setPreset(presetId).then(syncRoute)
+}
+
+function onLensChange(lensId: string) {
+  void workspace.setLens(lensId).then(syncRoute)
 }
 
 function onFilterChange(filter: string | null) {
@@ -189,8 +207,8 @@ watch(
 
 <template>
   <DashboardDetailLayout
-    title="Investigation Workspace"
-    :subtitle="`${workspace.entityType} population investigation`"
+    :title="workspaceTitle"
+    :subtitle="`${entityLabel} population investigation`"
     :loading="workspace.loadingPopulation && !workspace.population"
     :error="workspace.error"
     :generated-at="workspace.population?.GeneratedAt"
@@ -213,6 +231,16 @@ watch(
             option-value="EntityType"
             placeholder="Entity type"
             @update:model-value="onEntityTypeChange"
+          />
+          <SelectButton
+            v-if="workspace.hasLensSwitcher"
+            :model-value="workspace.activeLensId"
+            :options="lensOptions"
+            option-label="label"
+            option-value="value"
+            :allow-empty="false"
+            aria-label="Investigation lens"
+            @update:model-value="onLensChange"
           />
           <MapPresetSelector
             v-if="workspace.presets.length"
@@ -262,6 +290,13 @@ watch(
         </div>
       </WorkspaceStageSection>
 
+      <WorkspaceStageSection v-if="workspace.dataHealth?.IsAvailable" title="Data Health">
+        <WorkspaceDataHealthSection
+          :data-health="workspace.dataHealth"
+          :loading="workspace.loadingDataHealth"
+        />
+      </WorkspaceStageSection>
+
       <template v-if="isInvestigation">
         <WorkspaceStageSection title="Current Facts">
           <EntityIdentityPanel
@@ -276,6 +311,14 @@ watch(
           <WorkspaceKpiSummarySection
             :profiles="workspace.profiles"
             :entity-ids="workspace.selectedEntityIds"
+            :loading="workspace.loadingProfiles"
+            :kpi-ids="workspace.activeLensKpiIds"
+          />
+          <WorkspaceDerivedMetricsSection
+            v-if="workspace.activeLensDerivedMetricIds?.length"
+            :profiles="workspace.profiles"
+            :entity-ids="workspace.selectedEntityIds"
+            :metric-ids="workspace.activeLensDerivedMetricIds"
             :loading="workspace.loadingProfiles"
           />
         </WorkspaceStageSection>
@@ -335,6 +378,7 @@ watch(
             :entity-ids="workspace.selectedEntityIds"
             :profiles="workspace.profiles"
             :loading="workspace.loadingProfiles"
+            :active-lens-id="workspace.activeLensId"
           />
           <Message severity="info" :closable="false" class="iw-completeness">
             You have reviewed Population Map and Current Facts. Business Drivers and Evidence are

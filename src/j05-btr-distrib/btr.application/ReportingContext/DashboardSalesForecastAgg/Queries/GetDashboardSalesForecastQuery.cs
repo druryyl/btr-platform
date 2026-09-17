@@ -5,8 +5,10 @@ using System.Threading;
 using System.Threading.Tasks;
 using btr.application.ReportingContext.DashboardExecutiveAgg.Services;
 using btr.application.ReportingContext.DashboardSalesAgg.Queries;
+using btr.application.ReportingContext.DashboardSalesForecastAgg;
 using btr.application.ReportingContext.DashboardSalesForecastAgg.Contracts;
 using btr.application.ReportingContext.DashboardSnapshotAgg.Services;
+using btr.application.ReportingContext.PrincipalAnalyticsAgg.Contracts;
 using btr.application.SalesContext.SalesOmzetAgg.Policies;
 using MediatR;
 
@@ -69,6 +71,67 @@ namespace btr.application.ReportingContext.DashboardSalesForecastAgg.Queries
 
         public List<DashboardSalesWeekTrendItem> WeeklyTrend { get; set; }
             = new List<DashboardSalesWeekTrendItem>();
+
+        public DashboardSalesPrincipalForecastPresentation PrincipalForecast { get; set; }
+            = new DashboardSalesPrincipalForecastPresentation();
+    }
+
+    public class DashboardSalesPrincipalForecastPresentation
+    {
+        public bool IsAvailable { get; set; }
+
+        public string SalesOutKpiId { get; set; }
+
+        public string TargetKpiId { get; set; }
+
+        public int PeriodYear { get; set; }
+
+        public int PeriodMonth { get; set; }
+
+        public DateTime BusinessDate { get; set; }
+
+        public int DaysInMonth { get; set; }
+
+        public int DaysElapsed { get; set; }
+
+        public int DaysRemaining { get; set; }
+
+        public decimal SumOfPrincipalForecasts { get; set; }
+
+        public string CompanyForecastNote { get; set; }
+
+        public IList<string> Disclosures { get; set; }
+            = new List<string>();
+
+        public List<DashboardSalesPrincipalForecastItem> Items { get; set; }
+            = new List<DashboardSalesPrincipalForecastItem>();
+    }
+
+    public class DashboardSalesPrincipalForecastItem
+    {
+        public string PrincipalName { get; set; }
+
+        public string SupplierId { get; set; }
+
+        public string SalesOutKpiId { get; set; }
+
+        public decimal PrincipalSalesOutAmount { get; set; }
+
+        public string TargetKpiId { get; set; }
+
+        public decimal? PrincipalTargetAmount { get; set; }
+
+        public decimal DailyAverageSales { get; set; }
+
+        public decimal ForecastAmount { get; set; }
+
+        public decimal? ForecastAchievementPercent { get; set; }
+
+        public decimal? RequiredDailySales { get; set; }
+
+        public decimal TargetGap { get; set; }
+
+        public string RequiredDailySeverity { get; set; }
     }
 
     public class DashboardSalesForecastVsTarget
@@ -97,17 +160,31 @@ namespace btr.application.ReportingContext.DashboardSalesForecastAgg.Queries
         : IRequestHandler<GetDashboardSalesForecastQuery, DashboardSalesForecastResponse>
     {
         private readonly IDashboardSalesForecastDal _dal;
+        private readonly IPrincipalSalesOutHistoryDal _historyDal;
+        private readonly IPrincipalTargetSnapshotDal _targetSnapshotDal;
 
-        public GetDashboardSalesForecastHandler(IDashboardSalesForecastDal dal)
+        public GetDashboardSalesForecastHandler(
+            IDashboardSalesForecastDal dal,
+            IPrincipalSalesOutHistoryDal historyDal,
+            IPrincipalTargetSnapshotDal targetSnapshotDal)
         {
             _dal = dal;
+            _historyDal = historyDal;
+            _targetSnapshotDal = targetSnapshotDal;
         }
 
         public Task<DashboardSalesForecastResponse> Handle(
             GetDashboardSalesForecastQuery request,
             CancellationToken cancellationToken)
         {
-            return Task.FromResult(_dal.GetSummary());
+            var response = _dal.GetSummary();
+            response.PrincipalForecast = SalesForecastPrincipalPresentationComposer.Compose(
+                response.PeriodYear,
+                response.PeriodMonth,
+                response.BusinessDate,
+                _historyDal.GetHistory(),
+                _targetSnapshotDal.GetCurrent());
+            return Task.FromResult(response);
         }
     }
 

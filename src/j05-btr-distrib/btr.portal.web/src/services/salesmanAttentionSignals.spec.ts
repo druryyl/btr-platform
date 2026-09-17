@@ -4,6 +4,8 @@ import {
   countSalesmanAttentionBySignal,
   filterActiveSalesmen,
   filterSalesmanAttentionItems,
+  SALESMAN_ATTENTION_SIGNAL_LABELS,
+  salesmanAttentionDisplayLabel,
 } from '@/services/salesmanAttentionSignals'
 
 function row(signalKey: string, isActive = true): DashboardSalesmanAttentionItem {
@@ -21,6 +23,20 @@ function row(signalKey: string, isActive = true): DashboardSalesmanAttentionItem
     IsActive: isActive,
   }
 }
+
+describe('salesmanAttentionDisplayLabel', () => {
+  it('does not describe last-invoice dormancy as an owned customer portfolio', () => {
+    const label = salesmanAttentionDisplayLabel(
+      'DormantCustomerPortfolio',
+      'Dormant Customer Portfolio',
+    )
+
+    expect(label).toBe(SALESMAN_ATTENTION_SIGNAL_LABELS.DormantCustomerPortfolio)
+    expect(label.toLowerCase()).not.toContain('portfolio')
+    expect(label.toLowerCase()).not.toContain('owned')
+    expect(label.toLowerCase()).not.toContain('assigned')
+  })
+})
 
 describe('filterSalesmanAttentionItems', () => {
   const items = [row('BelowTarget'), row('MissingTargetSetup'), row('BelowTarget')]

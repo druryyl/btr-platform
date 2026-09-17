@@ -1,0 +1,5 @@
+IF NOT EXISTS (SELECT 1 FROM BTR_RoleMenu WHERE RoleId = 'SYSAD' AND MenuId = 'RT3')
+	INSERT INTO BTR_RoleMenu (RoleId, MenuId) VALUES ('SYSAD', 'RT3');
+
+IF NOT EXISTS (SELECT 1 FROM BTR_RoleMenu WHERE RoleId = 'FAKTR' AND MenuId = 'RT3')
+	INSERT INTO BTR_RoleMenu (RoleId, MenuId) VALUES ('FAKTR', 'RT3');

@@ -6,23 +6,37 @@ import {
   buildAutoLabelCandidates,
   buildDaysCalendarAxisTicks,
   buildIdrNiceAxisTicks,
+  buildPercentNiceAxisTicks,
   buildTransform,
+  classifyPacingQuadrant,
   computeBounds,
   computeRawExtents,
   dataToScreen,
   DAYS_CALENDAR_EDGES,
   DAYS_YEAR_EDGE,
+  ensureZeroTick,
+  findNearestStripItem,
   formatAxisTickValue,
   generateIdrNiceEdges,
   generateLinearAxisTicks,
   generateProjectionAxisGuides,
   generateProjectionGridTicks,
+  getLowConfidencePoints,
+  isBusinessZeroWithinBounds,
   isDaysAxisUnit,
   isIdrAxisUnit,
+  isLowConfidencePoint,
+  layoutLowConfidenceStrip,
+  LOW_CONFIDENCE_STRIP_HEIGHT,
+  partitionMapPoints,
   plotPoints,
   projectionToScreenX,
   resolveBusinessAttentionTier,
+  resolveBusinessProjection,
+  resolveBusinessZeroProjection,
   resolveLabelPlacements,
+  resolvePacingQuadrantBoundaries,
+  resolvePacingQuadrantForPoint,
   resolvePopulationAxisTicks,
   resolveVisualTier,
   formatBinRangeLabel,
@@ -274,8 +288,91 @@ describe('resolvePopulationAxisTicks', () => {
     expect(ticks.map((t) => t.businessValue)).toEqual([0, 7, 14, 21, 30, 60, 90])
   })
 
+  it('returns nice Percent ticks instead of raw percentile fallback', () => {
+    const ticks = resolvePopulationAxisTicks('Percent', norm, 0, 100, fallback)
+    expect(ticks).not.toBe(fallback)
+    expect(ticks.length).toBeGreaterThan(0)
+    for (const t of ticks) {
+      expect(Number.isInteger(t.businessValue)).toBe(true)
+    }
+  })
+
   it('returns fallback for other units', () => {
-    expect(resolvePopulationAxisTicks('Percent', norm, 0, 100, fallback)).toBe(fallback)
+    expect(resolvePopulationAxisTicks('Count', norm, 0, 100, fallback)).toBe(fallback)
+  })
+})
+
+describe('buildPercentNiceAxisTicks', () => {
+  const norm = { center: 6, scale: 1 }
+
+  it('emits clean integer steps for a pacing-like span (60…663)', () => {
+    const ticks = buildPercentNiceAxisTicks(norm, 'Percent', 60, 663)
+    expect(ticks.length).toBeGreaterThan(0)
+    const values = ticks.map((t) => t.businessValue)
+    expect(values).toEqual([...values].sort((a, b) => a - b))
+    for (const v of values) {
+      expect(Number.isInteger(v)).toBe(true)
+      expect(v).toBeGreaterThanOrEqual(0)
+      expect(v).toBeLessThanOrEqual(700)
+    }
+    // No awkward decimals like 75.044.
+    for (const v of values) {
+      expect(String(v)).not.toMatch(/\.\d{2,}/)
+    }
+  })
+
+  it('covers negative growth spans with clean steps and zero when in range', () => {
+    const ticks = buildPercentNiceAxisTicks(norm, 'Percent', -12, 2)
+    const values = ticks.map((t) => t.businessValue)
+    expect(values).toContain(0)
+    for (const v of values) {
+      expect(String(v)).not.toMatch(/\.\d{2,}/)
+    }
+  })
+
+  it('aligns tick projections with the plotted transform', () => {
+    const ticks = buildPercentNiceAxisTicks(norm, 'Percent', 60, 130)
+    for (const t of ticks) {
+      expect(t.projectionValue).toBeCloseTo(
+        resolveBusinessProjection(norm, 'Percent', t.businessValue),
+        9,
+      )
+    }
+  })
+
+  it('adds a negative tick when coarse steps skip a small negative tail', () => {
+    const ticks = buildPercentNiceAxisTicks(norm, 'Percent', -2, 45)
+    const values = ticks.map((t) => t.businessValue)
+    expect(values).toContain(-2)
+    expect(values).toEqual([...values].sort((a, b) => a - b))
+    expect(new Set(values).size).toBe(values.length)
+    for (const t of ticks) {
+      expect(t.projectionValue).toBeCloseTo(
+        resolveBusinessProjection(norm, 'Percent', t.businessValue),
+        9,
+      )
+    }
+  })
+
+  it('adds a one-decimal negative tick for a fractional tail', () => {
+    const ticks = buildPercentNiceAxisTicks(norm, 'Percent', -0.3, 5)
+    const values = ticks.map((t) => t.businessValue)
+    expect(values.some((v) => v < 0)).toBe(true)
+    expect(new Set(values).size).toBe(values.length)
+  })
+
+  it('does not duplicate when negatives are already labelled', () => {
+    const ticks = buildPercentNiceAxisTicks(norm, 'Percent', -25, 40)
+    const values = ticks.map((t) => t.businessValue)
+    expect(values.some((v) => v < 0)).toBe(true)
+    expect(new Set(values).size).toBe(values.length)
+  })
+
+  it('returns empty ticks for non-finite norm or range', () => {
+    expect(
+      buildPercentNiceAxisTicks({ center: NaN, scale: 1 }, 'Percent', 0, 100),
+    ).toEqual([])
+    expect(buildPercentNiceAxisTicks(norm, 'Percent', NaN, 100)).toEqual([])
   })
 })
 
@@ -587,5 +684,218 @@ describe('formatBinRangeLabel', () => {
     expect(formatBinRangeLabel(50_000_000, 1_400_000_000, 'IDR')).toBe('50J – 1.4M')
     expect(formatBinRangeLabel(500_000_000, 1_400_000_000, 'IDR', true)).toBe('500J – ~')
     expect(formatBinRangeLabel(1_000_000_000, 2_500_000_000_000, 'IDR')).toBe('1M – 2.5T')
+  })
+})
+
+describe('business zero reference (PSOM-12)', () => {
+  it('projects business 0 with the same transform as plotted points', () => {
+    const points = [
+      makePoint({ EntityId: 'neg', AxisX: 50, AxisY: -30 }),
+      makePoint({ EntityId: 'pos', AxisX: 150, AxisY: 40 }),
+    ]
+    const projection = populationProjectionEngine.project(points, {
+      axisXUnit: 'Percent',
+      axisYUnit: 'Percent',
+    })!
+    const zero = resolveBusinessZeroProjection(
+      projection.metadata.normalizationY,
+      'Percent',
+    )
+    expect(Number.isFinite(zero)).toBe(true)
+    expect(isBusinessZeroWithinBounds(zero, projection.bounds)).toBe(true)
+    expect(projection.bounds.minY).toBeLessThan(zero)
+    expect(projection.bounds.maxY).toBeGreaterThan(zero)
+  })
+
+  it('inserts a 0 tick when missing and zero is within bounds', () => {
+    const bounds = { minX: -2, maxX: 2, minY: -1, maxY: 1 }
+    const ticks = [
+      { businessValue: -20, projectionValue: -0.8 },
+      { businessValue: 30, projectionValue: 0.7 },
+    ]
+    const result = ensureZeroTick(ticks, 0, bounds)
+    expect(result.map((t) => t.businessValue)).toContain(0)
+    const zeroTick = result.find((t) => t.businessValue === 0)!
+    expect(zeroTick.projectionValue).toBe(0)
+    for (let i = 1; i < result.length; i++) {
+      expect(result[i].projectionValue).toBeGreaterThanOrEqual(result[i - 1].projectionValue)
+    }
+  })
+
+  it('keeps ticks unchanged when zero is outside bounds or already present', () => {
+    const bounds = { minX: -2, maxX: 2, minY: 0.5, maxY: 2 }
+    const ticks = [{ businessValue: 10, projectionValue: 1 }]
+    expect(ensureZeroTick(ticks, 0, bounds)).toBe(ticks)
+
+    const inBounds = { minX: -2, maxX: 2, minY: -1, maxY: 1 }
+    const withZero = [
+      { businessValue: 0, projectionValue: 0 },
+      { businessValue: 10, projectionValue: 0.5 },
+    ]
+    expect(ensureZeroTick(withZero, 0, inBounds)).toBe(withZero)
+  })
+})
+
+describe('fixed business quadrants (PSOM-13)', () => {
+  it('classifies the four fixed business quadrants', () => {
+    expect(classifyPacingQuadrant(120, 10)).toBe('star')
+    expect(classifyPacingQuadrant(80, 10)).toBe('growing')
+    expect(classifyPacingQuadrant(120, -10)).toBe('steady')
+    expect(classifyPacingQuadrant(80, -10)).toBe('declining')
+  })
+
+  it('treats the exact boundaries as Star (X≥100, Y≥0)', () => {
+    expect(classifyPacingQuadrant(100, 0)).toBe('star')
+    expect(classifyPacingQuadrant(100, -1)).toBe('steady')
+    expect(classifyPacingQuadrant(99, 0)).toBe('growing')
+    expect(classifyPacingQuadrant(99, -1)).toBe('declining')
+  })
+
+  it('returns null when a business value is missing or non-finite', () => {
+    expect(classifyPacingQuadrant(null, 10)).toBeNull()
+    expect(classifyPacingQuadrant(120, null)).toBeNull()
+    expect(classifyPacingQuadrant(undefined, undefined)).toBeNull()
+    expect(classifyPacingQuadrant(Number.NaN, 10)).toBeNull()
+  })
+
+  it('aligns quadrant boundaries with the plotted point transform', () => {
+    const points = [
+      makePoint({ EntityId: 'low', AxisX: 50, AxisY: -20 }),
+      makePoint({ EntityId: 'threshold', AxisX: 100, AxisY: 0 }),
+      makePoint({ EntityId: 'high', AxisX: 160, AxisY: 30 }),
+    ]
+    const projection = project(points)
+    const bounds = computeBounds(projection)
+    const transform = buildTransform(800, 600, bounds)
+
+    const { boundaryX, boundaryY } = resolvePacingQuadrantBoundaries(
+      projection,
+      transform,
+      'Percent',
+      'Percent',
+    )
+
+    const threshold = projection.entities.get('threshold')!
+    const screen = dataToScreen(threshold.projectionX, threshold.projectionY, transform)
+
+    expect(boundaryX).not.toBeNull()
+    expect(boundaryY).not.toBeNull()
+    expect(boundaryX!).toBeCloseTo(screen.x, 6)
+    expect(boundaryY!).toBeCloseTo(screen.y, 6)
+  })
+
+  it('returns null boundaries when they fall outside the visible bounds', () => {
+    const points = [
+      makePoint({ EntityId: 'a', AxisX: 0, AxisY: 0 }),
+      makePoint({ EntityId: 'b', AxisX: 200, AxisY: 50 }),
+    ]
+    const projection = project(points)
+    const transform = buildTransform(800, 600, { minX: 5, maxX: 10, minY: 0.5, maxY: 2 })
+
+    const { boundaryX, boundaryY } = resolvePacingQuadrantBoundaries(
+      projection,
+      transform,
+      'Percent',
+      'Percent',
+    )
+
+    expect(boundaryX).toBeNull()
+    expect(boundaryY).toBeNull()
+  })
+})
+
+describe('low-confidence quadrant exclusion (PSOM-14)', () => {
+  it('does not assign any business quadrant to low-confidence points', () => {
+    expect(
+      resolvePacingQuadrantForPoint(makePoint({ AxisX: 120, AxisY: 10, IsLowConfidence: true })),
+    ).toBeNull()
+    expect(
+      resolvePacingQuadrantForPoint(makePoint({ AxisX: 80, AxisY: 10, IsLowConfidence: true })),
+    ).toBeNull()
+    expect(
+      resolvePacingQuadrantForPoint(makePoint({ AxisX: 120, AxisY: -10, IsLowConfidence: true })),
+    ).toBeNull()
+    expect(
+      resolvePacingQuadrantForPoint(makePoint({ AxisX: 80, AxisY: -10, IsLowConfidence: true })),
+    ).toBeNull()
+  })
+
+  it('classifies non-flagged points normally', () => {
+    expect(resolvePacingQuadrantForPoint(makePoint({ AxisX: 120, AxisY: 10 }))).toBe('star')
+    expect(resolvePacingQuadrantForPoint(makePoint({ AxisX: 80, AxisY: 10 }))).toBe('growing')
+    expect(resolvePacingQuadrantForPoint(makePoint({ AxisX: 120, AxisY: -10 }))).toBe('steady')
+    expect(resolvePacingQuadrantForPoint(makePoint({ AxisX: 80, AxisY: -10 }))).toBe('declining')
+  })
+
+  it('treats an absent confidence flag as not low-confidence', () => {
+    expect(resolvePacingQuadrantForPoint(makePoint({ AxisX: 120, AxisY: 10 }))).toBe('star')
+    expect(
+      resolvePacingQuadrantForPoint(
+        makePoint({ AxisX: 120, AxisY: 10, IsLowConfidence: undefined }),
+      ),
+    ).toBe('star')
+  })
+
+  it('reports the low-confidence state', () => {
+    expect(isLowConfidencePoint(makePoint({ IsLowConfidence: true }))).toBe(true)
+    expect(isLowConfidencePoint(makePoint({ IsLowConfidence: false }))).toBe(false)
+    expect(isLowConfidencePoint(makePoint())).toBe(false)
+  })
+})
+
+describe('low-confidence strip lane', () => {
+  it('partitions flagged points including NULL-axis entities', () => {
+    const points = [
+      makePoint({ EntityId: 'ok', AxisX: 120, AxisY: 10 }),
+      makePoint({ EntityId: 'nullX', AxisX: null, AxisY: 10, IsLowConfidence: true }),
+      makePoint({ EntityId: 'nullY', AxisX: 80, AxisY: null, IsLowConfidence: true }),
+      makePoint({ EntityId: 'nullBoth', AxisX: null, AxisY: null, IsLowConfidence: true }),
+    ]
+    const { plottable, lowConfidence } = partitionMapPoints(points)
+    expect(plottable.map((p) => p.EntityId)).toEqual(['ok'])
+    expect(lowConfidence.map((p) => p.EntityId)).toEqual(['nullX', 'nullY', 'nullBoth'])
+    expect(getLowConfidencePoints(points)).toHaveLength(3)
+    for (const p of lowConfidence) {
+      expect(resolvePacingQuadrantForPoint(p)).toBeNull()
+    }
+  })
+
+  it('lays out strip items on a single bottom row inside the plot', () => {
+    const points = [
+      makePoint({ EntityId: 'a', AxisX: null, AxisY: null, IsLowConfidence: true }),
+      makePoint({ EntityId: 'b', AxisX: null, AxisY: 5, IsLowConfidence: true }),
+      makePoint({ EntityId: 'c', AxisX: 80, AxisY: null, IsLowConfidence: true }),
+    ]
+    const transform = buildTransform(800, 600, { minX: 0, maxX: 1, minY: 0, maxY: 1 })
+    const items = layoutLowConfidenceStrip(points, transform)
+
+    expect(items).toHaveLength(3)
+    const expectedY = transform.offsetY + transform.plotHeight - LOW_CONFIDENCE_STRIP_HEIGHT / 2
+    for (const item of items) {
+      expect(item.screenY).toBeCloseTo(expectedY, 9)
+      expect(item.screenX).toBeGreaterThanOrEqual(transform.offsetX)
+      expect(item.screenX).toBeLessThanOrEqual(transform.offsetX + transform.plotWidth)
+    }
+    expect(items[0].screenX).toBeLessThan(items[1].screenX)
+    expect(items[1].screenX).toBeLessThan(items[2].screenX)
+  })
+
+  it('returns no strip items when nothing is flagged', () => {
+    const transform = buildTransform(800, 600, { minX: 0, maxX: 1, minY: 0, maxY: 1 })
+    expect(layoutLowConfidenceStrip([], transform)).toEqual([])
+    expect(
+      layoutLowConfidenceStrip([makePoint({ EntityId: 'ok', AxisX: 120, AxisY: 10 })], transform),
+    ).toHaveLength(1)
+  })
+
+  it('hit-tests strip markers by proximity', () => {
+    const transform = buildTransform(800, 600, { minX: 0, maxX: 1, minY: 0, maxY: 1 })
+    const points = [
+      makePoint({ EntityId: 'a', AxisX: null, AxisY: null, IsLowConfidence: true }),
+      makePoint({ EntityId: 'b', AxisX: null, AxisY: null, IsLowConfidence: true }),
+    ]
+    const items = layoutLowConfidenceStrip(points, transform)
+    expect(findNearestStripItem(items, items[0].screenX, items[0].screenY, 12)?.point.EntityId).toBe('a')
+    expect(findNearestStripItem(items, -100, -100, 12)).toBeNull()
   })
 })

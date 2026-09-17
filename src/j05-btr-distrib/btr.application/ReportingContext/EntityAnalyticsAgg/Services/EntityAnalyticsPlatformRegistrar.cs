@@ -47,7 +47,7 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Services
             entityTypes.Register(new EntityTypeRegistration
             {
                 EntityTypeCode = EntityTypeCode.Supplier,
-                DisplayName = "Supplier",
+                DisplayName = "Principal",
                 KpiPackId = "supplier-default",
                 RelationshipPackId = "supplier-relationships",
                 PeerGroupRuleId = "supplier-all-active",

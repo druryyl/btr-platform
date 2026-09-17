@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <Import Project="..\packages\xunit.runner.visualstudio.3.0.1\build\net472\xunit.runner.visualstudio.props" Condition="Exists('..\packages\xunit.runner.visualstudio.3.0.1\build\net472\xunit.runner.visualstudio.props')" />
   <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
@@ -141,11 +141,13 @@
     <Compile Include="ReportingContext\DashboardInventoryAggregatorTest.cs" />
     <Compile Include="ReportingContext\DashboardInventoryRiskAggregatorTest.cs" />
     <Compile Include="ReportingContext\DashboardInventoryDalTest.cs" />
+    <Compile Include="ReportingContext\DashboardInventoryRiskDalTest.cs" />
     <Compile Include="ReportingContext\DashboardInventorySnapshotVerificationTest.cs" />
     <Compile Include="ReportingContext\DashboardSalesFakturAggregatorTest.cs" />
     <Compile Include="ReportingContext\DashboardSalesForecastAggregatorTest.cs" />
     <Compile Include="ReportingContext\DashboardSalesForecastSnapshotVerificationTest.cs" />
     <Compile Include="ReportingContext\SalesForecastPolicyTest.cs" />
+    <Compile Include="ReportingContext\AnalyticsPeriodCalculatorTest.cs" />
     <Compile Include="ReportingContext\CashFlowForecastPolicyTest.cs" />
     <Compile Include="ReportingContext\CustomerRiskForecastPolicyTest.cs" />
     <Compile Include="ReportingContext\CollectionOptimizationPolicyTest.cs" />
@@ -188,6 +190,10 @@
     <Compile Include="ReportingContext\DashboardSalesmanSnapshotRepHistoryTest.cs" />
     <Compile Include="ReportingContext\DashboardSalesmanKeyResolverTest.cs" />
     <Compile Include="ReportingContext\DashboardCustomerDalTest.cs" />
+    <Compile Include="ReportingContext\CustomerDashboardPrincipalMixTest.cs" />
+    <Compile Include="ReportingContext\CustomerRiskForecastPrincipalDeclineTest.cs" />
+    <Compile Include="ReportingContext\CustomerPortfolioPrincipalMixTest.cs" />
+    <Compile Include="ReportingContext\CustomerReportPrincipalPairTest.cs" />
     <Compile Include="ReportingContext\DashboardCustomerKeyResolverTest.cs" />
     <Compile Include="ReportingContext\DashboardCollectionAggregatorTest.cs" />
     <Compile Include="ReportingContext\DashboardLocationAggregatorTest.cs" />
@@ -198,6 +204,8 @@
     <Compile Include="ReportingContext\DashboardAlertCenterComposerTest.cs" />
     <Compile Include="ReportingContext\EntityAnalyticsKpiRegistryTest.cs" />
     <Compile Include="ReportingContext\EntityMapPresetRegistryTest.cs" />
+    <Compile Include="ReportingContext\EntityInvestigationLensRegistryTest.cs" />
+    <Compile Include="ReportingContext\GetEntityDataHealthHandlerTest.cs" />
     <Compile Include="ReportingContext\EntityAnalyticsRepositoryStubBase.cs" />
     <Compile Include="ReportingContext\EntityAnalyticsServiceTest.cs" />
     <Compile Include="ReportingContext\CustomerReplayDataLoaderIntegrationTest.cs" />
@@ -208,8 +216,32 @@
     <Compile Include="ReportingContext\EntityTrendEngineTest.cs" />
     <Compile Include="ReportingContext\EntityRankingCalculatorTest.cs" />
     <Compile Include="ReportingContext\EntityPeerDistributionBinBuilderTest.cs" />
+    <Compile Include="ReportingContext\EntityPeerDistributionSummaryTest.cs" />
     <Compile Include="ReportingContext\PeerGroupLabelFormatterTest.cs" />
+    <Compile Include="ReportingContext\PrincipalConfidenceGuardTest.cs" />
     <Compile Include="ReportingContext\PeerGroupRuleCatalogTest.cs" />
+    <Compile Include="ReportingContext\PrincipalKpiCatalogTest.cs" />
+    <Compile Include="ReportingContext\PrincipalSalesOutAggregatorTest.cs" />
+    <Compile Include="ReportingContext\PrincipalPerformanceQueryTest.cs" />
+    <Compile Include="ReportingContext\SalesDashboardPrincipalContributionTest.cs" />
+    <Compile Include="ReportingContext\SalesForecastPrincipalPresentationTest.cs" />
+    <Compile Include="ReportingContext\CustomerPrincipalRelationshipComposerTest.cs" />
+    <Compile Include="ReportingContext\PrincipalSalesOutHistoryComposerTest.cs" />
+    <Compile Include="ReportingContext\PrincipalSalesOutRangeEvidenceDalTest.cs" />
+    <Compile Include="ReportingContext\PrincipalPurchaseInAggregatorTest.cs" />
+    <Compile Include="ReportingContext\PrincipalReturnAggregatorTest.cs" />
+    <Compile Include="ReportingContext\PrincipalReturnHistoryComposerTest.cs" />
+    <Compile Include="ReportingContext\PrincipalReturnPercentageComposerTest.cs" />
+    <Compile Include="ReportingContext\PrincipalAchievementComposerTest.cs" />
+    <Compile Include="ReportingContext\PrincipalPacingAchievementComposerTest.cs" />
+    <Compile Include="ReportingContext\PrincipalActiveCustomerComposerTest.cs" />
+    <Compile Include="ReportingContext\PrincipalCustomerCoverageComposerTest.cs" />
+    <Compile Include="ReportingContext\PrincipalMomGrowthComposerTest.cs" />
+    <Compile Include="ReportingContext\PrincipalYoyGrowthComposerTest.cs" />
+    <Compile Include="ReportingContext\PrincipalYoyMtdGrowthComposerTest.cs" />
+    <Compile Include="ReportingContext\PrincipalSalesmanContributionComposerTest.cs" />
+    <Compile Include="ReportingContext\PrincipalInventoryAggregatorTest.cs" />
+    <Compile Include="ReportingContext\PrincipalTargetAggregatorTest.cs" />
     <Compile Include="ReportingContext\EntityRankingEngineTest.cs" />
     <Compile Include="ReportingContext\EntityRadarCalculatorTest.cs" />
     <Compile Include="ReportingContext\EntityRadarEngineTest.cs" />
@@ -225,10 +257,20 @@
     <Compile Include="ReportingContext\CustomerReplayBackfillReconciliationTest.cs" />
     <Compile Include="ReportingContext\SalesmanReplayBackfillReconciliationTest.cs" />
     <Compile Include="ReportingContext\SupplierReplayBackfillReconciliationTest.cs" />
+    <Compile Include="ReportingContext\SupplierPrincipalReplayTest.cs" />
+    <Compile Include="ReportingContext\SupplierAttentionSignalCatalogTest.cs" />
     <Compile Include="ReportingContext\ItemReplayBackfillReconciliationTest.cs" />
     <Compile Include="ReportingContext\SalesmanEntityAnalyticsProducerTest.cs" />
     <Compile Include="ReportingContext\SalesmanEntityAnalyticsReconciliationTest.cs" />
     <Compile Include="ReportingContext\SupplierEntityAnalyticsProducerTest.cs" />
+    <Compile Include="ReportingContext\SupplierPrincipalSalesOutCompositionTest.cs" />
+    <Compile Include="ReportingContext\SupplierPrincipalReturnCompositionTest.cs" />
+    <Compile Include="ReportingContext\SupplierPrincipalTargetCompositionTest.cs" />
+    <Compile Include="ReportingContext\SupplierPrincipalGrowthCompositionTest.cs" />
+    <Compile Include="ReportingContext\SupplierPrincipalPurchaseInCompositionTest.cs" />
+    <Compile Include="ReportingContext\SupplierPrincipalInventoryCompositionTest.cs" />
+    <Compile Include="ReportingContext\SupplierPrincipalOmzetRelationshipMetadataTest.cs" />
+    <Compile Include="ReportingContext\SupplierPurchasingRelationshipCatalogTest.cs" />
     <Compile Include="ReportingContext\SupplierEntityAnalyticsReconciliationTest.cs" />
     <Compile Include="ReportingContext\ItemEntityAnalyticsProducerTest.cs" />
     <Compile Include="ReportingContext\ItemEntityAnalyticsReconciliationTest.cs" />
@@ -252,6 +294,7 @@
     <Compile Include="ReportingContext\PurchasingReportDalTest.cs" />
     <Compile Include="ReportingContext\ReportPeriodValidatorTest.cs" />
     <Compile Include="ReportingContext\SalesReportDalTest.cs" />
+    <Compile Include="ReportingContext\SalesReportPrincipalEvidenceTest.cs" />
     <Compile Include="SalesContext\NumericHelperTest.cs" />
     <Compile Include="SalesContext\SalesOmzetEntityDalTest.cs" />
     <Compile Include="SalesContext\SalesOmzetPoliciesTest.cs" />

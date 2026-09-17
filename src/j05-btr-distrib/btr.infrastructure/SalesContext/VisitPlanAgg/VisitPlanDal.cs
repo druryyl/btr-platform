@@ -122,6 +122,28 @@ namespace btr.infrastructure.SalesContext.VisitPlanAgg
             }
         }
 
+        public void DeleteRange(string salesPersonId, DateTime fromDate, DateTime toDate)
+        {
+            if (fromDate.Date > toDate.Date)
+                return;
+
+            const string sql = @"
+                DELETE FROM BTR_VisitPlan
+                WHERE SalesPersonId = @SalesPersonId
+                    AND VisitDate >= @FromDate
+                    AND VisitDate <= @ToDate";
+
+            var dp = new DynamicParameters();
+            dp.AddParam("@SalesPersonId", salesPersonId, SqlDbType.VarChar);
+            dp.AddParam("@FromDate", fromDate.Date, SqlDbType.Date);
+            dp.AddParam("@ToDate", toDate.Date, SqlDbType.Date);
+
+            using (var conn = new SqlConnection(ConnStringHelper.Get(_opt)))
+            {
+                conn.Execute(sql, dp);
+            }
+        }
+
         public void BulkInsert(IEnumerable<VisitPlanModel> rows)
         {
             var fetched = rows?.ToList() ?? new List<VisitPlanModel>();

@@ -15,6 +15,7 @@ import {
   SALESMAN_ATTENTION_SIGNAL_ALL,
   SALESMAN_ATTENTION_SIGNAL_KEYS,
   SALESMAN_ATTENTION_SIGNAL_LABELS,
+  salesmanAttentionDisplayLabel,
 } from '@/services/salesmanAttentionSignals'
 import { resolveInvestigationSourceLabel } from '@/services/investigationSourceLabels'
 import { navigateToInvestigation } from '@/services/navigateToInvestigation'
@@ -167,7 +168,11 @@ function openProfile(item: DashboardSalesmanAttentionItem): void {
                 </button>
               </template>
             </Column>
-            <Column field="SignalLabel" header="Signal" />
+            <Column header="Signal">
+              <template #body="{ data }">
+                {{ salesmanAttentionDisplayLabel(data.SignalKey, data.SignalLabel) }}
+              </template>
+            </Column>
             <Column header="Detail">
               <template #body="{ data }">
                 {{ formatValue(data) }}

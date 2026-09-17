@@ -5,27 +5,30 @@ import Button from 'primevue/button'
 import DatePicker from 'primevue/datepicker'
 import Message from 'primevue/message'
 import SelectButton from 'primevue/selectbutton'
-import FieldActivityComparisonChart, {
-  type FieldActivityComparisonItem,
-} from '@/components/field-activity/FieldActivityComparisonChart.vue'
-import FieldActivityRankingGrid from '@/components/field-activity/FieldActivityRankingGrid.vue'
+import ExecutionFunnel from '@/components/field-activity/ExecutionFunnel.vue'
+import FieldActivityCollectionHealthSection from '@/components/field-activity/FieldActivityCollectionHealthSection.vue'
+import FieldActivityGroupedActionCenter, {
+  type CommercialRiskClickPayload,
+} from '@/components/field-activity/FieldActivityGroupedActionCenter.vue'
 import FieldActivitySalesmanTable from '@/components/field-activity/FieldActivitySalesmanTable.vue'
 import FieldActivityTeamKpiStrip from '@/components/field-activity/FieldActivityTeamKpiStrip.vue'
 import FieldActivityTeamTrendChart from '@/components/field-activity/FieldActivityTeamTrendChart.vue'
 import FieldActivityWilayahChart from '@/components/field-activity/FieldActivityWilayahChart.vue'
+import RevenueConcentrationStrip from '@/components/field-activity/RevenueConcentrationStrip.vue'
 import { getFieldActivityOverview } from '@/api/fieldActivityApi'
 import { getApiErrorMessage } from '@/api/httpClient'
-import type {
-  FieldActivityOverviewResponse,
-  FieldActivityRankingEntry,
-  FieldActivitySalesmanOverviewRow,
-} from '@/models/fieldActivity'
+import type { FieldActivityOverviewResponse } from '@/models/fieldActivity'
+import { navigateToDashboard, navigateToInvestigation } from '@/services/navigateToInvestigation'
+import { useDashboardStore } from '@/stores/dashboardStore'
 import { usePresentationStore } from '@/stores/presentationStore'
 
 type DatePreset = 'today' | 'yesterday' | 'custom'
 
+const INVESTIGATION_SOURCE_LABEL = 'Sales Force Overview'
+
 const router = useRouter()
 const presentation = usePresentationStore()
+const dashboard = useDashboardStore()
 
 const overview = ref<FieldActivityOverviewResponse | null>(null)
 const loading = ref(false)
@@ -105,38 +108,8 @@ const planBanner = computed(() => {
   return `No visit plan data before ${overview.value.Meta.VisitPlanGoLiveDate}. Planned KPIs show zero for earlier dates.`
 })
 
-function chartLabel(row: FieldActivitySalesmanOverviewRow): string {
-  return `${row.SalesPersonCode} · ${row.SalesPersonName}`
-}
-
-function toComparisonItems(
-  rows: FieldActivitySalesmanOverviewRow[],
-  valueSelector: (row: FieldActivitySalesmanOverviewRow) => number,
-): FieldActivityComparisonItem[] {
-  return rows
-    .filter((row) => row.HasEmail)
-    .map((row) => ({
-      label: chartLabel(row),
-      value: valueSelector(row),
-      salesPersonId: row.SalesPersonId,
-    }))
-    .sort((a, b) => b.value - a.value)
-}
-
-const executionChartItems = computed(() =>
-  toComparisonItems(overview.value?.Salesmen ?? [], (row) => row.VisitExecutionPercent ?? 0),
-)
-
-const effectiveChartItems = computed(() =>
-  toComparisonItems(overview.value?.Salesmen ?? [], (row) => row.EffectiveCallRate ?? 0),
-)
-
-const ordersChartItems = computed(() =>
-  toComparisonItems(overview.value?.Salesmen ?? [], (row) => row.OrdersCount),
-)
-
-const omzetChartItems = computed(() =>
-  toComparisonItems(overview.value?.Salesmen ?? [], (row) => Number(row.OmzetAmount)),
+const piutangDashboardRoute = computed(
+  () => dashboard.collection?.Navigation?.PiutangDashboardRoute ?? null,
 )
 
 async function loadOverview(): Promise<void> {
@@ -152,6 +125,11 @@ async function loadOverview(): Promise<void> {
   }
 }
 
+function refresh(): void {
+  void loadOverview()
+  void dashboard.loadCollection()
+}
+
 function navigateToDetail(salesPersonId: string): void {
   void router.push({
     name: 'field-activity-detail',
@@ -162,12 +140,26 @@ function navigateToDetail(salesPersonId: string): void {
   })
 }
 
-function onRankingClick(entry: FieldActivityRankingEntry): void {
-  navigateToDetail(entry.SalesPersonId)
+function onCollectionAlertClick(): void {
+  if (piutangDashboardRoute.value) {
+    navigateToDashboard(router, piutangDashboardRoute.value)
+  }
+}
+
+function onCommercialRiskClick(payload: CommercialRiskClickPayload): void {
+  if (payload.investigation) {
+    navigateToInvestigation(router, payload.investigation, INVESTIGATION_SOURCE_LABEL)
+    return
+  }
+
+  if (piutangDashboardRoute.value) {
+    navigateToDashboard(router, piutangDashboardRoute.value)
+  }
 }
 
 onMounted(() => {
   applyDatePreset('today')
+  void dashboard.loadCollection()
 })
 </script>
 
@@ -202,7 +194,7 @@ onMounted(() => {
           label="Refresh"
           severity="secondary"
           :loading="loading"
-          @click="loadOverview"
+          @click="refresh"
         />
       </div>
     </header>
@@ -210,61 +202,65 @@ onMounted(() => {
     <Message v-if="loadError" severity="error" :closable="false">{{ loadError }}</Message>
     <Message v-else-if="planBanner" severity="info" :closable="false">{{ planBanner }}</Message>
 
-    <FieldActivityTeamKpiStrip :kpis="overview?.TeamKpis ?? null" :loading="loading" />
+    <!-- A. Status — sales KPIs + dedicated Collection Health (MTD) section (GAP-005) -->
+    <section class="field-activity-overview__section" aria-label="Status">
+      <FieldActivityTeamKpiStrip :kpis="overview?.TeamKpis ?? null" :loading="loading" />
 
-    <FieldActivitySalesmanTable
-      :rows="overview?.Salesmen ?? []"
-      :loading="loading"
-      @row-click="(row) => navigateToDetail(row.SalesPersonId)"
-    />
-
-    <section class="field-activity-overview__charts">
-      <FieldActivityComparisonChart
-        title="Visit Execution %"
-        :items="executionChartItems"
-        :loading="loading"
-        value-kind="percent"
-        @bar-click="navigateToDetail"
-      />
-      <FieldActivityComparisonChart
-        title="Effective Call Rate"
-        :items="effectiveChartItems"
-        :loading="loading"
-        value-kind="percent"
-        @bar-click="navigateToDetail"
-      />
-      <FieldActivityComparisonChart
-        title="Orders Generated"
-        :items="ordersChartItems"
-        :loading="loading"
-        value-kind="number"
-        @bar-click="navigateToDetail"
-      />
-      <FieldActivityComparisonChart
-        title="Order Value"
-        :items="omzetChartItems"
-        :loading="loading"
-        value-kind="currency"
-        @bar-click="navigateToDetail"
+      <FieldActivityCollectionHealthSection
+        :collection="dashboard.collection"
+        :business-date="presentation.businessReferenceDate"
+        :loading="dashboard.loading"
+        @alert-click="onCollectionAlertClick"
       />
     </section>
 
-    <FieldActivityRankingGrid
-      :rankings="overview?.Rankings ?? null"
-      :loading="loading"
-      @row-click="onRankingClick"
-    />
+    <!-- B. Performance — execution funnel + salesman scoreboard + quality -->
+    <section class="field-activity-overview__section" aria-label="Performance">
+      <ExecutionFunnel :kpis="overview?.TeamKpis ?? null" :loading="loading" />
 
-    <FieldActivityTeamTrendChart
-      :last7-days="overview?.Trends.Last7Days ?? []"
-      :last30-days="overview?.Trends.Last30Days ?? []"
-      :loading="loading"
-    />
+      <FieldActivitySalesmanTable
+        :rows="overview?.Salesmen ?? []"
+        :collection="dashboard.collection"
+        :loading="loading"
+        @row-click="(row) => navigateToDetail(row.SalesPersonId)"
+      />
+    </section>
 
-    <FieldActivityWilayahChart
-      :items="overview?.WilayahBreakdown ?? []"
-      :loading="loading"
-    />
+    <!-- D. Action Center — grouped, action-first interventions -->
+    <section class="field-activity-overview__section" aria-label="Action Center">
+      <FieldActivityGroupedActionCenter
+        :salesmen="overview?.Salesmen ?? []"
+        :rankings="overview?.Rankings ?? null"
+        :collection="dashboard.collection"
+        :loading="loading"
+        @salesman-click="navigateToDetail"
+        @commercial-risk-click="onCommercialRiskClick"
+        @recognition-click="navigateToDetail"
+      />
+    </section>
+
+    <!-- C. Outcomes — revenue distribution + territory & financial health -->
+    <section class="field-activity-overview__section" aria-label="Outcomes">
+      <RevenueConcentrationStrip :salesmen="overview?.Salesmen ?? []" :loading="loading" />
+
+      <FieldActivityWilayahChart
+        :items="overview?.WilayahBreakdown ?? []"
+        :salesman-rows="overview?.Salesmen ?? []"
+        :top-overdue-wilayah="dashboard.collection?.TopOverdueWilayah ?? []"
+        :collection-available="dashboard.collection?.IsAvailable === true"
+        :business-date="presentation.businessReferenceDate"
+        :loading="loading"
+      />
+    </section>
+
+    <!-- E. Trends — sales trends only (collection trends deferred, GAP-001) -->
+    <section class="field-activity-overview__section" aria-label="Trends">
+      <FieldActivityTeamTrendChart
+        :last7-days="overview?.Trends.Last7Days ?? []"
+        :last30-days="overview?.Trends.Last30Days ?? []"
+        :loading="loading"
+      />
+    </section>
   </div>
 </template>
 
@@ -272,7 +268,7 @@ onMounted(() => {
 .field-activity-overview {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: 1.25rem;
 }
 
 .field-activity-overview__header {
@@ -296,9 +292,9 @@ onMounted(() => {
   gap: 0.75rem;
 }
 
-.field-activity-overview__charts {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(20rem, 1fr));
-  gap: 0.75rem;
+.field-activity-overview__section {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
 }
 </style>

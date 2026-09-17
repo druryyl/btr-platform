@@ -27,6 +27,7 @@ watch(entityId, loadCurrentProfile)
     :loading="store.loading"
     :error="store.error"
     :entity-code="store.profile?.Overview?.EntityCode ?? undefined"
+    notice="Last-invoicing and invoiced customers are not customer ownership. Assigned Principal mix and invoiced contribution remain execution measures."
     @refresh="loadCurrentProfile()"
   />
 </template>

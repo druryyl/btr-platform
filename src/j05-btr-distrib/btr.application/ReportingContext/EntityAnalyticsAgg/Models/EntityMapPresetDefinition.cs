@@ -16,6 +16,8 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Models
 
         public string BubbleKpiId { get; set; }
 
+        public string BubbleColorKpiId { get; set; }
+
         public string TooltipSupplementaryKpiId { get; set; }
 
         public bool IsDefault { get; set; }

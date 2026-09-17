@@ -13,6 +13,10 @@ import ReportSummaryBar from '@/components/reports/ReportSummaryBar.vue'
 import { useReportInvestigationFilter } from '@/composables/useReportInvestigationFilter'
 import { useReportInvestigationHydration } from '@/composables/useReportInvestigationHydration'
 import { formatCurrency, formatDate, formatDateTime } from '@/services/formatters'
+import {
+  FI04_ATTRIBUTION_DISCLOSURES,
+  FI04_INVOICE_ATTRIBUTED_SALESMAN_LABEL,
+} from '@/services/piutangInvoiceAttribution'
 import { piutangDateFieldLabel } from '@/services/reportFilterDefaults'
 import { summarizePiutangRows } from '@/services/reportSummaryHelpers'
 import { usePiutangReportStore } from '@/stores/piutangReportStore'
@@ -116,6 +120,10 @@ onMounted(() => {
           Summary reflects filtered rows.
         </p>
 
+        <p class="piutang-report__attribution-note">
+          <span v-for="item in FI04_ATTRIBUTION_DISCLOSURES" :key="item">{{ item }} </span>
+        </p>
+
         <DataTable
           :value="filteredRows"
           :loading="piutangReport.loading"
@@ -135,7 +143,7 @@ onMounted(() => {
           </template>
 
           <Column field="CustomerName" header="Customer" sortable />
-          <Column field="SalesName" header="Sales" sortable />
+          <Column field="SalesName" :header="FI04_INVOICE_ATTRIBUTED_SALESMAN_LABEL" sortable />
           <Column field="FakturCode" header="Faktur" sortable />
           <Column field="FakturDate" header="Tanggal" sortable>
             <template #body="{ data }">
@@ -193,6 +201,12 @@ onMounted(() => {
 .piutang-report__filter-hint {
   margin: 0 0 0.75rem;
   font-size: 0.85rem;
+  color: var(--p-text-muted-color);
+}
+
+.piutang-report__attribution-note {
+  margin: 0 0 0.75rem;
+  font-size: 0.875rem;
   color: var(--p-text-muted-color);
 }
 

@@ -5,6 +5,7 @@ using btr.application.ReportingContext.DashboardInventoryAgg.Queries;
 using btr.application.ReportingContext.DashboardSnapshotAgg.Models;
 using btr.application.ReportingContext.DashboardSnapshotAgg.Services;
 using btr.application.SupportContext.TglJamAgg;
+using btr.infrastructure.ReportingContext.DashboardSnapshotAgg;
 
 namespace btr.infrastructure.ReportingContext.DashboardInventoryAgg
 {
@@ -54,6 +55,8 @@ namespace btr.infrastructure.ReportingContext.DashboardInventoryAgg
                 {
                     Rank = r.Top10Rank ?? 0,
                     Name = r.Name,
+                    SupplierId = r.SupplierId,
+                    DashboardRoute = DashboardInventorySnapshotDal.PrincipalPerformanceRoute,
                     InventoryValue = r.InventoryValue
                 })
                 .ToList();
@@ -75,6 +78,8 @@ namespace btr.infrastructure.ReportingContext.DashboardInventoryAgg
             => ranking.Select(r => new DashboardInventoryBreakdownItem
             {
                 Name = r.Name,
+                SupplierId = r.SupplierId ?? string.Empty,
+                DashboardRoute = r.DashboardRoute,
                 InventoryValue = r.InventoryValue
             }).ToList();
     }

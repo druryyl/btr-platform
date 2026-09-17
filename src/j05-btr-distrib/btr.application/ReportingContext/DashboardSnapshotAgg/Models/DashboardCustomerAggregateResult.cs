@@ -57,6 +57,8 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.Models
         public decimal OmzetAmount { get; set; }
 
         public decimal? PercentOfTotal { get; set; }
+
+        public string LastInvoicingSalesmanName { get; set; }
     }
 
     public class DashboardCustomerTopPiutangRow
@@ -72,6 +74,8 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.Models
         public decimal OutstandingBalance { get; set; }
 
         public decimal? PercentOfTotal { get; set; }
+
+        public string LastInvoicingSalesmanName { get; set; }
     }
 
     public class DashboardCustomerAttentionRow
@@ -91,6 +95,8 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.Models
         public string ValueText { get; set; }
 
         public string WilayahName { get; set; }
+
+        public string LastInvoicingSalesmanName { get; set; }
 
         public int SortOrder { get; set; }
     }

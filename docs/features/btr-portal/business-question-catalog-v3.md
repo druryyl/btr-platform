@@ -55,7 +55,7 @@ EQ-001  Is the business healthy?
 EQ-002  Where is my biggest risk?
         MQ-001  Which customers are becoming risky?
         MQ-002  Which inventory is unhealthy?
-        MQ-003  Which salespeople are carrying overdue or dormant books?
+        MQ-003  Which salespeople have high invoice-attributed overdue exposure or last-invoice dormant signals?
         MQ-004  Which principals are becoming a buying or stock risk?
 
 EQ-003  What needs immediate attention?
@@ -209,11 +209,13 @@ Supported By:
 
 Question:
 
-Which salespeople are carrying overdue or dormant books?
+Which salespeople have high invoice-attributed overdue exposure or last-invoice dormant signals?
 
 Why This Matters:
 
-A salesperson’s omzet can look strong while the owned book is late or going quiet. Those books become next month’s collection problem.
+A salesperson's invoiced omzet can look strong while invoices attributed to
+that salesperson are late or going quiet. Those invoices become next month's
+collection problem.
 
 Typical Trigger:
 
@@ -223,7 +225,8 @@ Typical Trigger:
 
 Expected Decision:
 
-- Reallocate sales resources toward collection and recovery on the named books
+- Reallocate sales resources toward collection and recovery on the named
+  invoice-attributed exposure
 
 Investigation Starts With:
 
@@ -231,11 +234,11 @@ High Overdue Exposure Count
 
 Investigation Path:
 
-- Step 1: Identify salespeople with high overdue exposure
+- Step 1: Identify salespeople with high invoice-attributed overdue exposure
 - Step 2: Separate large outstanding from actually late
-- Step 3: Identify salespeople with dormant portfolios
-- Step 4: Identify the named overdue books
-- Step 5: Determine corrective action — joint Sales–Finance review of those books
+- Step 3: Identify last-invoice dormant signals on invoices attributed to those salespeople
+- Step 4: Identify the named overdue invoices and customers
+- Step 5: Determine corrective action — joint Sales–Finance review of those invoices
 
 Supported By:
 
@@ -851,7 +854,7 @@ Supported By:
 | EQ-008 | What is likely to become a problem next? | Credit Limit Signal Count / Pending Posting Value |
 | MQ-001 | Which customers are becoming risky? | Customers At Risk Count |
 | MQ-002 | Which inventory is unhealthy? | At-Risk Inventory % |
-| MQ-003 | Which salespeople are carrying overdue or dormant books? | High Overdue Exposure Count |
+| MQ-003 | Which salespeople have high invoice-attributed overdue exposure or last-invoice dormant signals? | High Overdue Exposure Count |
 | MQ-004 | Which principals are becoming a buying or stock risk? | Principal At-Risk Count |
 | MQ-005 | Who should be contacted today? | Actions Today |
 | MQ-006 | What should we buy, delay, transfer, or clear today? | Critical Actions Count |
@@ -943,3 +946,130 @@ Expected Decision
 ```
 
 Start from EQ-001. Do not start from a dashboard list.
+
+---
+
+# Principal-Centric Addendum (PCM-058 — implemented surfaces only)
+
+New management questions are taken from feasibility section 4.3. Only
+questions answered by an implemented surface are marked Available. Other
+questions are marked Not yet available and are not routed.
+
+Terminology rules for this addendum: no Salesman is described as the
+Customer owner; the Salesman on an invoice is invoice attribution or the
+last invoicing Salesman as a recency indicator. Returns are independent
+KPIs and are never described as a reduction of, deduction from, or
+redefinition of Principal Sales-Out (`PRN-SALES-001`).
+
+## PQ-001 — Available
+
+Question:
+
+Which Principals drive company sales, and which Principals miss their target?
+
+Routes to: SA04 Principal Performance (`/dashboard/principal-performance`)
+for `PRN-SALES-001` ranking and the target and achievement panel
+(`PRN-TGT-001`, `PRN-TGT-002`, `PRN-TGT-003`); SA01 Principal contribution
+for company context with navigation to SA04.
+
+## PQ-002 — Available
+
+Question:
+
+For a Principal below target, is the gap explained by customer reach, sales
+mix, or invoiced Salesman contribution?
+
+Routes to: SA04 target and achievement panel with the missing-target
+exception note; SA04 customer-reach panel (`PRN-CUS-001`, `PRN-CUS-002`,
+evidence grain is the Customer–Principal relationship projection); SA02
+Principal forecast presentation from `PRN-SALES-001` history compared with
+`PRN-TGT-001` (not a registry KPI, not a ranking KPI).
+
+## PQ-003 — Available
+
+Question:
+
+Which Customers are growing or declining for each Principal?
+
+Routes to: CU01 Principal mix from `BTRPD_CustomerPrincipalRelationship`
+(pair-attributed `PRN-SALES-001`); CU02 Principal decline or inactivity from
+the projection (Active and Dormant pairs can appear for the same Customer);
+CU04 portfolio mix from the projection; Customer Report pair evidence from
+the projection (CU05). Customer totals, credit, and piutang remain
+Customer-level.
+
+## PQ-004 — Not yet available
+
+Question:
+
+Which Customers buy one Principal but not another Principal?
+
+Status: Not yet available. No cross-Principal gap or eligible-base
+comparison is implemented in this slice. Do not route to a dashboard as if
+it were available.
+
+## PQ-005 — Available
+
+Question:
+
+Which Principal relationships are newly active, dormant, or at risk?
+
+Routes to: CU02 Principal decline or inactivity, CU04 portfolio mix, and
+Customer Report pair evidence, all read from
+`BTRPD_CustomerPrincipalRelationship` (Active means last transaction within
+6 months of the snapshot as-of date; Dormant means the row exists and the
+last transaction is not within 6 months; history is retained indefinitely).
+
+## PQ-006 — Not yet available
+
+Question:
+
+Is purchasing and inventory aligned with Principal sales-out?
+
+Status: Not yet available as a joint alignment view. PU01 and PU02 amounts
+are labeled Purchase-In and are not Principal Sales-Out (PCM-018). IN01 and
+IN02 remain inventory measures with a navigation action to SA04 for the same
+Principal (PCM-051). Use SA04 for sales-out, PU01 for Purchase-In, and IN01
+or IN02 for inventory, without treating them as one reconciled KPI.
+
+## PQ-007 — Available
+
+Question:
+
+Are Principal targets fully allocated to Salesmen?
+
+Routes to: SA04 target and achievement panel with the missing-target
+exception count (a sold Salesman × Principal pair with no target record for
+the transaction month remains in `PRN-SALES-001` and is listed as a
+responsibility exception). Salesman contribution is a decomposition of
+`PRN-SALES-001`, not a registry KPI.
+
+## PQ-008 — Available
+
+Question:
+
+Which Salesmen contribute invoiced sales to each Principal?
+
+Routes to: SA04 Principal Performance and SA01 Principal contribution
+(decomposition of stored `PRN-SALES-001` by `Faktur.SalesPersonId`). The
+contributing Salesman is commercial attribution on the transaction, not the
+Customer owner. Field-activity performer attribution on SF02 and SF03 is
+unchanged.
+
+## Evidence notes
+
+- Principal sales evidence is Faktur Item evidence for `PRN-SALES-001`
+  (SA04 drill-down, SA03). Header `GrandTotal` is not allocated across
+  Principals and is not required to reconcile.
+- Return evidence is Return Item evidence at Return Item grain (SA04 returns
+  panel drill-down). Return amounts are shown separately and do not change
+  the displayed `PRN-SALES-001` amount.
+- Customer–Principal evidence grain is the relationship projection. Coverage,
+  Active Customer, Dormant Customer, and relationship presentation read the
+  projection and do not recompute status from raw transactions.
+- Principal sales attention (EX01) and Principal sales alerts (EX02) route to
+  SA04 when the signal is Principal sales performance. No Principal
+  collection, credit, Health Score, or Net Sales alert is introduced.
+- No Principal piutang, overdue, collection, credit, Net Sales, or Health
+  Score KPI is introduced in this addendum. The KPI catalog is unchanged by
+  this slice (PCM-019 owns the catalog).

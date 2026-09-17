@@ -22,6 +22,8 @@ namespace btr.application.ReportingContext.DashboardExecutiveAgg.Queries
 
         public string OverallHealthStatus { get; set; }
 
+        public DashboardExecutivePrincipalSalesAttention PrincipalSales { get; set; }
+
         public DashboardExecutiveSalesAttention Sales { get; set; }
 
         public DashboardExecutivePiutangAttention Piutang { get; set; }
@@ -35,6 +37,30 @@ namespace btr.application.ReportingContext.DashboardExecutiveAgg.Queries
         public DashboardExecutiveCriticalExposures CriticalExposures { get; set; }
 
         public IList<DashboardExecutiveDomainSummary> DomainSummaries { get; set; }
+    }
+
+    public class DashboardExecutivePrincipalSalesAttention
+    {
+        public string KpiId { get; set; }
+
+        public int PeriodYear { get; set; }
+
+        public int PeriodMonth { get; set; }
+
+        public decimal PrincipalSalesOutAmount { get; set; }
+
+        public decimal? TopPrincipalPercent { get; set; }
+
+        public string TopPrincipalName { get; set; }
+
+        public string DashboardRoute { get; set; }
+
+        public bool RequiresAttention { get; set; }
+
+        public bool IsAvailable { get; set; }
+
+        public IList<string> Disclosures { get; set; }
+            = new List<string>();
     }
 
     public class DashboardExecutiveSalesAttention
@@ -117,6 +143,8 @@ namespace btr.application.ReportingContext.DashboardExecutiveAgg.Queries
         public IList<DashboardExecutiveRiskItem> TopSuppliers { get; set; }
 
         public IList<DashboardExecutiveRiskItem> TopPrincipals { get; set; }
+
+        public IList<DashboardExecutiveRiskItem> TopPrincipalSales { get; set; }
     }
 
     public class DashboardExecutiveRiskItem
@@ -125,7 +153,11 @@ namespace btr.application.ReportingContext.DashboardExecutiveAgg.Queries
 
         public string Name { get; set; }
 
+        public string SupplierId { get; set; }
+
         public decimal Amount { get; set; }
+
+        public string DashboardRoute { get; set; }
 
         public InvestigationMetadata Investigation { get; set; }
     }

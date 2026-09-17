@@ -32,6 +32,7 @@
             this.SyncBrgButton = new System.Windows.Forms.Button();
             this.SyncCustomerButton = new System.Windows.Forms.Button();
             this.SyncSalesPersonBotton = new System.Windows.Forms.Button();
+            this.SyncBarcodeButton = new System.Windows.Forms.Button();
             this.IncrementalDownloadOrderButton = new System.Windows.Forms.Button();
             this.LogTextBox = new System.Windows.Forms.RichTextBox();
             this.statusStrip1 = new System.Windows.Forms.StatusStrip();
@@ -81,6 +82,20 @@
             this.SyncSalesPersonBotton.TabIndex = 2;
             this.SyncSalesPersonBotton.Text = "Sync Sales Person";
             this.SyncSalesPersonBotton.UseVisualStyleBackColor = false;
+            // 
+            // SyncBarcodeButton
+            // 
+            this.SyncBarcodeButton.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(63)))), ((int)(((byte)(193)))), ((int)(((byte)(201)))));
+            this.SyncBarcodeButton.FlatAppearance.BorderColor = System.Drawing.Color.FromArgb(((int)(((byte)(42)))), ((int)(((byte)(170)))), ((int)(((byte)(179)))));
+            this.SyncBarcodeButton.FlatAppearance.BorderSize = 2;
+            this.SyncBarcodeButton.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.SyncBarcodeButton.ForeColor = System.Drawing.Color.WhiteSmoke;
+            this.SyncBarcodeButton.Location = new System.Drawing.Point(480, 9);
+            this.SyncBarcodeButton.Name = "SyncBarcodeButton";
+            this.SyncBarcodeButton.Size = new System.Drawing.Size(112, 28);
+            this.SyncBarcodeButton.TabIndex = 7;
+            this.SyncBarcodeButton.Text = "Sync Barcode";
+            this.SyncBarcodeButton.UseVisualStyleBackColor = false;
             // 
             // IncrementalDownloadOrderButton
             // 
@@ -138,12 +153,13 @@
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(54)))), ((int)(((byte)(79)))), ((int)(((byte)(107)))));
-            this.ClientSize = new System.Drawing.Size(486, 378);
+            this.ClientSize = new System.Drawing.Size(604, 378);
             this.Controls.Add(this.panel1);
             this.Controls.Add(this.statusStrip1);
             this.Controls.Add(this.IncrementalDownloadOrderButton);
             this.Controls.Add(this.SyncSalesPersonBotton);
             this.Controls.Add(this.SyncCustomerButton);
+            this.Controls.Add(this.SyncBarcodeButton);
             this.Controls.Add(this.SyncBrgButton);
             this.Font = new System.Drawing.Font("Segoe UI", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.Name = "SyncForm";
@@ -159,6 +175,7 @@
         private System.Windows.Forms.Button SyncBrgButton;
         private System.Windows.Forms.Button SyncCustomerButton;
         private System.Windows.Forms.Button SyncSalesPersonBotton;
+        private System.Windows.Forms.Button SyncBarcodeButton;
         private System.Windows.Forms.Button IncrementalDownloadOrderButton;
         private System.Windows.Forms.RichTextBox LogTextBox;
         private System.Windows.Forms.StatusStrip statusStrip1;

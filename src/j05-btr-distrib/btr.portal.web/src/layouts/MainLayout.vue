@@ -46,6 +46,10 @@ function isActive(routeName: string): boolean {
 
   }
 
+  if (routeName === 'principal-performance-dashboard') {
+    return route.path.startsWith('/dashboard/principal-performance')
+  }
+
   return route.name === routeName
 
 }
@@ -100,7 +104,7 @@ function logout(): void {
 
         <div>
 
-          <div class="layout__brand-title">BTR Portal</div>
+          <div class="layout__brand-title">BTR Portal V2</div>
 
           <div class="layout__brand-subtitle">Distributor Management</div>
 

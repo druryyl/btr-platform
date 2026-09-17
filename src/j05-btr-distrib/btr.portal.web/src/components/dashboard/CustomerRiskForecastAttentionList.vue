@@ -8,6 +8,7 @@ import SelectButton from 'primevue/selectbutton'
 import { RouterLink } from 'vue-router'
 import type { DashboardCustomerRiskForecastAttentionItem } from '@/models/dashboard'
 import { formatCurrency } from '@/services/formatters'
+import { correctCu02AttributionText } from '@/services/customerAnalyticsAttribution'
 import {
   countCustomerRiskForecastAttentionBySignalFamily,
   CUSTOMER_RISK_FORECAST_SIGNAL_ALL,
@@ -128,7 +129,11 @@ function formatValue(item: DashboardCustomerRiskForecastAttentionItem): string {
               </template>
             </Column>
             <Column field="HorizonText" header="Horizon" />
-            <Column field="Explanation" header="Explanation" />
+            <Column header="Explanation">
+              <template #body="{ data }">
+                {{ correctCu02AttributionText(data.Explanation) }}
+              </template>
+            </Column>
             <Column header="">
               <template #body="{ data }">
                 <RouterLink

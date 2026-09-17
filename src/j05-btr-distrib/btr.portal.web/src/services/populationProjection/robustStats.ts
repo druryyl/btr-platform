@@ -30,6 +30,20 @@ export function isDaysAxisUnit(unit: string | null | undefined): boolean {
   return normalized === 'days' || normalized.includes('day')
 }
 
+export function isPercentAxisUnit(unit: string | null | undefined): boolean {
+  const normalized = unit?.trim().toLowerCase() ?? ''
+  return normalized === '%' || normalized === 'pct' || normalized.includes('percent')
+}
+
+/**
+ * Symmetric log (symlog): sign-preserving and monotonic, anchoring 0 at 0.
+ * Positive and negative magnitudes compress logarithmically while preserving ordering.
+ */
+export function businessToSignedLog(value: number): number {
+  if (value >= 0) return Math.log10(value + 1)
+  return -Math.log10(-value + 1)
+}
+
 /** log10(max(value, 0) + 1) — safe for zero; clamps negatives before transform. */
 export function businessToLog(value: number): number {
   return Math.log10(Math.max(value, 0) + 1)
@@ -44,12 +58,17 @@ export const IDR_LOG_COMPRESSION = businessToLog(IDR_PROJECTION_FLOOR) - 1
 
 /**
  * Final log-domain projection position for a business value after unit-specific clamps:
+ * - Percent: signed symmetric-log (symlog) so negative ratios keep their sign and
+ *   ordering (0 anchors at 0; magnitude compresses logarithmically on each side).
  * - IDR: 0 → 0 (origin); values below the floor collapse into the zero-anchored band;
  *   above the floor, ordinary log minus a constant offset.
  * - Days: ceiling at DAYS_PROJECTION_CAP.
  * Otherwise pass through (still clamp negatives at 0).
  */
 export function businessToProjectedLog(value: number, unit: string | null | undefined): number {
+  if (isPercentAxisUnit(unit)) {
+    return businessToSignedLog(value)
+  }
   const clamped = Math.max(value, 0)
   if (isIdrAxisUnit(unit)) {
     return Math.max(businessToLog(clamped) - IDR_LOG_COMPRESSION, 0)

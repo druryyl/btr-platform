@@ -9,6 +9,7 @@ import type { DashboardPurchasingPrincipalExposureItem } from '@/models/dashboar
 import { formatCurrency, formatPercent } from '@/services/formatters'
 import { PROFILE_ROW_CLICK_HINT } from '@/navigation/entityAnalyticsNavigation'
 import { navigateToReport } from '@/services/navigateToReport'
+import { PU01_MTD_PURCHASE_IN_LABEL } from '@/services/purchasingPurchaseInLabels'
 
 defineProps<{
   items: DashboardPurchasingPrincipalExposureItem[]
@@ -61,7 +62,7 @@ function onRowClick(event: { data: DashboardPurchasingPrincipalExposureItem }): 
 
         <Column field="Rank" header="Rank" body-class="dash-numeric" header-class="dash-numeric" />
         <Column field="PrincipalName" header="Principal" />
-        <Column header="MTD Purchase" body-class="dash-numeric" header-class="dash-numeric">
+        <Column :header="PU01_MTD_PURCHASE_IN_LABEL" body-class="dash-numeric" header-class="dash-numeric">
           <template #body="{ data }">
             {{ formatCurrency(data.MtdPurchaseAmount) }}
             <span v-if="data.PercentOfPurchase != null" class="purchasing-exposure-table__pct">

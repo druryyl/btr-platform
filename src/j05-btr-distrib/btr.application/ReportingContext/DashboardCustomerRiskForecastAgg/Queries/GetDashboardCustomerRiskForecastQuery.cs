@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using btr.application.ReportingContext.DashboardCustomerRiskForecastAgg.Contracts;
+using btr.application.ReportingContext.PrincipalAnalyticsAgg.Contracts;
 using MediatR;
 
 namespace btr.application.ReportingContext.DashboardCustomerRiskForecastAgg.Queries
@@ -38,6 +39,47 @@ namespace btr.application.ReportingContext.DashboardCustomerRiskForecastAgg.Quer
 
         public IReadOnlyList<DashboardCustomerRiskForecastRecommendationDto> Recommendations { get; set; }
             = new List<DashboardCustomerRiskForecastRecommendationDto>();
+
+        public DashboardCustomerRiskForecastPrincipalDecline PrincipalDecline { get; set; }
+            = new DashboardCustomerRiskForecastPrincipalDecline();
+    }
+
+    public class DashboardCustomerRiskForecastPrincipalDecline
+    {
+        public bool IsAvailable { get; set; }
+
+        public string KpiId { get; set; }
+
+        public string Note { get; set; }
+
+        public IList<string> Disclosures { get; set; }
+            = new List<string>();
+
+        public IList<DashboardCustomerRiskForecastPrincipalDeclineCustomer> Customers { get; set; }
+            = new List<DashboardCustomerRiskForecastPrincipalDeclineCustomer>();
+    }
+
+    public class DashboardCustomerRiskForecastPrincipalDeclineCustomer
+    {
+        public string CustomerCode { get; set; }
+
+        public string CustomerName { get; set; }
+
+        public IList<DashboardCustomerRiskForecastPrincipalDeclinePrincipal> Principals { get; set; }
+            = new List<DashboardCustomerRiskForecastPrincipalDeclinePrincipal>();
+    }
+
+    public class DashboardCustomerRiskForecastPrincipalDeclinePrincipal
+    {
+        public string SupplierId { get; set; }
+
+        public string PrincipalName { get; set; }
+
+        public string RelationshipStatus { get; set; }
+
+        public string KpiId { get; set; }
+
+        public decimal PairSalesOutAmount { get; set; }
     }
 
     public class DashboardCustomerRiskForecastKpiDto
@@ -219,17 +261,26 @@ namespace btr.application.ReportingContext.DashboardCustomerRiskForecastAgg.Quer
         : IRequestHandler<GetDashboardCustomerRiskForecastQuery, DashboardCustomerRiskForecastResponse>
     {
         private readonly IDashboardCustomerRiskForecastDal _dal;
+        private readonly ICustomerPrincipalRelationshipDal _relationshipDal;
 
-        public GetDashboardCustomerRiskForecastHandler(IDashboardCustomerRiskForecastDal dal)
+        public GetDashboardCustomerRiskForecastHandler(
+            IDashboardCustomerRiskForecastDal dal,
+            ICustomerPrincipalRelationshipDal relationshipDal)
         {
             _dal = dal;
+            _relationshipDal = relationshipDal;
         }
 
         public Task<DashboardCustomerRiskForecastResponse> Handle(
             GetDashboardCustomerRiskForecastQuery request,
             CancellationToken cancellationToken)
         {
-            return Task.FromResult(_dal.GetCurrent());
+            var response = _dal.GetCurrent();
+            var customerCodes = CustomerRiskForecastPrincipalDeclineComposer.CollectRiskCustomerCodes(response);
+            response.PrincipalDecline = CustomerRiskForecastPrincipalDeclineComposer.Compose(
+                response,
+                _relationshipDal.ListPairsForCustomerCodes(customerCodes));
+            return Task.FromResult(response);
         }
     }
 }

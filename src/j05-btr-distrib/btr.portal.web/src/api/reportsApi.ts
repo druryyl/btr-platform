@@ -8,12 +8,17 @@ import type {
   PiutangReportResponse,
   PurchasingReportResponse,
   ReportDateQuery,
+  SalesReportQuery,
   SalesReportResponse,
 } from '@/models/reports'
 
-export async function fetchSalesReport(query: ReportDateQuery): Promise<SalesReportResponse> {
+export async function fetchSalesReport(query: SalesReportQuery): Promise<SalesReportResponse> {
   const { data } = await httpClient.get<ApiResponse<SalesReportResponse>>('/api/reports/sales', {
-    params: { from: query.from, to: query.to },
+    params: {
+      from: query.from,
+      to: query.to,
+      supplierId: query.supplierId || undefined,
+    },
   })
 
   if (!isApiSuccess(data) || !data.Data) {

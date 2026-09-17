@@ -34,6 +34,8 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.Contracts
 
         public string BrgName { get; set; }
 
+        public decimal LineSalesOut { get; set; }
+
         public decimal LineTotal { get; set; }
     }
 

@@ -156,5 +156,18 @@ performance to determine the appropriate follow-up.
    - Compare the ranking with **Achievement %** or the Salesman Performance
      Dashboard. A high omzet rank does not necessarily mean the Salesman has
      achieved the highest percentage of their target.
-   - Review target attainment, customer portfolio, and field execution before
-     treating the ranking as a complete performance judgment.
+    - Review target attainment, customer portfolio, and field execution before
+      treating the ranking as a complete performance judgment.
+
+## Principal-Centric Addendum (PCM-058, implemented surfaces only)
+
+SA01 keeps company header totals from the existing Faktur header
+`GrandTotal` measure and keeps Top Salesman contribution. Principal
+contribution reads stored `PRN-SALES-001` Principal Sales-Out and stored
+`PRN-TGT-001` Principal Target, ranks Principals by `PRN-SALES-001` only,
+and opens SA04 Principal Performance (`/dashboard/principal-performance`)
+for the selected Principal (PCM-008).
+
+Purchase-In, Inventory, Returns, collection, credit, and Net Sales are not
+shown as Principal sales on SA01. Company header totals are not required to
+equal the sum of `PRN-SALES-001`.

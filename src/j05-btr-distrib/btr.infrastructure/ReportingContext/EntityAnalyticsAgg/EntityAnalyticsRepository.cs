@@ -942,7 +942,8 @@ WHEN NOT MATCHED THEN
             const string sql = @"
 SELECT SourceEntityType, SourceEntityId, SourceEntityCode, RelationshipCode,
        TargetEntityType, TargetEntityId, TargetEntityCode, TargetDisplayName,
-       Rank, MetricValue, PeriodYear, PeriodMonth, GeneratedAt, LastRefreshLogId
+       Rank, MetricValue, PeriodYear, PeriodMonth, GeneratedAt, LastRefreshLogId,
+       RelationshipStatus, LastTransactionDate
 FROM BTRPD_EntityAnalytics_Relationship
 WHERE SourceEntityType = @EntityType
   AND SourceEntityId = @EntityId
@@ -1000,11 +1001,13 @@ WHERE SourceEntityType = @SourceEntityType
 INSERT INTO BTRPD_EntityAnalytics_Relationship
     (EntityAnalyticsRelationshipId, SourceEntityType, SourceEntityId, SourceEntityCode,
      RelationshipCode, TargetEntityType, TargetEntityId, TargetEntityCode, TargetDisplayName,
-     Rank, MetricValue, PeriodYear, PeriodMonth, GeneratedAt, UpdatedAt, LastRefreshLogId)
+     Rank, MetricValue, PeriodYear, PeriodMonth, GeneratedAt, UpdatedAt, LastRefreshLogId,
+     RelationshipStatus, LastTransactionDate)
 VALUES
     (@EntityAnalyticsRelationshipId, @SourceEntityType, @SourceEntityId, @SourceEntityCode,
      @RelationshipCode, @TargetEntityType, @TargetEntityId, @TargetEntityCode, @TargetDisplayName,
-     @Rank, @MetricValue, @PeriodYear, @PeriodMonth, @GeneratedAt, @UpdatedAt, @LastRefreshLogId)";
+     @Rank, @MetricValue, @PeriodYear, @PeriodMonth, @GeneratedAt, @UpdatedAt, @LastRefreshLogId,
+     @RelationshipStatus, @LastTransactionDate)";
 
                         foreach (var row in rowList)
                         {
@@ -1025,7 +1028,9 @@ VALUES
                                 PeriodMonth = periodMonth,
                                 GeneratedAt = row.GeneratedAt == default ? now : row.GeneratedAt,
                                 UpdatedAt = now,
-                                LastRefreshLogId = refreshLogId ?? string.Empty
+                                LastRefreshLogId = refreshLogId ?? string.Empty,
+                                row.RelationshipStatus,
+                                row.LastTransactionDate
                             }, trans);
                         }
                     }
@@ -1516,11 +1521,13 @@ WHERE SourceEntityType = @SourceEntityType
 INSERT INTO BTRPD_EntityAnalytics_Relationship
     (EntityAnalyticsRelationshipId, SourceEntityType, SourceEntityId, SourceEntityCode,
      RelationshipCode, TargetEntityType, TargetEntityId, TargetEntityCode, TargetDisplayName,
-     Rank, MetricValue, PeriodYear, PeriodMonth, GeneratedAt, UpdatedAt, LastRefreshLogId)
+     Rank, MetricValue, PeriodYear, PeriodMonth, GeneratedAt, UpdatedAt, LastRefreshLogId,
+     RelationshipStatus, LastTransactionDate)
 VALUES
     (@EntityAnalyticsRelationshipId, @SourceEntityType, @SourceEntityId, @SourceEntityCode,
      @RelationshipCode, @TargetEntityType, @TargetEntityId, @TargetEntityCode, @TargetDisplayName,
-     @Rank, @MetricValue, @PeriodYear, @PeriodMonth, @GeneratedAt, @UpdatedAt, @LastRefreshLogId)";
+     @Rank, @MetricValue, @PeriodYear, @PeriodMonth, @GeneratedAt, @UpdatedAt, @LastRefreshLogId,
+     @RelationshipStatus, @LastTransactionDate)";
 
                         foreach (var row in rowList)
                         {
@@ -1541,7 +1548,9 @@ VALUES
                                 PeriodMonth = periodMonth,
                                 GeneratedAt = row.GeneratedAt == default ? now : row.GeneratedAt,
                                 UpdatedAt = now,
-                                LastRefreshLogId = refreshLogId ?? string.Empty
+                                LastRefreshLogId = refreshLogId ?? string.Empty,
+                                row.RelationshipStatus,
+                                row.LastTransactionDate
                             }, trans);
                         }
                     }
@@ -1814,7 +1823,7 @@ GROUP BY EntityId";
             const string sql = @"
 SELECT c.EntityId,
        c.EntityCode,
-       TRY_CAST(c.TextValue AS DECIMAL(18,4)) AS NumericValue,
+       COALESCE(c.NumericValue, TRY_CAST(c.TextValue AS DECIMAL(18,4))) AS NumericValue,
        CASE WHEN COALESCE(active.NumericValue, 1) > 0 THEN 1 ELSE 0 END AS IsActive
 FROM BTRPD_EntityAnalytics_Current c
 LEFT JOIN BTRPD_EntityAnalytics_Current active

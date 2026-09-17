@@ -1,9 +1,28 @@
 import { Chart, type Chart as ChartType, type Plugin } from 'chart.js'
 import type { PeerDistributionBin, PeerDistributionResponse } from '@/models/entityAnalytics'
 import type { WORKSPACE_COMPARISON_COLORS } from '@/composables/useComparisonColors'
+import { formatAxisTickValue, formatBinRangeLabel } from '@/services/populationMapLayout'
 
 export const PEER_BIN_NEUTRAL_FILL = 'rgba(148, 163, 184, 0.45)'
 export const PEER_BIN_HIGHLIGHT_OPACITY = 0.35
+export const PEER_BIN_OVERFLOW_FILL = 'rgba(217, 119, 6, 0.5)'
+export const PEER_BIN_OVERFLOW_BORDER = '#d97706'
+
+/**
+ * X-axis label for one histogram bin. Backend-flagged overflow buckets render
+ * as an open-ended "≥ X" band instead of a range, per Principle 5 (backend owns
+ * meaning — the frontend renders metadata, never infers).
+ */
+export function formatPeerBinLabel(
+  bin: PeerDistributionBin,
+  unit: string | null | undefined,
+  isLast: boolean,
+): string {
+  if (bin.IsOverflow === true && isLast) {
+    return `≥ ${formatAxisTickValue(bin.BinStart, unit)}`
+  }
+  return formatBinRangeLabel(bin.BinStart, bin.BinEnd, unit, isLast)
+}
 
 export interface PeerBinMarker {
   entityId: string
@@ -85,6 +104,16 @@ export function buildPeerBarColors(
   const backgroundColor = bins.map(() => neutralColor)
   const borderColor = bins.map(() => 'transparent')
   const borderWidth = bins.map(() => 0)
+
+  // Overflow buckets get the distinct outlier tint first; a selected entity's
+  // own comparison color then wins, so identity is never lost.
+  bins.forEach((bin, i) => {
+    if (bin.IsOverflow === true) {
+      backgroundColor[i] = PEER_BIN_OVERFLOW_FILL
+      borderColor[i] = PEER_BIN_OVERFLOW_BORDER
+      borderWidth[i] = 2
+    }
+  })
 
   // One highlight color per bin: first marker wins when multiple share a bin.
   const firstByBin = new Map<number, PeerBinMarker>()

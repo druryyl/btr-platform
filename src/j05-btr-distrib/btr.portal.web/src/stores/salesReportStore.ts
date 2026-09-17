@@ -13,6 +13,7 @@ export const useSalesReportStore = defineStore('salesReport', () => {
   const from = ref(currentMonthRange().from)
   const to = ref(currentMonthRange().to)
   const freeText = ref('')
+  const supplierId = ref('')
   let defaultPeriodApplied = false
 
   function syncDefaultPeriod(): void {
@@ -35,7 +36,11 @@ export const useSalesReportStore = defineStore('salesReport', () => {
     error.value = null
 
     try {
-      report.value = await fetchSalesReport({ from: from.value, to: to.value })
+      report.value = await fetchSalesReport({
+        from: from.value,
+        to: to.value,
+        supplierId: supplierId.value.trim() || undefined,
+      })
     } catch (err) {
       error.value = getApiErrorMessage(err, 'Failed to load sales report.')
     } finally {
@@ -49,6 +54,7 @@ export const useSalesReportStore = defineStore('salesReport', () => {
     error.value = null
     syncDefaultPeriod()
     freeText.value = ''
+    supplierId.value = ''
   }
 
   return {
@@ -58,6 +64,7 @@ export const useSalesReportStore = defineStore('salesReport', () => {
     from,
     to,
     freeText,
+    supplierId,
     loadReport,
     reset,
   }

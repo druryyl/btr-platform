@@ -61,6 +61,13 @@
             this.SatuanGrid = new System.Windows.Forms.DataGridView();
             this.StokTab = new System.Windows.Forms.TabPage();
             this.StokGrid = new System.Windows.Forms.DataGridView();
+            this.BarcodeTab = new System.Windows.Forms.TabPage();
+            this.BarcodeToolbarPanel = new System.Windows.Forms.Panel();
+            this.AddBarcodeButton = new System.Windows.Forms.Button();
+            this.EditBarcodeButton = new System.Windows.Forms.Button();
+            this.ActivateBarcodeButton = new System.Windows.Forms.Button();
+            this.DeactivateBarcodeButton = new System.Windows.Forms.Button();
+            this.BarcodeGrid = new System.Windows.Forms.DataGridView();
             this.SaveButton = new System.Windows.Forms.Button();
             this.NewButton = new System.Windows.Forms.Button();
             this.ExcelButton = new System.Windows.Forms.Button();
@@ -75,6 +82,8 @@
             ((System.ComponentModel.ISupportInitialize)(this.SatuanGrid)).BeginInit();
             this.StokTab.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.StokGrid)).BeginInit();
+            this.BarcodeTab.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.BarcodeGrid)).BeginInit();
             this.SuspendLayout();
             // 
             // SearchText
@@ -345,6 +354,7 @@
             this.tabControl1.Controls.Add(this.HargaTab);
             this.tabControl1.Controls.Add(this.SatuanTab);
             this.tabControl1.Controls.Add(this.StokTab);
+            this.tabControl1.Controls.Add(this.BarcodeTab);
             this.tabControl1.Location = new System.Drawing.Point(511, 226);
             this.tabControl1.Name = "tabControl1";
             this.tabControl1.SelectedIndex = 0;
@@ -411,6 +421,75 @@
             this.StokGrid.Size = new System.Drawing.Size(448, 159);
             this.StokGrid.TabIndex = 1;
             // 
+            // BarcodeTab
+            // 
+            this.BarcodeTab.BackColor = System.Drawing.Color.Cornsilk;
+            this.BarcodeTab.Controls.Add(this.BarcodeGrid);
+            this.BarcodeTab.Controls.Add(this.BarcodeToolbarPanel);
+            this.BarcodeTab.Location = new System.Drawing.Point(4, 22);
+            this.BarcodeTab.Name = "BarcodeTab";
+            this.BarcodeTab.Padding = new System.Windows.Forms.Padding(3);
+            this.BarcodeTab.Size = new System.Drawing.Size(454, 165);
+            this.BarcodeTab.TabIndex = 3;
+            this.BarcodeTab.Text = "Barcode";
+            // 
+            // BarcodeToolbarPanel
+            // 
+            this.BarcodeToolbarPanel.Controls.Add(this.AddBarcodeButton);
+            this.BarcodeToolbarPanel.Controls.Add(this.EditBarcodeButton);
+            this.BarcodeToolbarPanel.Controls.Add(this.ActivateBarcodeButton);
+            this.BarcodeToolbarPanel.Controls.Add(this.DeactivateBarcodeButton);
+            this.BarcodeToolbarPanel.Dock = System.Windows.Forms.DockStyle.Top;
+            this.BarcodeToolbarPanel.Location = new System.Drawing.Point(3, 3);
+            this.BarcodeToolbarPanel.Name = "BarcodeToolbarPanel";
+            this.BarcodeToolbarPanel.Size = new System.Drawing.Size(448, 30);
+            this.BarcodeToolbarPanel.TabIndex = 0;
+            // 
+            // AddBarcodeButton
+            // 
+            this.AddBarcodeButton.Location = new System.Drawing.Point(0, 2);
+            this.AddBarcodeButton.Name = "AddBarcodeButton";
+            this.AddBarcodeButton.Size = new System.Drawing.Size(70, 24);
+            this.AddBarcodeButton.TabIndex = 0;
+            this.AddBarcodeButton.Text = "Add";
+            this.AddBarcodeButton.UseVisualStyleBackColor = true;
+            // 
+            // EditBarcodeButton
+            // 
+            this.EditBarcodeButton.Location = new System.Drawing.Point(74, 2);
+            this.EditBarcodeButton.Name = "EditBarcodeButton";
+            this.EditBarcodeButton.Size = new System.Drawing.Size(60, 24);
+            this.EditBarcodeButton.TabIndex = 1;
+            this.EditBarcodeButton.Text = "Edit";
+            this.EditBarcodeButton.UseVisualStyleBackColor = true;
+            // 
+            // ActivateBarcodeButton
+            // 
+            this.ActivateBarcodeButton.Location = new System.Drawing.Point(138, 2);
+            this.ActivateBarcodeButton.Name = "ActivateBarcodeButton";
+            this.ActivateBarcodeButton.Size = new System.Drawing.Size(75, 24);
+            this.ActivateBarcodeButton.TabIndex = 2;
+            this.ActivateBarcodeButton.Text = "Activate";
+            this.ActivateBarcodeButton.UseVisualStyleBackColor = true;
+            // 
+            // DeactivateBarcodeButton
+            // 
+            this.DeactivateBarcodeButton.Location = new System.Drawing.Point(217, 2);
+            this.DeactivateBarcodeButton.Name = "DeactivateBarcodeButton";
+            this.DeactivateBarcodeButton.Size = new System.Drawing.Size(85, 24);
+            this.DeactivateBarcodeButton.TabIndex = 3;
+            this.DeactivateBarcodeButton.Text = "Deactivate";
+            this.DeactivateBarcodeButton.UseVisualStyleBackColor = true;
+            // 
+            // BarcodeGrid
+            // 
+            this.BarcodeGrid.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            this.BarcodeGrid.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.BarcodeGrid.Location = new System.Drawing.Point(3, 33);
+            this.BarcodeGrid.Name = "BarcodeGrid";
+            this.BarcodeGrid.Size = new System.Drawing.Size(448, 129);
+            this.BarcodeGrid.TabIndex = 1;
+            // 
             // SaveButton
             // 
             this.SaveButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
@@ -472,6 +551,8 @@
             ((System.ComponentModel.ISupportInitialize)(this.SatuanGrid)).EndInit();
             this.StokTab.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)(this.StokGrid)).EndInit();
+            this.BarcodeTab.ResumeLayout(false);
+            ((System.ComponentModel.ISupportInitialize)(this.BarcodeGrid)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -506,6 +587,13 @@
         private System.Windows.Forms.DataGridView SatuanGrid;
         private System.Windows.Forms.DataGridView HargaGrid;
         private System.Windows.Forms.DataGridView StokGrid;
+        private System.Windows.Forms.TabPage BarcodeTab;
+        private System.Windows.Forms.Panel BarcodeToolbarPanel;
+        private System.Windows.Forms.Button AddBarcodeButton;
+        private System.Windows.Forms.Button EditBarcodeButton;
+        private System.Windows.Forms.Button ActivateBarcodeButton;
+        private System.Windows.Forms.Button DeactivateBarcodeButton;
+        private System.Windows.Forms.DataGridView BarcodeGrid;
         private System.Windows.Forms.ComboBox JenisBrgCombo;
         private System.Windows.Forms.Button SaveButton;
         private System.Windows.Forms.TextBox KategoriIdText;

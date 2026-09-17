@@ -7,6 +7,7 @@ import {
   IDR_PROJECTION_FLOOR,
   isDaysAxisUnit,
   isIdrAxisUnit,
+  isPercentAxisUnit,
 } from '@/services/populationProjection/robustStats'
 import { formatNumber } from '@/services/formatters'
 
@@ -465,7 +466,60 @@ export function buildDaysCalendarAxisTicks(
   })
 }
 
-/** Resolve axis ticks: Days calendar, IDR 1-2-5, otherwise percentile fallback. */
+/**
+ * Build Percent axis tick labels from 1-2-5 × 10ⁿ nice steps within
+ * [dataMin, dataMax], projected with the same log + robust-norm transform used
+ * for scatter points (labels only; points unchanged).
+ *
+ * Replaces raw percentile guides (e.g. 75.044, -11.702) with proper numbers:
+ * integers normally, up to 1 trimmed decimal only when the span is very small.
+ */
+export function buildPercentNiceAxisTicks(
+  norm: { center: number; scale: number },
+  unit: string | null | undefined,
+  dataMin: number,
+  dataMax: number,
+  targetTicks = 6,
+): ProjectionAxisTick[] {
+  if (!Number.isFinite(norm.center) || !Number.isFinite(norm.scale)) {
+    return []
+  }
+  if (!Number.isFinite(dataMin) || !Number.isFinite(dataMax)) {
+    return []
+  }
+  const min = Math.min(dataMin, dataMax)
+  const max = Math.max(dataMin, dataMax)
+  const scale = Math.abs(norm.scale) < 1e-12 ? 1e-12 : norm.scale
+
+  const ticks = generateLinearAxisTicks(min, max, targetTicks).map((businessValue) => {
+    const logValue = businessToProjectedLog(businessValue, unit)
+    return {
+      businessValue,
+      projectionValue: (logValue - norm.center) / scale,
+    }
+  })
+
+  // Guarantee a labelled gridline on the negative side: coarse nice steps can
+  // skip a small negative tail entirely (e.g. data −2…45 with step 10 yields
+  // ticks 0…40), leaving below-zero points with no number or line. The extra
+  // tick stays within [min, 0) so it always lands inside the visible plot.
+  if (min < 0 && ticks.every((t) => t.businessValue >= 0)) {
+    const ceilMin = Math.ceil(min)
+    const extra = ceilMin < 0 ? ceilMin : Math.round(min * 10) / 10
+    if (extra < 0 && ticks.every((t) => Math.abs(t.businessValue - extra) > 1e-9)) {
+      const logValue = businessToProjectedLog(extra, unit)
+      ticks.push({
+        businessValue: extra,
+        projectionValue: (logValue - norm.center) / scale,
+      })
+      ticks.sort((a, b) => a.businessValue - b.businessValue)
+    }
+  }
+
+  return ticks
+}
+
+/** Resolve axis ticks: Days calendar, IDR 1-2-5, Percent nice steps, otherwise percentile fallback. */
 export function resolvePopulationAxisTicks(
   unit: string | null | undefined,
   norm: { center: number; scale: number },
@@ -479,7 +533,216 @@ export function resolvePopulationAxisTicks(
   if (isIdrAxisUnit(unit)) {
     return buildIdrNiceAxisTicks(norm, dataMin, dataMax)
   }
+  if (isPercentAxisUnit(unit)) {
+    return buildPercentNiceAxisTicks(norm, unit, dataMin, dataMax)
+  }
   return fallback
+}
+
+/**
+ * PSOM-12/PSOM-13 — project an arbitrary business value with the same
+ * log + robust-norm transform used for scatter points, so overlays (zero line,
+ * quadrant boundaries) sit exactly on the plotted value.
+ */
+export function resolveBusinessProjection(
+  norm: { center: number; scale: number },
+  unit: string | null | undefined,
+  businessValue: number,
+): number {
+  if (!Number.isFinite(norm.center) || !Number.isFinite(norm.scale)) return NaN
+  const scale = Math.abs(norm.scale) < 1e-12 ? 1e-12 : norm.scale
+  const logValue = businessToProjectedLog(businessValue, unit)
+  return (logValue - norm.center) / scale
+}
+
+/**
+ * PSOM-12 — business-zero helper (GAP-005).
+ *
+ * Business `Y = 0` is projected with the same log + robust-norm transform used
+ * for scatter points, so the reference line and its tick sit exactly on the
+ * plotted zero. For Percent (signed symlog) axes 0 anchors at 0; for other
+ * units businessToProjectedLog(0, unit) is likewise the origin.
+ */
+export function resolveBusinessZeroProjection(
+  norm: { center: number; scale: number },
+  unit: string | null | undefined,
+): number {
+  return resolveBusinessProjection(norm, unit, 0)
+}
+
+export function isBusinessZeroWithinBounds(
+  zeroProjection: number,
+  bounds: MapBounds,
+): boolean {
+  if (!Number.isFinite(zeroProjection)) return false
+  return zeroProjection >= bounds.minY && zeroProjection <= bounds.maxY
+}
+
+/**
+ * Ensure a `0` business tick exists at the projected zero position.
+ * Returns the input unchanged when zero is outside the visible Y bounds or a
+ * zero tick is already present; otherwise inserts it sorted by projection value.
+ */
+export function ensureZeroTick(
+  ticks: ProjectionAxisTick[],
+  zeroProjection: number,
+  bounds: MapBounds,
+): ProjectionAxisTick[] {
+  if (!isBusinessZeroWithinBounds(zeroProjection, bounds)) return ticks
+  const hasZero = ticks.some(
+    (t) => t.businessValue === 0 || Math.abs(t.projectionValue - zeroProjection) < 1e-9,
+  )
+  if (hasZero) return ticks
+  return [...ticks, { businessValue: 0, projectionValue: zeroProjection }].sort(
+    (a, b) => a.projectionValue - b.projectionValue,
+  )
+}
+
+/**
+ * PSOM-13 — fixed business quadrants (GAP-006 / OQ-002).
+ *
+ * The `principal-sales-out-map` preset replaces statistical regions with fixed
+ * business quadrants at X = 100% Pacing Achievement and Y = 0% YoY MTD Growth.
+ */
+export const PRINCIPAL_SALES_OUT_MAP_PRESET_ID = 'principal-sales-out-map'
+
+export const PACING_QUADRANT_X_THRESHOLD = 100
+export const PACING_QUADRANT_Y_THRESHOLD = 0
+
+export type PacingQuadrant = 'star' | 'growing' | 'steady' | 'declining'
+
+export const PACING_QUADRANT_LABELS: Record<PacingQuadrant, string> = {
+  star: 'Star',
+  growing: 'Growing',
+  steady: 'Steady',
+  declining: 'Declining',
+}
+
+/**
+ * Classify a Principal into a fixed business quadrant using thresholds — never
+ * regression residuals:
+ * Star (X≥100, Y≥0), Growing (X<100, Y≥0), Steady (X≥100, Y<0), Declining (X<100, Y<0).
+ * Returns `null` when either business value is missing/non-finite.
+ */
+export function classifyPacingQuadrant(
+  businessX: number | null | undefined,
+  businessY: number | null | undefined,
+): PacingQuadrant | null {
+  if (
+    businessX == null
+    || businessY == null
+    || !Number.isFinite(businessX)
+    || !Number.isFinite(businessY)
+  ) {
+    return null
+  }
+
+  const strongX = businessX >= PACING_QUADRANT_X_THRESHOLD
+  const positiveY = businessY >= PACING_QUADRANT_Y_THRESHOLD
+
+  if (strongX && positiveY) return 'star'
+  if (!strongX && positiveY) return 'growing'
+  if (strongX && !positiveY) return 'steady'
+  return 'declining'
+}
+
+/** PSOM-14 (GAP-007): a point flagged low-confidence is excluded from classification. */
+export function isLowConfidencePoint(point: PopulationMapPoint): boolean {
+  return point.IsLowConfidence === true
+}
+
+/**
+ * PSOM-14 (GAP-007) — point-level business quadrant resolution.
+ *
+ * Low-confidence entities never participate in quadrant classification: a point
+ * flagged `IsLowConfidence` is assigned no quadrant. Non-flagged points classify
+ * normally through the fixed business thresholds (PSOM-13).
+ */
+export function resolvePacingQuadrantForPoint(
+  point: PopulationMapPoint,
+): PacingQuadrant | null {
+  if (isLowConfidencePoint(point)) return null
+  return classifyPacingQuadrant(point.AxisX, point.AxisY)
+}
+
+/**
+ * Low-confidence strip lane (chart displays flagged entities with a visual clue).
+ *
+ * Flagged entities carry NULL X and/or Y (GAP-007 suppression), so they have no
+ * scatter position and are excluded from projection/regression/bounds/quadrants.
+ * The canvas renders them in a dedicated bottom lane instead of dropping them.
+ */
+export interface LowConfidenceStripItem {
+  point: PopulationMapPoint
+  screenX: number
+  screenY: number
+  index: number
+}
+
+export const LOW_CONFIDENCE_STRIP_HEIGHT = 32
+export const LOW_CONFIDENCE_STRIP_EDGE_PAD = 16
+export const LOW_CONFIDENCE_STRIP_LABEL = 'Low confidence — not classified'
+
+/** All flagged points, including those with NULL axes (never plottable). */
+export function getLowConfidencePoints(points: PopulationMapPoint[]): PopulationMapPoint[] {
+  return points.filter(isLowConfidencePoint)
+}
+
+export function partitionMapPoints(points: PopulationMapPoint[]): {
+  plottable: PopulationMapPoint[]
+  lowConfidence: PopulationMapPoint[]
+} {
+  const lowConfidence = getLowConfidencePoints(points)
+  const flagged = new Set(lowConfidence)
+  return { plottable: points.filter((p) => !flagged.has(p)), lowConfidence }
+}
+
+/**
+ * Evenly space strip items across the plot width on a single row near the
+ * bottom edge. Pure layout — no canvas dependency, fully unit-testable.
+ */
+export function layoutLowConfidenceStrip(
+  points: PopulationMapPoint[],
+  transform: MapTransform,
+  options?: { stripHeight?: number; edgePad?: number },
+): LowConfidenceStripItem[] {
+  if (!points.length) return []
+  const stripHeight = options?.stripHeight ?? LOW_CONFIDENCE_STRIP_HEIGHT
+  const edgePad = options?.edgePad ?? LOW_CONFIDENCE_STRIP_EDGE_PAD
+  const { offsetX, offsetY, plotWidth, plotHeight } = transform
+  const screenY = offsetY + plotHeight - stripHeight / 2
+
+  if (points.length === 1) {
+    return [{ point: points[0], screenX: offsetX + plotWidth / 2, screenY, index: 0 }]
+  }
+
+  const usable = Math.max(plotWidth - edgePad * 2, 1)
+  return points.map((point, i) => ({
+    point,
+    screenX: offsetX + edgePad + (i * usable) / (points.length - 1),
+    screenY,
+    index: i,
+  }))
+}
+
+export function findNearestStripItem(
+  items: LowConfidenceStripItem[],
+  x: number,
+  y: number,
+  radius = 12,
+): LowConfidenceStripItem | null {
+  let best: LowConfidenceStripItem | null = null
+  let bestDist = radius * radius
+  for (const item of items) {
+    const dx = item.screenX - x
+    const dy = item.screenY - y
+    const dist = dx * dx + dy * dy
+    if (dist <= bestDist) {
+      bestDist = dist
+      best = item
+    }
+  }
+  return best
 }
 
 export function generateProjectionAxisGuides(
@@ -629,6 +892,48 @@ export function rawToScreenXFromBusiness(rawTick: number, transform: MapTransfor
 /** @deprecated Use projectionToScreenY */
 export function rawToScreenYFromBusiness(rawTick: number, transform: MapTransform): number {
   return projectionToScreenY(rawTick, transform)
+}
+
+export interface PacingQuadrantBoundaries {
+  /** Screen X of the X = 100% boundary; null when outside the visible X bounds. */
+  boundaryX: number | null
+  /** Screen Y of the Y = 0% boundary; null when outside the visible Y bounds. */
+  boundaryY: number | null
+}
+
+/**
+ * PSOM-13 — convert the fixed business quadrant boundaries (X = 100%,
+ * Y = 0%) to screen coordinates using the same transform as the plotted points.
+ */
+export function resolvePacingQuadrantBoundaries(
+  projection: PopulationProjectionResult,
+  transform: MapTransform,
+  axisXUnit: string | null | undefined,
+  axisYUnit: string | null | undefined,
+): PacingQuadrantBoundaries {
+  const xProjection = resolveBusinessProjection(
+    projection.metadata.normalizationX,
+    axisXUnit,
+    PACING_QUADRANT_X_THRESHOLD,
+  )
+  const yProjection = resolveBusinessProjection(
+    projection.metadata.normalizationY,
+    axisYUnit,
+    PACING_QUADRANT_Y_THRESHOLD,
+  )
+
+  const { bounds } = transform
+  const xVisible = Number.isFinite(xProjection)
+    && xProjection >= bounds.minX
+    && xProjection <= bounds.maxX
+  const yVisible = Number.isFinite(yProjection)
+    && yProjection >= bounds.minY
+    && yProjection <= bounds.maxY
+
+  return {
+    boundaryX: xVisible ? projectionToScreenX(xProjection, transform) : null,
+    boundaryY: yVisible ? projectionToScreenY(yProjection, transform) : null,
+  }
 }
 
 export function plotPoints(

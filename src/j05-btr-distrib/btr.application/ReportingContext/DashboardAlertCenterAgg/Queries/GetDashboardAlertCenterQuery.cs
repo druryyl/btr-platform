@@ -146,6 +146,8 @@ namespace btr.application.ReportingContext.DashboardAlertCenterAgg.Queries
 
         public string SalesDashboardRoute { get; set; }
 
+        public string PrincipalPerformanceDashboardRoute { get; set; }
+
         public string PiutangDashboardRoute { get; set; }
 
         public string CustomerDashboardRoute { get; set; }

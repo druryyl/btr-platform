@@ -379,7 +379,11 @@ namespace btr.test.ReportingContext
             result.DormantPortfolioCount.Should().Be(1);
             result.AttentionList.Should().ContainSingle(a =>
                 a.SignalKey == DashboardSalesmanAggregator.SignalDormantCustomerPortfolio &&
-                a.SalesPersonName == "Rep A");
+                a.SalesPersonName == "Rep A" &&
+                a.SignalLabel == DashboardSalesmanAggregator.LabelLastInvoiceDormantCustomers &&
+                a.ValueText == DashboardSalesmanAggregator.FormatLastInvoiceDormantValueText(1) &&
+                !a.ValueText.Contains("on book") &&
+                !a.SignalLabel.Contains("Portfolio"));
         }
 
         [Fact]
@@ -401,6 +405,22 @@ namespace btr.test.ReportingContext
         {
             var result = Aggregate();
             result.DormantPortfolioCount.Should().Be(0);
+        }
+
+        [Fact]
+        public void ApplySf01AttentionCopy_RewritesOwnedBookSnapshotText()
+        {
+            var signalLabel = "Dormant Customer Portfolio";
+            var valueText = "4 dormant customers on book";
+
+            DashboardSalesmanAggregator.ApplySf01AttentionCopy(
+                DashboardSalesmanAggregator.SignalDormantCustomerPortfolio,
+                ref signalLabel,
+                ref valueText);
+
+            signalLabel.Should().Be(DashboardSalesmanAggregator.LabelLastInvoiceDormantCustomers);
+            valueText.Should().Be(DashboardSalesmanAggregator.FormatLastInvoiceDormantValueText(4));
+            valueText.Should().NotContain("on book");
         }
 
         [Fact]

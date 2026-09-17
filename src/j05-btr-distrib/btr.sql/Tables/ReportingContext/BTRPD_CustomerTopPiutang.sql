@@ -8,6 +8,7 @@ CREATE TABLE BTRPD_CustomerTopPiutang
     CustomerName         VARCHAR(50)   NOT NULL CONSTRAINT DF_BTRPD_CustomerTopPiutang_CustomerName DEFAULT(''),
     OutstandingBalance   DECIMAL(18,2) NOT NULL CONSTRAINT DF_BTRPD_CustomerTopPiutang_OutstandingBalance DEFAULT(0),
     PercentOfTotal       DECIMAL(9,4)  NULL,
+    LastInvoicingSalesmanName VARCHAR(50) NOT NULL CONSTRAINT DF_BTRPD_CustomerTopPiutang_LastInvoicingSalesmanName DEFAULT(''),
 
     CONSTRAINT PK_BTRPD_CustomerTopPiutang PRIMARY KEY CLUSTERED (CustomerTopPiutangId),
     CONSTRAINT UX_BTRPD_CustomerTopPiutang_SnapshotKey_Rank UNIQUE (SnapshotKey, Rank)

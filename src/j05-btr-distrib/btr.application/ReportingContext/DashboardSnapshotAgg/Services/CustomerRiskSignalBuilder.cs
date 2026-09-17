@@ -27,6 +27,9 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.Services
         public const string SignalLowRecoveryCustomer = "LowRecoveryCustomer";
         public const string SignalHighCollectionRisk = "HighCollectionRisk";
 
+        public const string LowRecoveryCustomerExplanation =
+            "Last invoicing Salesman has low recovery vs billing and the customer is overdue. This is invoice attribution, not Customer ownership.";
+
         private const string ReportRoute = "/reports/piutang";
 
         public static List<CustomerRiskSignalRow> Build(
@@ -271,7 +274,7 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.Services
                     "Low Recovery Customer",
                     CustomerRiskForecastPolicy.SeverityModerate,
                     "CRF-L04",
-                    "Assigned salesman has low recovery vs billing and customer is overdue.",
+                    LowRecoveryCustomerExplanation,
                     context.OverdueBalance);
             }
 

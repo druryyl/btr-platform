@@ -217,6 +217,32 @@ namespace btr.test.ReportingContext
             result.AttentionList[1].SignalKey.Should().Be(DashboardInventoryRiskAggregator.SignalNeverSold);
         }
 
+        [Fact]
+        public void Aggregate_SupplierRiskBreakdown_CarriesSupplierId()
+        {
+            var rows = new[]
+            {
+                Row("BRG001", "G001", "Never", "Gudang Utama", 10, 1_000m, "Cat A", "Sup A", "S-01"),
+                Row("BRG002", "G002", "Slow", "Gudang Utama", 10, 1_000m, "Cat B", "Sup B", "S-02"),
+            };
+            var lastFaktur = new[] { LastFaktur("BRG002", FixedToday.AddDays(-95)) };
+
+            var result = _aggregator.Aggregate(rows, lastFaktur, FixedToday, FixedGeneratedAt);
+
+            var supplierRows = result.Breakdown
+                .Where(r => r.DimensionType == DashboardInventoryRiskAggregator.DimensionSupplier)
+                .ToList();
+
+            supplierRows.Single(r => r.Name == "Sup A").SupplierId.Should().Be("S-01");
+            supplierRows.Single(r => r.Name == "Sup B").SupplierId.Should().Be("S-02");
+
+            var categoryRows = result.Breakdown
+                .Where(r => r.DimensionType == DashboardInventoryRiskAggregator.DimensionCategory)
+                .ToList();
+
+            categoryRows.Should().OnlyContain(r => r.SupplierId == string.Empty);
+        }
+
         private static BrgLastFakturDto LastFaktur(string brgId, DateTime lastFakturDate) =>
             new BrgLastFakturDto
             {
@@ -234,7 +260,8 @@ namespace btr.test.ReportingContext
             int qty,
             decimal hpp,
             string kategoriName,
-            string supplierName)
+            string supplierName,
+            string supplierId = null)
         {
             return new StokBalanceView
             {
@@ -246,6 +273,7 @@ namespace btr.test.ReportingContext
                 Hpp = hpp,
                 KategoriName = kategoriName,
                 SupplierName = supplierName,
+                SupplierId = supplierId,
             };
         }
     }

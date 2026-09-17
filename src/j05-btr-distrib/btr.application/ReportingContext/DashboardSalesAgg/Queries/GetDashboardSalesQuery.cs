@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using btr.application.ReportingContext.DashboardSalesAgg.Contracts;
+using btr.application.ReportingContext.PrincipalAnalyticsAgg.Contracts;
 using btr.application.ReportingContext.Shared;
 using MediatR;
 
@@ -39,6 +40,51 @@ namespace btr.application.ReportingContext.DashboardSalesAgg.Queries
 
         public List<DashboardSalesRankingItem> TopSalesmanRanking { get; set; } =
             new List<DashboardSalesRankingItem>();
+
+        public DashboardSalesPrincipalContribution PrincipalContribution { get; set; } =
+            new DashboardSalesPrincipalContribution();
+    }
+
+    public class DashboardSalesPrincipalContribution
+    {
+        public bool IsAvailable { get; set; }
+
+        public string SalesOutKpiId { get; set; }
+
+        public string TargetKpiId { get; set; }
+
+        public int PeriodYear { get; set; }
+
+        public int PeriodMonth { get; set; }
+
+        public decimal PrincipalSalesOutAmount { get; set; }
+
+        public decimal? PrincipalTargetAmount { get; set; }
+
+        public string CompanyHeaderNote { get; set; }
+
+        public IList<string> Disclosures { get; set; } =
+            new List<string>();
+
+        public List<DashboardSalesPrincipalContributionItem> Ranking { get; set; } =
+            new List<DashboardSalesPrincipalContributionItem>();
+    }
+
+    public class DashboardSalesPrincipalContributionItem
+    {
+        public int Rank { get; set; }
+
+        public string PrincipalName { get; set; }
+
+        public string SupplierId { get; set; }
+
+        public string SalesOutKpiId { get; set; }
+
+        public decimal PrincipalSalesOutAmount { get; set; }
+
+        public string TargetKpiId { get; set; }
+
+        public decimal? PrincipalTargetAmount { get; set; }
     }
 
     public class DashboardSalesTargetVsAchievement
@@ -76,17 +122,28 @@ namespace btr.application.ReportingContext.DashboardSalesAgg.Queries
         : IRequestHandler<GetDashboardSalesQuery, DashboardSalesResponse>
     {
         private readonly IDashboardSalesDal _dal;
+        private readonly IPrincipalSalesOutSnapshotDal _salesOutSnapshotDal;
+        private readonly IPrincipalTargetSnapshotDal _targetSnapshotDal;
 
-        public GetDashboardSalesHandler(IDashboardSalesDal dal)
+        public GetDashboardSalesHandler(
+            IDashboardSalesDal dal,
+            IPrincipalSalesOutSnapshotDal salesOutSnapshotDal,
+            IPrincipalTargetSnapshotDal targetSnapshotDal)
         {
             _dal = dal;
+            _salesOutSnapshotDal = salesOutSnapshotDal;
+            _targetSnapshotDal = targetSnapshotDal;
         }
 
         public Task<DashboardSalesResponse> Handle(
             GetDashboardSalesQuery request,
             CancellationToken cancellationToken)
         {
-            return Task.FromResult(_dal.GetSummary());
+            var response = _dal.GetSummary();
+            response.PrincipalContribution = SalesDashboardPrincipalContributionComposer.Compose(
+                _salesOutSnapshotDal.GetCurrent(),
+                _targetSnapshotDal.GetCurrent());
+            return Task.FromResult(response);
         }
     }
 }

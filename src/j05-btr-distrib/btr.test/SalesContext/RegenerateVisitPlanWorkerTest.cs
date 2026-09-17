@@ -116,6 +116,66 @@ namespace btr.test.SalesContext
             visitPlanDal.DeleteCalls[0].ToDate.Should().Be(Today);
         }
 
+        [Fact]
+        public void Execute_AllowPast_GeneratesRequestedPastDateUsingRangeDelete()
+        {
+            var visitPlanDal = new RecordingVisitPlanDal();
+            var pastDate = Today.AddDays(-14);
+            var sut = CreateWorker(
+                visitPlanDal,
+                CreateTemplate("SP1",
+                    new SalesRuteModel { SalesRuteId = "RT1", SalesPersonId = "SP1", HariRuteId = "H12" },
+                    new SalesRuteItemModel { SalesRuteId = "RT1", CustomerId = "C001", NoUrut = 1 },
+                    new SalesRuteItemModel { SalesRuteId = "RT1", CustomerId = "C002", NoUrut = 2 }));
+
+            sut.Execute(new RegenerateVisitPlanRequest
+            {
+                SalesPersonId = "SP1",
+                FromDate = pastDate,
+                ToDate = pastDate,
+                AllowPast = true,
+                TriggeredBy = "Test"
+            });
+
+            visitPlanDal.DeleteCalls.Should().BeEmpty();
+            visitPlanDal.RangeDeleteCalls.Should().ContainSingle();
+            visitPlanDal.RangeDeleteCalls[0].FromDate.Should().Be(pastDate);
+            visitPlanDal.RangeDeleteCalls[0].ToDate.Should().Be(pastDate);
+
+            visitPlanDal.InsertedRows.Should().HaveCount(2);
+            visitPlanDal.InsertedRows.Should().OnlyContain(x =>
+                x.VisitDate == pastDate &&
+                x.SalesPersonId == "SP1" &&
+                x.HariRuteId == "H12");
+        }
+
+        [Fact]
+        public void Execute_AllowPastBeforeAnchor_ClampsFromDateToAnchorAndGenerates()
+        {
+            var visitPlanDal = new RecordingVisitPlanDal();
+            var anchor = new DateTime(2026, 1, 5);
+            var sut = CreateWorker(
+                visitPlanDal,
+                CreateTemplate("SP1",
+                    new SalesRuteModel { SalesRuteId = "RT1", SalesPersonId = "SP1", HariRuteId = "H12" },
+                    new SalesRuteItemModel { SalesRuteId = "RT1", CustomerId = "C001", NoUrut = 1 },
+                    new SalesRuteItemModel { SalesRuteId = "RT1", CustomerId = "C002", NoUrut = 2 }));
+
+            sut.Execute(new RegenerateVisitPlanRequest
+            {
+                SalesPersonId = "SP1",
+                FromDate = anchor.AddDays(-30),
+                ToDate = anchor.AddDays(1),
+                AllowPast = true,
+                TriggeredBy = "Test"
+            });
+
+            visitPlanDal.RangeDeleteCalls.Should().ContainSingle();
+            visitPlanDal.RangeDeleteCalls[0].FromDate.Should().Be(anchor);
+            visitPlanDal.InsertedRows.Should().HaveCount(2);
+            visitPlanDal.InsertedRows.Should().OnlyContain(x => x.VisitDate >= anchor);
+        }
+
         private static RegenerateVisitPlanWorker CreateWorker(
             RecordingVisitPlanDal visitPlanDal,
             (StubSalesRuteDal Routes, StubSalesRuteItemDal Items) template)
@@ -149,6 +209,7 @@ namespace btr.test.SalesContext
         {
             public List<VisitPlanModel> InsertedRows { get; } = new List<VisitPlanModel>();
             public List<DeleteCall> DeleteCalls { get; } = new List<DeleteCall>();
+            public List<DeleteCall> RangeDeleteCalls { get; } = new List<DeleteCall>();
 
             public IEnumerable<VisitPlanModel> ListData(IVisitPlanDateKey filter) =>
                 Enumerable.Empty<VisitPlanModel>();
@@ -162,6 +223,11 @@ namespace btr.test.SalesContext
             public void DeleteFuture(string salesPersonId, DateTime fromDate, DateTime toDate)
             {
                 DeleteCalls.Add(new DeleteCall(salesPersonId, fromDate, toDate));
+            }
+
+            public void DeleteRange(string salesPersonId, DateTime fromDate, DateTime toDate)
+            {
+                RangeDeleteCalls.Add(new DeleteCall(salesPersonId, fromDate, toDate));
             }
 
             public void BulkInsert(IEnumerable<VisitPlanModel> rows)

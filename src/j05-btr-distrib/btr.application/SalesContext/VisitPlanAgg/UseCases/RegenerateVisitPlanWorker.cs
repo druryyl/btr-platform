@@ -49,8 +49,20 @@ namespace btr.application.SalesContext.VisitPlanAgg.UseCases
                 throw new ArgumentNullException(nameof(request));
 
             var today = _tglJamDal.Now.Date;
-            var fromDate = request.FromDate.Date < today ? today : request.FromDate.Date;
+            var fromDate = request.AllowPast
+                ? request.FromDate.Date
+                : (request.FromDate.Date < today ? today : request.FromDate.Date);
             var toDate = request.ToDate?.Date ?? today.AddDays(GetHorizonDays());
+
+            var anchorDate = _calendar.GetAnchorDate().Date;
+            if (fromDate < anchorDate)
+            {
+                Logger.Warn(
+                    "Requested from-date {FromDate} is before route cycle anchor {AnchorDate}; clamping to anchor.",
+                    fromDate,
+                    anchorDate);
+                fromDate = anchorDate;
+            }
 
             if (fromDate > toDate)
                 return;
@@ -63,7 +75,7 @@ namespace btr.application.SalesContext.VisitPlanAgg.UseCases
             {
                 try
                 {
-                    RegenerateForSalesPerson(salesPersonId, fromDate, toDate);
+                    RegenerateForSalesPerson(salesPersonId, fromDate, toDate, request.AllowPast);
                 }
                 catch (Exception ex)
                 {
@@ -76,7 +88,11 @@ namespace btr.application.SalesContext.VisitPlanAgg.UseCases
             }
         }
 
-        private void RegenerateForSalesPerson(string salesPersonId, DateTime fromDate, DateTime toDate)
+        private void RegenerateForSalesPerson(
+            string salesPersonId,
+            DateTime fromDate,
+            DateTime toDate,
+            bool allowPast)
         {
             var routes = (_salesRuteDal.ListData(new SalesPersonModel(salesPersonId)) ?? Enumerable.Empty<SalesRuteModel>())
                 .ToList();
@@ -122,7 +138,11 @@ namespace btr.application.SalesContext.VisitPlanAgg.UseCases
 
             using (var trans = TransHelper.NewScope())
             {
-                _visitPlanDal.DeleteFuture(salesPersonId, fromDate, toDate);
+                if (allowPast)
+                    _visitPlanDal.DeleteRange(salesPersonId, fromDate, toDate);
+                else
+                    _visitPlanDal.DeleteFuture(salesPersonId, fromDate, toDate);
+
                 if (rows.Count > 0)
                     _visitPlanDal.BulkInsert(rows);
                 trans.Complete();

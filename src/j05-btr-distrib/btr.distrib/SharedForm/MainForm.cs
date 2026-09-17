@@ -9,6 +9,7 @@ using btr.distrib.FinanceContext.ReturBalanceAgg;
 using btr.distrib.FinanceContext.TagihanAgg;
 using btr.distrib.InventoryContext.AdjustmentAgg;
 using btr.distrib.InventoryContext.BrgAgg;
+using btr.distrib.InventoryContext.BrgBarcodeAgg;
 using btr.distrib.InventoryContext.DriverAgg;
 using btr.distrib.InventoryContext.ImportOpnameAgg;
 using btr.distrib.InventoryContext.KartuStokRpt;
@@ -18,6 +19,7 @@ using btr.distrib.InventoryContext.MutasiRpt;
 using btr.distrib.InventoryContext.OmzetSupplierRpt;
 using btr.distrib.InventoryContext.OpnameAgg;
 using btr.distrib.InventoryContext.PackingAgg;
+using btr.distrib.InventoryContext.ReturnOrderAgg;
 using btr.distrib.InventoryContext.ReturJualAgg;
 using btr.distrib.InventoryContext.ReturJualRpt;
 using btr.distrib.InventoryContext.StokBalanceRpt;
@@ -595,6 +597,15 @@ namespace btr.distrib.SharedForm
             form.MdiParent = this;
             form.Show();
         }
+        private void IM5BrgBarcodeButton_Click(object sender, EventArgs e)
+        {
+            if (BringMdiChildToFrontIfLoaded<BrgBarcodeForm>())
+                return;
+            var form = ThisServicesProvider.GetRequiredService<BrgBarcodeForm>();
+            form.StartPosition = FormStartPosition.CenterScreen;
+            form.MdiParent = this;
+            form.Show();
+        }
         #endregion
 
         #region FINANCE
@@ -685,11 +696,20 @@ namespace btr.distrib.SharedForm
 
         #region RETUR JUAL
         //      transaction
-        private void RT1ReturJualButton_Click(object sender, EventArgs e)
+        public void RT1ReturJualButton_Click(object sender, EventArgs e)
         {
             if (BringMdiChildToFrontIfLoaded<ReturJualForm>())
                 return;
             var form = ThisServicesProvider.GetRequiredService<ReturJualForm>();
+            form.StartPosition = FormStartPosition.CenterScreen;
+            form.MdiParent = this;
+            form.Show();
+        }
+        private void RT3GenerateReturnOrder_Click(object sender, EventArgs e)
+        {
+            if (BringMdiChildToFrontIfLoaded<GenerateReturnOrderForm>())
+                return;
+            var form = ThisServicesProvider.GetRequiredService<GenerateReturnOrderForm>();
             form.StartPosition = FormStartPosition.CenterScreen;
             form.MdiParent = this;
             form.Show();

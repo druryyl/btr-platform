@@ -320,6 +320,8 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Queries
 
         public string TargetEntityType { get; set; }
 
+        public string MetricKpiId { get; set; }
+
         public List<ProfileRelatedEntityRowDto> Rows { get; set; } = new List<ProfileRelatedEntityRowDto>();
     }
 
@@ -342,6 +344,10 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Queries
         public decimal? MetricValue { get; set; }
 
         public string ProfileRoute { get; set; }
+
+        public string RelationshipStatus { get; set; }
+
+        public DateTime? LastTransactionDate { get; set; }
     }
 
     public class ProfileEvidenceSectionDto : ProfileSectionDtoBase
@@ -358,6 +364,12 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Queries
         public string ReportRoute { get; set; }
 
         public string FilterDimension { get; set; }
+
+        public string RelationshipCode { get; set; }
+
+        public string MetricKpiId { get; set; }
+
+        public string LensId { get; set; }
     }
 
     public class GetEntityPerformanceProfileHandler

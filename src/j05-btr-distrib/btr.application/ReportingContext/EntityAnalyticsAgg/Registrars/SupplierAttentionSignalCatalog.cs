@@ -6,10 +6,22 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Registrars
 {
     public static class SupplierAttentionSignalCatalog
     {
+        public const string SignalSalesOutDecline = "SalesOutDecline";
+        public const string SignalGrowthDeterioration = "GrowthDeterioration";
+        public const string SignalTargetMiss = "TargetMiss";
+        public const string SignalReturnRisk = "ReturnRisk";
+        public const string SignalCoverageDeterioration = "CoverageDeterioration";
+
         public static void Register(IAttentionSignalRegistry registry)
         {
             if (registry == null)
                 return;
+
+            Register(registry, SignalSalesOutDecline, "Performance", "Sales-Out Decline");
+            Register(registry, SignalGrowthDeterioration, "Growth", "Growth Deterioration");
+            Register(registry, SignalTargetMiss, "Achievement", "Target Miss");
+            Register(registry, SignalReturnRisk, "Quality", "Return Risk");
+            Register(registry, SignalCoverageDeterioration, "Coverage", "Coverage Deterioration");
 
             Register(registry, DashboardPurchasingManagementAggregator.SignalQualifiedBacklog, "Quality", "Qualified Backlog");
             Register(registry, DashboardPurchasingManagementAggregator.SignalPrincipalSpendConcentration, "Contribution", "Spend Concentration");

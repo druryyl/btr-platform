@@ -3,6 +3,7 @@ import Card from 'primevue/card'
 import ProgressSpinner from 'primevue/progressspinner'
 import type { DashboardPurchasingSummaryRow } from '@/models/dashboard'
 import { formatCurrency, formatNumber, formatPercent } from '@/services/formatters'
+import { PU01_PURCHASE_IN_LABEL } from '@/services/purchasingPurchaseInLabels'
 
 defineProps<{
   summary: DashboardPurchasingSummaryRow | null
@@ -20,7 +21,7 @@ defineProps<{
         </div>
         <div v-else class="purchasing-summary__row">
           <div class="metric">
-            <span class="metric__label">Grand Total Purchase</span>
+            <span class="metric__label">{{ PU01_PURCHASE_IN_LABEL }}</span>
             <span class="metric__value">
               {{ summary ? formatCurrency(summary.GrandTotalPurchase) : '—' }}
             </span>

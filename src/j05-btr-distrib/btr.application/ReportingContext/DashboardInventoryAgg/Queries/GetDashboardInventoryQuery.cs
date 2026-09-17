@@ -33,6 +33,10 @@ namespace btr.application.ReportingContext.DashboardInventoryAgg.Queries
     {
         public string Name { get; set; }
 
+        public string SupplierId { get; set; }
+
+        public string DashboardRoute { get; set; }
+
         public decimal InventoryValue { get; set; }
     }
 
@@ -41,6 +45,10 @@ namespace btr.application.ReportingContext.DashboardInventoryAgg.Queries
         public int Rank { get; set; }
 
         public string Name { get; set; }
+
+        public string SupplierId { get; set; }
+
+        public string DashboardRoute { get; set; }
 
         public decimal InventoryValue { get; set; }
 

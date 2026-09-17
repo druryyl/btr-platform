@@ -8,11 +8,45 @@ export interface SalesReportRow {
   Status: string
 }
 
+export interface SalesReportPrincipalRow {
+  SupplierId: string
+  PrincipalName: string
+  KpiId: string
+  PrincipalSalesOutAmount: number
+  LineCount: number
+}
+
+export interface SalesReportPrincipalEvidenceLine {
+  FakturId: string
+  FakturCode: string
+  FakturDate: string
+  FakturItemId: string
+  BrgId: string
+  SupplierId: string
+  KpiId: string
+  PrincipalSalesOutAmount: number
+}
+
 export interface SalesReportResponse {
   PeriodFrom: string
   PeriodTo: string
   GeneratedAt: string
   Rows: SalesReportRow[]
+  KpiId: string
+  KpiName: string
+  HeaderTotalLabel: string
+  HeaderTotalAmount: number
+  Disclosures: string[]
+  Principals: SalesReportPrincipalRow[]
+  UnknownPrincipalExceptionCount: number
+  SelectedSupplierId: string
+  SelectedPrincipalName: string
+  SelectedPrincipalSalesOutAmount: number
+  EvidenceLines: SalesReportPrincipalEvidenceLine[]
+}
+
+export interface SalesReportQuery extends ReportDateQuery {
+  supplierId?: string
 }
 
 export interface PiutangReportRow {
@@ -130,8 +164,31 @@ export interface CustomerReportSummary {
   TotalOpenBalance: number
 }
 
+export interface CustomerReportPrincipalPair {
+  SupplierId: string
+  PrincipalName: string
+  RelationshipStatus: string
+  KpiId: string
+  PairSalesOutAmount: number
+}
+
+export interface CustomerReportPrincipalPairCustomer {
+  CustomerCode: string
+  CustomerName: string
+  Principals: CustomerReportPrincipalPair[]
+}
+
+export interface CustomerReportPrincipalPairEvidence {
+  IsAvailable: boolean
+  KpiId: string
+  Note: string
+  Disclosures: string[]
+  Customers: CustomerReportPrincipalPairCustomer[]
+}
+
 export interface CustomerReportResponse {
   GeneratedAt: string
   Summary: CustomerReportSummary
   Rows: CustomerReportRow[]
+  PairEvidence?: CustomerReportPrincipalPairEvidence | null
 }

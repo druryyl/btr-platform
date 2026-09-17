@@ -5,6 +5,7 @@ using btr.application.ReportingContext.DashboardExecutiveAgg.Queries;
 using btr.application.ReportingContext.DashboardExecutiveAgg.Services;
 using btr.application.ReportingContext.DashboardSnapshotAgg;
 using btr.application.ReportingContext.DashboardSnapshotAgg.Contracts;
+using btr.application.ReportingContext.PrincipalAnalyticsAgg.Contracts;
 using Microsoft.Extensions.Options;
 
 namespace btr.infrastructure.ReportingContext.DashboardExecutiveAgg
@@ -18,6 +19,7 @@ namespace btr.infrastructure.ReportingContext.DashboardExecutiveAgg
         private readonly IDashboardPurchasingManagementSnapshotDal _purchasingManagementSnapshotDal;
         private readonly IDashboardSnapshotRefreshLogDal _refreshLogDal;
         private readonly IDashboardCustomerPortfolioDal _customerPortfolioDal;
+        private readonly IPrincipalSalesOutSnapshotDal _principalSalesOutSnapshotDal;
         private readonly DashboardExecutiveComposer _composer;
         private readonly DashboardSnapshotOptions _options;
 
@@ -29,6 +31,7 @@ namespace btr.infrastructure.ReportingContext.DashboardExecutiveAgg
             IDashboardPurchasingManagementSnapshotDal purchasingManagementSnapshotDal,
             IDashboardSnapshotRefreshLogDal refreshLogDal,
             IDashboardCustomerPortfolioDal customerPortfolioDal,
+            IPrincipalSalesOutSnapshotDal principalSalesOutSnapshotDal,
             DashboardExecutiveComposer composer,
             IOptions<DashboardSnapshotOptions> options)
         {
@@ -39,6 +42,7 @@ namespace btr.infrastructure.ReportingContext.DashboardExecutiveAgg
             _purchasingManagementSnapshotDal = purchasingManagementSnapshotDal;
             _refreshLogDal = refreshLogDal;
             _customerPortfolioDal = customerPortfolioDal;
+            _principalSalesOutSnapshotDal = principalSalesOutSnapshotDal;
             _composer = composer;
             _options = options?.Value ?? new DashboardSnapshotOptions();
         }
@@ -48,6 +52,7 @@ namespace btr.infrastructure.ReportingContext.DashboardExecutiveAgg
             return _composer.Compose(new ExecutiveComposeInput
             {
                 Sales = _salesSnapshotDal.GetCurrent(),
+                PrincipalSalesOut = _principalSalesOutSnapshotDal.GetCurrent(),
                 Piutang = _piutangSnapshotDal.GetCurrent(),
                 Inventory = _inventorySnapshotDal.GetCurrent(),
                 Purchasing = _purchasingSnapshotDal.GetCurrent(),

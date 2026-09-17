@@ -21,8 +21,9 @@ namespace btr.application.SalesContext.VisitPlanAgg.UseCases
             _regenerateWorker.Execute(new RegenerateVisitPlanRequest
             {
                 SalesPersonId = null,
-                FromDate = today,
-                ToDate = null,
+                FromDate = request?.FromDate?.Date ?? today,
+                ToDate = request?.ToDate?.Date,
+                AllowPast = request?.AllowPast ?? false,
                 TriggeredBy = request?.TriggeredBy ?? "Scheduler"
             });
         }

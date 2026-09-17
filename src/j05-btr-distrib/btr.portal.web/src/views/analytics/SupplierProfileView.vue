@@ -27,6 +27,7 @@ watch(entityId, loadCurrentProfile)
     :loading="store.loading"
     :error="store.error"
     :entity-code="store.profile?.Overview?.EntityCode ?? undefined"
+    profile-title="Principal Profile"
     @refresh="loadCurrentProfile()"
   />
 </template>

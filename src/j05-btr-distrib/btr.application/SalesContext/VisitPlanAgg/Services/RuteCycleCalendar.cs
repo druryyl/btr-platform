@@ -51,7 +51,7 @@ namespace btr.application.SalesContext.VisitPlanAgg.Services
             return cycleDayIndex < 7 ? "Minggu1" : "Minggu2";
         }
 
-        internal DateTime GetAnchorDate()
+        public DateTime GetAnchorDate()
         {
             if (_cachedAnchorDate.HasValue)
                 return _cachedAnchorDate.Value;

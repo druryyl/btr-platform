@@ -73,6 +73,10 @@ namespace btr.application.ReportingContext.DashboardInventoryRiskAgg.Queries
     {
         public string Name { get; set; }
 
+        public string SupplierId { get; set; }
+
+        public string DashboardRoute { get; set; }
+
         public decimal AtRiskValue { get; set; }
 
         public int ItemCount { get; set; }

@@ -28,6 +28,9 @@ limits, or schedule visits.
 - **Planning Confidence** reflects how far the month has progressed. It is not
   a rating of employee or team quality.
 - One customer may appear in the priority queue and in a specialized queue.
+- Collection queues remain Customer-level. Routing a collection action to a
+  Salesman or function is operational routing, not Customer account ownership.
+- No Principal collection impact is shown.
 
 ## 1. Executive Summary
 
@@ -401,18 +404,20 @@ and Management Escalation.
 
 **Chart type:** Horizontal bar chart
 
-**Available views:** Wilayah and Salesman
+**Available views:** Wilayah and Routed Salesman
 
-**Content:** The number of collection actions assigned to each selected
-Wilayah or Salesman.
+**Content:** The number of collection actions grouped by selected Wilayah or
+by the Salesman used as an operational route. The Salesman view is not a
+Customer-ownership book.
 
 **Business question:** Where is today’s operational workload concentrated?
 
 **How to use it:**
 
 - A high Wilayah value may require regional coordination or capacity balancing.
-- A high Salesman value indicates that the representative owns many customer
-  follow-ups.
+- A high Routed Salesman value indicates operational concentration of today’s
+  collection follow-ups. It does not mean that Salesman owns those Customer
+  accounts.
 - Compare workload counts with impact and overdue exposure; equal action counts
   do not imply equal financial responsibility.
 
@@ -451,7 +456,7 @@ opportunity or risk?
 - Priority score
 - Impact
 - Risk category
-- Owner
+- Action Route
 
 **Expandable explanation:**
 
@@ -464,8 +469,8 @@ opportunity or risk?
 
 1. Start with the highest-priority customers.
 2. Review Impact alongside Priority so high-value work is not overlooked.
-3. Confirm the Owner and route the work to Collection, Finance, Sales, or
-   Management.
+3. Confirm the Action Route and send the work to Collection, Finance, Sales,
+   or Management. Action Route is operational routing, not Customer ownership.
 4. Expand the row when the team needs to understand or challenge the
    recommendation.
 
@@ -490,7 +495,7 @@ The priority score is a sorting aid, not a probability of payment.
 - Action
 - Impact
 - Risk
-- Owner
+- Action Route
 - Reason
 
 **How to use it:**
@@ -500,8 +505,8 @@ The priority score is a sorting aid, not a probability of payment.
 - Use **Sales Recovery** for declining customer relationships.
 - Use **Management Escalation** for critical cases requiring leadership review.
 
-These queues help each department work the same customer portfolio according
-to the appropriate responsibility.
+These queues remain Customer-level. They help each function work the same
+customer list according to the operational route, not as owned accounts.
 
 ### 6.3 Top Impact Opportunities
 
@@ -518,7 +523,7 @@ relationship-oriented.
 - Action
 - Overdue
 - Due within 7 days
-- Salesman
+- Routed Salesman
 - Wilayah
 
 **How to use it:**
@@ -526,7 +531,8 @@ relationship-oriented.
 - Use it to focus management attention on the largest financial opportunities.
 - Compare Overdue with Due within 7 days to distinguish late cash from
   upcoming cash.
-- Use Salesman and Wilayah to assign accountability and coordinate follow-up.
+- Use Routed Salesman and Wilayah to coordinate operational follow-up. The
+  Routed Salesman is not the Customer owner.
 
 ## 7. Recommended Management Reading Order
 
@@ -540,7 +546,7 @@ relationship-oriented.
    or high-impact customers.
 6. Work the appropriate Specialized Queue.
 7. Use **Top Impact Opportunities** to confirm that the largest opportunities
-   have an owner.
+   have an operational route. That route is not Customer ownership.
 
 ## 8. Footer and Traceability
 

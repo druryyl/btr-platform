@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
 using btr.application.ReportingContext.DashboardSnapshotAgg.Progress;
+using btr.application.ReportingContext.PrincipalAnalyticsAgg;
+using btr.application.ReportingContext.PrincipalAnalyticsAgg.UseCases;
 using btr.nuna.Application;
 
 namespace btr.application.ReportingContext.DashboardSnapshotAgg.UseCases
@@ -15,8 +17,23 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.UseCases
         private readonly IRefreshDashboardPiutangSnapshotWorker _piutangWorker;
         private readonly IRefreshDashboardInventorySnapshotWorker _inventoryWorker;
         private readonly IRefreshDashboardInventoryRiskSnapshotWorker _inventoryRiskWorker;
+        private readonly IRefreshPrincipalInventorySnapshotWorker _principalInventoryWorker;
         private readonly IRefreshDashboardSalesSnapshotWorker _salesWorker;
+        private readonly IRefreshPrincipalSalesOutSnapshotWorker _principalSalesOutWorker;
+        private readonly IRefreshPrincipalReturnSnapshotWorker _principalReturnWorker;
+        private readonly IRefreshPrincipalReturnPercentageSnapshotWorker _principalReturnPercentageWorker;
+        private readonly IRefreshPrincipalSalesOutHistoryWorker _principalSalesOutHistoryWorker;
+        private readonly IRefreshPrincipalReturnHistoryWorker _principalReturnHistoryWorker;
+        private readonly IRefreshPrincipalTargetSnapshotWorker _principalTargetWorker;
+        private readonly IRefreshPrincipalAchievementSnapshotWorker _principalAchievementWorker;
+        private readonly IRefreshPrincipalMomGrowthSnapshotWorker _principalMomGrowthWorker;
+        private readonly IRefreshPrincipalYoyGrowthSnapshotWorker _principalYoyGrowthWorker;
+        private readonly IRefreshPrincipalSalesmanContributionSnapshotWorker _principalSalesmanContributionWorker;
+        private readonly IRefreshCustomerPrincipalRelationshipWorker _customerPrincipalRelationshipWorker;
+        private readonly IRefreshPrincipalActiveCustomerSnapshotWorker _principalActiveCustomerWorker;
+        private readonly IRefreshPrincipalCustomerCoverageSnapshotWorker _principalCustomerCoverageWorker;
         private readonly IRefreshDashboardPurchasingSnapshotWorker _purchasingWorker;
+        private readonly IRefreshPrincipalPurchaseInSnapshotWorker _principalPurchaseInWorker;
         private readonly IRefreshDashboardPurchasingManagementSnapshotWorker _purchasingManagementWorker;
         private readonly IRefreshDashboardCustomerSnapshotWorker _customerWorker;
         private readonly IRefreshDashboardSalesmanSnapshotWorker _salesmanWorker;
@@ -28,8 +45,23 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.UseCases
             IRefreshDashboardPiutangSnapshotWorker piutangWorker,
             IRefreshDashboardInventorySnapshotWorker inventoryWorker,
             IRefreshDashboardInventoryRiskSnapshotWorker inventoryRiskWorker,
+            IRefreshPrincipalInventorySnapshotWorker principalInventoryWorker,
             IRefreshDashboardSalesSnapshotWorker salesWorker,
+            IRefreshPrincipalSalesOutSnapshotWorker principalSalesOutWorker,
+            IRefreshPrincipalReturnSnapshotWorker principalReturnWorker,
+            IRefreshPrincipalReturnPercentageSnapshotWorker principalReturnPercentageWorker,
+            IRefreshPrincipalSalesOutHistoryWorker principalSalesOutHistoryWorker,
+            IRefreshPrincipalReturnHistoryWorker principalReturnHistoryWorker,
+            IRefreshPrincipalTargetSnapshotWorker principalTargetWorker,
+            IRefreshPrincipalAchievementSnapshotWorker principalAchievementWorker,
+            IRefreshPrincipalMomGrowthSnapshotWorker principalMomGrowthWorker,
+            IRefreshPrincipalYoyGrowthSnapshotWorker principalYoyGrowthWorker,
+            IRefreshPrincipalSalesmanContributionSnapshotWorker principalSalesmanContributionWorker,
+            IRefreshCustomerPrincipalRelationshipWorker customerPrincipalRelationshipWorker,
+            IRefreshPrincipalActiveCustomerSnapshotWorker principalActiveCustomerWorker,
+            IRefreshPrincipalCustomerCoverageSnapshotWorker principalCustomerCoverageWorker,
             IRefreshDashboardPurchasingSnapshotWorker purchasingWorker,
+            IRefreshPrincipalPurchaseInSnapshotWorker principalPurchaseInWorker,
             IRefreshDashboardPurchasingManagementSnapshotWorker purchasingManagementWorker,
             IRefreshDashboardCustomerSnapshotWorker customerWorker,
             IRefreshDashboardSalesmanSnapshotWorker salesmanWorker,
@@ -40,8 +72,23 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.UseCases
             _piutangWorker = piutangWorker;
             _inventoryWorker = inventoryWorker;
             _inventoryRiskWorker = inventoryRiskWorker;
+            _principalInventoryWorker = principalInventoryWorker;
             _salesWorker = salesWorker;
+            _principalSalesOutWorker = principalSalesOutWorker;
+            _principalReturnWorker = principalReturnWorker;
+            _principalReturnPercentageWorker = principalReturnPercentageWorker;
+            _principalSalesOutHistoryWorker = principalSalesOutHistoryWorker;
+            _principalReturnHistoryWorker = principalReturnHistoryWorker;
+            _principalTargetWorker = principalTargetWorker;
+            _principalAchievementWorker = principalAchievementWorker;
+            _principalMomGrowthWorker = principalMomGrowthWorker;
+            _principalYoyGrowthWorker = principalYoyGrowthWorker;
+            _principalSalesmanContributionWorker = principalSalesmanContributionWorker;
+            _customerPrincipalRelationshipWorker = customerPrincipalRelationshipWorker;
+            _principalActiveCustomerWorker = principalActiveCustomerWorker;
+            _principalCustomerCoverageWorker = principalCustomerCoverageWorker;
             _purchasingWorker = purchasingWorker;
+            _principalPurchaseInWorker = principalPurchaseInWorker;
             _purchasingManagementWorker = purchasingManagementWorker;
             _customerWorker = customerWorker;
             _salesmanWorker = salesmanWorker;
@@ -102,6 +149,20 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.UseCases
                 failures);
 
             RunDomain(
+                PrincipalInventorySnapshot.Domain,
+                () =>
+                {
+                    var principalInventoryRequest = new RefreshPrincipalInventorySnapshotRequest
+                    {
+                        TriggeredBy = triggeredBy
+                    };
+                    _principalInventoryWorker.Execute(principalInventoryRequest);
+                    return principalInventoryRequest.Result;
+                },
+                domainResults,
+                failures);
+
+            RunDomain(
                 "Sales",
                 () =>
                 {
@@ -116,6 +177,188 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.UseCases
                 failures);
 
             RunDomain(
+                PrincipalSalesOutSnapshot.Domain,
+                () =>
+                {
+                    var principalSalesOutRequest = new RefreshPrincipalSalesOutSnapshotRequest
+                    {
+                        TriggeredBy = triggeredBy
+                    };
+                    _principalSalesOutWorker.Execute(principalSalesOutRequest);
+                    return principalSalesOutRequest.Result;
+                },
+                domainResults,
+                failures);
+
+            RunDomain(
+                PrincipalReturnSnapshot.Domain,
+                () =>
+                {
+                    var principalReturnRequest = new RefreshPrincipalReturnSnapshotRequest
+                    {
+                        TriggeredBy = triggeredBy
+                    };
+                    _principalReturnWorker.Execute(principalReturnRequest);
+                    return principalReturnRequest.Result;
+                },
+                domainResults,
+                failures);
+
+            RunDomain(
+                PrincipalReturnPercentageSnapshot.Domain,
+                () =>
+                {
+                    var principalReturnPercentageRequest = new RefreshPrincipalReturnPercentageSnapshotRequest
+                    {
+                        TriggeredBy = triggeredBy
+                    };
+                    _principalReturnPercentageWorker.Execute(principalReturnPercentageRequest);
+                    return principalReturnPercentageRequest.Result;
+                },
+                domainResults,
+                failures);
+
+            RunDomain(
+                PrincipalSalesOutHistory.Domain,
+                () =>
+                {
+                    var principalSalesOutHistoryRequest = new RefreshPrincipalSalesOutHistoryRequest
+                    {
+                        TriggeredBy = triggeredBy
+                    };
+                    _principalSalesOutHistoryWorker.Execute(principalSalesOutHistoryRequest);
+                    return principalSalesOutHistoryRequest.Result;
+                },
+                domainResults,
+                failures);
+
+            RunDomain(
+                PrincipalReturnHistory.Domain,
+                () =>
+                {
+                    var principalReturnHistoryRequest = new RefreshPrincipalReturnHistoryRequest
+                    {
+                        TriggeredBy = triggeredBy
+                    };
+                    _principalReturnHistoryWorker.Execute(principalReturnHistoryRequest);
+                    return principalReturnHistoryRequest.Result;
+                },
+                domainResults,
+                failures);
+
+            RunDomain(
+                PrincipalTargetSnapshot.Domain,
+                () =>
+                {
+                    var principalTargetRequest = new RefreshPrincipalTargetSnapshotRequest
+                    {
+                        TriggeredBy = triggeredBy
+                    };
+                    _principalTargetWorker.Execute(principalTargetRequest);
+                    return principalTargetRequest.Result;
+                },
+                domainResults,
+                failures);
+
+            RunDomain(
+                PrincipalAchievementSnapshot.Domain,
+                () =>
+                {
+                    var principalAchievementRequest = new RefreshPrincipalAchievementSnapshotRequest
+                    {
+                        TriggeredBy = triggeredBy
+                    };
+                    _principalAchievementWorker.Execute(principalAchievementRequest);
+                    return principalAchievementRequest.Result;
+                },
+                domainResults,
+                failures);
+
+            RunDomain(
+                PrincipalMomGrowthSnapshot.Domain,
+                () =>
+                {
+                    var principalMomGrowthRequest = new RefreshPrincipalMomGrowthSnapshotRequest
+                    {
+                        TriggeredBy = triggeredBy
+                    };
+                    _principalMomGrowthWorker.Execute(principalMomGrowthRequest);
+                    return principalMomGrowthRequest.Result;
+                },
+                domainResults,
+                failures);
+
+            RunDomain(
+                PrincipalYoyGrowthSnapshot.Domain,
+                () =>
+                {
+                    var principalYoyGrowthRequest = new RefreshPrincipalYoyGrowthSnapshotRequest
+                    {
+                        TriggeredBy = triggeredBy
+                    };
+                    _principalYoyGrowthWorker.Execute(principalYoyGrowthRequest);
+                    return principalYoyGrowthRequest.Result;
+                },
+                domainResults,
+                failures);
+
+            RunDomain(
+                PrincipalSalesmanContributionSnapshot.Domain,
+                () =>
+                {
+                    var principalSalesmanContributionRequest = new RefreshPrincipalSalesmanContributionSnapshotRequest
+                    {
+                        TriggeredBy = triggeredBy
+                    };
+                    _principalSalesmanContributionWorker.Execute(principalSalesmanContributionRequest);
+                    return principalSalesmanContributionRequest.Result;
+                },
+                domainResults,
+                failures);
+
+            RunDomain(
+                CustomerPrincipalRelationship.Domain,
+                () =>
+                {
+                    var relationshipRequest = new RefreshCustomerPrincipalRelationshipRequest
+                    {
+                        TriggeredBy = triggeredBy
+                    };
+                    _customerPrincipalRelationshipWorker.Execute(relationshipRequest);
+                    return relationshipRequest.Result;
+                },
+                domainResults,
+                failures);
+
+            RunDomain(
+                PrincipalActiveCustomerSnapshot.Domain,
+                () =>
+                {
+                    var activeCustomerRequest = new RefreshPrincipalActiveCustomerSnapshotRequest
+                    {
+                        TriggeredBy = triggeredBy
+                    };
+                    _principalActiveCustomerWorker.Execute(activeCustomerRequest);
+                    return activeCustomerRequest.Result;
+                },
+                domainResults,
+                failures);
+
+            RunDomain(
+                PrincipalCustomerCoverageSnapshot.Domain,
+                () =>
+                {
+                    var customerCoverageRequest = new RefreshPrincipalCustomerCoverageSnapshotRequest
+                    {
+                        TriggeredBy = triggeredBy
+                    };
+                    _principalCustomerCoverageWorker.Execute(customerCoverageRequest);
+                    return customerCoverageRequest.Result;
+                },
+                domainResults,
+                failures);
+
+            RunDomain(
                 "Purchasing",
                 () =>
                 {
@@ -125,6 +368,20 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.UseCases
                     };
                     _purchasingWorker.Execute(purchasingRequest);
                     return purchasingRequest.Result;
+                },
+                domainResults,
+                failures);
+
+            RunDomain(
+                PrincipalPurchaseInSnapshot.Domain,
+                () =>
+                {
+                    var principalPurchaseInRequest = new RefreshPrincipalPurchaseInSnapshotRequest
+                    {
+                        TriggeredBy = triggeredBy
+                    };
+                    _principalPurchaseInWorker.Execute(principalPurchaseInRequest);
+                    return principalPurchaseInRequest.Result;
                 },
                 domainResults,
                 failures);
@@ -274,12 +531,103 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.UseCases
                         RefreshLogId = inventoryRisk.RefreshLogId,
                         DurationMs = inventoryRisk.DurationMs
                     };
+                case RefreshPrincipalInventorySnapshotResult principalInventory:
+                    return new RefreshDashboardDomainResult
+                    {
+                        Domain = domain,
+                        RefreshLogId = principalInventory.RefreshLogId,
+                        DurationMs = principalInventory.DurationMs
+                    };
                 case RefreshDashboardSalesSnapshotResult sales:
                     return new RefreshDashboardDomainResult
                     {
                         Domain = domain,
                         RefreshLogId = sales.RefreshLogId,
                         DurationMs = sales.DurationMs
+                    };
+                case RefreshPrincipalSalesOutSnapshotResult principalSalesOut:
+                    return new RefreshDashboardDomainResult
+                    {
+                        Domain = domain,
+                        RefreshLogId = principalSalesOut.RefreshLogId,
+                        DurationMs = principalSalesOut.DurationMs
+                    };
+                case RefreshPrincipalReturnSnapshotResult principalReturn:
+                    return new RefreshDashboardDomainResult
+                    {
+                        Domain = domain,
+                        RefreshLogId = principalReturn.RefreshLogId,
+                        DurationMs = principalReturn.DurationMs
+                    };
+                case RefreshPrincipalReturnPercentageSnapshotResult principalReturnPercentage:
+                    return new RefreshDashboardDomainResult
+                    {
+                        Domain = domain,
+                        RefreshLogId = principalReturnPercentage.RefreshLogId,
+                        DurationMs = principalReturnPercentage.DurationMs
+                    };
+                case RefreshPrincipalSalesOutHistoryResult principalSalesOutHistory:
+                    return new RefreshDashboardDomainResult
+                    {
+                        Domain = domain,
+                        RefreshLogId = principalSalesOutHistory.RefreshLogId,
+                        DurationMs = principalSalesOutHistory.DurationMs
+                    };
+                case RefreshPrincipalReturnHistoryResult principalReturnHistory:
+                    return new RefreshDashboardDomainResult
+                    {
+                        Domain = domain,
+                        RefreshLogId = principalReturnHistory.RefreshLogId,
+                        DurationMs = principalReturnHistory.DurationMs
+                    };
+                case RefreshPrincipalTargetSnapshotResult principalTarget:
+                    return new RefreshDashboardDomainResult
+                    {
+                        Domain = domain,
+                        RefreshLogId = principalTarget.RefreshLogId,
+                        DurationMs = principalTarget.DurationMs
+                    };
+                case RefreshPrincipalAchievementSnapshotResult principalAchievement:
+                    return new RefreshDashboardDomainResult
+                    {
+                        Domain = domain,
+                        RefreshLogId = principalAchievement.RefreshLogId,
+                        DurationMs = principalAchievement.DurationMs
+                    };
+                case RefreshPrincipalMomGrowthSnapshotResult principalMomGrowth:
+                    return new RefreshDashboardDomainResult
+                    {
+                        Domain = domain,
+                        RefreshLogId = principalMomGrowth.RefreshLogId,
+                        DurationMs = principalMomGrowth.DurationMs
+                    };
+                case RefreshPrincipalSalesmanContributionSnapshotResult principalSalesmanContribution:
+                    return new RefreshDashboardDomainResult
+                    {
+                        Domain = domain,
+                        RefreshLogId = principalSalesmanContribution.RefreshLogId,
+                        DurationMs = principalSalesmanContribution.DurationMs
+                    };
+                case RefreshCustomerPrincipalRelationshipResult customerPrincipalRelationship:
+                    return new RefreshDashboardDomainResult
+                    {
+                        Domain = domain,
+                        RefreshLogId = customerPrincipalRelationship.RefreshLogId,
+                        DurationMs = customerPrincipalRelationship.DurationMs
+                    };
+                case RefreshPrincipalActiveCustomerSnapshotResult principalActiveCustomer:
+                    return new RefreshDashboardDomainResult
+                    {
+                        Domain = domain,
+                        RefreshLogId = principalActiveCustomer.RefreshLogId,
+                        DurationMs = principalActiveCustomer.DurationMs
+                    };
+                case RefreshPrincipalCustomerCoverageSnapshotResult principalCustomerCoverage:
+                    return new RefreshDashboardDomainResult
+                    {
+                        Domain = domain,
+                        RefreshLogId = principalCustomerCoverage.RefreshLogId,
+                        DurationMs = principalCustomerCoverage.DurationMs
                     };
                 case RefreshDashboardPurchasingSnapshotResult purchasing:
                     return new RefreshDashboardDomainResult

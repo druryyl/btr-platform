@@ -1,0 +1,113 @@
+<UserControl x:Class="btr.portal.worker.admin.Views.RefreshHistoryView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             mc:Ignorable="d"
+             d:DesignHeight="600" d:DesignWidth="900">
+
+    <UserControl.Resources>
+        <conv:StatusToColorConverter x:Key="StatusToColorConverter"
+             xmlns:conv="clr-namespace:btr.portal.worker.admin.Converters"/>
+        <conv:NullToVisibilityConverter x:Key="NullToVisibilityConverter"
+             xmlns:conv="clr-namespace:btr.portal.worker.admin.Converters"/>
+    </UserControl.Resources>
+
+    <Grid Background="{StaticResource BackgroundBrush}">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <Border Grid.Row="0" Style="{StaticResource CardStyle}">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <StackPanel Grid.Column="0">
+                    <TextBlock Text="Refresh History" Style="{StaticResource HeaderTextStyle}"/>
+                    <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
+                        <TextBlock Text="Filter by Domain:" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                        <ComboBox ItemsSource="{Binding FilterDomains}" SelectedItem="{Binding SelectedFilterDomain}"
+                                  Padding="8,4" Width="150" Margin="0,0,16,0"/>
+                        <TextBlock Text="Filter by Status:" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                        <ComboBox ItemsSource="{Binding FilterStatuses}" SelectedItem="{Binding SelectedFilterStatus}"
+                                  Padding="8,4" Width="120" Margin="0,0,16,0"/>
+                        <Button Content="Apply Filter" Command="{Binding LoadLogsCommand}"
+                                Style="{StaticResource PrimaryButtonStyle}"/>
+                    </StackPanel>
+                </StackPanel>
+
+                <Button Grid.Column="1" Content="Load History" Command="{Binding LoadLogsCommand}"
+                        VerticalAlignment="Bottom" Style="{StaticResource PrimaryButtonStyle}"/>
+            </Grid>
+        </Border>
+
+        <TextBlock Grid.Row="1" Text="{Binding ErrorMessage}" Foreground="{StaticResource StatusErrorBrush}"
+                   FontWeight="Medium" Margin="16,0,16,8" TextWrapping="Wrap"
+                   Visibility="{Binding ErrorMessage, Converter={StaticResource NullToVisibilityConverter}, ConverterParameter=invert}"/>
+
+        <DataGrid Grid.Row="2" ItemsSource="{Binding RefreshLogs}" AutoGenerateColumns="False"
+                  IsReadOnly="True" GridLinesVisibility="Horizontal"
+                  Background="{StaticResource SurfaceBrush}"
+                  BorderBrush="{StaticResource BorderBrush}"
+                  HeadersVisibility="Column" CanUserResizeColumns="True"
+                  SelectionMode="Single" SelectionUnit="FullRow">
+            <DataGrid.ColumnHeaderStyle>
+                <Style TargetType="DataGridColumnHeader">
+                    <Setter Property="Background" Value="#F9FAFB"/>
+                    <Setter Property="Foreground" Value="{StaticResource TextSecondaryBrush}"/>
+                    <Setter Property="FontWeight" Value="SemiBold"/>
+                    <Setter Property="FontSize" Value="11"/>
+                    <Setter Property="Padding" Value="12,8"/>
+                    <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}"/>
+                    <Setter Property="BorderThickness" Value="0,0,1,1"/>
+                </Style>
+            </DataGrid.ColumnHeaderStyle>
+            <DataGrid.Columns>
+                <DataGridTextColumn Header="Domain" Binding="{Binding Domain}" Width="130"/>
+                <DataGridTemplateColumn Header="Status" Width="100">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <Border Style="{StaticResource StatusBadgeStyle}"
+                                    Background="{Binding Status, Converter={StaticResource StatusToColorConverter}}">
+                                <TextBlock Text="{Binding Status}" Foreground="White"
+                                           FontWeight="Bold" FontSize="11"/>
+                            </Border>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+                <DataGridTextColumn Header="Started At" Width="150">
+                    <DataGridTextColumn.Binding>
+                        <Binding Path="StartedAt" StringFormat="{}{0:yyyy-MM-dd HH:mm:ss}"/>
+                    </DataGridTextColumn.Binding>
+                </DataGridTextColumn>
+                <DataGridTextColumn Header="Completed At" Width="150">
+                    <DataGridTextColumn.Binding>
+                        <Binding Path="CompletedAt" StringFormat="{}{0:yyyy-MM-dd HH:mm:ss}"/>
+                    </DataGridTextColumn.Binding>
+                </DataGridTextColumn>
+                <DataGridTextColumn Header="Duration (ms)" Binding="{Binding DurationMs, StringFormat='{}{0:N0}'}" Width="100"/>
+                <DataGridTextColumn Header="Triggered By" Binding="{Binding TriggeredBy}" Width="90"/>
+                <DataGridTextColumn Header="Error Message" Binding="{Binding ErrorMessage}" Width="*"/>
+            </DataGrid.Columns>
+        </DataGrid>
+
+        <Border Grid.Row="3" Background="{StaticResource SurfaceBrush}" BorderBrush="{StaticResource BorderBrush}"
+                BorderThickness="0,1,0,0" Padding="16,8">
+            <StackPanel Orientation="Horizontal">
+                <TextBlock Foreground="{StaticResource TextSecondaryBrush}" FontSize="11">
+                    <Run Text="Showing "/>
+                    <Run Text="{Binding RefreshLogs.Count, Mode=OneWay}"/>
+                    <Run Text=" entries"/>
+                </TextBlock>
+                <Button Content="Copy Selected Error" Command="{Binding CopyErrorCommand}"
+                        Padding="12,4" Margin="16,0,0,0" FontSize="11"/>
+            </StackPanel>
+        </Border>
+    </Grid>
+</UserControl>

@@ -2,6 +2,7 @@ using System;
 using btr.application.ReportingContext.EntityAnalyticsAgg.Models;
 using btr.application.ReportingContext.EntityAnalyticsAgg.Registrars;
 using btr.application.ReportingContext.EntityAnalyticsAgg.Services;
+using btr.application.ReportingContext.PrincipalAnalyticsAgg;
 using FluentAssertions;
 using Xunit;
 
@@ -157,6 +158,89 @@ namespace btr.test.ReportingContext
             Action act = () => EntityAnalyticsKpiRegistry.ValidateCategory((EntityKpiCategory)999);
 
             act.Should().Throw<ArgumentOutOfRangeException>();
+        }
+
+        [Fact]
+        public void SupplierDefaultPack_IncludesTimeAwareKpis()
+        {
+            var registry = CreateSupplierRegistry();
+
+            var ids = registry.GetPackKpiIds(SupplierEntityAnalyticsRegistrar.KpiPackId);
+            ids.Should().Contain(PrincipalKpiCatalog.PacingAchievementPercentageId);
+            ids.Should().Contain(PrincipalKpiCatalog.YoyMtdGrowthId);
+            registry.ValidatePack(SupplierEntityAnalyticsRegistrar.KpiPackId).Should().BeEmpty();
+        }
+
+        [Fact]
+        public void PacingAchievementMetadata_IsPercentWithElapsedDayGuardAndXAxis()
+        {
+            var registry = CreateSupplierRegistry();
+
+            registry.TryGetMetadata(PrincipalKpiCatalog.PacingAchievementPercentageId, out var pacing).Should().BeTrue();
+            pacing.DisplayName.Should().Be("Pacing Achievement %");
+            pacing.Unit.Should().Be("Percent");
+            pacing.Direction.Should().Be("HigherIsBetter");
+            pacing.Category.Should().Be(EntityKpiCategory.Financial);
+            pacing.DisplayPrecision.Should().BeGreaterThan(0);
+            pacing.Description.Should().Contain("Actual Sales MTD");
+            pacing.DefaultAxisRole.Should().Be("X");
+            pacing.MinimumElapsedDays.Should().HaveValue();
+            pacing.TrendEligible.Should().BeFalse("PRN-TGT-004 is a BusinessDate-dependent pacing KPI for current-period evaluation and is not trended historically; historical achievement uses PRN-TGT-003");
+            pacing.RankEligible.Should().BeTrue("PRN-TGT-004 remains a supporting ranking KPI");
+            pacing.RadarEligible.Should().BeFalse();
+        }
+
+        [Fact]
+        public void YoyMtdGrowthMetadata_IsPercentWithBaseGuardAndYAxis()
+        {
+            var registry = CreateSupplierRegistry();
+
+            registry.TryGetMetadata(PrincipalKpiCatalog.YoyMtdGrowthId, out var yoy).Should().BeTrue();
+            yoy.DisplayName.Should().Be("YoY MTD Growth %");
+            yoy.Unit.Should().Be("Percent");
+            yoy.Direction.Should().Be("HigherIsBetter");
+            yoy.Category.Should().Be(EntityKpiCategory.Growth);
+            yoy.DisplayPrecision.Should().BeGreaterThan(0);
+            yoy.NullableBehavior.Should().Be("ShowEmpty");
+            yoy.Description.Should().Contain("prior year MTD");
+            yoy.DefaultAxisRole.Should().Be("Y");
+            yoy.MinimumBaseValue.Should().HaveValue();
+        }
+
+        [Fact]
+        public void ExistingAchievementAndYoyMetadata_RemainUnchangedByTimeAwareKpis()
+        {
+            var registry = CreateSupplierRegistry();
+
+            registry.TryGetMetadata(PrincipalKpiCatalog.AchievementPercentageId, out var achievement).Should().BeTrue();
+            achievement.DisplayName.Should().Be("Achievement Percentage");
+            achievement.Unit.Should().Be("Ratio");
+            achievement.DefaultAxisRole.Should().BeNull();
+            achievement.MinimumElapsedDays.Should().BeNull();
+            achievement.MinimumBaseValue.Should().BeNull();
+
+            registry.TryGetMetadata(PrincipalKpiCatalog.YoyGrowthId, out var yoy).Should().BeTrue();
+            yoy.DisplayName.Should().Be("Year-over-Year Growth Percentage");
+            yoy.Unit.Should().Be("Percent");
+            yoy.DefaultAxisRole.Should().BeNull();
+            yoy.MinimumElapsedDays.Should().BeNull();
+            yoy.MinimumBaseValue.Should().BeNull();
+        }
+
+        private static EntityAnalyticsKpiRegistry CreateSupplierRegistry()
+        {
+            var entityTypes = new EntityTypeRegistry();
+            entityTypes.Register(new EntityTypeRegistration
+            {
+                EntityTypeCode = EntityTypeCode.Supplier,
+                DisplayName = "Principal",
+                KpiPackId = SupplierEntityAnalyticsRegistrar.KpiPackId
+            });
+
+            var registry = new EntityAnalyticsKpiRegistry(entityTypes);
+            var dimensionLabels = new EntityAnalyticsDimensionLabelRegistry();
+            new SupplierEntityAnalyticsRegistrar().Register(entityTypes, registry, dimensionLabels);
+            return registry;
         }
 
         private static EntityAnalyticsKpiRegistry CreateRegistry()

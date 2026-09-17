@@ -19,7 +19,7 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.Services
         {
             var itemGroups = DashboardInventoryItemGroupBuilder.BuildItemGroups(rows);
             var categoryRollup = BuildDimensionRollup(itemGroups, g => g.CategoryName);
-            var supplierRollup = BuildDimensionRollup(itemGroups, g => g.SupplierName);
+            var supplierRollup = BuildDimensionRollup(itemGroups, g => g.SupplierName, g => g.SupplierId);
             var topCategories = BuildTop10(categoryRollup);
             var topSuppliers = BuildTop10(supplierRollup);
 
@@ -36,30 +36,36 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.Services
             };
         }
 
-        private static List<(string Name, decimal InventoryValue)> BuildDimensionRollup(
+        private static List<(string Name, string SupplierId, decimal InventoryValue)> BuildDimensionRollup(
             List<DashboardInventoryItemGroup> itemGroups,
-            Func<DashboardInventoryItemGroup, string> dimensionSelector)
+            Func<DashboardInventoryItemGroup, string> dimensionSelector,
+            Func<DashboardInventoryItemGroup, string> supplierIdSelector = null)
         {
             return itemGroups
                 .GroupBy(dimensionSelector, StringComparer.OrdinalIgnoreCase)
-                .Select(g => (Name: g.Key, InventoryValue: g.Sum(x => x.InventoryValue)))
+                .Select(g => (
+                    Name: g.Key,
+                    SupplierId: supplierIdSelector == null
+                        ? null
+                        : g.Select(supplierIdSelector).FirstOrDefault(x => !string.IsNullOrWhiteSpace(x)),
+                    InventoryValue: g.Sum(x => x.InventoryValue)))
                 .OrderByDescending(x => x.InventoryValue)
                 .ThenBy(x => x.Name, StringComparer.OrdinalIgnoreCase)
                 .ToList();
         }
 
-        private static List<(string Name, decimal InventoryValue, int Rank)> BuildTop10(
-            List<(string Name, decimal InventoryValue)> rollup)
+        private static List<(string Name, string SupplierId, decimal InventoryValue, int Rank)> BuildTop10(
+            List<(string Name, string SupplierId, decimal InventoryValue)> rollup)
         {
             return rollup
                 .Take(10)
-                .Select((x, index) => (x.Name, x.InventoryValue, Rank: index + 1))
+                .Select((x, index) => (x.Name, x.SupplierId, x.InventoryValue, Rank: index + 1))
                 .ToList();
         }
 
         private static IEnumerable<DashboardInventoryBreakdownRow> MapBreakdownRows(
-            List<(string Name, decimal InventoryValue)> rollup,
-            List<(string Name, decimal InventoryValue, int Rank)> top10,
+            List<(string Name, string SupplierId, decimal InventoryValue)> rollup,
+            List<(string Name, string SupplierId, decimal InventoryValue, int Rank)> top10,
             string dimensionType)
         {
             var top10Lookup = top10.ToDictionary(
@@ -71,6 +77,7 @@ namespace btr.application.ReportingContext.DashboardSnapshotAgg.Services
             {
                 DimensionType = dimensionType,
                 Name = row.Name,
+                SupplierId = row.SupplierId ?? string.Empty,
                 InventoryValue = row.InventoryValue,
                 IsTop10 = top10Lookup.ContainsKey(row.Name),
                 Top10Rank = top10Lookup.TryGetValue(row.Name, out var rank) ? rank : (int?)null

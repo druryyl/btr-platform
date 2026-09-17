@@ -254,6 +254,10 @@ namespace btr.test.ReportingContext
 
             var assignedSalesman = section.Blocks
                 .Single(b => b.RelationshipCode == CustomerRelationshipCatalog.AssignedSalesman);
+            assignedSalesman.RelationshipLabel.Should().Be("Last Invoicing Salesman");
+            assignedSalesman.DisplayName.Should().Be("Last Invoicing Salesman");
+            assignedSalesman.RelationshipLabel.Should().NotContain("Assigned");
+            assignedSalesman.RelationshipLabel.Should().NotContain("Owner");
             assignedSalesman.Rows.Should().ContainSingle();
             assignedSalesman.Rows[0].EntityId.Should().Be("S-current");
             assignedSalesman.Rows[0].Rank.Should().Be(1);

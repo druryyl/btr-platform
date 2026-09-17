@@ -1,14 +1,19 @@
 <script setup lang="ts">
+import { computed } from 'vue'
 import type { PopulationMapPoint, PopulationMapResponse } from '@/models/entityAnalytics'
 import type { AnalyzedPoint } from '@/services/populationProjection/populationProjectionEngine'
 import { formatStatisticalClass } from '@/services/populationProjection/populationProjectionEngine'
-import { resolveBusinessAttentionTier } from '@/services/populationMapLayout'
+import { isLowConfidencePoint, resolveBusinessAttentionTier } from '@/services/populationMapLayout'
+import { resolveTooltipDimensionRow } from '@/services/populationTooltip'
 
-defineProps<{
+const props = defineProps<{
   point: PopulationMapPoint
   population: PopulationMapResponse | null
   analyzed?: AnalyzedPoint | null
 }>()
+
+/** PIW-10: dimension row is rendered only when a meaningful dimension exists (IW-GAP-015). */
+const dimensionRow = computed(() => resolveTooltipDimensionRow(props.point, props.population))
 </script>
 
 <template>
@@ -33,9 +38,30 @@ defineProps<{
       <div class="iw-map-tooltip__value">{{ point.FormattedSupplementaryValue }}</div>
     </div>
 
+    <div
+      v-if="population?.BubbleLabel && point.FormattedBubbleValue"
+      class="iw-map-tooltip__section"
+    >
+      <div class="iw-map-tooltip__label">{{ population.BubbleLabel }}</div>
+      <div class="iw-map-tooltip__value">{{ point.FormattedBubbleValue }}</div>
+    </div>
+
+    <div
+      v-if="population?.BubbleColorLabel && point.FormattedBubbleColorValue"
+      class="iw-map-tooltip__section"
+    >
+      <div class="iw-map-tooltip__label">{{ population.BubbleColorLabel }}</div>
+      <div class="iw-map-tooltip__value">{{ point.FormattedBubbleColorValue }}</div>
+    </div>
+
     <div v-if="analyzed" class="iw-map-tooltip__section">
       <div class="iw-map-tooltip__label">Classification</div>
       <div class="iw-map-tooltip__value">{{ formatStatisticalClass(analyzed.statisticalClass) }}</div>
+    </div>
+
+    <div v-if="isLowConfidencePoint(point)" class="iw-map-tooltip__section">
+      <div class="iw-map-tooltip__label">Confidence</div>
+      <div class="iw-map-tooltip__value">Low confidence — shown separately, not classified</div>
     </div>
 
     <div v-if="analyzed" class="iw-map-tooltip__section">
@@ -43,9 +69,9 @@ defineProps<{
       <div class="iw-map-tooltip__value">{{ analyzed.deviationLabel }}</div>
     </div>
 
-    <div v-if="point.DimensionValue" class="iw-map-tooltip__section">
-      <div class="iw-map-tooltip__label">Category</div>
-      <div class="iw-map-tooltip__value">{{ point.DimensionValue }}</div>
+    <div v-if="dimensionRow" class="iw-map-tooltip__section">
+      <div class="iw-map-tooltip__label">{{ dimensionRow.label }}</div>
+      <div class="iw-map-tooltip__value">{{ dimensionRow.value }}</div>
     </div>
 
     <div class="iw-map-tooltip__section">

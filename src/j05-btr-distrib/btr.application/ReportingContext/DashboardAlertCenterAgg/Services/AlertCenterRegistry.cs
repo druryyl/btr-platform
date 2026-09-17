@@ -68,6 +68,7 @@ namespace btr.application.ReportingContext.DashboardAlertCenterAgg.Services
         public const string SignalTop1WarehouseAtRiskPercent = "Top1WarehouseAtRiskPercent";
         public const string SignalTop1WarehouseSalesPercent = "Top1WarehouseSalesPercent";
         public const string SignalTop1WilayahSalesPercent = "Top1WilayahSalesPercent";
+        public const string SignalPrincipalSalesOut = "PrincipalSalesOut";
 
         private static readonly IReadOnlyList<AlertCenterRegistryEntry> Entries = new List<AlertCenterRegistryEntry>
         {
@@ -80,6 +81,7 @@ namespace btr.application.ReportingContext.DashboardAlertCenterAgg.Services
             new AlertCenterRegistryEntry(DashboardSnapshotAgg.Services.DashboardSalesmanAggregator.SignalDormantCustomerPortfolio, "Dormant Customer Portfolio", CategorySales, AlertCenterSection.Alerts, "/dashboard/salesmen", 5),
             new AlertCenterRegistryEntry(DashboardSnapshotAgg.Services.DashboardSalesmanAggregator.SignalCustomerConcentration, "Customer Concentration", CategorySales, AlertCenterSection.Concentrations, "/dashboard/salesmen", 20),
             new AlertCenterRegistryEntry(DashboardSnapshotAgg.Services.DashboardSalesmanAggregator.SignalHighPiutangExposure, "High Piutang Exposure", CategorySales, AlertCenterSection.Concentrations, "/dashboard/salesmen", 21),
+            new AlertCenterRegistryEntry(SignalPrincipalSalesOut, "Principal Sales-Out", CategorySales, AlertCenterSection.Alerts, "/dashboard/principal-performance", 6),
 
             // Customer
             new AlertCenterRegistryEntry(DashboardSnapshotAgg.Services.DashboardCustomerAggregator.SignalOverdue, "Overdue", CategoryCustomer, AlertCenterSection.Alerts, "/dashboard/customers", 1),

@@ -3,7 +3,9 @@ import { defineStore } from 'pinia'
 import axios from 'axios'
 import {
   fetchEntityCompare,
+  fetchEntityDataHealth,
   fetchEntityProfile,
+  fetchInvestigationLenses,
   fetchMapPresets,
   fetchPeerGroupRules,
   fetchPopulationMap,
@@ -12,7 +14,9 @@ import {
 import { getApiErrorMessage } from '@/api/httpClient'
 import type {
   EntityCompareResponse,
+  EntityDataHealthResponse,
   EntityPerformanceProfileResponse,
+  InvestigationLens,
   MapPreset,
   PeerGroupRule,
   PopulationMapPoint,
@@ -20,11 +24,13 @@ import type {
   WorkspaceSelectedEntity,
 } from '@/models/entityAnalytics'
 import { MAX_WORKSPACE_COMPARISON as MAX_COMPARISON } from '@/models/entityAnalytics'
+import { getEntityDisplayLabel } from '@/navigation/entityAnalyticsNavigation'
 
 export type WorkspaceMode = 'discovery' | 'investigation'
 
 export interface WorkspaceHistoryEntry {
   entityType: string
+  activeLensId: string | null
   presetId: string | null
   selectedEntityIds: string[]
   dimensionFilter: string | null
@@ -34,21 +40,25 @@ export interface WorkspaceHistoryEntry {
 
 export const useInvestigationWorkspaceStore = defineStore('investigationWorkspace', () => {
   const entityType = ref('Customer')
+  const activeLensId = ref<string | null>(null)
   const presetId = ref<string | null>(null)
   const dimensionFilter = ref<string | null>(null)
   const attentionOnly = ref(false)
   const selectedEntityIds = ref<string[]>([])
   const peerGroupRuleId = ref<string | null>(null)
 
+  const lenses = ref<InvestigationLens[]>([])
   const presets = ref<MapPreset[]>([])
   const peerGroupRules = ref<PeerGroupRule[]>([])
   const population = shallowRef<PopulationMapResponse | null>(null)
   const profiles = ref<Record<string, EntityPerformanceProfileResponse>>({})
   const compareBundle = ref<EntityCompareResponse | null>(null)
+  const dataHealth = ref<EntityDataHealthResponse | null>(null)
 
   const loadingPresets = ref(false)
   const loadingPopulation = ref(false)
   const loadingProfiles = ref(false)
+  const loadingDataHealth = ref(false)
   const error = ref<string | null>(null)
 
   const historyStack = ref<WorkspaceHistoryEntry[]>([])
@@ -73,6 +83,21 @@ export const useInvestigationWorkspaceStore = defineStore('investigationWorkspac
 
   const isComparisonMode = computed(() => selectedEntityIds.value.length > 1)
 
+  const activeLens = computed(() =>
+    lenses.value.find((l) => l.LensId === activeLensId.value)
+    ?? lenses.value.find((l) => l.IsDefault)
+    ?? lenses.value[0]
+    ?? null,
+  )
+
+  const activeLensKpiIds = computed(() => activeLens.value?.KpiIds ?? null)
+
+  const activeLensDerivedMetricIds = computed(
+    () => activeLens.value?.DerivedMetricIds ?? null,
+  )
+
+  const hasLensSwitcher = computed(() => lenses.value.length > 1)
+
   const activePreset = computed(() =>
     presets.value.find((p) => p.PresetId === presetId.value)
     ?? presets.value.find((p) => p.IsDefault)
@@ -96,7 +121,7 @@ export const useInvestigationWorkspaceStore = defineStore('investigationWorkspac
     if (!population.value) return null
     if (population.value.ActiveFilterDescription) return population.value.ActiveFilterDescription
     const total = population.value.TotalPopulationCount
-    const label = entityType.value
+    const label = getEntityDisplayLabel(entityType.value)
     return `Showing ${total} active ${label.toLowerCase()}s`
   })
 
@@ -108,6 +133,7 @@ export const useInvestigationWorkspaceStore = defineStore('investigationWorkspac
   function snapshotState(): WorkspaceHistoryEntry {
     return {
       entityType: entityType.value,
+      activeLensId: activeLensId.value,
       presetId: presetId.value,
       selectedEntityIds: [...selectedEntityIds.value],
       dimensionFilter: dimensionFilter.value,
@@ -123,11 +149,35 @@ export const useInvestigationWorkspaceStore = defineStore('investigationWorkspac
 
   function applySnapshot(entry: WorkspaceHistoryEntry) {
     entityType.value = entry.entityType
+    activeLensId.value = entry.activeLensId ?? null
     presetId.value = entry.presetId
     selectedEntityIds.value = [...entry.selectedEntityIds]
     dimensionFilter.value = entry.dimensionFilter
     attentionOnly.value = entry.attentionOnly
     peerGroupRuleId.value = entry.peerGroupRuleId ?? null
+  }
+
+  /** Resolves the active lens default preset only when it is available for the entity. */
+  function resolveLensDefaultPresetId(lens: InvestigationLens | null): string | null {
+    const presetId = lens?.DefaultPresetId
+    if (!presetId) return null
+    return presets.value.some((p) => p.PresetId === presetId) ? presetId : null
+  }
+
+  async function loadLenses(type = entityType.value) {
+    try {
+      const response = await fetchInvestigationLenses(type)
+      lenses.value = response.Lenses ?? []
+      if (!activeLensId.value || !lenses.value.some((l) => l.LensId === activeLensId.value)) {
+        activeLensId.value = response.DefaultLensId
+          ?? lenses.value.find((l) => l.IsDefault)?.LensId
+          ?? lenses.value[0]?.LensId
+          ?? null
+      }
+    } catch {
+      lenses.value = []
+      activeLensId.value = null
+    }
   }
 
   async function loadPresets(type = entityType.value) {
@@ -137,7 +187,8 @@ export const useInvestigationWorkspaceStore = defineStore('investigationWorkspac
       const response = await fetchMapPresets(type)
       presets.value = response.Presets ?? []
       if (!presetId.value || !presets.value.some((p) => p.PresetId === presetId.value)) {
-        presetId.value = presets.value.find((p) => p.IsDefault)?.PresetId
+        presetId.value = resolveLensDefaultPresetId(activeLens.value)
+          ?? presets.value.find((p) => p.IsDefault)?.PresetId
           ?? presets.value[0]?.PresetId
           ?? null
       }
@@ -171,6 +222,17 @@ export const useInvestigationWorkspaceStore = defineStore('investigationWorkspac
     } catch {
       peerGroupRules.value = []
       peerGroupRuleId.value = null
+    }
+  }
+
+  async function loadDataHealth(type = entityType.value) {
+    loadingDataHealth.value = true
+    try {
+      dataHealth.value = await fetchEntityDataHealth(type)
+    } catch {
+      dataHealth.value = null
+    } finally {
+      loadingDataHealth.value = false
     }
   }
 
@@ -247,14 +309,17 @@ export const useInvestigationWorkspaceStore = defineStore('investigationWorkspac
 
   async function initializeWorkspace(type: string, initial?: Partial<WorkspaceHistoryEntry>) {
     entityType.value = type
+    if (initial?.activeLensId !== undefined) activeLensId.value = initial.activeLensId
     if (initial?.presetId !== undefined) presetId.value = initial.presetId
     if (initial?.dimensionFilter !== undefined) dimensionFilter.value = initial.dimensionFilter
     if (initial?.attentionOnly !== undefined) attentionOnly.value = initial.attentionOnly
     if (initial?.peerGroupRuleId !== undefined) peerGroupRuleId.value = initial.peerGroupRuleId
     if (initial?.selectedEntityIds) selectedEntityIds.value = [...initial.selectedEntityIds]
 
+    await loadLenses(type)
     await loadPresets(type)
     await loadPeerGroupRules(type)
+    await loadDataHealth(type)
     await loadPopulation()
     if (selectedEntityIds.value.length) {
       await loadProfilesForSelection()
@@ -264,13 +329,18 @@ export const useInvestigationWorkspaceStore = defineStore('investigationWorkspac
   async function setEntityType(type: string) {
     pushUndo()
     entityType.value = type
+    activeLensId.value = null
+    lenses.value = []
     selectedEntityIds.value = []
     profiles.value = {}
     dimensionFilter.value = null
     attentionOnly.value = false
     peerGroupRuleId.value = null
+    dataHealth.value = null
+    await loadLenses(type)
     await loadPresets(type)
     await loadPeerGroupRules(type)
+    await loadDataHealth(type)
     await loadPopulation()
   }
 
@@ -278,6 +348,18 @@ export const useInvestigationWorkspaceStore = defineStore('investigationWorkspac
     if (presetId.value === id) return
     pushUndo()
     presetId.value = id
+    await loadPopulation()
+  }
+
+  async function setLens(lensId: string) {
+    if (activeLensId.value === lensId) return
+    pushUndo()
+    activeLensId.value = lensId
+    const lens = lenses.value.find((l) => l.LensId === lensId) ?? null
+    presetId.value = resolveLensDefaultPresetId(lens)
+      ?? presets.value.find((p) => p.IsDefault)?.PresetId
+      ?? presets.value[0]?.PresetId
+      ?? null
     await loadPopulation()
   }
 
@@ -342,6 +424,7 @@ export const useInvestigationWorkspaceStore = defineStore('investigationWorkspac
     const previous = undoStack.value.pop()
     if (!previous) return
     applySnapshot(previous)
+    void loadLenses(entityType.value)
     void loadPeerGroupRules(entityType.value)
     void loadPopulation()
     if (selectedEntityIds.value.length) void loadProfilesForSelection()
@@ -357,39 +440,51 @@ export const useInvestigationWorkspaceStore = defineStore('investigationWorkspac
   }
 
   async function refresh() {
+    await loadDataHealth()
     await loadPopulation()
     if (selectedEntityIds.value.length) await loadProfilesForSelection()
   }
 
   return {
     entityType,
+    activeLensId,
     presetId,
     dimensionFilter,
     attentionOnly,
     peerGroupRuleId,
     selectedEntityIds,
+    lenses,
     presets,
     peerGroupRules,
     population,
     profiles,
     compareBundle,
+    dataHealth,
     loadingPresets,
     loadingPopulation,
     loadingProfiles,
+    loadingDataHealth,
     error,
     expandedPanels,
     mode,
     isComparisonMode,
+    activeLens,
+    activeLensKpiIds,
+    activeLensDerivedMetricIds,
+    hasLensSwitcher,
     activePreset,
     selectedEntities,
     scopeLabel,
     showPeerGroupSelector,
     initializeWorkspace,
+    loadLenses,
     loadPresets,
     loadPeerGroupRules,
+    loadDataHealth,
     loadPopulation,
     loadProfilesForSelection,
     setEntityType,
+    setLens,
     setPreset,
     setDimensionFilter,
     setAttentionOnly,

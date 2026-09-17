@@ -3,6 +3,7 @@ import { computed } from 'vue'
 import Card from 'primevue/card'
 import Chart from 'primevue/chart'
 import { createChartOptions } from '@/services/chartLayout'
+import type { ActiveElement, ChartEvent } from 'chart.js'
 import ProgressSpinner from 'primevue/progressspinner'
 import { formatCurrency } from '@/services/formatters'
 import type { DashboardInventoryBreakdownItem } from '@/models/dashboard'
@@ -11,6 +12,11 @@ const props = defineProps<{
   title: string
   items: DashboardInventoryBreakdownItem[]
   loading: boolean
+  clickable?: boolean
+}>()
+
+const emit = defineEmits<{
+  'bar-click': [item: DashboardInventoryBreakdownItem]
 }>()
 
 const hasData = computed(() =>
@@ -31,8 +37,8 @@ const chartData = computed(() => ({
   ],
 }))
 
-const chartOptions = computed(() =>
-  createChartOptions({
+const chartOptions = computed(() => {
+  const options = createChartOptions({
     indexAxis: 'y' as const,
     plugins: {
       tooltip: {
@@ -49,8 +55,26 @@ const chartOptions = computed(() =>
         },
       },
     },
-  }),
-)
+  })
+
+  if (props.clickable) {
+    options.onClick = (_event: ChartEvent, elements: ActiveElement[]) => {
+      if (!elements.length) {
+        return
+      }
+      const index = (elements[0] as { index?: number }).index
+      if (typeof index !== 'number') {
+        return
+      }
+      const item = props.items[index]
+      if (item) {
+        emit('bar-click', item)
+      }
+    }
+  }
+
+  return options
+})
 </script>
 
 <template>
@@ -71,12 +95,19 @@ const chartOptions = computed(() =>
         <div
           v-if="hasData"
           class="inventory-horizontal-bar-chart__canvas portal-chart-canvas portal-chart-canvas--fluid"
+          :class="{ 'inventory-horizontal-bar-chart__canvas--clickable': clickable }"
           :style="{ height: `${chartHeight}px` }"
         >
           <Chart type="bar" :data="chartData" :options="chartOptions" />
         </div>
         <p v-else class="inventory-horizontal-bar-chart__empty">
           No inventory data available.
+        </p>
+        <p
+          v-if="clickable && hasData"
+          class="inventory-horizontal-bar-chart__hint"
+        >
+          Click a bar to open the Principal Performance dashboard.
         </p>
       </template>
     </template>
@@ -101,5 +132,17 @@ const chartOptions = computed(() =>
   padding: 2rem 0;
   text-align: center;
   color: var(--p-text-muted-color);
+}
+
+.inventory-horizontal-bar-chart__hint {
+  margin: 0;
+  padding-top: 0.5rem;
+  text-align: center;
+  font-size: var(--p-text-sm-font-size);
+  color: var(--p-text-muted-color);
+}
+
+.inventory-horizontal-bar-chart__canvas--clickable {
+  cursor: pointer;
 }
 </style>

@@ -118,6 +118,29 @@ namespace btr.test.ReportingContext
             categories.Single(r => r.Name == "Cat B").Top10Rank.Should().Be(2);
         }
 
+        [Fact]
+        public void Aggregate_SupplierBreakdown_CarriesSupplierId()
+        {
+            var result = _aggregator.Aggregate(new[]
+            {
+                Row("BRG001", "Gudang Utama", 10, 1_000m, "Cat A", "Sup A", "S-01"),
+                Row("BRG002", "Gudang Utama", 5, 2_000m, "Cat B", "Sup B", "S-02"),
+            }, FixedGeneratedAt);
+
+            var supplierRows = result.Breakdown
+                .Where(r => r.DimensionType == DashboardInventoryAggregator.DimensionSupplier)
+                .ToList();
+
+            supplierRows.Single(r => r.Name == "Sup A").SupplierId.Should().Be("S-01");
+            supplierRows.Single(r => r.Name == "Sup B").SupplierId.Should().Be("S-02");
+
+            var categoryRows = result.Breakdown
+                .Where(r => r.DimensionType == DashboardInventoryAggregator.DimensionCategory)
+                .ToList();
+
+            categoryRows.Should().OnlyContain(r => r.SupplierId == string.Empty);
+        }
+
         private static IEnumerable<DashboardInventoryBreakdownRow> TopRanking(
             DashboardInventoryAggregateResult result,
             string dimensionType)
@@ -133,7 +156,8 @@ namespace btr.test.ReportingContext
             int qty,
             decimal hpp,
             string kategoriName,
-            string supplierName)
+            string supplierName,
+            string supplierId = null)
         {
             return new StokBalanceView
             {
@@ -143,6 +167,7 @@ namespace btr.test.ReportingContext
                 Hpp = hpp,
                 KategoriName = kategoriName,
                 SupplierName = supplierName,
+                SupplierId = supplierId,
             };
         }
     }

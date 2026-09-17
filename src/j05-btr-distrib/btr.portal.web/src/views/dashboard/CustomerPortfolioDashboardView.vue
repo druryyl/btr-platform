@@ -10,7 +10,9 @@ import CustomerPortfolioFilterBar from '@/components/dashboard/customer-portfoli
 import CustomerPortfolioPriorityTable from '@/components/dashboard/customer-portfolio/CustomerPortfolioPriorityTable.vue'
 import CustomerPortfolioActionSegments from '@/components/dashboard/customer-portfolio/CustomerPortfolioActionSegments.vue'
 import CustomerPortfolioConcentrationTables from '@/components/dashboard/customer-portfolio/CustomerPortfolioConcentrationTables.vue'
+import CustomerPortfolioPrincipalMix from '@/components/dashboard/CustomerPortfolioPrincipalMix.vue'
 import type { SalesForecastKpiMetric } from '@/components/dashboard/SalesForecastKpiRow.vue'
+import { CU04_ATTRIBUTION_DISCLOSURES } from '@/services/customerAnalyticsAttribution'
 import { formatCurrency, formatCurrencyCompact, formatPercent } from '@/services/formatters'
 import {
   collectDistinctFilterValues,
@@ -38,6 +40,8 @@ const filteredPriorityQueue = computed(() => {
     customerCodes.has(row.CustomerCode),
   )
 })
+
+const principalMix = computed(() => portfolio.value?.PrincipalMix ?? null)
 
 function healthSeverity(score: number): SalesForecastKpiMetric['severity'] {
   if (score >= 75) return 'success'
@@ -136,6 +140,13 @@ onMounted(() => {
     :generated-at="portfolio?.GeneratedAt ?? null"
     @refresh="dashboard.loadCustomerPortfolio()"
   >
+    <section class="customer-portfolio-dashboard__disclosure" aria-label="Customer attribution disclosure">
+      <h2>Attribution disclosure</h2>
+      <ul>
+        <li v-for="item in CU04_ATTRIBUTION_DISCLOSURES" :key="item">{{ item }}</li>
+      </ul>
+    </section>
+
     <p v-if="portfolio?.IsAvailable === false && !dashboard.loading" class="customer-portfolio-dashboard__banner">
       Customer portfolio data is not yet available. Run the snapshot refresh worker for the Customer domain.
     </p>
@@ -179,6 +190,11 @@ onMounted(() => {
         :top-piutang="portfolio?.TopPiutang ?? []"
         :loading="dashboard.loading"
       />
+
+      <CustomerPortfolioPrincipalMix
+        :mix="principalMix"
+        :loading="dashboard.loading"
+      />
     </template>
 
     <footer class="customer-portfolio-dashboard__footer">
@@ -205,6 +221,27 @@ onMounted(() => {
 </template>
 
 <style scoped>
+.customer-portfolio-dashboard__disclosure {
+  margin-bottom: 1.5rem;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--p-content-border-color);
+  border-radius: var(--p-content-border-radius);
+}
+
+.customer-portfolio-dashboard__disclosure h2 {
+  margin: 0 0 0.5rem;
+  font-size: 1rem;
+}
+
+.customer-portfolio-dashboard__disclosure ul {
+  margin: 0;
+  padding-left: 1.25rem;
+}
+
+.customer-portfolio-dashboard__disclosure li + li {
+  margin-top: 0.25rem;
+}
+
 .customer-portfolio-dashboard__banner {
   margin: 0 0 1rem;
   padding: 0.75rem 1rem;

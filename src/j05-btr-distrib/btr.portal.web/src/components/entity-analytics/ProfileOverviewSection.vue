@@ -66,6 +66,7 @@ function formatFieldValue(key: string, value: string): string {
                   :severity="field.badgeSeverity"
                 />
                 <span v-else>{{ formatFieldValue(field.key, field.value) }}</span>
+                <p v-if="field.note" class="profile-overview__note">{{ field.note }}</p>
               </dd>
             </div>
           </dl>
@@ -88,7 +89,10 @@ function formatFieldValue(key: string, value: string): string {
             class="profile-overview__field"
           >
             <dt>{{ field.label }}</dt>
-            <dd>{{ formatFieldValue(field.key, field.value) }}</dd>
+            <dd>
+              {{ formatFieldValue(field.key, field.value) }}
+              <p v-if="field.note" class="profile-overview__note">{{ field.note }}</p>
+            </dd>
           </div>
         </dl>
       </Panel>
@@ -173,6 +177,13 @@ function formatFieldValue(key: string, value: string): string {
   font-size: 0.9375rem;
   line-height: 1.4;
   word-break: break-word;
+}
+
+.profile-overview__note {
+  margin: 0.25rem 0 0;
+  color: var(--p-text-muted-color, #64748b);
+  font-size: 0.75rem;
+  line-height: 1.35;
 }
 
 .profile-overview__details :deep(.p-panel-header) {

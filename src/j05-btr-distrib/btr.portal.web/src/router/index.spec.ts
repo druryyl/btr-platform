@@ -15,6 +15,21 @@ function createTestRouter(base = '/') {
               { path: '', name: 'dashboard', component: { template: '<div />' } },
               { path: 'sales', name: 'sales-dashboard', component: { template: '<div />' } },
               {
+                path: 'principal-performance',
+                name: 'principal-performance-dashboard',
+                component: { template: '<div />' },
+              },
+              {
+                path: 'principal-performance/evidence',
+                name: 'principal-performance-evidence',
+                component: { template: '<div />' },
+              },
+              {
+                path: 'principal-performance/return-evidence',
+                name: 'principal-performance-return-evidence',
+                component: { template: '<div />' },
+              },
+              {
                 path: 'sales-forecast',
                 name: 'sales-forecast-dashboard',
                 component: { template: '<div />' },
@@ -123,6 +138,24 @@ describe('dashboard route matching', () => {
     const router = createTestRouter()
     const resolved = router.resolve('/dashboard/sales')
     expect(resolved.name).toBe('sales-dashboard')
+  })
+
+  it('resolves /dashboard/principal-performance to principal-performance-dashboard', () => {
+    const router = createTestRouter()
+    const resolved = router.resolve('/dashboard/principal-performance')
+    expect(resolved.name).toBe('principal-performance-dashboard')
+  })
+
+  it('resolves /dashboard/principal-performance/evidence to principal-performance-evidence', () => {
+    const router = createTestRouter()
+    const resolved = router.resolve('/dashboard/principal-performance/evidence')
+    expect(resolved.name).toBe('principal-performance-evidence')
+  })
+
+  it('resolves /dashboard/principal-performance/return-evidence to principal-performance-return-evidence', () => {
+    const router = createTestRouter()
+    const resolved = router.resolve('/dashboard/principal-performance/return-evidence')
+    expect(resolved.name).toBe('principal-performance-return-evidence')
   })
 
   it('resolves /dashboard/sales-forecast to sales-forecast-dashboard', () => {

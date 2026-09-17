@@ -6,12 +6,13 @@ import type { ProfileEvidenceSection } from '@/models/entityAnalytics'
 defineProps<{
   section: ProfileEvidenceSection | null | undefined
   loading?: boolean
+  title?: string | null
 }>()
 </script>
 
 <template>
   <ProfileSectionCard
-    title="Evidence"
+    :title="title ?? 'Evidence'"
     :is-available="section?.IsAvailable"
     :unavailable-reason="section?.UnavailableReason"
     :loading="loading"

@@ -76,5 +76,14 @@ namespace btr.application.ReportingContext.EntityAnalyticsAgg.Models
         public string IntroducedVersion { get; set; }
 
         public string DeprecatedVersion { get; set; }
+
+        /// <summary>Default chart axis role when this KPI is plotted: X · Y · null (not an axis KPI).</summary>
+        public string DefaultAxisRole { get; set; }
+
+        /// <summary>Minimum elapsed days in the reporting period required before a pacing ratio is confident. Null when not applicable.</summary>
+        public int? MinimumElapsedDays { get; set; }
+
+        /// <summary>Minimum prior-period base value required before a ratio is confident. Null when not applicable.</summary>
+        public decimal? MinimumBaseValue { get; set; }
     }
 }

@@ -35,6 +35,19 @@ export interface DashboardOverviewResponse {
 
 export type AchievementBand = 'Healthy' | 'Warning' | 'Critical' | 'Unknown'
 
+export interface DashboardExecutivePrincipalSalesAttention {
+  KpiId: string
+  PeriodYear: number
+  PeriodMonth: number
+  PrincipalSalesOutAmount: number
+  TopPrincipalPercent: number | null
+  TopPrincipalName: string
+  DashboardRoute: string
+  RequiresAttention: boolean
+  IsAvailable: boolean
+  Disclosures: string[]
+}
+
 export interface DashboardExecutiveSalesAttention {
   AchievementPercent: number | null
   TotalAchievement: number
@@ -72,7 +85,9 @@ export interface DashboardExecutiveInventoryAttention {
 export interface DashboardExecutiveRiskItem {
   Rank: number
   Name: string
+  SupplierId?: string | null
   Amount: number
+  DashboardRoute?: string | null
   Investigation?: InvestigationMetadata | null
 }
 
@@ -81,6 +96,7 @@ export interface DashboardExecutiveCriticalExposures {
   TopCategories: DashboardExecutiveRiskItem[]
   TopSuppliers: DashboardExecutiveRiskItem[]
   TopPrincipals: DashboardExecutiveRiskItem[]
+  TopPrincipalSales?: DashboardExecutiveRiskItem[]
 }
 
 export interface DashboardExecutiveDomainSummary {
@@ -95,6 +111,7 @@ export interface DashboardExecutiveResponse {
   IsDataFresh: boolean
   LastRefreshed: string | null
   OverallHealthStatus: string
+  PrincipalSales?: DashboardExecutivePrincipalSalesAttention | null
   Sales: DashboardExecutiveSalesAttention
   Piutang: DashboardExecutivePiutangAttention
   Purchasing: DashboardExecutivePurchasingAttention
@@ -124,6 +141,172 @@ export interface DashboardSalesRankingItem {
   Investigation?: InvestigationMetadata | null
 }
 
+export interface DashboardSalesPrincipalContributionItem {
+  Rank: number
+  PrincipalName: string
+  SupplierId: string
+  SalesOutKpiId: string
+  PrincipalSalesOutAmount: number
+  TargetKpiId?: string | null
+  PrincipalTargetAmount?: number | null
+}
+
+export interface DashboardSalesPrincipalContribution {
+  IsAvailable: boolean
+  SalesOutKpiId: string
+  TargetKpiId: string
+  PeriodYear: number
+  PeriodMonth: number
+  PrincipalSalesOutAmount: number
+  PrincipalTargetAmount: number | null
+  CompanyHeaderNote: string
+  Disclosures: string[]
+  Ranking: DashboardSalesPrincipalContributionItem[]
+}
+
+export interface PrincipalPerformanceRankingItem {
+  Rank: number
+  PrincipalName: string
+  SupplierId: string
+  KpiId: string
+  PrincipalSalesOutAmount: number
+  TargetKpiId?: string | null
+  PrincipalTargetAmount?: number | null
+  AchievementAmountKpiId?: string | null
+  AchievementPercentageKpiId?: string | null
+  AchievementAmount?: number | null
+  AchievementPercentage?: number | null
+  GoodReturnAmountKpiId?: string | null
+  BrokenReturnAmountKpiId?: string | null
+  TotalReturnAmountKpiId?: string | null
+  ReturnPercentageKpiId?: string | null
+  GoodReturnAmount?: number | null
+  BrokenReturnAmount?: number | null
+  TotalReturnAmount?: number | null
+  ReturnPercentage?: number | null
+  MomGrowthKpiId?: string | null
+  YoyGrowthKpiId?: string | null
+  MomGrowthPercentage?: number | null
+  YoyGrowthPercentage?: number | null
+  ActiveCustomerCountKpiId?: string | null
+  CustomerCoverageKpiId?: string | null
+  ActiveCustomerCount?: number | null
+  TotalCustomerCount?: number | null
+  CoveragePercentage?: number | null
+}
+
+export interface PrincipalSalesmanContributionItem {
+  SupplierId: string
+  PrincipalName: string
+  SalesPersonId: string
+  SalesPersonCode: string
+  SalesPersonName: string
+  SourceSalesOutKpiId: string
+  ContributionAmount: number
+  LineCount: number
+  HasTargetResponsibility: boolean
+}
+
+export interface SupportingRankingOption {
+  KpiId: string
+  KpiName: string
+}
+
+export interface PrincipalPerformanceResponse {
+  IsAvailable: boolean
+  KpiId: string
+  KpiName: string
+  PeriodYear: number
+  PeriodMonth: number
+  GeneratedAt: string | null
+  PrincipalSalesOutAmount: number
+  UnknownPrincipalExceptionCount: number
+  TargetKpiId: string
+  PrincipalTargetAmount?: number | null
+  AchievementAmountKpiId: string
+  AchievementPercentageKpiId: string
+  AchievementAmount?: number | null
+  AchievementPercentage?: number | null
+  TargetAchievementIsAvailable: boolean
+  MissingTargetExceptionCount: number
+  GoodReturnAmountKpiId: string
+  BrokenReturnAmountKpiId: string
+  TotalReturnAmountKpiId: string
+  ReturnPercentageKpiId: string
+  GoodReturnAmount?: number | null
+  BrokenReturnAmount?: number | null
+  TotalReturnAmount?: number | null
+  ReturnPercentage?: number | null
+  ReturnIsAvailable: boolean
+  MomGrowthKpiId: string
+  YoyGrowthKpiId: string
+  MomGrowthPercentage?: number | null
+  YoyGrowthPercentage?: number | null
+  GrowthIsAvailable: boolean
+  ContributionIsAvailable: boolean
+  ActiveCustomerCountKpiId: string
+  CustomerCoverageKpiId: string
+  CustomerReachIsAvailable: boolean
+  SalesmanContributions: PrincipalSalesmanContributionItem[]
+  Disclosures: string[]
+  Ranking: PrincipalPerformanceRankingItem[]
+  SupportingRankingOptions: SupportingRankingOption[]
+}
+
+export interface PrincipalReturnEvidenceItem {
+  ReturJualId: string
+  ReturJualCode: string
+  ReturJualDate: string
+  ReturJualItemId: string
+  BrgId: string
+  JenisRetur: string
+  SupplierId: string
+  KpiId: string
+  ReturnAmount: number
+}
+
+export interface PrincipalReturnEvidenceResponse {
+  IsAvailable: boolean
+  GoodReturnAmountKpiId: string
+  BrokenReturnAmountKpiId: string
+  TotalReturnAmountKpiId: string
+  ReturnPercentageKpiId: string
+  SupplierId: string
+  PrincipalName: string
+  PeriodYear: number
+  PeriodMonth: number
+  GoodReturnAmount: number
+  BrokenReturnAmount: number
+  TotalReturnAmount: number
+  ReturnPercentage?: number | null
+  Disclosures: string[]
+  Lines: PrincipalReturnEvidenceItem[]
+}
+
+export interface PrincipalSalesOutEvidenceItem {
+  FakturId: string
+  FakturCode: string
+  FakturDate: string
+  FakturItemId: string
+  BrgId: string
+  SupplierId: string
+  KpiId: string
+  PrincipalSalesOutAmount: number
+}
+
+export interface PrincipalSalesOutEvidenceResponse {
+  IsAvailable: boolean
+  KpiId: string
+  KpiName: string
+  SupplierId: string
+  PrincipalName: string
+  PeriodYear: number
+  PeriodMonth: number
+  PrincipalSalesOutAmount: number
+  Disclosures: string[]
+  Lines: PrincipalSalesOutEvidenceItem[]
+}
+
 export interface DashboardSalesResponse {
   TotalOmzet: number
   CompletedOmzet: number
@@ -137,6 +320,7 @@ export interface DashboardSalesResponse {
   AchievementPercent: number | null
   TargetVsAchievement: DashboardSalesTargetVsAchievement
   TopSalesmanRanking: DashboardSalesRankingItem[]
+  PrincipalContribution?: DashboardSalesPrincipalContribution | null
 }
 
 export interface DashboardSalesForecastVsTarget {
@@ -156,6 +340,37 @@ export interface DashboardSalesDailyPaceItem {
 export type ForecastConfidence = 'Low' | 'Medium' | 'High'
 
 export type RequiredDailySeverity = 'Normal' | 'Warning' | 'Critical'
+
+export interface DashboardSalesPrincipalForecastItem {
+  PrincipalName: string
+  SupplierId: string
+  SalesOutKpiId: string
+  PrincipalSalesOutAmount: number
+  TargetKpiId: string | null
+  PrincipalTargetAmount: number | null
+  DailyAverageSales: number
+  ForecastAmount: number
+  ForecastAchievementPercent: number | null
+  RequiredDailySales: number | null
+  TargetGap: number
+  RequiredDailySeverity: string
+}
+
+export interface DashboardSalesPrincipalForecastPresentation {
+  IsAvailable: boolean
+  SalesOutKpiId: string
+  TargetKpiId: string
+  PeriodYear: number
+  PeriodMonth: number
+  BusinessDate: string
+  DaysInMonth: number
+  DaysElapsed: number
+  DaysRemaining: number
+  SumOfPrincipalForecasts: number
+  CompanyForecastNote: string
+  Disclosures: string[]
+  Items: DashboardSalesPrincipalForecastItem[]
+}
 
 export interface DashboardSalesForecastResponse {
   GeneratedAt: string
@@ -183,6 +398,7 @@ export interface DashboardSalesForecastResponse {
   ForecastVsTarget: DashboardSalesForecastVsTarget
   DailyPace: DashboardSalesDailyPaceItem[]
   WeeklyTrend: DashboardSalesWeekTrendItem[]
+  PrincipalForecast?: DashboardSalesPrincipalForecastPresentation | null
 }
 
 export interface DashboardCashFlowDailyPaceItem {
@@ -521,12 +737,16 @@ export interface DashboardPiutangResponse {
 
 export interface DashboardInventoryBreakdownItem {
   Name: string
+  SupplierId?: string
+  DashboardRoute?: string | null
   InventoryValue: number
 }
 
 export interface DashboardInventoryRankingItem {
   Rank: number
   Name: string
+  SupplierId?: string
+  DashboardRoute?: string | null
   InventoryValue: number
   Investigation?: InvestigationMetadata | null
 }
@@ -561,6 +781,8 @@ export interface DashboardInventoryRiskAgingBucket {
 
 export interface DashboardInventoryRiskBreakdownItem {
   Name: string
+  SupplierId?: string
+  DashboardRoute?: string | null
   AtRiskValue: number
   ItemCount: number
   PercentOfAtRisk: number | null
@@ -735,6 +957,7 @@ export interface DashboardCustomerAttentionItem {
   ValueAmount: number | null
   ValueText: string | null
   WilayahName: string
+  LastInvoicingSalesmanName?: string | null
   ReportRoute: string
   ProfileRoute?: string | null
   RequiresAttention: boolean
@@ -745,6 +968,7 @@ export interface DashboardCustomerRankingRow {
   Rank: number
   CustomerCode: string
   CustomerName: string
+  LastInvoicingSalesmanName?: string | null
   Amount: number
   PercentOfTotal: number | null
   ReportRoute: string
@@ -779,6 +1003,29 @@ export interface DashboardCustomerNavigationLinks {
   PiutangReportRoute: string
 }
 
+export interface DashboardCustomerPrincipalMixItem {
+  SupplierId: string
+  PrincipalName: string
+  KpiId: string
+  PairSalesOutAmount: number
+  PercentOfPairSalesOut: number | null
+}
+
+export interface DashboardCustomerPrincipalMixCustomer {
+  CustomerId: string
+  CustomerCode: string
+  CustomerName: string
+  Principals: DashboardCustomerPrincipalMixItem[]
+}
+
+export interface DashboardCustomerPrincipalMix {
+  IsAvailable: boolean
+  KpiId: string
+  Note: string
+  Disclosures: string[]
+  Customers: DashboardCustomerPrincipalMixCustomer[]
+}
+
 export interface DashboardCustomerResponse {
   IsAvailable: boolean
   IsDataFresh: boolean
@@ -790,6 +1037,7 @@ export interface DashboardCustomerResponse {
   Rankings: DashboardCustomerRankings | null
   Segmentation: DashboardCustomerSegmentationSummary | null
   Navigation: DashboardCustomerNavigationLinks | null
+  PrincipalMix?: DashboardCustomerPrincipalMix | null
 }
 
 export interface DashboardSalesmanFilterDefaults {
@@ -1126,6 +1374,7 @@ export interface PortalMenuLinkDto {
 export interface DashboardAlertCenterNavigationLinks {
   ExecutiveDashboardRoute: string
   SalesDashboardRoute: string
+  PrincipalPerformanceDashboardRoute: string
   PiutangDashboardRoute: string
   CustomerDashboardRoute: string
   SalesmanDashboardRoute: string
@@ -1256,6 +1505,28 @@ export interface DashboardCustomerRiskForecastRecommendationItem {
   DrillDownRoute: string
 }
 
+export interface DashboardCustomerRiskForecastPrincipalDeclinePair {
+  SupplierId: string
+  PrincipalName: string
+  RelationshipStatus: string
+  KpiId: string
+  PairSalesOutAmount: number
+}
+
+export interface DashboardCustomerRiskForecastPrincipalDeclineCustomer {
+  CustomerCode: string
+  CustomerName: string
+  Principals: DashboardCustomerRiskForecastPrincipalDeclinePair[]
+}
+
+export interface DashboardCustomerRiskForecastPrincipalDecline {
+  IsAvailable: boolean
+  KpiId: string
+  Note: string
+  Disclosures: string[]
+  Customers: DashboardCustomerRiskForecastPrincipalDeclineCustomer[]
+}
+
 export interface DashboardCustomerRiskForecastResponse {
   IsAvailable: boolean
   GeneratedAt: string
@@ -1267,6 +1538,7 @@ export interface DashboardCustomerRiskForecastResponse {
   TopCustomers: DashboardCustomerRiskForecastCustomerItem[]
   AttentionList: DashboardCustomerRiskForecastAttentionItem[]
   Recommendations: DashboardCustomerRiskForecastRecommendationItem[]
+  PrincipalDecline?: DashboardCustomerRiskForecastPrincipalDecline | null
 }
 
 export interface DashboardCollectionOptimizationKpi {
@@ -1517,6 +1789,28 @@ export interface DashboardCustomerPortfolioWilayahRow {
   AttentionCustomerCount: number
 }
 
+export interface DashboardCustomerPortfolioPrincipalMixPair {
+  SupplierId: string
+  PrincipalName: string
+  RelationshipStatus: string
+  KpiId: string
+  PairSalesOutAmount: number
+}
+
+export interface DashboardCustomerPortfolioPrincipalMixCustomer {
+  CustomerCode: string
+  CustomerName: string
+  Principals: DashboardCustomerPortfolioPrincipalMixPair[]
+}
+
+export interface DashboardCustomerPortfolioPrincipalMix {
+  IsAvailable: boolean
+  KpiId: string
+  Note: string
+  Disclosures: string[]
+  Customers: DashboardCustomerPortfolioPrincipalMixCustomer[]
+}
+
 export interface DashboardCustomerPortfolioResponse {
   IsAvailable: boolean
   GeneratedAt: string
@@ -1530,4 +1824,5 @@ export interface DashboardCustomerPortfolioResponse {
   TopOmzet: DashboardCustomerPortfolioConcentrationRow[]
   TopPiutang: DashboardCustomerPortfolioConcentrationRow[]
   WilayahBreakdown: DashboardCustomerPortfolioWilayahRow[]
+  PrincipalMix?: DashboardCustomerPortfolioPrincipalMix | null
 }

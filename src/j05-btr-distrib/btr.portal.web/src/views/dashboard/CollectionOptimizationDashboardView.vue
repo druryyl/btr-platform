@@ -12,6 +12,7 @@ import CollectionOptimizationQueueTabs from '@/components/dashboard/collection-o
 import CollectionOptimizationImpactTable from '@/components/dashboard/collection-optimization/CollectionOptimizationImpactTable.vue'
 import type { SalesForecastKpiMetric } from '@/components/dashboard/SalesForecastKpiRow.vue'
 import { formatCurrency, formatCurrencyCompact, formatPercent } from '@/services/formatters'
+import { CU03_ATTRIBUTION_DISCLOSURES } from '@/services/collectionOptimizationRouting'
 import { useDashboardStore } from '@/stores/dashboardStore'
 
 const dashboard = useDashboardStore()
@@ -81,6 +82,13 @@ onMounted(() => {
     :generated-at="optimization?.GeneratedAt ?? null"
     @refresh="dashboard.loadCollectionOptimization()"
   >
+    <section class="collection-optimization-dashboard__disclosure" aria-label="Collection routing disclosure">
+      <h2>Routing disclosure</h2>
+      <ul>
+        <li v-for="item in CU03_ATTRIBUTION_DISCLOSURES" :key="item">{{ item }}</li>
+      </ul>
+    </section>
+
     <p v-if="optimization?.IsAvailable === false && !dashboard.loading" class="collection-optimization-dashboard__banner">
       Collection optimization data is not yet available. Run the snapshot refresh worker for the Customer domain.
     </p>
@@ -149,6 +157,27 @@ onMounted(() => {
 </template>
 
 <style scoped>
+.collection-optimization-dashboard__disclosure {
+  margin-bottom: 1.5rem;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--p-content-border-color);
+  border-radius: var(--p-content-border-radius);
+}
+
+.collection-optimization-dashboard__disclosure h2 {
+  margin: 0 0 0.5rem;
+  font-size: 1rem;
+}
+
+.collection-optimization-dashboard__disclosure ul {
+  margin: 0;
+  padding-left: 1.25rem;
+}
+
+.collection-optimization-dashboard__disclosure li + li {
+  margin-top: 0.25rem;
+}
+
 .collection-optimization-dashboard__banner {
   margin: 0 0 1rem;
   padding: 0.75rem 1rem;

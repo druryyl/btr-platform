@@ -8,13 +8,16 @@ import ProfileOverviewSection from '@/components/entity-analytics/ProfileOvervie
 import ProfileKpiSummarySection from '@/components/entity-analytics/ProfileKpiSummarySection.vue'
 import ProfileComparisonSection from '@/components/entity-analytics/ProfileComparisonSection.vue'
 import ProfileTrendSection from '@/components/entity-analytics/ProfileTrendSection.vue'
-import ProfileRadarSection from '@/components/entity-analytics/ProfileRadarSection.vue'
 import ProfileRankingHistorySection from '@/components/entity-analytics/ProfileRankingHistorySection.vue'
 import ProfileAttentionHistorySection from '@/components/entity-analytics/ProfileAttentionHistorySection.vue'
 import ProfileRelatedEntitiesSection from '@/components/entity-analytics/ProfileRelatedEntitiesSection.vue'
 import ProfileEvidenceSection from '@/components/entity-analytics/ProfileEvidenceSection.vue'
 import type { EntityPerformanceProfileResponse } from '@/models/entityAnalytics'
-import { buildCompareRoute, getEntityAnalyticsNav } from '@/navigation/entityAnalyticsNavigation'
+import {
+  buildCompareRoute,
+  getEntityAnalyticsNav,
+  getEntityDisplayLabel,
+} from '@/navigation/entityAnalyticsNavigation'
 import { buildWorkspaceRoute } from '@/navigation/investigationWorkspaceNavigation'
 
 const props = defineProps<{
@@ -22,6 +25,8 @@ const props = defineProps<{
   loading?: boolean
   error?: string | null
   entityCode?: string | null
+  profileTitle?: string | null
+  notice?: string | null
 }>()
 
 const emit = defineEmits<{
@@ -45,6 +50,22 @@ const resolvedEntityId = computed(
 
 const navConfig = computed(() => getEntityAnalyticsNav(resolvedEntityType.value))
 
+const entityLabel = computed(() => getEntityDisplayLabel(resolvedEntityType.value))
+
+const displayTitle = computed(
+  () =>
+    props.profileTitle?.trim()
+    || props.profile?.Overview?.DisplayName
+    || props.profile?.EntityId
+    || 'Entity Performance Profile',
+)
+
+const isPrincipal = computed(() => resolvedEntityType.value === 'Supplier')
+
+const relationshipTitle = computed(() => (isPrincipal.value ? 'Principal Relationships' : null))
+
+const evidenceTitle = computed(() => (isPrincipal.value ? 'Principal Evidence' : null))
+
 const compareRoute = computed(() => {
   if (!navConfig.value) return null
   return buildCompareRoute(navConfig.value.entityType, resolvedEntityId.value)
@@ -65,8 +86,8 @@ const workspaceRoute = computed(() => {
 
 <template>
   <DashboardDetailLayout
-    :title="profile?.Overview?.DisplayName || profile?.EntityId || 'Entity Performance Profile'"
-    :subtitle="profile ? `${profile.EntityType} · ${profile.Overview?.EntityCode || profile.EntityId}` : 'Entity Analytics'"
+    :title="displayTitle"
+    :subtitle="profile ? `${entityLabel} · ${profile.Overview?.EntityCode || profile.EntityId}` : 'Entity Analytics'"
     :loading="loading"
     :error="error"
     :generated-at="profile?.GeneratedAt"
@@ -122,31 +143,43 @@ const workspaceRoute = computed(() => {
       to populate Entity Analytics data.
     </Message>
 
+    <p v-if="notice" class="entity-profile-shell__notice">{{ notice }}</p>
+
     <div class="entity-profile-shell__sections">
       <ProfileOverviewSection :section="profile?.Overview" :loading="loading" />
       <ProfileKpiSummarySection
         :section="profile?.KpiSummary"
         :entity-code="resolvedEntityCode"
+        :entity-id="resolvedEntityId"
         :loading="loading"
       />
       <ProfileComparisonSection :section="profile?.Comparison" :loading="loading" />
       <ProfileTrendSection :section="profile?.Trend" :loading="loading" />
-      <ProfileRadarSection
-        :section="profile?.Radar"
-        :loading="loading"
-        :entity-label="profile?.Overview?.DisplayName"
-      />
       <ProfileRankingHistorySection :section="profile?.Ranking" :loading="loading" />
       <ProfileAttentionHistorySection :section="profile?.Attention" :loading="loading" />
-      <ProfileRelatedEntitiesSection :section="profile?.RelatedEntities" :loading="loading" />
-      <ProfileEvidenceSection :section="profile?.Evidence" :loading="loading" />
+      <ProfileRelatedEntitiesSection
+        :section="profile?.RelatedEntities"
+        :loading="loading"
+        :title="relationshipTitle ?? undefined"
+      />
+      <ProfileEvidenceSection
+        :section="profile?.Evidence"
+        :loading="loading"
+        :title="evidenceTitle ?? undefined"
+      />
     </div>
   </DashboardDetailLayout>
 </template>
 
 <style scoped>
-.entity-profile-shell__banner {
+.entity-profile-shell__banner,
+.entity-profile-shell__notice {
   margin-bottom: 1rem;
+}
+
+.entity-profile-shell__notice {
+  font-size: 0.875rem;
+  color: var(--p-text-muted-color);
 }
 
 .entity-profile-shell__sections {

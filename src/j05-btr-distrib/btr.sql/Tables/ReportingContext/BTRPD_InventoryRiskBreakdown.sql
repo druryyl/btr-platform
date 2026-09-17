@@ -4,6 +4,7 @@ CREATE TABLE BTRPD_InventoryRiskBreakdown
     SnapshotKey              VARCHAR(10)   NOT NULL CONSTRAINT DF_BTRPD_InventoryRiskBreakdown_SnapshotKey DEFAULT('CURRENT'),
     DimensionType            VARCHAR(20)   NOT NULL CONSTRAINT DF_BTRPD_InventoryRiskBreakdown_DimensionType DEFAULT(''),
     Name                     VARCHAR(50)   NOT NULL CONSTRAINT DF_BTRPD_InventoryRiskBreakdown_Name DEFAULT(''),
+    SupplierId               VARCHAR(5)    NOT NULL CONSTRAINT DF_BTRPD_InventoryRiskBreakdown_SupplierId DEFAULT(''),
     AtRiskValue              DECIMAL(18,2) NOT NULL CONSTRAINT DF_BTRPD_InventoryRiskBreakdown_AtRiskValue DEFAULT(0),
     ItemCount                INT           NOT NULL CONSTRAINT DF_BTRPD_InventoryRiskBreakdown_ItemCount DEFAULT(0),
     Rank                     INT           NOT NULL CONSTRAINT DF_BTRPD_InventoryRiskBreakdown_Rank DEFAULT(0),
