@@ -111,6 +111,7 @@
             this.ribbonPanel3 = new System.Windows.Forms.RibbonPanel();
             this.RT1ReturJualMenu = new System.Windows.Forms.RibbonButton();
             this.RT2PostingReturMenu = new System.Windows.Forms.RibbonButton();
+            this.RT3GenerateReturnOrderMenu = new System.Windows.Forms.RibbonButton();
             this.ribbonPanel4 = new System.Windows.Forms.RibbonPanel();
             this.RF1ReturJualInfoMenu = new System.Windows.Forms.RibbonButton();
             this.RF2ReturBrgInfoMenu = new System.Windows.Forms.RibbonButton();
@@ -871,6 +872,7 @@
             // 
             this.ribbonPanel3.Items.Add(this.RT1ReturJualMenu);
             this.ribbonPanel3.Items.Add(this.RT2PostingReturMenu);
+            this.ribbonPanel3.Items.Add(this.RT3GenerateReturnOrderMenu);
             this.ribbonPanel3.Name = "ribbonPanel3";
             this.ribbonPanel3.Text = "";
             // 
@@ -891,6 +893,14 @@
             this.RT2PostingReturMenu.SmallImage = ((System.Drawing.Image)(resources.GetObject("RT2PostingReturMenu.SmallImage")));
             this.RT2PostingReturMenu.Text = "RT2-Posting Retur";
             this.RT2PostingReturMenu.Click += new System.EventHandler(this.RT2PostingRetur_Click);
+            // 
+            // RT3GenerateReturnOrderMenu
+            // 
+            this.RT3GenerateReturnOrderMenu.Image = global::btr.distrib.Properties.Resources.icons8_uninstalling_updates_32;
+            this.RT3GenerateReturnOrderMenu.LargeImage = global::btr.distrib.Properties.Resources.icons8_uninstalling_updates_32;
+            this.RT3GenerateReturnOrderMenu.Name = "RT3GenerateReturnOrderMenu";
+            this.RT3GenerateReturnOrderMenu.Text = "RT3-Generate Return Order";
+            this.RT3GenerateReturnOrderMenu.Click += new System.EventHandler(this.RT3GenerateReturnOrder_Click);
             // 
             // ribbonPanel4
             // 
@@ -1099,6 +1109,7 @@
         private System.Windows.Forms.RibbonPanel ribbonPanel4;
         private System.Windows.Forms.RibbonButton RF1ReturJualInfoMenu;
         private System.Windows.Forms.RibbonButton RT2PostingReturMenu;
+        private System.Windows.Forms.RibbonButton RT3GenerateReturnOrderMenu;
         private System.Windows.Forms.RibbonButton IM4DriverMenu;
         private System.Windows.Forms.RibbonButton IM5BrgBarcodeMenu;
         private System.Windows.Forms.RibbonButton FT3FpKeluaranMenu;

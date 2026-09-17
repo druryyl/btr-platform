@@ -109,6 +109,12 @@ namespace btr.distrib.InventoryContext.ReturJualAgg
             ClearDisplay();
         }
 
+        public void ShowReturJual(string returJualId)
+        {
+            ReturJualIdText.Text = returJualId;
+            ValidateReturJual();
+        }
+
         private void InitParamSistem()
         {
             var paramKey = new ParamSistemModel("SISTEM_PPN_PROSEN");

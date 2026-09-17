@@ -604,6 +604,15 @@
     <Compile Include="InventoryContext\ReturJualRpt\ReturJualReportForm.Designer.cs">
       <DependentUpon>ReturJualReportForm.cs</DependentUpon>
     </Compile>
+    <Compile Include="InventoryContext\ReturnOrderAgg\GenerateReturnOrderForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="InventoryContext\ReturnOrderAgg\GenerateReturnOrderForm.Designer.cs">
+      <DependentUpon>GenerateReturnOrderForm.cs</DependentUpon>
+    </Compile>
+    <Compile Include="InventoryContext\ReturnOrderAgg\GenerateReturnOrderFormItemDto.cs" />
+    <Compile Include="InventoryContext\ReturnOrderAgg\GenerateReturnOrderFormOrderDto.cs" />
+    <Compile Include="InventoryContext\ReturnOrderAgg\GenerateReturnOrderFormResultDto.cs" />
     <Compile Include="InventoryContext\StokBalanceRpt\StokBalanceInfo2Form.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -1092,6 +1101,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="InventoryContext\ReturJualAgg\ReturJualForm.resx">
       <DependentUpon>ReturJualForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="InventoryContext\ReturnOrderAgg\GenerateReturnOrderForm.resx">
+      <DependentUpon>GenerateReturnOrderForm.cs</DependentUpon>
     </EmbeddedResource>
     <Content Include="Reports\ReturJualPrintOut-Yk.rdlc">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>

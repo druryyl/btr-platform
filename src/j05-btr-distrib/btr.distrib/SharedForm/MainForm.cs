@@ -19,6 +19,7 @@ using btr.distrib.InventoryContext.MutasiRpt;
 using btr.distrib.InventoryContext.OmzetSupplierRpt;
 using btr.distrib.InventoryContext.OpnameAgg;
 using btr.distrib.InventoryContext.PackingAgg;
+using btr.distrib.InventoryContext.ReturnOrderAgg;
 using btr.distrib.InventoryContext.ReturJualAgg;
 using btr.distrib.InventoryContext.ReturJualRpt;
 using btr.distrib.InventoryContext.StokBalanceRpt;
@@ -695,11 +696,20 @@ namespace btr.distrib.SharedForm
 
         #region RETUR JUAL
         //      transaction
-        private void RT1ReturJualButton_Click(object sender, EventArgs e)
+        public void RT1ReturJualButton_Click(object sender, EventArgs e)
         {
             if (BringMdiChildToFrontIfLoaded<ReturJualForm>())
                 return;
             var form = ThisServicesProvider.GetRequiredService<ReturJualForm>();
+            form.StartPosition = FormStartPosition.CenterScreen;
+            form.MdiParent = this;
+            form.Show();
+        }
+        private void RT3GenerateReturnOrder_Click(object sender, EventArgs e)
+        {
+            if (BringMdiChildToFrontIfLoaded<GenerateReturnOrderForm>())
+                return;
+            var form = ThisServicesProvider.GetRequiredService<GenerateReturnOrderForm>();
             form.StartPosition = FormStartPosition.CenterScreen;
             form.MdiParent = this;
             form.Show();
