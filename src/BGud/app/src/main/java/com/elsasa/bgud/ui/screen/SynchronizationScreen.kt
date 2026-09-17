@@ -25,6 +25,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.elsasa.bgud.viewmodel.ReturnOrderSyncViewModel
 import com.elsasa.bgud.viewmodel.SyncState
 import com.elsasa.bgud.viewmodel.SynchronizationViewModel
 import java.text.SimpleDateFormat
@@ -32,25 +33,29 @@ import java.util.Date
 import java.util.Locale
 
 /**
- * Synchronization screen (SCR-MOB-007, Architecture §12.9, UX Blueprint §11).
+ * Synchronization screen (SCR-MOB-007 / SCR-MOB-RO-005, Architecture §12.9,
+ * §14.3, §14.5, UX Blueprint §11).
  *
  * ```text
  * Master Data Card    (Last Barang Sync, Last Barcode Sync)
+ * Return Order Card   (Last Reference Sync, Pending, Synced)
  * Queue Card          (Pending, Success, Rejected)
  * Actions             (Sync Now)
  * Connectivity State  (Online / Offline)
  * ```
  *
- * State display (§14.5): `Idle` → `Sync Now` → `Synchronizing` →
+ * State display (§14.5, §14.3): `Idle` → `Sync Now` → `Synchronizing` →
  * `Synchronized` (timestamps + queue counts refreshed via the DataStore/Room
- * flows) or `Failed` ("Gagal sinkronisasi.", UX §14) with Retry. Sync Now is
- * disabled while offline (IR-M5) and while a run is in progress (IR-M6).
- * The screen issues no network call itself; [SynchronizationViewModel]
- * enqueues the one-shot sync worker (S5.3, §20).
+ * flows) or `Failed` ("Gagal sinkronisasi.", UX §14) with Retry. Sync Now
+ * triggers the Return Order sync worker in addition to the barcode worker
+ * (SCR-MOB-RO-005, S4.10) and is disabled while offline (IR-M5/IR-M9) and
+ * while a run is in progress (IR-M6/OQ-1). The screen issues no network call
+ * itself; the view models enqueue the one-shot sync workers (S5.3/S4.5, §20).
  */
 @Composable
 fun SynchronizationScreen(
     viewModel: SynchronizationViewModel,
+    returnOrderViewModel: ReturnOrderSyncViewModel,
     onBack: () -> Unit
 ) {
     val context = LocalContext.current
@@ -63,10 +68,31 @@ fun SynchronizationScreen(
     val error by viewModel.error.collectAsState()
     val isOnline by viewModel.isOnline.collectAsState()
 
-    val isSyncing = syncState == SyncState.SYNCHRONIZING
-    // IR-M5: offline disables Sync Now (progress impossible). IR-M6: one
-    // sync run at a time — Sync Now is disabled while Synchronizing.
-    val syncNowEnabled = isOnline && !isSyncing
+    // SCR-MOB-RO-005 (S4.10): Return Order sync state shown alongside the
+    // barcode state (§19.1 `ReturnOrderSyncViewModel`).
+    val lastRefSync by returnOrderViewModel.lastRefSync.collectAsState()
+    val returnOrderPendingCount by returnOrderViewModel.pendingCount.collectAsState()
+    val returnOrderSyncedCount by returnOrderViewModel.syncedCount.collectAsState()
+    val returnOrderSyncState by returnOrderViewModel.syncState.collectAsState()
+    val returnOrderError by returnOrderViewModel.error.collectAsState()
+    val returnOrderOnline by returnOrderViewModel.isOnline.collectAsState()
+
+    val barcodeSyncing = syncState == SyncState.SYNCHRONIZING
+    val returnOrderSyncing = returnOrderSyncState == SyncState.SYNCHRONIZING
+    val isSyncing = barcodeSyncing || returnOrderSyncing
+    val isFailed = syncState == SyncState.FAILED || returnOrderSyncState == SyncState.FAILED
+    val isSynchronized = syncState == SyncState.SYNCHRONIZED ||
+        returnOrderSyncState == SyncState.SYNCHRONIZED
+    val failures = buildList {
+        if (syncState == SyncState.FAILED) add(error ?: "Gagal sinkronisasi.")
+        if (returnOrderSyncState == SyncState.FAILED) {
+            add(returnOrderError ?: "Gagal sinkronisasi.")
+        }
+    }.distinct()
+    // IR-M5/IR-M9: offline disables Sync Now (progress impossible). IR-M6/OQ-1:
+    // one sync run at a time — Sync Now is disabled while Synchronizing.
+    val isConnected = isOnline && returnOrderOnline
+    val syncNowEnabled = isConnected && !isSyncing
 
     Scaffold(
         containerColor = MaterialTheme.colorScheme.surface
@@ -97,6 +123,20 @@ fun SynchronizationScreen(
                 }
             }
 
+            // Return Order Card (SCR-MOB-RO-005, §14.3, §19.1): reference
+            // timestamps + pending/synced counts. Device vocabulary is
+            // `Draft`/`Synced` only (ADR-RO-006); `lastRefSync` is the most
+            // recent Customer/SalesPerson/Driver reference download.
+            Card(modifier = Modifier.fillMaxWidth()) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    SyncSectionTitle("Return Order")
+                    Spacer(modifier = Modifier.height(8.dp))
+                    SyncRow("Last Reference Sync", formatSyncTime(lastRefSync))
+                    SyncRow("Pending", returnOrderPendingCount.toString())
+                    SyncRow("Synced", returnOrderSyncedCount.toString())
+                }
+            }
+
             // Queue Card (§12.9, UX Blueprint §11; §14.6
             // Pending | Synced | Rejected).
             Card(modifier = Modifier.fillMaxWidth()) {
@@ -118,9 +158,11 @@ fun SynchronizationScreen(
                 }
             }
 
-            // Sync state feedback (§14.5).
-            when (syncState) {
-                SyncState.SYNCHRONIZING -> {
+            // Sync state feedback (§14.5, §14.3). Barcode and Return Order
+            // runs are reported together: failure wins, then progress, then
+            // success.
+            when {
+                returnOrderSyncing || barcodeSyncing -> {
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(
@@ -137,39 +179,47 @@ fun SynchronizationScreen(
                         )
                     }
                 }
-                SyncState.SYNCHRONIZED -> {
+                isFailed -> {
+                    Text(
+                        text = if (failures.isEmpty()) {
+                            "Gagal sinkronisasi."
+                        } else {
+                            failures.joinToString(" ")
+                        },
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.error
+                    )
+                }
+                isSynchronized -> {
                     Text(
                         text = "Sinkronisasi berhasil.",
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.primary
                     )
                 }
-                SyncState.FAILED -> {
-                    Text(
-                        text = error ?: "Gagal sinkronisasi.",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.error
-                    )
-                }
-                SyncState.IDLE -> Unit
+                else -> Unit
             }
 
-            // Actions (§12.9): Sync Now; on failure the same button is the
-            // Retry (UX §14 "Gagal sinkronisasi." → Retry).
+            // Actions (§12.9): Sync Now triggers the Return Order worker in
+            // addition to the barcode worker (SCR-MOB-RO-005); on failure the
+            // same button is the Retry (UX §14 "Gagal sinkronisasi." → Retry).
             Button(
-                onClick = { viewModel.syncNow(context) },
+                onClick = {
+                    viewModel.syncNow(context)
+                    returnOrderViewModel.syncNow(context)
+                },
                 enabled = syncNowEnabled,
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Text(
                     when {
                         isSyncing -> "Synchronizing…"
-                        syncState == SyncState.FAILED -> "Retry"
+                        isFailed -> "Retry"
                         else -> "Sync Now"
                     }
                 )
             }
-            if (!isOnline) {
+            if (!isConnected) {
                 Text(
                     text = "Offline — Sync Now tidak tersedia.",
                     style = MaterialTheme.typography.bodySmall,

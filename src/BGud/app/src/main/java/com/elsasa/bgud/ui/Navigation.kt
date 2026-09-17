@@ -38,6 +38,8 @@ import com.elsasa.bgud.viewmodel.LoginViewModel
 import com.elsasa.bgud.viewmodel.LoginViewModelFactory
 import com.elsasa.bgud.viewmodel.RegisterBarcodeViewModel
 import com.elsasa.bgud.viewmodel.RegisterBarcodeViewModelFactory
+import com.elsasa.bgud.viewmodel.ReturnOrderSyncViewModel
+import com.elsasa.bgud.viewmodel.ReturnOrderSyncViewModelFactory
 import com.elsasa.bgud.viewmodel.ScanViewModel
 import com.elsasa.bgud.viewmodel.ScanViewModelFactory
 import com.elsasa.bgud.viewmodel.SettingsViewModel
@@ -259,10 +261,14 @@ fun AppNavigation(
             // SCR-MOB-007 (S5.10): sync state display + Sync Now trigger
             // (§12.9, §14.5). Closes the S5.5 INFO-002 forward reference for
             // this route; `settings` is owned by S5.11 (SCR-MOB-008).
+            // SCR-MOB-RO-005 (S4.10): the same surface shows Return Order
+            // sync state and Sync Now additionally triggers the Return Order
+            // worker (S4.5); the Return Order view model is constructed here
+            // as a direct prerequisite of the extension (§19.1).
+            val connectivityManager = context.getSystemService(
+                ConnectivityManager::class.java
+            )
             val syncFactory = remember {
-                val connectivityManager = context.getSystemService(
-                    ConnectivityManager::class.java
-                )
                 SynchronizationViewModelFactory(
                     session,
                     database.barcodeRegistrationRequestDao(),
@@ -272,8 +278,19 @@ fun AppNavigation(
             }
             val syncViewModel: SynchronizationViewModel =
                 viewModel(factory = syncFactory)
+            val returnOrderSyncFactory = remember {
+                ReturnOrderSyncViewModelFactory(
+                    session,
+                    database.returnOrderDao(),
+                    connectivityManager,
+                    CLOUD_BASE_URL
+                )
+            }
+            val returnOrderSyncViewModel: ReturnOrderSyncViewModel =
+                viewModel(factory = returnOrderSyncFactory)
             SynchronizationScreen(
                 viewModel = syncViewModel,
+                returnOrderViewModel = returnOrderSyncViewModel,
                 onBack = { navController.popBackStack() }
             )
         }
