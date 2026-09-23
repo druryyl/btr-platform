@@ -264,3 +264,4 @@ FodyWeavers.xsd
 
 # j05-btr-distrib: distrib packages
 **/btr.distrib/*.7z
+/src/j07-btrade-sync/j07-btrade-sync/*.7z
