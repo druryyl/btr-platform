@@ -2,7 +2,7 @@
 Title: BGud — Google Sign-In and Unauthenticated Cloud Endpoints — Feasibility Assessment
 Code: BGUD-GOOGLE-SIGNIN-001
 Artifact: FEASIBILITY-ASSESSMENT
-Version: 1.0
+Version: 1.1
 LastUpdated: 2026-09-23
 Status: NOT-READY
 ---
@@ -149,7 +149,7 @@ This section contains facts only (verified 2026-09-23 at HEAD `2b73b7bc`).
 | ID | Severity | Gap |
 |------|------|------|
 | GAP-001 | CRITICAL | The request contradicts **accepted** decisions ADR-002 and ADR-003, which require JWT authentication on all Cloud write endpoints and state explicitly that Google Sign-In does not replace the API token. The request also inverts the 2026-09-17 BTrade3 compatibility direction (RD-001: BTrade3 to adopt BGud's JWT mechanism). No superseding decision exists; the policy direction must be decided (and the ADRs superseded) before any architecture work. |
-| GAP-002 | CRITICAL | Tenant and actor resolution is currently supplied **by the JWT itself** for every BGud operational route except the legacy `{serverId}` reads: `api/barcodes/sync`, `api/barcode-registration`, `api/BarcodeRegistration/status`, `api/return-order`, and `api/User` read `User.GetServerId()`/`User.GetUserId()`. Removing authentication without a replacement mechanism does not merely drop a header — it makes these endpoints inoperable and requires a server contract change BGud cannot make alone. |
+| GAP-002 | CRITICAL | Tenant and actor resolution is currently supplied **by the JWT itself** for every BGud operational route except the legacy `{serverId}` reads: `api/barcodes/sync`, `api/barcode-registration`, `api/BarcodeRegistration/status`, `api/return-order`, and `api/User` read `User.GetServerId()`/`User.GetUserId()` (note: `api/User` is not in BGud's consumed-endpoint set — verified against `BtradeApiService.kt` — so it falls outside the OQ-001 exception scope). Removing authentication without a replacement mechanism does not merely drop a header — it makes these endpoints inoperable and requires a server contract change BGud cannot make alone. **Scope confirmed by the OQ-001 decision (§8); replacement mechanism still undecided (OQ-003).** |
 | GAP-003 | CRITICAL | No Google-account-to-BTR-user mapping exists. `BTR_User`/`BTRADE_User` have no email/Google identifier column (verified schema), and nothing in the repository maps a Google account to a BTR `UserId`, `RoleId`, or operational location. "Which Google accounts may sign in" therefore has no answer in the current data model. |
 | GAP-004 | MAJOR | Login-UX swap and endpoint-auth removal are separable but entangled in BGud: the login response (`serverId`, `userId`, `warehouseCode`) drives navigation gating, login-time sync, session binding, and queued-record warehouse binding. Replacing the login call with a local-only Google gate requires re-sourcing every one of these values. |
 | GAP-005 | MAJOR | Warehouse/tenant selector semantics conflict. BGud's selector (`GAMPING`/`CONCAT`/`MAGELANG` → server-side mapping to `JOGJA`/`MGL`) preserves warehouse granularity required by IR-09/ADR-RO-006; a BTrade3-style tenant selector (`JOG`/`MGL`) collapses Gamping and Concat, and its `JOG` value differs from the mapped `JOGJA`. The desired selector model must be chosen and its data vocabulary reconciled. |
@@ -163,8 +163,8 @@ This section contains facts only (verified 2026-09-23 at HEAD `2b73b7bc`).
 
 | ID | Question | Impact |
 |------|------|------|
-| OQ-001 | Does "not using authentication" mean only removing the BGud client bearer header, or also removing `[Authorize]` from the Cloud controllers (issue Notes 1–2)? | BLOCKING — decides whether this is a client-only change or a Cloud API contract/policy change (GAP-001, GAP-002). |
-| OQ-002 | Will the organization formally supersede or amend ADR-002/ADR-003/ADR-007, and does the same policy decision also reverse the planned BTrade3 remediation (RD-001)? | BLOCKING — architecture cannot be finalized while two accepted, contradictory decisions are both standing (GAP-001). |
+| OQ-001 | Does "not using authentication" mean only removing the BGud client bearer header, or also removing `[Authorize]` from the Cloud controllers (issue Notes 1–2)? | **CLOSED 2026-09-23 — see §8.** Answer: **both**; therefore a Cloud API contract/security-policy change, not a client-only change (GAP-001, GAP-002). Residual scope of the exception is raised as OQ-010. |
+| OQ-002 | Will the organization formally supersede or amend ADR-002/ADR-003/ADR-007, and does the same policy decision also reverse the planned BTrade3 remediation (RD-001)? | OPEN — **narrowed** by the OQ-001 decision (§8): the recorded stance is a temporary demo-path exception that leaves the ADRs accepted, not a supersession. Still required: (a) formal ratification of that exception by the ADR owning process, (b) whether BTrade3's RD-001 remediation continues as planned. Architecture cannot be finalized while the exception is unratified (GAP-001). |
 | OQ-003 | If authentication is removed, how must the Cloud identify the tenant for `api/barcodes/sync`, `api/barcode-registration`, `api/BarcodeRegistration/status`, and `api/return-order` — client-supplied `ServerId` (BTrade3 style, contradicting ADR-007 §4) or another mechanism? | BLOCKING — determines the required server contract (GAP-002). |
 | OQ-004 | May any Google account sign in, or must accounts be allow-listed / mapped to existing `BTR_User` operators? If mapped, who creates and maintains the mapping, and which BTR `RoleId` applies? | BLOCKING — no data model answer exists (GAP-003, GAP-006). |
 | OQ-005 | Who is recorded as the actor for barcode registrations and return orders after the JWT user id disappears, and is loss of per-operator attribution acceptable to the business? | BLOCKING — `RegisteredBy` and audit semantics depend on it (GAP-006). |
@@ -172,6 +172,8 @@ This section contains facts only (verified 2026-09-23 at HEAD `2b73b7bc`).
 | OQ-007 | Should BGud reuse BTrade3's Google OAuth web client/project or obtain a separate BGud registration? | Non-blocking for direction, blocking for any Google Sign-In realization detail (GAP-008). |
 | OQ-008 | Should login-time master-data synchronization continue to run at login time (with whatever new identity step replaces it), and what replaces the token-based navigation gate (IR-M8)? | MAJOR — affects the target operational flow (GAP-004). |
 | OQ-009 | Should this remain one combined change request or be split into (a) login UX change and (b) endpoint-auth removal? | MINOR — recommended split is documented in §7 Option D; affects ISSUE tracking, not feasibility. |
+| OQ-010 | The OQ-001 decision scopes the anonymous exposure to "the BGud demo path," but BGud's endpoints are the shared Cloud API also consumed by BTrade3 and populated by `j07-btrade-sync` (ASM-002). How is a "BGud-only" exposure enforced when the controllers, tenant data, and `BTRADE_User`/barcode/return-order tables are common to all consumers? | BLOCKING for the Cloud change (GAP-002) — determines whether this is a scoped change or an instance-wide security regression, and whether a separate demo environment/database is required (new RISK-009). |
+| OQ-011 | What is the exit condition for the temporary exception — who owns restoring `[Authorize]`/tenant isolation after the demo, and against what trigger or date? | MAJOR — an exception with no owner or exit criterion tends to persist; required before ADR-002/003/007 enforcement can be treated as merely deferred (GAP-001, RISK-009). |
 
 ---
 
@@ -182,7 +184,7 @@ This section contains facts only (verified 2026-09-23 at HEAD `2b73b7bc`).
 | ASM-001 | "Following BTrade3's approach" means BTrade3's **currently implemented** behavior (local Google gate, email as login state, anonymous APIs, explicit `serverId`), not an as-yet undocumented target design. |
 | ASM-002 | BGud and BTrade3 consume the same Cloud database/host today (`dev.smart-ics.com:8089`), so any BGud endpoint change affects data shared with BTrade3 and `j07-btrade-sync`. |
 | ASM-003 | `BTR_User` remains the operator store of record at the Main Office; any new identifier mapping must not turn the Cloud into an independent credential authority (PRODUCT principle "Single Source of Truth"). |
-| ASM-004 | Existing ADRs remain in force until explicitly superseded by the owning decision process; this assessment treats them as binding constraints on the current state. |
+| ASM-004 | Existing ADRs remain in force until explicitly superseded by the owning decision process; this assessment treats them as binding constraints on the current state. The only recorded departure is the **temporary, demo-path** enforcement deferral accepted under OQ-001 (§8), which explicitly does not supersede ADR-002/ADR-003/ADR-007 and still awaits ratification by their owning process (OQ-002). |
 | ASM-005 | There are (or may be) field-deployed BGud devices with queued local records bound to `warehouseCode`; the change must not silently re-home or orphan them. |
 
 ---
@@ -191,14 +193,15 @@ This section contains facts only (verified 2026-09-23 at HEAD `2b73b7bc`).
 
 | ID | Risk | Impact | Mitigation |
 |------|------|------|------|
-| RISK-001 | BGud client stops sending tokens while the Cloud still enforces `[Authorize]` (partial change) | Complete BGud operational outage (401 on every route) | OQ-001 must be answered before implementation; changes must be coordinated as one release (BTrade3 assessment notes the same dependency in reverse) |
-| RISK-002 | Anonymous, client-selectable tenant on write endpoints | Cross-tenant data pollution/spoofing; forged registrations and return orders | Keep writes authenticated (Option B/C) or accept explicit policy reversal with compensating controls (OQ-002/003) |
+| RISK-001 | BGud client stops sending tokens while the Cloud still enforces `[Authorize]` (partial change) | Complete BGud operational outage (401 on every route) | **Answered by OQ-001 (§8):** both sides change, and the coordinated-release requirement remains — client and Cloud must ship as one release (BTrade3 assessment notes the same dependency in reverse) |
+| RISK-002 | Anonymous, client-selectable tenant on write endpoints | Cross-tenant data pollution/spoofing; forged registrations and return orders | Keep writes authenticated (Option B/C) or accept explicit policy reversal with compensating controls (OQ-002/003) — **Option B/C are no longer available for the demo path after the OQ-001 decision, so for the demo the accepted path is reversal plus compensating controls, scoped and time-boxed per OQ-010/OQ-011** |
 | RISK-003 | Loss of per-operator attribution on registrations/return orders | Audit and Main-Office validation expectations (ADR-002 context) break | Decide actor model (OQ-004/005); Google-email-to-user mapping preserves attribution if desired |
 | RISK-004 | Shared cleartext HTTP with any credential (Google ID token or JWT) in transit | Credential exposure | Pre-existing platform risk; any option needs HTTPS before introducing tokens of any kind (mirror of RD-004/GAP-006 in BTrade3 assessment) |
 | RISK-005 | Reuse of BTrade3's Google OAuth client (ASM/ OQ-007) | Coupled app inventories; BTrade3 project changes can break BGud sign-in | Register a BGud-specific OAuth client unless reuse is explicitly approved |
 | RISK-006 | Duplicated/conflicting identity stores over time (Google allow-list vs `BTR_User`) | Off-boarded BTR users retain app access | If Google login is adopted, define the authoritative mapping and provisioning owner (OQ-004) |
 | RISK-007 | Tenant vocabulary drift (`JOG` vs `JOGJA`, collapsed warehouse granularity) | Wrong/failed tenant resolution on anonymous routes; queue re-homing violations (IR-09) | Resolve selector and vocabulary decision first (OQ-006, GAP-005) |
 | RISK-008 | Reversing direction while BTrade3 remediation (RD-001: BTrade3 adopts JWT) is still planned | The two work items cancel each other; wasted effort | Handle both apps in one platform-level authentication policy decision (OQ-002) |
+| RISK-009 | The accepted OQ-001 exception is described as "BGud demo path" only, but the affected controllers, Cloud database, and replicated credential/data tables are shared with BTrade3 and `j07-btrade-sync` (ASM-002); anonymous exposure on those routes therefore degrades every consumer, not just BGud, and there is no named owner, expiry, or restoration plan | Security regression outliving the demo; cross-tenant and unattributed writes against live shared data | Define the environment/tenant blast radius and an explicit exit plan (OQ-010, OQ-011) — prefer an isolated demo instance/database or a tenant-scoped allow-list; track re-enabling `[Authorize]` as a first-class follow-up ISSUE before the demo ships |
 
 ---
 
@@ -206,6 +209,11 @@ This section contains facts only (verified 2026-09-23 at HEAD `2b73b7bc`).
 
 Alternative solution directions only. **No final decision is recorded here** — decisions
 belong in §8 Gap Closure after stakeholder/architecture input.
+
+*Status note (v1.1):* the authentication-posture question is now decided for the demo path
+(§8, OQ-001 CLOSED — full removal, i.e. the Option A posture). The options below remain the
+pre-decision analysis record; Option A's unresolved content (anonymous contract, actor model,
+selector semantics, environment scope) is still open as OQ-003/OQ-004/OQ-005/OQ-006/OQ-010.
 
 ## Option A — Literal BTrade3 parity (full removal)
 
@@ -285,10 +293,110 @@ artifact for the BGud operator-authentication capability (GAP-007) before archit
 
 # 8. Gap Closure
 
-No gap or open question has been resolved yet. Every GAP-00x and OQ-00x entry above is
-**Status: OPEN**. When a resolution is approved, it will be recorded here in place
-(Decision, Rationale, Impact, Architecture Impact, Resolved By, Resolved Date) without
-renumbering, and Planning Readiness will be updated accordingly.
+Ledger: **OQ-001 — CLOSED (2026-09-23)**. All other entries (GAP-001…GAP-008,
+OQ-002…OQ-011) remain **Status: OPEN**. When a further resolution is approved it will be
+recorded here in place (Decision, Rationale, Impact, Architecture Impact, Resolved By,
+Resolved Date) without renumbering, and Planning Readiness will be updated accordingly.
+
+## OQ-001
+
+**Status: CLOSED** — Accepted (Temporary Demo Exception)
+
+### Decision
+
+For the initial BGud demo release, **"not using authentication" means both:**
+
+1. BGud does not send an `Authorization: Bearer` header.
+2. Cloud endpoints required by BGud are exposed without `[Authorize]`.
+
+This is therefore **not a client-only change**. It is a temporary Cloud API contract and
+security-policy change to enable the demo.
+
+**Scope limitation.** The decision applies only to the BGud demo path. It does **not**
+change the long-term architectural direction defined by ADR-002 (authenticated JWT identity
+on all Cloud write endpoints), ADR-003 (mobile authentication against the Cloud API), and
+ADR-007 (tenant isolation from authenticated identity). These ADRs remain **Accepted** and
+are **deferred** until after the demo.
+
+### Rationale
+
+The current BGud implementation depends on a successful authentication flow to obtain a JWT
+token. Simply removing the bearer header from the client would cause requests to
+authenticated endpoints to fail with `401 Unauthorized`.
+
+Removing authentication only on the client side would not produce a working system for the
+demo.
+
+The simplest path to obtain a working end-to-end demonstration is therefore:
+
+- Disable JWT authentication for BGud-required endpoints.
+- Allow BGud to access those endpoints anonymously.
+- Continue using existing business logic with minimal code changes.
+
+### Consequences
+
+Positive:
+
+- Fastest path to a working demo.
+- Minimal implementation effort.
+- Removes the current login blocker.
+
+Negative:
+
+- Temporarily violates ADR-002, ADR-003, and ADR-007.
+- No authenticated user identity is available.
+- No authenticated tenant isolation is available.
+- Not suitable for production deployment.
+
+### Impact
+
+- Resolves issue Notes 1–2: endpoint scope is the full BGud-consumed set, and client **and**
+  server change together (RISK-001 is answered as "change both", not avoided).
+- Consistent with §7 **Option A** (literal BTrade3 parity) for the authentication posture;
+  it rules out **Option B** (federated login keeping JWT) and **Option C** (anonymous reads /
+  authenticated writes) for the demo path. Option A's remaining unknowns are the anonymous
+  contract, actor, and selector details, not the direction.
+- Does not close GAP-001 (formal ratification of the exception by the ADR owning process is
+  still outstanding, and the BTrade3 RD-001 question is untouched), GAP-002 (the replacement
+  mechanism is undecided), GAP-003 (Google-account authority still undefined), GAP-005,
+  GAP-006 (now accepted knowingly, for the demo only), GAP-007, GAP-008.
+- Adds two new open questions surfaced by the decision itself — OQ-010 (how a "BGud-only"
+  exception is scoped on an API and database shared with BTrade3 and `j07-btrade-sync`) and
+  OQ-011 (owner and exit condition for restoring enforcement) — and one risk, RISK-009.
+- Reconciles ASM-004: the ADRs remain binding except for this recorded temporary deferral.
+
+### Architecture Impact
+
+- The Cloud is in scope: `[Authorize]` removal on BGud-required endpoints is a contract and
+  security-policy change that the Architect must design, ratify against ADR-002/003/007
+  (OQ-002), and mark as a demo-only exception with a restoration path (OQ-011).
+- Evidence-derived endpoint scope for the exception (BGud's authenticated surface, verified
+  in `BtradeApiService.kt` and the controller attributes in §2) is five routes:
+  `GET api/barcodes/sync`, `POST /api/barcode-registration`,
+  `GET api/BarcodeRegistration/status`, `POST api/return-order`, and
+  `GET api/Driver/{serverId}`. `api/User` is `[Authorize]` but is not consumed by BGud and is
+  therefore outside this exception unless a later flow adds it.
+- Four of those five routes currently derive tenant (and, for registration, actor) **from the
+  JWT itself** and carry no client-supplied tenant field (P-06, ADR-007 §4), so anonymous
+  exposure cannot be an attribute-only edit for them; the replacement contract is exactly the
+  undecided OQ-003/OQ-005/OQ-006 items. Only `api/Driver/{serverId}` is already
+  tenant-explicit in the route.
+- Google Sign-In remains part of the request (ISSUE part 1) and is **not** resolved by this
+  decision: OQ-004 (account authority/mapping), OQ-007 (OAuth client), OQ-008 (login-time
+  sync and navigation gate) still stand, and the client-side identity model inherits the
+  "no authenticated identity" consequence recorded above.
+- Cleartext-HTTP constraints (RISK-004) and the queued-record warehouse binding constraint
+  (IR-09, ASM-005) are unchanged by this decision and must still be answered by the flow and
+  contract questions above.
+
+### Resolved By
+
+Repository owner (issue reporter) via the gap-closure direction recorded by the Analyst;
+formal ratification by the ADR-002/ADR-003/ADR-007 owning process remains required (OQ-002).
+
+### Resolved Date
+
+2026-09-23
 
 ---
 
@@ -297,8 +405,11 @@ renumbering, and Planning Readiness will be updated accordingly.
 ## Readiness Checklist
 
 - [ ] All critical gaps resolved (GAP-001, GAP-002, GAP-003 open)
-- [ ] All required decisions recorded (§8 empty; ADR-supersession decision outstanding)
-- [ ] All blocking open questions resolved (OQ-001…OQ-006 open)
+- [ ] All required decisions recorded (§8 now holds one decision — OQ-001 client **and**
+      server scope; the ADR ratification decision and the anonymous tenant/actor/selector
+      contract decisions are still outstanding)
+- [ ] All blocking open questions resolved (OQ-001 closed; OQ-002, OQ-003, OQ-004, OQ-005,
+      OQ-006, OQ-010 open)
 - [ ] Architecture can be finalized or updated
 
 ## Status
@@ -307,23 +418,34 @@ NOT-READY
 
 ## Notes
 
-- The blocking core is a **policy contradiction**, not a technical unknown: the request
-  reverses ADR-002/ADR-003/ADR-007 (all Accepted 2026-09-15) and the BTrade3 RD-001
-  direction (2026-09-17). Until the owner of those decisions explicitly supersedes or
-  reaffirms them (OQ-001/OQ-002), the target architecture cannot be finalized in either
-  direction.
-- If the reaffirmed direction is Option B (or A/C after supersession), the
-  Google-account-to-BTR-user mapping decision (OQ-004/OQ-005) and the selector/tenant
-  vocabulary decision (OQ-006) are the next required gap-closure inputs.
+- One blocking unknown has been removed: the change is confirmed to be a **Cloud API contract
+  and security-policy change**, not a client-only change (§8 OQ-001). The remaining blocking
+  core is still a **policy/scope contradiction** rather than a technical unknown: the accepted
+  temporary exception contradicts ADR-002/ADR-003/ADR-007 (all Accepted 2026-09-15) and the
+  BTrade3 RD-001 direction (2026-09-17) without having been ratified by their owning process,
+  and its environment blast radius on the shared Cloud instance is undefined.
+- With the direction fixed to full removal for the demo path (§7 Option A posture), the next
+  required gap-closure inputs are, in dependency order: OQ-002 (ratification), OQ-003
+  (anonymous tenant-resolution contract per route), OQ-005 (actor model for registrations and
+  return orders), OQ-006 (selector and tenant-vocabulary authority, `JOG` vs `JOGJA`),
+  OQ-004 (Google-account authority/mapping for ISSUE part 1), and OQ-010 (scoped environment
+  for the exception). OQ-011 should be answered before the demo ships so that enforcement
+  restoration is an owned follow-up rather than an assumption.
+- Recommended follow-up (not yet raised as an artifact): a separate ISSUE to restore
+  `[Authorize]`/tenant isolation on the BGud-exposed endpoints after the demo, so the accepted
+  exception has a tracked exit condition (OQ-011, RISK-009).
 - READY-FOR-PLANNING means that feasibility is sufficiently resolved for the Architecture
   skill to finalize or update the target architecture. It does not mean that architecture
   is complete or that the architecture step may be skipped. Planning begins only after the
   required architecture work is complete. Only the Architect grants the gate; this
   artifact remains NOT-READY while blocking gaps remain.
-- Knowledge propagation: once the policy decision is made, `ADR-002`, `ADR-003`,
-  `ADR-007`, and the BTrade3 compatibility recommendations (RD-001/RD-003) require review
-  by their owning process; a FEATURE artifact for operator authentication should be created
-  (GAP-007, stage Discovery).
+- Knowledge propagation: the OQ-001 decision is a **deferral, not a supersession**, so
+  `ADR-002`, `ADR-003`, and `ADR-007` require review by their owning process to ratify the
+  temporary exception and to state whether the BTrade3 compatibility recommendations
+  (RD-001/RD-003) still proceed; that review is outside this artifact's authority. A FEATURE
+  artifact for operator authentication is still required (GAP-007, stage Discovery), and the
+  FEATURE/ARCHITECTURE review request implied by the confirmed Cloud contract change belongs
+  to the Architect.
 
 ---
 
