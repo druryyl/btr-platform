@@ -2,9 +2,9 @@
 Title: BGud — Google Sign-In and Unauthenticated Cloud Endpoints — Feasibility Assessment
 Code: BGUD-GOOGLE-SIGNIN-001
 Artifact: FEASIBILITY-ASSESSMENT
-Version: 1.11
+Version: 1.17
 LastUpdated: 2026-09-23
-Status: NOT-READY
+Status: READY-FOR-PLANNING
 ---
 
 # 1. Request Summary
@@ -16,8 +16,10 @@ stop authenticating the Cloud endpoints BGud consumes.
 Referenced artifacts:
 
 - DOMAIN: `docs/foundation/DOMAIN.md`, `docs/work/barcode-registry/BARCODE-REGISTRY-DOMAIN.md`
-  (no dedicated DOMAIN/FEATURE artifact exists for the BGud authentication flow — see GAP-007)
-- FEATURE: none exists for this area (see GAP-007)
+  (no dedicated DOMAIN artifact exists for the BGud authentication flow; operator-account
+  business knowledge is owned by Main Office and the OQ-004 decision — see GAP-007)
+- FEATURE: `docs/features/bgud-operator-signin/feature.md` (`BGUD-OPERATOR-SIGNIN-001`) —
+  created to close GAP-007
 - Superseded-for-this-feature decisions: `docs/work/barcode-registry/adrs/ADR-002-*.md`,
   `ADR-003-*.md`, `ADR-007-*.md` — **no longer authoritative for BGud** per the
   2026-09-23 authentication-direction override (§8 OQ-002); repository treatment of the ADR
@@ -162,13 +164,13 @@ This section contains facts only (verified 2026-09-23 at HEAD `2b73b7bc`).
 | ID | Severity | Gap |
 |------|------|------|
 | GAP-001 | CRITICAL | The request contradicted **accepted** decisions ADR-002 and ADR-003, which require JWT authentication on all Cloud write endpoints and state explicitly that Google Sign-In does not replace the API token, and it inverted the 2026-09-17 BTrade3 compatibility direction (RD-001). **Status: CLOSED — resolved by the authentication-direction override recorded under OQ-002 (§8, 2026-09-23):** ADR-002/ADR-003/ADR-007 are no longer authoritative for this feature and are to be removed/superseded per the treatment decided in OQ-002 (file status changes executed by the ADR owning process, requested in §9). No contradiction with any binding decision remains for BGud, and no temporary-exception abstraction is created. |
-| GAP-002 | CRITICAL | Tenant and actor resolution is currently supplied **by the JWT itself** for every BGud operational route except the legacy `{serverId}` reads: `api/barcodes/sync`, `api/barcode-registration`, `api/BarcodeRegistration/status`, `api/return-order`, and `api/User` read `User.GetServerId()`/`User.GetUserId()` (note: `api/User` is not in BGud's consumed-endpoint set — verified against `BtradeApiService.kt` — so it falls outside the BGud anonymous scope and keeps `[Authorize]`). Removing authentication without a replacement contract does not merely drop a header — it makes these endpoints inoperable and requires a server contract change BGud cannot make alone. **Posture decided by OQ-001 (§8)** and **tenant contract decided by OQ-003 (§8):** BGud carries the session `locationId` (`GAMPING`/`CONCAT`/`MAGELANG`) explicitly on every request, and the Cloud resolves it through `BTR_WarehouseMapping` to `ServerId` (no JWT-derived tenant). **Actor contract decided by OQ-005 (§8):** BGud carries the logged-in Google email as the actor input; the Cloud resolves it via the OQ-004 Main Office mapping to the authoritative BTR `UserId`. **Shared-controller scope is decided by OQ-010 (§8).** Direction for this gap is fully decided; the remaining work is contract-change implementation, which is architecture work. |
-| GAP-003 | CRITICAL | No Google-account-to-BTR-user mapping exists. `BTR_User`/`BTRADE_User` have no email/Google identifier column (verified schema), and nothing in the repository maps a Google account to a BTR `UserId`, `RoleId`, or operational location. "Which Google accounts may sign in" therefore has no answer in the current data model. **Status note: direction decided by OQ-004 (§8, 2026-09-23)** — only Google accounts mapped one-to-one to existing BTR users may sign in; the mapping is maintained in the Main Office **User** menu and Main Office is its authoritative source. What remains open under this gap is the data-model/UI realization (mapping storage + maintenance screen), which is architecture/implementation work, not an unanswered feasibility question. |
-| GAP-004 | MAJOR | Login-UX swap and endpoint-auth removal are separable but entangled in BGud: the login response (`serverId`, `userId`, `warehouseCode`) drives navigation gating, login-time sync, session binding, and queued-record warehouse binding. Replacing the login call with a local-only Google gate requires re-sourcing every one of these values. **Status note: flow direction decided by OQ-008 (§8)** — login-time synchronization remains part of login and the navigation gate uses the persisted local session. The remaining work is realization of the revised session and synchronization flow. |
+| GAP-002 | CRITICAL | Tenant and actor resolution is currently supplied **by the JWT itself** for every BGud operational route except the legacy `{serverId}` reads: `api/barcodes/sync`, `api/barcode-registration`, `api/BarcodeRegistration/status`, `api/return-order`, and `api/User` read `User.GetServerId()`/`User.GetUserId()` (note: `api/User` is not in BGud's consumed-endpoint set — verified against `BtradeApiService.kt` — so it falls outside the BGud anonymous scope and keeps `[Authorize]`). Removing authentication without a replacement contract does not merely drop a header — it makes these endpoints inoperable and requires a server contract change BGud cannot make alone. **Posture decided by OQ-001 (§8)** and **tenant contract decided by OQ-003 (§8):** BGud carries the session `locationId` (`GAMPING`/`CONCAT`/`MAGELANG`) explicitly on every request, and the Cloud resolves it through `BTR_WarehouseMapping` to `ServerId` (no JWT-derived tenant). **Actor contract decided by OQ-005 (§8):** BGud carries the logged-in Google email as the actor input; the Cloud resolves it via the OQ-004 Main Office mapping to the authoritative BTR `UserId`. **Shared-controller scope is decided by OQ-010 (§8).** **Status: CLOSED (2026-09-23, §8 GAP-002)** — the target anonymous contract is fully decided; exact DTOs, carriers, controller changes, and implementation mechanics are architecture/implementation work, not feasibility blockers. |
+| GAP-003 | CRITICAL | No Google-account-to-BTR-user mapping exists. `BTR_User`/`BTRADE_User` have no email/Google identifier column (verified schema), and nothing in the repository maps a Google account to a BTR `UserId`, `RoleId`, or operational location. "Which Google accounts may sign in" therefore has no answer in the current data model. **Status: CLOSED (2026-09-23, §8 GAP-003)** — resolved by OQ-004: only Google accounts mapped one-to-one to existing BTR users may sign in; the mapping is maintained in the Main Office **User** menu and Main Office is its authoritative source; the existing BTR `UserId`/`RoleId` remain authoritative. Required database, synchronization/projection, and User-menu UI changes are architecture/implementation work, not feasibility blockers. |
+| GAP-004 | MAJOR | Login-UX swap and endpoint-auth removal are separable but entangled in BGud: the login response (`serverId`, `userId`, `warehouseCode`) drives navigation gating, login-time sync, session binding, and queued-record warehouse binding. Replacing the login call with a local-only Google gate requires re-sourcing every one of these values. **Status: CLOSED (2026-09-23, §8 GAP-004)** — resolved by OQ-008: login-time synchronization remains part of login; the JWT navigation gate is replaced by a local session gate (validated Google email + selected Gudang + persisted local session); logout and warehouse change clear the session while queued offline records retain their warehouse binding. Required client refactoring is architecture/implementation work, not a feasibility blocker. |
 | GAP-005 | MAJOR | Warehouse/tenant selector semantics must be reconciled now that BGud supplies tenant context explicitly. BGud's selector (`GAMPING`/`CONCAT`/`MAGELANG` → `JOGJA`/`MGL`) preserves warehouse granularity required by IR-09/ADR-RO-006 — and the OQ-001 decision (§8) requires that granularity to be preserved — while a BTrade3-style tenant selector (`JOG`/`MGL`) collapses Gamping and Concat and uses a different vocabulary for the same tenant. **Status: CLOSED — resolved by OQ-003/OQ-006 (§8):** the existing three-Gudang selector is retained; BGud carries `locationId` (`GAMPING`/`CONCAT`/`MAGELANG`) as session context; `ServerId` stays a Cloud-side value derived via the existing warehouse mapping (BTrade3's `JOG` vocabulary is not on BGud's request path); offline queue binding is retained per the OQ-003 session rule. |
-| GAP-006 | MAJOR | Removing endpoint authentication reopens the security properties ADR-002/ADR-007 were created to establish: unattributed writes (registration `RegisteredBy`, return-order actor), client-selectable tenant (cross-tenant read/write spoofing), and anonymous-writable Cloud state — while transport remains cleartext HTTP. **Accepted knowingly for BGud as deliberate policy by OQ-001/OQ-002 (§8), not a temporary exception.** Compensating contract is fully decided — tenant by OQ-003 (session `locationId`, server-side mapping), actor by OQ-005 (payload Google email resolved to BTR `UserId`), and shared-controller scope by OQ-010. Remaining work is contract implementation, not a restoration path. |
-| GAP-007 | MINOR | Workflow-stage-1 knowledge is missing: there is no DOMAIN/FEATURE artifact for the BGud authentication/warehouse-login capability (the assessment was performed from ISSUE + ADRs + code). The requested business change has not been defined as a FEATURE artifact. |
-| GAP-008 | MINOR | BGud has no Google OAuth client configuration in the repository (no `google-services.json`, no client id). Reusing BTrade3's hard-coded client id/project is an external-configuration dependency, not an in-code default. **Status note: direction decided by OQ-007 (§8, 2026-09-23)** — BGud reuses BTrade3's existing Google OAuth project and web client configuration, following BTrade3's already-implemented Sign-In configuration pattern. What remains open under this gap is bringing that configuration into BGud (config file / client id in the BGud app), which is implementation work, not an unanswered feasibility question. |
+| GAP-006 | MAJOR | Removing endpoint authentication reopens the security properties ADR-002/ADR-007 were created to establish: unattributed writes (registration `RegisteredBy`, return-order actor), client-selectable tenant (cross-tenant read/write spoofing), and anonymous-writable Cloud state — while transport remains cleartext HTTP. **Status: CLOSED (2026-09-23, §8 GAP-006)** — accepted knowingly for BGud as deliberate policy by OQ-001/OQ-002 (not a temporary exception); the compensating business contracts are decided — tenant by OQ-003, actor by OQ-005, and shared-controller scope by OQ-010. Security hardening beyond the approved posture is not a feasibility prerequisite; remaining work is contract implementation and pre-deployment verification, not a restoration path. |
+| GAP-007 | MINOR | Workflow-stage-1 knowledge is missing: there is no DOMAIN/FEATURE artifact for the BGud authentication/warehouse-login capability (the assessment was performed from ISSUE + ADRs + code). The requested business change has not been defined as a FEATURE artifact. **Status: CLOSED (2026-09-23, §8 GAP-007)** — resolved by the new FEATURE artifact `docs/features/bgud-operator-signin/feature.md` (`BGUD-OPERATOR-SIGNIN-001`), which defines the capability against the approved §8 decisions. |
+| GAP-008 | MINOR | BGud has no Google OAuth client configuration in the repository (no `google-services.json`, no client id). Reusing BTrade3's hard-coded client id/project is an external-configuration dependency, not an in-code default. **Status: CLOSED (2026-09-23, §8 GAP-008)** — resolved by OQ-007: BGud reuses BTrade3's existing Google OAuth project and web client configuration, following BTrade3's already-implemented Sign-In pattern; no separate BGud OAuth registration. Adding the required configuration to BGud and reconciling Android package/fingerprint requirements are architecture/implementation tasks, not feasibility blockers. |
 
 ---
 
@@ -320,8 +322,9 @@ Option D proposed splitting the ISSUE into (D1) login method change (Google Sign
 OQ-001/OQ-002 decisions (§8), no policy conflict remained between D1 and D2; the split
 was therefore considered optional for release coordination (RISK-001). OQ-009 subsequently
 closed this question and selected one combined change request. This option remains only
-as historical analysis. The missing FEATURE artifact for the BGud operator-authentication
-capability (GAP-007) is still required before architecture. Option D answered issue Note 8.
+as historical analysis. The FEATURE artifact for the BGud operator-authentication
+capability (GAP-007) was subsequently created at
+`docs/features/bgud-operator-signin/feature.md`. Option D answered issue Note 8.
 
 ### Advantages
 
@@ -335,15 +338,10 @@ capability (GAP-007) is still required before architecture. Option D answered is
 
 # 8. Gap Closure
 
-Ledger: **GAP-001 — CLOSED (2026-09-23)**, **GAP-005 — CLOSED (2026-09-23)**, **OQ-001 —
+Ledger: **GAP-001 — CLOSED (2026-09-23)**, **GAP-002 — CLOSED (2026-09-23)**, **GAP-003 — CLOSED (2026-09-23)**, **GAP-004 — CLOSED (2026-09-23)**, **GAP-005 — CLOSED (2026-09-23)**, **GAP-006 — CLOSED (2026-09-23)**, **GAP-007 — CLOSED (2026-09-23)**, **GAP-008 — CLOSED (2026-09-23)**, **OQ-001 —
 CLOSED (2026-09-23, override)**, **OQ-002 — CLOSED (2026-09-23, override)**, **OQ-003 —
 CLOSED (2026-09-23)**, **OQ-004 — CLOSED (2026-09-23)**, **OQ-005 — CLOSED (2026-09-23)**, **OQ-006 — CLOSED (2026-09-23)**, **OQ-007 — CLOSED (2026-09-23)**, **OQ-008 — CLOSED (2026-09-23)**, **OQ-009 — CLOSED (2026-09-23)**, **OQ-010 — CLOSED (2026-09-23)**, **OQ-011 — OBSOLETE
-(2026-09-23)**. All other entries (GAP-002, GAP-003, GAP-004, GAP-006, GAP-007, GAP-008)
-remain **Status: OPEN** — GAP-002's direction is fully
-decided (posture OQ-001, tenant OQ-003, actor OQ-005, shared-controller scope OQ-010; contract implementation remains),
-GAP-003's policy direction is decided by OQ-004 (data-model/UI realization remains),
-GAP-006's compensating contract is decided (shared-consumer scope decided by OQ-010; contract implementation remains), and GAP-008's
-direction is decided by OQ-007 (configuration delivery remains). When a further
+(2026-09-23)**. All GAP and open-question entries are now **CLOSED** or **OBSOLETE**. When a further
 resolution is approved it will be recorded here in place (Decision, Rationale, Impact,
 Architecture Impact, Resolved By, Resolved Date) without renumbering, and Planning
 Readiness will be updated accordingly.
@@ -399,6 +397,197 @@ the Analyst.
 
 ---
 
+## GAP-002
+
+**Status: CLOSED**
+
+### Decision
+
+The feasibility question is fully resolved by OQ-001, OQ-003, OQ-005, and OQ-010.
+
+The target contract is:
+
+- BGud sends no JWT or bearer token.
+- Tenant context is supplied using the session `locationId`.
+- Cloud resolves `locationId` to `ServerId` through `BTR_WarehouseMapping`.
+- Barcode registration and return order carry the logged-in Google email for actor
+  attribution.
+- Cloud resolves the email to the authoritative BTR `UserId`.
+- The five BGud-consumed routes are anonymous instance-wide.
+
+Exact DTOs, carriers, controller changes, and implementation mechanics are
+architecture/implementation work and are not feasibility blockers.
+
+### Rationale
+
+The gap existed because four of the five BGud-consumed routes derived tenant context —
+and, for barcode registration, actor identity — from the JWT itself and carried no
+client-supplied tenant field (P-06), so removing authentication without a replacement
+contract would have made those endpoints inoperable (GAP-002). Each element of that
+replacement contract has since been decided: OQ-001 fixes the anonymous posture (no JWT,
+no bearer header, no `[Authorize]`), OQ-003 fixes the tenant contract (session
+`locationId` → `BTR_WarehouseMapping` → `ServerId`, warehouse granularity preserved),
+OQ-005 fixes the actor contract (logged-in Google email in the payload → BTR `UserId`),
+and OQ-010 fixes the shared-controller scope (instance-wide `[Authorize]` removal, no
+BGud-only exception). With posture, tenant, actor, and scope all decided, no unanswered
+feasibility question remains; only the contract-change realization is left, which
+belongs to architecture/implementation rather than feasibility.
+
+### Impact
+
+GAP-002 no longer blocks architecture.
+
+### Architecture Impact
+
+- The Architect designs the anonymous Cloud contract with the explicit session
+  `locationId` carried on the four JWT-derived routes (`GET api/barcodes/sync`,
+  `POST api/barcode-registration`, `GET api/BarcodeRegistration/status`,
+  `POST api/return-order`) and resolves it server-side via `BTR_WarehouseMapping`;
+  `GET api/Driver/{serverId}` keeps its existing route-based contract.
+- `POST api/barcode-registration` (for `RegisteredBy`) and `POST api/return-order`
+  carry the logged-in Google email for actor attribution, resolved server-side to the
+  BTR `UserId`.
+- `[Authorize]` is removed instance-wide from the five BGud-consumed routes (OQ-010);
+  no BGud-only exception, dual-mode, or separate compatibility mechanism is introduced.
+- No JWT-claim reads (`User.GetServerId()`, `User.GetUserId()`) remain on BGud's request
+  path.
+- The exact carriers (header, query/route parameter, or payload field), Dto/envelope
+  changes, and controller edits are target-architecture decisions for the Architect.
+
+### Resolved By
+
+Repository owner (issue reporter) via the OQ-001/OQ-003/OQ-005/OQ-010 decisions (§8);
+recorded by the Analyst.
+
+### Resolved Date
+
+2026-09-23
+
+---
+
+## GAP-003
+
+**Status: CLOSED**
+
+### Decision
+
+The business and authority rules for Google-account mapping are fully resolved by OQ-004.
+
+- Only mapped Google accounts may access BGud.
+- Each BTR user maps to at most one Google email.
+- Main Office is the authoritative source.
+- Mapping is maintained through the existing BTR User menu.
+- Existing BTR `UserId` and `RoleId` remain authoritative.
+
+The required database changes, synchronization/projection changes, and User-menu UI
+changes are implementation work.
+
+### Rationale
+
+The gap existed because neither `BTR_User` nor its `BTRADE_User` projection has an
+email/Google-identifier column and nothing in the repository maps a Google account to a
+BTR `UserId`, `RoleId`, or operational location (verified schema), so "which Google
+accounts may sign in" had no answer in the current data model. OQ-004 supplies that
+answer at the business/authority level: sign-in is restricted to Google accounts mapped
+one-to-one to existing BTR users, the mapping is created/modified/removed in the Main
+Office **User** menu, Main Office stays the single authoritative source, the existing BTR
+`UserId`/`RoleId` remain authoritative, and unmapped accounts are rejected. With the
+policy and authority decided, the residual work is the data-model/projection/UI
+realization, which belongs to architecture/implementation rather than feasibility. The
+decision also keeps the existing single-source-of-truth model (ASM-003) and avoids a
+parallel BGud identity store.
+
+### Impact
+
+GAP-003 no longer blocks architecture.
+
+### Architecture Impact
+
+- The Google email ↔ BTR user mapping is stored and maintained where the Main Office
+  system manages users; no separate BGud account store and no Cloud-side independent
+  credential authority (ASM-003).
+- The mapping must become readable where identity resolution occurs — for the BGud local
+  sign-in gate and for Cloud-side actor resolution (OQ-005) — so database and
+  synchronization/projection changes (e.g., extending the existing `j07-btrade-sync`
+  `BTRADE_User` projection) are architecture/implementation work.
+- Resolution yields the authoritative BTR `UserId`; the user's existing BTR `RoleId`
+  remains authoritative and no new BGud role model is designed.
+- The Main Office Desktop change (Google email field plus create/modify/remove in the
+  **User** menu) enters scope as a work item for the plan.
+- Uniqueness enforcement (one Google email per BTR user, one BTR user per email) is a
+  design point for the Architect.
+
+### Resolved By
+
+Repository owner (issue reporter) via the OQ-004 decision (§8); recorded by the Analyst.
+
+### Resolved Date
+
+2026-09-23
+
+---
+
+## GAP-004
+
+**Status: CLOSED**
+
+### Decision
+
+The login/session behavior is fully resolved by OQ-008.
+
+Google Sign-In → validate mapped account → select Gudang → create local session →
+login-time sync → Home.
+
+The JWT navigation gate is replaced by the local session gate.
+
+Required client refactoring is implementation work.
+
+### Rationale
+
+The gap existed because the old login response (`serverId`, `userId`, `warehouseCode`)
+drove navigation gating, login-time synchronization, session binding, and queued-record
+warehouse binding, so replacing the login call with a local-only Google gate required
+re-sourcing every one of those values. OQ-008 resolves how each is re-sourced: Google
+Sign-In plus the validated mapped account establishes identity; Gudang selection
+establishes the operational/location context; a persisted local session replaces the JWT
+session; login-time synchronization (Barcode Registry and Return Order data) remains part
+of login and runs under the selected location; navigation is gated on local session state;
+and logout and warehouse change clear/rotate the session while queued offline records keep
+their original warehouse binding. With the flow fixed, the residual work is client
+refactoring (session storage, navigation gate, sync triggers), which belongs to
+implementation rather than feasibility.
+
+### Impact
+
+GAP-004 no longer blocks architecture.
+
+### Architecture Impact
+
+- BGud navigation changes from a stored-token existence check to a local-session
+  existence check (validated Google email + selected `locationId` + persisted local
+  session).
+- Session storage changes from JWT-based keys (`token`, `user_id`, `warehouse_code`,
+  `office_code`) to local session keys (Google email, `locationId`, etc.); no JWT or
+  Cloud token is stored or used.
+- The Login ViewModel continues to trigger `BarcodeSyncRepository.sync` and
+  `ReturnOrderSyncRepository.sync` after session creation; sync calls carry `locationId`
+  (OQ-003) and actor email (OQ-005) with no Authorization header.
+- Logout and warehouse change clear the session before a new selection; queued offline
+  records retain their original warehouse/location binding and are never silently
+  re-homed (IR-09, ASM-005).
+- The exact session model, storage keys, and navigation/refactor mechanics are
+  target-architecture decisions for the Architect.
+
+### Resolved By
+
+Repository owner (issue reporter) via the OQ-008 decision (§8); recorded by the Analyst.
+
+### Resolved Date
+
+2026-09-23
+
+---
+
 ## GAP-005
 
 **Status: CLOSED**
@@ -443,6 +632,173 @@ warehouse binding and are never silently re-homed (IR-09, ASM-005).
 ### Resolved By
 
 Repository owner (issue reporter) via the OQ-003 decision (§8); recorded by the Analyst.
+
+### Resolved Date
+
+2026-09-23
+
+---
+
+## GAP-006
+
+**Status: CLOSED**
+
+### Decision
+
+The loss of API authentication is an accepted architectural policy for BGud, established by OQ-001/OQ-002.
+
+The resulting risks are knowingly accepted.
+
+Compensating business contracts are already decided:
+
+- tenant context → OQ-003
+- actor attribution → OQ-005
+- shared-controller scope → OQ-010
+
+Security hardening beyond the approved BGud posture is not a feasibility prerequisite.
+
+### Rationale
+
+The gap described the security properties that ADR-002/ADR-007 had established and that
+BGud's deliberate anonymous posture reopens — unattributed writes, client-selectable
+tenant (cross-tenant read/write spoofing), and anonymous-writable Cloud state over
+cleartext HTTP. This is not an unresolved feasibility question: OQ-001/OQ-002 establish
+anonymous operation as deliberate BGud policy (not a temporary exception) with the named
+risks knowingly accepted, and each compensating business contract is already decided —
+tenant by OQ-003, actor by OQ-005, and shared-controller scope by OQ-010. What remains is
+realization of those contracts and the documented pre-deployment verification, which are
+architecture/implementation/testing activities rather than feasibility blockers. Security
+hardening beyond the approved posture is explicitly not a prerequisite.
+
+### Impact
+
+GAP-006 no longer blocks architecture.
+
+### Architecture Impact
+
+- The Architect designs the anonymous Cloud contract with the OQ-003 tenant contract
+  (session `locationId` → `BTR_WarehouseMapping` → `ServerId`) and the OQ-005 actor
+  contract (logged-in Google email → BTR `UserId`) as the compensating controls;
+  `[Authorize]` is removed instance-wide from the five BGud-consumed routes (OQ-010).
+- The client-supplied tenant and actor values are not cryptographically verified —
+  knowingly accepted under the approved anonymous posture (OQ-001/OQ-002); no
+  restoration/authentication path is designed and OQ-011 remains obsolete.
+- Pre-deployment verification of the shared routes against known non-BGud clients and
+  integration tests is implementation/testing work; any discovered dependency is handled
+  as a new ISSUE/change, not as a BGud-specific authorization exception.
+- Cleartext HTTP remains a general platform concern; BGud sends no credentials to the
+  Cloud under the approved posture, so it does not gate this feature.
+- Security hardening beyond the approved BGud posture is out of scope for this feature
+  and does not block architecture.
+
+### Resolved By
+
+Repository owner (issue reporter) via the OQ-001/OQ-002 policy decisions and the
+OQ-003/OQ-005/OQ-010 compensating contracts (§8); recorded by the Analyst.
+
+### Resolved Date
+
+2026-09-23
+
+---
+
+## GAP-007
+
+**Status: CLOSED**
+
+### Decision
+
+The missing workflow-stage-1 knowledge is resolved: the BGud sign-in capability is now
+defined as a FEATURE artifact, `docs/features/bgud-operator-signin/feature.md`
+(`BGUD-OPERATOR-SIGNIN-001`, v1.0, 2026-09-23).
+
+The FEATURE covers purpose, business outcome, participating domains, trigger,
+preconditions, operational flow, domain orchestration, constraints, exceptions, and
+acceptance criteria for operator sign-in and warehouse session establishment, written
+against the approved §8 decisions (OQ-001…OQ-010).
+
+### Rationale
+
+GAP-007 existed because the assessment had been performed from the ISSUE, ADRs, and code,
+with no FEATURE artifact defining the requested business change. The new FEATURE artifact
+supplies that definition and is the single authoritative owner of the feature's business
+outcome, operational flow, and acceptance criteria; barcode and Retur business rules remain
+owned by their domains and are referenced rather than restated. Work-stage knowledge (the
+login UX blueprint, the login/authentication architecture, and the implementation plan) was
+used only as source material and remains owned by its own artifact types.
+
+### Impact
+
+GAP-007 no longer blocks architecture. All GAP and open-question entries in this
+assessment are now closed or obsolete.
+
+### Architecture Impact
+
+- The Architect can design the target architecture against the FEATURE artifact
+  `docs/features/bgud-operator-signin/feature.md` together with the §8 decisions, rather
+  than reconstructing business intent from the ISSUE and code.
+- The barcode-registry login/authentication artifacts remain historical sources; their
+  pre-Google login design is not authoritative for BGud.
+- Operator-account/registration business knowledge remains with Main Office (OQ-004 and the
+  FEATURE's participating-domain and constraint statements); if the domain process later
+  chooses a dedicated operator-identity DOMAIN artifact, that is a knowledge-organization
+  follow-up, not a feasibility blocker.
+
+### Resolved By
+
+Analyst (via the `feature-creation` activity) on the repository owner's instruction;
+recorded by the Analyst.
+
+### Resolved Date
+
+2026-09-23
+
+---
+
+## GAP-008
+
+**Status: CLOSED**
+
+### Decision
+
+OQ-007 resolves the OAuth configuration decision: BGud reuses the existing BTrade3 Google OAuth project and web client configuration.
+
+Adding the required configuration to BGud and reconciling Android package/fingerprint requirements are implementation tasks.
+
+### Rationale
+
+The gap existed because BGud has no Google OAuth client configuration in the repository
+(no `google-services.json`, no client id), so Google Sign-In depended on an external
+configuration that had not been selected or committed. OQ-007 removes that uncertainty by
+deciding that BGud reuses BTrade3's existing Google OAuth project and web client
+configuration, following BTrade3's already-implemented Sign-In pattern, with no separate
+BGud OAuth registration. The residual work — bringing the configuration into the BGud app
+and reconciling Android package/fingerprint requirements with the shared client — is
+configuration/implementation work rather than an open feasibility question. The coupling
+with the BTrade3 project is knowingly accepted for the MVP (RISK-005).
+
+### Impact
+
+GAP-008 no longer blocks architecture.
+
+### Architecture Impact
+
+- BGud carries the shared OAuth configuration (web client id / `google-services.json`
+  pattern as in BTrade3); the delivery mechanism into the BGud build is an
+  implementation detail under the plan.
+- The BGud Google Sign-In setup targets the same OAuth project/client as BTrade3; Android
+  application identity constraints imposed by the shared client (package name, SHA
+  certificate/fingerprint requirements) must be reconciled by the Architect/implementer —
+  adding BGud as an allowed client within the existing project is realization, not a new
+  registration decision.
+- No separate BGud OAuth project/client is registered; the coupling to BTrade3's project
+  is knowingly accepted (RISK-005), with a BGud-specific client as a future fallback only.
+- Google Sign-In establishes only the Google account; BTR identity resolution remains per
+  OQ-004/OQ-005 (email → BTR user → `UserId`).
+
+### Resolved By
+
+Repository owner (issue reporter) via the OQ-007 decision (§8); recorded by the Analyst.
 
 ### Resolved Date
 
@@ -517,14 +873,17 @@ client and Cloud change together as one deliberate posture.
   (federated login keeping JWT) and **Option C** (anonymous reads / authenticated writes)
   for BGud — no replacement authentication mechanism without an actual business-flow
   requirement.
-- Does not close GAP-002 (posture, tenant — OQ-003, and actor — OQ-005 now all
-  decided; contract implementation remains), GAP-003 (Google-account authority now
-  decided — OQ-004; data-model/UI realization remains), GAP-004 (OQ-008), GAP-006
-  (accepted knowingly as policy; compensating tenant/actor contract now decided —
-  OQ-003/OQ-005; shared-controller scope subsequently closed by OQ-010; contract
-  implementation remains), GAP-007,
-  GAP-008 (OAuth client configuration — direction decided by OQ-007; configuration
-  delivery remains). (GAP-005 is closed by OQ-003/OQ-006.)
+- Did not close GAP-002 at the time of this decision (posture, tenant — OQ-003, and
+  actor — OQ-005 now all decided; contract implementation remains); **GAP-002 was
+  subsequently CLOSED once OQ-010 fixed shared-controller scope (§8)**. GAP-003 was
+  subsequently **CLOSED after OQ-004 decided the account-authority rules (§8)**; its
+  data-model/UI realization remains. GAP-004 was subsequently **CLOSED after OQ-008
+  fixed the login/session flow (§8)**; its client refactoring remains. GAP-006 was
+  subsequently **CLOSED as knowingly accepted policy once OQ-010 fixed shared-controller
+  scope (§8)**; its contract implementation remains. GAP-008 was subsequently
+  **CLOSED after OQ-007 decided the OAuth-client reuse (§8)**; its configuration
+  delivery remains. GAP-007 was subsequently **CLOSED by the new FEATURE artifact (§8)**.
+  (GAP-005 is closed by OQ-003/OQ-006.)
 - GAP-001 is closed via OQ-002 (§8).
 - OQ-010 is closed as an instance-wide shared-controller decision, not a BGud-only
   exception; OQ-011 is retired as obsolete because no exception exit/restoration condition
@@ -917,9 +1276,9 @@ This keeps BGud aligned with the existing Main Office user-management model:
   mapped one-to-one to existing BTR users; unmapped Google accounts are rejected.
 - GAP-003's policy question ("which Google accounts may sign in", "who creates and
   maintains the mapping", "which `RoleId` applies") is answered — direction
-  **decided by this decision**. What remains open under GAP-003 is the data-model/UI
+  **decided by this decision**, and GAP-003 is **CLOSED (§8)**. The data-model/UI
   realization of the mapping (mapping storage + maintenance in the Main Office **User**
-  menu), which is architecture/implementation work rather than an unanswered
+  menu) remains as architecture/implementation work rather than an unanswered
   feasibility question.
 - RISK-006's mitigation is decided: Main Office is the single authoritative source for
   the mapping — no parallel BGud identity store; access follows the BTR user's
@@ -1013,10 +1372,12 @@ by the OQ-001 decision (§8).
   Per-operator attribution is preserved; loss of attribution is **not** accepted as
   unavoidable — it is compensated by this contract.
 - GAP-002's direction is now fully decided: posture (OQ-001), tenant (OQ-003), and
-  actor (OQ-005) — the gap remains open only for the contract-change implementation
-  (architecture work).
+  actor (OQ-005); shared-controller scope was subsequently fixed by OQ-010, after which
+  GAP-002 was **CLOSED (§8)** — only the contract-change implementation (architecture
+  work) remains.
 - GAP-006's compensating actor contract is decided (tenant + actor both in place); shared-
-  consumer scope was subsequently closed by OQ-010.
+  consumer scope was subsequently closed by OQ-010, after which GAP-006 is **CLOSED
+  (§8)**.
 - RISK-003 is answered (attribution preserved via email → `UserId` resolution);
   RISK-002's and RISK-009's actor-compensating controls are decided.
 - Consistent with OQ-001: no API authentication mechanism is reintroduced — the actor
@@ -1102,9 +1463,9 @@ BTR UserId
 
 - OQ-007 is closed: BGud reuses BTrade3's Google OAuth project/web client — no
   separate BGud OAuth registration is required.
-- GAP-008's direction is decided (reuse of BTrade3's configuration); what remains open
-  under GAP-008 is delivering that configuration into the BGud app (config file /
-  client id), which is implementation work.
+- GAP-008 is **CLOSED (§8)**: BGud reuses BTrade3's configuration; delivering that
+  configuration into the BGud app (config file / client id) and reconciling
+  package/fingerprint requirements are implementation work.
 - RISK-005's mitigation is decided: the reuse that RISK-005 flagged is now the
   explicitly approved direction — the coupling (BTrade3 project changes can affect BGud
   sign-in) is knowingly accepted for the MVP rather than avoided.
@@ -1119,7 +1480,7 @@ BTR UserId
 
 - BGud must carry the shared OAuth configuration (web client id / `google-services.json`
   pattern as in BTrade3) — the delivery mechanism into the BGud app build is an
-  implementation detail under the plan (GAP-008 residual).
+  implementation detail under the plan (GAP-008 closed; implementation residual).
 - The BGud Google Sign-In setup must target the same OAuth project/client as BTrade3:
   package/fingerprint requirements imposed by that shared client (e.g., package name,
   SHA certificate requirements) are constraints the Architect must reconcile with BGud's
@@ -1185,7 +1546,7 @@ Keeping login-time synchronization is simpler and more consistent with the exist
 ### Impact
 
 - OQ-008 is closed: login-time master-data synchronization continues at login time, and the token-based navigation gate is replaced by a local session gate.
-- GAP-004 is resolved for the login UX / navigation gating and login-time sync aspects; the flow re-sources the session values required by login-time sync and navigation.
+- GAP-004 is **CLOSED (§8)** — the login UX / navigation gating and login-time sync aspects are resolved and the flow re-sources the session values required by login-time sync and navigation.
 - No JWT or Cloud authentication token is required to enter the Home screen.
 - Session state drives navigation; offline behavior and warehouse binding are preserved.
 
@@ -1302,8 +1663,8 @@ The repository currently provides no evidence that another consumer requires the
 ### Impact
 
 - OQ-010 is closed: the shared-controller scope gate for the Cloud change is decided — instance-wide `[Authorize]` removal on the five listed routes, not a BGud-only exception.
-- GAP-002's scope question is answered (posture OQ-001, tenant OQ-003, actor OQ-005, shared-controller scope OQ-010); what remains under GAP-002 is the contract-change implementation, which is architecture work.
-- GAP-006's remaining shared-consumer work is answered at policy level; the compensating tenant (OQ-003) and actor (OQ-005) contracts stand unchanged.
+- GAP-002's scope question is answered (posture OQ-001, tenant OQ-003, actor OQ-005, shared-controller scope OQ-010) and GAP-002 is **CLOSED (§8)**; only the contract-change implementation, which is architecture work, remains.
+- GAP-006's remaining shared-consumer work is answered at policy level and GAP-006 is **CLOSED (§8)**; the compensating tenant (OQ-003) and actor (OQ-005) contracts stand unchanged.
 - RISK-002's shared-instance residual and RISK-009's consumer-impact scope are decided at policy level; pre-deployment verification against known non-BGud clients and integration tests becomes implementation/testing work, not a feasibility question.
 - If an actual non-BGud consumer dependency is discovered, a new ISSUE/change is raised by its owning process rather than reintroducing a BGud-specific authorization exception (OQ-011 stays obsolete; no restoration framing).
 
@@ -1370,31 +1731,33 @@ the Analyst.
 
 ## Readiness Checklist
 
-- [ ] All critical gaps resolved (GAP-001 CLOSED by OQ-002, GAP-005 CLOSED by OQ-003;
-      GAP-002 direction fully decided — posture OQ-001, tenant OQ-003, actor OQ-005 —
-      contract implementation remains; GAP-003 open — direction decided by OQ-004,
-      data-model/UI realization remains)
+- [ ] All critical gaps resolved (GAP-001 CLOSED by OQ-002, GAP-002 CLOSED by
+      OQ-001/OQ-003/OQ-005/OQ-010, GAP-003 CLOSED by OQ-004, GAP-004 CLOSED by OQ-008,
+      GAP-005 CLOSED by OQ-003, GAP-006 CLOSED by OQ-001/OQ-002/OQ-003/OQ-005/OQ-010,
+      GAP-007 CLOSED by the new FEATURE artifact `docs/features/bgud-operator-signin/
+      feature.md`, GAP-008 CLOSED by OQ-007; no open gaps remain)
 - [ ] All required decisions recorded (§8 holds the authentication-direction decisions —
       OQ-001 full anonymous posture, OQ-002 ADR non-authority and treatment approval,
       OQ-003 tenant contract as session-scoped `locationId` with OQ-006/GAP-005 closed,
       OQ-004 Google-account authority as a pre-registered one-to-one Google-email↔BTR-user
       mapping maintained in the Main Office **User** menu with the existing BTR `RoleId`
-      authoritative (GAP-003 direction decided), OQ-005 actor contract as the logged-in
+      authoritative (GAP-003 direction decided and CLOSED), OQ-005 actor contract as the logged-in
       Google email in the payload resolved server-side to the BTR `UserId` for actor/
-      `RegisteredBy` (GAP-002 actor residual and GAP-006 actor half decided),
+      `RegisteredBy` (GAP-002 actor residual and GAP-006 actor half decided and CLOSED),
       OQ-007 OAuth client as reuse of BTrade3's existing Google OAuth project/web client
-      (GAP-008 direction decided), OQ-008 login-time synchronization retained and navigation
-      gate replaced by local session, OQ-009 single combined change request
+      (GAP-008 direction decided and CLOSED), OQ-008 login-time synchronization retained and navigation
+      gate replaced by local session (GAP-004 closed), OQ-009 single combined change request
       (supersedes the §7 Option D split recommendation), OQ-010 shared-controller
       scope as instance-wide `[Authorize]` removal with no BGud-only exception,
-      GAP-001 closed, OQ-011 retired)
+      GAP-001 closed, GAP-002 closed, GAP-003 closed, GAP-004 closed, GAP-006 closed,
+      GAP-007 closed, GAP-008 closed, OQ-011 retired)
 - [ ] All blocking open questions resolved (OQ-001, OQ-002, OQ-003, OQ-004, OQ-005,
       OQ-006, OQ-007, OQ-008, OQ-009, OQ-010 closed; OQ-011 obsolete)
 - [ ] Architecture can be finalized or updated
 
 ## Status
 
-NOT-READY
+READY-FOR-PLANNING
 
 ## Notes
 
@@ -1422,6 +1785,27 @@ NOT-READY
   is decided (OQ-010 closed 2026-09-23 — instance-wide `[Authorize]` removal on the
   five BGud-consumed shared routes, no BGud-only exception; pre-deployment verification
   against known non-BGud clients and integration tests is implementation/testing work).
+  GAP-002 is **CLOSED** (2026-09-23 — the target anonymous contract is fully decided by
+  OQ-001/OQ-003/OQ-005/OQ-010; only the contract-change implementation remains, which is
+  architecture work). GAP-003 is **CLOSED** (2026-09-23 — the Google-account
+  mapping/authority rules are fully decided by OQ-004; the database, synchronization/
+  projection, and User-menu UI realization remains, which is implementation work).
+  GAP-004 is **CLOSED** (2026-09-23 — the login/session flow is fully decided by OQ-008:
+  Google Sign-In plus the validated mapped account plus Gudang selection plus a persisted
+  local session, with login-time synchronization retained and the JWT navigation gate
+  replaced by the local session gate; required client refactoring remains implementation
+  work). GAP-006 is **CLOSED** (2026-09-23 — the loss of API authentication is knowingly
+  accepted policy under OQ-001/OQ-002, with the compensating business contracts decided
+  by OQ-003 (tenant), OQ-005 (actor), and OQ-010 (shared-controller scope); security
+  hardening beyond the approved posture is not a prerequisite, and only contract
+  implementation and pre-deployment verification remain). GAP-008 is **CLOSED**
+  (2026-09-23 — the OAuth configuration decision is resolved by OQ-007: BGud reuses
+  BTrade3's existing Google OAuth project and web client configuration; adding the
+  configuration to BGud and reconciling package/fingerprint requirements remain
+  implementation tasks). GAP-007 is **CLOSED** (2026-09-23 — the missing workflow-stage-1
+  knowledge is supplied by the new FEATURE artifact
+  `docs/features/bgud-operator-signin/feature.md`, `BGUD-OPERATOR-SIGNIN-001`, written
+  against the approved §8 decisions). All GAP entries are now closed.
   OQ-008 is closed;
   OQ-009 is closed — single combined change request, superseding the §7 Option D
   split recommendation; OQ-011 is obsolete. No open OQs remain; remaining work is the
@@ -1487,10 +1871,10 @@ NOT-READY
   artifact remains NOT-READY while blocking gaps remain.
 - Knowledge propagation: the OQ-001/OQ-002 decisions must be reflected in the ADR files'
   own status records by their owning process (request 2 above) so the knowledge artifacts
-  stay synchronized; the ISSUE must be aligned (request 1 above). A FEATURE artifact for
-  operator authentication is still required (GAP-007, stage Discovery), and the
-  ARCHITECTURE work for the confirmed Cloud contract change belongs to the Architect once
-  the blocking OQs are closed.
+  stay synchronized; the ISSUE must be aligned (request 1 above). The FEATURE artifact for
+  operator authentication now exists at `docs/features/bgud-operator-signin/feature.md`
+  (GAP-007 closed), and the ARCHITECTURE work for the confirmed Cloud contract change
+  belongs to the Architect now that all blocking gaps and OQs are closed.
 
 ---
 
@@ -1499,6 +1883,8 @@ NOT-READY
 Referenced artifacts:
 
 - `docs/issues/BGUD-GOOGLE-SIGNIN-ISSUE.md` (ISSUE, input — alignment request in §9)
+- `docs/features/bgud-operator-signin/feature.md` (`BGUD-OPERATOR-SIGNIN-001`) — the FEATURE
+  artifact for this capability (GAP-007 closed)
 - `docs/foundation/DOMAIN.md`, `docs/foundation/LANDSCAPE.md`, `docs/foundation/PRODUCT.md`, `docs/foundation/WORKFLOW.md`
 - `docs/work/barcode-registry/adrs/ADR-002-authenticated-jwt-write-endpoints.md`
   — no longer authoritative for BGud (§8 OQ-002); status treatment requested (§9)
