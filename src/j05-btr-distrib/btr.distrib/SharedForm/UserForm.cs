@@ -140,12 +140,14 @@ namespace btr.distrib.SharedForm
             UserNameText.Text = user.UserName;
             PrefixText.Text = user.Prefix;
             RoleComboBox.SelectedValue = user.RoleId;
+            EmailText.Text = user.Email;
         }
 
         private void ClearForm()
         {
             UserIdText.Clear();
             UserNameText.Clear();
+            EmailText.Clear();
             RoleComboBox.SelectedIndex = 0;
         }
         #endregion
@@ -171,6 +173,7 @@ namespace btr.distrib.SharedForm
                 .LoadOrCreate(user)
                 .UserName(UserNameText.Text)
                 .Prefix(PrefixText.Text)
+                .Email(EmailText.Text)
                 .Build();
             user.RoleId = RoleComboBox.SelectedValue.ToString();
 
@@ -182,7 +185,17 @@ namespace btr.distrib.SharedForm
                     .Build();
             }
 
-            _userWriter.Save(ref user);
+            try
+            {
+                _userWriter.Save(ref user);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message, @"Validation Warning",
+                    MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
             ClearForm();
             InitGrid();
         }

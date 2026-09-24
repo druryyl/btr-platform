@@ -13,19 +13,23 @@ import androidx.work.workDataOf
 import com.elsasa.bgud.database.AppDatabase
 import com.elsasa.bgud.datastore.SessionPreferencesDataSource
 import com.elsasa.bgud.network.ApiClient
+import com.elsasa.bgud.network.SessionContextInterceptor
 import com.elsasa.bgud.repository.ReturnOrderReferenceSyncRepository
 import com.elsasa.bgud.repository.ReturnOrderSyncRepository
+import kotlinx.coroutines.flow.first
 import java.io.IOException
 import java.util.UUID
+import java.util.concurrent.atomic.AtomicBoolean
 
 /**
  * Return Order sync worker (S4.5).
  *
  * Executes one ordered [ReturnOrderSyncRepository.sync] run
  * (submit `DRAFT` orders → reference downloads; Arch §17.1, §20) under a
- * connectivity constraint. The JWT is read once at run start and supplied
- * as a fixed bearer provider, so no DataStore I/O blocks the OkHttp
- * dispatcher (mirrors `BarcodeSyncWorker`, S5.3).
+ * connectivity constraint. The local session is read once at run start and
+ * supplied as a fixed session-context provider, so no DataStore I/O blocks the
+ * OkHttp dispatcher (mirrors `BarcodeSyncWorker`, S5.3). No bearer token is
+ * used (TD-09/TD-12).
  *
  * Concurrency and scheduling (OQ-1):
  * - One sync run at a time via unique work ([ExistingWorkPolicy.KEEP]);
@@ -47,20 +51,29 @@ class ReturnOrderSyncWorker(
         }
 
         val session = SessionPreferencesDataSource(applicationContext)
-        val token = session.getToken().orEmpty()
-        if (token.isBlank()) {
-            // No valid JWT → operational sync is blocked; the user must log
-            // in again. Retrying without a session cannot succeed.
+        val actorEmail = session.googleEmail.first().orEmpty()
+        if (actorEmail.isBlank()) {
+            // TD-10/TD-11: no valid local session → operational sync is
+            // blocked; the user must sign in again. Retrying without a session
+            // cannot succeed.
             return Result.failure(
-                workDataOf(OUTPUT_ERRORS to "no session token; login required")
+                workDataOf(OUTPUT_ERRORS to "no session; login required")
             )
         }
+        val locationId = session.locationId.first().orEmpty()
+        val sessionEnded = AtomicBoolean(false)
 
         return try {
             val database = AppDatabase.getDatabase(applicationContext)
             val api = ApiClient.create(
                 baseUrl = normalizedBaseUrl(baseUrl),
-                tokenProvider = { token }
+                sessionContextProvider = {
+                    SessionContextInterceptor.SessionContext(
+                        locationId = locationId,
+                        actorEmail = actorEmail
+                    )
+                },
+                onSessionInvalidated = { sessionEnded.set(true) }
             )
             val repository = ReturnOrderSyncRepository(
                 api = api,
@@ -77,6 +90,15 @@ class ReturnOrderSyncWorker(
 
             val serverId = inputData.getString(KEY_SERVER_ID).orEmpty()
             val run = repository.sync(serverId)
+
+            if (sessionEnded.get()) {
+                // TD-13 — the actor mapping was removed; clear the session and
+                // let the Navigation gate return the operator to sign-in.
+                session.clearSession()
+                return Result.failure(
+                    workDataOf(OUTPUT_ERRORS to "session ended; login required")
+                )
+            }
 
             Result.success(run.toOutputData())
         } catch (e: IOException) {
@@ -99,8 +121,9 @@ class ReturnOrderSyncWorker(
         const val KEY_BASE_URL = "baseUrl"
 
         /**
-         * Login-returned Office id for the reference read routes only
-         * (S4.3, §8.1). Never persisted by the sync layer.
+         * Session-resolved Office id for the reference read routes only
+         * (TD-08). Supplied per enqueue by the caller; never persisted by the
+         * sync layer.
          */
         const val KEY_SERVER_ID = "serverId"
 

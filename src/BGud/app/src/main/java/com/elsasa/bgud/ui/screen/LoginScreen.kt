@@ -1,5 +1,8 @@
 package com.elsasa.bgud.ui.screen
 
+import android.app.Activity
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -8,8 +11,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.text.KeyboardActions
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
@@ -19,6 +20,7 @@ import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.MenuAnchorType
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -30,28 +32,30 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.elsasa.bgud.util.GoogleSignInHelper
 import com.elsasa.bgud.viewmodel.LoginViewModel
 
 /**
- * Login screen (SCR-MOB-001, Architecture §12.3, UX Blueprint §5).
+ * Login screen (SCR-MOB-001, FEATURE §6).
  *
  * ```text
  * Header          (application identity)
- * Form            (Username, Password, Warehouse selector)
- * Action          (Login)
+ * Google gate     (Sign in with Google → resolve the account)
+ * Identity        (resolved Google email)
+ * Gudang selector (Gudang Gamping / Gudang Concat / Gudang Magelang)
+ * Action          (Masuk)
  * Feedback        (error message region)
  * ```
  *
- * Warehouse selector values: Gudang Gamping, Gudang Concat, Gudang Magelang.
- * On success the caller navigates to home (§13.2); on failure the error
- * region shows the message and the screen stays. No valid JWT → the caller
- * keeps this screen as the start destination (IR-M8).
+ * The operator signs in with a Google account; the email is resolved through
+ * `POST api/session/resolve` (TD-02). Only then is the Gudang selector usable.
+ * On success the caller navigates to Home; a refusal or cancellation leaves
+ * the operator on this screen, signed out. No password, JWT, or
+ * `Authorization` header exists anywhere (ARCHITECTURE §10).
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -59,16 +63,36 @@ fun LoginScreen(
     viewModel: LoginViewModel,
     onLoginSuccess: () -> Unit
 ) {
-    val username by viewModel.username.collectAsState()
-    val password by viewModel.password.collectAsState()
+    val context = LocalContext.current
+    val googleSignInHelper = remember { GoogleSignInHelper(context) }
+
+    val resolvedAccount by viewModel.resolvedAccount.collectAsState()
     val selectedWarehouse by viewModel.selectedWarehouse.collectAsState()
+    val warehouseOptions by viewModel.warehouseOptions.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
     val isSyncing by viewModel.isSyncing.collectAsState()
     val error by viewModel.error.collectAsState()
 
     var warehouseExpanded by remember { mutableStateOf(false) }
 
-    val canSubmit = username.isNotBlank() && password.isNotBlank() && !isLoading
+    val isResolved = resolvedAccount != null
+    val canEstablish = isResolved && selectedWarehouse != null && !isLoading
+
+    val signInLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        if (result.resultCode == Activity.RESULT_OK) {
+            val email = googleSignInHelper.getSignedInEmail(result.data)
+            if (email.isNullOrBlank()) {
+                viewModel.onSignInCancelled()
+            } else {
+                viewModel.onGoogleAccountSelected(email)
+            }
+        } else {
+            // Google sign-in cancelled or failed — remain signed out.
+            viewModel.onSignInCancelled()
+        }
+    }
 
     Scaffold(
         containerColor = MaterialTheme.colorScheme.surface
@@ -98,46 +122,46 @@ fun LoginScreen(
                 modifier = Modifier.padding(top = 4.dp, bottom = 32.dp)
             )
 
-            OutlinedTextField(
-                value = username,
-                onValueChange = viewModel::onUsernameChange,
-                modifier = Modifier.fillMaxWidth(),
-                label = { Text("Username") },
-                singleLine = true,
+            Button(
+                onClick = { signInLauncher.launch(googleSignInHelper.getSignInIntent()) },
                 enabled = !isLoading,
-                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next)
-            )
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(52.dp)
+            ) {
+                if (isLoading && !isResolved) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(22.dp),
+                        strokeWidth = 2.dp
+                    )
+                } else {
+                    Text("Masuk dengan Google")
+                }
+            }
 
-            Spacer(modifier = Modifier.height(12.dp))
-
-            OutlinedTextField(
-                value = password,
-                onValueChange = viewModel::onPasswordChange,
-                modifier = Modifier.fillMaxWidth(),
-                label = { Text("Password") },
-                singleLine = true,
-                enabled = !isLoading,
-                visualTransformation = PasswordVisualTransformation(),
-                keyboardOptions = KeyboardOptions(
-                    keyboardType = KeyboardType.Password,
-                    imeAction = ImeAction.Done
-                ),
-                keyboardActions = KeyboardActions(
-                    onDone = { if (canSubmit) viewModel.login(onLoginSuccess) }
+            if (isResolved) {
+                Text(
+                    text = resolvedAccount?.email.orEmpty(),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.padding(top = 12.dp)
                 )
-            )
+            }
 
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(16.dp))
 
             ExposedDropdownMenuBox(
                 expanded = warehouseExpanded,
-                onExpandedChange = { if (!isLoading) warehouseExpanded = !warehouseExpanded }
+                onExpandedChange = {
+                    if (isResolved && !isLoading) warehouseExpanded = !warehouseExpanded
+                }
             ) {
                 OutlinedTextField(
-                    value = selectedWarehouse.displayName,
+                    value = selectedWarehouse?.displayName.orEmpty(),
                     onValueChange = {},
                     readOnly = true,
-                    enabled = !isLoading,
+                    enabled = isResolved && !isLoading,
                     modifier = Modifier
                         .menuAnchor(MenuAnchorType.PrimaryNotEditable)
                         .fillMaxWidth(),
@@ -151,7 +175,7 @@ fun LoginScreen(
                     expanded = warehouseExpanded,
                     onDismissRequest = { warehouseExpanded = false }
                 ) {
-                    viewModel.warehouseOptions.forEach { option ->
+                    warehouseOptions.forEach { option ->
                         DropdownMenuItem(
                             text = { Text(option.displayName) },
                             onClick = {
@@ -165,20 +189,20 @@ fun LoginScreen(
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            Button(
-                onClick = { viewModel.login(onLoginSuccess) },
-                enabled = canSubmit,
+            OutlinedButton(
+                onClick = { viewModel.establishSession(onLoginSuccess) },
+                enabled = canEstablish,
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(52.dp)
             ) {
-                if (isLoading) {
+                if (isLoading && isResolved) {
                     CircularProgressIndicator(
                         modifier = Modifier.size(22.dp),
                         strokeWidth = 2.dp
                     )
                 } else {
-                    Text("Login")
+                    Text("Masuk")
                 }
             }
 

@@ -1,29 +1,42 @@
+using System.Text.Json;
 using btrade.application.UseCase;
 using btrade.domain.ReturnOrderFeature;
 using btrade.webapi.Infrastructure;
 using MediatR;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Nuna.Lib.ActionResultHelper;
 
 namespace btrade.webapi.Controllers;
 
-[Authorize]
 [Route("api/[controller]")]
 [ApiController]
 public class ReturnOrderController : ControllerBase
 {
     private readonly IMediator _mediator;
+    private readonly SessionContextResolver _sessionContextResolver;
 
-    public ReturnOrderController(IMediator mediator)
+    public ReturnOrderController(
+        IMediator mediator,
+        SessionContextResolver sessionContextResolver)
     {
         _mediator = mediator;
+        _sessionContextResolver = sessionContextResolver;
     }
 
     [HttpPost]
     [Route("~/api/return-order")]
     public async Task<IActionResult> Submit(ReturnOrderSubmitRequest request)
     {
+        //  TD-03/TD-04/TD-05/TD-06 — [Authorize] is removed instance-wide and
+        //  the context comes from the session headers through the single
+        //  resolver: X-Session-Location → ServerId, X-Session-Actor → the
+        //  resolved BTR UserId recorded as SubmittedBy. No JWT claim is read
+        //  on BGud's path.
+        var serverId = _sessionContextResolver.ResolveTenant(
+            Request.GetSessionLocation());
+        var submittedBy = _sessionContextResolver.ResolveAccount(
+            Request.GetSessionActor()).UserId;
+
         var cmd = new ReturnOrderUploadCommand(
             request.ReturnOrderId,
             request.ReturnOrderDate,
@@ -35,7 +48,8 @@ public class ReturnOrderController : ControllerBase
             request.DriverId,
             request.DriverName,
             request.Note,
-            User.GetServerId(),
+            serverId,
+            submittedBy,
             request.ListItem);
         await _mediator.Send(cmd);
         return Ok(new JSendOk("Done"));
@@ -47,7 +61,16 @@ public class ReturnOrderController : ControllerBase
     {
         var query = new ReturnOrderIncrementalDownloadQuery(tgl1, tgl2, serverId);
         var result = await _mediator.Send(query);
-        return Ok(new JSendOk(result));
+
+        //  TD-15 — the download carries SubmittedBy (resolved operator UserId)
+        //  for j07-btrade-sync to relay. §10 PascalCase payload fields, matching
+        //  the SessionController convention; the JSend envelope keys stay
+        //  lowercase by declaration on JSendOk.
+        return new JsonResult(new JSendOk(result))
+        {
+            StatusCode = StatusCodes.Status200OK,
+            SerializerSettings = new JsonSerializerOptions()
+        };
     }
 }
 

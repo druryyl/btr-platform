@@ -1,12 +1,15 @@
 using btrade.application.UseCase;
 using MediatR;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Nuna.Lib.ActionResultHelper;
 
 namespace btrade.webapi.Controllers;
 
-[Authorize]
+//  TD-06 — [Authorize] is removed instance-wide. Both routes keep their
+//  existing contract: GET api/Driver/{serverId} is a legacy read route with a
+//  client-supplied serverId (TD-08), and POST api/Driver keeps its body-bound
+//  DriverSyncCommand for token-bearing consumers (j07-btrade-sync); neither
+//  reads JWT claims.
 [Route("api/[controller]")]
 [ApiController]
 public class DriverController : ControllerBase

@@ -4,8 +4,8 @@ Code: BGUD-GOOGLE-SIGNIN-001
 Artifact: IMPLEMENTATION-PLAN
 Version: 1.0
 LastUpdated: 2026-09-23
-Status: NOT-STARTED
-Execution Approval: PENDING
+Status: COMPLETED
+Execution Approval: APPROVED
 ---
 
 # 1. Objective
@@ -169,12 +169,12 @@ Slice review status values are:
 
 | Phase | Implementation Status | Review Status | Progress |
 |-------|-----------------------|---------------|----------|
-| P1 | NOT-STARTED | NOT-REVIEWED | 0/2 |
-| P2 | NOT-STARTED | NOT-REVIEWED | 0/1 |
-| P3 | NOT-STARTED | NOT-REVIEWED | 0/1 |
-| P4 | NOT-STARTED | NOT-REVIEWED | 0/2 |
-| P5 | NOT-STARTED | NOT-REVIEWED | 0/2 |
-| P6 | NOT-STARTED | NOT-REVIEWED | 0/2 |
+| P1 | IMPLEMENTED | GO | 2/2 |
+| P2 | IMPLEMENTED | GO | 1/1 |
+| P3 | IMPLEMENTED | GO | 1/1 |
+| P4 | IMPLEMENTED | GO | 2/2 |
+| P5 | IMPLEMENTED | GO | 2/2 |
+| P6 | IMPLEMENTED | GO | 2/2 |
 
 ---
 
@@ -182,8 +182,8 @@ Slice review status values are:
 
 ## P1 - Database Foundation
 
-Implementation Status: NOT-STARTED
-Review Status: NOT-REVIEWED
+Implementation Status: IMPLEMENTED
+Review Status: GO
 
 Additive-only schema changes (ARCHITECTURE §8): both slices are
 non-breaking for existing consumers and are deployed first (EXT-02).
@@ -192,8 +192,8 @@ non-breaking for existing consumers and are deployed first (EXT-02).
 
 Title: Main Office `BTR_User` Google-email column and filtered unique index
 
-Implementation Status: NOT-STARTED
-Review Status: NOT-REVIEWED
+Implementation Status: IMPLEMENTED
+Review Status: GO
 
 Objective: Add the operator Google-email mapping storage to the authoritative
 Main Office account table per TD-14 and ARCHITECTURE §8:
@@ -224,8 +224,8 @@ saves (P2-S03).
 
 Title: Cloud `BTRADE_User.Email` and `BTRADE_ReturnOrder.SubmittedBy` columns
 
-Implementation Status: NOT-STARTED
-Review Status: NOT-REVIEWED
+Implementation Status: IMPLEMENTED
+Review Status: GO
 
 Objective: Add the Cloud-side columns required by account resolution and
 return-order attribution per ARCHITECTURE §8: `BTRADE_User.Email
@@ -250,19 +250,33 @@ Completion Criteria:
 Notes: `BTRADE_BarcodeRegistrationRequest` and `BTR_ReturnOrder` require no
 schema change (ARCHITECTURE §8); do not touch them.
 
+Implementation Notes: Added `Email VARCHAR(100) NOT NULL CONSTRAINT
+DF_BTRADE_User_Email DEFAULT('')` plus `IX_BTRADE_User_Email` to
+`BarcodeContext/BTRADE_User.sql`, and `SubmittedBy VARCHAR(50) NOT NULL
+CONSTRAINT DF_BTRADE_ReturnOrder_SubmittedBy DEFAULT('')` to
+`ReturnOrderContext/BTRADE_ReturnOrder.sql` (appended last so an upgraded
+database matches the model column order). A pre-existing untracked
+`Scripts/Upgrade_Google_SignIn.sql` was reconciled (header aligned to P1-S02)
+and registered in `btrade.sqldb.sqlproj`; its guarded `ALTER TABLE`/`CREATE
+INDEX` batches are idempotent. `Scripts/Create_BTRADE_ReturnOrder.sql` and
+`Scripts/Upgrade_Barcode_Registry.sql` were intentionally left unchanged: they
+create the base tables and the new delta script supplies the columns on both
+fresh and existing databases (the same pattern P1-S01 used for
+`Upgrade_Barcode_Registry.sql`).
+
 ---
 
 ## P2 - Main Office Account Mapping
 
-Implementation Status: NOT-STARTED
-Review Status: NOT-REVIEWED
+Implementation Status: IMPLEMENTED
+Review Status: GO
 
 ### P2-S03
 
 Title: User-menu maintenance of the Google-email mapping
 
-Implementation Status: NOT-STARTED
-Review Status: NOT-REVIEWED
+Implementation Status: IMPLEMENTED
+Review Status: GO
 
 Objective: Realize OQ-004/TD-14 in the Main Office desktop application: an
 authorized user can create, modify, and remove a BTR user's Google email in
@@ -291,19 +305,41 @@ Notes: Empty `Email` rows are simply not eligible for BGud sign-in
 (ARCHITECTURE §8). Permission model is unchanged — User-menu access is the
 existing gate (OQ-004).
 
+Implementation Notes: `UserModel.Email` carries the mapping.
+`UserBuilder.Email(email)` normalizes on build (`(email ?? '').Trim()`), so the
+persisted value is always trimmed and never null. `UserValidator` gained an
+`IUserDal` constructor (the parameterless one is retained as a fallback) and a
+`RuleFor(x => x.Email)` rule that rejects a non-empty email already registered
+to another user (trimmed, `OrdinalIgnoreCase`), excluding the same `UserId`;
+empty/whitespace is treated as unmapped and allowed. The message is the
+operator-visible `"Email is already registered to another user"`.
+`UserDal` reads/writes `aa.Email` on both `GetData` and `ListData` and on
+`Insert`/`Update`. `UserForm` gained a `Google Email` textbox (`EmailText` +
+`label7`) bound in `ShowData`/`ClearForm` and passed through
+`_userBuilder.Email(EmailText.Text)`; `SaveButton_Click` wraps
+`_userWriter.Save` in the repository's existing `try/catch → MessageBox
+"Validation Warning"` convention so the duplicate rejection is visible to the
+operator. Password/role/prefix behavior is unchanged. Pre-existing untracked
+test leftovers under `btr.test/SupportContext/` (`UserBuilderTest`,
+`UserValidatorTest`, `UserDalStub`) were reconciled: registered in
+`btr.test.csproj`, and `FluentValidation 11.6.0` added to the test project's
+references/`packages.config` (it previously relied only on the transitive
+assembly). All 8 tests pass. `BTR_User.Email`/`UX_BTR_User_Email` were not
+re-added (P1-S01 owns them).
+
 ---
 
 ## P3 - Cloud Account-Mapping and Resolution Base
 
-Implementation Status: NOT-STARTED
-Review Status: NOT-REVIEWED
+Implementation Status: IMPLEMENTED
+Review Status: GO
 
 ### P3-S04
 
 Title: Cloud user email path, `SessionContextResolver`, and `POST api/session/resolve`
 
-Implementation Status: NOT-STARTED
-Review Status: NOT-REVIEWED
+Implementation Status: IMPLEMENTED
+Review Status: GO
 
 Objective: Build the Cloud's complete `BTRADE_User.Email` capability in one
 base slice: carry `Email` on the user model/DAL (read by email for
@@ -350,12 +386,58 @@ and the resolver are one slice deliberately: they share `UserType.cs`,
 `IUserDal.cs`, and `UserDal.cs` and cannot be implemented concurrently
 without conflict.
 
+Implementation Notes: Carried `Email` end-to-end on the Cloud projection.
+`UserType` gained `string Email = ""` (PascalCase JSON field per §10; the
+default is what makes a legacy `POST api/User` payload with no `Email` member
+bind to `''` — EXT-02). `IUserDal` gained `MayBe<UserType> GetByEmail(string)`;
+`UserDal` now selects/inserts `Email` (null-safe `?? string.Empty` on insert)
+and implements `GetByEmail` with TD-14 trim + blank-reject, relying on the
+column's case-insensitive collation for the case-insensitive match against
+`IX_BTRADE_User_Email` (the same convention as `SalesPersonDal.GetByEmail`).
+`IWarehouseMappingDal` gained `IListDataMayBe<WarehouseMappingType>` and
+`WarehouseMappingDal.ListData()` returns the distinct `WarehouseCode→ServerId`
+mapping — no new tenant table or vocabulary. `SessionContextResolver`
+(application layer) exposes `ResolveAccount` (rejects blank/unmapped/inactive
+with `SessionAccountUnresolvableException`), `ResolveTenant` (throws
+`SessionTenantUnresolvableException : ArgumentException` with the verbatim
+`IssueTokenCommand` message `"Invalid warehouse ({locationId})"` — no fallback),
+and `ListWarehouses`. It is registered explicitly (`.AddScoped<SessionContextResolver>()`)
+in `btrade.webapi/Configurations/ApplicationService.cs` because the Scrutor
+scans cannot discover it. `SessionController` serves `POST api/session/resolve`
+anonymously (`[Route("~/api/session/resolve")]`, no `[Authorize]`), issues no
+token, keeps no server-side state, and returns JSendOk
+`{ UserId, UserName, RoleId, Warehouses[ { LocationId, ServerId } ] }`; an
+unmapped/invalid account yields HTTP 400 `new JSend(400, "Bad Request", …)`
+(§9; no 409 here — that is P4). `UserController` was left untouched
+(`[Authorize]` and behavior unchanged, TD-06). The pre-existing untracked
+leftovers (`SessionContextResolver.cs`, `SessionController.cs`, `FakeUserDal.cs`,
+`FakeWarehouseMappingDal.cs`, `SessionContextResolverTests.cs`,
+`SessionResolveTests.cs`) were reconciled rather than duplicated; the fake DALs
+mirror the real TD-14 semantics. Verified: `dotnet build` of
+`btrade.webapi.Test` succeeds (0 errors) and `dotnet test` passes 19/19
+(10 resolver unit tests, 5 resolve/ingest integration tests incl. the
+email-based projection round-trip, 4 pre-existing JWT tests unchanged).
+
+Changed files: `btrade.domain/BarcodeFeature/UserType.cs`,
+`btrade.application/Contract/IUserDal.cs`,
+`btrade.application/Contract/IWarehouseMappingDal.cs`,
+`btrade.infrastructure/BarcodeFeature/UserDal.cs`,
+`btrade.infrastructure/WarehouseFeature/WarehouseMappingDal.cs`,
+`btrade.webapi/Configurations/ApplicationService.cs` (modified);
+`btrade.application/UseCase/SessionContextResolver.cs`,
+`btrade.webapi/Controllers/SessionController.cs`,
+`btrade.webapi.Test/FakeUserDal.cs`,
+`btrade.webapi.Test/FakeWarehouseMappingDal.cs`,
+`btrade.webapi.Test/SessionContextResolverTests.cs`,
+`btrade.webapi.Test/SessionResolveTests.cs` (pre-existing untracked leftovers,
+reconciled). `P1-S02` owns the `BTRADE_User.Email` column/index — not re-added.
+
 ---
 
 ## P4 - Cloud Anonymous Session Contract
 
-Implementation Status: NOT-STARTED
-Review Status: NOT-REVIEWED
+Implementation Status: IMPLEMENTED
+Review Status: GO
 
 Both slices serve BGud-consumed routes on disjoint controllers/use-cases and
 may run in parallel; together with P6-S10 they form the coordinated release
@@ -366,8 +448,8 @@ ARCHITECTURE §8.
 
 Title: Barcode routes — instance-wide `[Authorize]` removal and session-context resolution
 
-Implementation Status: NOT-STARTED
-Review Status: NOT-REVIEWED
+Implementation Status: IMPLEMENTED
+Review Status: GO
 
 Objective: Per TD-03/TD-05/TD-06/TD-13, remove `[Authorize]` from
 `BarcodeController` and `BarcodeRegistrationController`, and convert BGud's
@@ -408,14 +490,63 @@ Notes: Only the three BGud-consumed routes lose JWT-claim reads;
 `POST api/Barcode/sync` (j07 publish path) and `pending`/`ack` behavior for
 token-bearing consumers is otherwise unchanged.
 
+Implementation Notes: Removed the controller-level `[Authorize]` from
+`BarcodeController` and `BarcodeRegistrationController` (instance-wide; no
+BGud-only exception, dual-mode, or compatibility shim) and converted exactly
+the three BGud-consumed routes to header-resolved context through the existing
+`SessionContextResolver` (P3-S04) — no second resolver was added. A small
+`btrade.webapi/Infrastructure/SessionContextHeaders.cs` fixes the §10 header
+names (`X-Session-Location` / `X-Session-Actor`) in one place and exposes
+`HttpRequest.GetSessionLocation()/GetSessionActor()` (missing header → empty
+string). `GET api/barcodes/sync` resolves `ResolveTenant(location)` only;
+`POST api/barcode-registration` (Submit) and `GET api/BarcodeRegistration/status`
+resolve `ResolveTenant(location)` then `ResolveAccount(actor).UserId` and pass
+the resolved BTR `UserId` as `RequestedBy` (identifier shape unchanged), so the
+status query's existing `RequestedBy` filter (TD-05) still returns only the
+caller's own requests. No `User.GetUserId()` and no `User.GetServerId()` remain
+on those three routes. `POST api/Barcode/sync` (j07 publish path) and
+`pending`/`ack` were deliberately left claim-based (`User.GetServerId()`) for
+token-bearing consumers — removing the attribute does not strip claims from a
+supplied token. Error semantics per TD-13: a missing/unmapped
+`X-Session-Location` fails through `SessionTenantUnresolvableException :
+ArgumentException` and maps to HTTP 400; an unresolvable `X-Session-Actor`
+throws `SessionAccountUnresolvableException`, for which a `case
+SessionAccountUnresolvableException` was added to `ErrorHandlerMiddleware`
+mapping to HTTP **409 Conflict** with the JSend failure envelope. That
+middleware change is the single one shared with P4-S06 (which has not run);
+P4-S06 must reuse it. Tenant is resolved before actor, so a request missing both
+headers is reported as malformed context (400), not session-ended (409). No
+logging was added; header values (notably the personal email) are never logged
+at informational level (§9) — the 409 message is the generic resolver text and
+does not echo the email. Tests: `JwtAuthenticationTests` was re-pointed to the
+still-authenticated `POST api/User` (TD-06) for its 401/200 posture checks (the
+barcode routes are no longer the authenticated endpoint); the token/claim
+assertions are unchanged. A new `BarcodeSessionContextTests` (with a new
+`FakeBarcodeRegistrationDal`) covers anonymous access (no token → 200), missing
+and unmapped location → 400, unresolvable actor → 409 (submit and status),
+submit `RequestedBy`/`ServerId` attribution, status own-requests filtering, and
+`pending` retaining claim-based tenant selection under a bearer. Verified:
+`dotnet build btrade.webapi.Test` → 0 errors; `dotnet test` → 28/28 passed
+(19 pre-existing + 9 new).
+
+Changed files: `btrade.webapi/Controllers/BarcodeController.cs`,
+`btrade.webapi/Controllers/BarcodeRegistrationController.cs`,
+`btrade.webapi/Middlewares/ErrorHandlerMiddleware.cs`,
+`btrade.webapi.Test/JwtAuthenticationTests.cs` (modified);
+`btrade.webapi/Infrastructure/SessionContextHeaders.cs`,
+`btrade.webapi.Test/FakeBarcodeRegistrationDal.cs`,
+`btrade.webapi.Test/BarcodeSessionContextTests.cs` (new). The plan's §4 P4 row
+and the P4 phase header were advanced to reflect this slice; P4-S06 remains
+NOT-STARTED and owns the same controllers' return-order/driver routes.
+
 ---
 
 ### P4-S06
 
 Title: Return-order and driver routes — `[Authorize]` removal and `SubmittedBy` attribution
 
-Implementation Status: NOT-STARTED
-Review Status: NOT-REVIEWED
+Implementation Status: IMPLEMENTED
+Review Status: GO
 
 Objective: Per TD-03/TD-05/TD-06/TD-13/TD-15, remove `[Authorize]` from
 `ReturnOrderController` and `DriverController`; resolve
@@ -449,19 +580,85 @@ Completion Criteria:
 Notes: Legacy Cloud rows without `SubmittedBy` are handled by the relay
 slice (P5-S08), not here.
 
+Implementation Notes: Removed the controller-level `[Authorize]` from
+`ReturnOrderController` and `DriverController` (instance-wide; no BGud-only
+exception, dual-mode, or compatibility shim) and dropped the now-unused
+`using Microsoft.AspNetCore.Authorization;`. `ReturnOrderController.Submit` no
+longer calls `User.GetServerId()`: it resolves `ResolveTenant(Request
+.GetSessionLocation())` → `ServerId` and `ResolveAccount(Request.GetSessionActor())
+.UserId` → `SubmittedBy` through the existing `SessionContextResolver` (P3-S04;
+no second resolver) and `SessionContextHeaders` (P4-S05; no duplicated header
+handling). Tenant is resolved before actor, so a request missing both headers is
+reported as malformed context (400), consistent with P4-S05/RV-002. Error
+semantics reuse the generic `case SessionAccountUnresolvableException → 409` and
+`case ArgumentException → 400` already in `ErrorHandlerMiddleware` (P4-S05);
+neither the middleware nor `SessionContextHeaders` was modified. No JWT claim is
+read on either controller. `DriverController` keeps both routes' contracts: `GET
+api/Driver/{serverId}` remains the anonymous legacy client-supplied-`ServerId`
+read (TD-08) and `POST api/Driver` keeps its body-bound `DriverSyncCommand`
+behavior for token-bearing consumers (j07-btrade-sync) — neither route read
+claims before or after, so removing the attribute changes only the requirement.
+`ReturnOrderUploadCommand` gained a `SubmittedBy` positional member (after
+`ServerId`); its handler passes it to `ReturnOrderType`; `ReturnOrderDal.Insert`
+now writes `SubmittedBy` (`@SubmittedBy`, null-safe `?? string.Empty`). The
+request body `ReturnOrderSubmitRequest` is unchanged — no `ServerId`/actor field
+is added (P-06 preserved; context travels in headers only). `ReturnOrderType`
+gained the `SubmittedBy` property and constructor parameter (PascalCase per §10);
+both `GetData` and `ListData` SELECTs were extended with `SubmittedBy` so Dapper's
+constructor binding stays complete (the type uses private setters, so the
+column must be present wherever the type is materialised). The incremental route
+now returns the result through a `JsonResult` with a default
+`JsonSerializerOptions` (the `SessionController` convention) so the payload is
+PascalCase per §10, including `SubmittedBy`; the JSend envelope keys stay
+lowercase by declaration on `JSendOk`. This changes the casing of the existing
+incremental fields from the MVC default camelCase to PascalCase; the only
+consumer (`j07-btrade-sync`) already deserialises case-insensitively
+(`PropertyNameCaseInsensitive = true`), and P5-S08 will consume `SubmittedBy`
+case-insensitively as well. Legacy rows without `SubmittedBy` read back as `''`
+via the column default and are left to P5-S08. Tests: a new
+`ReturnOrderSessionContextTests` (with new `FakeReturnOrderDal`,
+`FakeReturnOrderItemDal`, `FakeDriverDal`) covers anonymous submit with resolved
+`SubmittedBy`/`ServerId` attribution, unresolvable actor → 409 JSend failure,
+missing and unmapped location → 400, anonymous incremental download emitting
+PascalCase `SubmittedBy`, empty incremental download, anonymous `GET api/Driver`,
+and bearer-token `POST api/Driver` keeping its body-bound behavior. The existing
+`JwtAuthenticationTests` required no change (P4-S05 already re-pointed them to
+`POST api/User`). Verified: `dotnet build btrade.webapi.Test` → 0 errors;
+`dotnet test` → 36/36 passed (28 pre-existing + 8 new). The solution-level
+`dotnet build` of `j06-pkl-btrade-api.sln` cannot complete in this environment
+because the `btrade.sqldb` SQL project imports Visual Studio SSDT targets
+(`MSB4278`, pre-existing/environmental, unrelated to this slice); every C#
+project compiles via the test-project build.
+
+Changed files: `btrade.domain/ReturnOrderFeature/ReturnOrderType.cs`,
+`btrade.application/UseCase/ReturnOrderUploadCommand.cs`,
+`btrade.infrastructure/Repository/ReturnOrderDal.cs`,
+`btrade.webapi/Controllers/ReturnOrderController.cs`,
+`btrade.webapi/Controllers/DriverController.cs` (modified);
+`btrade.webapi.Test/FakeReturnOrderDal.cs`,
+`btrade.webapi.Test/FakeReturnOrderItemDal.cs`,
+`btrade.webapi.Test/FakeDriverDal.cs`,
+`btrade.webapi.Test/ReturnOrderSessionContextTests.cs` (new).
+`ErrorHandlerMiddleware.cs` and `SessionContextHeaders.cs` were reused
+unchanged (P4-S05). `UserController`/`BarcodeController`/
+`BarcodeRegistrationController` and the `BTRADE_ReturnOrder.SubmittedBy` column
+(P1-S02) were not touched. The plan's §4 P4 row and the P4 phase header were
+advanced to reflect this slice; plan-level `Status` remains IN-PROGRESS (P5-S08
+and P6-S10 are not IMPLEMENTED).
+
 ---
 
 ## P5 - Synchronization Adjustments
 
-Implementation Status: NOT-STARTED
-Review Status: NOT-REVIEWED
+Implementation Status: IMPLEMENTED
+Review Status: GO
 
 ### P5-S07
 
 Title: `j07-btrade-sync` user projection carries `Email`
 
-Implementation Status: NOT-STARTED
-Review Status: NOT-REVIEWED
+Implementation Status: IMPLEMENTED
+Review Status: GO
 
 Objective: Extend the `BTR_User → BTRADE_User` credential projection
 (IR-05 "replicates BTR_User verbatim") so the Google email flows to the
@@ -487,14 +684,33 @@ Notes: The Cloud tolerates this payload before and after P3-S04's ingest
 change deploys (unknown-field tolerance per EXT-02), so the ARCHITECTURE §8
 order (Main Office column → sync → Cloud column) is safe.
 
+Implementation Notes: `Model/UserType.cs` now carries `Email` (constructor
+parameter + property), placed after `RoleId` to mirror the `BTR_User` column
+order; Dapper binds it by name from the new select. `Repository/UserDal.cs`
+`ListData()` selects `Email` alongside the existing columns, so the projection
+replicates `BTR_User` verbatim (IR-05/TD-14). No functional change was needed
+in `Service/UserSyncService.cs`: the payload is `JsonSerializer.Serialize(new
+UserSyncRequest(listUser))`, which emits every `UserType` property, so `Email`
+is included automatically as a PascalCase member of each `ListUser` item on the
+still-authenticated `POST api/User` (the service-account JWT is unchanged). The
+stale `UserDal` comment was corrected: it no longer cites the
+non-authoritative `ADR-007`; it now records that the emitted `ServerId` is not
+authoritative because `POST api/User` remains authenticated (TD-06) and the
+Cloud re-binds `ServerId` server-side from the service-account JWT, so this
+sync client keeps its login/JWT. Build verified: MSBuild `Debug` of
+`j07-btrade-sync.csproj` → `j07-btrade-sync.exe` produced with 0 errors (only
+pre-existing CS0108/CS0436 warnings). No other slice's files were touched
+(`UserController`/`IUserDal`/Cloud `UserType` belong to P3-S04 and were left
+as-is).
+
 ---
 
 ### P5-S08
 
 Title: Return-order attribution relay to Main Office
 
-Implementation Status: NOT-STARTED
-Review Status: NOT-REVIEWED
+Implementation Status: IMPLEMENTED
+Review Status: GO
 
 Objective: Per TD-15, relay the Cloud-resolved operator attribution into the
 Main Office: `SubmittedBy` from the incremental download reaches the
@@ -522,19 +738,52 @@ Notes: The download service already authenticates with its service JWT
 change the sync client's call — verify it still succeeds, do not "clean up"
 its token header.
 
+Implementation Notes: Relayed the Cloud-resolved operator attribution into the
+existing Main Office import (TD-15) without changing numbering, validation, or
+schema. `Model/ReturnOrderModel.cs` gained `SubmittedBy` (public `get; set;`)
+so the incremental response's PascalCase `SubmittedBy` binds
+case-insensitively — `ReturnOrderIncrementalDownloadService` already
+deserializes with `PropertyNameCaseInsensitive = true` (System.Text.Json
+8.0.5), so no service change was required (only a documenting comment was
+added). `Repository/ReturnOrderDal.cs` `Insert` now stamps the office audit
+identity: `CreatedBy` is `SubmittedBy` when non-empty, else `fallbackCreatedBy`
+(the existing sync service-account identity). `SyncForm.ProcessReturnOrder`
+computes `auditUserId = string.IsNullOrWhiteSpace(returnOrder.SubmittedBy) ?
+userId : returnOrder.SubmittedBy` (the registry `SyncUserId` service account)
+and passes it both to the staging `Insert(returnOrder, auditUserId)` and to the
+existing `MainOfficeCommandExecutor.ImportReturnOrder(returnOrder, auditUserId)`,
+so the operator `UserId` reaches `BTR_ReturnOrder.CreatedBy` (identifier shape
+unchanged) and a legacy row without `SubmittedBy` keeps the pre-relay
+service-account identity. `ReturnOrderDal.Update` is unchanged (never rewrites
+`CreatedBy`), so a re-download preserves the captured attribution. Numbering
+(`ReturnOrderNo`) and validation remain office-side (`ImportReturnOrderCommand`
+/ `INunaCounterBL`); no Main Office schema change. The download service keeps
+its service-account JWT (`BtradeAuthService.AddAuthHeaderAsync`) — removal of
+`[Authorize]` on the Cloud route does not change the call, and the token header
+was deliberately left intact.
+
+Changed files: `Model/ReturnOrderModel.cs`,
+`Repository/ReturnOrderDal.cs`, `SyncForm.cs` (modified);
+`Service/ReturnOrderIncrementalDownloadService.cs` (modified — comment only).
+The Cloud `ReturnOrderType`/`ReturnOrderDal`/`ReturnOrderController` (P4-S06)
+and the `BTR_ReturnOrder` schema (P1-S02) were not touched. Build: MSBuild
+`Debug` of `j07-btrade-sync.csproj` (`/p:SignManifests=false`) →
+`j07-btrade-sync.exe` produced, 0 errors (only the pre-existing CS0436/CS0108
+warnings). No test project exists in `src/j07-btrade-sync`.
+
 ---
 
 ## P6 - BGud Client Cutover
 
-Implementation Status: NOT-STARTED
-Review Status: NOT-REVIEWED
+Implementation Status: IMPLEMENTED
+Review Status: GO
 
 ### P6-S09
 
 Title: Google Sign-In configuration and helper
 
-Implementation Status: NOT-STARTED
-Review Status: NOT-REVIEWED
+Implementation Status: IMPLEMENTED
+Review Status: GO
 
 Objective: Per TD-01/TD-07 (OQ-007), give BGud Google Sign-In capability
 following BTrade3's implemented pattern: add `app/google-services.json` for
@@ -563,14 +812,39 @@ Notes: Runtime verification of the Google flow requires EXT-01; if the
 console registration is not yet delivered, compile-level completion is still
 reviewable and this must be recorded as the residual check.
 
+Implementation Notes: Reconciled the two pre-existing untracked leftovers
+rather than duplicating them. `app/google-services.json` targets the shared
+project `btrade3-663be` with `package_name` `com.elsasa.bgud` and the shared
+web client id (`405920502340-odieer196drj8fd5jinppg7hnj8s8bpa.apps.googleusercontent.com`,
+`client_type: 3`) — no separate BGud OAuth registration. Root
+`build.gradle.kts` gained `buildscript { dependencies { classpath("com.google.gms:google-services:4.3.15") } }`
+and `app/build.gradle.kts` applies `id("com.google.gms.google-services")` plus
+`implementation(libs.play.services.auth)`, mirroring BTrade3's Gradle
+configuration. `gradle/libs.versions.toml` declares `playServicesAuth = "20.7.0"`
+and the `play-services-auth` library (same artifact/version BTrade3 hard-codes
+inline; declared through the BGud catalog convention). The reconciled
+`util/GoogleSignInHelper.kt` mirrors BTrade3's helper (shared web client id via
+`requestIdToken`, `signOut()`) and adds `getSignedInEmail(data)` returning the
+signed-in account email. Verified by `.\gradlew.bat :app:assembleDebug --offline`
+→ BUILD SUCCESSFUL (36 tasks), including `:app:processDebugGoogleServices` and
+`:app:compileDebugKotlin`; the generated resource
+`default_web_client_id` = the shared web client id. No login screen or sign-in
+path was rewired (P6-S10). **EXT-01 residual check:** the Android client entry
+(`mobilesdk_app_id`, Android `client_id`, `certificate_hash`) and `api_key` in
+`google-services.json` are compile-enabling placeholders; the real values
+require the external Google-console registration of package `com.elsasa.bgud`
+plus its signing-certificate fingerprint inside `btrade3-663be`. Runtime
+Google Sign-In cannot be verified until that registration is delivered; until
+then this slice is complete at compile level only.
+
 ---
 
 ### P6-S10
 
 Title: Local-session sign-in flow and bearer-free network layer
 
-Implementation Status: NOT-STARTED
-Review Status: NOT-REVIEWED
+Implementation Status: IMPLEMENTED
+Review Status: GO
 
 Objective: Execute the BGud cutover realizing TD-02/TD-03/TD-08/TD-09/TD-10/
 TD-11/TD-12/TD-13 and FEATURE §6: replace the username/password
@@ -632,6 +906,90 @@ DataStore/Room handling). The edges to P3-S04/P4-S05/P4-S06 encode EXT-02:
 the Cloud must serve the new contract before BGud omits the bearer. Sign-in
 data prerequisites (mapped operators, projected emails) are EXT-01/EXT-04,
 not code dependencies.
+
+Implementation Notes: **Local session (TD-10).** `datastore/SessionPreferences.kt`
+(new) holds the pure `SessionState` snapshot + key mapping for the six TD-10
+keys (`google_email`, `user_id`, `user_name`, `role_id`, `location_id`,
+`server_id`); validity = `google_email` non-blank. `SessionPreferencesDataSource`
+now exposes those six flows, `saveSession(googleEmail, userId, userName,
+roleId, locationId, serverId)`, `clearSession()` (session keys only — sync
+timestamps retained, non-destructive), and `getGoogleEmail()`; `token`,
+`warehouse_code`/`office_code`, and `getToken()` are gone. A legacy install
+holding only the removed `token` key therefore has no `google_email` and is
+treated as signed out. `SessionBinding` compares the queued record's
+`locationId` against the session's `locationId` (IR-09; queued records never
+re-homed); all stamping/reading sites (`BarcodeSyncRepository`,
+`ReturnOrderCaptureRepository`, `Register/EditBarcodeViewModel`,
+`CreateReturnOrderViewModel`) now read `session.locationId`.
+**Network layer (TD-12/TD-13).** `network/AuthInterceptor.kt` is deleted;
+`network/SessionContextInterceptor.kt` (new) attaches the fixed
+`X-Session-Location`/`X-Session-Actor` headers when a session exists, sends no
+`Authorization` header, and reports a Cloud HTTP 409 through
+`onSessionInvalidated`. `ApiClient.create(baseUrl, sessionContextProvider,
+onSessionInvalidated, enableLogging)` no longer accepts a token provider; the
+resolution call passes no provider (send-only body email, TD-02/TD-12).
+`BtradeApiService` declares `POST api/session/resolve` and drops
+`api/Auth/login`; `SessionResolveRequest`/`SessionResolveResult`/`WarehouseDto`
+replace `LoginRequest`/`LoginResult`; legacy `{serverId}` reads keep their
+route contract (TD-08), supplied with the session's resolved `server_id`.
+**Sign-in flow (TD-02/TD-09).** `repository/SessionResolverRepository.kt`
+(new) calls `POST api/session/resolve` (email in body; HTTP 400 →
+`Refused` with the administrator message); `LoginViewModel` replaces the
+username/password flow with `onGoogleAccountSelected(email)` (resolve →
+populate the three-Gudang selector from the returned mapping),
+`onSignInCancelled()` (stays signed out), and `establishSession(onSuccess)`
+(persist session → login-time sync with the session-context client →
+Home). `LoginScreen` presents the Google button (via
+`GoogleSignInHelper`/`rememberLauncherForActivityResult`) and the retained
+Gudang selector; the resolved email is shown. Barcode sync remains
+structurally blocking; the Return Order run is wrapped so its failure never
+blocks navigation (TD-09, current semantics). A Cloud 409 during login-time
+sync or a manual sync clears the session (worker and `LoginViewModel`) and
+the operator is returned to sign-in.
+**Gate and lifecycle (TD-11).** `ui/Navigation.kt` gates the start
+destination on `session.googleEmail` (never a token); a reactive guard returns
+to `login` if a valid session ends while running (logout/Gudang change/409),
+de-duplicated against the settings navigation. `SettingsViewModel` exposes
+`logout()` and `changeWarehouse()` (both clear the local session) and reads
+`locationId`/`serverId`; `SettingsScreen` adds a `Ganti Gudang` action.
+`HomeViewModel`/`SynchronizationViewModel`/`ReturnOrderSyncViewModel` read
+`locationId`/`serverId`. Workers build their clients from the local session
+(`googleEmail`+`locationId`) and send no bearer.
+**Removal.** No code path stores, reads, or sends a JWT or password; the
+`token`/`office_code` keys and `api/Auth/login`/`LoginRequest`/`LoginResult`/
+`AuthInterceptor` are absent (remaining `JWT`/`Authorization`/`password`
+occurrences are doc comments only). **Tests:** new `SessionPreferencesTest`
+(5), `SessionBindingTest` (3), `SessionContextInterceptorTest` (5) cover the
+session store/validity, IR-09 binding, header attachment, no-`Authorization`,
+and 409 session-clear signalling. Verified: `.\gradlew.bat :app:assembleDebug
+--offline` → BUILD SUCCESSFUL; `:app:testDebugUnitTest` → 13/13 passed.
+**EXT-01 residual:** runtime Google Sign-In verification still requires the
+external Google-console registration of `com.elsasa.bgud` (P6-S09 RV-001);
+compile-level completion is achieved.
+
+Changed files: `datastore/SessionPreferencesDataSource.kt`,
+`datastore/SessionBinding.kt`, `network/ApiClient.kt`,
+`network/BtradeApiService.kt`, `model/api/ApiModels.kt`,
+`repository/BarcodeSyncRepository.kt`,
+`repository/ReturnOrderSyncRepository.kt`,
+`repository/ReturnOrderReferenceSyncRepository.kt`,
+`repository/ReturnOrderCaptureRepository.kt`, `sync/BarcodeSyncWorker.kt`,
+`sync/ReturnOrderSyncWorker.kt`, `viewmodel/LoginViewModel.kt`,
+`viewmodel/HomeViewModel.kt`, `viewmodel/SettingsViewModel.kt`,
+`viewmodel/SynchronizationViewModel.kt`,
+`viewmodel/ReturnOrderSyncViewModel.kt`,
+`viewmodel/RegisterBarcodeViewModel.kt`, `viewmodel/EditBarcodeViewModel.kt`,
+`viewmodel/CreateReturnOrderViewModel.kt`, `ui/Navigation.kt`,
+`ui/screen/LoginScreen.kt`, `ui/screen/SettingsScreen.kt` (modified);
+`datastore/SessionPreferences.kt`, `network/SessionContextInterceptor.kt`,
+`repository/SessionResolverRepository.kt`,
+`app/src/test/java/com/elsasa/bgud/datastore/SessionPreferencesTest.kt`,
+`app/src/test/java/com/elsasa/bgud/datastore/SessionBindingTest.kt`,
+`app/src/test/java/com/elsasa/bgud/network/SessionContextInterceptorTest.kt`
+(new); `network/AuthInterceptor.kt` (deleted). `viewmodel/LoginViewModelFactory.kt`
+needed no change (constructor unchanged). The plan's §4 P6 row and the P6
+phase header were advanced to reflect this slice; plan-level `Status` remains
+IN-PROGRESS (review not assigned).
 
 ---
 

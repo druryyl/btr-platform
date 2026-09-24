@@ -39,6 +39,9 @@
     <Reference Include="FluentAssertions, Version=6.11.0.0, Culture=neutral, PublicKeyToken=33f2691a05b67b6a, processorArchitecture=MSIL">
       <HintPath>..\packages\FluentAssertions.6.11.0\lib\net47\FluentAssertions.dll</HintPath>
     </Reference>
+    <Reference Include="FluentValidation, Version=11.0.0.0, Culture=neutral, PublicKeyToken=7de548da2fbae0f0, processorArchitecture=MSIL">
+      <HintPath>..\packages\FluentValidation.11.6.0\lib\netstandard2.0\FluentValidation.dll</HintPath>
+    </Reference>
     <Reference Include="Microsoft.Bcl.AsyncInterfaces, Version=7.0.0.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
       <HintPath>..\packages\Microsoft.Bcl.AsyncInterfaces.7.0.0\lib\net462\Microsoft.Bcl.AsyncInterfaces.dll</HintPath>
     </Reference>
@@ -317,6 +320,9 @@
     <Compile Include="SalesContext\SegmentDalTest.cs" />
     <Compile Include="Portal\BusinessDateProviderTest.cs" />
     <Compile Include="Portal\PresentationModeServiceTest.cs" />
+    <Compile Include="SupportContext\UserBuilderTest.cs" />
+    <Compile Include="SupportContext\UserDalStub.cs" />
+    <Compile Include="SupportContext\UserValidatorTest.cs" />
     <Compile Include="Tests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

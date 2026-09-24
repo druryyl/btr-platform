@@ -64,6 +64,9 @@ namespace j07_btrade_sync.Service
                 return (false, response.ErrorMessage ?? response.StatusDescription, null);
             }
 
+            //  TD-15 — the incremental response is PascalCase (§10); the
+            //  case-insensitive options bind SubmittedBy (and every other
+            //  field) regardless of casing.
             var options = new JsonSerializerOptions
             {
                 PropertyNameCaseInsensitive = true

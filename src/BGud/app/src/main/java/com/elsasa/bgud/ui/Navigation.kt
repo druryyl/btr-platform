@@ -6,9 +6,13 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -72,9 +76,10 @@ import com.elsasa.bgud.viewmodel.SynchronizationViewModelFactory
  * `http://dev.smart-ics.com:8089/belajar-api/api/Brg/{serverId}`.
  *
  * The single composition-root value is held here and passed down; no
- * environment URL is hardcoded in the network layer (S5.2). Never append a
- * tenant segment: the tenant is JWT-resolved (ADR-007). Cleartext HTTP is
- * permitted for this host via `res/xml/network_security_config.xml`.
+ * environment URL is hardcoded in the network layer (§10). Never append a
+ * tenant segment: the tenant is resolved server-side from
+ * `X-Session-Location` (TD-03). Cleartext HTTP is permitted for this host via
+ * `res/xml/network_security_config.xml`.
  */
 private const val CLOUD_BASE_URL = "http://dev.smart-ics.com:8089/belajar-api/"
 
@@ -144,12 +149,13 @@ private const val SESSION_NOT_LOADED = "\u0000session-not-loaded"
  *   └─ Kembali ──▶ back
  * ```
  *
- * Start destination: `login` when no session (no valid JWT) exists,
- * otherwise `home` (IR-M8: no valid JWT → all operational commands
- * blocked). The session gate re-reads the DataStore token, so a warehouse
- * change (which requires re-authentication, IR-09) returns here via
- * logout (S5.11, SCR-MOB-008): `Logout` clears the session and navigates
- * to `login` with the back stack cleared. All §13.2 routes
+ * Start destination: `login` when no valid local session exists, otherwise
+ * `home` (TD-11: session validity = `google_email` present; no JWT or Cloud
+ * token is consulted). The session gate re-reads the DataStore session, so a
+ * Gudang change (which requires a new session, IR-09) returns here via
+ * logout/change (SCR-MOB-008): the session is cleared and the operator
+ * navigates to `login` with the back stack cleared. A Cloud 409 (session
+ * ended, TD-13) also clears the session and lands here. All §13.2 routes
  * (`login`, `home`, `scan`, `register?barcode={value}`,
  * `barcode_registry`, `edit?barcodeId={id}`, `synchronization`,
  * `settings`) are wired; no forward references remain. The §13.1 Return
@@ -167,9 +173,9 @@ fun AppNavigation(
     val context = LocalContext.current
     val session = remember { SessionPreferencesDataSource(context) }
     val captureRepository = remember { ReturnOrderCaptureRepository(database, session) }
-    val tokenOrLoading by session.token.collectAsState(initial = SESSION_NOT_LOADED)
+    val googleEmailOrLoading by session.googleEmail.collectAsState(initial = SESSION_NOT_LOADED)
 
-    if (tokenOrLoading == SESSION_NOT_LOADED) {
+    if (googleEmailOrLoading == SESSION_NOT_LOADED) {
         // Session not yet read — hold the gate instead of guessing.
         Box(
             modifier = Modifier.fillMaxSize(),
@@ -180,9 +186,28 @@ fun AppNavigation(
         return
     }
 
-    // Loaded: a blank/absent token means "no session" → login. On first install
-    // and after logout this is the resolved state, not the loading spinner.
-    val hasSession = !tokenOrLoading.isNullOrBlank()
+    // Loaded: a blank/absent `google_email` means "no session" → login. Session
+    // validity is the presence of `google_email` (TD-10/TD-11); a legacy
+    // install holding only the removed `token` key therefore routes here too.
+    // On first install and after logout this is the resolved state, not the
+    // loading spinner.
+    val hasSession = !googleEmailOrLoading.isNullOrBlank()
+
+    // TD-11/TD-13: if a valid session ends while the app is running — logout,
+    // Gudang change, or a Cloud 409 clearing the local session — return the
+    // operator to sign-in. The logout path already navigates; this guard keeps
+    // the two from double-navigating.
+    var hadSession by rememberSaveable { mutableStateOf(hasSession) }
+    LaunchedEffect(hasSession) {
+        if (hasSession) {
+            hadSession = true
+        } else if (hadSession && navController.currentDestination?.route != "login") {
+            hadSession = false
+            navController.navigate("login") {
+                popUpTo("home") { inclusive = true }
+            }
+        }
+    }
 
     NavHost(
         navController = navController,
@@ -477,9 +502,13 @@ fun AppNavigation(
                 viewModel(factory = settingsFactory)
             SettingsScreen(
                 viewModel = settingsViewModel,
-                onLoggedOut = {
-                    navController.navigate("login") {
-                        popUpTo("home") { inclusive = true }
+                onSessionEnded = {
+                    // Guard against a double navigation with the reactive gate
+                    // above (both react to the same cleared session).
+                    if (navController.currentDestination?.route != "login") {
+                        navController.navigate("login") {
+                            popUpTo("home") { inclusive = true }
+                        }
                     }
                 },
                 onBack = { navController.popBackStack() }

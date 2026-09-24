@@ -12,7 +12,7 @@ public class ReturnOrderType : IReturnOrderKey, IServerId
     public ReturnOrderType(string returnOrderId, string serverId, string returnOrderDate,
         string warehouseCode, string customerId, string customerName,
         string salesPersonId, string salesPersonName, string driverId, string driverName,
-        string note, string statusSync)
+        string note, string statusSync, string submittedBy)
     {
         ReturnOrderId = returnOrderId;
         ServerId = serverId;
@@ -26,6 +26,7 @@ public class ReturnOrderType : IReturnOrderKey, IServerId
         DriverName = driverName;
         Note = note;
         StatusSync = statusSync;
+        SubmittedBy = submittedBy;
         ListItems = new List<ReturnOrderItemType>();
     }
 
@@ -42,9 +43,16 @@ public class ReturnOrderType : IReturnOrderKey, IServerId
     public string Note { get; private set; }
     public string StatusSync { get; set; }
 
+    /// <summary>
+    /// TD-05/TD-15 — the resolved BTR <c>UserId</c> of the operator who
+    /// submitted the return order. Carried in the incremental download so
+    /// j07-btrade-sync can relay it into the Main Office return-order audit.
+    /// </summary>
+    public string SubmittedBy { get; private set; }
+
     public List<ReturnOrderItemType> ListItems { get; set; }
 
-    public static IReturnOrderKey Key(string id) => new ReturnOrderType(id, "", "", "", "", "", "", "", "", "", "", "");
+    public static IReturnOrderKey Key(string id) => new ReturnOrderType(id, "", "", "", "", "", "", "", "", "", "", "", "");
 }
 
 public interface IReturnOrderKey

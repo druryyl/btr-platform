@@ -18,5 +18,6 @@ namespace btr.domain.SupportContext.UserAgg
         public string Prefix { get; set; }
         public string RoleId { get; set; }
         public string RoleName { get; set; }
+        public string Email { get; set; }
     }
 }

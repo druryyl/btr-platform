@@ -14,6 +14,7 @@ namespace btr.application.SupportContext.UserAgg
         IUserBuilder UserName(string userName);
         IUserBuilder Password(string password);
         IUserBuilder Prefix(string prefix);
+        IUserBuilder Email(string email);
     }
 
     public class UserBuilder : IUserBuilder
@@ -75,6 +76,12 @@ namespace btr.application.SupportContext.UserAgg
         public IUserBuilder Prefix(string prefix)
         {
             _agg.Prefix = prefix;
+            return this;
+        }
+
+        public IUserBuilder Email(string email)
+        {
+            _agg.Email = (email ?? string.Empty).Trim();
             return this;
         }
 

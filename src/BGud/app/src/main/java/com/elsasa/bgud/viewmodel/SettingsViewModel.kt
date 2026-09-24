@@ -10,23 +10,21 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
 /**
- * Settings view model (SCR-MOB-008, Architecture §19.3).
+ * Settings view model (SCR-MOB-008).
  *
- * Settings is a navigation leaf (traceability: navigation — no workflow,
- * no domain capability; UX Blueprint §4). It exposes the login-bound
- * session for display and the session-closing action:
+ * Settings is a navigation leaf. It exposes the local session for display and
+ * the two session-closing actions:
  *
  * - `user` / `warehouse` / `office` re-expose the DataStore session
- *   (`userId`, `warehouseCode`, `officeCode`; IR-09 — `warehouseCode`,
- *   never a `ServerId`, is the stored tenant binding; `officeCode` is the
- *   login-returned `serverId` kept for display-only, S5.5 precedent).
- * - `logout()` clears the session (`clearSession`) so the Navigation
- *   start-destination gate returns to `login` (IR-M8: no valid JWT → all
- *   operational commands blocked; §13.2 `any → login` when no valid JWT,
- *   token expired, or warehouse change requested). Warehouse change is
- *   realized as logout + re-authentication (IR-09); the local cache is
- *   replaced for the new tenant by the login sync (S5.3/S5.4) — this
- *   screen clears no Room state and issues no network call.
+ *   (`user_id`, `location_id`, `server_id`; TD-10). `location_id` — never a
+ *   `ServerId` — is the stored tenant binding (IR-09); `server_id` is the
+ *   Cloud-resolved value kept for the legacy `{serverId}` read routes (TD-08).
+ * - `logout()` and `changeWarehouse()` both clear the local session so the
+ *   Navigation gate returns to `login` (TD-10/TD-11). Gudang change is a new
+ *   session: the operator ends the current session and selects another Gudang
+ *   (FEATURE §6.8). Room caches and queued records are intentionally
+ *   untouched — they keep their original `locationId` binding and are never
+ *   re-homed (IR-09).
  */
 class SettingsViewModel(
     private val session: SessionPreferencesDataSource
@@ -36,24 +34,36 @@ class SettingsViewModel(
         .map { it.orEmpty() }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), "")
 
-    val warehouse: StateFlow<String> = session.warehouseCode
+    val warehouse: StateFlow<String> = session.locationId
         .map { it.orEmpty() }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), "")
 
-    val office: StateFlow<String> = session.officeCode
+    val office: StateFlow<String> = session.serverId
         .map { it.orEmpty() }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), "")
 
     /**
-     * Logout (§13.2 `any → login`, IR-M8, IR-09): clear the session and
-     * report completion so Navigation can route to `login`. Room caches
-     * are intentionally untouched — the next login sync replaces them
-     * for the newly bound tenant (S5.3/S5.4).
+     * Logout (TD-10/TD-11): clear the local session and report completion so
+     * Navigation can route to `login`. Room caches and queued records are
+     * intentionally untouched (IR-09).
      */
     fun logout(onLoggedOut: () -> Unit) {
+        clearSession(onLoggedOut)
+    }
+
+    /**
+     * Gudang change (FEATURE §6.8, IR-09): ending the session is exactly what
+     * logout does; the operator then selects another Gudang at sign-in. Queued
+     * records keep their original `locationId` and are never re-homed.
+     */
+    fun changeWarehouse(onChanged: () -> Unit) {
+        clearSession(onChanged)
+    }
+
+    private fun clearSession(onCleared: () -> Unit) {
         viewModelScope.launch {
             session.clearSession()
-            onLoggedOut()
+            onCleared()
         }
     }
 }

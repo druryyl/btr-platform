@@ -32,14 +32,14 @@ import kotlinx.coroutines.withContext
  * ```
  *
  * Rules (no new decisions):
- * - Every request carries the JWT via [BtradeApiService] (S5.2
- *   `AuthInterceptor`); this class performs no authentication itself (IR-M8
- *   is enforced by the caller holding a valid session).
- * - No `ServerId` is stored or sent as a command input (ADR-007, IR-09,
- *   P-06). The only tenant value the device ever supplies is the legacy
- *   read-route path `GET /api/Brg/{serverId}` (ADR-007 §8), using the
- *   login-returned `serverId` passed per run for display and for that route
- *   only (§8.4). It is never persisted here.
+ * - Every request carries the session context via [BtradeApiService] (TD-12
+ *   `SessionContextInterceptor`); this class performs no authentication itself
+ *   (a valid local session is enforced by the caller).
+ * - No `ServerId` is stored or sent as a command input on the session-context
+ *   routes (IR-09, P-06). The only tenant value the device ever supplies is
+ *   the legacy read-route path `GET /api/Brg/{serverId}` (TD-08), using the
+ *   session-resolved `serverId` passed per run for that route only. It is
+ *   never persisted here.
  * - Submission is filtered by [SessionBinding.canSubmit] (IR-M7, IR-09):
  *   queued requests captured under a different warehouse are held, never
  *   re-homed, never submitted.
@@ -77,7 +77,7 @@ class BarcodeSyncRepository(
     /**
      * Full ordered run: submit → barcodes → barang → statuses.
      *
-     * @param serverId login-returned Office id for the legacy I-06 read
+     * @param serverId session-resolved Office id for the legacy I-06 read
      * route only; blank skips the Barang download (recorded in [errors]).
      */
     suspend fun sync(serverId: String): SyncRunResult = withContext(Dispatchers.IO) {
@@ -143,13 +143,11 @@ class BarcodeSyncRepository(
             .first()
         if (pending.isEmpty()) return@withContext SubmitOutcome()
 
-        val warehouseCode = session.warehouseCode.first().orEmpty()
+        val locationId = session.locationId.first().orEmpty()
         val userId = session.userId.first().orEmpty()
-        val officeCode = session.officeCode.first().orEmpty()
         val binding = SessionBinding(
             userId = userId,
-            warehouseCode = warehouseCode,
-            officeCode = officeCode
+            locationId = locationId
         )
 
         var submitted = 0
@@ -204,7 +202,7 @@ class BarcodeSyncRepository(
 
     /**
      * Step 3 — Barang reference download (I-06); replaces the local
-     * reference cache (ADR-005). [serverId] is the login-returned Office id,
+     * reference cache (ADR-005). [serverId] is the session-resolved Office id,
      * used for this legacy read route only (§8.4, ADR-007 §8).
      */
     suspend fun downloadBarang(serverId: String): Int = withContext(Dispatchers.IO) {

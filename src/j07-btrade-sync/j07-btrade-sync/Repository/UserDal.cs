@@ -13,12 +13,16 @@ namespace j07_btrade_sync.Repository
     {
         public IEnumerable<UserType> ListData()
         {
-            //  IR-05 — the credential projection replicates BTR_User verbatim.
-            //  BTR_User has no active flag, so every replicated account is
-            //  active; ServerId is assigned by the Cloud from the JWT (ADR-007).
+            //  IR-05 — the credential projection replicates BTR_User verbatim,
+            //  now including the Google-email mapping (TD-14). BTR_User has no
+            //  active flag, so every replicated account is active. The ServerId
+            //  value emitted here is not authoritative: POST api/User remains
+            //  authenticated (TD-06) and the Cloud re-binds ServerId server-side
+            //  from the service-account JWT, so this sync client keeps its
+            //  login/JWT.
             const string sql = @"
                 SELECT
-                    UserId, UserName, Password, RoleId,
+                    UserId, UserName, Password, RoleId, Email,
                     CAST(1 AS BIT) AS IsAktif,
                     '' AS ServerId
                 FROM

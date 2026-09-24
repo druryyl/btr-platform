@@ -35,4 +35,20 @@ public class WarehouseMappingDal : IWarehouseMappingDal
         using var conn = new SqlConnection(ConnStringHelper.Get(_opt));
         return MayBe.From(conn.ReadSingle<WarehouseMappingType>(sql, dp));
     }
+
+    public MayBe<IEnumerable<WarehouseMappingType>> ListData()
+    {
+        //  TD-02/TD-04 — the full distinct locationId(WarehouseCode)→ServerId
+        //  mapping returned to BGud at session establishment.
+        const string sql = @"
+            SELECT
+                WarehouseCode, ServerId
+            FROM
+                BTR_WarehouseMapping
+            ORDER BY
+                WarehouseCode";
+
+        using var conn = new SqlConnection(ConnStringHelper.Get(_opt));
+        return MayBe.From(conn.Read<WarehouseMappingType>(sql, new DynamicParameters()));
+    }
 }

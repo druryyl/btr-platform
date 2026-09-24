@@ -340,6 +340,15 @@ namespace j07_btrade_sync
                 {
                     try
                     {
+                        //  TD-15 — the Cloud-resolved operator UserId (SubmittedBy)
+                        //  is relayed to the existing Main Office import as the
+                        //  office audit identity. A legacy row without SubmittedBy
+                        //  keeps the existing sync service-account identity
+                        //  (registry SyncUserId) — the pre-relay behavior.
+                        var auditUserId = string.IsNullOrWhiteSpace(returnOrder.SubmittedBy)
+                            ? userId
+                            : returnOrder.SubmittedBy;
+
                         var returnOrderDb = _returnOrderDal.GetData(returnOrder);
                         if (returnOrderDb != null)
                         {
@@ -350,13 +359,13 @@ namespace j07_btrade_sync
                         }
                         else
                         {
-                            _returnOrderDal.Insert(returnOrder);
+                            _returnOrderDal.Insert(returnOrder, auditUserId);
                             _returnOrderItemDal.Delete(returnOrder);
                             _returnOrderItemDal.Insert(returnOrder.ListItems);
                             LogMessage($"Staged return order {returnOrder.CustomerName} ...", Color.Blue);
                         }
 
-                        var importResult = await _mainOfficeCommand.ImportReturnOrder(returnOrder, userId);
+                        var importResult = await _mainOfficeCommand.ImportReturnOrder(returnOrder, auditUserId);
                         LogMessage($"Imported return order {importResult.ReturnOrderNo} ...", Color.Blue);
                     }
                     catch (Exception ex)

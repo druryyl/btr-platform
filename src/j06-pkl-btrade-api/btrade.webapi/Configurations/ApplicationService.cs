@@ -1,4 +1,5 @@
 ﻿using btrade.application;
+using btrade.application.UseCase;
 using Nuna.Lib.AutoNumberHelper;
 using Nuna.Lib.CleanArchHelper;
 using Nuna.Lib.ValidationHelper;
@@ -15,7 +16,11 @@ public static class ApplicationService
         services
             .AddMediatR(cfg => cfg.RegisterServicesFromAssemblyContaining<ApplicationAssemblyAnchor>()) 
             .AddScoped<INunaCounterBL, NunaCounterBL>()
-            .AddScoped<DateTimeProvider, DateTimeProvider>();
+            .AddScoped<DateTimeProvider, DateTimeProvider>()
+            //  TD-04 — the single owner of session-context resolution. It is not
+            //  discoverable by the Scrutor scans below (it implements no scanned
+            //  abstraction), so it is registered explicitly.
+            .AddScoped<SessionContextResolver>();
 
         services
             .Scan(selector => selector

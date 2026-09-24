@@ -30,12 +30,12 @@ import kotlinx.coroutines.withContext
  * ```
  *
  * Rules (no new decisions):
- * - Every call carries the JWT via [BtradeApiService] (S4.2
- *   `AuthInterceptor`); this class performs no authentication itself.
+ * - Every call carries the session context via [BtradeApiService] (TD-12
+ *   `SessionContextInterceptor`); this class performs no authentication itself.
  * - No `ServerId` is stored or sent as a command input (P-06). The only
  *   tenant value the device ever supplies is the legacy read-route path
  *   `GET /api/Customer|SalesPerson|Driver/{serverId}` (the
- *   `GET /api/Brg/{serverId}` precedent), using the login-returned
+ *   `GET /api/Brg/{serverId}` precedent), using the session-resolved
  *   `serverId` passed per run for that route only (§8.1, §9.2). It is
  *   never persisted here; the session already holds both `WarehouseCode`
  *   and `ServerId` (resolved at login, IR-RO-04).
@@ -69,7 +69,7 @@ class ReturnOrderReferenceSyncRepository(
     /**
      * Full ordered run: customer → salesperson → driver.
      *
-     * @param serverId login-returned Office id for the I-RO-03/04/05 read
+     * @param serverId session-resolved Office id for the I-RO-03/04/05 read
      * routes only; blank fails each download (recorded in [errors]).
      */
     suspend fun sync(serverId: String): SyncRunResult = withContext(Dispatchers.IO) {
@@ -106,7 +106,7 @@ class ReturnOrderReferenceSyncRepository(
 
     /**
      * Customer reference download (I-RO-03); replaces the local mandatory
-     * Customer cache (GAP-004). [serverId] is the login-returned Office id,
+     * Customer cache (GAP-004). [serverId] is the session-resolved Office id,
      * used for this read route only (§8.1, §9.2).
      */
     suspend fun downloadCustomer(serverId: String): Int = withContext(Dispatchers.IO) {
@@ -127,7 +127,7 @@ class ReturnOrderReferenceSyncRepository(
     /**
      * Sales Person reference download (I-RO-04); replaces the local
      * optional Salesman cache (ADR-RO-005). [serverId] is the
-     * login-returned Office id, used for this read route only (§8.1, §9.2).
+     * session-resolved Office id, used for this read route only (§8.1, §9.2).
      */
     suspend fun downloadSalesPerson(serverId: String): Int = withContext(Dispatchers.IO) {
         if (serverId.isBlank()) {
@@ -147,7 +147,7 @@ class ReturnOrderReferenceSyncRepository(
     /**
      * Driver reference download (I-RO-05, S2.5); replaces the local
      * optional Driver cache (ADR-RO-005, GAP-013). [serverId] is the
-     * login-returned Office id, used for this read route only (§8.1, §9.2).
+     * session-resolved Office id, used for this read route only (§8.1, §9.2).
      */
     suspend fun downloadDriver(serverId: String): Int = withContext(Dispatchers.IO) {
         if (serverId.isBlank()) {

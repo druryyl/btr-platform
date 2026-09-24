@@ -9,11 +9,11 @@ import com.google.gson.annotations.SerializedName
  * - Every response is wrapped in the `JSendOk` envelope (`status`/`code`/`data`,
  *   lowercase — `Nuna.Lib.ActionResultHelper.JSendOk`); payload fields are
  *   PascalCase (ASP.NET Core default serialization of the C# records).
- * - No request ever carries `ServerId` as a command input (ADR-007, IR-09,
- *   P-06). The Cloud resolves the tenant server-side from the JWT. The only
- *   place the device supplies a tenant value is the legacy read route
- *   `GET /api/Brg/{serverId}` (ADR-007 §8), using the `ServerId` returned by
- *   the login response for display and for that route only (§8.4).
+ * - No request ever carries `ServerId` as a command input on the four
+ *   session-context routes (IR-09, P-06). The Cloud resolves the tenant
+ *   server-side from `X-Session-Location`. The only place the device supplies
+ *   a tenant value is the legacy read route `GET /api/Brg/{serverId}` (TD-08),
+ *   using the session's resolved `ServerId` for that route only.
  */
 
 /** `JSendOk` envelope: `status`/`code`/`data` (all lowercase). */
@@ -24,31 +24,35 @@ data class JSendEnvelope<T>(
 )
 
 /**
- * I-07 request — `POST api/Auth/login` (`IssueTokenCommand`).
+ * TD-02 request — `POST api/session/resolve`.
  *
- * `locationId` is the selected operational location. The warehouse selector
- * (Gudang Gamping / Gudang Concat / Gudang Magelang) maps to a `locationId`
- * in S5.4; this layer only carries the value, it never invents the mapping.
+ * Carries only the signed-in Google email (TD-12). There is no password, no
+ * location, and no `ServerId`: the Cloud resolves the authoritative BTR
+ * identity and returns the locationId→ServerId mapping.
  */
-data class LoginRequest(
-    @SerializedName("UserId") val userId: String,
-    @SerializedName("Password") val password: String,
-    @SerializedName("LocationId") val locationId: String
+data class SessionResolveRequest(
+    @SerializedName("Email") val email: String
 )
 
 /**
- * I-07 response data — `IssueTokenResult` (§9.1).
+ * TD-02 response data — the resolved BTR identity plus the warehouse mapping.
  *
- * `serverId` is received for display and for the legacy I-06 read route only;
- * it is never sent back as a command input. `expiresAt` stays a String so no
- * date parsing can fail the login path.
+ * `warehouses` supplies the Gudang selector and the `ServerId` for the legacy
+ * `{serverId}` read routes (TD-08); `serverId` is never sent back as a command
+ * input on the four session-context routes.
  */
-data class LoginResult(
-    @SerializedName("Token") val token: String = "",
-    @SerializedName("ExpiresAt") val expiresAt: String = "",
+data class SessionResolveResult(
     @SerializedName("UserId") val userId: String = "",
     @SerializedName("UserName") val userName: String = "",
     @SerializedName("RoleId") val roleId: String = "",
+    @SerializedName("Warehouses") val warehouses: List<WarehouseDto> = emptyList()
+)
+
+/**
+ * TD-02 warehouse mapping item — one Gudang (`locationId`) and its resolved
+ * `ServerId`.
+ */
+data class WarehouseDto(
     @SerializedName("LocationId") val locationId: String = "",
     @SerializedName("ServerId") val serverId: String = ""
 )
@@ -73,8 +77,8 @@ data class BarcodeDto(
  * I-04 request — `POST /api/barcode-registration`
  * (`BarcodeRegistrationSubmitRequest`, §8.5, §19.2).
  *
- * No `ServerId` (ADR-007); `RequestedBy` is resolved server-side from the JWT.
- * `satuan` is '' when absent (BR-005).
+ * No `ServerId`/actor (P-06); `RequestedBy` is resolved server-side from
+ * `X-Session-Actor`. `satuan` is '' when absent (BR-005).
  */
 data class BarcodeRegistrationSubmitRequest(
     @SerializedName("ClientRequestId") val clientRequestId: String,
@@ -109,9 +113,10 @@ data class RegistrationStatusDto(
  * resubmission replaces the staged copy, never duplicates (Arch §10.6).
  * `ReturnOrderDate` is a `yyyy-MM-dd` string, mirroring the Cloud
  * `ReturnOrderType` and the `OrderModel` string-date convention.
- * No `ServerId` — the Cloud resolves the tenant server-side from the JWT
- * (P-06). Items are carried in `ListItem` (singular), matching the Cloud
- * `ReturnOrderUploadCommand` property name.
+ * No `ServerId`/actor — the Cloud resolves the tenant and actor server-side
+ * from `X-Session-Location`/`X-Session-Actor` (P-06). Items are carried in
+ * `ListItem` (singular), matching the Cloud `ReturnOrderUploadCommand`
+ * property name.
  */
 data class ReturnOrderSubmitRequest(
     @SerializedName("ReturnOrderId") val returnOrderId: String,
@@ -151,7 +156,7 @@ data class ReturnOrderItemDto(
  * GAP-004, Return Order Architecture §8.3).
  *
  * Served by the existing route `GET /api/Customer/{serverId}` whose path
- * value is the login-returned `serverId` (the `GET api/Brg/{serverId}`
+ * value is the session-resolved `serverId` (the `GET api/Brg/{serverId}`
  * precedent). `serverId` is deserialized (the Cloud returns it) but never
  * sent and never used for scoping; the local cache is scoped by the session
  * binding. Full sync mapping of these fields into `customer_entity` is
@@ -170,7 +175,7 @@ data class CustomerDto(
  * GAP-005, Return Order Architecture §8.3).
  *
  * Served by the existing route `GET /api/SalesPerson/{serverId}` whose path
- * value is the login-returned `serverId` (the `GET api/Brg/{serverId}`
+ * value is the session-resolved `serverId` (the `GET api/Brg/{serverId}`
  * precedent). `serverId` is deserialized (the Cloud returns it) but never
  * sent and never used for scoping; the local cache is scoped by the session
  * binding. Full sync mapping of these fields into `salesperson_entity` is
@@ -189,7 +194,7 @@ data class SalesPersonDto(
  * Return Order Architecture §8.3).
  *
  * Served by `GET /api/Driver/{serverId}` (S2.5 `DriverController`) whose
- * path value is the login-returned `serverId` (the `GET api/Brg/{serverId}`
+ * path value is the session-resolved `serverId` (the `GET api/Brg/{serverId}`
  * precedent). `serverId` is deserialized (the Cloud returns it) but never
  * sent and never used for scoping; the local cache is scoped by the session
  * binding. Full sync mapping of these fields into `driver_entity` is owned

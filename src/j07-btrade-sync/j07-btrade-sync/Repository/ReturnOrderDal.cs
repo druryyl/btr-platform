@@ -10,22 +10,31 @@ using System.Globalization;
 namespace j07_btrade_sync.Repository
 {
     //  Stages downloaded Return Orders into the Main Office BTR_ReturnOrder
-    //  (Arch §4.3, §8.2, I-RO-07). Staging only: numbering (ReturnOrderNo)
-    //  and audit are owned by ImportReturnOrderCommand (S1.5/S3.4, IR-RO-07),
-    //  so Insert writes an empty number and Update never overwrites it.
+    //  (Arch §4.3, §8.2, I-RO-07). Staging only: numbering (ReturnOrderNo) is
+    //  owned by ImportReturnOrderCommand (S1.5/S3.4, IR-RO-07), so Insert
+    //  writes an empty number and Update never overwrites it. TD-15 operator
+    //  attribution (CreatedBy) is stamped at Insert from the relayed
+    //  SubmittedBy, because this staging insert creates the row.
     public class ReturnOrderDal
     {
         private const string StagedStatus = "Synced";
 
-        public void Insert(ReturnOrderModel model)
+        //  TD-15 — the staged row is created here, so the office audit identity
+        //  (CreatedBy) is written here. The Cloud-resolved operator UserId
+        //  (SubmittedBy) is used when present; a legacy row without SubmittedBy
+        //  falls back to fallbackCreatedBy, the existing sync service-account
+        //  identity, preserving the pre-relay audit behavior. Update never
+        //  rewrites CreatedBy, so a re-download preserves the captured
+        //  attribution.
+        public void Insert(ReturnOrderModel model, string fallbackCreatedBy = "")
         {
             const string sql = @"
                 INSERT INTO BTR_ReturnOrder(
                     ReturnOrderId, ReturnOrderNo, ReturnOrderDate, WarehouseCode,
-                    CustomerId, SalesPersonId, DriverId, Note, Status)
+                    CustomerId, SalesPersonId, DriverId, Note, Status, CreatedBy)
                 VALUES (
                     @ReturnOrderId, @ReturnOrderNo, @ReturnOrderDate, @WarehouseCode,
-                    @CustomerId, @SalesPersonId, @DriverId, @Note, @Status)";
+                    @CustomerId, @SalesPersonId, @DriverId, @Note, @Status, @CreatedBy)";
 
             var dp = new DynamicParameters();
             dp.AddParam("@ReturnOrderId", model.ReturnOrderId, SqlDbType.VarChar);
@@ -37,6 +46,11 @@ namespace j07_btrade_sync.Repository
             dp.AddParam("@DriverId", model.DriverId ?? string.Empty, SqlDbType.VarChar);
             dp.AddParam("@Note", model.Note ?? string.Empty, SqlDbType.VarChar);
             dp.AddParam("@Status", StagedStatus, SqlDbType.VarChar);
+
+            var createdBy = string.IsNullOrWhiteSpace(model.SubmittedBy)
+                ? (fallbackCreatedBy ?? string.Empty)
+                : model.SubmittedBy;
+            dp.AddParam("@CreatedBy", createdBy, SqlDbType.VarChar);
 
             using (var conn = new SqlConnection(ConnStringHelper.Get()))
             {

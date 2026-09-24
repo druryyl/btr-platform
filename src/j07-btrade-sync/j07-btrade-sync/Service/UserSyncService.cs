@@ -22,7 +22,9 @@ namespace j07_btrade_sync.Service
             _authService = new BtradeAuthService();
         }
 
-        //  SYNC USER (credential projection, IR-05)
+        //  SYNC USER (credential projection, IR-05).
+        //  The projection now carries Email (TD-14); it flows into the
+        //  POST api/User payload via the serialized UserType items.
         public async Task<(bool, string)> SyncUser(IEnumerable<UserType> enumUser)
         {
             //  BUILD

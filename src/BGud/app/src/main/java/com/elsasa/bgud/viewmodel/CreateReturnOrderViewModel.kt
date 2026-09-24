@@ -184,7 +184,7 @@ class CreateReturnOrderViewModel(
         // Read-only session-bound warehouse (BR-005/006, IR-RO-04).
         viewModelScope.launch {
             _warehouseCode.value = try {
-                session.warehouseCode.first().orEmpty()
+                session.locationId.first().orEmpty()
             } catch (e: Exception) {
                 ""
             }

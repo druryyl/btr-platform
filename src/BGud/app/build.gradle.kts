@@ -4,6 +4,7 @@ plugins {
     alias(libs.plugins.kotlin.compose)
     id("com.google.devtools.ksp") version "2.0.21-1.0.27"
     id("kotlin-parcelize")
+    id("com.google.gms.google-services")
 }
 
 android {
@@ -99,4 +100,7 @@ dependencies {
 
     // WorkManager (background sync; worker itself is S5.3)
     implementation(libs.androidx.workmanager)
+
+    // Google Sign-In (TD-01/TD-07; shared OAuth project via google-services.json)
+    implementation(libs.play.services.auth)
 }

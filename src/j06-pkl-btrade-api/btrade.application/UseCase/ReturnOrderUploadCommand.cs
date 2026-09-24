@@ -11,7 +11,7 @@ namespace btrade.application.UseCase
         string CustomerId, string CustomerName,
         string SalesPersonId, string SalesPersonName,
         string DriverId, string DriverName,
-        string Note, string ServerId,
+        string Note, string ServerId, string SubmittedBy,
         IEnumerable<ReturnOrderItemType> ListItem) : IRequest, IServerId;
 
     public class ReturnOrderUploadCommandHandler : IRequestHandler<ReturnOrderUploadCommand>
@@ -30,7 +30,7 @@ namespace btrade.application.UseCase
                 request.WarehouseCode, request.CustomerId, request.CustomerName,
                 request.SalesPersonId, request.SalesPersonName,
                 request.DriverId, request.DriverName,
-                request.Note, "TERKIRIM");
+                request.Note, "TERKIRIM", request.SubmittedBy);
 
             foreach (var item in request.ListItem)
             {

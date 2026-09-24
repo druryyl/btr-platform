@@ -1,6 +1,7 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.Net;
 using System.Text.Json;
+using btrade.application.UseCase;
 using Nuna.Lib.ActionResultHelper;
 
 namespace btrade.webapi.Middlewares;
@@ -32,6 +33,12 @@ public class ErrorHandlerMiddleware
             string? status;
             switch (error)
             {
+                case SessionAccountUnresolvableException:
+                    //  TD-13 — the actor mapping no longer resolves: session
+                    //  invalid (distinct from malformed context → 400).
+                    response.StatusCode = (int)HttpStatusCode.Conflict;
+                    status = "Conflict";
+                    break;
                 case ArgumentException:
                 case ValidationException:
                 case InvalidOperationException:

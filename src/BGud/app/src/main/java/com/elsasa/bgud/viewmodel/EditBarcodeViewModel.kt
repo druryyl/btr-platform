@@ -257,7 +257,7 @@ class EditBarcodeViewModel(
             _isSaving.value = true
             try {
                 val warehouseCode = try {
-                    session.warehouseCode.first().orEmpty()
+                    session.locationId.first().orEmpty()
                 } catch (e: Exception) {
                     ""
                 }

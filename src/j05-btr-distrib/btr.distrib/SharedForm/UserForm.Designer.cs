@@ -46,6 +46,8 @@
             this.ListGrid = new System.Windows.Forms.DataGridView();
             this.NewButton = new System.Windows.Forms.Button();
             this.DeleteButton = new System.Windows.Forms.Button();
+            this.EmailText = new System.Windows.Forms.TextBox();
+            this.label7 = new System.Windows.Forms.Label();
             this.panel1.SuspendLayout();
             this.panel2.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.ListGrid)).BeginInit();
@@ -64,6 +66,8 @@
             this.panel1.Controls.Add(this.label2);
             this.panel1.Controls.Add(this.UserIdText);
             this.panel1.Controls.Add(this.label1);
+            this.panel1.Controls.Add(this.EmailText);
+            this.panel1.Controls.Add(this.label7);
             this.panel1.Location = new System.Drawing.Point(458, 12);
             this.panel1.Name = "panel1";
             this.panel1.Size = new System.Drawing.Size(190, 284);
@@ -86,6 +90,22 @@
             this.RoleComboBox.Name = "RoleComboBox";
             this.RoleComboBox.Size = new System.Drawing.Size(154, 21);
             this.RoleComboBox.TabIndex = 7;
+            // 
+            // EmailText
+            // 
+            this.EmailText.Location = new System.Drawing.Point(18, 231);
+            this.EmailText.Name = "EmailText";
+            this.EmailText.Size = new System.Drawing.Size(154, 22);
+            this.EmailText.TabIndex = 9;
+            // 
+            // label7
+            // 
+            this.label7.AutoSize = true;
+            this.label7.Location = new System.Drawing.Point(15, 215);
+            this.label7.Name = "label7";
+            this.label7.Size = new System.Drawing.Size(74, 13);
+            this.label7.TabIndex = 10;
+            this.label7.Text = "Google Email";
             // 
             // Password2Text
             // 
@@ -272,5 +292,7 @@
         private System.Windows.Forms.Label label5;
         private System.Windows.Forms.ComboBox RoleComboBox;
         private System.Windows.Forms.Button DeleteButton;
+        private System.Windows.Forms.TextBox EmailText;
+        private System.Windows.Forms.Label label7;
     }
 }

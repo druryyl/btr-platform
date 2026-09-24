@@ -12,9 +12,16 @@ using Xunit;
 
 namespace btrade.webapi.Test;
 
+/// <summary>
+/// JWT issuance/validation tests. Since TD-06 removed [Authorize] from the
+/// BGud-consumed controllers, the remaining authenticated endpoint is
+/// POST api/User (UserController keeps [Authorize]; j07-btrade-sync still
+/// authenticates for it). The BGud routes are now anonymous and are covered by
+/// BarcodeSessionContextTests.
+/// </summary>
 public class JwtAuthenticationTests : IClassFixture<WebApplicationFactory<Program>>
 {
-    private const string AuthorizedEndpoint = "/api/barcodes/sync";
+    private const string AuthenticatedEndpoint = "/api/User";
 
     private readonly WebApplicationFactory<Program> _factory;
 
@@ -22,39 +29,45 @@ public class JwtAuthenticationTests : IClassFixture<WebApplicationFactory<Progra
     {
         _factory = factory.WithWebHostBuilder(builder =>
             builder.ConfigureTestServices(services =>
-                services.AddScoped<IBarcodeDal, FakeBarcodeDal>()));
+            {
+                services.AddScoped<IBarcodeDal, FakeBarcodeDal>();
+                services.AddSingleton<IUserDal, FakeUserDal>();
+            }));
     }
 
+    private static StringContent EmptyUserSyncPayload() =>
+        new("{\"ListUser\":[]}", Encoding.UTF8, "application/json");
+
     [Fact]
-    public async Task AuthorizedEndpoint_WithNoToken_Returns401()
+    public async Task AuthenticatedEndpoint_WithNoToken_Returns401()
     {
         var client = _factory.CreateClient();
 
-        var response = await client.GetAsync(AuthorizedEndpoint);
+        var response = await client.PostAsync(AuthenticatedEndpoint, EmptyUserSyncPayload());
 
         Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
     }
 
     [Fact]
-    public async Task AuthorizedEndpoint_WithInvalidToken_Returns401()
+    public async Task AuthenticatedEndpoint_WithInvalidToken_Returns401()
     {
         var client = _factory.CreateClient();
         client.DefaultRequestHeaders.Authorization =
             new AuthenticationHeaderValue("Bearer", "not-a-valid-token");
 
-        var response = await client.GetAsync(AuthorizedEndpoint);
+        var response = await client.PostAsync(AuthenticatedEndpoint, EmptyUserSyncPayload());
 
         Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
     }
 
     [Fact]
-    public async Task AuthorizedEndpoint_WithIssuedToken_Returns200()
+    public async Task AuthenticatedEndpoint_WithIssuedToken_Returns200()
     {
         var client = _factory.CreateClient();
         client.DefaultRequestHeaders.Authorization =
             new AuthenticationHeaderValue("Bearer", IssueToken());
 
-        var response = await client.GetAsync(AuthorizedEndpoint);
+        var response = await client.PostAsync(AuthenticatedEndpoint, EmptyUserSyncPayload());
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
     }

@@ -6,7 +6,6 @@ import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.emptyPreferences
 import androidx.datastore.preferences.core.longPreferencesKey
-import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
@@ -16,24 +15,28 @@ import kotlinx.coroutines.flow.map
 private val Context.sessionPreferencesDataStore: DataStore<Preferences> by preferencesDataStore(name = "session_preferences")
 
 /**
- * Session + sync-state store (Architecture §6.4 `session_preferences`).
+ * Local session + sync-state store (TD-10).
  *
- * Holds: token, user, warehouseCode, officeCode, last sync timestamps.
- * `warehouseCode` (not `ServerId`) is stored on queued requests (IR-09);
- * switching warehouse requires re-authentication and the local cache is
- * replaced for the new tenant (S5.3).
+ * The local session replaces the JWT-based session and stores `google_email`,
+ * `user_id`, `user_name`, `role_id`, `location_id`, and `server_id` (TD-10).
+ * The former `token` and `office_code` keys are removed: no code path stores,
+ * reads, or sends a JWT or password (ARCHITECTURE §10). Session validity is
+ * "`google_email` present" (see [SessionState.isValid]), so a legacy install
+ * holding only a `token` key is treated as signed out and routed to sign-in.
  *
- * Return Order reference timestamps (S4.3, Arch §6.4, §8.1): each advances
- * only on the committed download of its own reference type, mirroring the
- * Barang/Barcode timestamp pattern.
+ * `locationId` (not `ServerId`) binds queued requests (IR-09); `serverId` is
+ * stored only to supply the legacy `{serverId}` read routes (TD-08). Switching
+ * Gudang clears the session and starts a new one; queued records are never
+ * re-homed.
+ *
+ * Return Order reference timestamps (S4.3): each advances only on the
+ * committed download of its own reference type, mirroring the
+ * Barang/Barcode timestamp pattern. Timestamps survive logout/warehouse
+ * change ([clearSession] removes only the session keys).
  */
 class SessionPreferencesDataSource(private val context: Context) {
 
     companion object {
-        private val TOKEN_KEY = stringPreferencesKey("token")
-        private val USER_ID_KEY = stringPreferencesKey("user_id")
-        private val WAREHOUSE_CODE_KEY = stringPreferencesKey("warehouse_code")
-        private val OFFICE_CODE_KEY = stringPreferencesKey("office_code")
         private val LAST_BARANG_SYNC_KEY = longPreferencesKey("last_barang_sync")
         private val LAST_BARCODE_SYNC_KEY = longPreferencesKey("last_barcode_sync")
         private val LAST_CUSTOMER_SYNC_KEY = longPreferencesKey("last_customer_sync")
@@ -43,24 +46,30 @@ class SessionPreferencesDataSource(private val context: Context) {
 
     /**
      * Single source for all preference reads. A corrupted preferences file
-     * would otherwise throw `IOException` and leave the token flow unresolved
-     * forever (the startup gate would spin); recover with empty preferences so
-     * the app degrades to "no session" instead.
+     * would otherwise throw `IOException` and leave the session flow
+     * unresolved forever (the startup gate would spin); recover with empty
+     * preferences so the app degrades to "no session" instead.
      */
     private val preferences: Flow<Preferences> = context.sessionPreferencesDataStore.data
         .catch { emit(emptyPreferences()) }
 
-    val token: Flow<String?> = preferences
-        .map { it[TOKEN_KEY] }
+    val googleEmail: Flow<String?> = preferences
+        .map { it[SessionPreferences.GoogleEmailKey] }
 
     val userId: Flow<String?> = preferences
-        .map { it[USER_ID_KEY] }
+        .map { it[SessionPreferences.UserIdKey] }
 
-    val warehouseCode: Flow<String?> = preferences
-        .map { it[WAREHOUSE_CODE_KEY] }
+    val userName: Flow<String?> = preferences
+        .map { it[SessionPreferences.UserNameKey] }
 
-    val officeCode: Flow<String?> = preferences
-        .map { it[OFFICE_CODE_KEY] }
+    val roleId: Flow<String?> = preferences
+        .map { it[SessionPreferences.RoleIdKey] }
+
+    val locationId: Flow<String?> = preferences
+        .map { it[SessionPreferences.LocationIdKey] }
+
+    val serverId: Flow<String?> = preferences
+        .map { it[SessionPreferences.ServerIdKey] }
 
     val lastBarangSync: Flow<Long> = preferences
         .map { it[LAST_BARANG_SYNC_KEY] ?: 0L }
@@ -77,27 +86,47 @@ class SessionPreferencesDataSource(private val context: Context) {
     val lastDriverSync: Flow<Long> = preferences
         .map { it[LAST_DRIVER_SYNC_KEY] ?: 0L }
 
+    /**
+     * Persist the established local session (TD-10). Called only after
+     * `POST api/session/resolve` succeeded and a Gudang was selected.
+     */
     suspend fun saveSession(
-        token: String,
+        googleEmail: String,
         userId: String,
-        warehouseCode: String,
-        officeCode: String
+        userName: String,
+        roleId: String,
+        locationId: String,
+        serverId: String
     ) {
         context.sessionPreferencesDataStore.edit { preferences ->
-            preferences[TOKEN_KEY] = token
-            preferences[USER_ID_KEY] = userId
-            preferences[WAREHOUSE_CODE_KEY] = warehouseCode
-            preferences[OFFICE_CODE_KEY] = officeCode
+            SessionPreferences.write(
+                preferences,
+                SessionState(
+                    googleEmail = googleEmail,
+                    userId = userId,
+                    userName = userName,
+                    roleId = roleId,
+                    locationId = locationId,
+                    serverId = serverId
+                )
+            )
         }
     }
 
+    /**
+     * Clear the local session (logout, Gudang change, or Cloud 409). Only the
+     * session keys are removed; queued records and sync timestamps are
+     * untouched (IR-09).
+     */
     suspend fun clearSession() {
         context.sessionPreferencesDataStore.edit { preferences ->
-            preferences.remove(TOKEN_KEY)
-            preferences.remove(USER_ID_KEY)
-            preferences.remove(WAREHOUSE_CODE_KEY)
-            preferences.remove(OFFICE_CODE_KEY)
+            SessionPreferences.clear(preferences)
         }
+    }
+
+    /** The signed-in Google email, or null when there is no session. */
+    suspend fun getGoogleEmail(): String? {
+        return preferences.first()[SessionPreferences.GoogleEmailKey]
     }
 
     suspend fun setLastBarangSync(timestampMillis: Long) {
@@ -128,9 +157,5 @@ class SessionPreferencesDataSource(private val context: Context) {
         context.sessionPreferencesDataStore.edit { preferences ->
             preferences[LAST_DRIVER_SYNC_KEY] = timestampMillis
         }
-    }
-
-    suspend fun getToken(): String? {
-        return preferences.first()[TOKEN_KEY]
     }
 }

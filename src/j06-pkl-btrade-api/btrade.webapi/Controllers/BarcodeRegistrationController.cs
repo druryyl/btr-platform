@@ -1,28 +1,32 @@
 using btrade.application.UseCase;
 using btrade.webapi.Infrastructure;
 using MediatR;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Nuna.Lib.ActionResultHelper;
 
 namespace btrade.webapi.Controllers;
 
-[Authorize]
 [Route("api/[controller]")]
 [ApiController]
 public class BarcodeRegistrationController : ControllerBase
 {
     private readonly IMediator _mediator;
+    private readonly SessionContextResolver _sessionContextResolver;
 
-    public BarcodeRegistrationController(IMediator mediator)
+    public BarcodeRegistrationController(
+        IMediator mediator,
+        SessionContextResolver sessionContextResolver)
     {
         _mediator = mediator;
+        _sessionContextResolver = sessionContextResolver;
     }
 
     [HttpGet]
     [Route("pending")]
     public async Task<IActionResult> Pending()
     {
+        //  TD-06 — anonymous instance-wide, but pending/ack keep their existing
+        //  claim-based behavior for token-bearing consumers (j07-btrade-sync).
         var query = new BarcodeRegistrationPendingQuery(User.GetServerId());
         var response = await _mediator.Send(query);
         return Ok(new JSendOk(response));
@@ -45,13 +49,22 @@ public class BarcodeRegistrationController : ControllerBase
     [Route("~/api/barcode-registration")]
     public async Task<IActionResult> Submit(BarcodeRegistrationSubmitRequest request)
     {
+        //  TD-03/TD-04/TD-05 — tenant from X-Session-Location, actor from
+        //  X-Session-Actor, both through the single resolver. The resolved BTR
+        //  UserId is recorded verbatim as RequestedBy (identifier shape
+        //  unchanged); no JWT claims are read on BGud's path.
+        var serverId = _sessionContextResolver.ResolveTenant(
+            Request.GetSessionLocation());
+        var requestedBy = _sessionContextResolver.ResolveAccount(
+            Request.GetSessionActor()).UserId;
+
         var cmd = new BarcodeRegistrationSubmitCommand(
             request.ClientRequestId,
             request.BarcodeValue,
             request.BrgId,
             request.Satuan,
-            User.GetUserId(),
-            User.GetServerId());
+            requestedBy,
+            serverId);
         await _mediator.Send(cmd);
         return Ok(new JSendOk("Done"));
     }
@@ -60,7 +73,14 @@ public class BarcodeRegistrationController : ControllerBase
     [Route("status")]
     public async Task<IActionResult> Status()
     {
-        var query = new BarcodeRegistrationStatusQuery(User.GetServerId(), User.GetUserId());
+        //  TD-05 — the caller still learns only the outcome of its own
+        //  requests: the resolved actor UserId is the RequestedBy filter.
+        var serverId = _sessionContextResolver.ResolveTenant(
+            Request.GetSessionLocation());
+        var requestedBy = _sessionContextResolver.ResolveAccount(
+            Request.GetSessionActor()).UserId;
+
+        var query = new BarcodeRegistrationStatusQuery(serverId, requestedBy);
         var response = await _mediator.Send(query);
         return Ok(new JSendOk(response));
     }

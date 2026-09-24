@@ -6,7 +6,8 @@ public record UserType(
     string Password,
     string RoleId,
     bool IsAktif,
-    string ServerId) : IUserKey;
+    string ServerId,
+    string Email = "") : IUserKey;
 
 public interface IUserKey
 {

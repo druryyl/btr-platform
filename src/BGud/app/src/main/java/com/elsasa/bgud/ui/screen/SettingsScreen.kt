@@ -35,17 +35,17 @@ import com.elsasa.bgud.viewmodel.SettingsViewModel
  *
  * Settings is a navigation leaf (traceability: navigation — no workflow,
  * no domain capability). It issues no network call and stores/sends no
- * `ServerId` (ADR-007, IR-09): the session readout mirrors the Home
- * context header (S5.5 precedent, `officeCode` display-only); `Logout`
- * clears the DataStore session via [SettingsViewModel.logout] so the
- * Navigation start-destination gate returns to `login` (IR-M8, §13.2
- * `any → login`). Warehouse change is logout + re-authentication (IR-09);
- * no activation/deactivation surface exists on this screen (IR-06, C-1).
+ * `ServerId` as a command input (IR-09): the session readout mirrors the Home
+ * context header (`locationId` binding, `serverId` display-only for the legacy
+ * read routes). `Logout` and `Ganti Gudang` both clear the local session via
+ * [SettingsViewModel.logout] / [SettingsViewModel.changeWarehouse] so the
+ * Navigation gate returns to `login` (TD-10/TD-11, FEATURE §6.7/§6.8).
+ * Queued records are never re-homed.
  */
 @Composable
 fun SettingsScreen(
     viewModel: SettingsViewModel,
-    onLoggedOut: () -> Unit,
+    onSessionEnded: () -> Unit,
     onBack: () -> Unit
 ) {
     val user by viewModel.user.collectAsState()
@@ -82,12 +82,20 @@ fun SettingsScreen(
                 }
             }
 
-            // Actions: Logout (session close → login) + Kembali (back).
+            // Actions: Logout / Ganti Gudang (both end the session → login)
+            // + Kembali (back).
             Button(
-                onClick = { viewModel.logout(onLoggedOut) },
+                onClick = { viewModel.logout(onSessionEnded) },
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Text("Logout")
+            }
+
+            OutlinedButton(
+                onClick = { viewModel.changeWarehouse(onSessionEnded) },
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text("Ganti Gudang")
             }
 
             OutlinedButton(

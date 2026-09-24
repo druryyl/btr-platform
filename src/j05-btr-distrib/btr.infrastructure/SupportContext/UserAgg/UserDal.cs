@@ -23,9 +23,9 @@ namespace btr.infrastructure.SupportContext.UserAgg
         {
             const string sql = @"
             INSERT INTO BTR_User(
-                UserId, UserName, Password, Prefix, RoleId)
+                UserId, UserName, Password, Prefix, RoleId, Email)
             VALUES (
-                @UserId, @UserName, @Password, @Prefix, @RoleId)";
+                @UserId, @UserName, @Password, @Prefix, @RoleId, @Email)";
 
             var dp = new DynamicParameters();
             dp.AddParam("@UserId", model.UserId, SqlDbType.VarChar);
@@ -33,6 +33,7 @@ namespace btr.infrastructure.SupportContext.UserAgg
             dp.AddParam("@Password", model.Password, SqlDbType.VarChar);
             dp.AddParam("@Prefix", model.Prefix, SqlDbType.VarChar);
             dp.AddParam("@RoleId", model.RoleId, SqlDbType.VarChar);
+            dp.AddParam("@Email", model.Email ?? string.Empty, SqlDbType.VarChar);
 
             using (var conn = new SqlConnection(ConnStringHelper.Get(_opt)))
             {
@@ -49,7 +50,8 @@ namespace btr.infrastructure.SupportContext.UserAgg
                 UserName = @UserName,
                 Password = @Password,
                 Prefix = @Prefix,
-                RoleId = @RoleId
+                RoleId = @RoleId,
+                Email = @Email
             WHERE
                 UserId = @UserId ";
 
@@ -59,6 +61,7 @@ namespace btr.infrastructure.SupportContext.UserAgg
             dp.AddParam("@Password", model.Password, SqlDbType.VarChar);
             dp.AddParam("@Prefix", model.Prefix, SqlDbType.VarChar);
             dp.AddParam("@RoleId", model.RoleId, SqlDbType.VarChar);
+            dp.AddParam("@Email", model.Email ?? string.Empty, SqlDbType.VarChar);
 
             using (var conn = new SqlConnection(ConnStringHelper.Get(_opt)))
             {
@@ -87,7 +90,7 @@ namespace btr.infrastructure.SupportContext.UserAgg
         {
             const string sql = @"
                 SELECT
-                    aa.UserId, aa.UserName, aa.Password, aa.Prefix, aa.RoleId,
+                    aa.UserId, aa.UserName, aa.Password, aa.Prefix, aa.RoleId, aa.Email,
                     ISNULL(bb.RoleName, '') AS RoleName
                 FROM
                     BTR_User aa
@@ -108,7 +111,7 @@ namespace btr.infrastructure.SupportContext.UserAgg
         {
             const string sql = @"
                 SELECT
-                    aa.UserId, aa.UserName, aa.Password, aa.Prefix, aa.RoleId,
+                    aa.UserId, aa.UserName, aa.Password, aa.Prefix, aa.RoleId, aa.Email,
                     ISNULL(bb.RoleName, '') AS RoleName
                 FROM
                     BTR_User aa

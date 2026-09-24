@@ -4,3 +4,9 @@ plugins {
     alias(libs.plugins.kotlin.android) apply false
     alias(libs.plugins.kotlin.compose) apply false
 }
+buildscript {
+    dependencies {
+        // Google Services plugin for Google Sign-In (TD-01/TD-07), same version as BTrade3.
+        classpath("com.google.gms:google-services:4.3.15")
+    }
+}

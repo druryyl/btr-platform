@@ -57,8 +57,10 @@ enum class SyncState {
  *   register, and edit remain available offline (UX-001).
  * - One sync run at a time (IR-M6): a Sync Now issued while
  *   `Synchronizing` is ignored, matching the worker's `KEEP` policy.
- * - No valid JWT → the worker fails fast ("no session token; login
- *   required", IR-M8); the failure surfaces here as `Failed` + Retry.
+ * - No valid local session (`google_email` absent) → the worker fails fast
+ *   ("no session; login required"); the failure surfaces here as `Failed` +
+ *   Retry. A Cloud 409 clears the session (TD-13) and the Navigation gate
+ *   returns the operator to sign-in.
  * - Blank `baseUrl` (transport unresolved, C-3/R-03; no URL hardcoded per
  *   S5.2) reports via the error region instead of issuing a call (S5.4
  *   precedent).
@@ -152,7 +154,7 @@ class SynchronizationViewModel(
         viewModelScope.launch {
             _error.value = null
             _syncState.value = SyncState.SYNCHRONIZING
-            val serverId = session.officeCode.first().orEmpty()
+            val serverId = session.serverId.first().orEmpty()
             val requestId = BarcodeSyncWorker.enqueueUnique(
                 context.applicationContext,
                 baseUrl,

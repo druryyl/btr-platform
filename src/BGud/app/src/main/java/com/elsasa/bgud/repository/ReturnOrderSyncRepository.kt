@@ -26,12 +26,12 @@ import java.util.Locale
  * ```
  *
  * Rules (no new decisions):
- * - Every submit carries the JWT via [BtradeApiService] (S4.2
- *   `AuthInterceptor`); this class performs no authentication itself.
+ * - Every submit carries the session context via [BtradeApiService] (TD-12
+ *   `SessionContextInterceptor`); this class performs no authentication itself.
  * - No `ServerId` is stored or sent as a command input (P-06). The only
  *   tenant value the device ever supplies is the reference read-route path
  *   `GET /api/Customer|SalesPerson|Driver/{serverId}` (S4.3), using the
- *   login-returned `serverId` passed per run.
+ *   session-resolved `serverId` passed per run.
  * - A `DRAFT` order is submitted exactly once per run; a `2xx` response moves
  *   the local order to `SYNCED` (ADR-RO-006). A failed submission keeps the
  *   order `DRAFT` and counts as failed without aborting the run; resubmission
@@ -74,7 +74,7 @@ class ReturnOrderSyncRepository(
     /**
      * Full ordered run: submit DRAFT orders → reference downloads.
      *
-     * @param serverId login-returned Office id for the S4.3 reference read
+     * @param serverId session-resolved Office id for the S4.3 reference read
      * routes only; blank fails each reference download (recorded in
      * [SyncRunResult.errors]).
      */

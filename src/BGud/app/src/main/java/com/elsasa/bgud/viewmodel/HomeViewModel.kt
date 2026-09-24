@@ -22,10 +22,10 @@ import kotlinx.coroutines.flow.stateIn
  * `pendingCount`. Sources: DataStore + Room only — no network call is
  * issued from this screen (the sync status card summarizes local state).
  *
- * - `user` / `warehouse` / `office` re-expose the login-bound session
- *   (`userId`, `warehouseCode`, `officeCode`; IR-09 — `warehouseCode`, never
- *   a `ServerId`, is the stored tenant binding; `officeCode` is the
- *   login-returned `serverId` kept for display).
+ * - `user` / `warehouse` / `office` re-expose the local session (`user_id`,
+ *   `location_id`, `server_id`; TD-10 — `location_id`, never a `ServerId`, is
+ *   the stored tenant binding; `server_id` is the Cloud-resolved value kept
+ *   for the legacy `{serverId}` read routes, TD-08).
  * - `lastSyncAt` is the most recent committed download timestamp
  *   (`max(lastBarangSync, lastBarcodeSync)`; `0` = never synced).
  * - `pendingCount` counts locally queued `PENDING` requests (the offline
@@ -45,11 +45,11 @@ class HomeViewModel(
         .map { it.orEmpty() }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), "")
 
-    val warehouse: StateFlow<String> = session.warehouseCode
+    val warehouse: StateFlow<String> = session.locationId
         .map { it.orEmpty() }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), "")
 
-    val office: StateFlow<String> = session.officeCode
+    val office: StateFlow<String> = session.serverId
         .map { it.orEmpty() }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), "")
 

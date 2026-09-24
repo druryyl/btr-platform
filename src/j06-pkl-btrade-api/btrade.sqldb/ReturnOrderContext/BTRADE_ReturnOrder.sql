@@ -12,6 +12,7 @@ CREATE TABLE BTRADE_ReturnOrder(
     DriverName      VARCHAR(20)  NOT NULL CONSTRAINT DF_BTRADE_ReturnOrder_DriverName    DEFAULT(''),
     Note            VARCHAR(100) NOT NULL CONSTRAINT DF_BTRADE_ReturnOrder_Note          DEFAULT(''),
     StatusSync      VARCHAR(10)  NOT NULL CONSTRAINT DF_BTRADE_ReturnOrder_StatusSync    DEFAULT('TERKIRIM'),
+    SubmittedBy     VARCHAR(50)  NOT NULL CONSTRAINT DF_BTRADE_ReturnOrder_SubmittedBy DEFAULT(''),
 
     CONSTRAINT PK_BTRADE_ReturnOrder PRIMARY KEY CLUSTERED (ReturnOrderId, ServerId)
 )

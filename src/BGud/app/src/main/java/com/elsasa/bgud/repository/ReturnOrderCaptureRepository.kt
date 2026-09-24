@@ -105,7 +105,7 @@ class ReturnOrderCaptureRepository(
      */
     suspend fun createDraft(draft: ReturnOrderDraft): ReturnOrderCaptureResult =
         withContext(Dispatchers.IO) {
-            val warehouseCode = session.warehouseCode.first().orEmpty()
+            val warehouseCode = session.locationId.first().orEmpty()
             when (val resolution = resolve(draft, warehouseCode)) {
                 is DraftResolution.Invalid ->
                     return@withContext ReturnOrderCaptureResult.Rejected(resolution.errors)

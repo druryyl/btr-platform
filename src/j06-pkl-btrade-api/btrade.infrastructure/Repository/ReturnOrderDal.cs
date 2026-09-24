@@ -27,11 +27,11 @@ namespace btrade.infrastructure.Repository
             INSERT INTO BTRADE_ReturnOrder(
                 ReturnOrderId, ServerId, ReturnOrderDate, WarehouseCode,
                 CustomerId, CustomerName, SalesPersonId, SalesPersonName,
-                DriverId, DriverName, Note, StatusSync)
+                DriverId, DriverName, Note, StatusSync, SubmittedBy)
             VALUES (
                 @ReturnOrderId, @ServerId, @ReturnOrderDate, @WarehouseCode,
                 @CustomerId, @CustomerName, @SalesPersonId, @SalesPersonName,
-                @DriverId, @DriverName, @Note, @StatusSync)";
+                @DriverId, @DriverName, @Note, @StatusSync, @SubmittedBy)";
 
             var dp = new DynamicParameters();
             dp.AddParam("@ReturnOrderId", model.ReturnOrderId, SqlDbType.VarChar);
@@ -46,6 +46,8 @@ namespace btrade.infrastructure.Repository
             dp.AddParam("@DriverName", model.DriverName, SqlDbType.VarChar);
             dp.AddParam("@Note", model.Note, SqlDbType.VarChar);
             dp.AddParam("@StatusSync", model.StatusSync, SqlDbType.VarChar);
+            //  TD-05/TD-15 — the resolved operator UserId, persisted verbatim.
+            dp.AddParam("@SubmittedBy", model.SubmittedBy ?? string.Empty, SqlDbType.VarChar);
 
             using var conn = new SqlConnection(ConnStringHelper.Get(_opt));
             conn.Execute(sql, dp);
@@ -125,7 +127,7 @@ namespace btrade.infrastructure.Repository
             SELECT
                 ReturnOrderId, ServerId, ReturnOrderDate, WarehouseCode,
                 CustomerId, CustomerName, SalesPersonId, SalesPersonName,
-                DriverId, DriverName, Note, StatusSync
+                DriverId, DriverName, Note, StatusSync, SubmittedBy
             FROM
                 BTRADE_ReturnOrder
             WHERE
@@ -144,7 +146,7 @@ namespace btrade.infrastructure.Repository
             SELECT
                 ReturnOrderId, ServerId, ReturnOrderDate, WarehouseCode,
                 CustomerId, CustomerName, SalesPersonId, SalesPersonName,
-                DriverId, DriverName, Note, StatusSync
+                DriverId, DriverName, Note, StatusSync, SubmittedBy
             FROM
                 BTRADE_ReturnOrder
             WHERE
