@@ -2,7 +2,7 @@
 Title: BGud — Return Order Navigation Restructure — Feasibility Assessment
 Code: BGUD-RETURN-ORDER-NAV-001
 Artifact: FEASIBILITY-ASSESSMENT
-Version: 1.4
+Version: 1.5
 LastUpdated: 2026-09-25
 Status: NOT-READY
 ---
@@ -181,7 +181,7 @@ working tree.
 | GAP-003 | CRITICAL | **Routing Draft rows directly to Edit removes the only Delete entry point.** — **CLOSED (2026-09-25).** Delete is a Draft-only action that lives on Detail (`ReturnOrderDetailScreen.kt:229-239`), and Edit is reachable only from Detail (`Navigation.kt:321-330`). If a Draft row opens Edit/Resume directly, the Draft Detail surface (and therefore Delete) becomes unreachable unless the delete action is relocated. DOMAIN BR-019/BR-020 (Draft delete allowed, Synced delete prohibited) must be preserved. **Resolution:** Draft Detail screen removed; Delete action relocated from Detail to Edit; see §8 GAP-003. |
 | GAP-004 | MAJOR | **Home is a feature launcher; the target is a work launcher.** — **CLOSED (2026-09-25).** Current Home exposes Scan/Search/Register/Return Order with near-equal weight, a non-clickable sync card, and a flat Navigation list. The target requires New Return as the most prominent action, Return Orders as the primary destination, a clickable sync status card, and a "More" group (Barcode Registry / Synchronization / Settings). Evidence: `HomeScreen.kt:98-150`. **Resolution:** Home transitions from feature launcher to work launcher; see §8 GAP-004. |
 | GAP-005 | MAJOR | **Return Orders list becomes a work queue.** — **CLOSED (2026-09-25).** The target adds date grouping (e.g. "TODAY"), keeps recent-first, preserves search, keeps New Return accessible, and routes Draft → Edit/Resume while Synced → read-only Detail. The current list is a flat, ungrouped list whose rows always open Detail. Ordering is already recent-first. Evidence: `ReturnOrderListScreen.kt:160-251`, `ReturnOrderDao.kt`. **Resolution:** see §8 GAP-005. |
-| GAP-006 | MAJOR | **Capture is already a continuous form; the real change is layout re-prioritization.** `CreateReturnOrderScreen` already embeds the scanner and identifies items locally with consecutive scans, so the requested "continuous transaction surface" largely exists. The substantive change is structural emphasis: item entry dominates while Salesman/Driver/Notes are de-emphasized, and each row shows Item, Quantity, Unit, Return Type. The ISSUE itself (Note 2) leaves this confirmation open. Evidence: `CreateReturnOrderScreen.kt:136-477`. |
+| GAP-006 | MAJOR | **Capture is already a continuous form; the real change is layout re-prioritization.** `CreateReturnOrderScreen` already embeds the scanner and identifies items locally with consecutive scans, so the requested "continuous transaction surface" largely exists. The substantive change is structural emphasis: item entry dominates while Salesman/Driver/Notes are de-emphasized, and each row shows Item, Quantity, Unit, Return Type. The ISSUE itself (Note 2) leaves this confirmation open. Evidence: `CreateReturnOrderScreen.kt:136-477`. — **CLOSED (2026-09-25):** the capture workflow is retained; only layout/structural re-prioritization applies; see §8 GAP-006. |
 | GAP-007 | MAJOR | **Existing architecture artifacts become inconsistent.** The approved architecture fixes the current navigation and layouts that this request contradicts: `RETURN-ORDER-ARCHITECTURE.md` §11.1/§12.2/§13.1 (List → Detail → Edit; Home → return_order_list only) and `BARCODE-REGISTRY-UX-BLUEPRINT.md` §4/§6 and `BARCODE-REGISTRY-ARCHITECTURE.md` (Home quick actions; Barcode Registry branch). ARCHITECTURE is owned by the Architect; it must be reviewed and updated so knowledge and code stay synchronized. — **CLOSED (2026-09-25):** the affected architecture artifacts shall be updated by the Architect to reflect the approved navigation and workflow changes; see §8 GAP-007. |
 | GAP-008 | MAJOR | **Scope boundary between "structure" and deferred visual styling is not fixed.** — **CLOSED (2026-09-25):** the boundary is fixed; this change request is limited to Navigation and Layout (navigation hierarchy, screen routing, screen ownership, information architecture, content grouping, component placement, layout structure, workflow prioritization, visibility of operational and administrative actions). Visual styling (colors, typography, iconography, branding, component styling, elevation, shadows, animations, visual emphasis through color or styling treatment, design-system refinements) is explicitly excluded and deferred to a separate UI/UX Styling change request after Navigation and Layout implementation is complete. See §8 GAP-008. |
 | GAP-009 | MINOR | **Duplicate route to Synchronization.** — **CLOSED (2026-09-25).** The Home Synchronization Status card becomes the authoritative navigation entry point to Synchronization; the separate Synchronization menu item is removed from More. See §8 GAP-009. |
@@ -227,14 +227,14 @@ localized decision.
 
 | ID | Risk | Impact | Mitigation |
 |------|------|------|------|
-| RISK-001 | Register Barcode becomes unreachable after the Home actions and standalone `scan` are removed | High — a preserved capability regresses | Resolve OQ-005 / GAP-002 before architecture; add or retain an explicit Register entry point. |
+| RISK-001 | Register Barcode becomes unreachable after the Home actions and standalone `scan` are removed | High — a preserved capability regresses | **CLOSED (2026-09-25):** resolved — the Register Barcode entry point is moved into Barcode Registry (see §8 GAP-002). |
 | RISK-002 | Draft Delete capability regresses when Draft rows bypass Detail | High — violates BR-019/BR-020 as experienced by operators | **CLOSED (2026-09-25):** resolved — Delete relocated from Detail to the Edit/Resume screen; Draft Detail screen removed from the navigation graph; see §8 GAP-003. |
 | RISK-003 | Structure and visual styling overlap/conflict with the separate UI design change request | Medium — duplicated or contradictory changes to the same screens | **CLOSED (2026-09-25):** boundary fixed in §8 GAP-008. This change is limited to Navigation and Layout; visual styling is explicitly excluded and deferred to a separate UI/UX Styling change request after Navigation and Layout implementation is complete. |
-| RISK-004 | "No ViewModel changes" constraint conflicts with the requested structure | Medium — either the constraint is violated or the structure is left incomplete | Resolve OQ-007; define the permitted implementation surface before planning. |
-| RISK-005 | Knowledge drift: architecture/UX artifacts still describe the pre-change navigation | Medium — implementers may follow stale navigation contracts | Architecture review/update by the Architect (GAP-007) before planning starts. |
+| RISK-004 | "No ViewModel changes" constraint conflicts with the requested structure | Medium — either the constraint is violated or the structure is left incomplete | **CLOSED (2026-09-25):** resolved — OQ-007 closed via §8 GAP-006; the capture workflow and its behavior are retained and the implementation surface is bounded to the approved navigation/layout structure. |
+| RISK-005 | Knowledge drift: architecture/UX artifacts still describe the pre-change navigation | Medium — implementers may follow stale navigation contracts | **CLOSED (2026-09-25):** resolved — GAP-007 closed; the affected architecture artifacts are updated by the Architect as an assigned Architecture-phase activity before planning starts (see §8 GAP-007). |
 | RISK-006 | Removing the top-level Scan quick action increases steps for ad-hoc item lookup | Medium — operator efficiency and muscle memory | Keep scanning fast inside capture and preserve manual search; confirm Barcode Registry search covers lookup. |
 | RISK-007 | Two navigation entries to Synchronization (card + More item) confuse operators | Low — minor UX inconsistency | **CLOSED (2026-09-25):** resolved — Home Synchronization Status card becomes the authoritative navigation entry point; Synchronization menu item removed from More (see §8 GAP-009). |
-| RISK-008 | Home grouping ("work launcher") is interpreted as a redesign beyond navigation and pulls in visual styling | Medium — scope creep across change requests | Enforce ASM-003 and the OQ-006 boundary. |
+| RISK-008 | Home grouping ("work launcher") is interpreted as a redesign beyond navigation and pulls in visual styling | Medium — scope creep across change requests | **CLOSED (2026-09-25):** resolved — scope boundary fixed in §8 GAP-008 (OQ-006); visual styling excluded and deferred to a separate UI/UX Styling change request. |
 
 ---
 
@@ -243,15 +243,16 @@ localized decision.
 Alternative solution directions only. **No final decision is recorded here** —
 decisions belong in §8 Gap Closure after stakeholder/architecture input.
 
-*Status note (v1.3):* four decisions are recorded in §8 — **GAP-001 / OQ-009**,
-**GAP-002 / OQ-001 / OQ-005**, **GAP-003 / OQ-002 / OQ-003**, and **OQ-010**.
-The FEATURE artifact requirement is waived for this change and the ISSUE plus the
-DOMAIN is the accepted Discovery input (Option B below selected); the Register
-Barcode entry point is moved into Barcode Registry (Option A below selected); the
-Draft Delete action is relocated from Detail to Edit with the Draft Detail screen
-removed (Option A below selected); and Home's New Return reuses the existing
-full-screen `return_order_create` route with no new capture route introduced.
-The remaining options below are the pre-decision analysis record.
+*Status note (v1.5):* all gaps and open questions are resolved and recorded in
+§8 — **GAP-001 / OQ-009**, **GAP-002 / OQ-001 / OQ-005**, **GAP-003 / OQ-002 /
+OQ-003**, **GAP-004**, **GAP-005**, **GAP-006 / OQ-007**, **GAP-007**,
+**GAP-008 / OQ-006**, **GAP-009 / OQ-004**, **GAP-010 / OQ-008**, and
+**OQ-010**. Selected directions: the FEATURE artifact requirement is waived for
+this change (ISSUE + DOMAIN accepted as the Discovery input); the Register
+Barcode entry point moves into Barcode Registry; the Draft Delete action is
+relocated from Detail to Edit with the Draft Detail screen removed; and Home's
+New Return reuses the existing full-screen `return_order_create` route. The
+options below are the pre-decision analysis record; no option remains open.
 
 ## OQ-001 / GAP-002 — Standalone scan and the Register entry
 
@@ -335,7 +336,7 @@ Ledger: **GAP-001 — CLOSED (2026-09-25)**, **GAP-002 — CLOSED (2026-09-25)**
 **GAP-007 — CLOSED (2026-09-25)**, **GAP-008 — CLOSED (2026-09-25)**, **GAP-009 — CLOSED (2026-09-25)**, **GAP-010 — CLOSED (2026-09-25)**,
 **OQ-009 — CLOSED (2026-09-25)**, **OQ-001, OQ-005 — CLOSED (2026-09-25)**,
 **OQ-002, OQ-003, OQ-004 — CLOSED (2026-09-25)**, **OQ-008 — CLOSED (2026-09-25)**,
-**OQ-006 … OQ-007 — OPEN**, **OQ-010 — CLOSED (2026-09-25)**. Eleven decisions have been
+**OQ-006, OQ-007 — CLOSED (2026-09-25)**, **OQ-010 — CLOSED (2026-09-25)**. Eleven decisions have been
 approved (§8 GAP-001, §8 GAP-002, §8 GAP-003, §8 GAP-004, §8 GAP-005, §8 GAP-006, §8 GAP-007, §8 GAP-008, §8 GAP-009, §8 GAP-010, §8 OQ-010).
 When a further resolution is approved it will be recorded in place (Decision,
 Rationale, Impact, Architecture Impact, Resolved By, Resolved Date) without
@@ -796,105 +797,94 @@ Stakeholder / Product Owner
 
 ---
 
-## GAP-006 — Capture layout re-prioritization
+## GAP-006 — Return Order Capture Layout Re-prioritization
 
 **Status: CLOSED**
 
 ### Decision
 
-The Return Order capture workflow remains fundamentally unchanged.
+The existing Return Order capture workflow is retained.
 
-The existing Create Return Order screen is accepted as already satisfying the continuous transaction capture requirement.
+The current `CreateReturnOrderScreen` already provides the required continuous transaction surface, including:
 
-This change request does not introduce a new capture workflow. The required change is limited to layout and structural prioritization:
+* single-screen capture,
+* embedded barcode scanning,
+* local item lookup,
+* consecutive item scanning,
+* existing transaction lifecycle.
 
-* Item entry becomes the dominant working area.
+Therefore, this change does **not** introduce a new Return Order capture workflow.
+
+The scope of this gap is limited to **structural layout and information hierarchy**:
+
+* Item entry becomes the primary working area.
+* The item list becomes a primary part of the transaction surface.
 * Salesman becomes secondary information.
 * Driver becomes secondary information.
 * Notes become secondary information.
-* The item list clearly emphasizes:
+* Item rows clearly expose Item, Quantity, Unit, and Return Type.
 
-  * Item
-  * Quantity
-  * Unit
-  * Return Type
-
-Barcode scanning remains embedded within the Return Order capture process.
+Visual styling is explicitly governed by **GAP-008** and is not part of this decision.
 
 ### Rationale
 
-Repository analysis confirms that the current implementation already provides:
+The current implementation already satisfies the functional intent of a continuous transaction surface.
 
-* a single-screen capture experience,
-* embedded barcode scanning,
-* local barcode lookup,
-* consecutive item scanning,
-* no network dependency during capture,
-* immediate item addition into the transaction.
+The requested change is therefore a reorganization of the existing screen rather than a workflow redesign.
 
-These characteristics already satisfy the intended operational requirement of a continuous transaction surface.
-
-The requested change therefore concerns screen emphasis and information hierarchy rather than workflow redesign.
+Creating a new capture flow would add unnecessary complexity and duplicate behavior that already exists.
 
 ### Impact
 
-Required changes:
+The implementation shall:
 
-* Reorganize screen layout to prioritize item capture activities.
-* Reduce visual prominence of Salesman.
-* Reduce visual prominence of Driver.
-* Reduce visual prominence of Notes.
-* Improve visibility of item-line information.
-* Preserve existing barcode scanning workflow.
-* Preserve existing transaction lifecycle.
+* retain the existing capture workflow;
+* retain the existing barcode-scanning behavior;
+* retain the existing local/offline lookup behavior;
+* reorganize the screen structure and information hierarchy.
 
-No business rules change.
+The implementation shall not introduce:
 
-No domain changes are required.
+* a new capture workflow;
+* a wizard;
+* additional transaction steps;
+* new business rules;
+* API changes;
+* database changes;
+* synchronization changes.
 
-No API changes are required.
+### Scope Boundary
 
-No database changes are required.
+This decision covers **structure and layout only**.
 
-No synchronization changes are required.
+The following remain outside this gap:
+
+* colors,
+* typography,
+* iconography,
+* component styling,
+* spacing treatment,
+* visual emphasis,
+* branding,
+* design-system refinement.
+
+Those items are deferred to the separate UI/UX Styling change defined by GAP-008.
 
 ### Architecture Impact
 
-Current conceptual structure:
-
-```text
-Header Information
-├─ Warehouse
-├─ Customer
-├─ Salesman
-├─ Driver
-└─ Notes
-
-Item Entry
-├─ Barcode Scan
-├─ Item Search
-├─ Qty
-├─ Unit
-└─ Return Type
-
-Item List
-```
-
-Target conceptual structure:
+The architecture shall describe the target capture structure as:
 
 ```text
 Transaction Context
 ├─ Warehouse
 └─ Customer
 
-Item Entry (Primary Focus)
+Item Entry / Item List
 ├─ Barcode Scan
 ├─ Item Search
-├─ Qty
+├─ Quantity
 ├─ Unit
 └─ Return Type
-
-Item List (Prominent)
 
 Additional Information
 ├─ Salesman
@@ -902,13 +892,7 @@ Additional Information
 └─ Notes
 ```
 
-The transaction remains a single continuous capture flow.
-
-### Confirmation
-
-Issue Note 2 is resolved:
-
-The current implementation already functions as a continuous transaction surface. The requested change is a structural and visual prioritization of existing components rather than a workflow redesign.
+The existing transaction behavior remains unchanged.
 
 ### Resolved By
 
@@ -920,103 +904,78 @@ Stakeholder / Product Owner
 
 ---
 
-## GAP-007 — Architecture artifact inconsistency
+## GAP-007 — Architecture Artifact Consistency
 
 **Status: CLOSED**
 
 ### Decision
 
-The affected architecture artifacts shall be updated to reflect the approved
-navigation and workflow changes defined by this change request.
+The existing architecture artifacts are acknowledged as describing the **pre-change architecture** and therefore require update.
 
-The following artifacts are identified as impacted:
+This does not block feasibility.
 
-* `RETURN-ORDER-ARCHITECTURE.md`
-* `BARCODE-REGISTRY-ARCHITECTURE.md`
-* `BARCODE-REGISTRY-UX-BLUEPRINT.md`
+The approved decisions from this feasibility assessment are sufficient to establish the target direction. The Architect shall update the affected architecture artifacts during the Architecture phase.
 
-These updates are architecture-maintenance activities and do not require
-additional business decisions.
+Affected artifacts:
+
+* `docs/work/return-order/RETURN-ORDER-ARCHITECTURE.md`
+* `docs/work/barcode-registry/BARCODE-REGISTRY-ARCHITECTURE.md`
+* `docs/work/barcode-registry/BARCODE-REGISTRY-UX-BLUEPRINT.md`
 
 ### Rationale
 
-The existing architecture documents accurately describe the current implementation state.
+The architecture documents are not expected to remain unchanged when an approved change intentionally modifies navigation, routing, and screen structure.
 
-This change request intentionally modifies:
+The inconsistency is therefore a **knowledge-update task**, not an unresolved product or feasibility decision.
 
-* Home navigation structure,
-* Return Order navigation flow,
-* Draft/Synced routing behavior,
-* Barcode Registry navigation ownership,
-* Return Order list behavior,
-* Return Order capture layout priorities.
-
-As a result, the current architecture artifacts become partially outdated once
-the change is approved.
-
-This is not a feasibility concern. It is a normal consequence of changing the
-approved architecture.
-
-Knowledge artifacts must remain synchronized with the approved target state.
+No additional stakeholder decision is required to determine whether the architecture should reflect the approved target state.
 
 ### Impact
 
-The Architect shall update architecture artifacts to reflect the approved
-decisions recorded in:
+The Architect must update the affected artifacts to reflect the decisions already approved in this assessment, including:
 
-* GAP-001
-* GAP-002
-* GAP-003
-* GAP-004
-* GAP-005
-* GAP-006
-* OQ-010
+* Home navigation hierarchy;
+* New Return entry;
+* Return Orders entry;
+* Draft → Edit / Resume;
+* Synced → Read-only Detail;
+* Draft Delete relocation;
+* Barcode Registry navigation;
+* Register Barcode entry point;
+* Synchronization navigation;
+* Return Order list structure;
+* Return Order capture layout structure.
 
-The updated architecture shall become the authoritative technical definition for
-implementation planning.
+The updated architecture becomes the authoritative technical input for implementation planning.
 
-### Architecture Impact
+### Important Boundary
 
-The following sections are expected to require revision:
+Closing GAP-007 does **not** mean the architecture documents have already been updated.
 
-#### RETURN-ORDER-ARCHITECTURE.md
+It means:
 
-* Navigation graph
-* Home routing
-* Return Order list behavior
-* Draft routing
-* Synced routing
-* Delete action placement
-* Capture screen structure
+> **No unresolved feasibility decision remains regarding those artifacts.**
 
-#### BARCODE-REGISTRY-ARCHITECTURE.md
+The remaining work is an explicitly assigned Architecture-phase activity.
 
-* Barcode Registry ownership
-* Register Barcode entry point
-* Removal of Home ownership for barcode registration
+### Planning Impact
 
-#### BARCODE-REGISTRY-UX-BLUEPRINT.md
+GAP-007 is **not a feasibility blocker**.
 
-* Home information architecture
-* Navigation hierarchy
-* Barcode Registry access path
-* Synchronization entry path
+However, implementation planning shall use the **updated architecture artifacts** as its authoritative technical input.
 
-The Architect is responsible for determining the exact document changes required.
+Therefore:
 
-### Compliance
+```text
+Feasibility
+    → GAP-007 CLOSED
 
-This decision does not alter:
+Architecture
+    → Update affected artifacts
 
-* business rules,
-* domain rules,
-* APIs,
-* persistence,
-* synchronization behavior,
-* security requirements.
-
-It only requires architectural documentation to be updated so that approved
-knowledge and implementation guidance remain aligned.
+Planning
+    → Use updated architecture
+```
 
 ### Resolved By
 
@@ -1396,12 +1355,13 @@ the Draft Detail screen is removed from the navigation graph; see §8 GAP-003.
 authoritative navigation entry point to Synchronization; the separate
 Synchronization menu item is removed from More; see §8 GAP-009.
 **OQ-005 — CLOSED (2026-09-25)** — see §8 GAP-002.
+**OQ-006 — CLOSED (2026-09-25)** — see §8 GAP-008.
 **OQ-007 — CLOSED (2026-09-25)** — see §8 GAP-006.
 **OQ-008 — CLOSED (2026-09-25)** — the existing status filters (Semua, Draft, Synced) are retained; default remains Semua; see §8 GAP-010.
 
-All other open questions remain **OPEN**; their dispositions are recorded in §3
-and §7 above. None has an approved decision. **OQ-006 and OQ-007 remain OPEN** —
-see §3 and §7.
+All open questions are now **CLOSED**; their dispositions are recorded in §3
+and §7 above. No open question remains unresolved: **OQ-006** is closed via
+§8 GAP-008 and **OQ-007** via §8 GAP-006.
 
 ---
 
@@ -1421,6 +1381,11 @@ NOT-READY
 ## Notes
 
 Blocking items: none.
+
+Readiness re-review (2026-09-25): every gap (GAP-001 … GAP-010) and every open
+question (OQ-001 … OQ-010) is **CLOSED**. With GAP-007 now closed, no blocking
+gap or open question remains and feasibility is sufficiently resolved for the
+Architecture phase to finalize/update the target architecture.
 
 Action items assigned to other roles:
 
@@ -1489,12 +1454,16 @@ Resolved items:
 
 Non-blocking items: none.
 
-The Analyst maintains this checklist and will keep Status `NOT-READY` while
-blocking gaps remain. Only the Architect sets Status to `READY-FOR-PLANNING`
-once the gaps and questions above are resolved and the architecture has been
-updated. `READY-FOR-PLANNING` will mean feasibility is sufficiently resolved for
-the Architecture skill to finalize or update the target architecture; it does
-not mean architecture is complete or that the architecture step may be skipped.
+The Analyst maintains this checklist and keeps Status `NOT-READY` while blocking
+gaps remain. No blocking gap or open question now remains, so the Analyst
+readiness review is complete; the Status is left `NOT-READY` only because the
+Architect is the sole role that grants the gate by setting it to
+`READY-FOR-PLANNING` after the affected architecture artifacts have been
+updated. `READY-FOR-PLANNING` means feasibility is sufficiently resolved for the
+Architecture skill to finalize or update the target architecture; it does not
+mean architecture is complete or that the architecture step may be skipped.
+Planning begins only after the required architecture work (the GAP-007
+architecture-artifact update) is complete.
 
 ---
 
