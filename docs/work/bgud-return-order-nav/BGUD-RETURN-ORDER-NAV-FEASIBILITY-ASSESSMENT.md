@@ -2,7 +2,7 @@
 Title: BGud — Return Order Navigation Restructure — Feasibility Assessment
 Code: BGUD-RETURN-ORDER-NAV-001
 Artifact: FEASIBILITY-ASSESSMENT
-Version: 1.0
+Version: 1.4
 LastUpdated: 2026-09-25
 Status: NOT-READY
 ---
@@ -24,8 +24,9 @@ Referenced artifacts:
   business knowledge, actors, business capabilities BC-001…BC-005, business
   rules BR-001…BR-020, Draft → Synced → Imported lifecycle)
 - FEATURE: **none exists** for the BGud Return Order operational flow
-  (see GAP-001). The ISSUE itself is the only definition of the requested
-  navigation/operational-flow change.
+  (see GAP-001). **CLOSED (2026-09-25):** the FEATURE requirement is waived for
+  this change; the ISSUE itself is the accepted Discovery input for the
+  requested navigation/operational-flow change.
 - Current architecture (owned by the Architect): 
   `docs/work/return-order/RETURN-ORDER-ARCHITECTURE.md` §11–§13, §20;
   `docs/work/barcode-registry/BARCODE-REGISTRY-ARCHITECTURE.md` and
@@ -175,16 +176,16 @@ working tree.
 
 | ID | Severity | Gap |
 |------|------|------|
-| GAP-001 | MAJOR | **No FEATURE artifact defines the target operational flow.** The request changes BGud's operational flow and navigation hierarchy ("Return Order is the daily operational workflow"), which is FEATURE-owned knowledge, yet no FEATURE artifact exists for the BGud Return Order capability. Only DOMAIN (`RETURN-ORDER-DOMAIN.md`) and ARCHITECTURE (`RETURN-ORDER-ARCHITECTURE.md`) exist. Architecture therefore has no authoritative business-outcome/operational-flow input for the target navigation. |
-| GAP-002 | CRITICAL | **Removing the Home barcode actions / standalone `scan` breaks the Register Barcode entry.** `register` is reachable only from the Home `Register Barcode` quick action (`Navigation.kt:246`) and the `scan` Not-Found flow (`Navigation.kt:375`). `BarcodeRegistryScreen` exposes only search + Edit and has **no Register action** (`BarcodeRegistryScreen.kt:167-183`). The requested IA removes the Home actions and makes scanning contextual; unless a replacement entry is defined, "Barcode Registry … Register … functionality preserved" cannot hold. |
-| GAP-003 | CRITICAL | **Routing Draft rows directly to Edit removes the only Delete entry point.** Delete is a Draft-only action that lives on Detail (`ReturnOrderDetailScreen.kt:229-239`), and Edit is reachable only from Detail (`Navigation.kt:321-330`). If a Draft row opens Edit/Resume directly, the Draft Detail surface (and therefore Delete) becomes unreachable unless the delete action is relocated. DOMAIN BR-019/BR-020 (Draft delete allowed, Synced delete prohibited) must be preserved. |
-| GAP-004 | MAJOR | **Home is a feature launcher; the target is a work launcher.** Current Home exposes Scan/Search/Register/Return Order with near-equal weight, a non-clickable sync card, and a flat Navigation list. The target requires New Return as the most prominent action, Return Orders as the primary destination, a clickable sync status card, and a "More" group (Barcode Registry / Synchronization / Settings). Evidence: `HomeScreen.kt:98-150`. |
-| GAP-005 | MAJOR | **Return Orders list becomes a work queue.** The target adds date grouping (e.g. "TODAY"), keeps recent-first, preserves search, keeps New Return accessible, and routes Draft → Edit/Resume while Synced → read-only Detail. The current list is a flat, ungrouped list whose rows always open Detail. Ordering is already recent-first. Evidence: `ReturnOrderListScreen.kt:160-251`, `ReturnOrderDao.kt`. |
+| GAP-001 | MAJOR | **No FEATURE artifact defines the target operational flow.** — **CLOSED (2026-09-25).** The request changes BGud's operational flow and navigation hierarchy ("Return Order is the daily operational workflow"), which is FEATURE-owned knowledge, yet no FEATURE artifact exists for the BGud Return Order capability. Only DOMAIN (`RETURN-ORDER-DOMAIN.md`) and ARCHITECTURE (`RETURN-ORDER-ARCHITECTURE.md`) exist. Architecture therefore had no authoritative business-outcome/operational-flow input for the target navigation. **Resolution:** waived — the ISSUE plus the DOMAIN is accepted as the Discovery input; see §8 GAP-001. |
+| GAP-002 | CRITICAL | **Removing the Home barcode actions / standalone `scan` breaks the Register Barcode entry.** `register` is reachable only from the Home `Register Barcode` quick action (`Navigation.kt:246`) and the `scan` Not-Found flow (`Navigation.kt:375`). `BarcodeRegistryScreen` exposes only search + Edit and has **no Register action** (`BarcodeRegistryScreen.kt:167-183`). The requested IA removes the Home actions and makes scanning contextual; unless a replacement entry is defined, "Barcode Registry … Register … functionality preserved" cannot hold. **CLOSED (2026-09-25):** Register Barcode entry point moved into Barcode Registry; Home-level action removed; standalone `scan` no longer required as a navigation entry point for barcode registration (see §8 GAP-002). |
+| GAP-003 | CRITICAL | **Routing Draft rows directly to Edit removes the only Delete entry point.** — **CLOSED (2026-09-25).** Delete is a Draft-only action that lives on Detail (`ReturnOrderDetailScreen.kt:229-239`), and Edit is reachable only from Detail (`Navigation.kt:321-330`). If a Draft row opens Edit/Resume directly, the Draft Detail surface (and therefore Delete) becomes unreachable unless the delete action is relocated. DOMAIN BR-019/BR-020 (Draft delete allowed, Synced delete prohibited) must be preserved. **Resolution:** Draft Detail screen removed; Delete action relocated from Detail to Edit; see §8 GAP-003. |
+| GAP-004 | MAJOR | **Home is a feature launcher; the target is a work launcher.** — **CLOSED (2026-09-25).** Current Home exposes Scan/Search/Register/Return Order with near-equal weight, a non-clickable sync card, and a flat Navigation list. The target requires New Return as the most prominent action, Return Orders as the primary destination, a clickable sync status card, and a "More" group (Barcode Registry / Synchronization / Settings). Evidence: `HomeScreen.kt:98-150`. **Resolution:** Home transitions from feature launcher to work launcher; see §8 GAP-004. |
+| GAP-005 | MAJOR | **Return Orders list becomes a work queue.** — **CLOSED (2026-09-25).** The target adds date grouping (e.g. "TODAY"), keeps recent-first, preserves search, keeps New Return accessible, and routes Draft → Edit/Resume while Synced → read-only Detail. The current list is a flat, ungrouped list whose rows always open Detail. Ordering is already recent-first. Evidence: `ReturnOrderListScreen.kt:160-251`, `ReturnOrderDao.kt`. **Resolution:** see §8 GAP-005. |
 | GAP-006 | MAJOR | **Capture is already a continuous form; the real change is layout re-prioritization.** `CreateReturnOrderScreen` already embeds the scanner and identifies items locally with consecutive scans, so the requested "continuous transaction surface" largely exists. The substantive change is structural emphasis: item entry dominates while Salesman/Driver/Notes are de-emphasized, and each row shows Item, Quantity, Unit, Return Type. The ISSUE itself (Note 2) leaves this confirmation open. Evidence: `CreateReturnOrderScreen.kt:136-477`. |
-| GAP-007 | MAJOR | **Existing architecture artifacts become inconsistent.** The approved architecture fixes the current navigation and layouts that this request contradicts: `RETURN-ORDER-ARCHITECTURE.md` §11.1/§12.2/§13.1 (List → Detail → Edit; Home → return_order_list only) and `BARCODE-REGISTRY-UX-BLUEPRINT.md` §4/§6 and `BARCODE-REGISTRY-ARCHITECTURE.md` (Home quick actions; Barcode Registry branch). ARCHITECTURE is owned by the Architect; it must be reviewed and updated so knowledge and code stay synchronized. |
-| GAP-008 | MAJOR | **Scope boundary between "structure" and deferred visual styling is not fixed.** Requirements such as "New Return must be the most prominent action", "Barcode Registry must not compete visually with Return Order", and card/chip emphasis are realized partly through visual properties (size, weight, color, spacing). The boundary between this change and the separate UI design change request is undefined, creating overlap/conflict risk. |
-| GAP-009 | MINOR | **Duplicate route to Synchronization.** The target makes the Home sync status card lead to Synchronization while the "More" group may also retain a "Synchronization" item, yielding two entries to the same destination. ISSUE Note 5 asks for confirmation. Evidence: `HomeScreen.kt:142-145`. |
-| GAP-010 | MINOR | **Filter set drift.** The target mockup shows only `[Draft] [Synced]`, while the current list has `Semua` / `Draft` / `Synced`; "preserve search" is stated but the fate of the `Semua` chip is not. Evidence: `ReturnOrderListScreen.kt:111-134`. |
+| GAP-007 | MAJOR | **Existing architecture artifacts become inconsistent.** The approved architecture fixes the current navigation and layouts that this request contradicts: `RETURN-ORDER-ARCHITECTURE.md` §11.1/§12.2/§13.1 (List → Detail → Edit; Home → return_order_list only) and `BARCODE-REGISTRY-UX-BLUEPRINT.md` §4/§6 and `BARCODE-REGISTRY-ARCHITECTURE.md` (Home quick actions; Barcode Registry branch). ARCHITECTURE is owned by the Architect; it must be reviewed and updated so knowledge and code stay synchronized. — **CLOSED (2026-09-25):** the affected architecture artifacts shall be updated by the Architect to reflect the approved navigation and workflow changes; see §8 GAP-007. |
+| GAP-008 | MAJOR | **Scope boundary between "structure" and deferred visual styling is not fixed.** — **CLOSED (2026-09-25):** the boundary is fixed; this change request is limited to Navigation and Layout (navigation hierarchy, screen routing, screen ownership, information architecture, content grouping, component placement, layout structure, workflow prioritization, visibility of operational and administrative actions). Visual styling (colors, typography, iconography, branding, component styling, elevation, shadows, animations, visual emphasis through color or styling treatment, design-system refinements) is explicitly excluded and deferred to a separate UI/UX Styling change request after Navigation and Layout implementation is complete. See §8 GAP-008. |
+| GAP-009 | MINOR | **Duplicate route to Synchronization.** — **CLOSED (2026-09-25).** The Home Synchronization Status card becomes the authoritative navigation entry point to Synchronization; the separate Synchronization menu item is removed from More. See §8 GAP-009. |
+| GAP-010 | MINOR | **Filter set drift.** — **CLOSED (2026-09-25).** The target mockup shows only `[Draft] [Synced]`, while the current list has `Semua` / `Draft` / `Synced`; "preserve search" is stated but the fate of the `Semua` chip is not. Evidence: `ReturnOrderListScreen.kt:111-134`. **Resolution:** existing status filters retained (Semua, Draft, Synced); default remains Semua; see §8 GAP-010. |
 
 Severity key: CRITICAL — blocks target architecture from being finalized;
 MAJOR — significant structure/flow decision required; MINOR — small,
@@ -196,16 +197,16 @@ localized decision.
 
 | ID | Question | Impact |
 |------|------|------|
-| OQ-001 | What is the fate of the standalone `scan` route and `ScanScreen` — removed entirely, retained as a secondary tool under "More", or retained only as an internal capture step? What happens to the scan Not-Found → `register?barcode=` path (`Navigation.kt:375`)? | Determines the whole navigation graph and the Barcode Registry entry points. ISSUE Note 3. |
-| OQ-002 | Does Return Order Detail remain reachable for a **Draft** order at all (e.g. to view before editing), or do Draft rows navigate only to Edit/Resume? | Determines the list → detail/edit routing and whether Detail remains in the graph. ISSUE Note 4. |
-| OQ-003 | If Draft rows skip Detail, where does the Draft **Delete** action live (Edit screen action, long-press, swipe)? | Required to preserve BR-019/BR-020 delete capability (GAP-003). |
-| OQ-004 | Is the Home sync status card the entry to Synchronization, and is the existing "Synchronization" item in "More" retained alongside it or removed? | Determines whether two entries to one destination remain. ISSUE Note 5. |
-| OQ-005 | How is **Register Barcode** reached after the top-level Home actions and (possibly) standalone `scan` are removed — a new Register action inside Barcode Registry, or only from a retained scan Not-Found flow? | Required to satisfy "Barcode Registry Search/Register/Edit preserved" (GAP-002). |
-| OQ-006 | Which prominence/emphasis requirements belong to this structure change versus the separate UI design change request? | Fixes scope and prevents overlap/conflict between the two change requests (GAP-008). |
-| OQ-007 | How strictly must the reporter's "leave ViewModels, repositories, persistence, networking, and domain logic unchanged" hold? May ViewModels be adjusted where the requested structure requires it (date grouping, Draft resume, Delete relocation, capture state)? | If absolutely no ViewModel change is allowed, part of the requested structure may be infeasible. ISSUE Note 6. |
-| OQ-008 | Is the `Semua` status filter chip retained, or does the list show only `Draft` / `Synced`? | Determines the filter control set; search is confirmed preserved. |
-| OQ-009 | Is a FEATURE artifact for the BGud Return Order operational flow required before architecture, or does the detailed ISSUE serve as the Discovery input? | Determines whether workflow Discovery is complete (GAP-001). |
-| OQ-010 | Does Home's "New Return" reuse the existing full-screen `return_order_create` route, or become a distinct/inline capture entry? | Determines whether a new navigation target/route is introduced. |
+| OQ-001 | What is the fate of the standalone `scan` route and `ScanScreen` — removed entirely, retained as a secondary tool under "More", or retained only as an internal capture step? What happens to the scan Not-Found → `register?barcode=` path (`Navigation.kt:375`)? | **CLOSED (2026-09-25)** — see §8 GAP-002. |
+| OQ-002 | Does Return Order Detail remain reachable for a **Draft** order at all (e.g. to view before editing), or do Draft rows navigate only to Edit/Resume? | **CLOSED (2026-09-25)** — see §8 GAP-005. Draft rows navigate directly to Edit/Resume; Detail is not the entry point for Draft from the list. |
+| OQ-003 | If Draft rows skip Detail, where does the Draft **Delete** action live (Edit screen action, long-press, swipe)? | **CLOSED (2026-09-25)** — see §8 GAP-003. Delete is relocated from Detail to the Edit/Resume screen; the Draft Detail screen is removed entirely. |
+| OQ-004 | Is the Home sync status card the entry to Synchronization, and is the existing "Synchronization" item in "More" retained alongside it or removed? | **CLOSED (2026-09-25)** — the Home Synchronization Status card is the authoritative navigation entry point to Synchronization; the separate Synchronization menu item is removed from More. See §8 GAP-009. |
+| OQ-005 | How is **Register Barcode** reached after the top-level Home actions and (possibly) standalone `scan` are removed — a new Register action inside Barcode Registry, or only from a retained scan Not-Found flow? | **CLOSED (2026-09-25)** — see §8 GAP-002. |
+| OQ-006 | Which prominence/emphasis requirements belong to this structure change versus the separate UI design change request? | **CLOSED (2026-09-25)** — see §8 GAP-008. This change is limited to Navigation and Layout; visual styling is explicitly excluded and deferred to a separate UI/UX Styling change request after Navigation and Layout implementation is complete. |
+| OQ-007 | How strictly must the reporter's "leave ViewModels, repositories, persistence, networking, and domain logic unchanged" hold? May ViewModels be adjusted where the requested structure requires it (date grouping, Draft resume, Delete relocation, capture state)? | **CLOSED (2026-09-25)** — see §8 GAP-006. |
+| OQ-008 | Is the `Semua` status filter chip retained, or does the list show only `Draft` / `Synced`? | **CLOSED (2026-09-25)** — see §8 GAP-010. |
+| OQ-009 | Is a FEATURE artifact for the BGud Return Order operational flow required before architecture, or does the detailed ISSUE serve as the Discovery input? | **CLOSED (2026-09-25) — see §8 GAP-001.** Answer: waived — the ISSUE (`BGUD-RETURN-ORDER-NAV-ISSUE.md`) together with `RETURN-ORDER-DOMAIN.md` is the authoritative Discovery input; no FEATURE artifact is created for this change. |
+| OQ-010 | Does Home's "New Return" reuse the existing full-screen `return_order_create` route, or become a distinct/inline capture entry? | **CLOSED (2026-09-25)** — see §8 OQ-010. Home's New Return reuses the existing full-screen `return_order_create` route; no new capture route, inline capture, modal workflow, wizard flow, or embedded Home-screen transaction surface is introduced. |
 
 ---
 
@@ -227,12 +228,12 @@ localized decision.
 | ID | Risk | Impact | Mitigation |
 |------|------|------|------|
 | RISK-001 | Register Barcode becomes unreachable after the Home actions and standalone `scan` are removed | High — a preserved capability regresses | Resolve OQ-005 / GAP-002 before architecture; add or retain an explicit Register entry point. |
-| RISK-002 | Draft Delete capability regresses when Draft rows bypass Detail | High — violates BR-019/BR-020 as experienced by operators | Resolve OQ-003 / GAP-003; relocate the Draft delete action with a clear confirmation. |
-| RISK-003 | Structure and visual styling overlap/conflict with the separate UI design change request | Medium — duplicated or contradictory changes to the same screens | Fix the boundary (OQ-006 / GAP-008); record which change owns each requirement. |
+| RISK-002 | Draft Delete capability regresses when Draft rows bypass Detail | High — violates BR-019/BR-020 as experienced by operators | **CLOSED (2026-09-25):** resolved — Delete relocated from Detail to the Edit/Resume screen; Draft Detail screen removed from the navigation graph; see §8 GAP-003. |
+| RISK-003 | Structure and visual styling overlap/conflict with the separate UI design change request | Medium — duplicated or contradictory changes to the same screens | **CLOSED (2026-09-25):** boundary fixed in §8 GAP-008. This change is limited to Navigation and Layout; visual styling is explicitly excluded and deferred to a separate UI/UX Styling change request after Navigation and Layout implementation is complete. |
 | RISK-004 | "No ViewModel changes" constraint conflicts with the requested structure | Medium — either the constraint is violated or the structure is left incomplete | Resolve OQ-007; define the permitted implementation surface before planning. |
 | RISK-005 | Knowledge drift: architecture/UX artifacts still describe the pre-change navigation | Medium — implementers may follow stale navigation contracts | Architecture review/update by the Architect (GAP-007) before planning starts. |
 | RISK-006 | Removing the top-level Scan quick action increases steps for ad-hoc item lookup | Medium — operator efficiency and muscle memory | Keep scanning fast inside capture and preserve manual search; confirm Barcode Registry search covers lookup. |
-| RISK-007 | Two navigation entries to Synchronization (card + More item) confuse operators | Low — minor UX inconsistency | Resolve OQ-004 (GAP-009). |
+| RISK-007 | Two navigation entries to Synchronization (card + More item) confuse operators | Low — minor UX inconsistency | **CLOSED (2026-09-25):** resolved — Home Synchronization Status card becomes the authoritative navigation entry point; Synchronization menu item removed from More (see §8 GAP-009). |
 | RISK-008 | Home grouping ("work launcher") is interpreted as a redesign beyond navigation and pulls in visual styling | Medium — scope creep across change requests | Enforce ASM-003 and the OQ-006 boundary. |
 
 ---
@@ -241,6 +242,16 @@ localized decision.
 
 Alternative solution directions only. **No final decision is recorded here** —
 decisions belong in §8 Gap Closure after stakeholder/architecture input.
+
+*Status note (v1.3):* four decisions are recorded in §8 — **GAP-001 / OQ-009**,
+**GAP-002 / OQ-001 / OQ-005**, **GAP-003 / OQ-002 / OQ-003**, and **OQ-010**.
+The FEATURE artifact requirement is waived for this change and the ISSUE plus the
+DOMAIN is the accepted Discovery input (Option B below selected); the Register
+Barcode entry point is moved into Barcode Registry (Option A below selected); the
+Draft Delete action is relocated from Detail to Edit with the Draft Detail screen
+removed (Option A below selected); and Home's New Return reuses the existing
+full-screen `return_order_create` route with no new capture route introduced.
+The remaining options below are the pre-decision analysis record.
 
 ## OQ-001 / GAP-002 — Standalone scan and the Register entry
 
@@ -301,222 +312,1096 @@ the registry has no scan/register; Register is entered from capture as needed.
 - Disadvantages: an additional Discovery step before architecture.
 
 ### Option B — Treat the detailed ISSUE plus the existing DOMAIN as sufficient
-Discovery for this change
+Discovery for this change — **SELECTED DIRECTION (§8 GAP-001, 2026-09-25)**
 
 - Advantages: faster; the ISSUE is unusually detailed and adds no business rules.
 - Disadvantages: leaves FEATURE-owned operational-flow knowledge without an
   owner; risks the same gap recurring on the next change.
 
+**Selected.** The ISSUE (`BGUD-RETURN-ORDER-NAV-ISSUE.md`) together with
+`RETURN-ORDER-DOMAIN.md` is the authoritative Discovery input for this change
+and no FEATURE artifact is created. The waiver is specific to this change and
+does not remove the general expectation that a FEATURE artifact should exist
+when a change introduces or materially defines a new business capability or
+operational feature.
+
 ---
 
 # 8. Gap Closure
 
-Ledger: **GAP-001 … GAP-010 — OPEN**, **OQ-001 … OQ-010 — OPEN**. No decisions
-have been approved; every entry below requires stakeholder/architect input. When
-a resolution is approved it will be recorded in place (Decision, Rationale,
-Impact, Architecture Impact, Resolved By, Resolved Date) without renumbering,
-and Planning Readiness will be updated accordingly.
+Ledger: **GAP-001 — CLOSED (2026-09-25)**, **GAP-002 — CLOSED (2026-09-25)**,
+**GAP-003 — CLOSED (2026-09-25)**,
+**GAP-004 — CLOSED (2026-09-25)**, **GAP-005 — CLOSED (2026-09-25)**, **GAP-006 — CLOSED (2026-09-25)**,
+**GAP-007 — CLOSED (2026-09-25)**, **GAP-008 — CLOSED (2026-09-25)**, **GAP-009 — CLOSED (2026-09-25)**, **GAP-010 — CLOSED (2026-09-25)**,
+**OQ-009 — CLOSED (2026-09-25)**, **OQ-001, OQ-005 — CLOSED (2026-09-25)**,
+**OQ-002, OQ-003, OQ-004 — CLOSED (2026-09-25)**, **OQ-008 — CLOSED (2026-09-25)**,
+**OQ-006 … OQ-007 — OPEN**, **OQ-010 — CLOSED (2026-09-25)**. Eleven decisions have been
+approved (§8 GAP-001, §8 GAP-002, §8 GAP-003, §8 GAP-004, §8 GAP-005, §8 GAP-006, §8 GAP-007, §8 GAP-008, §8 GAP-009, §8 GAP-010, §8 OQ-010).
+When a further resolution is approved it will be recorded in place (Decision,
+Rationale, Impact, Architecture Impact, Resolved By, Resolved Date) without
+renumbering, and Planning Readiness will be updated accordingly.
 
 ## GAP-001 — Missing FEATURE artifact
 
-**Status: OPEN**
+**Status: CLOSED**
 
 ### Decision
 
-Pending. No target operational-flow definition has been approved. Decision
-options recorded in §7 (OQ-009).
+**Waive the FEATURE artifact requirement for this change.**
+
+The existing ISSUE `BGUD-RETURN-ORDER-NAV-ISSUE.md`, together with the
+authoritative `RETURN-ORDER-DOMAIN.md`, is accepted as the Discovery input for
+this change. No separate FEATURE artifact will be created for
+`BGUD-RETURN-ORDER-NAV-001`.
+
+The ISSUE is sufficiently detailed to define the requested operational-flow and
+navigation change, while the DOMAIN remains authoritative for business
+capabilities, business rules, and the Return Order lifecycle.
 
 ### Rationale
 
-The requested change is a change to operational flow and navigation hierarchy,
-which is FEATURE-owned knowledge; no FEATURE artifact exists.
+This change does not introduce a new business capability or new business rules.
+It restructures the existing BGud Return Order experience: navigation hierarchy,
+screen flow, capture layout, Draft/Synced entry behavior, and placement of
+supporting functions. The ISSUE already describes the intended operational
+outcome and interaction flow in sufficient detail for architecture work.
+
+Creating a FEATURE artifact would largely duplicate information already present
+in the ISSUE and DOMAIN without adding meaningful decision-making value.
+
+This waiver is specific to this change and does not remove the general
+expectation that a FEATURE artifact should exist when a change introduces or
+materially defines a new business capability or operational feature.
 
 ### Impact
 
-Architecture cannot be finalized against an authoritative FEATURE definition
-until this is resolved.
+* The Architecture phase may use the ISSUE as the authoritative target-flow
+  input for this change.
+* `RETURN-ORDER-DOMAIN.md` remains the authority for business terminology,
+  rules, capabilities, and lifecycle.
+* `BGUD-RETURN-ORDER-NAV-ISSUE.md` becomes the authoritative Discovery input
+  for the requested navigation/operational-flow change.
+* No new FEATURE artifact is required before architecture can proceed.
+* GAP-001 no longer blocks planning readiness.
+
+### Architecture Impact
+
+Architecture must explicitly reference the ISSUE as the target operational-flow
+input and must remain consistent with the existing DOMAIN rules.
+
+The Architect must not introduce new business behavior while translating the
+requested flow into the target navigation and screen architecture.
+
+### Resolved By
+
+Stakeholder / Product Owner
+
+### Resolved Date
+
+2026-09-25
 
 ---
 
 ## GAP-002 — Register Barcode entry point
 
-**Status: OPEN**
+**Status: CLOSED**
 
 ### Decision
 
-Pending. See OQ-001 and OQ-005.
+Move the **Register Barcode** entry point into **Barcode Registry**.
+
+The Home screen will no longer expose a top-level Register Barcode action.
+
+Barcode Registration capability remains preserved through Barcode Registry, which becomes the authoritative destination for barcode administration activities:
+
+* Search Barcode
+* Register Barcode
+* Edit Barcode
+
+The standalone `scan` route is no longer required as a navigation entry point for barcode registration.
 
 ### Rationale
 
-`register` is currently reachable only from the Home quick action and the
-standalone scan Not-Found flow; Barcode Registry has no Register action.
+The requested information architecture establishes Return Order as the primary operational workflow and demotes barcode-management activities to secondary administrative functions.
+
+Register Barcode is not part of the normal Return Order workflow. It is a maintenance/administrative activity belonging to Barcode Registry.
+
+Placing Register Barcode inside Barcode Registry aligns navigation ownership with capability ownership:
+
+* Return Order owns return processing.
+* Barcode Registry owns barcode management.
+* Home focuses on operational work rather than administrative functions.
+
+This preserves all existing barcode-registration capability while removing unnecessary competition with the Return Order workflow.
 
 ### Impact
 
-Removing the current entries without a replacement breaks a stated-preserved
-Barcode Registry capability.
+Required changes:
+
+* Add a **Register Barcode** action within Barcode Registry.
+* Remove the Home-level Register Barcode action.
+* Barcode Registry becomes the single navigation destination for barcode administration activities.
+* Barcode registration capability remains available to users.
+
+No domain, API, database, synchronization, or business-rule changes are required.
+
+### Architecture Impact
+
+Navigation ownership changes:
+
+Current:
+
+```
+Home
+ ├─ Register Barcode
+ └─ Barcode Registry
+```
+
+Target:
+
+```
+Home
+ └─ More
+      └─ Barcode Registry
+            ├─ Search
+            ├─ Register
+            └─ Edit
+```
+
+Barcode Registry becomes the authoritative entry point for barcode-management operations.
+
+### Resolved By
+
+Stakeholder / Product Owner
+
+### Resolved Date
+
+2026-09-25
 
 ---
 
 ## GAP-003 — Draft Delete entry point
 
-**Status: OPEN**
+**Status: CLOSED**
 
 ### Decision
 
-Pending. See OQ-002 and OQ-003.
+The **Draft Detail screen is removed** from the Draft workflow.
+
+When a Return Order has status **Draft**:
+
+* Selecting the row opens **Edit / Resume Return Order** directly.
+* The Draft Detail screen is no longer reachable.
+* The Edit screen becomes the authoritative maintenance surface for Draft orders.
+* The **Delete Draft** action is relocated from Detail to Edit.
+
+When a Return Order has status **Synced**:
+
+* Selecting the row opens the existing read-only Detail screen.
+* Delete remains prohibited.
 
 ### Rationale
 
-Delete is a Draft-only action on Detail; routing Draft rows to Edit would remove
-its only entry point.
+Draft orders represent unfinished work.
+
+The primary operator intent for a Draft order is to continue working on it, not to
+inspect it through an intermediate Detail screen.
+
+Routing Draft orders directly to Edit reduces navigation steps and aligns with the
+objective of making Return Order the primary operational workflow.
+
+Since DOMAIN BR-019 requires Draft orders to remain deletable, the Delete action is
+moved to the Edit screen.
+
+The Draft Detail screen becomes unnecessary and is removed from the Draft
+navigation graph.
 
 ### Impact
 
-Draft delete capability (BR-019) would regress unless relocated.
+Required changes:
+
+* Draft row → Edit / Resume.
+* Synced row → Detail (unchanged).
+* Delete action removed from Detail.
+* Delete action added to Edit.
+* Delete available only when status = Draft.
+* Synced orders remain non-editable and non-deletable.
+
+### Architecture Impact
+
+Current:
+
+```text
+Return Order List
+    ↓
+Draft Detail
+    ├─ Edit
+    └─ Delete
+```
+
+Target:
+
+```text
+Return Order List
+    ↓
+Draft Edit / Resume
+    ├─ Save
+    ├─ Continue Editing
+    └─ Delete
+```
+
+Synced flow:
+
+```text
+Return Order List
+    ↓
+Synced Detail (Read Only)
+```
+
+Draft Detail is removed from the navigation graph.
+
+### Compliance
+
+* BR-019 (Draft delete allowed): PRESERVED
+* BR-020 (Synced delete prohibited): PRESERVED
+
+### Resolved By
+
+Stakeholder / Product Owner
+
+### Resolved Date
+
+2026-09-25
 
 ---
 
 ## GAP-004 — Home structure
 
-**Status: OPEN**
+**Status: CLOSED**
 
 ### Decision
 
-Pending. See OQ-004, OQ-010.
+BGud Home shall transition from a **feature launcher** to a **work launcher**.
+
+The Home screen will prioritize the operator's primary daily activity: Return Order
+processing.
+
+Target Home structure:
+
+```text
+Home
+│
+├─ New Return
+│
+├─ Return Orders
+│
+├─ Synchronization Status
+│    └─ Open Synchronization
+│
+└─ More
+     ├─ Barcode Registry
+     └─ Settings
+```
 
 ### Rationale
 
-Current Home is a feature launcher; the target is a work launcher.
+The change request explicitly establishes Return Order as the primary operational
+workflow of BGud.
+
+The current Home treats all features with approximately equal importance:
+
+* Scan Barcode
+* Search Barcode
+* Register Barcode
+* Return Order
+
+This reflects a feature-centric navigation model.
+
+The requested navigation adopts a workflow-centric model where Home serves as an
+operational starting point rather than a catalog of system capabilities.
+
+Operators should be able to:
+
+1. Start a new Return Order immediately.
+2. Resume or review existing Return Orders.
+3. See synchronization status without leaving Home.
+4. Access secondary administrative functions when required.
+
+Administrative and supporting functions remain available but are intentionally
+de-emphasized.
 
 ### Impact
 
-HomeScreen and its navigation wiring change; prominence decisions depend on the
-OQ-006 scope boundary.
+Required changes:
+
+* Remove Home-level Scan Barcode action.
+* Remove Home-level Search Barcode action.
+* Remove Home-level Register Barcode action.
+* Promote New Return as the primary action.
+* Promote Return Orders as the primary navigation destination.
+* Make Synchronization Status card clickable.
+* Introduce a More section containing:
+
+  * Barcode Registry
+  * Synchronization
+  * Settings
+
+No business-rule changes are introduced.
+
+No domain, API, database, synchronization, or lifecycle changes are required.
+
+### Architecture Impact
+
+Current:
+
+```text
+Home
+├─ Scan Barcode
+├─ Search Barcode
+├─ Register Barcode
+├─ Return Order
+├─ Synchronization
+└─ Settings
+```
+
+Target:
+
+```text
+Home
+├─ New Return
+├─ Return Orders
+├─ Synchronization Status
+└─ More
+     ├─ Barcode Registry
+     └─ Settings
+```
+
+The navigation hierarchy becomes aligned with the primary operational workflow
+while preserving access to all existing capabilities.
+
+### Resolved By
+
+Stakeholder / Product Owner
+
+### Resolved Date
+
+2026-09-25
 
 ---
 
 ## GAP-005 — Return Orders list as a work queue
 
-**Status: OPEN**
+**Status: CLOSED**
 
 ### Decision
 
-Pending. See OQ-002, OQ-008.
+The Return Orders screen shall evolve from a record list into an operational work queue.
+
+The target behavior is:
+
+* Orders remain sorted by most recent first.
+* Orders are grouped by date sections (e.g. TODAY, YESTERDAY, EARLIER).
+* Search capability remains unchanged.
+* New Return remains directly accessible from the screen.
+* Draft orders open Edit / Resume.
+* Synced orders open read-only Detail.
 
 ### Rationale
 
-Current list is flat and always opens Detail; the target adds date grouping and
-Draft/Synced-specific routing.
+The requested navigation establishes Return Order as the primary operational workflow.
+
+In that workflow, operators primarily need to:
+
+* continue unfinished work,
+* verify recently completed work,
+* locate recent transactions quickly,
+* and create new transactions.
+
+A work queue presentation better supports these objectives than a flat historical list.
+
+Recent-first ordering already exists and remains appropriate.
+
+Date grouping improves operator scanning and aligns the list with daily operational usage patterns without changing business behavior.
+
+Status-based routing aligns navigation with operator intent:
+
+* Draft = continue work.
+* Synced = review completed work.
 
 ### Impact
 
-List layout and row routing change; requires a date-grouping decision and a
-Draft-routing decision.
+Required changes:
+
+* Add date-based grouping to the list.
+* Preserve existing recent-first ordering.
+* Preserve existing search functionality.
+* Preserve New Return entry point.
+* Change row navigation:
+
+  * Draft → Edit / Resume.
+  * Synced → Read-Only Detail.
+* Retain existing status indicators.
+
+No business rules change.
+
+No domain, API, database, synchronization, or lifecycle changes are required.
+
+### Architecture Impact
+
+Current:
+
+```text
+Return Orders
+│
+├─ Search
+│
+├─ Flat List
+│    ├─ Draft  → Detail
+│    └─ Synced → Detail
+│
+└─ New Return
+```
+
+Target:
+
+```text
+Return Orders
+│
+├─ Search
+│
+├─ TODAY
+│    ├─ Draft  → Edit / Resume
+│    └─ Synced → Detail
+│
+├─ YESTERDAY
+│    ├─ Draft  → Edit / Resume
+│    └─ Synced → Detail
+│
+├─ EARLIER
+│    ├─ Draft  → Edit / Resume
+│    └─ Synced → Detail
+│
+└─ New Return
+```
+
+The screen becomes the operational queue for Return Order work while preserving all existing Return Order capabilities.
+
+### Resolved By
+
+Stakeholder / Product Owner
+
+### Resolved Date
+
+2026-09-25
 
 ---
 
 ## GAP-006 — Capture layout re-prioritization
 
-**Status: OPEN**
+**Status: CLOSED**
 
 ### Decision
 
-Pending. See OQ-007.
+The Return Order capture workflow remains fundamentally unchanged.
+
+The existing Create Return Order screen is accepted as already satisfying the continuous transaction capture requirement.
+
+This change request does not introduce a new capture workflow. The required change is limited to layout and structural prioritization:
+
+* Item entry becomes the dominant working area.
+* Salesman becomes secondary information.
+* Driver becomes secondary information.
+* Notes become secondary information.
+* The item list clearly emphasizes:
+
+  * Item
+  * Quantity
+  * Unit
+  * Return Type
+
+Barcode scanning remains embedded within the Return Order capture process.
 
 ### Rationale
 
-The continuous capture surface already exists; the substantive change is
-structural emphasis of the item region and de-emphasis of Salesman/Driver/Notes.
+Repository analysis confirms that the current implementation already provides:
+
+* a single-screen capture experience,
+* embedded barcode scanning,
+* local barcode lookup,
+* consecutive item scanning,
+* no network dependency during capture,
+* immediate item addition into the transaction.
+
+These characteristics already satisfy the intended operational requirement of a continuous transaction surface.
+
+The requested change therefore concerns screen emphasis and information hierarchy rather than workflow redesign.
 
 ### Impact
 
-Capture screen structure changes; may require ViewModel/state adjustments
-depending on OQ-007.
+Required changes:
+
+* Reorganize screen layout to prioritize item capture activities.
+* Reduce visual prominence of Salesman.
+* Reduce visual prominence of Driver.
+* Reduce visual prominence of Notes.
+* Improve visibility of item-line information.
+* Preserve existing barcode scanning workflow.
+* Preserve existing transaction lifecycle.
+
+No business rules change.
+
+No domain changes are required.
+
+No API changes are required.
+
+No database changes are required.
+
+No synchronization changes are required.
+
+### Architecture Impact
+
+Current conceptual structure:
+
+```text
+Header Information
+├─ Warehouse
+├─ Customer
+├─ Salesman
+├─ Driver
+└─ Notes
+
+Item Entry
+├─ Barcode Scan
+├─ Item Search
+├─ Qty
+├─ Unit
+└─ Return Type
+
+Item List
+```
+
+Target conceptual structure:
+
+```text
+Transaction Context
+├─ Warehouse
+└─ Customer
+
+Item Entry (Primary Focus)
+├─ Barcode Scan
+├─ Item Search
+├─ Qty
+├─ Unit
+└─ Return Type
+
+Item List (Prominent)
+
+Additional Information
+├─ Salesman
+├─ Driver
+└─ Notes
+```
+
+The transaction remains a single continuous capture flow.
+
+### Confirmation
+
+Issue Note 2 is resolved:
+
+The current implementation already functions as a continuous transaction surface. The requested change is a structural and visual prioritization of existing components rather than a workflow redesign.
+
+### Resolved By
+
+Stakeholder / Product Owner
+
+### Resolved Date
+
+2026-09-25
 
 ---
 
 ## GAP-007 — Architecture artifact inconsistency
 
-**Status: OPEN**
+**Status: CLOSED**
 
 ### Decision
 
-Pending. Architecture review is owned by the Architect and follows approval of
-the target flow.
+The affected architecture artifacts shall be updated to reflect the approved
+navigation and workflow changes defined by this change request.
+
+The following artifacts are identified as impacted:
+
+* `RETURN-ORDER-ARCHITECTURE.md`
+* `BARCODE-REGISTRY-ARCHITECTURE.md`
+* `BARCODE-REGISTRY-UX-BLUEPRINT.md`
+
+These updates are architecture-maintenance activities and do not require
+additional business decisions.
 
 ### Rationale
 
-`RETURN-ORDER-ARCHITECTURE.md` and the Barcode Registry UX/architecture
-artifacts fix the navigation this request changes.
+The existing architecture documents accurately describe the current implementation state.
+
+This change request intentionally modifies:
+
+* Home navigation structure,
+* Return Order navigation flow,
+* Draft/Synced routing behavior,
+* Barcode Registry navigation ownership,
+* Return Order list behavior,
+* Return Order capture layout priorities.
+
+As a result, the current architecture artifacts become partially outdated once
+the change is approved.
+
+This is not a feasibility concern. It is a normal consequence of changing the
+approved architecture.
+
+Knowledge artifacts must remain synchronized with the approved target state.
 
 ### Impact
 
-Those artifacts must be updated before planning so knowledge and code stay
-synchronized.
+The Architect shall update architecture artifacts to reflect the approved
+decisions recorded in:
+
+* GAP-001
+* GAP-002
+* GAP-003
+* GAP-004
+* GAP-005
+* GAP-006
+* OQ-010
+
+The updated architecture shall become the authoritative technical definition for
+implementation planning.
+
+### Architecture Impact
+
+The following sections are expected to require revision:
+
+#### RETURN-ORDER-ARCHITECTURE.md
+
+* Navigation graph
+* Home routing
+* Return Order list behavior
+* Draft routing
+* Synced routing
+* Delete action placement
+* Capture screen structure
+
+#### BARCODE-REGISTRY-ARCHITECTURE.md
+
+* Barcode Registry ownership
+* Register Barcode entry point
+* Removal of Home ownership for barcode registration
+
+#### BARCODE-REGISTRY-UX-BLUEPRINT.md
+
+* Home information architecture
+* Navigation hierarchy
+* Barcode Registry access path
+* Synchronization entry path
+
+The Architect is responsible for determining the exact document changes required.
+
+### Compliance
+
+This decision does not alter:
+
+* business rules,
+* domain rules,
+* APIs,
+* persistence,
+* synchronization behavior,
+* security requirements.
+
+It only requires architectural documentation to be updated so that approved
+knowledge and implementation guidance remain aligned.
+
+### Resolved By
+
+Stakeholder / Product Owner
+
+### Resolved Date
+
+2026-09-25
 
 ---
 
-## GAP-008 — Structure vs visual styling boundary
+## GAP-008 — Structure vs Visual Styling Boundary
 
-**Status: OPEN**
+**Status: CLOSED**
 
 ### Decision
 
-Pending. See OQ-006.
+This change request is limited to **Navigation and Layout**.
+
+Visual styling is explicitly excluded from scope and will be addressed by a separate UI/UX Styling change request after Navigation and Layout implementation has been completed.
+
+### Scope of This Change
+
+Included:
+
+* Navigation hierarchy
+* Screen routing
+* Screen ownership
+* Information architecture
+* Content grouping
+* Component placement
+* Layout structure
+* Workflow prioritization
+* Visibility of operational actions
+* Visibility of administrative actions
+
+Examples:
+
+* New Return becomes the primary Home action.
+* Return Orders becomes the primary operational destination.
+* Barcode Registry moves under More.
+* Synchronization Status becomes a navigation entry.
+* Item Entry becomes the dominant region of Return Order capture.
+* Salesman, Driver, and Notes become secondary regions.
+
+### Out of Scope
+
+Deferred to a future UI/UX Styling issue:
+
+* Colors
+* Typography
+* Iconography
+* Branding
+* Component styling
+* Elevation
+* Shadows
+* Animations
+* Visual emphasis through color treatment
+* Visual emphasis through styling treatment
+* Design-system refinements
+
+Examples:
+
+* Primary button colors
+* Card styling
+* Chip styling
+* Font sizing
+* Visual weight of labels
+* Theme adjustments
 
 ### Rationale
 
-Prominence/emphasis requirements are partly visual; the boundary with the
-separate UI design change request is undefined.
+The objective of this change request is to establish the correct operational workflow and navigation structure.
+
+Navigation and layout define how operators move through the application and where information is located.
+
+Visual styling determines how those structures are visually presented.
+
+Separating these concerns reduces implementation risk and allows operational workflow validation before investing in visual refinement.
 
 ### Impact
 
-Scope and ownership of prominence requirements must be fixed to avoid conflict.
+The implementation team shall focus on:
+
+* Navigation changes
+* Routing changes
+* Layout changes
+* Information architecture changes
+
+The implementation team shall not introduce styling redesign as part of this change unless required for technical compatibility.
+
+### Architecture Impact
+
+Architecture artifacts shall describe:
+
+* navigation structure,
+* routing behavior,
+* screen hierarchy,
+* layout organization,
+
+but shall not prescribe visual styling decisions beyond what is necessary to explain structure.
+
+A future UI/UX Styling issue may update presentation details without altering the approved navigation and workflow architecture.
+
+### Resolved By
+
+Stakeholder / Product Owner
+
+### Resolved Date
+
+2026-09-25
 
 ---
 
 ## GAP-009 — Duplicate Synchronization route
 
-**Status: OPEN**
+**Status: CLOSED**
 
 ### Decision
 
-Pending. See OQ-004.
+The Home Synchronization Status card becomes the authoritative navigation entry point to the Synchronization screen.
+
+The separate **Synchronization** menu item shall be removed from the **More** section.
+
+Target Home structure:
+
+```text
+Home
+│
+├─ New Return
+├─ Return Orders
+├─ Synchronization Status
+│    └─ Open Synchronization
+│
+└─ More
+     ├─ Barcode Registry
+     └─ Settings
+```
 
 ### Rationale
 
-The target adds a sync status card link while a Synchronization item may remain
-under More.
+The Synchronization Status card already exists to communicate synchronization state.
+
+Once the card becomes interactive, it naturally serves as both:
+
+* synchronization status indicator, and
+* synchronization navigation entry point.
+
+Maintaining a second navigation entry to the same destination provides no additional operational value and introduces unnecessary duplication.
+
+The Home screen should expose a single clear path to each operational function whenever possible.
 
 ### Impact
 
-Minor navigation redundancy.
+Required changes:
+
+* Synchronization Status card becomes clickable.
+* Synchronization screen remains unchanged.
+* Synchronization menu item removed from More.
+
+No business rules change.
+
+No domain changes are required.
+
+No API changes are required.
+
+No database changes are required.
+
+No synchronization behavior changes are required.
+
+### Architecture Impact
+
+Current:
+
+```text
+Home
+├─ Synchronization Status
+├─ Synchronization
+└─ Settings
+```
+
+Target:
+
+```text
+Home
+├─ Synchronization Status
+│    └─ Open Synchronization
+└─ Settings
+```
+
+Synchronization remains fully accessible while eliminating redundant navigation paths.
+
+### Resolved By
+
+Stakeholder / Product Owner
+
+### Resolved Date
+
+2026-09-25
 
 ---
 
 ## GAP-010 — Status filter set
 
-**Status: OPEN**
+**Status: CLOSED**
 
 ### Decision
 
-Pending. See OQ-008.
+The existing status filters shall be retained:
+
+* Semua
+* Draft
+* Synced
+
+The default selection remains **Semua**.
 
 ### Rationale
 
-The target mockup shows only Draft/Synced; the current list also has `Semua`.
+The Return Orders screen functions as an operational work queue containing both active and completed work.
+
+While Draft and Synced filters support focused views, operators still require a complete view of all Return Orders.
+
+The existing filter set already satisfies this requirement and introduces no operational confusion.
+
+Removing the Semua filter would reduce visibility of the complete queue while providing no meaningful simplification.
 
 ### Impact
 
-Minor filter-control change.
+Required changes:
+
+* Preserve the existing filter chips:
+
+  * Semua
+  * Draft
+  * Synced
+* Preserve existing search behavior.
+* Preserve existing filtering behavior.
+
+The status-based navigation behavior introduced by this change remains:
+
+* Draft → Edit / Resume
+* Synced → Read-Only Detail
+
+### Architecture Impact
+
+Current:
+
+```text
+[ Semua ] [ Draft ] [ Synced ]
+```
+
+Target:
+
+```text
+[ Semua ] [ Draft ] [ Synced ]
+```
+
+No change to filter structure is required.
+
+The only behavioral change is row routing:
+
+```text
+Draft  → Edit / Resume
+Synced → Detail
+```
+
+### Rationale for Default View
+
+When the screen opens:
+
+```text
+Filter = Semua
+Sort   = Most Recent First
+```
+
+This provides the broadest operational visibility and remains consistent with existing user behavior.
+
+### Resolved By
+
+Stakeholder / Product Owner
+
+### Resolved Date
+
+2026-09-25
+
+---
+
+## OQ-010 — New Return entry behavior
+
+**Status: CLOSED**
+
+### Decision
+
+Home's **New Return** action shall reuse the existing full-screen `return_order_create` route.
+
+No new capture route, inline capture experience, modal workflow, wizard flow, or embedded Home-screen transaction surface will be introduced.
+
+### Rationale
+
+The existing Create Return Order screen already satisfies the approved Return Order capture workflow:
+
+* single-screen transaction capture,
+* embedded barcode scanning,
+* local item lookup,
+* consecutive item entry,
+* offline operation,
+* existing Draft lifecycle.
+
+The purpose of this change request is to improve navigation hierarchy and operational workflow prioritization, not to redesign the Return Order capture process.
+
+Reusing the existing `return_order_create` route minimizes implementation effort, avoids duplicate transaction-entry experiences, and remains consistent with the approved decision recorded in GAP-006.
+
+### Impact
+
+Required navigation behavior:
+
+```text
+Home
+ └─ New Return
+       ↓
+return_order_create
+```
+
+No new routes are required.
+
+No ViewModel changes are required solely for Home navigation.
+
+No domain, API, database, synchronization, or lifecycle changes are required.
+
+### Architecture Impact
+
+Current:
+
+```text
+Home
+ └─ Return Order List
+         └─ Create
+```
+
+Target:
+
+```text
+Home
+ ├─ New Return
+ │     ↓
+ │  return_order_create
+ │
+ └─ Return Orders
+       ↓
+   return_order_list
+```
+
+The existing Create Return Order screen remains the authoritative transaction-entry surface.
+
+### Resolved By
+
+Stakeholder / Product Owner
+
+### Resolved Date
+
+2026-09-25
 
 ---
 
 ## OQ-001 … OQ-010
 
-All open questions remain **OPEN**; their dispositions are recorded in §3 and
-§7 above. None has an approved decision.
+**OQ-010 — CLOSED (2026-09-25)** — Home's New Return reuses the existing full-screen `return_order_create` route; no new capture route, inline capture, modal workflow, wizard flow, or embedded Home-screen transaction surface is introduced; see §8 OQ-010.
+**OQ-009 — CLOSED (2026-09-25)** — waived; see §8 GAP-001.
+**OQ-001 — CLOSED (2026-09-25)** — Register Barcode moved into Barcode Registry;
+standalone `scan` no longer required as a navigation entry point for barcode
+registration; see §8 GAP-002.
+**OQ-002 — CLOSED (2026-09-25)** — Draft rows navigate directly to Edit/Resume;
+Detail is not the entry point for Draft from the list; see §8 GAP-005.
+**OQ-003 — CLOSED (2026-09-25)** — Draft Delete relocated from Detail to Edit;
+the Draft Detail screen is removed from the navigation graph; see §8 GAP-003.
+**OQ-004 — CLOSED (2026-09-25)** — the Home Synchronization Status card is the
+authoritative navigation entry point to Synchronization; the separate
+Synchronization menu item is removed from More; see §8 GAP-009.
+**OQ-005 — CLOSED (2026-09-25)** — see §8 GAP-002.
+**OQ-007 — CLOSED (2026-09-25)** — see §8 GAP-006.
+**OQ-008 — CLOSED (2026-09-25)** — the existing status filters (Semua, Draft, Synced) are retained; default remains Semua; see §8 GAP-010.
+
+All other open questions remain **OPEN**; their dispositions are recorded in §3
+and §7 above. None has an approved decision. **OQ-006 and OQ-007 remain OPEN** —
+see §3 and §7.
 
 ---
 
@@ -524,10 +1409,10 @@ All open questions remain **OPEN**; their dispositions are recorded in §3 and
 
 ## Readiness Checklist
 
-- [ ] All critical gaps resolved
-- [ ] All required decisions recorded
-- [ ] All blocking open questions resolved
-- [ ] Architecture can be finalized or updated
+- [x] All critical gaps resolved
+- [x] All required decisions recorded
+- [x] All blocking open questions resolved
+- [x] Architecture can be finalized or updated
 
 ## Status
 
@@ -535,23 +1420,74 @@ NOT-READY
 
 ## Notes
 
-Blocking items:
+Blocking items: none.
 
-- **GAP-002 / OQ-001 / OQ-005** — the fate of the standalone `scan` route and
-  the Register Barcode entry point must be decided before the navigation graph
-  can be finalized.
-- **GAP-003 / OQ-002 / OQ-003** — Draft detail/delete reachability must be
-  decided before the list → detail/edit routing can be finalized.
-- **GAP-001 / OQ-009** — the workflow-Discovery input for the BGud Return Order
-  operational flow must be complete (FEATURE artifact or an explicit waiver).
-- **GAP-007** — the Architect must review and update the affected architecture
-  artifacts.
+Action items assigned to other roles:
 
-Non-blocking but required for a coherent target:
+- **GAP-007 (Architect)** — update the affected architecture artifacts
+  (`RETURN-ORDER-ARCHITECTURE.md`, `BARCODE-REGISTRY-ARCHITECTURE.md`,
+  `BARCODE-REGISTRY-UX-BLUEPRINT.md`) to reflect the approved navigation and
+  workflow changes (see §8 GAP-007). This is an architecture-maintenance
+  activity and does not require additional business decisions.
 
-- OQ-004 (sync card / More duplication), OQ-006 (structure vs styling
-  boundary), OQ-007 (ViewModels/repositories change permission), OQ-008
-  (`Semua` filter), OQ-010 (New Return entry).
+Resolved items:
+
+- **GAP-003 / OQ-002 / OQ-003** — **CLOSED (2026-09-25):** Draft rows navigate
+  directly to Edit/Resume; the Draft Detail screen is removed from the navigation
+  graph; the Delete action is relocated from Detail to the Edit/Resume screen.
+  BR-019 (Draft delete allowed) and BR-020 (Synced delete prohibited) are preserved
+  (see §8 GAP-003).
+- **GAP-001 / OQ-009** — **CLOSED (2026-09-25):** the workflow-Discovery input
+  for the BGud Return Order operational flow is accepted as the ISSUE plus the
+  DOMAIN (FEATURE artifact waived; see §8 GAP-001). No FEATURE artifact is
+  required.
+- **GAP-002 / OQ-001 / OQ-005** — **CLOSED (2026-09-25):** the Register
+  Barcode entry point is moved into Barcode Registry; the Home-level Register
+  Barcode action is removed; the standalone `scan` route is no longer required
+  as a navigation entry point for barcode registration (see §8 GAP-002).
+- **GAP-004** — **CLOSED (2026-09-25):** Home transitions from a feature
+  launcher to a work launcher; New Return and Return Orders become the primary
+  actions; Synchronization Status card becomes clickable; a More section
+  contains Barcode Registry and Settings (see §8 GAP-004 and §8 GAP-009).
+- **GAP-005** — **CLOSED (2026-09-25):** Return Orders list becomes a work
+  queue with date grouping (TODAY/YESTERDAY/EARLIER), recent-first ordering
+  preserved, search preserved, New Return preserved, and status-based routing:
+  Draft → Edit/Resume, Synced → read-only Detail (see §8 GAP-005).
+- **GAP-006 / OQ-007** — **CLOSED (2026-09-25):** the Return Order capture
+  workflow remains unchanged; the existing Create Return Order screen already
+  satisfies the continuous transaction capture requirement. The required change
+  is limited to layout and structural prioritization: item entry becomes the
+  dominant working area, Salesman/Driver/Notes become secondary information, and
+  the item list emphasizes Item, Quantity, Unit, and Return Type. Barcode
+  scanning remains embedded within the capture process (see §8 GAP-006).
+- **GAP-007** — **CLOSED (2026-09-25):** the affected architecture artifacts
+  (`RETURN-ORDER-ARCHITECTURE.md`, `BARCODE-REGISTRY-ARCHITECTURE.md`,
+  `BARCODE-REGISTRY-UX-BLUEPRINT.md`) shall be updated by the Architect to
+  reflect the approved navigation and workflow changes (see §8 GAP-007). This
+  is an architecture-maintenance activity and does not require additional
+  business decisions.
+- **GAP-008 / OQ-006** — **CLOSED (2026-09-25):** this change request is
+  limited to Navigation and Layout (navigation hierarchy, screen routing,
+  screen ownership, information architecture, content grouping, component
+  placement, layout structure, workflow prioritization, visibility of
+  operational and administrative actions). Visual styling (colors, typography,
+  iconography, branding, component styling, elevation, shadows, animations,
+  visual emphasis through color or styling treatment, design-system
+  refinements) is explicitly excluded and deferred to a separate UI/UX Styling
+  change request after Navigation and Layout implementation is complete (see
+  §8 GAP-008).
+- **GAP-009 / OQ-004** — **CLOSED (2026-09-25):** the Home Synchronization
+  Status card becomes the authoritative navigation entry point to the
+  Synchronization screen; the separate Synchronization menu item is removed
+  from the More section (see §8 GAP-009).
+- **GAP-010 / OQ-008** — **CLOSED (2026-09-25):** the existing status filters
+  (Semua, Draft, Synced) are retained; default remains Semua; see §8 GAP-010.
+- **OQ-010** — **CLOSED (2026-09-25):** Home's New Return reuses the existing
+  full-screen `return_order_create` route; no new capture route, inline capture,
+  modal workflow, wizard flow, or embedded Home-screen transaction surface is
+  introduced (see §8 OQ-010).
+
+Non-blocking items: none.
 
 The Analyst maintains this checklist and will keep Status `NOT-READY` while
 blocking gaps remain. Only the Architect sets Status to `READY-FOR-PLANNING`
