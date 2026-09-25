@@ -4,7 +4,7 @@ Code: BGUD-RETURN-ORDER-NAV-001
 Artifact: FEASIBILITY-ASSESSMENT
 Version: 1.5
 LastUpdated: 2026-09-25
-Status: NOT-READY
+Status: READY-FOR-PLANNING
 ---
 
 # 1. Request Summary

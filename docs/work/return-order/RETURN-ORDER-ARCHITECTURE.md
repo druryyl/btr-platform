@@ -1100,11 +1100,15 @@ The Warehouse Mapping table is populated centrally as configuration
 
 #### SCR-MOB-RO-001 — Return Order List
 
-* **Purpose:** Search and list local Return Orders (BC-004).
+* **Purpose:** Search and list local Return Orders as a work queue (BC-004).
 * **Primary Actor:** Warehouse Officer
 * **Workflow Reference:** BC-004
 * **Domain Reference:** DOMAIN §5, §11
-* **Status filter:** `Draft` / `Synced` only (ADR-RO-006).
+* **Status filter:** `Semua` / `Draft` / `Synced`; default `Semua` (GAP-010).
+* **Row routing:** Draft row → Edit/Resume (SCR-MOB-RO-004); Synced row →
+  read-only Detail (SCR-MOB-RO-003) (GAP-003, GAP-005).
+* **Updated (BGUD-RETURN-ORDER-NAV-001):** Date-section grouping added (TODAY /
+  YESTERDAY / EARLIER); row routing is now status-conditional.
 
 #### SCR-MOB-RO-002 — Create Return Order
 
@@ -1116,17 +1120,27 @@ The Warehouse Mapping table is populated centrally as configuration
 
 #### SCR-MOB-RO-003 — Return Order Detail
 
-* **Purpose:** Read-only view of a Return Order with status-gated actions.
+* **Purpose:** Read-only view of a **Synced** Return Order.
 * **Primary Actor:** Warehouse Officer
 * **Workflow Reference:** BC-004 (view)
-* **Domain Reference:** DOMAIN §8, §11; BR-017…BR-020
+* **Domain Reference:** DOMAIN §8, §11; BR-018, BR-020
+* **Routing note:** Reachable from the list only for `Synced` orders. Draft
+  orders open Edit/Resume directly (GAP-003). Delete action has been relocated
+  to the Edit screen (GAP-003).
+* **Updated (BGUD-RETURN-ORDER-NAV-001):** Screen is now exclusively for Synced
+  orders; Delete action removed from this screen.
 
-#### SCR-MOB-RO-004 — Edit Return Order
+#### SCR-MOB-RO-004 — Edit / Resume Return Order
 
-* **Purpose:** Modify a `Draft` Return Order (BC-002).
+* **Purpose:** Modify a `Draft` Return Order (BC-002); host the Delete Draft
+  action (BC-003).
 * **Primary Actor:** Warehouse Officer
-* **Workflow Reference:** BC-002
-* **Domain Reference:** DOMAIN §5; BR-017, BR-018
+* **Workflow Reference:** BC-002, BC-003
+* **Domain Reference:** DOMAIN §5; BR-017, BR-018, BR-019, BR-020
+* **Routing note:** Reachable directly from a Draft row in the list (GAP-003).
+  Delete action is available on this screen when `status == DRAFT` (BR-019).
+* **Updated (BGUD-RETURN-ORDER-NAV-001):** Delete action relocated here from
+  Detail (GAP-003). Layout re-prioritized per §12.4.
 
 #### SCR-MOB-RO-005 — Synchronization (extended)
 
@@ -1136,8 +1150,11 @@ The Warehouse Mapping table is populated centrally as configuration
 * **Workflow Reference:** BC-005
 * **Domain Reference:** DOMAIN §11, §12
 
-> **Delete (BC-003)** is a status-gated action on Detail (SCR-MOB-RO-003), not a
+> **Delete (BC-003)** is a status-gated action on Edit (SCR-MOB-RO-004), not a
 > separate screen. `Draft` only; local-only, never propagates (GAP-014).
+> **Updated (BGUD-RETURN-ORDER-NAV-001):** Delete was previously on Detail
+> (SCR-MOB-RO-003); it is now on Edit (SCR-MOB-RO-004). Draft Detail is no
+> longer reachable from the list (GAP-003).
 
 ### 11.2 BTR Desktop (`j05-btr-distrib/btr.distrib`)
 
@@ -1164,45 +1181,80 @@ The Warehouse Mapping table is populated centrally as configuration
 
 ## 12. Screen Layout Architecture
 
-### 12.1 SCR-MOB-RO-001 — Return Order List
+### 12.1 SCR-MOB-RO-001 — Return Order List (Work Queue)
+
+> **Updated (BGUD-RETURN-ORDER-NAV-001):** Date-section grouping and
+> status-conditional routing added.
 
 ```text
-Search Bar        (Customer name / date / status)
-Result List       (Customer, date, item count, status badge)
-Row Action        (open Detail)
-Create Action     (FAB / toolbar → Create)
+Search Bar             (Customer name / date, min 3 chars, 300 ms debounce)
+Status Filter Chips    ([ Semua ] [ Draft ] [ Synced ]; default Semua)
+Result List (grouped):
+  TODAY
+    ├─ Draft row  → tap → EditReturnOrderScreen (Edit / Resume)
+    └─ Synced row → tap → ReturnOrderDetailScreen (read-only)
+  YESTERDAY
+    ├─ Draft row  → Edit / Resume
+    └─ Synced row → Detail
+  EARLIER
+    ├─ Draft row  → Edit / Resume
+    └─ Synced row → Detail
+New Return Action      (FAB → return_order_create)
 ```
+
+Row displays: Customer, date (`dd MMM yyyy`), item count, status badge.
+Ordering within each date section: most-recent-first.
 
 ### 12.2 SCR-MOB-RO-002 — Create Return Order
 
+> **Updated (BGUD-RETURN-ORDER-NAV-001):** Layout re-prioritized; Item Entry /
+> Item List is now the dominant working area. Salesman, Driver, Notes moved to
+> a secondary position below item entry. Capture workflow and barcode scanning
+> are unchanged.
+
 ```text
-Header Region     (Customer picker [mandatory], Warehouse [read-only,
-                  session-bound], Salesman picker [optional], Driver picker
-                  [optional], Notes)
-Item Region       (item lines: Item [scan/search], Qty, Unit [SatId], Return
-                  Type [BAGUS/RUSAK]; add/remove lines)
-Action Region     (Save, Cancel)
+Transaction Context  (Customer picker [mandatory], Warehouse [read-only,
+                     session-bound])
+Item Entry / List    (Barcode Scanner [BarcodeScannerView], Item Search,
+                     Qty, Unit [SatId], Return Type [BAGUS/RUSAK];
+                     added-item list — each row: Item, Qty, Unit, Return Type)
+Additional Info      (Salesman picker [optional], Driver picker [optional],
+                     Notes)
+Action Region        (Save, Cancel)
 ```
 
-Layout notes: Warehouse is not user-selectable (BR-005/006); it is the
-session-bound warehouse. Item identification reuses `BarcodeScannerView`
-(scan) and the existing manual Item Search.
+Item identification reuses `BarcodeScannerView` (scan) and existing manual
+Item Search. Warehouse is session-bound, not user-selectable (BR-005/006).
 
-### 12.3 SCR-MOB-RO-003 — Return Order Detail
+### 12.3 SCR-MOB-RO-003 — Return Order Detail (Synced Only)
+
+> **Updated (BGUD-RETURN-ORDER-NAV-001):** Screen is now exclusively for Synced
+> orders. Delete action removed. Edit button removed (Synced orders are
+> non-editable, BR-018).
 
 ```text
 Header Region     (Customer, Warehouse, Salesman/Driver, Notes, status)
 Item Region       (Item, Qty, Unit, Return Type)
-Action Region     (Edit, Delete — enabled only while Draft)
+Action Region     (read-only; no Edit, no Delete for Synced orders — BR-018, BR-020)
 ```
 
-### 12.4 SCR-MOB-RO-004 — Edit Return Order
+### 12.4 SCR-MOB-RO-004 — Edit / Resume Return Order
+
+> **Updated (BGUD-RETURN-ORDER-NAV-001):** Delete action relocated here from
+> Detail (GAP-003). Layout re-prioritized to mirror Create (§12.2).
 
 ```text
-Header Region     (editable Customer/Salesman/Driver/Notes)
-Item Region       (editable item lines)
-Action Region     (Save, Cancel)
+Transaction Context  (Customer picker [editable], Warehouse [read-only,
+                     session-bound])
+Item Entry / List    (Barcode Scanner, Item Search, Qty, Unit, Return Type;
+                     added-item list — each row: Item, Qty, Unit, Return Type)
+Additional Info      (Salesman picker [optional], Driver picker [optional],
+                     Notes)
+Action Region        (Save, Cancel, Delete [enabled only when status == DRAFT])
 ```
+
+Delete is visible and enabled only when `status == DRAFT` (BR-019).
+Synced orders are non-editable and non-deletable (BR-018, BR-020).
 
 ### 12.5 SCR-DESK-RO-001 — Generate Return Order
 
@@ -1221,17 +1273,26 @@ Result Region      (generated ReturJual documents, openable in RT1-Retur Jual)
 
 ### 13.1 BGud (Navigation Compose)
 
+> **Updated (BGUD-RETURN-ORDER-NAV-001):** Home restructured as work launcher;
+> status-conditional list routing; Draft Detail removed; Register relocated to
+> Barcode Registry; More section introduced; Sync card becomes nav entry.
+
 ```text
 home
-  └─ Return Order ─────────▶ return_order_list
+  ├─ New Return ───────────────▶ return_order_create
+  ├─ Return Orders ────────────▶ return_order_list
+  ├─ Synchronization Status ───▶ synchronization   (card tap)
+  └─ More
+       ├─ Barcode Registry ────▶ barcode_registry
+       └─ Settings ────────────▶ settings
 
 return_order_list
-  ├─ Create ───────────────▶ return_order_create
-  └─ row ─────────────────▶ return_order_detail?returnOrderId={id}
+  ├─ Draft row ────────────────▶ return_order_edit?returnOrderId={id}
+  ├─ Synced row ───────────────▶ return_order_detail?returnOrderId={id}
+  └─ New Return (FAB) ─────────▶ return_order_create
 
-return_order_detail
-  ├─ Edit ─────────────────▶ return_order_edit?returnOrderId={id}
-  └─ Delete (Draft) ───────▶ confirm ──▶ back (list refreshed)
+return_order_detail  (Synced only)
+  └─ (read-only; no Edit, no Delete)
 
 return_order_create
   ├─ Save ────▶ local write ──▶ back
@@ -1239,16 +1300,26 @@ return_order_create
 
 return_order_edit
   ├─ Save ────▶ local write ──▶ back
-  └─ Cancel ──▶ back
+  ├─ Cancel ──▶ back
+  └─ Delete (Draft only) ──▶ confirm ──▶ back (list refreshed)
+
+barcode_registry
+  ├─ row Edit ────────────────▶ edit?barcodeId={id}
+  └─ Register Barcode ────────▶ register           (no pre-filled barcode)
 ```
 
 | Source | Target | Conditions |
 | ------ | ------ | ---------- |
-| `home` | `return_order_list` | User selects the Return Order quick action |
-| `return_order_list` | `return_order_create` | Create selected |
-| `return_order_list` | `return_order_detail` | A row is selected |
-| `return_order_detail` | `return_order_edit` | Status is `Draft` (BR-017) |
-| `return_order_detail` | delete | Status is `Draft` (BR-019) |
+| `home` New Return | `return_order_create` | User selects New Return |
+| `home` Return Orders | `return_order_list` | User selects Return Orders |
+| `home` Sync Status card | `synchronization` | User taps the card |
+| `home` More → Barcode Registry | `barcode_registry` | User selects Barcode Registry in More |
+| `home` More → Settings | `settings` | User selects Settings in More |
+| `return_order_list` Draft row | `return_order_edit` | Row status == `DRAFT` |
+| `return_order_list` Synced row | `return_order_detail` | Row status == `SYNCED` |
+| `return_order_list` New Return FAB | `return_order_create` | User taps FAB |
+| `return_order_edit` Delete | local Room delete | Status is `Draft` (BR-019); confirm then back |
+| `barcode_registry` Register | `register` | No pre-filled barcode |
 
 ### 13.2 BTR Desktop
 
@@ -1291,13 +1362,27 @@ Transition rules:
   Manual Item Search resolve against the local caches (BR-009).
 * Warehouse is fixed to the session binding and never editable (BR-005/006).
 
-### 14.2 SCR-MOB-RO-003 / -004 — Detail / Edit
+### 14.2 SCR-MOB-RO-003 — Detail (Synced Only)
+
+> **Updated (BGUD-RETURN-ORDER-NAV-001):** Detail is now Synced-only;
+> no Edit or Delete on this screen.
+
+```text
+Loaded (Synced)
+  └─ read-only; no Edit, no Delete (BR-018, BR-020)
+```
+
+### 14.2b SCR-MOB-RO-004 — Edit / Resume (Draft)
+
+> **Updated (BGUD-RETURN-ORDER-NAV-001):** Edit now hosts the Delete action
+> (relocated from Detail per GAP-003).
 
 ```text
 Loaded
-  ├─ Draft   → Edit and Delete enabled (BR-017, BR-019)
-  └─ Synced  → Edit and Delete disabled (BR-018, BR-020)
+  ├─ Draft   → editable; Delete enabled (BR-017, BR-019)
+  └─ Synced  → non-editable; Delete disabled (BR-018, BR-020)
 Edit: Loaded → Dirty → Saving → Saved → back
+Delete: Loaded (Draft) → Confirm → local Room delete → back
 ```
 
 ### 14.3 SCR-MOB-RO-005 — Synchronization
@@ -1376,8 +1461,8 @@ Device status: Draft | Synced   (ADR-RO-006; never Imported)
 | IR-M4 | Mobile, Qty ≤ 0 | — | Save that line | BR-010 |
 | IR-M5 | Mobile, Unit not set | — | Save that line | BR-011 |
 | IR-M6 | Mobile, Return Type not BAGUS/RUSAK | — | Save that line | ADR-RO-004 |
-| IR-M7 | Mobile, status `Synced` | View | Edit, Delete | BR-018/020 |
-| IR-M8 | Mobile, status `Draft` | Edit, Delete, Save | — | BR-017/019 |
+| IR-M7 | Mobile Edit screen, status `Synced` | View | Edit, Delete | BR-018/020 — Edit screen still loaded for navigation purposes |
+| IR-M8 | Mobile Edit screen, status `Draft` | Edit, Delete, Save | — | BR-017/019; Delete relocated from Detail per BGUD-RETURN-ORDER-NAV-001 |
 | IR-M9 | Mobile, offline | Create/Edit/Delete (local) | Sync Now progress | BG-003 |
 | IR-D1 | Desktop, Generate surface, no order selected | Refresh | Generate | selection required (ADR-RO-007) |
 | IR-D2 | Desktop, Generate surface, Salesman/Driver empty on a selected order | Generate | — | optional fields (ADR-RO-005) |

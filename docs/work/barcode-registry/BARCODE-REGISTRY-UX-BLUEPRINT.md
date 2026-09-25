@@ -77,6 +77,29 @@ Responsibilities:
 
 # 4. Navigation Structure
 
+> **Updated (BGUD-RETURN-ORDER-NAV-001):** Home restructured from feature
+> launcher to work launcher. Return Order is the primary operational
+> destination. Barcode Registry and Settings are secondary (More).
+> Register Barcode moved into Barcode Registry. Synchronization Status
+> card is the navigation entry to Synchronization.
+
+```text
+Home
+
+├── New Return
+├── Return Orders
+├── Synchronization Status
+│    └── Open Synchronization
+└── More
+     ├── Barcode Registry
+     │    ├── Search Barcode
+     │    ├── Register Barcode
+     │    └── Edit Barcode
+     └── Settings
+```
+
+**Previous navigation structure (pre-BGUD-RETURN-ORDER-NAV-001):**
+
 ```text
 Home
 
@@ -88,6 +111,14 @@ Home
 ├── Synchronization
 └── Settings
 ```
+
+Key changes:
+
+- Scan Barcode removed from Home (scanning is contextual within Return capture).
+- Return Order (New Return, Return Orders) promoted to primary Home level.
+- Barcode Registry demoted to More section.
+- Synchronization Status card is the entry point to Synchronization; Synchronization no longer appears as a separate item in More.
+- Register Barcode is now accessed from within Barcode Registry.
 
 No additional modules are included in Phase 1.
 
@@ -135,17 +166,21 @@ Home Screen
 
 # 6. Home Screen
 
+> **Updated (BGUD-RETURN-ORDER-NAV-001):** Home is now a **work launcher**
+> focused on the Return Order operational workflow. Quick Actions (Scan Barcode,
+> Search Barcode, Register Barcode) have been removed. Secondary administrative
+> functions (Barcode Registry, Settings) are under More.
+
 Purpose:
 
-Provide entry point to barcode operations.
+Provide the operational starting point for daily warehouse work.
 
 Sections:
 
-## Quick Actions
+## Primary Actions
 
-* Scan Barcode
-* Search Barcode
-* Register Barcode
+* New Return — navigate to Create Return Order
+* Return Orders — navigate to the Return Orders list
 
 ## Synchronization Status
 
@@ -155,6 +190,11 @@ Display:
 * Last Sync Time
 * Pending Upload Count
 
+Behavior:
+
+* Card is **clickable** — tapping navigates to the Synchronization screen.
+* Synchronization no longer appears as a separate item in More.
+
 ## Current Context
 
 Display:
@@ -162,6 +202,19 @@ Display:
 * Logged In User
 * Warehouse
 * Office
+
+## More
+
+Secondary administrative destinations:
+
+* Barcode Registry (Search, Register, Edit)
+* Settings
+
+**Previous Home sections (pre-BGUD-RETURN-ORDER-NAV-001):**
+
+* Quick Actions: Scan Barcode, Search Barcode, Register Barcode
+* Synchronization Status (non-clickable)
+* Navigation list: Barcode Registry, Synchronization, Settings
 
 ---
 

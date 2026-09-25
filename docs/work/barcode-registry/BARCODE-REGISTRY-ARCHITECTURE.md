@@ -359,6 +359,40 @@ System: `BGud` (new Android application)
 * Resolve scans cache-first (ADR-006).
 * Capture registration and correction intent locally for later submission.
 * Present synchronization state to the user.
+* Expose Register Barcode from within **Barcode Registry** (administrative
+  destination); Register Barcode is no longer a Home-level quick action
+  (BGUD-RETURN-ORDER-NAV-001, GAP-002).
+
+#### BGud Navigation (Updated — BGUD-RETURN-ORDER-NAV-001)
+
+> The BGud Home screen was restructured from a feature launcher to a work
+> launcher. The navigation hierarchy below reflects the approved target state.
+
+```text
+Home
+├─ New Return
+├─ Return Orders
+├─ Synchronization Status  (clickable → Synchronization screen)
+└─ More
+     ├─ Barcode Registry
+     │    ├─ Search Barcode
+     │    ├─ Register Barcode   ← moved from Home (GAP-002)
+     │    └─ Edit Barcode
+     └─ Settings
+```
+
+**Previous Home navigation (pre-BGUD-RETURN-ORDER-NAV-001):**
+
+```text
+Home
+├─ Scan Barcode
+├─ Barcode Registry  (Search, Edit)
+├─ Synchronization
+└─ Settings
+```
+
+Barcode Registry is now a **More** destination, not a primary Home action.
+Register Barcode is accessed from within Barcode Registry, not from Home.
 
 #### Owns
 
@@ -374,6 +408,8 @@ System: `BGud` (new Android application)
 * Decide barcode validity or uniqueness.
 * Hold `ServerId` as an input to any command.
 * Act as an authority for any data.
+* Expose Register Barcode as a Home-level quick action
+  (BGUD-RETURN-ORDER-NAV-001).
 
 ---
 
