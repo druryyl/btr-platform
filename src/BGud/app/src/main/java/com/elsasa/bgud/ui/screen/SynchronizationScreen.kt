@@ -1,6 +1,9 @@
 package com.elsasa.bgud.ui.screen
 
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -8,23 +11,39 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
-import androidx.compose.material3.Card
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import com.elsasa.bgud.ui.component.BrandHeaderBar
+import com.elsasa.bgud.ui.component.IndustrialCard
+import com.elsasa.bgud.ui.theme.BrandCrimson
+import com.elsasa.bgud.ui.theme.BrandGreen
+import com.elsasa.bgud.ui.theme.BrandSage
 import com.elsasa.bgud.viewmodel.ReturnOrderSyncViewModel
 import com.elsasa.bgud.viewmodel.SyncState
 import com.elsasa.bgud.viewmodel.SynchronizationViewModel
@@ -36,21 +55,12 @@ import java.util.Locale
  * Synchronization screen (SCR-MOB-007 / SCR-MOB-RO-005, Architecture §12.9,
  * §14.3, §14.5, UX Blueprint §11).
  *
- * ```text
- * Master Data Card    (Last Barang Sync, Last Barcode Sync)
- * Return Order Card   (Last Reference Sync, Pending, Synced)
- * Queue Card          (Pending, Success, Rejected)
- * Actions             (Sync Now)
- * Connectivity State  (Online / Offline)
- * ```
- *
- * State display (§14.5, §14.3): `Idle` → `Sync Now` → `Synchronizing` →
- * `Synchronized` (timestamps + queue counts refreshed via the DataStore/Room
- * flows) or `Failed` ("Gagal sinkronisasi.", UX §14) with Retry. Sync Now
- * triggers the Return Order sync worker in addition to the barcode worker
- * (SCR-MOB-RO-005, S4.10) and is disabled while offline (IR-M5/IR-M9) and
- * while a run is in progress (IR-M6/OQ-1). The screen issues no network call
- * itself; the view models enqueue the one-shot sync workers (S5.3/S4.5, §20).
+ * Modern Industrial layout:
+ * - Master Data Cache Card
+ * - Return Order Operational Queue Card
+ * - Registration Queue Card
+ * - Connectivity indicator
+ * - Sync Now CTA button with loading states
  */
 @Composable
 fun SynchronizationScreen(
@@ -68,8 +78,6 @@ fun SynchronizationScreen(
     val error by viewModel.error.collectAsState()
     val isOnline by viewModel.isOnline.collectAsState()
 
-    // SCR-MOB-RO-005 (S4.10): Return Order sync state shown alongside the
-    // barcode state (§19.1 `ReturnOrderSyncViewModel`).
     val lastRefSync by returnOrderViewModel.lastRefSync.collectAsState()
     val returnOrderPendingCount by returnOrderViewModel.pendingCount.collectAsState()
     val returnOrderSyncedCount by returnOrderViewModel.syncedCount.collectAsState()
@@ -84,195 +92,339 @@ fun SynchronizationScreen(
     val isSynchronized = syncState == SyncState.SYNCHRONIZED ||
         returnOrderSyncState == SyncState.SYNCHRONIZED
     val failures = buildList {
-        if (syncState == SyncState.FAILED) add(error ?: "Gagal sinkronisasi.")
+        if (syncState == SyncState.FAILED) add(error ?: "Gagal sinkronisasi barcode.")
         if (returnOrderSyncState == SyncState.FAILED) {
-            add(returnOrderError ?: "Gagal sinkronisasi.")
+            add(returnOrderError ?: "Gagal sinkronisasi return order.")
         }
     }.distinct()
-    // IR-M5/IR-M9: offline disables Sync Now (progress impossible). IR-M6/OQ-1:
-    // one sync run at a time — Sync Now is disabled while Synchronizing.
+
     val isConnected = isOnline && returnOrderOnline
     val syncNowEnabled = isConnected && !isSyncing
 
     Scaffold(
-        containerColor = MaterialTheme.colorScheme.surface
+        containerColor = MaterialTheme.colorScheme.background
     ) { paddingValues ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
                 .verticalScroll(rememberScrollState())
-                .padding(horizontal = 16.dp, vertical = 16.dp),
+                .padding(horizontal = 16.dp, vertical = 12.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            Text(
-                text = "Synchronization",
-                style = MaterialTheme.typography.headlineSmall.copy(
-                    fontWeight = FontWeight.Bold
-                ),
-                color = MaterialTheme.colorScheme.onSurface
+            // Header Bar
+            BrandHeaderBar(
+                title = "Sinkronisasi Data",
+                subtitle = "Sinkronisasi data master & pengiriman antrean",
+                onBack = onBack,
+                actions = {
+                    Surface(
+                        shape = RoundedCornerShape(10.dp),
+                        color = if (isConnected) BrandGreen.copy(alpha = 0.15f) else BrandCrimson.copy(alpha = 0.15f)
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .size(6.dp)
+                                    .clip(CircleShape)
+                                    .background(if (isConnected) BrandGreen else BrandCrimson)
+                            )
+                            Spacer(modifier = Modifier.width(5.dp))
+                            Text(
+                                text = if (isConnected) "Online" else "Offline",
+                                style = MaterialTheme.typography.labelSmall.copy(
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 10.sp
+                                ),
+                                color = if (isConnected) BrandGreen else BrandCrimson
+                            )
+                        }
+                    }
+                }
             )
 
-            // Master Data Card (§12.9, UX Blueprint §11).
-            Card(modifier = Modifier.fillMaxWidth()) {
-                Column(modifier = Modifier.padding(16.dp)) {
-                    SyncSectionTitle("Master Data")
-                    Spacer(modifier = Modifier.height(8.dp))
-                    SyncRow("Last Barang Sync", formatSyncTime(lastBarangSyncAt))
-                    SyncRow("Last Barcode Sync", formatSyncTime(lastBarcodeSyncAt))
-                }
+            // 1. Master Data Cache Card
+            IndustrialCard(borderColor = BrandSage, containerColor = MaterialTheme.colorScheme.surface) {
+                Text(
+                    text = "1. DATA MASTER (UNDUH DARI SERVER)",
+                    style = MaterialTheme.typography.labelSmall.copy(
+                        fontWeight = FontWeight.Bold,
+                        fontFamily = FontFamily.Monospace,
+                        letterSpacing = 1.sp
+                    ),
+                    color = MaterialTheme.colorScheme.primary
+                )
+                Spacer(modifier = Modifier.height(10.dp))
+                SyncDataRow("Katalog Barang (Barang Entity)", formatSyncTime(lastBarangSyncAt))
+                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f), modifier = Modifier.padding(vertical = 6.dp))
+                SyncDataRow("Barcode Registry", formatSyncTime(lastBarcodeSyncAt))
+                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f), modifier = Modifier.padding(vertical = 6.dp))
+                SyncDataRow("Referensi Retur (Pelanggan/Sales/Driver)", formatSyncTime(lastRefSync))
             }
 
-            // Return Order Card (SCR-MOB-RO-005, §14.3, §19.1): reference
-            // timestamps + pending/synced counts. Device vocabulary is
-            // `Draft`/`Synced` only (ADR-RO-006); `lastRefSync` is the most
-            // recent Customer/SalesPerson/Driver reference download.
-            Card(modifier = Modifier.fillMaxWidth()) {
-                Column(modifier = Modifier.padding(16.dp)) {
-                    SyncSectionTitle("Return Order")
-                    Spacer(modifier = Modifier.height(8.dp))
-                    SyncRow("Last Reference Sync", formatSyncTime(lastRefSync))
-                    SyncRow("Pending", returnOrderPendingCount.toString())
-                    SyncRow("Synced", returnOrderSyncedCount.toString())
-                }
-            }
-
-            // Queue Card (§12.9, UX Blueprint §11; §14.6
-            // Pending | Synced | Rejected).
-            Card(modifier = Modifier.fillMaxWidth()) {
-                Column(modifier = Modifier.padding(16.dp)) {
-                    SyncSectionTitle("Registration Queue")
-                    Spacer(modifier = Modifier.height(8.dp))
-                    SyncRow("Pending", pendingCount.toString())
-                    SyncRow("Success", successCount.toString())
-                    SyncRow("Rejected", rejectedCount.toString())
-                }
-            }
-
-            // Connectivity State (§12.9, §14.6 Online | Offline).
-            Card(modifier = Modifier.fillMaxWidth()) {
-                Column(modifier = Modifier.padding(16.dp)) {
-                    SyncSectionTitle("Connectivity")
-                    Spacer(modifier = Modifier.height(8.dp))
-                    SyncRow("Status", if (isOnline) "Online" else "Offline")
-                }
-            }
-
-            // Sync state feedback (§14.5, §14.3). Barcode and Return Order
-            // runs are reported together: failure wins, then progress, then
-            // success.
-            when {
-                returnOrderSyncing || barcodeSyncing -> {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(
-                            12.dp,
-                            Alignment.CenterHorizontally
-                        ),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        CircularProgressIndicator()
+            // 2. Return Order Queue Card
+            IndustrialCard(borderColor = BrandGreen.copy(alpha = 0.5f), containerColor = MaterialTheme.colorScheme.surface) {
+                Text(
+                    text = "2. ANTREAN RETURN ORDER",
+                    style = MaterialTheme.typography.labelSmall.copy(
+                        fontWeight = FontWeight.Bold,
+                        fontFamily = FontFamily.Monospace,
+                        letterSpacing = 1.sp
+                    ),
+                    color = BrandGreen
+                )
+                Spacer(modifier = Modifier.height(10.dp))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column {
                         Text(
-                            text = "Sinkronisasi berjalan…",
-                            style = MaterialTheme.typography.bodyMedium,
+                            text = "Menunggu Pengiriman",
+                            style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        Text(
+                            text = "$returnOrderPendingCount Dokumen Draft",
+                            style = MaterialTheme.typography.bodyMedium.copy(
+                                fontWeight = FontWeight.Bold,
+                                color = if (returnOrderPendingCount > 0) BrandCrimson else MaterialTheme.colorScheme.onSurface
+                            )
+                        )
+                    }
+
+                    Column(horizontalAlignment = Alignment.End) {
+                        Text(
+                            text = "Telah Disinkronkan",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        Text(
+                            text = "$returnOrderSyncedCount Dokumen",
+                            style = MaterialTheme.typography.bodyMedium.copy(
+                                fontWeight = FontWeight.Bold,
+                                color = BrandGreen
+                            )
                         )
                     }
                 }
+            }
+
+            // 3. Barcode Registration Queue Card
+            IndustrialCard(borderColor = MaterialTheme.colorScheme.outlineVariant) {
+                Text(
+                    text = "3. ANTREAN REGISTRASI BARCODE",
+                    style = MaterialTheme.typography.labelSmall.copy(
+                        fontWeight = FontWeight.Bold,
+                        fontFamily = FontFamily.Monospace,
+                        letterSpacing = 1.sp
+                    ),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Spacer(modifier = Modifier.height(10.dp))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    QueueStatusCount("Menunggu", pendingCount, BrandCrimson)
+                    QueueStatusCount("Berhasil", successCount, BrandGreen)
+                    QueueStatusCount("Ditolak", rejectedCount, Color.Gray)
+                }
+            }
+
+            // Sync State Feedback Banner
+            when {
+                isSyncing -> {
+                    Surface(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(12.dp),
+                        color = BrandSage.copy(alpha = 0.25f),
+                        border = BorderStroke(1.dp, BrandSage)
+                    ) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(12.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.Center
+                        ) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(18.dp),
+                                strokeWidth = 2.dp,
+                                color = BrandGreen
+                            )
+                            Spacer(modifier = Modifier.width(10.dp))
+                            Text(
+                                text = "Proses sinkronisasi data sedang berjalan...",
+                                style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.SemiBold),
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                        }
+                    }
+                }
                 isFailed -> {
-                    Text(
-                        text = if (failures.isEmpty()) {
-                            "Gagal sinkronisasi."
-                        } else {
-                            failures.joinToString(" ")
-                        },
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.error
-                    )
+                    Surface(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(12.dp),
+                        color = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.5f),
+                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.error.copy(alpha = 0.5f))
+                    ) {
+                        Column(modifier = Modifier.padding(12.dp)) {
+                            Text(
+                                text = "Gagal Sinkronisasi",
+                                style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold),
+                                color = MaterialTheme.colorScheme.error
+                            )
+                            Text(
+                                text = failures.joinToString(" • "),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.error
+                            )
+                        }
+                    }
                 }
                 isSynchronized -> {
-                    Text(
-                        text = "Sinkronisasi berhasil.",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.primary
-                    )
+                    Surface(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(12.dp),
+                        color = BrandGreen.copy(alpha = 0.15f),
+                        border = BorderStroke(1.dp, BrandGreen.copy(alpha = 0.4f))
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(12.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(text = "✓", color = BrandGreen, fontWeight = FontWeight.Bold)
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                text = "Semua data berhasil disinkronkan dengan server.",
+                                style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.Medium),
+                                color = Color(0xFF1E460E)
+                            )
+                        }
+                    }
                 }
                 else -> Unit
             }
 
-            // Actions (§12.9): Sync Now triggers the Return Order worker in
-            // addition to the barcode worker (SCR-MOB-RO-005); on failure the
-            // same button is the Retry (UX §14 "Gagal sinkronisasi." → Retry).
-            Button(
-                onClick = {
-                    viewModel.syncNow(context)
-                    returnOrderViewModel.syncNow(context)
-                },
-                enabled = syncNowEnabled,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Text(
-                    when {
-                        isSyncing -> "Synchronizing…"
-                        isFailed -> "Retry"
-                        else -> "Sync Now"
+            // Sync CTA Button
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Button(
+                    onClick = {
+                        viewModel.syncNow(context)
+                        returnOrderViewModel.syncNow(context)
+                    },
+                    enabled = syncNowEnabled,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(52.dp),
+                    shape = RoundedCornerShape(14.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = BrandGreen,
+                        contentColor = Color.White
+                    ),
+                    elevation = ButtonDefaults.buttonElevation(defaultElevation = 2.dp)
+                ) {
+                    if (isSyncing) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(20.dp),
+                            strokeWidth = 2.dp,
+                            color = Color.White
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("Sedang Menyinkronkan...", fontWeight = FontWeight.Bold)
+                    } else if (isFailed) {
+                        Text("Coba Sinkronkan Ulang", fontWeight = FontWeight.Bold)
+                    } else {
+                        Text("Sinkronkan Sekarang", fontWeight = FontWeight.Bold)
                     }
-                )
-            }
-            if (!isConnected) {
-                Text(
-                    text = "Offline — Sync Now tidak tersedia.",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
+                }
+
+                if (!isConnected) {
+                    Text(
+                        text = "Perangkat sedang offline. Sambungkan koneksi internet untuk melakukan sinkronisasi.",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+
+                OutlinedButton(
+                    onClick = onBack,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(50.dp),
+                    shape = RoundedCornerShape(14.dp),
+                    colors = ButtonDefaults.outlinedButtonColors(
+                        containerColor = MaterialTheme.colorScheme.surface
+                    ),
+                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
+                ) {
+                    Text("Kembali", fontWeight = FontWeight.SemiBold)
+                }
             }
 
-            OutlinedButton(
-                onClick = onBack,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Text("Kembali")
-            }
+            Spacer(modifier = Modifier.height(12.dp))
         }
     }
 }
 
 @Composable
-private fun SyncSectionTitle(text: String) {
-    Text(
-        text = text,
-        style = MaterialTheme.typography.titleSmall.copy(
-            fontWeight = FontWeight.Bold
-        ),
-        color = MaterialTheme.colorScheme.onSurface
-    )
-}
-
-@Composable
-private fun SyncRow(label: String, value: String) {
+private fun SyncDataRow(label: String, value: String) {
     Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 2.dp),
-        horizontalArrangement = Arrangement.SpaceBetween
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
     ) {
         Text(
             text = label,
-            style = MaterialTheme.typography.bodyMedium,
+            style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
         Text(
             text = value,
-            style = MaterialTheme.typography.bodyMedium.copy(
-                fontWeight = FontWeight.Medium
+            style = MaterialTheme.typography.bodySmall.copy(
+                fontWeight = FontWeight.SemiBold,
+                fontFamily = FontFamily.Monospace
             ),
             color = MaterialTheme.colorScheme.onSurface
         )
     }
 }
 
+@Composable
+private fun QueueStatusCount(label: String, count: Int, color: Color) {
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+        Spacer(modifier = Modifier.height(2.dp))
+        Surface(
+            shape = RoundedCornerShape(6.dp),
+            color = color.copy(alpha = 0.15f)
+        ) {
+            Text(
+                text = count.toString(),
+                modifier = Modifier.padding(horizontal = 10.dp, vertical = 2.dp),
+                style = MaterialTheme.typography.labelMedium.copy(
+                    fontWeight = FontWeight.Bold,
+                    fontFamily = FontFamily.Monospace
+                ),
+                color = color
+            )
+        }
+    }
+}
+
 private fun formatSyncTime(timestampMillis: Long): String {
-    if (timestampMillis <= 0L) return "Never"
+    if (timestampMillis <= 0L) return "Belum pernah"
     return SimpleDateFormat("dd MMM yyyy HH:mm", Locale.getDefault())
         .format(Date(timestampMillis))
 }

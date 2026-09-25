@@ -93,60 +93,63 @@ private const val CLOUD_BASE_URL = "http://dev.smart-ics.com:8089/belajar-api/"
 private const val SESSION_NOT_LOADED = "\u0000session-not-loaded"
 
 /**
- * Navigation graph (Architecture §13.2).
+ * Navigation graph (Architecture §13.2, BGUD-RETURN-ORDER-NAV-001).
  *
  * ```text
  * login
  *   ├─ success ──▶ office resolution ──▶ master data synchronization ──▶ home
  *   └─ failure ──▶ login (error)
  *
- * home
- *   ├─ Scan Barcode ────────▶ scan
- *   ├─ Search Barcode ──────▶ barcode_registry (S5.8)
- *   ├─ Register Barcode ────▶ register (barcode argument optional)
- *   ├─ Return Order ────────▶ return_order_list (§13.1, S4.11)
- *   ├─ Barcode Registry ────▶ barcode_registry (S5.8)
- *   ├─ Synchronization ─────▶ synchronization (S5.10)
- *   └─ Settings ────────────▶ settings (S5.11)
+ * home (work launcher, TD-001)
+ *   ├─ New Return ──────────▶ return_order_create (TD-001)
+ *   ├─ Return Orders ───────▶ return_order_list (TD-001)
+ *   ├─ Sync Status Card ────▶ synchronization (TD-001, TD-008)
+ *   ├─ Barcode Registry ────▶ barcode_registry (TD-001)
+ *   └─ Settings ────────────▶ settings (TD-001)
  *
- * scan
- *   ├─ found ───────────────▶ scan (result region) ── Close ──▶ back
- *   ├─ not found + Register ─▶ register?barcode={value} (S5.7)
- *   └─ not found + Cancel ───▶ scan (re-armed Scanning)
+ * barcode_registry (SCR-MOB-005, TD-003)
+ *   ├─ Register Barcode ────▶ register (no barcode argument, TD-003)
+ *   ├─ Edit Barcode ────────▶ edit?barcodeId={id} (S5.9, SCR-MOB-006)
+ *   └─ Kembali ─────────────▶ back
  *
  * register
  *   ├─ Save ────▶ local queue ── success message ──▶ back
  *   └─ Cancel ──▶ back
  *
- * barcode_registry (S5.8, SCR-MOB-005)
- *   └─ Edit Barcode ────────▶ edit?barcodeId={id} (S5.9, SCR-MOB-006)
- *
  * edit (S5.9, SCR-MOB-006)
  *   ├─ Save ────▶ local queue ── success message ──▶ back
  *   └─ Cancel ──▶ back
  *
- * return_order_list (S4.6, SCR-MOB-RO-001)
- *   ├─ Create ─────────────▶ return_order_create (S4.7)
- *   └─ row ────────────────▶ return_order_detail?returnOrderId={id} (S4.8)
+ * return_order_list (SCR-MOB-RO-001, TD-004, TD-006)
+ *   ├─ Create ─────────────▶ return_order_create (FAB)
+ *   ├─ Draft row ──────────▶ return_order_edit?returnOrderId={id} (TD-004)
+ *   ├─ Synced row ─────────▶ return_order_detail?returnOrderId={id} (TD-004)
+ *   └─ Back ───────────────▶ back
  *
- * return_order_create (S4.7, SCR-MOB-RO-002)
+ * return_order_create (SCR-MOB-RO-002, TD-007)
  *   ├─ Save ────▶ local write ──▶ back
  *   └─ Cancel ──▶ back
  *
- * return_order_detail (S4.8, SCR-MOB-RO-003)
- *   ├─ Edit (Draft) ───────▶ return_order_edit?returnOrderId={id} (S4.9)
- *   └─ Delete (Draft) ─────▶ confirm ──▶ back
- *
- * return_order_edit (S4.9, SCR-MOB-RO-004)
+ * return_order_edit (SCR-MOB-RO-004, TD-004, TD-005)
  *   ├─ Save ────▶ local write ──▶ back
+ *   ├─ Delete (Draft) ─────▶ confirm ──▶ back (TD-005)
  *   └─ Cancel ──▶ back
  *
- * synchronization (S5.10, SCR-MOB-007)
- *   └─ Sync Now ──▶ sync worker ──▶ synchronization (refreshed)
+ * return_order_detail (SCR-MOB-RO-003, TD-004, TD-005)
+ *   └─ Back ──▶ back
  *
- * settings (S5.11, SCR-MOB-008)
+ * synchronization (SCR-MOB-007)
+ *   ├─ Sync Now ──▶ sync worker ──▶ synchronization (refreshed)
+ *   └─ Back ──────▶ back
+ *
+ * settings (SCR-MOB-008)
  *   ├─ Logout ──▶ session cleared ──▶ login
  *   └─ Kembali ──▶ back
+ *
+ * scan (technical route retained for compatibility, TD-002)
+ *   ├─ found ───────────────▶ scan (result region) ── Close ──▶ back
+ *   ├─ not found + Register ─▶ register?barcode={value} (S5.7)
+ *   └─ not found + Cancel ───▶ scan (re-armed Scanning)
  * ```
  *
  * Start destination: `login` when no valid local session exists, otherwise
@@ -161,9 +164,10 @@ private const val SESSION_NOT_LOADED = "\u0000session-not-loaded"
  * `settings`) are wired; no forward references remain. The §13.1 Return
  * Order routes (`return_order_list`, `return_order_create`,
  * `return_order_detail?returnOrderId={id}`,
- * `return_order_edit?returnOrderId={id}`) are wired by S4.11; Edit is
- * reached only from Detail (which itself gates on `Draft`), and no
- * device `Imported` state exists (ADR-RO-006).
+ * `return_order_edit?returnOrderId={id}`) are rewired by BGUD-RETURN-ORDER-NAV-001
+ * (P3-S07): Home operates as a work launcher; `return_order_list` performs
+ * status-conditional routing (Draft → Edit, Synced → Detail); Draft Detail is
+ * unreachable; Barcode Registry initiates registration with no barcode parameter.
  */
 @Composable
 fun AppNavigation(
@@ -241,18 +245,17 @@ fun AppNavigation(
             val homeViewModel: HomeViewModel = viewModel(factory = homeFactory)
             HomeScreen(
                 viewModel = homeViewModel,
-                onScanBarcode = { navController.navigate("scan") },
-                onSearchBarcode = { navController.navigate("barcode_registry") },
-                onRegisterBarcode = { navController.navigate("register") },
-                onOpenReturnOrder = { navController.navigate("return_order_list") },
-                onOpenBarcodeRegistry = { navController.navigate("barcode_registry") },
-                onOpenSynchronization = { navController.navigate("synchronization") },
-                onOpenSettings = { navController.navigate("settings") }
+                onNewReturn = { navController.navigate("return_order_create") },
+                onReturnOrders = { navController.navigate("return_order_list") },
+                onSyncStatusClick = { navController.navigate("synchronization") },
+                onBarcodeRegistry = { navController.navigate("barcode_registry") },
+                onSettings = { navController.navigate("settings") }
             )
         }
         composable("return_order_list") {
-            // SCR-MOB-RO-001 (S4.6): searchable local list. §13.1 wiring
-            // (S4.11): Create → `return_order_create`; a row →
+            // SCR-MOB-RO-001 (S4.6, TD-004, TD-006): searchable local list with
+            // date grouping. Create → `return_order_create`; Draft row →
+            // `return_order_edit?returnOrderId={id}`; Synced row →
             // `return_order_detail?returnOrderId={id}`.
             val listFactory = remember {
                 ReturnOrderListViewModelFactory(
@@ -264,7 +267,12 @@ fun AppNavigation(
                 viewModel(factory = listFactory)
             ReturnOrderListScreen(
                 viewModel = listViewModel,
-                onOpenDetail = { returnOrderId ->
+                onEditDraft = { returnOrderId ->
+                    navController.navigate(
+                        "return_order_edit?returnOrderId=$returnOrderId"
+                    )
+                },
+                onViewDetail = { returnOrderId ->
                     navController.navigate(
                         "return_order_detail?returnOrderId=$returnOrderId"
                     )
@@ -305,9 +313,10 @@ fun AppNavigation(
                 }
             )
         ) { backStackEntry ->
-            // SCR-MOB-RO-003 (S4.8): read-only detail. A missing argument
-            // yields the ViewModel's not-found state — no entry path is
-            // invented. Edit is offered only while `Draft` (§13.1, BR-017).
+            // SCR-MOB-RO-003 (S4.8, TD-004, TD-005): read-only detail for Synced orders.
+            // A missing argument yields the ViewModel's not-found state — no entry path is
+            // invented. Draft Detail is removed from the navigation graph (TD-004).
+            // Delete action relocated to Edit screen (TD-005).
             val returnOrderIdArg =
                 backStackEntry.arguments?.getString("returnOrderId").orEmpty()
             val detailFactory = remember(returnOrderIdArg) {
@@ -339,8 +348,9 @@ fun AppNavigation(
                 }
             )
         ) { backStackEntry ->
-            // SCR-MOB-RO-004 (S4.9): Draft-only modification. A non-`Draft`
-            // order is refused by the ViewModel (`notEditable`, BR-018).
+            // SCR-MOB-RO-004 (S4.9, TD-004, TD-005): Draft-only modification. A non-`Draft`
+            // order is refused by the ViewModel (`notEditable`, BR-018). Hosts relocated
+            // Delete action for Draft orders (TD-005).
             val returnOrderIdArg =
                 backStackEntry.arguments?.getString("returnOrderId").orEmpty()
             val editFactory = remember(returnOrderIdArg) {
@@ -359,7 +369,8 @@ fun AppNavigation(
             EditReturnOrderScreen(
                 viewModel = editViewModel,
                 onSaved = { navController.popBackStack() },
-                onCancel = { navController.popBackStack() }
+                onCancel = { navController.popBackStack() },
+                onDeleted = { navController.popBackStack() }
             )
         }
         composable("scan") {
@@ -406,8 +417,9 @@ fun AppNavigation(
             )
         }
         composable("barcode_registry") {
-            // SCR-MOB-005 (S5.8): searchable local cache list. Row action
-            // targets `edit?barcodeId={id}` (§13.2, S5.9).
+            // SCR-MOB-005 (S5.8, TD-003): searchable local cache list. Row action
+            // targets `edit?barcodeId={id}` (§13.2, S5.9). Register Barcode action
+            // targets `register` with no barcode argument (TD-003).
             val registryFactory = remember {
                 BarcodeRegistryViewModelFactory(database.barcodeDao())
             }
@@ -418,6 +430,7 @@ fun AppNavigation(
                 onEditBarcode = { barcodeId ->
                     navController.navigate("edit?barcodeId=$barcodeId")
                 },
+                onRegisterBarcode = { navController.navigate("register") },
                 onBack = { navController.popBackStack() }
             )
         }

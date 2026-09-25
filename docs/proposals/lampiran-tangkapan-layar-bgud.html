@@ -1,0 +1,1287 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Lampiran Proposal Penawaran — Tangkapan Layar Sistem Mobile BGud</title>
+  <style>
+    :root {
+      --brand-crimson: #A82323;
+      --brand-crimson-dark: #7E1414;
+      --brand-cream: #FEFFD3;
+      --brand-sage: #BCD9A2;
+      --brand-green: #6D9E51;
+      --brand-green-dark: #4B7235;
+      
+      --ink: #192024;
+      --ink-muted: #5A6672;
+      --line: #DFE5EA;
+      --paper: #FFFFFF;
+      --canvas: #EBF0F5;
+      --surface-soft: #F7F9FA;
+    }
+
+    * { box-sizing: border-box; }
+
+    @page {
+      size: A4 portrait;
+      margin: 0;
+    }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      background: var(--canvas);
+      color: var(--ink);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }
+
+    body {
+      padding: 10mm 0;
+    }
+
+    .page {
+      position: relative;
+      width: 210mm;
+      height: 297mm;
+      margin: 0 auto 10mm;
+      padding: 14mm 16mm 14mm;
+      overflow: hidden;
+      background: var(--paper);
+      page-break-after: always;
+      break-after: page;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    .page:last-child {
+      page-break-after: auto;
+      break-after: auto;
+      margin-bottom: 0;
+    }
+
+    @media print {
+      body { padding: 0; background: #fff; }
+      .page { margin: 0; box-shadow: none; width: 210mm; height: 297mm; }
+    }
+
+    /* Page Header & Footer */
+    .doc-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-bottom: 8px;
+      border-bottom: 1.5px solid var(--line);
+      font-size: 8pt;
+      color: var(--ink-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .doc-header .tag {
+      font-weight: 700;
+      color: var(--brand-crimson);
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+    .doc-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-top: 8px;
+      border-top: 1px solid var(--line);
+      font-size: 8pt;
+      color: var(--ink-muted);
+    }
+
+    /* Section & Content Layout */
+    .page-title {
+      font-size: 16pt;
+      font-weight: 800;
+      color: var(--ink);
+      margin: 10px 0 3px 0;
+      letter-spacing: -0.3px;
+    }
+    .page-subtitle {
+      font-size: 9pt;
+      color: var(--ink-muted);
+      margin-bottom: 12px;
+      line-height: 1.4;
+    }
+
+    .split-layout {
+      display: grid;
+      grid-template-columns: 82mm 1fr;
+      gap: 14mm;
+      align-items: start;
+      flex: 1;
+      margin-top: 4px;
+    }
+
+    /* Device Mockup Frame */
+    .phone-mockup {
+      width: 78mm;
+      height: 160mm;
+      background: #FCFDF9;
+      border-radius: 28px;
+      border: 3.5mm solid #1E232A;
+      box-shadow: 0 14px 28px rgba(0, 0, 0, 0.15);
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      font-size: 6.8pt;
+      color: #1A1C18;
+    }
+    .phone-status-bar {
+      height: 6mm;
+      padding: 0 3.5mm;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #FCFDF9;
+      font-size: 5.5pt;
+      font-weight: 700;
+      border-bottom: 0.5px solid rgba(0,0,0,0.05);
+    }
+    .phone-notch {
+      width: 18mm;
+      height: 2.8mm;
+      background: #1E232A;
+      border-radius: 0 0 7px 7px;
+      margin: 0 auto;
+    }
+    .phone-screen-body {
+      padding: 3mm;
+      flex: 1;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      gap: 2.5mm;
+      background: #FCFDF9;
+    }
+
+    /* Explanatory Cards */
+    .info-panel {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .info-card {
+      background: var(--surface-soft);
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 10px 12px;
+    }
+    .info-card h4 {
+      font-size: 9pt;
+      font-weight: 700;
+      margin: 0 0 4px 0;
+      color: var(--ink);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .info-card p {
+      font-size: 8pt;
+      line-height: 1.45;
+      color: var(--ink-muted);
+      margin: 0;
+    }
+    .info-card ul {
+      margin: 5px 0 0 0;
+      padding-left: 14px;
+      font-size: 8pt;
+      color: var(--ink);
+      line-height: 1.45;
+    }
+    .badge-pill {
+      display: inline-block;
+      padding: 2px 7px;
+      border-radius: 4px;
+      font-size: 7pt;
+      font-weight: 700;
+      font-family: monospace;
+      letter-spacing: 0.5px;
+    }
+    .badge-crimson { background: #FDECEC; color: var(--brand-crimson); border: 1px solid #F5C6C6; }
+    .badge-green { background: #EDF7E8; color: var(--brand-green-dark); border: 1px solid #BCD9A2; }
+    .badge-sage { background: #FEFFD3; color: #4B7235; border: 1px solid #BCD9A2; }
+    .badge-draft { background: #FFF3CD; color: #856404; border: 1px solid #FFEEBA; }
+
+    /* Key Business Value Box */
+    .benefit-box {
+      background: linear-gradient(135deg, rgba(254, 255, 211, 0.4), rgba(188, 217, 162, 0.25));
+      border: 1px solid var(--brand-sage);
+      border-radius: 10px;
+      padding: 10px 12px;
+    }
+    .benefit-box h5 {
+      margin: 0 0 3px 0;
+      font-size: 8pt;
+      font-weight: 700;
+      color: var(--brand-green-dark);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .benefit-box p {
+      margin: 0;
+      font-size: 8pt;
+      color: var(--ink);
+      line-height: 1.4;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ============================================================== -->
+  <!-- HALAMAN 1: COVER LAMPIRAN PROPOSAL -->
+  <!-- ============================================================== -->
+  <div class="page" style="background: linear-gradient(180deg, #FFFFFF 0%, #F9FBF8 100%);">
+    <div class="doc-header">
+      <span class="tag">
+        <svg width="12" height="12" fill="currentColor" viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 14l-5-5 1.41-1.41L12 14.17l7.59-7.59L21 8l-9 9z"/></svg>
+        Lampiran Proposal Penawaran Teknis
+      </span>
+      <span>Dokumen No: BTR-PRP-BGUD-2026</span>
+    </div>
+
+    <div style="flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; padding: 0 10mm;">
+      
+      <!-- Brand Logo Badge -->
+      <div style="width: 22mm; height: 22mm; background: #A82323; border-radius: 18px; display: flex; align-items: center; justify-content: center; box-shadow: 0 10px 25px rgba(168, 35, 35, 0.28); margin-bottom: 6mm;">
+        <svg width="42" height="42" viewBox="0 0 24 24" fill="none" stroke="#FEFFD3" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+        </svg>
+      </div>
+
+      <div class="badge-pill badge-green" style="margin-bottom: 3mm; font-size: 8pt; padding: 3px 10px;">
+        MODERN INDUSTRIAL WAREHOUSE UI/UX
+      </div>
+
+      <h1 style="font-size: 23pt; font-weight: 900; line-height: 1.25; margin: 0 0 3mm 0; color: #192024; letter-spacing: -0.5px;">
+        Lampiran Visual & Tangkapan Layar<br>
+        <span style="color: #6D9E51;">BGud Mobile Warehouse System</span>
+      </h1>
+
+      <p style="font-size: 10.5pt; color: #5A6672; max-width: 140mm; line-height: 1.5; margin: 0 0 8mm 0;">
+        Katalog antarmuka operasional mobile petugas gudang untuk pencatatan retur fisik (Return Order), verifikasi barcode produk, dan sinkronisasi real-time dengan sistem ERP distribusi.
+      </p>
+
+      <!-- Color Palette Showcase Card -->
+      <div style="width: 100%; max-width: 145mm; background: #FFFFFF; border: 1px solid #DFE5EA; border-radius: 14px; padding: 4.5mm; box-shadow: 0 4px 14px rgba(0,0,0,0.04); margin-bottom: 8mm;">
+        <div style="font-size: 8pt; font-weight: 700; color: #5A6672; text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 3mm;">
+          Palet Desain Identitas Logistik BTR
+        </div>
+        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 3mm;">
+          <div style="text-align: center; padding: 2.5mm; background: #FDF9F9; border-radius: 8px; border: 1px solid #F5C6C6;">
+            <div style="width: 100%; height: 5mm; background: #A82323; border-radius: 4px; margin-bottom: 2mm;"></div>
+            <div style="font-size: 7.5pt; font-weight: 800; color: #A82323;">#A82323</div>
+            <div style="font-size: 6.5pt; color: #7E1414;">Brand Crimson</div>
+          </div>
+          <div style="text-align: center; padding: 2.5mm; background: #FFFEEA; border-radius: 8px; border: 1px solid #EFE49A;">
+            <div style="width: 100%; height: 5mm; background: #FEFFD3; border-radius: 4px; border: 1px solid #E0E2A0; margin-bottom: 2mm;"></div>
+            <div style="font-size: 7.5pt; font-weight: 800; color: #6D721A;">#FEFFD3</div>
+            <div style="font-size: 6.5pt; color: #70751A;">Warm Cream</div>
+          </div>
+          <div style="text-align: center; padding: 2.5mm; background: #F6FAF2; border-radius: 8px; border: 1px solid #BCD9A2;">
+            <div style="width: 100%; height: 5mm; background: #BCD9A2; border-radius: 4px; margin-bottom: 2mm;"></div>
+            <div style="font-size: 7.5pt; font-weight: 800; color: #4B7235;">#BCD9A2</div>
+            <div style="font-size: 6.5pt; color: #4B7235;">Sage Accent</div>
+          </div>
+          <div style="text-align: center; padding: 2.5mm; background: #F2F8EE; border-radius: 8px; border: 1px solid #A6CD8F;">
+            <div style="width: 100%; height: 5mm; background: #6D9E51; border-radius: 4px; margin-bottom: 2mm;"></div>
+            <div style="font-size: 7.5pt; font-weight: 800; color: #4B7235;">#6D9E51</div>
+            <div style="font-size: 6.5pt; color: #4B7235;">Forest Green</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Table of Contents / Index -->
+      <div style="width: 100%; max-width: 145mm; text-align: left; background: #F7F9FA; border-radius: 12px; padding: 4.5mm 6mm; border: 1px solid #DFE5EA; font-size: 8pt;">
+        <div style="font-weight: 800; color: #192024; margin-bottom: 2.5mm; text-transform: uppercase; font-size: 8pt; letter-spacing: 0.5px;">
+          Daftar Tangkapan Layar Lampiran:
+        </div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2mm 5mm; color: #354049;">
+          <div><strong>Hal. 2:</strong> Layar 1 — Login & Alokasi Gudang</div>
+          <div><strong>Hal. 3:</strong> Layar 2 — Beranda & Peluncur Kerja</div>
+          <div><strong>Hal. 4:</strong> Layar 3 — Antrean Dokumen Retur</div>
+          <div><strong>Hal. 5:</strong> Layar 4 — Input & Scan Retur Fisik</div>
+          <div><strong>Hal. 6:</strong> Layar 5 — Arsip Resmi Retur Synced</div>
+          <div><strong>Hal. 7:</strong> Layar 6 — Barcode Registry & Katalog</div>
+          <div><strong>Hal. 8:</strong> Layar 7 — Sinkronisasi & Pengaturan Sesi</div>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="doc-footer">
+      <span>BTR Platform • Mobile Gudang System</span>
+      <span>Halaman 1 dari 8</span>
+    </div>
+  </div>
+
+  <!-- ============================================================== -->
+  <!-- HALAMAN 2: LAYAR 1 - LOGIN & ALOKASI GUDANG -->
+  <!-- ============================================================== -->
+  <div class="page">
+    <div class="doc-header">
+      <span class="tag">Lampiran I — Visual Antarmuka</span>
+      <span>Layar 1: Autentikasi & Alokasi</span>
+    </div>
+
+    <div>
+      <h2 class="page-title">1. Autentikasi Operator & Penugasan Gudang</h2>
+      <p class="page-subtitle">Desain kartu bertingkat (Industrial Stepped Card) memandu operator menyelesaikan otentikasi akun Google resmi dan penugasan unit gudang sebelum dapat mengakses fungsi transaksi.</p>
+    </div>
+
+    <div class="split-layout">
+      <!-- Phone Mockup -->
+      <div class="phone-mockup">
+        <div class="phone-status-bar">
+          <span>09:41</span>
+          <div class="phone-notch"></div>
+          <span>GUDANG</span>
+        </div>
+        <div class="phone-screen-body" style="align-items: center; justify-content: center; padding: 4mm 3mm;">
+          
+          <div style="width: 11mm; height: 11mm; background: #A82323; border-radius: 9px; display: flex; align-items: center; justify-content: center; margin-bottom: 1.5mm;">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#FEFFD3" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5" />
+            </svg>
+          </div>
+          
+          <div style="font-size: 11pt; font-weight: 900; letter-spacing: -0.3px;">BGud <span style="font-size: 6.5pt; background: #BCD9A2; color: #163206; padding: 1px 4px; border-radius: 3px; font-family: monospace;">GUDANG</span></div>
+          <div style="font-size: 6pt; color: #6D7781; margin-bottom: 3.5mm;">Sistem Operasional Logistik</div>
+
+          <!-- Stepped Card -->
+          <div style="width: 100%; background: #FFFFFF; border: 1px solid #DFE5EA; border-radius: 12px; padding: 3mm; box-shadow: 0 2px 6px rgba(0,0,0,0.03);">
+            
+            <!-- Step 1 -->
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5mm;">
+              <div style="font-weight: 700; font-size: 6.5pt; display: flex; align-items: center; gap: 3px;">
+                <span style="width: 4mm; height: 4mm; border-radius: 50%; background: #6D9E51; color: white; display: inline-flex; align-items: center; justify-content: center; font-size: 5pt;">✓</span>
+                <span>1. Autentikasi Akun</span>
+              </div>
+              <span class="badge-pill badge-green" style="font-size: 5.5pt; padding: 1px 4px;">Terhubung</span>
+            </div>
+
+            <!-- Operator Profile Box -->
+            <div style="background: rgba(188, 217, 162, 0.2); border: 1px solid #BCD9A2; border-radius: 7px; padding: 2mm; display: flex; align-items: center; gap: 2.5mm; margin-bottom: 2.5mm;">
+              <div style="width: 6mm; height: 6mm; border-radius: 50%; background: #A82323; color: #FEFFD3; font-weight: 800; font-size: 5.5pt; display: flex; align-items: center; justify-content: center;">BS</div>
+              <div style="flex: 1; overflow: hidden;">
+                <div style="font-weight: 800; font-size: 6.5pt; white-space: nowrap; text-overflow: ellipsis;">Budi Santoso</div>
+                <div style="font-size: 5pt; color: #5A6672;">budi.santoso@btr.co.id</div>
+              </div>
+            </div>
+
+            <div style="height: 1px; background: #DFE5EA; margin: 2mm 0;"></div>
+
+            <!-- Step 2 -->
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5mm;">
+              <div style="font-weight: 700; font-size: 6.5pt; display: flex; align-items: center; gap: 3px;">
+                <span style="width: 4mm; height: 4mm; border-radius: 50%; background: #6D9E51; color: white; display: inline-flex; align-items: center; justify-content: center; font-size: 5pt;">✓</span>
+                <span>2. Pilih Unit Gudang</span>
+              </div>
+              <span class="badge-pill badge-green" style="font-size: 5.5pt; padding: 1px 4px;">GUD-01</span>
+            </div>
+
+            <div style="border: 1px solid #6D9E51; border-radius: 6px; padding: 2mm; font-size: 6.5pt; font-weight: 700; background: #FFFFFF; display: flex; justify-content: space-between; align-items: center; margin-bottom: 3mm;">
+              <span>Gudang Utama Barat (Surabaya)</span>
+              <span style="font-size: 5pt; color: #6D9E51;">▼</span>
+            </div>
+
+            <!-- Enter CTA Button -->
+            <div style="background: #6D9E51; color: white; text-align: center; padding: 2.5mm; border-radius: 7px; font-weight: 800; font-size: 7pt; box-shadow: 0 2px 5px rgba(109, 158, 81, 0.35);">
+              Masuk ke Operasional Gudang
+            </div>
+
+          </div>
+
+          <div style="font-size: 5.5pt; color: #8A97A4; margin-top: 3mm;">BTR Platform • Sesi Terotentikasi</div>
+        </div>
+      </div>
+
+      <!-- Explanatory Details -->
+      <div class="info-panel">
+        <div class="info-card">
+          <h4>
+            <span class="badge-pill badge-crimson">Keamanan & Tata Kelola</span>
+            Single Sign-On (SSO) Google Workspace
+          </h4>
+          <p>Operator gudang masuk menggunakan akun resmi Google terdaftar tanpa perlu mengingat kredensial manual, memastikan setiap transaksi penerimaan terhubung dengan identitas petugas yang valid.</p>
+        </div>
+
+        <div class="info-card">
+          <h4>
+            <span class="badge-pill badge-green">Pencegahan Kesalahan</span>
+            Session Binding Lokasi Fisik Gudang
+          </h4>
+          <p>Setelah memilih unit gudang tugas, seluruh dokumen retur yang dibuat otomatis terikat pada kode gudang tersebut (Warehouse ID). Operator dicegah salah memasukkan transaksi ke gudang cabang lain.</p>
+          <ul>
+            <li>Terkunci otomatis pada Session DataStore perangkat.</li>
+            <li>Tidak ada resiko salah alokasi barang retur antar gudang.</li>
+            <li>Pergantian gudang memerlukan konfirmasi pergantian sesi.</li>
+          </ul>
+        </div>
+
+        <div class="benefit-box">
+          <h5>Manfaat bagi Manajemen</h5>
+          <p>Audit trail sempurna: Manajemen kantor pusat mengetahui persis jam berapa, oleh siapa, dan di fasilitas gudang mana suatu barang retur pertama kali diterima dari armada distribusi.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="doc-footer">
+      <span>Lampiran Proposal: BGud Mobile System</span>
+      <span>Halaman 2 dari 8</span>
+    </div>
+  </div>
+
+  <!-- ============================================================== -->
+  <!-- HALAMAN 3: LAYAR 2 - BERANDA & PELUNCUR KERJA (HOME) -->
+  <!-- ============================================================== -->
+  <div class="page">
+    <div class="doc-header">
+      <span class="tag">Lampiran I — Visual Antarmuka</span>
+      <span>Layar 2: Beranda Gudang</span>
+    </div>
+
+    <div>
+      <h2 class="page-title">2. Beranda & Peluncur Kerja (Work Launcher)</h2>
+      <p class="page-subtitle">Beranda dirancang khusus sebagai peluncur kerja operasional yang cepat: menampilkan konteks sesi aktif, tombol kerja utama berukuran besar, dan pemantau antrean sinkronisasi.</p>
+    </div>
+
+    <div class="split-layout">
+      <!-- Phone Mockup -->
+      <div class="phone-mockup">
+        <div class="phone-status-bar">
+          <span>09:41</span>
+          <div class="phone-notch"></div>
+          <span>GUD-01</span>
+        </div>
+        <div class="phone-screen-body">
+          
+          <!-- Header -->
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <div style="display: flex; align-items: center; gap: 2mm;">
+              <div style="width: 7mm; height: 7mm; background: #A82323; border-radius: 6px; display: flex; align-items: center; justify-content: center; color: #FEFFD3; font-weight: 900; font-size: 5pt;">BG</div>
+              <div>
+                <div style="font-weight: 800; font-size: 7.5pt;">BGud <span class="badge-pill badge-green" style="font-size: 5pt; padding: 0.5px 3px;">GUDANG</span></div>
+                <div style="font-size: 5pt; color: #5A6672;">Operasional Logistik & Retur</div>
+              </div>
+            </div>
+            <div style="width: 6mm; height: 6mm; border-radius: 50%; background: #EEF2F5; display: flex; align-items: center; justify-content: center; font-size: 6pt;">⚙</div>
+          </div>
+
+          <!-- Active Session Card -->
+          <div style="background: rgba(254, 255, 211, 0.4); border: 1px solid #BCD9A2; border-radius: 9px; padding: 2.5mm;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5mm;">
+              <span style="font-size: 5pt; font-weight: 800; font-family: monospace; color: #4B7235;">SESI AKTIF OPERATOR</span>
+              <span class="badge-pill badge-green" style="font-size: 5pt; padding: 0.5px 4px;">Terhubung</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; font-size: 6pt; margin-bottom: 1mm;">
+              <span style="color: #617083;">Petugas:</span>
+              <span style="font-weight: 800;">Budi Santoso</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; font-size: 6pt;">
+              <span style="color: #617083;">Gudang:</span>
+              <span style="font-weight: 800;"><span class="badge-pill badge-crimson" style="font-size: 4.5pt; padding: 0.5px 3px;">GUD-01</span> Utama Barat</span>
+            </div>
+          </div>
+
+          <!-- Hero Action: New Return -->
+          <div style="background: #6D9E51; border-radius: 10px; padding: 3mm; color: white; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 3px 8px rgba(109, 158, 81, 0.35);">
+            <div style="display: flex; align-items: center; gap: 2.5mm;">
+              <div style="width: 7mm; height: 7mm; background: rgba(255,255,255,0.25); border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 9pt; font-weight: 900;">+</div>
+              <div>
+                <div style="font-weight: 900; font-size: 7.5pt;">Buat Return Order</div>
+                <div style="font-size: 5pt; color: #FEFFD3;">Catat penerimaan fisik retur barang</div>
+              </div>
+            </div>
+            <span style="font-size: 7pt; font-weight: 800;">&rarr;</span>
+          </div>
+
+          <!-- Secondary Action: Return Orders List -->
+          <div style="background: white; border: 1px solid #DFE5EA; border-radius: 9px; padding: 2.5mm; display: flex; align-items: center; justify-content: space-between;">
+            <div style="display: flex; align-items: center; gap: 2mm;">
+              <div style="width: 6mm; height: 6mm; background: rgba(188, 217, 162, 0.35); border-radius: 5px; display: flex; align-items: center; justify-content: center; font-size: 6pt; color: #4B7235;">📦</div>
+              <div>
+                <div style="font-weight: 800; font-size: 6.8pt;">Daftar Return Orders</div>
+                <div style="font-size: 5pt; color: #617083;">Antrean dokumen & riwayat</div>
+              </div>
+            </div>
+            <span style="font-size: 5.5pt; font-weight: 800; color: #A82323; background: #FDECEC; padding: 1px 4px; border-radius: 4px;">2 Draft</span>
+          </div>
+
+          <!-- Clickable Sync Status Card -->
+          <div style="background: white; border: 1px solid #DFE5EA; border-radius: 9px; padding: 2.5mm;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2mm;">
+              <span style="font-size: 5.5pt; font-weight: 800; color: #5A6672; text-transform: uppercase;">Status Sinkronisasi</span>
+              <span class="badge-pill badge-green" style="font-size: 5pt;">● Online</span>
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2mm; text-align: center;">
+              <div style="background: #F8FAFB; padding: 1.5mm; border-radius: 6px;">
+                <div style="font-size: 5pt; color: #788591;">Terakhir Sync</div>
+                <div style="font-weight: 800; font-size: 6pt; color: #192024;">10 Menit lalu</div>
+              </div>
+              <div style="background: #FFFEEA; border: 1px solid #BCD9A2; padding: 1.5mm; border-radius: 6px;">
+                <div style="font-size: 5pt; color: #4B7235;">Menunggu Upload</div>
+                <div style="font-weight: 900; font-size: 6.5pt; color: #A82323;">2 Dokumen</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- More Options -->
+          <div style="background: white; border: 1px solid #DFE5EA; border-radius: 9px; overflow: hidden;">
+            <div style="padding: 2mm 2.5mm; display: flex; justify-content: space-between; align-items: center; border-bottom: 0.5px solid #F0F4F7;">
+              <span style="font-weight: 700; font-size: 6pt;">Barcode Registry</span>
+              <span style="font-size: 6pt; color: #788591;">&rarr;</span>
+            </div>
+            <div style="padding: 2mm 2.5mm; display: flex; justify-content: space-between; align-items: center;">
+              <span style="font-weight: 700; font-size: 6pt;">Pengaturan & Ganti Gudang</span>
+              <span style="font-size: 6pt; color: #788591;">&rarr;</span>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Explanatory Details -->
+      <div class="info-panel">
+        <div class="info-card">
+          <h4>
+            <span class="badge-pill badge-green">Efisiensi Kerja</span>
+            Work Launcher Fokus Tindakan Cepat
+          </h4>
+          <p>Menghapus menu navigasi yang berbelit-belit. Tombol utama <strong>"Buat Return Order"</strong> berukuran besar (56dp) dan kontras tinggi ditempatkan di jangkauan ibu jari untuk memudahkan operator yang sering mengenakan sarung tangan kerja.</p>
+        </div>
+
+        <div class="info-card">
+          <h4>
+            <span class="badge-pill badge-crimson">Transparansi Data</span>
+            Pemantau Sinkronisasi Interaktif
+          </h4>
+          <p>Kartu sinkronisasi memberi kepastian apakah perangkat sedang online serta berapa banyak dokumen retur yang belum terkirim ke server pusat:</p>
+          <ul>
+            <li>Menampilkan waktu sinkronisasi katalog master terakhir.</li>
+            <li>Badge merah menyala saat terdapat dokumen antrean offline.</li>
+            <li>Dapat ditekan langsung untuk membuka detail proses sinkronisasi.</li>
+          </ul>
+        </div>
+
+        <div class="benefit-box">
+          <h5>Manfaat bagi Manajemen</h5>
+          <p>Tidak ada lagi dokumen retur yang tertinggal di perangkat operator tanpa diketahui. Supervisor gudang dapat melihat secara instan kesiapan data sebelum proses serah terima shift.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="doc-footer">
+      <span>Lampiran Proposal: BGud Mobile System</span>
+      <span>Halaman 3 dari 8</span>
+    </div>
+  </div>
+
+  <!-- ============================================================== -->
+  <!-- HALAMAN 4: LAYAR 3 - ANTREAN RETURN ORDER (WORK QUEUE) -->
+  <!-- ============================================================== -->
+  <div class="page">
+    <div class="doc-header">
+      <span class="tag">Lampiran I — Visual Antarmuka</span>
+      <span>Layar 3: Antrean Kerja Retur</span>
+    </div>
+
+    <div>
+      <h2 class="page-title">3. Antrean Kerja & Riwayat Retur (Work Queue)</h2>
+      <p class="page-subtitle">Daftar dokumen retur terstruktur berdasarkan linimasa tanggal (Hari Ini, Kemarin, Sebelumnya) dengan pembedaan status jelas antara Draft yang dapat diedit dan Synced yang telah terkirim.</p>
+    </div>
+
+    <div class="split-layout">
+      <!-- Phone Mockup -->
+      <div class="phone-mockup">
+        <div class="phone-status-bar">
+          <span>09:41</span>
+          <div class="phone-notch"></div>
+          <span>GUD-01</span>
+        </div>
+        <div class="phone-screen-body">
+          
+          <!-- Top Bar -->
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <span style="font-size: 8pt; font-weight: 800;">&larr;</span>
+            <span style="font-weight: 800; font-size: 7.5pt;">Daftar Return Order</span>
+            <span style="font-size: 6pt; font-weight: 800; color: #4B7235; background: #BCD9A2; padding: 1px 5px; border-radius: 4px;">+ Baru</span>
+          </div>
+
+          <!-- Search Bar -->
+          <div style="background: white; border: 1px solid #DFE5EA; border-radius: 8px; padding: 1.5mm 2.5mm; font-size: 5.5pt; color: #8A97A4; display: flex; align-items: center; gap: 1.5mm;">
+            <span>🔍</span>
+            <span>Cari pelanggan atau tanggal...</span>
+          </div>
+
+          <!-- Filter Pills -->
+          <div style="display: flex; gap: 1.5mm;">
+            <span style="background: #6D9E51; color: white; padding: 1mm 2.5mm; border-radius: 12px; font-weight: 700; font-size: 5.5pt;">Semua (5)</span>
+            <span style="background: white; border: 1px solid #DFE5EA; color: #5A6672; padding: 1mm 2.5mm; border-radius: 12px; font-weight: 600; font-size: 5.5pt;">Draft (2)</span>
+            <span style="background: white; border: 1px solid #DFE5EA; color: #5A6672; padding: 1mm 2.5mm; border-radius: 12px; font-weight: 600; font-size: 5.5pt;">Synced (3)</span>
+          </div>
+
+          <!-- Section: HARI INI -->
+          <div>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5mm;">
+              <span style="font-size: 5pt; font-weight: 800; font-family: monospace; color: #A82323;">HARI INI (TODAY)</span>
+              <span style="font-size: 4.5pt; color: #8A97A4;">2 Dokumen</span>
+            </div>
+
+            <!-- Card 1: DRAFT -->
+            <div style="background: white; border: 1px solid #FFE082; border-left: 1.2mm solid #FFA000; border-radius: 8px; padding: 2mm; margin-bottom: 2mm;">
+              <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                <div>
+                  <div style="font-weight: 800; font-size: 6.5pt; color: #192024;">Toko Berkah Mandiri</div>
+                  <div style="font-size: 5pt; font-family: monospace; color: #8A97A4;">CUST-00291</div>
+                </div>
+                <span class="badge-pill badge-draft" style="font-size: 4.5pt; padding: 0.5px 3px;">DRAFT</span>
+              </div>
+              <div style="height: 0.5px; background: #F0F4F7; margin: 1.5mm 0;"></div>
+              <div style="display: flex; justify-content: space-between; align-items: center; font-size: 5pt;">
+                <span style="color: #617083;">09:15 WIB • <span style="font-weight: 700; color: #192024;">3 Item</span></span>
+                <span style="font-weight: 800; color: #A82323;">Lanjut Edit &rarr;</span>
+              </div>
+            </div>
+
+            <!-- Card 2: SYNCED -->
+            <div style="background: white; border: 1px solid #DFE5EA; border-left: 1.2mm solid #6D9E51; border-radius: 8px; padding: 2mm;">
+              <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                <div>
+                  <div style="font-weight: 800; font-size: 6.5pt; color: #192024;">UD Sumber Rejeki</div>
+                  <div style="font-size: 5pt; font-family: monospace; color: #8A97A4;">CUST-00104</div>
+                </div>
+                <span class="badge-pill badge-green" style="font-size: 4.5pt; padding: 0.5px 3px;">SYNCED</span>
+              </div>
+              <div style="height: 0.5px; background: #F0F4F7; margin: 1.5mm 0;"></div>
+              <div style="display: flex; justify-content: space-between; align-items: center; font-size: 5pt;">
+                <span style="color: #617083;">08:30 WIB • <span style="font-weight: 700; color: #192024;">6 Item</span></span>
+                <span style="font-weight: 800; color: #4B7235;">Lihat Detail &rarr;</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Section: KEMARIN -->
+          <div>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5mm;">
+              <span style="font-size: 5pt; font-weight: 800; font-family: monospace; color: #617083;">KEMARIN (YESTERDAY)</span>
+              <span style="font-size: 4.5pt; color: #8A97A4;">1 Dokumen</span>
+            </div>
+
+            <div style="background: white; border: 1px solid #DFE5EA; border-left: 1.2mm solid #6D9E51; border-radius: 8px; padding: 2mm;">
+              <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                <div>
+                  <div style="font-weight: 800; font-size: 6.5pt; color: #192024;">Toko Maju Bersama</div>
+                  <div style="font-size: 5pt; font-family: monospace; color: #8A97A4;">CUST-00341</div>
+                </div>
+                <span class="badge-pill badge-green" style="font-size: 4.5pt; padding: 0.5px 3px;">SYNCED</span>
+              </div>
+              <div style="height: 0.5px; background: #F0F4F7; margin: 1.5mm 0;"></div>
+              <div style="display: flex; justify-content: space-between; align-items: center; font-size: 5pt;">
+                <span style="color: #617083;">15:42 WIB • <span style="font-weight: 700; color: #192024;">2 Item</span></span>
+                <span style="font-weight: 800; color: #4B7235;">Lihat Detail &rarr;</span>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Explanatory Details -->
+      <div class="info-panel">
+        <div class="info-card">
+          <h4>
+            <span class="badge-pill badge-green">Alur Cerdas</span>
+            Navigasi Bersyarat Berdasarkan Status
+          </h4>
+          <p>Mencegah salah aksi operasional:</p>
+          <ul>
+            <li><strong>Dokumen DRAFT:</strong> Mengetuk kartu langsung membuka layar <em>Edit & Resume</em>, memungkinkan operator melanjutkan penambahan barang atau menghapus draft jika keliru.</li>
+            <li><strong>Dokumen SYNCED:</strong> Mengetuk kartu membuka tampilan <em>Detail Read-Only</em> resmi, mencegah perubahan yang tidak disengaja terhadap dokumen yang telah diterima server pusat.</li>
+          </ul>
+        </div>
+
+        <div class="info-card">
+          <h4>
+            <span class="badge-pill badge-sage">Organisasi Kerja</span>
+            Pengelompokan Linimasa Tanggal (TD-006)
+          </h4>
+          <p>Daftar disusun menjadi seksi linimasa <strong>Hari Ini (Today)</strong>, <strong>Kemarin (Yesterday)</strong>, dan <strong>Sebelumnya</strong> sehingga operator memprioritaskan dokumen penerimaan hari berjalan tanpa harus mengingat nomor transaksi.</p>
+        </div>
+
+        <div class="benefit-box">
+          <h5>Manfaat bagi Manajemen</h5>
+          <p>Transisi mulus antar shift: Saat pergantian shift kerja, operator shift berikutnya dapat langsung melihat dokumen retur yang belum selesai diinput (Draft) dan menyelesaikannya dalam hitungan detik.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="doc-footer">
+      <span>Lampiran Proposal: BGud Mobile System</span>
+      <span>Halaman 4 dari 8</span>
+    </div>
+  </div>
+
+  <!-- ============================================================== -->
+  <!-- HALAMAN 5: LAYAR 4 - INPUT & SCAN RETUR FISIK (CAPTURE) -->
+  <!-- ============================================================== -->
+  <div class="page">
+    <div class="doc-header">
+      <span class="tag">Lampiran I — Visual Antarmuka</span>
+      <span>Layar 4: Pencatatan & Pemindaian</span>
+    </div>
+
+    <div>
+      <h2 class="page-title">4. Input & Pemindaian Retur Fisik (Capture Screen)</h2>
+      <p class="page-subtitle">Hierarki layout memprioritaskan area pemindaian kamera barcode dan input item sebagai bidang kerja dominan, meminimalkan pengetikan dan mempercepat proses penerimaan barang di dok bongkar.</p>
+    </div>
+
+    <div class="split-layout">
+      <!-- Phone Mockup -->
+      <div class="phone-mockup">
+        <div class="phone-status-bar">
+          <span>09:41</span>
+          <div class="phone-notch"></div>
+          <span>GUD-01</span>
+        </div>
+        <div class="phone-screen-body">
+          
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <span style="font-size: 8pt; font-weight: 800;">&larr;</span>
+            <span style="font-weight: 800; font-size: 7.5pt;">Buat Return Order</span>
+            <span class="badge-pill badge-draft" style="font-size: 4.5pt;">DRAFT</span>
+          </div>
+
+          <!-- 1. Context Box -->
+          <div style="background: white; border: 1px solid #DFE5EA; border-radius: 7px; padding: 2mm;">
+            <div style="font-size: 4.5pt; font-weight: 800; font-family: monospace; color: #4B7235; margin-bottom: 1mm;">1. KONTEKS PELANGGAN & GUDANG</div>
+            <div style="background: #F8FAFB; border: 1px solid #BCD9A2; border-radius: 5px; padding: 1.5mm; display: flex; justify-content: space-between; align-items: center;">
+              <div>
+                <div style="font-weight: 800; font-size: 6pt;">Toko Berkah Mandiri</div>
+                <div style="font-size: 4.5pt; font-family: monospace; color: #8A97A4;">CUST-00291 • Surabaya</div>
+              </div>
+              <span style="color: #A82323; font-size: 5pt; font-weight: 800;">Ganti</span>
+            </div>
+          </div>
+
+          <!-- 2. Dominant Scan Region -->
+          <div style="background: white; border: 1.5px solid rgba(109, 158, 81, 0.6); border-radius: 8px; padding: 2mm; box-shadow: 0 2px 6px rgba(0,0,0,0.04);">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5mm;">
+              <span style="font-size: 4.8pt; font-weight: 800; font-family: monospace; color: #4B7235;">2. SCAN & INPUT ITEM (DOMINAN)</span>
+              <span class="badge-pill badge-green" style="font-size: 4.5pt;">Area Utama</span>
+            </div>
+
+            <!-- Viewfinder Mockup -->
+            <div style="height: 16mm; background: #1B2129; border-radius: 6px; position: relative; display: flex; align-items: center; justify-content: center;">
+              <div style="position: absolute; width: 90%; height: 1px; background: #A82323; box-shadow: 0 0 5px #A82323;"></div>
+              <span style="font-size: 4.5pt; color: #FEFFD3; background: rgba(0,0,0,0.6); padding: 1px 4px; border-radius: 3px; z-index: 2;">Arahkan kamera ke barcode fisik</span>
+            </div>
+
+            <!-- Scanned Item Card -->
+            <div style="background: #F7F9FA; border: 1px solid #DFE5EA; border-radius: 6px; padding: 1.5mm; margin-top: 1.5mm;">
+              <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div style="font-weight: 800; font-size: 6pt;">Indomie Goreng Spesial 85g</div>
+                <span class="badge-pill badge-green" style="font-size: 4pt; padding: 0.5px 3px;">COCOK</span>
+              </div>
+              
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5mm; margin: 1.5mm 0;">
+                <div style="background: white; border: 1px solid #DFE5EA; border-radius: 4px; padding: 1mm;">
+                  <span style="font-size: 4pt; color: #8A97A4; display: block;">Qty:</span>
+                  <span style="font-weight: 800; font-size: 6pt;">12</span>
+                </div>
+                <div style="background: white; border: 1px solid #DFE5EA; border-radius: 4px; padding: 1mm;">
+                  <span style="font-size: 4pt; color: #8A97A4; display: block;">Satuan:</span>
+                  <span style="font-weight: 800; font-size: 6pt;">Pcs</span>
+                </div>
+              </div>
+
+              <!-- Kondisi Retur Chips -->
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5mm;">
+                <div style="background: rgba(109, 158, 81, 0.2); border: 1px solid #6D9E51; color: #4B7235; border-radius: 4px; text-align: center; padding: 1mm; font-weight: 800; font-size: 5pt;">
+                  ✓ BAGUS (Sellable)
+                </div>
+                <div style="background: white; border: 1px solid #DFE5EA; color: #617083; border-radius: 4px; text-align: center; padding: 1mm; font-weight: 600; font-size: 5pt;">
+                  RUSAK (Damaged)
+                </div>
+              </div>
+
+              <div style="background: #6D9E51; color: white; text-align: center; padding: 1.2mm; border-radius: 5px; font-weight: 800; font-size: 5.5pt; margin-top: 1.5mm;">
+                + Tambah Item ke Dokumen
+              </div>
+            </div>
+
+            <!-- List item added -->
+            <div style="margin-top: 1.5mm; border-top: 0.5px solid #DFE5EA; padding-top: 1mm;">
+              <div style="display: flex; justify-content: space-between; font-size: 4.8pt; color: #5A6672; margin-bottom: 0.5mm;">
+                <span>Item Dalam Retur:</span>
+                <span style="font-weight: 800; color: #192024;">1 Item</span>
+              </div>
+              <div style="background: white; border: 1px solid #DFE5EA; border-radius: 5px; padding: 1mm; display: flex; justify-content: space-between; align-items: center; font-size: 5pt;">
+                <div>
+                  <div style="font-weight: 700;">Minyak Goreng Sania 2L</div>
+                  <div style="color: #617083;">4 Pcs • <span style="color: #A82323; font-weight: 700;">RUSAK</span></div>
+                </div>
+                <span style="color: #A82323; font-weight: 700;">Hapus</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Bottom Save Actions -->
+          <div style="margin-top: auto; display: flex; flex-direction: column; gap: 1mm;">
+            <div style="background: #6D9E51; color: white; text-align: center; padding: 2mm; border-radius: 7px; font-weight: 800; font-size: 6.5pt;">
+              Simpan Sebagai Draft (Lokal)
+            </div>
+            <div style="background: white; border: 1px solid #DFE5EA; color: #5A6672; text-align: center; padding: 1.5mm; border-radius: 7px; font-weight: 600; font-size: 6pt;">
+              Batalkan
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Explanatory Details -->
+      <div class="info-panel">
+        <div class="info-card">
+          <h4>
+            <span class="badge-pill badge-green">Operasional Cepat</span>
+            Pemindai Kamera Barcode Terintegrasi
+          </h4>
+          <p>Kamera perangkat berfungsi sebagai scanner barcode langsung dengan resolusi lokal menggunakan ML Kit. Barcode kemasan terbaca instan dan langsung mencocokkan master barang yang tersimpan di memori perangkat.</p>
+        </div>
+
+        <div class="info-card">
+          <h4>
+            <span class="badge-pill badge-crimson">Ketepatan Klasifikasi</span>
+            Klasifikasi Fisik: BAGUS vs RUSAK
+          </h4>
+          <p>Aturan bisnis BTR mewajibkan pemisahan barang retur layak jual kembali (Bagus) dengan barang cacat pabrik/rusak pengiriman (Rusak). Di aplikasi ini, operator memilih kondisi fisik dengan 1 sentuhan tombol pill.</p>
+        </div>
+
+        <div class="info-card">
+          <h4>
+            <span class="badge-pill badge-sage">Ketahanan Offline</span>
+            Offline-First Local Storage (Room DB)
+          </h4>
+          <p>Tidak ada panggilan jaringan (network call) selama pemindaian barang. Petugas dapat bekerja di titik buta sinyal (basement gudang) dengan kecepatan penuh tanpa hambatan loading.</p>
+        </div>
+
+        <div class="benefit-box">
+          <h5>Manfaat bagi Manajemen</h5>
+          <p>Menghilangkan penulisan tangan pada formulir kertas retur yang rentan robek, basah, atau tidak terbaca. Kuantitas fisik barang retur tercatat akurat dan langsung tervalidasi dengan satuan kemasannya.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="doc-footer">
+      <span>Lampiran Proposal: BGud Mobile System</span>
+      <span>Halaman 5 dari 8</span>
+    </div>
+  </div>
+
+  <!-- ============================================================== -->
+  <!-- HALAMAN 6: LAYAR 5 - DETAIL RETUR TERSINKRON (SYNCED DETAIL) -->
+  <!-- ============================================================== -->
+  <div class="page">
+    <div class="doc-header">
+      <span class="tag">Lampiran I — Visual Antarmuka</span>
+      <span>Layar 5: Detail Arsip Resmi</span>
+    </div>
+
+    <div>
+      <h2 class="page-title">5. Detail Arsip Resmi Dokumen Retur (Synced)</h2>
+      <p class="page-subtitle">Setelah dokumen tersinkronisasi ke server pusat, sistem menguncinya menjadi arsip resmi (read-only) untuk mencegah manipulasi data, sementara kantor pusat memproses dokumen Faktur Retur Penjualan.</p>
+    </div>
+
+    <div class="split-layout">
+      <!-- Phone Mockup -->
+      <div class="phone-mockup">
+        <div class="phone-status-bar">
+          <span>09:41</span>
+          <div class="phone-notch"></div>
+          <span>GUD-01</span>
+        </div>
+        <div class="phone-screen-body">
+          
+          <!-- Top Bar -->
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <span style="font-size: 8pt; font-weight: 800;">&larr;</span>
+            <span style="font-weight: 800; font-size: 7.5pt;">Detail Return Order</span>
+            <span class="badge-pill badge-green" style="font-size: 4.5pt;">SYNCED</span>
+          </div>
+
+          <!-- Synced Notice Banner -->
+          <div style="background: rgba(109, 158, 81, 0.12); border: 1px solid #BCD9A2; border-radius: 6px; padding: 1.5mm 2mm; display: flex; align-items: center; gap: 1.5mm;">
+            <span style="color: #4B7235; font-size: 6pt; font-weight: 900;">✓</span>
+            <span style="font-size: 4.8pt; color: #163206; line-height: 1.3;">Tersinkronisasi ke server pusat. Data bersifat arsip resmi (read-only).</span>
+          </div>
+
+          <!-- Transaction Context Card -->
+          <div style="background: white; border: 1px solid #DFE5EA; border-radius: 7px; padding: 2mm; font-size: 5.5pt;">
+            <div style="font-size: 4.5pt; font-weight: 800; font-family: monospace; color: #4B7235; margin-bottom: 1.5mm;">KONTEKS DOKUMEN</div>
+            
+            <div style="display: flex; justify-content: space-between; margin-bottom: 1mm;">
+              <span style="color: #617083;">Customer:</span>
+              <span style="font-weight: 800;">UD Sumber Rejeki</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; margin-bottom: 1mm;">
+              <span style="color: #617083;">Warehouse:</span>
+              <span style="font-family: monospace; font-weight: 700;">GUD-01</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; margin-bottom: 1mm;">
+              <span style="color: #617083;">Salesman:</span>
+              <span>Eko Prasetyo</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; margin-bottom: 1mm;">
+              <span style="color: #617083;">Driver:</span>
+              <span>Bambang</span>
+            </div>
+            <div style="display: flex; justify-content: space-between;">
+              <span style="color: #617083;">Catatan:</span>
+              <span style="font-style: italic; color: #192024;">Kelebihan kirim faktur 1042</span>
+            </div>
+          </div>
+
+          <!-- Items List Breakdown -->
+          <div>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5mm;">
+              <span style="font-size: 4.8pt; font-weight: 800; font-family: monospace; color: #5A6672;">RINCIAN BARANG RETUR</span>
+              <span class="badge-pill badge-green" style="font-size: 4.5pt;">2 Macam Barang</span>
+            </div>
+
+            <!-- Item Row 1 -->
+            <div style="background: white; border: 1px solid #DFE5EA; border-radius: 6px; padding: 1.8mm; margin-bottom: 1.5mm; display: flex; justify-content: space-between; align-items: center;">
+              <div>
+                <div style="font-weight: 800; font-size: 6pt;">Teh Botol Sosro 250ml</div>
+                <div style="font-size: 4.8pt; color: #617083;">89999991201 • <strong>2 Dus</strong></div>
+              </div>
+              <span class="badge-pill badge-green" style="font-size: 4.5pt;">BAGUS</span>
+            </div>
+
+            <!-- Item Row 2 -->
+            <div style="background: white; border: 1px solid #DFE5EA; border-radius: 6px; padding: 1.8mm; display: flex; justify-content: space-between; align-items: center;">
+              <div>
+                <div style="font-weight: 800; font-size: 6pt;">Kopi Kapal Api Spesial 65g</div>
+                <div style="font-size: 4.8pt; color: #617083;">89988220199 • <strong>4 Pak</strong></div>
+              </div>
+              <span class="badge-pill badge-crimson" style="font-size: 4.5pt;">RUSAK</span>
+            </div>
+          </div>
+
+          <div style="margin-top: auto;">
+            <div style="background: white; border: 1px solid #DFE5EA; color: #5A6672; text-align: center; padding: 2mm; border-radius: 7px; font-weight: 700; font-size: 6pt;">
+              Kembali ke Antrean
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Explanatory Details -->
+      <div class="info-panel">
+        <div class="info-card">
+          <h4>
+            <span class="badge-pill badge-green">Integritas Data</span>
+            Proteksi Dokumen Read-Only Resmi
+          </h4>
+          <p>Setelah dokumen Return Order berhasil diunggah ke server kantor pusat melalui proses sinkronisasi, sistem di perangkat gudang otomatis mengunci dokumen tersebut menjadi mode baca-saja:</p>
+          <ul>
+            <li>Tombol edit dan hapus dinonaktifkan secara permanen.</li>
+            <li>Menghilangkan resiko data diubah sepihak setelah admin kantor pusat menerbitkan Sales Return.</li>
+            <li>Menjamin kesesuaian 100% antara catatan fisik gudang dan saldo retur pembukuan keuangan.</li>
+          </ul>
+        </div>
+
+        <div class="info-card">
+          <h4>
+            <span class="badge-pill badge-sage">Dokumentasi Logistik</span>
+            Keterlacakan Armada & Pengemudi
+          </h4>
+          <p>Menampilkan informasi nama Pengemudi (Driver) dan Tenaga Penjual (Salesman) yang membawa barang retur tersebut ke gudang, mempermudah koordinasi investigasi jika terdapat selisih fisik.</p>
+        </div>
+
+        <div class="benefit-box">
+          <h5>Manfaat bagi Manajemen</h5>
+          <p>Mencegah kebocoran inventaris dan klaim ganda: Barang retur yang sudah disinkronisasi tidak dapat dihapus atau ditumpuk kembali oleh pihak tidak bertanggung jawab.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="doc-footer">
+      <span>Lampiran Proposal: BGud Mobile System</span>
+      <span>Halaman 6 dari 8</span>
+    </div>
+  </div>
+
+  <!-- ============================================================== -->
+  <!-- HALAMAN 7: LAYAR 6 - BARCODE REGISTRY & REGISTER BARCODE -->
+  <!-- ============================================================== -->
+  <div class="page">
+    <div class="doc-header">
+      <span class="tag">Lampiran I — Visual Antarmuka</span>
+      <span>Layar 6: Katalog Master Barcode</span>
+    </div>
+
+    <div>
+      <h2 class="page-title">6. Barcode Registry & Registrasi Mandiri</h2>
+      <p class="page-subtitle">Sistem master data barcode mandiri: memungkinkan petugas gudang mencari pemetaan produk berdasarkan barcode dan mendaftarkan barcode kemasan baru secara langsung dari lapangan.</p>
+    </div>
+
+    <div class="split-layout">
+      <!-- Phone Mockup -->
+      <div class="phone-mockup">
+        <div class="phone-status-bar">
+          <span>09:41</span>
+          <div class="phone-notch"></div>
+          <span>GUD-01</span>
+        </div>
+        <div class="phone-screen-body">
+          
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <span style="font-size: 8pt; font-weight: 800;">&larr;</span>
+            <span style="font-weight: 800; font-size: 7.5pt;">Barcode Registry</span>
+            <span style="font-size: 5pt; font-family: monospace; color: #8A97A4;">Master</span>
+          </div>
+
+          <!-- Search Bar -->
+          <div style="background: white; border: 1px solid #DFE5EA; border-radius: 8px; padding: 1.5mm 2.5mm; font-size: 5.5pt; color: #8A97A4; display: flex; align-items: center; gap: 1.5mm;">
+            <span>🔍</span>
+            <span>Cari barcode, kode atau nama barang...</span>
+          </div>
+
+          <!-- Hero Action: Register Barcode (TD-003) -->
+          <div style="background: linear-gradient(135deg, #A82323, #7E1414); color: white; border-radius: 8px; padding: 2.5mm; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 2px 6px rgba(168, 35, 35, 0.3);">
+            <div style="display: flex; align-items: center; gap: 2mm;">
+              <div style="width: 6mm; height: 6mm; background: rgba(255,255,255,0.25); border-radius: 5px; display: flex; align-items: center; justify-content: center; font-size: 8pt; font-weight: 900;">+</div>
+              <div>
+                <div style="font-weight: 800; font-size: 6.8pt;">Daftarkan Barcode Baru</div>
+                <div style="font-size: 4.8pt; color: #FEFFD3;">Input barcode fisik ke item master</div>
+              </div>
+            </div>
+            <span style="font-size: 6.5pt; font-weight: 800;">&rarr;</span>
+          </div>
+
+          <!-- List of Registered Barcodes -->
+          <div>
+            <div style="font-size: 4.8pt; font-weight: 800; font-family: monospace; color: #5A6672; margin-bottom: 1.5mm;">BARCODE TERDAFTAR DI CACHE</div>
+
+            <!-- Card 1 -->
+            <div style="background: white; border: 1px solid #DFE5EA; border-radius: 7px; padding: 2mm; margin-bottom: 1.5mm;">
+              <div style="display: flex; justify-content: space-between; align-items: center;">
+                <span style="font-family: monospace; font-weight: 800; font-size: 6.5pt; color: #192024;">8998866200018</span>
+                <span class="badge-pill badge-green" style="font-size: 4.5pt;">Pcs</span>
+              </div>
+              <div style="font-weight: 700; font-size: 6pt; color: #354049; margin-top: 0.5mm;">Indomie Goreng Spesial 85g</div>
+              <div style="display: flex; justify-content: space-between; font-size: 4.5pt; font-family: monospace; color: #8A97A4; margin-top: 1mm;">
+                <span>BRG-00124</span>
+                <span style="color: #4B7235; font-weight: 700;">Edit Koreksi &rarr;</span>
+              </div>
+            </div>
+
+            <!-- Card 2 -->
+            <div style="background: white; border: 1px solid #DFE5EA; border-radius: 7px; padding: 2mm;">
+              <div style="display: flex; justify-content: space-between; align-items: center;">
+                <span style="font-family: monospace; font-weight: 800; font-size: 6.5pt; color: #192024;">8992753112001</span>
+                <span class="badge-pill badge-green" style="font-size: 4.5pt;">Dus</span>
+              </div>
+              <div style="font-weight: 700; font-size: 6pt; color: #354049; margin-top: 0.5mm;">Minyak Goreng Sania 2L</div>
+              <div style="display: flex; justify-content: space-between; font-size: 4.5pt; font-family: monospace; color: #8A97A4; margin-top: 1mm;">
+                <span>BRG-00452</span>
+                <span style="color: #4B7235; font-weight: 700;">Edit Koreksi &rarr;</span>
+              </div>
+            </div>
+          </div>
+
+          <div style="margin-top: auto;">
+            <div style="background: white; border: 1px solid #DFE5EA; color: #5A6672; text-align: center; padding: 1.8mm; border-radius: 7px; font-weight: 700; font-size: 6pt;">
+              Kembali
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Explanatory Details -->
+      <div class="info-panel">
+        <div class="info-card">
+          <h4>
+            <span class="badge-pill badge-crimson">Desentralisasi Cepat</span>
+            Registrasi Barcode Lapangan (TD-003)
+          </h4>
+          <p>Seringkali produk kemasan baru atau varian promosi dari principal datang dengan barcode yang belum terdata di kantor pusat. Petugas gudang dapat langsung mendaftarkannya saat barang datang tanpa menunggu admin pusat.</p>
+        </div>
+
+        <div class="info-card">
+          <h4>
+            <span class="badge-pill badge-green">Pencegahan Konflik</span>
+            Deteksi Duplikasi Otomatis (Duplicate Guard)
+          </h4>
+          <p>Jika barcode fisik yang dipindai ternyata sudah dipetakan pada item lain, sistem segera menampilkan peringatan duplikasi secara lokal dan memblokir penyimpanan ganda.</p>
+        </div>
+
+        <div class="info-card">
+          <h4>
+            <span class="badge-pill badge-sage">Fleksibilitas Satuan</span>
+            Dukungan Multi-Kemasan (Multi-Packaging)
+          </h4>
+          <p>Satu produk dapat memiliki barcode berbeda untuk level kemasan satuan (Pcs), pak (Pack), dan karton (Dus). Barcode Registry mendukung pemetaan satuan fisik secara akurat.</p>
+        </div>
+
+        <div class="benefit-box">
+          <h5>Manfaat bagi Manajemen</h5>
+          <p>Katalog master barcode perusahaan berkembang secara organik dan akurat dari operasional nyata di gudang, menghilangkan ketergantungan input manual barcode oleh staf kantor.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="doc-footer">
+      <span>Lampiran Proposal: BGud Mobile System</span>
+      <span>Halaman 7 dari 8</span>
+    </div>
+  </div>
+
+  <!-- ============================================================== -->
+  <!-- HALAMAN 8: LAYAR 7 - SINKRONISASI DATA & PENGATURAN SESI -->
+  <!-- ============================================================== -->
+  <div class="page">
+    <div class="doc-header">
+      <span class="tag">Lampiran I — Visual Antarmuka</span>
+      <span>Layar 7: Sinkronisasi & Akun</span>
+    </div>
+
+    <div>
+      <h2 class="page-title">7. Sinkronisasi Data & Pengaturan Sesi</h2>
+      <p class="page-subtitle">Pusat kendali pertukaran data dua arah (unduh master katalog dari ERP dan unggah antrean dokumen transaksi gudang) serta panel manajemen akun operator dan perpindahan gudang.</p>
+    </div>
+
+    <div class="split-layout">
+      <!-- Phone Mockup -->
+      <div class="phone-mockup">
+        <div class="phone-status-bar">
+          <span>09:41</span>
+          <div class="phone-notch"></div>
+          <span>GUD-01</span>
+        </div>
+        <div class="phone-screen-body">
+          
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <span style="font-size: 8pt; font-weight: 800;">&larr;</span>
+            <span style="font-weight: 800; font-size: 7.5pt;">Sinkronisasi Data</span>
+            <span class="badge-pill badge-green" style="font-size: 4.5pt;">● Online</span>
+          </div>
+
+          <!-- Card 1: Master Data -->
+          <div style="background: white; border: 1px solid #DFE5EA; border-radius: 7px; padding: 2mm; font-size: 5.2pt;">
+            <div style="font-size: 4.5pt; font-weight: 800; font-family: monospace; color: #4B7235; margin-bottom: 1.5mm;">1. DATA MASTER CACHE (SERVER &rarr; HP)</div>
+            <div style="display: flex; justify-content: space-between; margin-bottom: 1mm;">
+              <span style="color: #617083;">Katalog Barang:</span>
+              <span style="font-family: monospace; font-weight: 700;">25 Sep 2026 08:00</span>
+            </div>
+            <div style="display: flex; justify-content: space-between;">
+              <span style="color: #617083;">Barcode Registry:</span>
+              <span style="font-family: monospace; font-weight: 700;">25 Sep 2026 08:00</span>
+            </div>
+          </div>
+
+          <!-- Card 2: Return Order Queue -->
+          <div style="background: white; border: 1px solid rgba(109, 158, 81, 0.5); border-radius: 7px; padding: 2mm; font-size: 5.2pt;">
+            <div style="font-size: 4.5pt; font-weight: 800; font-family: monospace; color: #4B7235; margin-bottom: 1.5mm;">2. ANTREAN RETURN ORDER (HP &rarr; SERVER)</div>
+            <div style="display: flex; justify-content: space-between; margin-bottom: 1mm;">
+              <span style="color: #617083;">Menunggu Pengiriman:</span>
+              <span style="font-weight: 900; color: #A82323;">2 Dokumen Draft</span>
+            </div>
+            <div style="display: flex; justify-content: space-between;">
+              <span style="color: #617083;">Berhasil Disinkronkan:</span>
+              <span style="font-weight: 900; color: #4B7235;">14 Dokumen</span>
+            </div>
+          </div>
+
+          <!-- Card 3: Queue Status -->
+          <div style="background: white; border: 1px solid #DFE5EA; border-radius: 7px; padding: 2mm;">
+            <div style="font-size: 4.5pt; font-weight: 800; font-family: monospace; color: #5A6672; margin-bottom: 1.5mm;">3. ANTREAN REGISTRASI BARCODE</div>
+            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5mm; text-align: center;">
+              <div style="background: #FDF9F9; padding: 1mm; border-radius: 4px; border: 1px solid #F5C6C6;">
+                <div style="font-size: 4pt; color: #A82323;">Menunggu</div>
+                <div style="font-weight: 900; font-size: 6.5pt; color: #A82323;">0</div>
+              </div>
+              <div style="background: #F4F9F1; padding: 1mm; border-radius: 4px; border: 1px solid #BCD9A2;">
+                <div style="font-size: 4pt; color: #4B7235;">Berhasil</div>
+                <div style="font-weight: 900; font-size: 6.5pt; color: #4B7235;">8</div>
+              </div>
+              <div style="background: #F8FAFB; padding: 1mm; border-radius: 4px; border: 1px solid #DFE5EA;">
+                <div style="font-size: 4pt; color: #788591;">Ditolak</div>
+                <div style="font-weight: 900; font-size: 6.5pt; color: #788591;">0</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Sync CTA Button -->
+          <div style="background: #6D9E51; color: white; text-align: center; padding: 2.2mm; border-radius: 8px; font-weight: 800; font-size: 6.8pt; box-shadow: 0 2px 6px rgba(109, 158, 81, 0.35);">
+            🔄 Sinkronkan Sekarang
+          </div>
+
+          <!-- Bottom Session Quick Links -->
+          <div style="background: white; border: 1px solid #DFE5EA; border-radius: 7px; padding: 1.8mm; font-size: 5.2pt;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1mm;">
+              <span style="color: #617083;">Operator Terhubung:</span>
+              <span style="font-weight: 800;">Budi Santoso</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <span style="color: #A82323; font-weight: 800;">Ganti Gudang</span>
+              <span style="color: #A82323; font-weight: 800;">Keluar Sesi (Logout)</span>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Explanatory Details -->
+      <div class="info-panel">
+        <div class="info-card">
+          <h4>
+            <span class="badge-pill badge-green">Keandalan Sistem</span>
+            Arsitektur Sinkronisasi Latar Belakang
+          </h4>
+          <p>Sinkronisasi memanfaatkan Android WorkManager yang andal: tetap berjalan bahkan saat aplikasi ditutup atau perangkat beralih antar jaringan WiFi gudang dan data seluler.</p>
+        </div>
+
+        <div class="info-card">
+          <h4>
+            <span class="badge-pill badge-sage">Ketahanan Offline</span>
+            Operasi Tanpa Ketergantungan Sinyal
+          </h4>
+          <p>Petugas gudang dapat terus mencatat retur barang dan memindai barcode tanpa koneksi internet. Saat perangkat kembali mendeteksi jaringan, seluruh data otomatis terkirim tanpa data hilang.</p>
+        </div>
+
+        <div class="info-card">
+          <h4>
+            <span class="badge-pill badge-crimson">Kontrol Akses</span>
+            Manajemen Sesi & Pergantian Fasilitas
+          </h4>
+          <p>Jika seorang petugas dipindahkan untuk membantu gudang cabang lain, petugas cukup menekan <em>"Ganti Penugasan Gudang"</em> untuk memperbarui alokasi transaksi tanpa perlu registrasi ulang.</p>
+        </div>
+
+        <div class="benefit-box">
+          <h5>Manfaat bagi Manajemen</h5>
+          <p>Menjamin ketersediaan sistem 99.9% di lapangan: Gangguan jaringan internet kantor pusat tidak pernah menghentikan aktivitas bongkar muat dan penerimaan barang di gudang.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="doc-footer">
+      <span>Lampiran Proposal: BGud Mobile System</span>
+      <span>Halaman 8 dari 8</span>
+    </div>
+  </div>
+
+</body>
+</html>

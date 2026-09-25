@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.elsasa.bgud.dao.ReturnOrderDao
 import com.elsasa.bgud.dao.ReturnOrderItemDao
 import com.elsasa.bgud.model.ReturnOrderEntity
+import java.util.Calendar
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -22,10 +23,27 @@ data class ReturnOrderListItem(
 )
 
 /**
+ * Date section category for grouping Return Orders (TD-006, GAP-005).
+ */
+enum class ReturnOrderDateSection(val displayName: String) {
+    TODAY("TODAY"),
+    YESTERDAY("YESTERDAY"),
+    EARLIER("EARLIER")
+}
+
+/**
+ * Grouped section of Return Orders for the work-queue UI (TD-006, GAP-005).
+ */
+data class ReturnOrderGroupedSection(
+    val section: ReturnOrderDateSection,
+    val items: List<ReturnOrderListItem>
+)
+
+/**
  * Return Order list view model (SCR-MOB-RO-001, Architecture §12.1, §14.4,
- * §19.1, §20).
+ * §19.1, §20, BGUD-RETURN-ORDER-NAV-001 TD-006).
  *
- * Key fields: `query`, `results`, `isEmpty`, `statusFilter`. Source: Room
+ * Key fields: `query`, `results`, `groupedSections`, `isEmpty`, `statusFilter`. Source: Room
  * `return_order_entity` / `return_order_item_entity` only — local cache, no
  * network (§17.1).
  *
@@ -39,10 +57,13 @@ data class ReturnOrderListItem(
  * - A row opens Detail and the Create action is owned by the screen (§12.1,
  *   §13.1; route wiring is S4.11 and the destinations themselves are
  *   S4.7/S4.8).
+ * - Results are grouped into date sections (TODAY, YESTERDAY, EARLIER)
+ *   while preserving most-recent-first ordering (TD-006).
  */
 class ReturnOrderListViewModel(
     private val returnOrderDao: ReturnOrderDao,
-    private val returnOrderItemDao: ReturnOrderItemDao
+    private val returnOrderItemDao: ReturnOrderItemDao,
+    private val nowProvider: () -> Long = { System.currentTimeMillis() }
 ) : ViewModel() {
 
     companion object {
@@ -57,6 +78,72 @@ class ReturnOrderListViewModel(
 
         /** Status filter value selecting every local order (§11.1). */
         const val STATUS_ALL = ""
+
+        /**
+         * Categorizes a timestamp ([createdAt] in millis) into a date section
+         * relative to [nowMillis] in the local timezone (TD-006, GAP-005).
+         */
+        fun categorizeDate(
+            createdAt: Long,
+            nowMillis: Long = System.currentTimeMillis()
+        ): ReturnOrderDateSection {
+            if (createdAt <= 0L) {
+                return ReturnOrderDateSection.EARLIER
+            }
+            val cal = Calendar.getInstance().apply {
+                timeInMillis = nowMillis
+                set(Calendar.HOUR_OF_DAY, 0)
+                set(Calendar.MINUTE, 0)
+                set(Calendar.SECOND, 0)
+                set(Calendar.MILLISECOND, 0)
+            }
+            val startOfToday = cal.timeInMillis
+
+            cal.add(Calendar.DAY_OF_YEAR, -1)
+            val startOfYesterday = cal.timeInMillis
+
+            return when {
+                createdAt >= startOfToday -> ReturnOrderDateSection.TODAY
+                createdAt >= startOfYesterday -> ReturnOrderDateSection.YESTERDAY
+                else -> ReturnOrderDateSection.EARLIER
+            }
+        }
+
+        /**
+         * Groups a list of [ReturnOrderListItem]s by [ReturnOrderDateSection]
+         * (TODAY, YESTERDAY, EARLIER), preserving the existing ordering within each section
+         * (TD-006, GAP-005). Sections with no items are omitted.
+         */
+        fun groupByDateSection(
+            items: List<ReturnOrderListItem>,
+            nowMillis: Long = System.currentTimeMillis()
+        ): List<ReturnOrderGroupedSection> {
+            if (items.isEmpty()) return emptyList()
+
+            val todayItems = mutableListOf<ReturnOrderListItem>()
+            val yesterdayItems = mutableListOf<ReturnOrderListItem>()
+            val earlierItems = mutableListOf<ReturnOrderListItem>()
+
+            for (item in items) {
+                when (categorizeDate(item.order.createdAt, nowMillis)) {
+                    ReturnOrderDateSection.TODAY -> todayItems.add(item)
+                    ReturnOrderDateSection.YESTERDAY -> yesterdayItems.add(item)
+                    ReturnOrderDateSection.EARLIER -> earlierItems.add(item)
+                }
+            }
+
+            val sections = mutableListOf<ReturnOrderGroupedSection>()
+            if (todayItems.isNotEmpty()) {
+                sections.add(ReturnOrderGroupedSection(ReturnOrderDateSection.TODAY, todayItems))
+            }
+            if (yesterdayItems.isNotEmpty()) {
+                sections.add(ReturnOrderGroupedSection(ReturnOrderDateSection.YESTERDAY, yesterdayItems))
+            }
+            if (earlierItems.isNotEmpty()) {
+                sections.add(ReturnOrderGroupedSection(ReturnOrderDateSection.EARLIER, earlierItems))
+            }
+            return sections
+        }
     }
 
     private val _query = MutableStateFlow("")
@@ -68,6 +155,9 @@ class ReturnOrderListViewModel(
 
     private val _results = MutableStateFlow<List<ReturnOrderListItem>>(emptyList())
     val results: StateFlow<List<ReturnOrderListItem>> = _results.asStateFlow()
+
+    private val _groupedSections = MutableStateFlow<List<ReturnOrderGroupedSection>>(emptyList())
+    val groupedSections: StateFlow<List<ReturnOrderGroupedSection>> = _groupedSections.asStateFlow()
 
     /** True when the current result set is empty and no load is in flight. */
     private val _isEmpty = MutableStateFlow(false)
@@ -127,9 +217,10 @@ class ReturnOrderListViewModel(
             try {
                 val offset = _results.value.size
                 val page = queryDao(offset)
-                _results.value = _results.value + page
+                val updated = _results.value + page
+                updateResults(updated)
                 _hasMore.value = page.size == PAGE_SIZE
-                _isEmpty.value = _results.value.isEmpty()
+                _isEmpty.value = updated.isEmpty()
             } catch (e: Exception) {
                 // Keep the loaded rows; a failed page simply stops
                 // further auto paging until the next explicit search.
@@ -140,16 +231,26 @@ class ReturnOrderListViewModel(
         }
     }
 
+    /** Re-evaluates date sections against [nowProvider] without re-querying Room. */
+    fun refreshGroupedSections() {
+        _groupedSections.value = groupByDateSection(_results.value, nowProvider())
+    }
+
+    private fun updateResults(items: List<ReturnOrderListItem>) {
+        _results.value = items
+        _groupedSections.value = groupByDateSection(items, nowProvider())
+    }
+
     private fun loadFirstPage() {
         viewModelScope.launch {
             _isLoading.value = true
             try {
                 val page = queryDao(0)
-                _results.value = page
+                updateResults(page)
                 _hasMore.value = page.size == PAGE_SIZE
                 _isEmpty.value = page.isEmpty()
             } catch (e: Exception) {
-                _results.value = emptyList()
+                updateResults(emptyList())
                 _hasMore.value = false
                 _isEmpty.value = true
             } finally {

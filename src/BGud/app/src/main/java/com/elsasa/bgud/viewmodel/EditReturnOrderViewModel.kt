@@ -38,6 +38,8 @@ import kotlinx.coroutines.launch
  * - Entry is rejected unless the stored order is `DRAFT` (BR-018): a `SYNCED`
  *   order can never enter edit (`notEditable`), and the UI never offers edit
  *   for `SYNCED` (the Detail action is gated by `ReturnOrderDetailViewModel`).
+ * - Delete action relocated from Detail (TD-005, P2-S03); enabled and visible
+ *   only when `status == DRAFT` (BR-019/020, Architecture §10 constraint 6).
  * - Warehouse is the stored, session-bound code and is never editable — a
  *   draft is never re-homed (BR-005/006, IR-RO-04).
  * - Customer is mandatory and selected from the cache (BR-001/002, GAP-004);
@@ -79,6 +81,19 @@ class EditReturnOrderViewModel(
      */
     private val _notEditable = MutableStateFlow(false)
     val notEditable: StateFlow<Boolean> = _notEditable.asStateFlow()
+
+    /** Status of the loaded order (`Draft` / `Synced`). */
+    private val _status = MutableStateFlow<String?>(null)
+    val status: StateFlow<String?> = _status.asStateFlow()
+
+    private val _isDeleting = MutableStateFlow(false)
+    val isDeleting: StateFlow<Boolean> = _isDeleting.asStateFlow()
+
+    private val _deleteError = MutableStateFlow<String?>(null)
+    val deleteError: StateFlow<String?> = _deleteError.asStateFlow()
+
+    private val _deleted = MutableStateFlow(false)
+    val deleted: StateFlow<Boolean> = _deleted.asStateFlow()
 
     /** Stored, session-bound warehouse — read-only (BR-005/006, IR-RO-04). */
     private val _warehouseCode = MutableStateFlow("")
@@ -207,6 +222,7 @@ class EditReturnOrderViewModel(
                     _notFound.value = true
                     return@launch
                 }
+                _status.value = loaded.status
                 if (loaded.status != ReturnOrderEntity.STATUS_DRAFT) {
                     // BR-018 — a synced order can never enter edit.
                     _notEditable.value = true
@@ -558,6 +574,7 @@ class EditReturnOrderViewModel(
      */
     fun canSave(): Boolean =
         !_notEditable.value && !_isSaving.value && !_saved.value &&
+            !_isDeleting.value && !_deleted.value &&
             _isDirty.value && _customer.value != null && _items.value.isNotEmpty()
 
     /**
@@ -569,7 +586,7 @@ class EditReturnOrderViewModel(
      * no `ReturnOrderNo` is authored (ADR-RO-002).
      */
     fun save() {
-        if (_isSaving.value || _saved.value) return
+        if (_isSaving.value || _saved.value || _isDeleting.value || _deleted.value) return
         val customer = _customer.value
         if (customer == null) {
             _saveError.value = ReturnOrderCaptureRepository.CUSTOMER_REQUIRED
@@ -609,6 +626,45 @@ class EditReturnOrderViewModel(
                     "Gagal menyimpan: ${e.message?.take(200) ?: "kesalahan tidak diketahui."}"
             } finally {
                 _isSaving.value = false
+            }
+        }
+    }
+
+    // --- Delete (local delete only, BR-019/020, TD-005, §10 constraint 6) ---
+
+    /** True while the loaded order is `DRAFT` (BR-019). */
+    fun isDraft(): Boolean = _status.value == ReturnOrderEntity.STATUS_DRAFT
+
+    /**
+     * Delete is offered only for a `DRAFT` order (BR-019/020, Architecture §10 constraint 6).
+     * Synced orders are never deletable.
+     */
+    fun canDelete(): Boolean =
+        isDraft() && !_notEditable.value && !_isDeleting.value && !_deleted.value && !_isSaving.value
+
+    /**
+     * Delete the `DRAFT` order and its items (BC-003, GAP-014, TD-005).
+     *
+     * Delegates to [ReturnOrderCaptureRepository.deleteDraft]: one local
+     * transaction, local-only, never propagated. A non-`DRAFT` order is
+     * guarded at ViewModel level and rejected by the repository.
+     */
+    fun delete() {
+        if (!canDelete()) return
+        viewModelScope.launch {
+            _isDeleting.value = true
+            _deleteError.value = null
+            try {
+                when (val result = captureRepository.deleteDraft(returnOrderId)) {
+                    is ReturnOrderCaptureResult.Saved -> _deleted.value = true
+                    is ReturnOrderCaptureResult.Rejected ->
+                        _deleteError.value = result.errors.joinToString("\n")
+                }
+            } catch (e: Exception) {
+                _deleteError.value =
+                    "Gagal menghapus: ${e.message?.take(200) ?: "kesalahan tidak diketahui."}"
+            } finally {
+                _isDeleting.value = false
             }
         }
     }

@@ -13,22 +13,21 @@ import kotlinx.coroutines.launch
 
 /**
  * Return Order Detail view model (SCR-MOB-RO-003, Architecture §11.1, §12.3,
- * §14.2).
+ * §14.2). Exclusively for Synced orders; Delete action relocated to Edit
+ * screen (TD-004, TD-005).
  *
- * Key fields: `order` (header), `items` (lines), `isLoading`, `notFound`, and
- * the Delete state (`isDeleting` / `deleteError` / `deleted`). Source is the
- * local Room capture store only, read through [ReturnOrderCaptureRepository] —
- * the screen issues no network call (§17.1, P-07).
+ * Key fields: `order` (header), `items` (lines), `isLoading`, `notFound`.
+ * Source is the local Room capture store only, read through
+ * [ReturnOrderCaptureRepository] — the screen issues no network call
+ * (§17.1, P-07).
  *
  * Rules (no new decisions):
  * - The header is shown read-only (§12.3); the device vocabulary is exactly
  *   `Draft`/`Synced` (ADR-RO-006, §14.4).
- * - Edit and Delete are enabled only while the order is `DRAFT`
- *   (IR-M7/M8, BR-017–020). A `SYNCED` order is view-only; the repository
- *   re-derives the same gate on write (BR-018/020).
- * - Delete removes the order and its items in one local transaction and never
- *   propagates (GAP-014, BC-003); it is a `Draft`-only action on Detail, not a
- *   separate screen (§11.1).
+ * - Edit is enabled only while the order is `DRAFT` (IR-M7/M8, BR-017–018).
+ *   A `SYNCED` order is view-only; the repository re-derives the same gate on
+ *   write (BR-018).
+ * - Delete action has been relocated to Edit screen (TD-005, P2-S03).
  * - Edit routes to `return_order_edit?returnOrderId={id}` (§13.1); the route
  *   wiring is owned by S4.11 and the Edit screen by S4.9, so this view model
  *   only reports whether Edit is allowed.
@@ -52,15 +51,6 @@ class ReturnOrderDetailViewModel(
     /** True when [returnOrderId] matches no local row. */
     private val _notFound = MutableStateFlow(false)
     val notFound: StateFlow<Boolean> = _notFound.asStateFlow()
-
-    private val _isDeleting = MutableStateFlow(false)
-    val isDeleting: StateFlow<Boolean> = _isDeleting.asStateFlow()
-
-    private val _deleteError = MutableStateFlow<String?>(null)
-    val deleteError: StateFlow<String?> = _deleteError.asStateFlow()
-
-    private val _deleted = MutableStateFlow(false)
-    val deleted: StateFlow<Boolean> = _deleted.asStateFlow()
 
     init {
         load()
@@ -94,35 +84,5 @@ class ReturnOrderDetailViewModel(
         _order.value?.status == ReturnOrderEntity.STATUS_DRAFT
 
     /** Edit is offered only for a `DRAFT` order (IR-M7/M8, BR-017/018). */
-    fun canEdit(): Boolean = isDraft() && !_isDeleting.value && !_deleted.value
-
-    /** Delete is offered only for a `DRAFT` order (IR-M7/M8, BR-019/020). */
-    fun canDelete(): Boolean = isDraft() && !_isDeleting.value && !_deleted.value
-
-    /**
-     * Delete the `DRAFT` order and its items (BC-003).
-     *
-     * Delegates to [ReturnOrderCaptureRepository.deleteDraft]: one local
-     * transaction, local-only, never propagated (GAP-014). A `SYNCED` order is
-     * rejected by the repository and surfaced as an error.
-     */
-    fun delete() {
-        if (!canDelete()) return
-        viewModelScope.launch {
-            _isDeleting.value = true
-            _deleteError.value = null
-            try {
-                when (val result = captureRepository.deleteDraft(returnOrderId)) {
-                    is ReturnOrderCaptureResult.Saved -> _deleted.value = true
-                    is ReturnOrderCaptureResult.Rejected ->
-                        _deleteError.value = result.errors.joinToString("\n")
-                }
-            } catch (e: Exception) {
-                _deleteError.value =
-                    "Gagal menghapus: ${e.message?.take(200) ?: "kesalahan tidak diketahui."}"
-            } finally {
-                _isDeleting.value = false
-            }
-        }
-    }
+    fun canEdit(): Boolean = isDraft()
 }
