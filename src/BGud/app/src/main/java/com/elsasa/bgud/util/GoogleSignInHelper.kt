@@ -2,6 +2,7 @@ package com.elsasa.bgud.util
 
 import android.content.Context
 import android.content.Intent
+import android.util.Log
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount
 import com.google.android.gms.auth.api.signin.GoogleSignInClient
@@ -15,8 +16,16 @@ import com.google.android.gms.common.api.ApiException
  * the id token is never sent to the Cloud) and exposes sign-out of the Google
  * account. Uses the shared web client id of Google project `btrade3-663be`;
  * there is no separate BGud OAuth registration (OQ-007).
+ *
+ * Note: [getSignedInAccountFromIntent] logs any [ApiException] so that a silent
+ * failure (e.g. an invalid or mismatched google-services.json) surfaces in
+ * logcat rather than producing a blank login screen.
  */
 class GoogleSignInHelper(context: Context) {
+    companion object {
+        private const val TAG = "GoogleSignInHelper"
+    }
+
     private val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
         .requestEmail()
         // Shared web client id (client_type: 3) of project btrade3-663be, same as BTrade3 (TD-07)
@@ -36,6 +45,7 @@ class GoogleSignInHelper(context: Context) {
             val task = GoogleSignIn.getSignedInAccountFromIntent(data)
             task.getResult(ApiException::class.java)
         } catch (e: ApiException) {
+            Log.e(TAG, "Google Sign-In failed: status=${e.statusCode}", e)
             null
         }
     }
