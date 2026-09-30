@@ -46,6 +46,9 @@ namespace btr.distrib.SalesContext.FakturControlAgg
 
         private ContextMenu _gridContextMenu;
 
+        private string _sortColumn;
+        private bool _sortAsc = true;
+
         private BindingList<FakturControlView> _listItem = new BindingList<FakturControlView>();
         public FakturControlForm(IListFaktorControlWorker listFaktorControlWorker,
             IFakturControlBuilder builder,
@@ -90,6 +93,69 @@ namespace btr.distrib.SalesContext.FakturControlAgg
 
             FakturGrid.CellContentClick += FakturGrid_CellContentClick;
             FakturGrid.MouseClick += FakturGrid_MouseClick;
+            FakturGrid.ColumnHeaderMouseClick += FakturGrid_ColumnHeaderMouseClick;
+        }
+
+        private void FakturGrid_ColumnHeaderMouseClick(object sender,DataGridViewCellMouseEventArgs e)
+        {
+            var grid = (DataGridView) sender;
+            var colName = grid.Columns[e.ColumnIndex].Name;
+
+            // Guard: ignore clicks on row index column or invalid column index
+            if (e.ColumnIndex < 0)
+                return;
+
+            // Non-sortable columns (checkbox/status) do not respond to header clicks
+            if (grid.Columns[e.ColumnIndex].SortMode == DataGridViewColumnSortMode.NotSortable)
+                return;
+
+            // Determine sort direction: toggle if same column, else ascending
+            if (colName == _sortColumn)
+                _sortAsc = !_sortAsc;
+            else
+            {
+                _sortColumn = colName;
+                _sortAsc = true;
+            }
+
+            // Reorder the in-memory list
+            var ordered = _sortAsc
+                ? _listItem.OrderBy(x => GetSortValue(x, _sortColumn)).ToList()
+                : _listItem.OrderByDescending(x => GetSortValue(x, _sortColumn)).ToList();
+            _listItem = new BindingList<FakturControlView>(ordered);
+
+            // Rebind grid
+            var binding = new BindingSource { DataSource = _listItem };
+            FakturGrid.DataSource = binding;
+            FakturGrid.Refresh();
+
+            // Update row header numbering
+            foreach (DataGridViewRow row in FakturGrid.Rows)
+                row.HeaderCell.Value = $"{(row.Index + 1):N0}";
+
+            // Update sort glyphs: clear all, then set on active column
+            foreach (DataGridViewColumn c in FakturGrid.Columns)
+                c.HeaderCell.SortGlyphDirection = System.Windows.Forms.SortOrder.None;
+            FakturGrid.Columns[_sortColumn].HeaderCell.SortGlyphDirection =
+                _sortAsc ? System.Windows.Forms.SortOrder.Ascending : System.Windows.Forms.SortOrder.Descending;
+        }
+
+        private static object GetSortValue(FakturControlView item, string propertyName)
+        {
+            switch (propertyName)
+            {
+                case "FakturDate": return item.FakturDate;
+                case "FakturCode": return item.FakturCode;
+                case "CustomerName": return item.CustomerName;
+                case "Npwp": return item.Npwp;
+                case "SalesPersonName": return item.SalesPersonName;
+                case "GrandTotal": return item.GrandTotal;
+                case "Bayar": return item.Bayar;
+                case "PotBiayaLain": return item.PotBiayaLain;
+                case "Sisa": return item.Sisa;
+                case "UserId": return item.UserId;
+                default: return null;
+            }
         }
 
         private void PrintFakturKlaimButton_Click(object sender, EventArgs e)
@@ -552,6 +618,30 @@ namespace btr.distrib.SalesContext.FakturControlAgg
             FakturGrid.Columns.GetCol("PotBiayaLain").HeaderText = @"Pot/Biaya";
             FakturGrid.Columns.GetCol("IsHasKlaim").HeaderText = "Klaim";
 
+            // Sortable data columns
+            FakturGrid.Columns.GetCol("FakturDate").SortMode =DataGridViewColumnSortMode.Automatic;
+            FakturGrid.Columns.GetCol("FakturCode").SortMode = DataGridViewColumnSortMode.Automatic;
+            FakturGrid.Columns.GetCol("CustomerName").SortMode = DataGridViewColumnSortMode.Automatic;
+            FakturGrid.Columns.GetCol("Npwp").SortMode =DataGridViewColumnSortMode.Automatic;
+            FakturGrid.Columns.GetCol("SalesPersonName").SortMode =DataGridViewColumnSortMode.Automatic;
+            FakturGrid.Columns.GetCol("GrandTotal").SortMode =DataGridViewColumnSortMode.Automatic;
+            FakturGrid.Columns.GetCol("Bayar").SortMode =DataGridViewColumnSortMode.Automatic;
+            FakturGrid.Columns.GetCol("PotBiayaLain").SortMode =DataGridViewColumnSortMode.Automatic;
+            FakturGrid.Columns.GetCol("Sisa").SortMode =DataGridViewColumnSortMode.Automatic;
+            FakturGrid.Columns.GetCol("UserId").SortMode =DataGridViewColumnSortMode.Automatic;
+
+            // Non-sortable checkbox/status columns
+            FakturGrid.Columns.GetCol("Posted").SortMode =DataGridViewColumnSortMode.NotSortable;
+            FakturGrid.Columns.GetCol("Kirim").SortMode =DataGridViewColumnSortMode.NotSortable;
+            FakturGrid.Columns.GetCol("Kembali").SortMode =DataGridViewColumnSortMode.NotSortable;
+            FakturGrid.Columns.GetCol("Lunas").SortMode =DataGridViewColumnSortMode.NotSortable;
+            FakturGrid.Columns.GetCol("Pajak").SortMode =DataGridViewColumnSortMode.NotSortable;
+            FakturGrid.Columns.GetCol("IsHasKlaim").SortMode =DataGridViewColumnSortMode.NotSortable;
+
+            // Hidden columns: not sortable for consistency
+            FakturGrid.Columns.GetCol("FakturId").SortMode =DataGridViewColumnSortMode.NotSortable;
+            FakturGrid.Columns.GetCol("NoFakturPajak").SortMode =DataGridViewColumnSortMode.NotSortable;
+
             // conditional formatting row color; if lunas, then green
             FakturGrid.CellFormatting += (s, e) =>
             {
@@ -633,7 +723,26 @@ namespace btr.distrib.SalesContext.FakturControlAgg
             FakturGrid.Refresh();
             foreach (DataGridViewRow row in FakturGrid.Rows)
                 row.HeaderCell.Value = $"{(row.Index + 1):N0}";
-            
+
+            // Re-apply persisted sort state (OQ-001: sort survives refresh)
+            if (_sortColumn != null && FakturGrid.Columns.Contains(_sortColumn))
+            {
+                var ordered = _sortAsc
+                    ? _listItem.OrderBy(x => GetSortValue(x, _sortColumn)).ToList()
+                    : _listItem.OrderByDescending(x => GetSortValue(x, _sortColumn)).ToList();
+                _listItem = new BindingList<FakturControlView>(ordered);
+
+                var sortBinding = new BindingSource { DataSource = _listItem };
+                FakturGrid.DataSource = sortBinding;
+                FakturGrid.Refresh();
+                foreach (DataGridViewRow row in FakturGrid.Rows)
+                    row.HeaderCell.Value = $"{(row.Index + 1):N0}";
+
+                foreach (DataGridViewColumn c in FakturGrid.Columns)
+                    c.HeaderCell.SortGlyphDirection = System.Windows.Forms.SortOrder.None;
+                FakturGrid.Columns[_sortColumn].HeaderCell.SortGlyphDirection =
+                    _sortAsc ? System.Windows.Forms.SortOrder.Ascending : System.Windows.Forms.SortOrder.Descending;
+            }
         }
 
         private IEnumerable<FakturControlModel> FilterFaktur(IEnumerable<FakturControlModel> listFaktur, string keyword)
