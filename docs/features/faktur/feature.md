@@ -26,6 +26,7 @@ Business Rules
 - The preview dialog provides SAVE (persist, no print) and SAVE & PRINT (persist, then print the finalized document).
 - Printing initiates only after a successful save; failed save prevents printing.
 - Both actions operate on the finalized persisted Faktur.
+- For SAVE & PRINT, a printer settings dialog is displayed before printing, allowing the operator to select printer destination and configure settings. Cancelling the print dialog aborts printing without rolling back the saved Faktur.
 
 ## Preview Robustness (D-004)
 

@@ -1,4 +1,4 @@
-﻿using btr.application.BrgContext.BrgAgg;
+using btr.application.BrgContext.BrgAgg;
 using btr.application.FinanceContext.PiutangAgg.Contracts;
 using btr.application.FinanceContext.PiutangAgg.Workers;
 using btr.application.InventoryContext.DriverAgg;
@@ -1313,13 +1313,14 @@ namespace btr.distrib.SalesContext.FakturAgg
                 fakturJualDataset,
                 fakturJualItemDataset
             };
-            //  SAVE & PRINT prints silently to the default printer with no
-            //  second preview window. The draft preview (ShowPreviewDialog)
-            //  is the only visual verification step. Print failures show a
-            //  message but never roll back the already-committed save.
+            //  SAVE & PRINT opens the printer settings dialog so the operator
+            //  can choose printer destination and configuration before printing.
+            //  The draft preview (ShowPreviewDialog) is the visual verification step.
+            //  If the user cancels the print dialog, print is aborted but the
+            //  already-committed save is preserved.
             try
             {
-                RdlcViewerForm.PrintDirect(printOutTemplate, listDataset);
+                FakturSavePreviewForm.PrintWithDialog(printOutTemplate, listDataset);
             }
             catch (Exception ex)
             {

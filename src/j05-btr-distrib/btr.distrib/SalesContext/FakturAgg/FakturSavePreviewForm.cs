@@ -1,8 +1,10 @@
 using Microsoft.Reporting.WinForms;
 using System;
 using System.Collections.Generic;
+using System.Drawing.Imaging;
 using System.Drawing.Printing;
 using System.IO;
+using System.Text;
 using System.Windows.Forms;
 
 namespace btr.distrib.SalesContext.FakturAgg
@@ -163,6 +165,107 @@ namespace btr.distrib.SalesContext.FakturAgg
         public string GetCurrentPaperSizeName()
         {
             return _currentPaperSize == RdlcViewerForm.LetterPaperSize ? "Letter" : "Half Letter";
+        }
+
+        /// <summary>
+        /// Prints the finalized Faktur after SAVE &amp; PRINT with a printer settings
+        /// dialog shown first, allowing the operator to select printer destination,
+        /// copies, and properties before printing. Cancelling the dialog aborts
+        /// printing without affecting the already-saved Faktur.
+        /// </summary>
+        public static void PrintWithDialog(string reportName, List<ReportDataSource> listDatasource, bool isLandscape = false)
+        {
+            var reportFileName = $"{reportName}.rdlc";
+            var reportFileFullPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Reports", reportFileName);
+            if (!File.Exists(reportFileFullPath))
+                throw new FileNotFoundException($"Report template tidak ditemukan: {reportFileFullPath}");
+
+            var paperSize = RdlcViewerForm.GetLastPaperSize();
+            var margins = new Margins(25, 25, 25, 25);
+
+            var pageWidthInch = paperSize.Width / 100.0;
+            var pageHeightInch = paperSize.Height / 100.0;
+            if (isLandscape)
+            {
+                var tmp = pageWidthInch;
+                pageWidthInch = pageHeightInch;
+                pageHeightInch = tmp;
+            }
+
+            var deviceInfo = new StringBuilder();
+            deviceInfo.Append("<DeviceInfo>");
+            deviceInfo.Append("<OutputFormat>EMF</OutputFormat>");
+            deviceInfo.Append($"<PageWidth>{pageWidthInch.ToString(System.Globalization.CultureInfo.InvariantCulture)}in</PageWidth>");
+            deviceInfo.Append($"<PageHeight>{pageHeightInch.ToString(System.Globalization.CultureInfo.InvariantCulture)}in</PageHeight>");
+            deviceInfo.Append("<MarginTop>0.25in</MarginTop>");
+            deviceInfo.Append("<MarginLeft>0.25in</MarginLeft>");
+            deviceInfo.Append("<MarginRight>0.25in</MarginRight>");
+            deviceInfo.Append("<MarginBottom>0.25in</MarginBottom>");
+            deviceInfo.Append("</DeviceInfo>");
+
+            var streams = new List<Stream>();
+            using (var report = new LocalReport())
+            {
+                report.ReportPath = reportFileFullPath;
+                foreach (var ds in listDatasource)
+                    report.DataSources.Add(new ReportDataSource(ds.Name, ds.Value));
+
+                Warning[] warnings;
+                report.Render("Image", deviceInfo.ToString(),
+                    (name, fileNameExtension, encoding, mimeType, willSeek) =>
+                    {
+                        var stream = new MemoryStream();
+                        streams.Add(stream);
+                        return stream;
+                    },
+                    out warnings);
+
+                foreach (var stream in streams)
+                    stream.Position = 0;
+            }
+
+            if (streams.Count == 0)
+                return;
+
+            try
+            {
+                using (var printDoc = new PrintDocument())
+                {
+                    printDoc.DefaultPageSettings.PaperSize = paperSize;
+                    printDoc.DefaultPageSettings.Margins = margins;
+                    printDoc.DefaultPageSettings.Landscape = isLandscape;
+
+                    using (var printDialog = new PrintDialog())
+                    {
+                        printDialog.Document = printDoc;
+                        printDialog.UseEXDialog = true;
+                        if (printDialog.ShowDialog() != DialogResult.OK)
+                        {
+                            return;
+                        }
+                    }
+
+                    if (!printDoc.PrinterSettings.IsValid)
+                        throw new InvalidOperationException("Printer yang dipilih tidak valid.");
+
+                    var pageIndex = 0;
+                    printDoc.PrintPage += (sender, e) =>
+                    {
+                        using (var pageImage = new Metafile(streams[pageIndex]))
+                        {
+                            e.Graphics.DrawImage(pageImage, e.PageBounds);
+                        }
+                        pageIndex++;
+                        e.HasMorePages = pageIndex < streams.Count;
+                    };
+                    printDoc.Print();
+                }
+            }
+            finally
+            {
+                foreach (var stream in streams)
+                    stream.Dispose();
+            }
         }
     }
 }
