@@ -42,6 +42,7 @@ namespace btr.distrib.SalesContext.FakturAgg
             this.TheViewer.Location = new System.Drawing.Point(0, 0);
             this.TheViewer.Name = "TheViewer";
             this.TheViewer.ServerReport.BearerToken = null;
+            this.TheViewer.ShowPrintButton = false;
             this.TheViewer.Size = new System.Drawing.Size(800, 405);
             this.TheViewer.TabIndex = 0;
             //

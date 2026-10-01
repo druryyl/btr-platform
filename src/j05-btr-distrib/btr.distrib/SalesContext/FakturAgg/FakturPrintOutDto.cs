@@ -1,4 +1,4 @@
-﻿using btr.domain.SalesContext.CustomerAgg;
+using btr.domain.SalesContext.CustomerAgg;
 using btr.domain.SalesContext.FakturAgg;
 using btr.nuna.Domain;
 using System;
@@ -20,7 +20,10 @@ namespace btr.distrib.SalesContext.FakturAgg
             FakturDate = $"Tgl: {faktur.FakturDate:dd MMMM yyyy}";
             CustomerId = $"Kepada Yth Customer-{faktur.CustomerId}";
             CustomerName = $"{faktur.CustomerName}";
-            Address1 = $"{faktur.Address}";
+            var address1 = !string.IsNullOrWhiteSpace(faktur?.Address)
+                ? faktur.Address
+                : customer?.Address1;
+            Address1 = string.IsNullOrWhiteSpace(address1) ? "-" : address1;
             var address2 = customer?.Address2;
             var kota = customer?.Kota;
             var hasAddress2 = !string.IsNullOrWhiteSpace(address2);

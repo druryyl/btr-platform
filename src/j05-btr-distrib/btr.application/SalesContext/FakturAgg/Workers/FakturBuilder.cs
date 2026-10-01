@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
@@ -183,9 +183,14 @@ namespace btr.application.SalesContext.FakturAgg.Workers
                            ?? throw new KeyNotFoundException($"CustomerId not found ({customerKey.CustomerId})");
             _aggRoot.CustomerId = customer.CustomerId;
             _aggRoot.CustomerName = customer.CustomerName;
+            _aggRoot.CustomerCode = customer.CustomerCode;
             _aggRoot.Plafond = customer.Plafond;
             _aggRoot.CreditBalance = customer.CreditBalance;
             _aggRoot.HargaTypeId = customer.HargaTypeId;
+            _aggRoot.Address = customer.Address1;
+            _aggRoot.Kota = customer.Kota;
+            _aggRoot.Npwp = customer.Npwp;
+            _aggRoot.Nitku = customer.Nitku;
             return this;
         }
 

@@ -36,34 +36,12 @@ namespace btr.distrib.SalesContext.FakturAgg
         public FakturSavePreviewForm()
         {
             InitializeComponent();
-            TheViewer.Print += TheViewer_Print;
+            TheViewer.ShowPrintButton = false;
             _currentPaperSize = RdlcViewerForm.GetLastPaperSize();
             AddCustomToolbarButton();
-            HideToolbarPrintButton();
             SaveButton.Click += SaveButton_Click;
             SavePrintButton.Click += SavePrintButton_Click;
             CancelPreviewButton.Click += CancelPreviewButton_Click;
-        }
-
-        /// <summary>
-        /// Hides the built-in ReportViewer toolbar Print button. Printing only
-        /// happens through SAVE &amp; PRINT (silent print of the persisted document).
-        /// </summary>
-        private void HideToolbarPrintButton()
-        {
-            if (TheViewer.Controls.Find("ToolStrip1", true).Length == 0)
-                return;
-
-            var toolStrip = (ToolStrip)TheViewer.Controls.Find("ToolStrip1", true)[0];
-            foreach (ToolStripItem item in toolStrip.Items)
-            {
-                if (!(item is ToolStripButton button))
-                    continue;
-                if (button == _paperSizeButton)
-                    continue;
-                if (string.Equals(button.ToolTipText, "Print", StringComparison.OrdinalIgnoreCase))
-                    button.Visible = false;
-            }
         }
 
         private void SaveButton_Click(object sender, EventArgs e)
@@ -110,11 +88,6 @@ namespace btr.distrib.SalesContext.FakturAgg
             TogglePaperSize();
         }
 
-        private void TheViewer_Print(object sender, ReportPrintEventArgs e)
-        {
-            //this.Close();
-        }
-
         public void SetReportData(string reportName, List<ReportDataSource> listDatasource, bool isLandscape = false)
         {
             _reportName = reportName;
@@ -151,9 +124,6 @@ namespace btr.distrib.SalesContext.FakturAgg
 
             // Update button text
             UpdatePaperSizeButtonText();
-
-            //  RefreshReport may rebuild the toolbar; keep Print hidden.
-            HideToolbarPrintButton();
         }
 
         public void SwitchToLetter()
