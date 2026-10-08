@@ -41,6 +41,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.elsasa.bgud.ui.component.BrandHeaderBar
 import com.elsasa.bgud.ui.component.IndustrialCard
+import com.elsasa.bgud.ui.component.SyncResultCard
 import com.elsasa.bgud.ui.theme.BrandCrimson
 import com.elsasa.bgud.ui.theme.BrandGreen
 import com.elsasa.bgud.ui.theme.BrandSage
@@ -77,6 +78,7 @@ fun SynchronizationScreen(
     val syncState by viewModel.syncState.collectAsState()
     val error by viewModel.error.collectAsState()
     val isOnline by viewModel.isOnline.collectAsState()
+    val barcodeSummary by viewModel.syncSummary.collectAsState()
 
     val lastRefSync by returnOrderViewModel.lastRefSync.collectAsState()
     val returnOrderPendingCount by returnOrderViewModel.pendingCount.collectAsState()
@@ -84,6 +86,7 @@ fun SynchronizationScreen(
     val returnOrderSyncState by returnOrderViewModel.syncState.collectAsState()
     val returnOrderError by returnOrderViewModel.error.collectAsState()
     val returnOrderOnline by returnOrderViewModel.isOnline.collectAsState()
+    val returnOrderSummary by returnOrderViewModel.syncSummary.collectAsState()
 
     val barcodeSyncing = syncState == SyncState.SYNCHRONIZING
     val returnOrderSyncing = returnOrderSyncState == SyncState.SYNCHRONIZING
@@ -236,7 +239,7 @@ fun SynchronizationScreen(
                 }
             }
 
-            // Sync State Feedback Banner
+            // Sync State Feedback Banner & Result Card
             when {
                 isSyncing -> {
                     Surface(
@@ -266,47 +269,14 @@ fun SynchronizationScreen(
                         }
                     }
                 }
-                isFailed -> {
-                    Surface(
+                barcodeSummary != null || returnOrderSummary != null || isSynchronized || isFailed -> {
+                    SyncResultCard(
+                        barcodeSummary = barcodeSummary,
+                        returnOrderSummary = returnOrderSummary,
                         modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(12.dp),
-                        color = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.5f),
-                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.error.copy(alpha = 0.5f))
-                    ) {
-                        Column(modifier = Modifier.padding(12.dp)) {
-                            Text(
-                                text = "Gagal Sinkronisasi",
-                                style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold),
-                                color = MaterialTheme.colorScheme.error
-                            )
-                            Text(
-                                text = failures.joinToString(" • "),
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.error
-                            )
-                        }
-                    }
-                }
-                isSynchronized -> {
-                    Surface(
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(12.dp),
-                        color = BrandGreen.copy(alpha = 0.15f),
-                        border = BorderStroke(1.dp, BrandGreen.copy(alpha = 0.4f))
-                    ) {
-                        Row(
-                            modifier = Modifier.padding(12.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Text(text = "✓", color = BrandGreen, fontWeight = FontWeight.Bold)
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text(
-                                text = "Semua data berhasil disinkronkan dengan server.",
-                                style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.Medium),
-                                color = Color(0xFF1E460E)
-                            )
-                        }
-                    }
+                        isFailed = isFailed,
+                        errorMessage = failures.joinToString(" • ").ifBlank { null }
+                    )
                 }
                 else -> Unit
             }

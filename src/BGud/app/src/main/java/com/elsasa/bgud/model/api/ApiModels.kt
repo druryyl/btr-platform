@@ -163,11 +163,11 @@ data class ReturnOrderItemDto(
  * owned by S4.3.
  */
 data class CustomerDto(
-    @SerializedName("CustomerId") val customerId: String = "",
-    @SerializedName("CustomerCode") val customerCode: String = "",
-    @SerializedName("CustomerName") val customerName: String = "",
-    @SerializedName("Alamat") val alamat: String = "",
-    @SerializedName("ServerId") val serverId: String = ""
+    @SerializedName("customerId", alternate = ["CustomerId"]) val customerId: String = "",
+    @SerializedName("customerCode", alternate = ["CustomerCode"]) val customerCode: String = "",
+    @SerializedName("customerName", alternate = ["CustomerName"]) val customerName: String = "",
+    @SerializedName("alamat", alternate = ["Alamat"]) val alamat: String = "",
+    @SerializedName("serverId", alternate = ["ServerId"]) val serverId: String = ""
 )
 
 /**
@@ -182,11 +182,11 @@ data class CustomerDto(
  * owned by S4.3.
  */
 data class SalesPersonDto(
-    @SerializedName("SalesPersonId") val salesPersonId: String = "",
-    @SerializedName("SalesPersonCode") val salesPersonCode: String = "",
-    @SerializedName("SalesPersonName") val salesPersonName: String = "",
-    @SerializedName("Email") val email: String = "",
-    @SerializedName("ServerId") val serverId: String = ""
+    @SerializedName("salesPersonId", alternate = ["SalesPersonId"]) val salesPersonId: String = "",
+    @SerializedName("salesPersonCode", alternate = ["SalesPersonCode"]) val salesPersonCode: String = "",
+    @SerializedName("salesPersonName", alternate = ["SalesPersonName"]) val salesPersonName: String = "",
+    @SerializedName("email", alternate = ["Email"]) val email: String = "",
+    @SerializedName("serverId", alternate = ["ServerId"]) val serverId: String = ""
 )
 
 /**
@@ -201,10 +201,10 @@ data class SalesPersonDto(
  * by S4.3.
  */
 data class DriverDto(
-    @SerializedName("DriverId") val driverId: String = "",
-    @SerializedName("DriverName") val driverName: String = "",
-    @SerializedName("IsAktif") val isAktif: Boolean = true,
-    @SerializedName("ServerId") val serverId: String = ""
+    @SerializedName("driverId", alternate = ["DriverId"]) val driverId: String = "",
+    @SerializedName("driverName", alternate = ["DriverName"]) val driverName: String = "",
+    @SerializedName("isAktif", alternate = ["IsAktif"]) val isAktif: Boolean = true,
+    @SerializedName("serverId", alternate = ["ServerId"]) val serverId: String = ""
 )
 
 /**

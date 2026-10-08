@@ -115,7 +115,7 @@ class ReturnOrderReferenceSyncRepository(
         }
         val envelope = api.customerList(serverId)
         val dtos = envelope.data ?: emptyList()
-        val entities = dtos.map { it.toEntity() }
+        val entities = dtos.map { it.toEntity() }.filter { it.customerId.isNotBlank() }
         customerDao.deleteAll()
         if (entities.isNotEmpty()) {
             customerDao.upsertAll(entities)
@@ -135,7 +135,7 @@ class ReturnOrderReferenceSyncRepository(
         }
         val envelope = api.salesPersonList(serverId)
         val dtos = envelope.data ?: emptyList()
-        val entities = dtos.map { it.toEntity() }
+        val entities = dtos.map { it.toEntity() }.filter { it.salesPersonId.isNotBlank() }
         salesPersonDao.deleteAll()
         if (entities.isNotEmpty()) {
             salesPersonDao.upsertAll(entities)
@@ -155,7 +155,7 @@ class ReturnOrderReferenceSyncRepository(
         }
         val envelope = api.driverList(serverId)
         val dtos = envelope.data ?: emptyList()
-        val entities = dtos.map { it.toEntity() }
+        val entities = dtos.map { it.toEntity() }.filter { it.driverId.isNotBlank() }
         driverDao.deleteAll()
         if (entities.isNotEmpty()) {
             driverDao.upsertAll(entities)

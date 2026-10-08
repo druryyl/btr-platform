@@ -7,6 +7,7 @@ import android.net.NetworkCapabilities
 import android.net.NetworkRequest
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.work.Data
 import androidx.work.WorkInfo
 import androidx.work.WorkManager
 import com.elsasa.bgud.dao.BarcodeRegistrationRequestDao
@@ -39,6 +40,35 @@ enum class SyncState {
     SYNCHRONIZING,
     SYNCHRONIZED,
     FAILED
+}
+
+/**
+ * Metrics summary produced by [BarcodeSyncWorker] execution.
+ */
+data class BarcodeSyncSummary(
+    val submitted: Int = 0,
+    val submitSkipped: Int = 0,
+    val submitFailed: Int = 0,
+    val barcodeCount: Int = 0,
+    val barangCount: Int = 0,
+    val synced: Int = 0,
+    val rejected: Int = 0,
+    val errors: String = ""
+) {
+    companion object {
+        fun fromOutputData(data: Data): BarcodeSyncSummary {
+            return BarcodeSyncSummary(
+                submitted = data.getInt(BarcodeSyncWorker.OUTPUT_SUBMITTED, 0),
+                submitSkipped = data.getInt(BarcodeSyncWorker.OUTPUT_SUBMIT_SKIPPED, 0),
+                submitFailed = data.getInt(BarcodeSyncWorker.OUTPUT_SUBMIT_FAILED, 0),
+                barcodeCount = data.getInt(BarcodeSyncWorker.OUTPUT_BARCODE_COUNT, 0),
+                barangCount = data.getInt(BarcodeSyncWorker.OUTPUT_BARANG_COUNT, 0),
+                synced = data.getInt(BarcodeSyncWorker.OUTPUT_SYNCED, 0),
+                rejected = data.getInt(BarcodeSyncWorker.OUTPUT_REJECTED, 0),
+                errors = data.getString(BarcodeSyncWorker.OUTPUT_ERRORS).orEmpty()
+            )
+        }
+    }
 }
 
 /**
@@ -97,6 +127,9 @@ class SynchronizationViewModel(
         .map { it == SyncState.SYNCHRONIZING }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), false)
 
+    private val _syncSummary = MutableStateFlow<BarcodeSyncSummary?>(null)
+    val syncSummary: StateFlow<BarcodeSyncSummary?> = _syncSummary.asStateFlow()
+
     private val _error = MutableStateFlow<String?>(null)
     val error: StateFlow<String?> = _error.asStateFlow()
 
@@ -136,6 +169,11 @@ class SynchronizationViewModel(
         super.onCleared()
     }
 
+    @androidx.annotation.VisibleForTesting
+    internal fun setOnlineForTesting(online: Boolean) {
+        _isOnline.value = online
+    }
+
     /**
      * Sync Now (§13.2, §17.2): enqueue one ordered sync run and observe it
      * to `Synchronized` / `Failed`. Ignored while `Synchronizing` (IR-M6)
@@ -144,6 +182,7 @@ class SynchronizationViewModel(
     fun syncNow(context: Context) {
         if (_syncState.value == SyncState.SYNCHRONIZING) return
         if (!_isOnline.value) return
+        _syncSummary.value = null
         if (baseUrl.isBlank()) {
             // C-3: transport unresolved — no environment URL is hardcoded
             // (S5.2); without a configured server no call can be issued.
@@ -164,47 +203,50 @@ class SynchronizationViewModel(
         }
     }
 
+    @androidx.annotation.VisibleForTesting
+    internal fun handleWorkInfo(workInfo: WorkInfo?) {
+        when (workInfo?.state) {
+            WorkInfo.State.ENQUEUED,
+            WorkInfo.State.RUNNING,
+            WorkInfo.State.BLOCKED -> {
+                _syncState.value = SyncState.SYNCHRONIZING
+            }
+            WorkInfo.State.SUCCEEDED -> {
+                val summary = BarcodeSyncSummary.fromOutputData(workInfo.outputData)
+                _syncSummary.value = summary
+                if (summary.errors.isBlank()) {
+                    _syncState.value = SyncState.SYNCHRONIZED
+                } else {
+                    _error.value = "Gagal sinkronisasi. ${summary.errors}"
+                    _syncState.value = SyncState.FAILED
+                }
+                observeJob?.cancel()
+            }
+            WorkInfo.State.FAILED -> {
+                val summary = BarcodeSyncSummary.fromOutputData(workInfo.outputData)
+                _syncSummary.value = summary
+                _error.value = if (summary.errors.isBlank()) {
+                    "Gagal sinkronisasi."
+                } else {
+                    "Gagal sinkronisasi. ${summary.errors}"
+                }
+                _syncState.value = SyncState.FAILED
+                observeJob?.cancel()
+            }
+            WorkInfo.State.CANCELLED,
+            null -> {
+                _syncState.value = SyncState.IDLE
+                observeJob?.cancel()
+            }
+        }
+    }
+
     private fun observeRun(context: Context, requestId: UUID) {
         observeJob?.cancel()
         observeJob = viewModelScope.launch {
             WorkManager.getInstance(context).getWorkInfoByIdFlow(requestId)
                 .collect { workInfo ->
-                    when (workInfo?.state) {
-                        WorkInfo.State.ENQUEUED,
-                        WorkInfo.State.RUNNING,
-                        WorkInfo.State.BLOCKED -> {
-                            _syncState.value = SyncState.SYNCHRONIZING
-                        }
-                        WorkInfo.State.SUCCEEDED -> {
-                            val errors = workInfo.outputData
-                                .getString(BarcodeSyncWorker.OUTPUT_ERRORS)
-                                .orEmpty()
-                            if (errors.isBlank()) {
-                                _syncState.value = SyncState.SYNCHRONIZED
-                            } else {
-                                _error.value = "Gagal sinkronisasi. $errors"
-                                _syncState.value = SyncState.FAILED
-                            }
-                            observeJob?.cancel()
-                        }
-                        WorkInfo.State.FAILED -> {
-                            val errors = workInfo.outputData
-                                .getString(BarcodeSyncWorker.OUTPUT_ERRORS)
-                                .orEmpty()
-                            _error.value = if (errors.isBlank()) {
-                                "Gagal sinkronisasi."
-                            } else {
-                                "Gagal sinkronisasi. $errors"
-                            }
-                            _syncState.value = SyncState.FAILED
-                            observeJob?.cancel()
-                        }
-                        WorkInfo.State.CANCELLED,
-                        null -> {
-                            _syncState.value = SyncState.IDLE
-                            observeJob?.cancel()
-                        }
-                    }
+                    handleWorkInfo(workInfo)
                 }
         }
     }

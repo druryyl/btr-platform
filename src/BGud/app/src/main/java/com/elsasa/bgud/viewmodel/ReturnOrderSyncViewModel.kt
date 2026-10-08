@@ -7,6 +7,7 @@ import android.net.NetworkCapabilities
 import android.net.NetworkRequest
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.work.Data
 import androidx.work.WorkInfo
 import androidx.work.WorkManager
 import com.elsasa.bgud.dao.ReturnOrderDao
@@ -59,6 +60,31 @@ import java.util.UUID
  * - No background/scheduled/realtime trigger is exposed (OQ-1): one-shot
  *   enqueue only.
  */
+/**
+ * Metrics summary produced by [ReturnOrderSyncWorker] execution.
+ */
+data class ReturnOrderSyncSummary(
+    val submitted: Int = 0,
+    val submitFailed: Int = 0,
+    val customerCount: Int = 0,
+    val salesPersonCount: Int = 0,
+    val driverCount: Int = 0,
+    val errors: String = ""
+) {
+    companion object {
+        fun fromOutputData(data: Data): ReturnOrderSyncSummary {
+            return ReturnOrderSyncSummary(
+                submitted = data.getInt(ReturnOrderSyncWorker.OUTPUT_SUBMITTED, 0),
+                submitFailed = data.getInt(ReturnOrderSyncWorker.OUTPUT_SUBMIT_FAILED, 0),
+                customerCount = data.getInt(ReturnOrderSyncWorker.OUTPUT_CUSTOMER_COUNT, 0),
+                salesPersonCount = data.getInt(ReturnOrderSyncWorker.OUTPUT_SALESPERSON_COUNT, 0),
+                driverCount = data.getInt(ReturnOrderSyncWorker.OUTPUT_DRIVER_COUNT, 0),
+                errors = data.getString(ReturnOrderSyncWorker.OUTPUT_ERRORS).orEmpty()
+            )
+        }
+    }
+}
+
 class ReturnOrderSyncViewModel(
     private val session: SessionPreferencesDataSource,
     returnOrderDao: ReturnOrderDao,
@@ -96,6 +122,9 @@ class ReturnOrderSyncViewModel(
     val isSyncing: StateFlow<Boolean> = syncState
         .map { it == SyncState.SYNCHRONIZING }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), false)
+
+    private val _syncSummary = MutableStateFlow<ReturnOrderSyncSummary?>(null)
+    val syncSummary: StateFlow<ReturnOrderSyncSummary?> = _syncSummary.asStateFlow()
 
     private val _error = MutableStateFlow<String?>(null)
     val error: StateFlow<String?> = _error.asStateFlow()
@@ -136,6 +165,11 @@ class ReturnOrderSyncViewModel(
         super.onCleared()
     }
 
+    @androidx.annotation.VisibleForTesting
+    internal fun setOnlineForTesting(online: Boolean) {
+        _isOnline.value = online
+    }
+
     /**
      * Sync Now (§14.3): enqueue one ordered Return Order sync run and observe
      * it to `Synchronized` / `Failed`. Ignored while `Synchronizing` (OQ-1)
@@ -144,6 +178,7 @@ class ReturnOrderSyncViewModel(
     fun syncNow(context: Context) {
         if (_syncState.value == SyncState.SYNCHRONIZING) return
         if (!_isOnline.value) return
+        _syncSummary.value = null
         if (baseUrl.isBlank()) {
             // C-3: transport unresolved — no environment URL is hardcoded
             // (S5.2); without a configured server no call can be issued.
@@ -164,49 +199,62 @@ class ReturnOrderSyncViewModel(
         }
     }
 
+    @androidx.annotation.VisibleForTesting
+    internal fun handleWorkInfo(workInfo: WorkInfo?) {
+        when (workInfo?.state) {
+            WorkInfo.State.ENQUEUED,
+            WorkInfo.State.RUNNING,
+            WorkInfo.State.BLOCKED -> {
+                _syncState.value = SyncState.SYNCHRONIZING
+            }
+            WorkInfo.State.SUCCEEDED -> {
+                val summary = extractSyncSummary(workInfo)
+                _syncSummary.value = summary
+                val errors = workInfo.outputData
+                    .getString(ReturnOrderSyncWorker.OUTPUT_ERRORS)
+                    .orEmpty()
+                if (errors.isBlank()) {
+                    _syncState.value = SyncState.SYNCHRONIZED
+                } else {
+                    _error.value = "Gagal sinkronisasi. $errors"
+                    _syncState.value = SyncState.FAILED
+                }
+                observeJob?.cancel()
+            }
+            WorkInfo.State.FAILED -> {
+                val summary = extractSyncSummary(workInfo)
+                _syncSummary.value = summary
+                val errors = workInfo.outputData
+                    .getString(ReturnOrderSyncWorker.OUTPUT_ERRORS)
+                    .orEmpty()
+                _error.value = if (errors.isBlank()) {
+                    "Gagal sinkronisasi."
+                } else {
+                    "Gagal sinkronisasi. $errors"
+                }
+                _syncState.value = SyncState.FAILED
+                observeJob?.cancel()
+            }
+            WorkInfo.State.CANCELLED,
+            null -> {
+                _syncState.value = SyncState.IDLE
+                observeJob?.cancel()
+            }
+        }
+    }
+
     private fun observeRun(context: Context, requestId: UUID) {
         observeJob?.cancel()
         observeJob = viewModelScope.launch {
             WorkManager.getInstance(context).getWorkInfoByIdFlow(requestId)
                 .collect { workInfo ->
-                    when (workInfo?.state) {
-                        WorkInfo.State.ENQUEUED,
-                        WorkInfo.State.RUNNING,
-                        WorkInfo.State.BLOCKED -> {
-                            _syncState.value = SyncState.SYNCHRONIZING
-                        }
-                        WorkInfo.State.SUCCEEDED -> {
-                            val errors = workInfo.outputData
-                                .getString(ReturnOrderSyncWorker.OUTPUT_ERRORS)
-                                .orEmpty()
-                            if (errors.isBlank()) {
-                                _syncState.value = SyncState.SYNCHRONIZED
-                            } else {
-                                _error.value = "Gagal sinkronisasi. $errors"
-                                _syncState.value = SyncState.FAILED
-                            }
-                            observeJob?.cancel()
-                        }
-                        WorkInfo.State.FAILED -> {
-                            val errors = workInfo.outputData
-                                .getString(ReturnOrderSyncWorker.OUTPUT_ERRORS)
-                                .orEmpty()
-                            _error.value = if (errors.isBlank()) {
-                                "Gagal sinkronisasi."
-                            } else {
-                                "Gagal sinkronisasi. $errors"
-                            }
-                            _syncState.value = SyncState.FAILED
-                            observeJob?.cancel()
-                        }
-                        WorkInfo.State.CANCELLED,
-                        null -> {
-                            _syncState.value = SyncState.IDLE
-                            observeJob?.cancel()
-                        }
-                    }
+                    handleWorkInfo(workInfo)
                 }
         }
+    }
+
+    private fun extractSyncSummary(workInfo: WorkInfo): ReturnOrderSyncSummary {
+        return ReturnOrderSyncSummary.fromOutputData(workInfo.outputData)
     }
 
     private fun currentlyOnline(): Boolean {
