@@ -1,9 +1,12 @@
 package com.elsasa.bgud.model
 
+import com.elsasa.bgud.model.api.BarcodeDto
+import com.elsasa.bgud.model.api.BrgDto
 import com.elsasa.bgud.model.api.CustomerDto
 import com.elsasa.bgud.model.api.DriverDto
 import com.elsasa.bgud.model.api.JSendEnvelope
 import com.elsasa.bgud.model.api.SalesPersonDto
+import com.elsasa.bgud.repository.BarcodeSyncRepository.Companion.toEntity
 import com.elsasa.bgud.repository.ReturnOrderReferenceSyncRepository.Companion.toEntity
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
@@ -254,6 +257,169 @@ class ReferenceDtoDeserializationTest {
         assertTrue(entity.isAktif)
     }
 
+    // --- BrgDto Tests ---
+
+    @Test
+    fun brgDto_deserializesFromCamelCaseJson() {
+        val json = """
+            {
+              "brgId": "BRG0001",
+              "brgCode": "RG001",
+              "brgName": "REGAL MARIE BISKUIT 250G",
+              "kategoriName": "BISKUIT",
+              "satBesar": "KARTON",
+              "satKecil": "BKS",
+              "konversi": 24,
+              "hrgSat": 18500.0,
+              "stok": 120,
+              "serverId": "JOG"
+            }
+        """.trimIndent()
+
+        val dto = gson.fromJson(json, BrgDto::class.java)
+
+        assertNotNull(dto)
+        assertEquals("BRG0001", dto.brgId)
+        assertEquals("RG001", dto.brgCode)
+        assertEquals("REGAL MARIE BISKUIT 250G", dto.brgName)
+        assertEquals("BISKUIT", dto.kategoriName)
+        assertEquals("KARTON", dto.satBesar)
+        assertEquals("BKS", dto.satKecil)
+        assertEquals(24, dto.konversi)
+        assertEquals(18500.0, dto.hrgSat, 0.001)
+        assertEquals(120, dto.stok)
+        assertEquals("JOG", dto.serverId)
+    }
+
+    @Test
+    fun brgDto_deserializesFromPascalCaseJson() {
+        val json = """
+            {
+              "BrgId": "BRG0001",
+              "BrgCode": "RG001",
+              "BrgName": "REGAL MARIE BISKUIT 250G",
+              "KategoriName": "BISKUIT",
+              "SatBesar": "KARTON",
+              "SatKecil": "BKS",
+              "Konversi": 24,
+              "HrgSat": 18500.0,
+              "Stok": 120,
+              "ServerId": "JOG"
+            }
+        """.trimIndent()
+
+        val dto = gson.fromJson(json, BrgDto::class.java)
+
+        assertNotNull(dto)
+        assertEquals("BRG0001", dto.brgId)
+        assertEquals("RG001", dto.brgCode)
+        assertEquals("REGAL MARIE BISKUIT 250G", dto.brgName)
+        assertEquals("BISKUIT", dto.kategoriName)
+        assertEquals("KARTON", dto.satBesar)
+        assertEquals("BKS", dto.satKecil)
+        assertEquals(24, dto.konversi)
+        assertEquals(18500.0, dto.hrgSat, 0.001)
+        assertEquals(120, dto.stok)
+        assertEquals("JOG", dto.serverId)
+    }
+
+    @Test
+    fun brgDto_toEntityConversion_producesValidBarangEntity() {
+        val dto = BrgDto(
+            brgId = "BRG0001",
+            brgCode = "RG001",
+            brgName = "REGAL MARIE BISKUIT 250G",
+            satBesar = "KARTON",
+            satKecil = "BKS"
+        )
+
+        val entity = dto.toEntity()
+
+        assertEquals("BRG0001", entity.brgId)
+        assertEquals("RG001", entity.brgCode)
+        assertEquals("REGAL MARIE BISKUIT 250G", entity.brgName)
+        assertTrue(entity.isAktif)
+        assertEquals("BKS", entity.satKecil)
+        assertEquals("KARTON", entity.satBesar)
+    }
+
+    // --- BarcodeDto Tests ---
+
+    @Test
+    fun barcodeDto_deserializesFromCamelCaseJson() {
+        val json = """
+            {
+              "brgBarcodeId": "BAR001",
+              "barcodeValue": "8992775211019",
+              "brgId": "BRG0001",
+              "brgCode": "RG001",
+              "brgName": "REGAL MARIE BISKUIT 250G",
+              "satuan": "BKS",
+              "serverId": "JOG"
+            }
+        """.trimIndent()
+
+        val dto = gson.fromJson(json, BarcodeDto::class.java)
+
+        assertNotNull(dto)
+        assertEquals("BAR001", dto.brgBarcodeId)
+        assertEquals("8992775211019", dto.barcodeValue)
+        assertEquals("BRG0001", dto.brgId)
+        assertEquals("RG001", dto.brgCode)
+        assertEquals("REGAL MARIE BISKUIT 250G", dto.brgName)
+        assertEquals("BKS", dto.satuan)
+        assertEquals("JOG", dto.serverId)
+    }
+
+    @Test
+    fun barcodeDto_deserializesFromPascalCaseJson() {
+        val json = """
+            {
+              "BrgBarcodeId": "BAR001",
+              "BarcodeValue": "8992775211019",
+              "BrgId": "BRG0001",
+              "BrgCode": "RG001",
+              "BrgName": "REGAL MARIE BISKUIT 250G",
+              "Satuan": "BKS",
+              "ServerId": "JOG"
+            }
+        """.trimIndent()
+
+        val dto = gson.fromJson(json, BarcodeDto::class.java)
+
+        assertNotNull(dto)
+        assertEquals("BAR001", dto.brgBarcodeId)
+        assertEquals("8992775211019", dto.barcodeValue)
+        assertEquals("BRG0001", dto.brgId)
+        assertEquals("RG001", dto.brgCode)
+        assertEquals("REGAL MARIE BISKUIT 250G", dto.brgName)
+        assertEquals("BKS", dto.satuan)
+        assertEquals("JOG", dto.serverId)
+    }
+
+    @Test
+    fun barcodeDto_toEntityConversion_producesValidBarcodeEntity() {
+        val dto = BarcodeDto(
+            brgBarcodeId = "BAR001",
+            barcodeValue = "8992775211019",
+            brgId = "BRG0001",
+            brgCode = "RG001",
+            brgName = "REGAL MARIE BISKUIT 250G",
+            satuan = "BKS",
+            serverId = "JOG"
+        )
+
+        val entity = dto.toEntity()
+
+        assertEquals("BAR001", entity.brgBarcodeId)
+        assertEquals("8992775211019", entity.barcodeValue)
+        assertEquals("BRG0001", entity.brgId)
+        assertEquals("RG001", entity.brgCode)
+        assertEquals("REGAL MARIE BISKUIT 250G", entity.brgName)
+        assertEquals("BKS", entity.satuan)
+        assertEquals("8992775211019", entity.barcodeValueKey)
+    }
+
     // --- Default Values / Incomplete Payload Test ---
 
     @Test
@@ -279,5 +445,17 @@ class ReferenceDtoDeserializationTest {
         assertEquals("", driver.driverName)
         assertTrue(driver.isAktif) // default is true
         assertEquals("", driver.serverId)
+
+        val brg = gson.fromJson(emptyJson, BrgDto::class.java)
+        assertEquals("", brg.brgId)
+        assertEquals("", brg.brgCode)
+        assertEquals("", brg.brgName)
+        assertEquals(0, brg.konversi)
+        assertEquals(0.0, brg.hrgSat, 0.001)
+
+        val barcode = gson.fromJson(emptyJson, BarcodeDto::class.java)
+        assertEquals("", barcode.brgBarcodeId)
+        assertEquals("", barcode.barcodeValue)
+        assertEquals("", barcode.brgId)
     }
 }

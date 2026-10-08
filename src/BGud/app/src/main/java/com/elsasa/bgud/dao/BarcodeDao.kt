@@ -33,6 +33,10 @@ interface BarcodeDao {
     @Query("SELECT * FROM barcode_entity WHERE brgId = :brgId ORDER BY barcodeValue")
     fun listByBrg(brgId: String): Flow<List<BarcodeEntity>>
 
+    /** Distinct non-blank packaging units registered on barcodes for an item. */
+    @Query("SELECT DISTINCT satuan FROM barcode_entity WHERE brgId = :brgId AND satuan != ''")
+    suspend fun getUnitsByBrg(brgId: String): List<String>
+
     @Query("SELECT * FROM barcode_entity ORDER BY brgName, barcodeValue LIMIT :limit OFFSET :offset")
     suspend fun paged(limit: Int, offset: Int): List<BarcodeEntity>
 

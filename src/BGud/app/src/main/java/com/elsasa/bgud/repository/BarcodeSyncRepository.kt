@@ -191,7 +191,7 @@ class BarcodeSyncRepository(
     suspend fun downloadBarcodes(): Int = withContext(Dispatchers.IO) {
         val envelope = api.barcodeSync()
         val dtos = envelope.data ?: emptyList()
-        val entities = dtos.map { it.toEntity() }
+        val entities = dtos.map { it.toEntity() }.filter { it.brgBarcodeId.isNotBlank() }
         barcodeDao.deleteAll()
         if (entities.isNotEmpty()) {
             barcodeDao.upsertAll(entities)
@@ -211,7 +211,7 @@ class BarcodeSyncRepository(
         }
         val envelope = api.brgList(serverId)
         val dtos = envelope.data ?: emptyList()
-        val entities = dtos.map { it.toEntity() }
+        val entities = dtos.map { it.toEntity() }.filter { it.brgId.isNotBlank() }
         barangDao.deleteAll()
         if (entities.isNotEmpty()) {
             barangDao.upsertAll(entities)

@@ -19,6 +19,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
@@ -40,6 +41,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -47,6 +49,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontFamily
@@ -65,6 +69,7 @@ import com.elsasa.bgud.ui.component.IndustrialCard
 import com.elsasa.bgud.ui.component.StatusBadge
 import com.elsasa.bgud.ui.theme.BrandCrimson
 import com.elsasa.bgud.ui.theme.BrandGreen
+import com.elsasa.bgud.ui.theme.BrandGreenDark
 import com.elsasa.bgud.ui.theme.BrandSage
 import com.elsasa.bgud.ui.theme.BrandWarmCream
 import com.elsasa.bgud.viewmodel.CreateReturnOrderViewModel
@@ -130,8 +135,17 @@ fun CreateReturnOrderScreen(
     }
 
     var unitExpanded by remember { mutableStateOf(false) }
-    val unitOptions = viewModel.unitOptions()
+    val unitOptions by viewModel.availableUnits.collectAsState()
     val unitLabel = pendingUnit.ifBlank { "Pilih satuan" }
+
+    var scanTimeoutExceeded by remember { mutableStateOf(false) }
+    val itemSearchFocusRequester = remember { FocusRequester() }
+
+    LaunchedEffect(pendingItem) {
+        if (pendingItem != null) {
+            scanTimeoutExceeded = false
+        }
+    }
 
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background
@@ -349,7 +363,11 @@ fun CreateReturnOrderScreen(
                         ) {
                             BarcodeScannerView(
                                 enabled = !isSaving,
-                                onBarcode = viewModel::onBarcodeScanned,
+                                onBarcode = { rawValue ->
+                                    scanTimeoutExceeded = false
+                                    viewModel.onBarcodeScanned(rawValue)
+                                },
+                                onScanTimeout = { scanTimeoutExceeded = true },
                                 modifier = Modifier.fillMaxSize()
                             )
                         }
@@ -375,6 +393,17 @@ fun CreateReturnOrderScreen(
                         }
                     }
 
+                    if (scanTimeoutExceeded) {
+                        Spacer(modifier = Modifier.height(10.dp))
+                        ScanTimeoutGuidanceCard(
+                            onManualSearchClick = {
+                                try {
+                                    itemSearchFocusRequester.requestFocus()
+                                } catch (_: Exception) {}
+                            }
+                        )
+                    }
+
                     Spacer(modifier = Modifier.height(12.dp))
 
                     // Manual Item Search
@@ -384,10 +413,14 @@ fun CreateReturnOrderScreen(
                         results = itemResults,
                         isSearching = isSearchingItem,
                         enabled = !isSaving,
-                        onQueryChange = viewModel::onItemQueryChange,
+                        onQueryChange = { query ->
+                            scanTimeoutExceeded = false
+                            viewModel.onItemQueryChange(query)
+                        },
                         onSelect = viewModel::onSelectItem,
                         rowHeadline = { it.brgName },
-                        rowSupporting = { it.brgCode }
+                        rowSupporting = { it.brgCode },
+                        modifier = Modifier.focusRequester(itemSearchFocusRequester)
                     )
                 } else {
                     // Item Selected Card
@@ -751,6 +784,106 @@ private fun ModernReturnTypePill(
 }
 
 /**
+ * Industrial timeout guidance card shown when barcode scanning has been active for ~7 seconds
+ * without detection. Provides operational tips and quick shortcut to manual item search.
+ */
+@Composable
+private fun ScanTimeoutGuidanceCard(
+    onManualSearchClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    IndustrialCard(
+        modifier = modifier,
+        borderColor = BrandSage,
+        containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.35f)
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Surface(
+                shape = CircleShape,
+                color = BrandSage.copy(alpha = 0.35f),
+                modifier = Modifier.size(24.dp)
+            ) {
+                Box(contentAlignment = Alignment.Center) {
+                    Text(
+                        text = "i",
+                        style = MaterialTheme.typography.labelMedium.copy(
+                            fontWeight = FontWeight.Bold,
+                            fontFamily = FontFamily.Monospace
+                        ),
+                        color = BrandGreenDark
+                    )
+                }
+            }
+            Text(
+                text = "Barcode Belum Terdeteksi?",
+                style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold),
+                color = MaterialTheme.colorScheme.onSurface
+            )
+        }
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        Column(
+            modifier = Modifier.padding(start = 4.dp),
+            verticalArrangement = Arrangement.spacedBy(4.dp)
+        ) {
+            Row(
+                verticalAlignment = Alignment.Top,
+                horizontalArrangement = Arrangement.spacedBy(6.dp)
+            ) {
+                Text(
+                    text = "•",
+                    style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.Bold),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Text(
+                    text = "Pastikan pencahayaan cukup (gunakan senter di kanan atas)",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+            Row(
+                verticalAlignment = Alignment.Top,
+                horizontalArrangement = Arrangement.spacedBy(6.dp)
+            ) {
+                Text(
+                    text = "•",
+                    style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.Bold),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Text(
+                    text = "Atur jarak kamera ~15-25 cm atau tap layar untuk memfokuskan",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.height(10.dp))
+
+        OutlinedButton(
+            onClick = onManualSearchClick,
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(10.dp),
+            border = BorderStroke(1.dp, BrandGreen),
+            colors = ButtonDefaults.outlinedButtonColors(
+                contentColor = BrandGreen
+            )
+        ) {
+            Text(
+                text = "Cari item secara manual di kolom bawah",
+                style = MaterialTheme.typography.labelMedium.copy(
+                    fontWeight = FontWeight.SemiBold
+                )
+            )
+        }
+    }
+}
+
+/**
  * Local-cache reference search section with dropdown results.
  */
 @Composable
@@ -763,12 +896,13 @@ private fun <T> ReferenceSearchSection(
     onQueryChange: (String) -> Unit,
     onSelect: (T) -> Unit,
     rowHeadline: (T) -> String,
-    rowSupporting: (T) -> String
+    rowSupporting: (T) -> String,
+    modifier: Modifier = Modifier
 ) {
     OutlinedTextField(
         value = query,
         onValueChange = onQueryChange,
-        modifier = Modifier.fillMaxWidth(),
+        modifier = modifier.fillMaxWidth(),
         label = { Text(label) },
         singleLine = true,
         enabled = enabled,

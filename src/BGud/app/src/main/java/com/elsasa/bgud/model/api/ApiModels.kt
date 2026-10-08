@@ -53,8 +53,8 @@ data class SessionResolveResult(
  * `ServerId`.
  */
 data class WarehouseDto(
-    @SerializedName("LocationId") val locationId: String = "",
-    @SerializedName("ServerId") val serverId: String = ""
+    @SerializedName("locationId", alternate = ["LocationId"]) val locationId: String = "",
+    @SerializedName("serverId", alternate = ["ServerId"]) val serverId: String = ""
 )
 
 /**
@@ -64,13 +64,13 @@ data class WarehouseDto(
  * used for scoping; the local cache is scoped by the session binding (IR-09).
  */
 data class BarcodeDto(
-    @SerializedName("BrgBarcodeId") val brgBarcodeId: String = "",
-    @SerializedName("BarcodeValue") val barcodeValue: String = "",
-    @SerializedName("BrgId") val brgId: String = "",
-    @SerializedName("BrgCode") val brgCode: String = "",
-    @SerializedName("BrgName") val brgName: String = "",
-    @SerializedName("Satuan") val satuan: String = "",
-    @SerializedName("ServerId") val serverId: String = ""
+    @SerializedName("brgBarcodeId", alternate = ["BrgBarcodeId"]) val brgBarcodeId: String = "",
+    @SerializedName("barcodeValue", alternate = ["BarcodeValue"]) val barcodeValue: String = "",
+    @SerializedName("brgId", alternate = ["BrgId"]) val brgId: String = "",
+    @SerializedName("brgCode", alternate = ["BrgCode"]) val brgCode: String = "",
+    @SerializedName("brgName", alternate = ["BrgName"]) val brgName: String = "",
+    @SerializedName("satuan", alternate = ["Satuan"]) val satuan: String = "",
+    @SerializedName("serverId", alternate = ["ServerId"]) val serverId: String = ""
 )
 
 /**
@@ -96,13 +96,13 @@ data class BarcodeRegistrationSubmitRequest(
  * fields are carried for diagnostics only.
  */
 data class RegistrationStatusDto(
-    @SerializedName("BarcodeRegistrationId") val barcodeRegistrationId: String = "",
-    @SerializedName("ClientRequestId") val clientRequestId: String = "",
-    @SerializedName("BarcodeValue") val barcodeValue: String = "",
-    @SerializedName("BrgId") val brgId: String = "",
-    @SerializedName("Satuan") val satuan: String = "",
-    @SerializedName("Status") val status: String = "",
-    @SerializedName("ProcessedNote") val processedNote: String = ""
+    @SerializedName("barcodeRegistrationId", alternate = ["BarcodeRegistrationId"]) val barcodeRegistrationId: String = "",
+    @SerializedName("clientRequestId", alternate = ["ClientRequestId"]) val clientRequestId: String = "",
+    @SerializedName("barcodeValue", alternate = ["BarcodeValue"]) val barcodeValue: String = "",
+    @SerializedName("brgId", alternate = ["BrgId"]) val brgId: String = "",
+    @SerializedName("satuan", alternate = ["Satuan"]) val satuan: String = "",
+    @SerializedName("status", alternate = ["Status"]) val status: String = "",
+    @SerializedName("processedNote", alternate = ["ProcessedNote"]) val processedNote: String = ""
 )
 
 /**
@@ -215,14 +215,14 @@ data class DriverDto(
  * mapping of these fields into `barang_entity` is owned by S5.3.
  */
 data class BrgDto(
-    @SerializedName("BrgId") val brgId: String = "",
-    @SerializedName("BrgCode") val brgCode: String = "",
-    @SerializedName("BrgName") val brgName: String = "",
-    @SerializedName("KategoriName") val kategoriName: String = "",
-    @SerializedName("SatBesar") val satBesar: String = "",
-    @SerializedName("SatKecil") val satKecil: String = "",
-    @SerializedName("Konversi") val konversi: Int = 0,
-    @SerializedName("HrgSat") val hrgSat: Double = 0.0,
-    @SerializedName("Stok") val stok: Int = 0,
-    @SerializedName("ServerId") val serverId: String = ""
+    @SerializedName("brgId", alternate = ["BrgId"]) val brgId: String = "",
+    @SerializedName("brgCode", alternate = ["BrgCode"]) val brgCode: String = "",
+    @SerializedName("brgName", alternate = ["BrgName"]) val brgName: String = "",
+    @SerializedName("kategoriName", alternate = ["KategoriName"]) val kategoriName: String = "",
+    @SerializedName("satBesar", alternate = ["SatBesar"]) val satBesar: String = "",
+    @SerializedName("satKecil", alternate = ["SatKecil"]) val satKecil: String = "",
+    @SerializedName("konversi", alternate = ["Konversi"]) val konversi: Int = 0,
+    @SerializedName("hrgSat", alternate = ["HrgSat"]) val hrgSat: Double = 0.0,
+    @SerializedName("stok", alternate = ["Stok"]) val stok: Int = 0,
+    @SerializedName("serverId", alternate = ["ServerId"]) val serverId: String = ""
 )

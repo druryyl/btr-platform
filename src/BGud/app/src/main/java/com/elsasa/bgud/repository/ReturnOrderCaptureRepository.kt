@@ -322,11 +322,20 @@ class ReturnOrderCaptureRepository(
             }
 
             // BR-011, ADR-RO-003 — unit mandatory, taken from the item's cached
-            // unit data. Recorded verbatim as `satId`; no small-unit conversion.
-            val cachedUnits = item?.cachedUnits().orEmpty()
+            // unit data or registered barcodes. Recorded verbatim as `satId`; no small-unit conversion.
+            val barcodeUnits = if (item != null) {
+                try {
+                    database.barcodeDao().getUnitsByBrg(item.brgId)
+                } catch (e: Exception) {
+                    emptyList()
+                }
+            } else {
+                emptyList()
+            }
+            val allowedUnits = (item?.cachedUnits().orEmpty() + barcodeUnits).distinct()
             when {
                 line.satId.isBlank() -> errors.add("$row: $UNIT_REQUIRED")
-                item != null && line.satId !in cachedUnits ->
+                item != null && line.satId !in allowedUnits ->
                     errors.add("$row: $UNIT_INVALID")
             }
 

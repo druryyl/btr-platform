@@ -66,6 +66,8 @@ class EditReturnOrderViewModel(
     companion object {
         /** Local reference search debounce, mirroring the existing pattern. */
         const val SEARCH_DEBOUNCE_MILLIS = 300L
+        /** Scan debounce to avoid query storm when unregistered barcode remains in view. */
+        const val SCAN_DEBOUNCE_MILLIS = 1500L
     }
 
     private val _isLoading = MutableStateFlow(true)
@@ -166,6 +168,9 @@ class EditReturnOrderViewModel(
 
     private val _pendingUnit = MutableStateFlow("")
     val pendingUnit: StateFlow<String> = _pendingUnit.asStateFlow()
+
+    private val _unitOptions = MutableStateFlow<List<String>>(emptyList())
+    val availableUnits: StateFlow<List<String>> = _unitOptions.asStateFlow()
 
     /** `""` until the user picks a Return Type (IR-M6). */
     private val _pendingJenisRetur = MutableStateFlow("")
@@ -398,6 +403,9 @@ class EditReturnOrderViewModel(
 
     // --- Item identification (Barcode Scan or Manual Item Search, BR-009) ----
 
+    private var lastScannedRaw: String? = null
+    private var lastScannedTimestamp: Long = 0L
+
     /**
      * Scanner callback (BR-009). Resolves the barcode against the local
      * `barcode_entity` cache and then loads its Item from the local
@@ -408,6 +416,14 @@ class EditReturnOrderViewModel(
         if (rawValue.isNullOrEmpty()) return
         val displayValue = BarcodeNormalization.normalize(rawValue)
         if (displayValue.isEmpty()) return
+
+        val now = System.currentTimeMillis()
+        if (displayValue == lastScannedRaw && (now - lastScannedTimestamp) < SCAN_DEBOUNCE_MILLIS) {
+            return
+        }
+        lastScannedRaw = displayValue
+        lastScannedTimestamp = now
+
         viewModelScope.launch {
             _pendingError.value = null
             val barcode = try {
@@ -428,7 +444,8 @@ class EditReturnOrderViewModel(
                 _pendingError.value = ReturnOrderCaptureRepository.ITEM_NOT_CACHED
                 return@launch
             }
-            selectPendingItem(item)
+            lastScannedRaw = null
+            selectPendingItem(item, preselectedUnit = barcode.satuan)
         }
     }
 
@@ -438,6 +455,7 @@ class EditReturnOrderViewModel(
         _pendingItem.value = null
         _pendingQty.value = ""
         _pendingUnit.value = ""
+        _unitOptions.value = emptyList()
         _pendingJenisRetur.value = ""
         itemSearchJob?.cancel()
         val query = value.trim()
@@ -461,38 +479,57 @@ class EditReturnOrderViewModel(
 
     /** Item selected from the local search results (BR-009). */
     fun onSelectItem(item: BarangEntity) {
-        selectPendingItem(item)
+        viewModelScope.launch {
+            selectPendingItem(item)
+        }
     }
 
-    private fun selectPendingItem(item: BarangEntity) {
+    private suspend fun selectPendingItem(item: BarangEntity, preselectedUnit: String? = null) {
         _pendingItem.value = item
         _pendingQty.value = ""
-        _pendingUnit.value = ""
         _pendingJenisRetur.value = ""
         _pendingError.value = null
         _itemQuery.value = ""
         _itemResults.value = emptyList()
+        loadUnitOptions(item, preselectedUnit)
+    }
+
+    private suspend fun loadUnitOptions(item: BarangEntity, preselectedUnit: String? = null) {
+        val barcodeUnits = try {
+            barcodeDao.getUnitsByBrg(item.brgId)
+        } catch (e: Exception) {
+            emptyList()
+        }
+        val extra = if (!preselectedUnit.isNullOrBlank()) listOf(preselectedUnit) else emptyList()
+        val options = (listOf(item.satKecil, item.satBesar).filter { it.isNotBlank() } + barcodeUnits + extra)
+            .distinct()
+        _unitOptions.value = options
+        if (!preselectedUnit.isNullOrBlank()) {
+            _pendingUnit.value = preselectedUnit
+        } else if (options.size == 1) {
+            _pendingUnit.value = options.first()
+        } else {
+            _pendingUnit.value = ""
+        }
     }
 
     /** Pending item cleared: back to scan/search (add/remove lines, §12.4). */
     fun onClearPendingItem() {
+        lastScannedRaw = null
         _pendingItem.value = null
         _pendingQty.value = ""
         _pendingUnit.value = ""
+        _unitOptions.value = emptyList()
         _pendingJenisRetur.value = ""
         _pendingError.value = null
     }
 
     /**
      * Unit options for the pending item: its own cached small/big units
-     * (BR-011, ADR-RO-003); empty when nothing is selected.
+     * and packaging units registered across its barcodes; empty when
+     * nothing is selected.
      */
-    fun unitOptions(): List<String> {
-        val item = _pendingItem.value ?: return emptyList()
-        return listOf(item.satKecil, item.satBesar)
-            .filter { it.isNotBlank() }
-            .distinct()
-    }
+    fun unitOptions(): List<String> = _unitOptions.value
 
     fun onQtyChange(value: String) {
         _pendingQty.value = value
