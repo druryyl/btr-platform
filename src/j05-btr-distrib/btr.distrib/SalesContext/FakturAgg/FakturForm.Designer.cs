@@ -49,7 +49,6 @@
             this.TotalText = new System.Windows.Forms.NumericUpDown();
             this.TotalLabel = new System.Windows.Forms.Label();
             this.SaveButton = new System.Windows.Forms.Button();
-            this.PreviewButton = new System.Windows.Forms.Button();
             this.NewButton = new System.Windows.Forms.Button();
             this.panel1 = new System.Windows.Forms.Panel();
             this.OrderIdText = new System.Windows.Forms.TextBox();
@@ -210,11 +209,6 @@
             0,
             0,
             0});
-            this.DppText.Minimum = new decimal(new int[] {
-            999999999,
-            0,
-            0,
-            -2147483648});
             this.DppText.Name = "DppText";
             this.DppText.ReadOnly = true;
             this.DppText.Size = new System.Drawing.Size(117, 20);
@@ -231,11 +225,6 @@
             0,
             0,
             0});
-            this.TaxText.Minimum = new decimal(new int[] {
-            999999999,
-            0,
-            0,
-            -2147483648});
             this.TaxText.Name = "TaxText";
             this.TaxText.ReadOnly = true;
             this.TaxText.Size = new System.Drawing.Size(117, 20);
@@ -292,11 +281,6 @@
             0,
             0,
             0});
-            this.UangMukaText.Minimum = new decimal(new int[] {
-            999999999,
-            0,
-            0,
-            -2147483648});
             this.UangMukaText.Name = "UangMukaText";
             this.UangMukaText.Size = new System.Drawing.Size(117, 20);
             this.UangMukaText.TabIndex = 24;
@@ -322,11 +306,6 @@
             0,
             0,
             0});
-            this.GrandTotalText.Minimum = new decimal(new int[] {
-            999999999,
-            0,
-            0,
-            -2147483648});
             this.GrandTotalText.Name = "GrandTotalText";
             this.GrandTotalText.ReadOnly = true;
             this.GrandTotalText.Size = new System.Drawing.Size(117, 20);
@@ -352,11 +331,6 @@
             0,
             0,
             0});
-            this.DiscountText.Minimum = new decimal(new int[] {
-            999999999,
-            0,
-            0,
-            -2147483648});
             this.DiscountText.Name = "DiscountText";
             this.DiscountText.ReadOnly = true;
             this.DiscountText.Size = new System.Drawing.Size(117, 20);
@@ -383,11 +357,6 @@
             0,
             0,
             0});
-            this.TotalText.Minimum = new decimal(new int[] {
-            999999999,
-            0,
-            0,
-            -2147483648});
             this.TotalText.Name = "TotalText";
             this.TotalText.ReadOnly = true;
             this.TotalText.Size = new System.Drawing.Size(117, 20);
@@ -411,20 +380,9 @@
             this.SaveButton.Name = "SaveButton";
             this.SaveButton.Size = new System.Drawing.Size(75, 23);
             this.SaveButton.TabIndex = 26;
-            this.SaveButton.Text = "Preview";
+            this.SaveButton.Text = "Save";
             this.SaveButton.UseVisualStyleBackColor = true;
             this.SaveButton.Click += new System.EventHandler(this.SaveButton_Click);
-            // 
-            // PreviewButton
-            // 
-            this.PreviewButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.PreviewButton.Location = new System.Drawing.Point(974, 491);
-            this.PreviewButton.Name = "PreviewButton";
-            this.PreviewButton.Size = new System.Drawing.Size(95, 23);
-            this.PreviewButton.TabIndex = 27;
-            this.PreviewButton.Text = "Preview / Print";
-            this.PreviewButton.UseVisualStyleBackColor = true;
-            this.PreviewButton.Visible = false;
             // 
             // NewButton
             // 
@@ -881,7 +839,6 @@
             this.Controls.Add(this.FakturItemGrid);
             this.Controls.Add(this.PanelTengah);
             this.Controls.Add(this.SaveButton);
-            this.Controls.Add(this.PreviewButton);
             this.Controls.Add(this.label2);
             this.Controls.Add(this.NewButton);
             this.Controls.Add(this.panel1);
@@ -937,7 +894,6 @@
         private System.Windows.Forms.NumericUpDown TotalText;
         private System.Windows.Forms.Label TotalLabel;
         private System.Windows.Forms.Button SaveButton;
-        private System.Windows.Forms.Button PreviewButton;
         private System.Windows.Forms.Button NewButton;
         private System.Windows.Forms.Panel panel1;
         private System.Windows.Forms.TextBox FakturIdText;
