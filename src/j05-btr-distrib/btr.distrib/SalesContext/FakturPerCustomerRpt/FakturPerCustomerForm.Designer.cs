@@ -1,4 +1,4 @@
-﻿namespace btr.distrib.SalesContext.FakturPerCustomerRpt
+namespace btr.distrib.SalesContext.FakturPerCustomerRpt
 {
     partial class FakturPerCustomerForm
     {
@@ -35,8 +35,12 @@
             this.ProsesButton = new System.Windows.Forms.Button();
             this.SearchText = new System.Windows.Forms.TextBox();
             this.InfoGrid = new Syncfusion.Windows.Forms.Grid.Grouping.GridGroupingControl();
+            this.StatusStrip = new System.Windows.Forms.StatusStrip();
+            this.StatusLabel = new System.Windows.Forms.ToolStripStatusLabel();
+            this.ProgressBar = new System.Windows.Forms.ToolStripProgressBar();
             this.panel1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.InfoGrid)).BeginInit();
+            this.StatusStrip.SuspendLayout();
             this.SuspendLayout();
             // 
             // panel1
@@ -114,11 +118,36 @@
             this.InfoGrid.Location = new System.Drawing.Point(7, 47);
             this.InfoGrid.Name = "InfoGrid";
             this.InfoGrid.ShowCurrentCellBorderBehavior = Syncfusion.Windows.Forms.Grid.GridShowCurrentCellBorder.GrayWhenLostFocus;
-            this.InfoGrid.Size = new System.Drawing.Size(832, 397);
+            this.InfoGrid.Size = new System.Drawing.Size(832, 375);
             this.InfoGrid.TabIndex = 9;
             this.InfoGrid.Text = "gridGroupingControl1";
             this.InfoGrid.UseRightToLeftCompatibleTextBox = true;
             this.InfoGrid.VersionInfo = "22.1460.34";
+            // 
+            // StatusStrip
+            // 
+            this.StatusStrip.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.StatusLabel,
+            this.ProgressBar});
+            this.StatusStrip.Location = new System.Drawing.Point(0, 428);
+            this.StatusStrip.Name = "StatusStrip";
+            this.StatusStrip.Size = new System.Drawing.Size(845, 22);
+            this.StatusStrip.TabIndex = 10;
+            this.StatusStrip.Text = "statusStrip1";
+            // 
+            // StatusLabel
+            // 
+            this.StatusLabel.Name = "StatusLabel";
+            this.StatusLabel.Size = new System.Drawing.Size(830, 17);
+            this.StatusLabel.Spring = true;
+            this.StatusLabel.Text = "Siap";
+            this.StatusLabel.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            // 
+            // ProgressBar
+            // 
+            this.ProgressBar.Name = "ProgressBar";
+            this.ProgressBar.Size = new System.Drawing.Size(120, 16);
+            this.ProgressBar.Visible = false;
             // 
             // FakturPerCustomerForm
             // 
@@ -128,13 +157,17 @@
             this.ClientSize = new System.Drawing.Size(845, 450);
             this.Controls.Add(this.panel1);
             this.Controls.Add(this.InfoGrid);
+            this.Controls.Add(this.StatusStrip);
             this.Font = new System.Drawing.Font("Lucida Console", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.Name = "FakturPerCustomerForm";
             this.Text = "Faktur Per Customer";
             this.panel1.ResumeLayout(false);
             this.panel1.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)(this.InfoGrid)).EndInit();
+            this.StatusStrip.ResumeLayout(false);
+            this.StatusStrip.PerformLayout();
             this.ResumeLayout(false);
+            this.PerformLayout();
 
         }
 
@@ -147,5 +180,8 @@
         private System.Windows.Forms.Button ProsesButton;
         private System.Windows.Forms.TextBox SearchText;
         private Syncfusion.Windows.Forms.Grid.Grouping.GridGroupingControl InfoGrid;
+        private System.Windows.Forms.StatusStrip StatusStrip;
+        private System.Windows.Forms.ToolStripStatusLabel StatusLabel;
+        private System.Windows.Forms.ToolStripProgressBar ProgressBar;
     }
 }

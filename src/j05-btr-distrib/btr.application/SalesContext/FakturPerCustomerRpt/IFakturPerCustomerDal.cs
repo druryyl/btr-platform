@@ -1,11 +1,15 @@
-﻿using btr.nuna.Domain;
+using btr.nuna.Domain;
 using btr.nuna.Infrastructure;
 using System;
+using System.Collections.Generic;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace btr.application.SalesContext.FakturPerCustomerRpt
 {
     public interface IFakturPerCustomerDal : IListData<FakturPerCustomerView, Periode>
     {
+        Task<IEnumerable<FakturPerCustomerView>> ListDataAsync(Periode filter, CancellationToken cancellationToken = default);
     }
 
     public class FakturPerCustomerView
