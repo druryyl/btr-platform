@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Reflection;
@@ -8,6 +8,14 @@ public class SortableBindingList<T> : BindingList<T>
     private bool _isSorted;
     private ListSortDirection _sortDirection;
     private PropertyDescriptor _sortProperty;
+
+    public SortableBindingList()
+    {
+    }
+
+    public SortableBindingList(IList<T> list) : base(list)
+    {
+    }
 
     protected override bool SupportsSortingCore => true;
     protected override bool IsSortedCore => _isSorted;
