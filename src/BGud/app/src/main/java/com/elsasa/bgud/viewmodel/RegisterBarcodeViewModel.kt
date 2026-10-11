@@ -61,7 +61,7 @@ class RegisterBarcodeViewModel(
     private val barangDao: BarangDao,
     private val requestDao: BarcodeRegistrationRequestDao,
     private val session: SessionPreferencesDataSource,
-    initialBarcode: String
+    initialBarcode: String = ""
 ) : ViewModel() {
 
     /** Captured barcode, read-only (normalized display form, VO-01). */
@@ -102,15 +102,61 @@ class RegisterBarcodeViewModel(
     val saved: StateFlow<Boolean> = _saved.asStateFlow()
 
     private var searchJob: Job? = null
+    private var duplicateProbeJob: Job? = null
 
     init {
         // Local duplicate probe against the Active cache (IR-M4).
         val captured = _barcodeValue.value
         if (captured.isNotBlank()) {
-            viewModelScope.launch {
-                _duplicateFound.value =
+            duplicateProbeJob = viewModelScope.launch {
+                _duplicateFound.value = try {
                     barcodeDao.getByKey(BarcodeNormalization.toKey(captured))
+                } catch (e: Exception) {
+                    null
+                }
             }
+        }
+    }
+
+    /**
+     * Called when a barcode is captured via camera scanner (SCR-MOB-004, UX-002).
+     */
+    fun onBarcodeScanned(rawValue: String) {
+        applyBarcode(rawValue)
+    }
+
+    /**
+     * Called when a barcode is submitted manually via text entry fallback (SCR-MOB-004, UX-002).
+     */
+    fun onBarcodeManualSubmit(manualValue: String) {
+        applyBarcode(manualValue)
+    }
+
+    /**
+     * Resets the captured barcode and duplicate/error state to re-arm acquisition mode.
+     */
+    fun onClearBarcode() {
+        duplicateProbeJob?.cancel()
+        _barcodeValue.value = ""
+        _duplicateFound.value = null
+        _saveError.value = null
+    }
+
+    private fun applyBarcode(raw: String) {
+        val normalized = BarcodeNormalization.normalize(raw)
+        _barcodeValue.value = normalized
+        _saveError.value = null
+        duplicateProbeJob?.cancel()
+        if (normalized.isNotBlank()) {
+            duplicateProbeJob = viewModelScope.launch {
+                _duplicateFound.value = try {
+                    barcodeDao.getByKey(BarcodeNormalization.toKey(normalized))
+                } catch (e: Exception) {
+                    null
+                }
+            }
+        } else {
+            _duplicateFound.value = null
         }
     }
 

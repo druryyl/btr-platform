@@ -1,5 +1,9 @@
 package com.elsasa.bgud.ui.screen
 
+import android.Manifest
+import android.content.pm.PackageManager
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -42,6 +46,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
@@ -49,7 +54,9 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.content.ContextCompat
 import com.elsasa.bgud.model.BarangEntity
+import com.elsasa.bgud.ui.component.BarcodeScannerView
 import com.elsasa.bgud.ui.component.BrandHeaderBar
 import com.elsasa.bgud.ui.component.IndustrialCard
 import com.elsasa.bgud.ui.theme.BrandCrimson
@@ -62,7 +69,8 @@ import com.elsasa.bgud.viewmodel.RegisterBarcodeViewModel
  * Register Barcode screen (SCR-MOB-004, Architecture §12.6, UX Blueprint §8).
  *
  * Modern Industrial layout:
- * - Barcode value card (read-only monospace badge)
+ * - Barcode acquisition (camera scanner viewfinder + manual text input fallback)
+ * - Barcode value card (read-only monospace badge) with "Ganti / Pindai Ulang" action
  * - Local duplicate detection warning banner
  * - Item search field + item result list
  * - Selected item summary card with clear action
@@ -86,9 +94,33 @@ fun RegisterScreen(
     val saveError by viewModel.saveError.collectAsState()
     val saved by viewModel.saved.collectAsState()
 
+    val context = LocalContext.current
+    var hasCameraPermission by remember {
+        mutableStateOf(
+            ContextCompat.checkSelfPermission(
+                context,
+                Manifest.permission.CAMERA
+            ) == PackageManager.PERMISSION_GRANTED
+        )
+    }
+    val permissionLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { granted ->
+        hasCameraPermission = granted
+    }
+
+    var manualBarcodeEntry by remember { mutableStateOf("") }
+
     var unitExpanded by remember { mutableStateOf(false) }
     val unitOptions = viewModel.unitOptions()
     val unitLabel = selectedUnit.ifBlank { "Pilih satuan (opsional)" }
+
+    fun submitManualBarcode() {
+        if (manualBarcodeEntry.isNotBlank()) {
+            viewModel.onBarcodeManualSubmit(manualBarcodeEntry)
+            manualBarcodeEntry = ""
+        }
+    }
 
     val canSave = !saved && !isSaving &&
         barcodeValue.isNotBlank() &&
@@ -143,56 +175,148 @@ fun RegisterScreen(
                 return@Column
             }
 
-            // Barcode Read-Only Card
-            IndustrialCard(borderColor = BrandSage, containerColor = MaterialTheme.colorScheme.surface) {
-                Text(
-                    text = "BARCODE FISIK",
-                    style = MaterialTheme.typography.labelSmall.copy(
-                        fontWeight = FontWeight.Bold,
-                        fontFamily = FontFamily.Monospace,
-                        letterSpacing = 1.sp
-                    ),
-                    color = MaterialTheme.colorScheme.primary
-                )
-                Spacer(modifier = Modifier.height(6.dp))
-                Surface(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(10.dp),
-                    color = BrandWarmCream.copy(alpha = 0.4f),
-                    border = BorderStroke(1.dp, BrandSage)
-                ) {
+            // Barcode Acquisition / Display Region
+            if (barcodeValue.isBlank()) {
+                // Acquisition Mode: Camera Viewfinder or Permission Prompt
+                if (hasCameraPermission) {
+                    Surface(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(240.dp),
+                        shape = RoundedCornerShape(16.dp),
+                        border = BorderStroke(2.dp, BrandSage)
+                    ) {
+                        BarcodeScannerView(
+                            enabled = true,
+                            onBarcode = viewModel::onBarcodeScanned,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(240.dp)
+                        )
+                    }
+                } else {
+                    IndustrialCard(borderColor = MaterialTheme.colorScheme.outlineVariant) {
+                        Text(
+                            text = "Izin kamera diperlukan untuk memindai barcode.",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Button(
+                            onClick = { permissionLauncher.launch(Manifest.permission.CAMERA) },
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(10.dp),
+                            colors = ButtonDefaults.buttonColors(containerColor = BrandGreen)
+                        ) {
+                            Text("Berikan Izin Kamera")
+                        }
+                    }
+                }
+
+                // Manual Barcode Entry Card
+                IndustrialCard(borderColor = MaterialTheme.colorScheme.outlineVariant) {
                     Text(
-                        text = barcodeValue.ifBlank { "(Menunggu input)" },
-                        modifier = Modifier.padding(horizontal = 14.dp, vertical = 12.dp),
-                        style = MaterialTheme.typography.bodyLarge.copy(
+                        text = "INPUT BARCODE MANUAL",
+                        style = MaterialTheme.typography.labelSmall.copy(
                             fontWeight = FontWeight.Bold,
                             fontFamily = FontFamily.Monospace,
                             letterSpacing = 1.sp
                         ),
-                        color = MaterialTheme.colorScheme.onSurface
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    OutlinedTextField(
+                        value = manualBarcodeEntry,
+                        onValueChange = { manualBarcodeEntry = it },
+                        label = { Text("Nomor Barcode Fisik") },
+                        singleLine = true,
+                        enabled = !isSaving,
+                        shape = RoundedCornerShape(12.dp),
+                        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+                        keyboardActions = KeyboardActions(onDone = { submitManualBarcode() }),
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Button(
+                        onClick = { submitManualBarcode() },
+                        enabled = !isSaving && manualBarcodeEntry.isNotBlank(),
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(12.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = BrandGreen)
+                    ) {
+                        Text("Terapkan Barcode", fontWeight = FontWeight.Bold)
+                    }
                 }
-            }
+            } else {
+                // Captured Mode: Barcode Read-Only Card with Rescan / Change Action
+                IndustrialCard(borderColor = BrandSage, containerColor = MaterialTheme.colorScheme.surface) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "BARCODE FISIK",
+                            style = MaterialTheme.typography.labelSmall.copy(
+                                fontWeight = FontWeight.Bold,
+                                fontFamily = FontFamily.Monospace,
+                                letterSpacing = 1.sp
+                            ),
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                        OutlinedButton(
+                            onClick = {
+                                manualBarcodeEntry = ""
+                                viewModel.onClearBarcode()
+                            },
+                            enabled = !isSaving,
+                            shape = RoundedCornerShape(8.dp),
+                            border = BorderStroke(1.dp, BrandSage),
+                            colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.primary)
+                        ) {
+                            Text("Ganti / Pindai Ulang", style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold))
+                        }
+                    }
+                    Spacer(modifier = Modifier.height(6.dp))
+                    Surface(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(10.dp),
+                        color = BrandWarmCream.copy(alpha = 0.4f),
+                        border = BorderStroke(1.dp, BrandSage)
+                    ) {
+                        Text(
+                            text = barcodeValue,
+                            modifier = Modifier.padding(horizontal = 14.dp, vertical = 12.dp),
+                            style = MaterialTheme.typography.bodyLarge.copy(
+                                fontWeight = FontWeight.Bold,
+                                fontFamily = FontFamily.Monospace,
+                                letterSpacing = 1.sp
+                            ),
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                    }
+                }
 
-            // Duplicate Detection Alert
-            if (duplicateFound != null) {
-                Surface(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(12.dp),
-                    color = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.5f),
-                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.error.copy(alpha = 0.5f))
-                ) {
-                    Column(modifier = Modifier.padding(12.dp)) {
-                        Text(
-                            text = "Barcode sudah terdaftar!",
-                            style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold),
-                            color = MaterialTheme.colorScheme.error
-                        )
-                        Text(
-                            text = "${duplicateFound!!.brgCode} — ${duplicateFound!!.brgName}",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
+                // Duplicate Detection Alert
+                if (duplicateFound != null) {
+                    Surface(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(12.dp),
+                        color = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.5f),
+                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.error.copy(alpha = 0.5f))
+                    ) {
+                        Column(modifier = Modifier.padding(12.dp)) {
+                            Text(
+                                text = "Barcode sudah terdaftar!",
+                                style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold),
+                                color = MaterialTheme.colorScheme.error
+                            )
+                            Text(
+                                text = "${duplicateFound!!.brgCode} — ${duplicateFound!!.brgName}",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
                     }
                 }
             }
