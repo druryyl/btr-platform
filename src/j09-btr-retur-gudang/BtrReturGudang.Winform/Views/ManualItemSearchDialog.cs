@@ -70,24 +70,24 @@ namespace BtrReturGudang.Winform.Views
             MaximizeBox = false;
             MinimizeBox = false;
             StartPosition = FormStartPosition.CenterParent;
-            ClientSize = new Size(680, 520);
-            BackColor = Color.FromArgb(248, 250, 252); // Slate-50
-            Font = new Font("Segoe UI", 9.5F, FontStyle.Regular, GraphicsUnit.Point);
+            ClientSize = new Size(720, 540);
+            BackColor = UiTheme.Slate100;
+            Font = UiTheme.FontBody;
             KeyPreview = true;
 
             // 1. Header Area
             var pnlHeader = new Panel
             {
                 Dock = DockStyle.Top,
-                Height = 70,
-                BackColor = Color.FromArgb(15, 23, 42), // Slate-900
+                Height = 68,
+                BackColor = UiTheme.Slate900,
                 Padding = new Padding(20, 12, 20, 12)
             };
 
             var lblTitle = new Label
             {
                 Text = "🔍 Cari Master Barang",
-                Font = new Font("Segoe UI", 12F, FontStyle.Bold, GraphicsUnit.Point),
+                Font = UiTheme.FontSectionTitle,
                 ForeColor = Color.White,
                 Location = new Point(20, 12),
                 AutoSize = true
@@ -96,8 +96,8 @@ namespace BtrReturGudang.Winform.Views
             var lblSubtitle = new Label
             {
                 Text = "Ketik kode atau nama barang. Gunakan panah Atas/Bawah dan tekan Enter untuk memilih.",
-                Font = new Font("Segoe UI", 8.5F, FontStyle.Regular, GraphicsUnit.Point),
-                ForeColor = Color.FromArgb(148, 163, 184), // Slate-400
+                Font = UiTheme.FontSubtitle,
+                ForeColor = UiTheme.Slate400,
                 Location = new Point(20, 38),
                 AutoSize = true
             };
@@ -109,25 +109,25 @@ namespace BtrReturGudang.Winform.Views
             var pnlSearch = new Panel
             {
                 Dock = DockStyle.Top,
-                Height = 52,
-                BackColor = Color.FromArgb(241, 245, 249), // Slate-100
+                Height = 54,
+                BackColor = UiTheme.Slate50,
                 Padding = new Padding(20, 10, 20, 10)
             };
 
             var lblSearch = new Label
             {
                 Text = "Cari Barang:",
-                Font = new Font("Segoe UI Semibold", 9F, FontStyle.Bold),
-                ForeColor = Color.FromArgb(51, 65, 85),
-                Location = new Point(20, 15),
+                Font = UiTheme.FontLabel,
+                ForeColor = UiTheme.Slate700,
+                Location = new Point(20, 16),
                 AutoSize = true
             };
 
             _txtSearch = new TextBox
             {
                 Font = new Font("Segoe UI", 10F, FontStyle.Regular, GraphicsUnit.Point),
-                Location = new Point(106, 12),
-                Width = 440
+                Location = new Point(110, 12),
+                Width = 470
             };
             _txtSearch.TextChanged += async (s, e) => await PerformSearchAsync(_txtSearch.Text);
             _txtSearch.KeyDown += OnSearchKeyDown;
@@ -135,13 +135,13 @@ namespace BtrReturGudang.Winform.Views
             var btnSearch = new Button
             {
                 Text = "Cari",
-                Font = new Font("Segoe UI Semibold", 9F, FontStyle.Bold),
-                BackColor = Color.FromArgb(37, 99, 235), // Blue-600
+                Font = UiTheme.FontLabel,
+                BackColor = UiTheme.Primary,
                 ForeColor = Color.White,
                 FlatStyle = FlatStyle.Flat,
-                Location = new Point(556, 11),
-                Width = 100,
-                Height = 28,
+                Location = new Point(590, 11),
+                Width = 105,
+                Height = 30,
                 Cursor = Cursors.Hand
             };
             btnSearch.FlatAppearance.BorderSize = 0;
@@ -156,24 +156,31 @@ namespace BtrReturGudang.Winform.Views
             {
                 Dock = DockStyle.Bottom,
                 Height = 84,
-                BackColor = Color.FromArgb(241, 245, 249),
+                BackColor = UiTheme.Slate50,
                 Padding = new Padding(20, 8, 20, 8)
+            };
+            pnlFooter.Paint += (s, e) =>
+            {
+                using (var pen = new Pen(UiTheme.Slate200, 1))
+                {
+                    e.Graphics.DrawLine(pen, 0, 0, pnlFooter.Width, 0);
+                }
             };
 
             _lblSelectedItem = new Label
             {
                 Text = "Barang Terpilih: (Belum dipilih)",
-                Font = new Font("Segoe UI Semibold", 9.5F, FontStyle.Bold),
-                ForeColor = Color.FromArgb(37, 99, 235), // Blue-600
-                Location = new Point(20, 10),
+                Font = UiTheme.FontBodyBold,
+                ForeColor = UiTheme.Primary,
+                Location = new Point(20, 12),
                 AutoSize = true
             };
 
             var lblSatuan = new Label
             {
                 Text = "Satuan:",
-                Font = new Font("Segoe UI Semibold", 9F, FontStyle.Bold),
-                ForeColor = Color.FromArgb(51, 65, 85),
+                Font = UiTheme.FontLabel,
+                ForeColor = UiTheme.Slate700,
                 Location = new Point(20, 44),
                 AutoSize = true
             };
@@ -181,8 +188,8 @@ namespace BtrReturGudang.Winform.Views
             _cboSatuan = new ComboBox
             {
                 DropDownStyle = ComboBoxStyle.DropDownList,
-                Font = new Font("Segoe UI", 9F),
-                Location = new Point(76, 41),
+                Font = UiTheme.FontBody,
+                Location = new Point(78, 41),
                 Width = 120
             };
             _cboSatuan.Items.AddRange(new object[] { "Dus", "Pak", "Pcs" });
@@ -191,21 +198,21 @@ namespace BtrReturGudang.Winform.Views
             _lblStatus = new Label
             {
                 Text = "0 barang ditemukan",
-                Font = new Font("Segoe UI", 8.5F),
-                ForeColor = Color.FromArgb(100, 116, 139),
-                Location = new Point(210, 45),
+                Font = UiTheme.FontSubtitle,
+                ForeColor = UiTheme.Slate500,
+                Location = new Point(215, 45),
                 AutoSize = true
             };
 
             _btnSelect = new Button
             {
                 Text = "Pilih (Enter)",
-                Font = new Font("Segoe UI Semibold", 9.5F, FontStyle.Bold),
-                BackColor = Color.FromArgb(16, 185, 129), // Emerald-500
+                Font = UiTheme.FontBodyBold,
+                BackColor = UiTheme.Emerald,
                 ForeColor = Color.White,
                 FlatStyle = FlatStyle.Flat,
-                Location = new Point(430, 26),
-                Width = 120,
+                Location = new Point(470, 24),
+                Width = 115,
                 Height = 38,
                 Cursor = Cursors.Hand
             };
@@ -216,16 +223,16 @@ namespace BtrReturGudang.Winform.Views
             {
                 Text = "Batal (Esc)",
                 DialogResult = DialogResult.Cancel,
-                Font = new Font("Segoe UI", 9.5F),
-                BackColor = Color.FromArgb(226, 232, 240),
-                ForeColor = Color.FromArgb(71, 85, 105),
+                Font = UiTheme.FontBody,
+                BackColor = UiTheme.White,
+                ForeColor = UiTheme.Slate700,
                 FlatStyle = FlatStyle.Flat,
-                Location = new Point(560, 26),
+                Location = new Point(595, 24),
                 Width = 100,
                 Height = 38,
                 Cursor = Cursors.Hand
             };
-            _btnCancel.FlatAppearance.BorderSize = 0;
+            _btnCancel.FlatAppearance.BorderColor = UiTheme.Slate300;
             _btnCancel.Click += (s, e) =>
             {
                 DialogResult = DialogResult.Cancel;
@@ -240,16 +247,14 @@ namespace BtrReturGudang.Winform.Views
             pnlFooter.Controls.Add(_btnCancel);
 
             // 4. Center Grid Area
-            var pnlGrid = new Panel
-            {
-                Dock = DockStyle.Fill,
-                Padding = new Padding(20, 10, 20, 10)
-            };
+            var pnlGrid = UiTheme.CreateCard(new Padding(10), new Padding(20, 10, 20, 10));
+            pnlGrid.Dock = DockStyle.Fill;
 
             _dgvItems = new DoubleBufferedDataGridView
             {
                 Dock = DockStyle.Fill
             };
+            UiTheme.StyleDataGrid(_dgvItems);
             BuildColumns();
 
             _dgvItems.SelectionChanged += OnGridSelectionChanged;
@@ -277,8 +282,9 @@ namespace BtrReturGudang.Winform.Views
                 Name = "colBrgId",
                 HeaderText = "Kode Barang",
                 DataPropertyName = "BrgId",
-                Width = 120,
-                ReadOnly = true
+                Width = 125,
+                ReadOnly = true,
+                DefaultCellStyle = { Font = UiTheme.FontMonospaceBold }
             };
 
             var colName = new DataGridViewTextBoxColumn
@@ -296,7 +302,7 @@ namespace BtrReturGudang.Winform.Views
                 Name = "colSat1",
                 HeaderText = "Satuan 1",
                 DataPropertyName = "Satuan1",
-                Width = 80,
+                Width = 85,
                 ReadOnly = true,
                 DefaultCellStyle = { Alignment = DataGridViewContentAlignment.MiddleCenter }
             };

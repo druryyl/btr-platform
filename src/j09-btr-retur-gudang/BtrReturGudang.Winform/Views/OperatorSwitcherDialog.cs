@@ -32,60 +32,112 @@ namespace BtrReturGudang.Winform.Views
             MaximizeBox = false;
             MinimizeBox = false;
             StartPosition = FormStartPosition.CenterParent;
-            ClientSize = new Size(380, 180);
-            BackColor = Color.FromArgb(248, 250, 252);
-            Font = new Font("Segoe UI", 9.75F, FontStyle.Regular, GraphicsUnit.Point);
+            ClientSize = new Size(460, 260);
+            BackColor = UiTheme.Slate100;
+            Font = UiTheme.FontBody;
+
+            // 1. Top Header Banner
+            var pnlHeader = new Panel
+            {
+                Dock = DockStyle.Top,
+                Height = 62,
+                BackColor = UiTheme.Slate900,
+                Padding = new Padding(20, 10, 20, 10)
+            };
+
+            var lblTitle = new Label
+            {
+                Text = "👤 Ganti Operator Shift",
+                Font = UiTheme.FontSectionTitle,
+                ForeColor = Color.White,
+                Location = new Point(20, 10),
+                AutoSize = true
+            };
+
+            var lblSubtitle = new Label
+            {
+                Text = "Perbarui identitas operator aktif untuk sesi retur workstation ini.",
+                Font = UiTheme.FontSubtitle,
+                ForeColor = UiTheme.Slate400,
+                Location = new Point(20, 34),
+                AutoSize = true
+            };
+
+            pnlHeader.Controls.Add(lblTitle);
+            pnlHeader.Controls.Add(lblSubtitle);
+
+            // 2. Card Body Container
+            var pnlBody = UiTheme.CreateCard(new Padding(16, 12, 16, 14), new Padding(20, 16, 20, 16));
+            pnlBody.Dock = DockStyle.Fill;
 
             var lblPrompt = new Label
             {
-                Text = "Masukkan nama operator yang sedang bertugas:",
-                Location = new Point(24, 20),
-                AutoSize = true,
-                ForeColor = Color.FromArgb(15, 23, 42)
+                Text = "Nama Operator / Petugas Gudang:",
+                Font = UiTheme.FontLabel,
+                ForeColor = UiTheme.Slate700,
+                Location = new Point(20, 16),
+                AutoSize = true
             };
 
+            string currentOp = _registryHelper.LastOperatorName ?? string.Empty;
             _txtOperator = new TextBox
             {
-                Location = new Point(24, 52),
-                Width = 330,
+                Location = new Point(20, 40),
+                Width = 388,
                 Font = new Font("Segoe UI", 11F, FontStyle.Regular, GraphicsUnit.Point),
-                Text = _registryHelper.LastOperatorName ?? string.Empty
+                Text = currentOp
             };
 
+            var lblHint = new Label
+            {
+                Text = string.IsNullOrWhiteSpace(currentOp) 
+                    ? "Belum ada operator tersimpan di registry workstation ini." 
+                    : $"Operator aktif sebelumnya: \"{currentOp}\"",
+                Font = UiTheme.FontSubtitle,
+                ForeColor = UiTheme.Slate500,
+                Location = new Point(20, 75),
+                AutoSize = true
+            };
+
+            // 3. Action Buttons
             _btnSave = new Button
             {
-                Text = "Simpan",
+                Text = "Simpan Operator",
                 DialogResult = DialogResult.OK,
-                Location = new Point(168, 110),
-                Width = 90,
-                Height = 36,
-                BackColor = Color.FromArgb(37, 99, 235), // Blue-600
-                ForeColor = Color.White,
-                FlatStyle = FlatStyle.Flat
+                Location = new Point(194, 110),
+                Width = 130,
+                Height = 36
             };
-            _btnSave.FlatAppearance.BorderSize = 0;
+            UiTheme.ApplyPrimaryButton(_btnSave, 36);
             _btnSave.Click += OnSaveClick;
 
             _btnCancel = new Button
             {
                 Text = "Batal",
                 DialogResult = DialogResult.Cancel,
-                Location = new Point(266, 110),
-                Width = 88,
-                Height = 36,
-                BackColor = Color.FromArgb(226, 232, 240),
-                ForeColor = Color.FromArgb(71, 85, 105),
-                FlatStyle = FlatStyle.Flat
+                Location = new Point(332, 110),
+                Width = 76,
+                Height = 36
             };
-            _btnCancel.FlatAppearance.BorderSize = 0;
+            UiTheme.ApplyOutlineButton(_btnCancel, 36);
 
             AcceptButton = _btnSave;
             CancelButton = _btnCancel;
 
-            Controls.Add(lblPrompt);
-            Controls.Add(_txtOperator);
-            Controls.Add(_btnSave);
-            Controls.Add(_btnCancel);
+            pnlBody.Controls.Add(lblPrompt);
+            pnlBody.Controls.Add(_txtOperator);
+            pnlBody.Controls.Add(lblHint);
+            pnlBody.Controls.Add(_btnSave);
+            pnlBody.Controls.Add(_btnCancel);
+
+            Controls.Add(pnlBody);
+            Controls.Add(pnlHeader);
+
+            Shown += (s, e) =>
+            {
+                _txtOperator.Focus();
+                _txtOperator.SelectAll();
+            };
         }
 
         private void OnSaveClick(object sender, EventArgs e)

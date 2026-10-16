@@ -89,8 +89,8 @@ namespace BtrReturGudang.Winform.Views
         private void InitializeComponent()
         {
             Dock = DockStyle.Fill;
-            BackColor = Color.FromArgb(241, 245, 249); // Slate-100
-            Font = new Font("Segoe UI", 9.75F, FontStyle.Regular, GraphicsUnit.Point);
+            BackColor = UiTheme.Slate100;
+            Font = UiTheme.FontBody;
 
             // 1. Header
             BuildHeader();
@@ -136,39 +136,39 @@ namespace BtrReturGudang.Winform.Views
             _pnlHeader = new Panel
             {
                 Dock = DockStyle.Top,
-                Height = 72,
-                BackColor = Color.White,
+                Height = 68,
+                BackColor = UiTheme.White,
                 Padding = new Padding(24, 12, 24, 12)
             };
 
             _lblTitle = new Label
             {
                 Text = "Pengaturan Workstation [F5]",
-                Font = new Font("Segoe UI", 15F, FontStyle.Bold, GraphicsUnit.Point),
-                ForeColor = Color.FromArgb(15, 23, 42),
+                Font = UiTheme.FontPageTitle,
+                ForeColor = UiTheme.Slate900,
                 AutoSize = true,
-                Location = new Point(24, 12)
+                Location = new Point(24, 10)
             };
 
             _lblStatus = new Label
             {
                 Text = "Konfigurasi Depo/Warehouse, koneksi database btrgd, pengujian relay API, dan umpan balik audio scanner.",
-                Font = new Font("Segoe UI", 9F, FontStyle.Regular, GraphicsUnit.Point),
-                ForeColor = Color.FromArgb(100, 116, 139),
+                Font = UiTheme.FontSubtitle,
+                ForeColor = UiTheme.Slate500,
                 AutoSize = true,
-                Location = new Point(26, 42)
+                Location = new Point(26, 38)
             };
 
             _btnSaveAll = new Button
             {
                 Text = "💾 Simpan Pengaturan",
-                Font = new Font("Segoe UI Semibold", 9.5F, FontStyle.Bold),
-                BackColor = Color.FromArgb(37, 99, 235), // Blue-600
+                Font = UiTheme.FontLabel,
+                BackColor = UiTheme.Primary,
                 ForeColor = Color.White,
                 FlatStyle = FlatStyle.Flat,
-                Width = 175,
+                Width = 180,
                 Height = 36,
-                Location = new Point(Width - 200, 18),
+                Location = new Point(Width - 205, 16),
                 Anchor = AnchorStyles.Top | AnchorStyles.Right,
                 Cursor = Cursors.Hand
             };
@@ -185,48 +185,49 @@ namespace BtrReturGudang.Winform.Views
             var pnl = CreateCardPanel("🏢 Identitas Workstation & Shift Operator", 185);
 
             // Depo / Warehouse Code
-            var lblWh = new Label { Text = "Kode Depo / Warehouse:", Location = new Point(20, 48), AutoSize = true };
-            _txtWarehouseCode = new TextBox { Location = new Point(200, 45), Width = 160 };
+            var lblWh = new Label { Text = "Kode Depo / Warehouse:", Font = UiTheme.FontLabel, ForeColor = UiTheme.Slate700, Location = new Point(24, 48), AutoSize = true };
+            _txtWarehouseCode = new TextBox { Location = new Point(210, 45), Width = 170, Font = UiTheme.FontBody };
 
             // Server Target ID
-            var lblServer = new Label { Text = "Server Target ID:", Location = new Point(400, 48), AutoSize = true };
-            _txtServerTargetId = new TextBox { Location = new Point(530, 45), Width = 160 };
+            var lblServer = new Label { Text = "Server Target ID:", Font = UiTheme.FontLabel, ForeColor = UiTheme.Slate700, Location = new Point(410, 48), AutoSize = true };
+            _txtServerTargetId = new TextBox { Location = new Point(540, 45), Width = 170, Font = UiTheme.FontBody };
 
             // PC Machine Name
-            var lblPc = new Label { Text = "Nama Komputer (PC):", Location = new Point(20, 88), AutoSize = true };
+            var lblPc = new Label { Text = "Nama Komputer (PC):", Font = UiTheme.FontLabel, ForeColor = UiTheme.Slate700, Location = new Point(24, 88), AutoSize = true };
             _txtPcName = new TextBox
             {
                 Text = Environment.MachineName,
                 ReadOnly = true,
-                BackColor = Color.FromArgb(241, 245, 249),
-                Location = new Point(200, 85),
-                Width = 240
+                BackColor = UiTheme.Slate100,
+                Font = UiTheme.FontMonospace,
+                Location = new Point(210, 85),
+                Width = 260
             };
 
             // Operator
-            var lblOp = new Label { Text = "Operator Shift Aktif:", Location = new Point(20, 128), AutoSize = true };
+            var lblOp = new Label { Text = "Operator Shift Aktif:", Font = UiTheme.FontLabel, ForeColor = UiTheme.Slate700, Location = new Point(24, 128), AutoSize = true };
             _lblOperatorDisplay = new Label
             {
                 Text = "Operator-1",
-                Font = new Font("Segoe UI Semibold", 10F, FontStyle.Bold),
-                ForeColor = Color.FromArgb(15, 23, 42),
-                Location = new Point(200, 128),
+                Font = UiTheme.FontBodyBold,
+                ForeColor = UiTheme.Slate900,
+                Location = new Point(210, 128),
                 AutoSize = true
             };
 
             _btnSwitchOperator = new Button
             {
                 Text = "Ganti Operator...",
-                Font = new Font("Segoe UI", 8.5F),
-                BackColor = Color.FromArgb(226, 232, 240),
-                ForeColor = Color.FromArgb(51, 65, 85),
+                Font = UiTheme.FontLabel,
+                BackColor = UiTheme.Slate100,
+                ForeColor = UiTheme.Slate800,
                 FlatStyle = FlatStyle.Flat,
-                Location = new Point(360, 124),
-                Width = 120,
-                Height = 28,
+                Location = new Point(370, 123),
+                Width = 130,
+                Height = 30,
                 Cursor = Cursors.Hand
             };
-            _btnSwitchOperator.FlatAppearance.BorderSize = 0;
+            _btnSwitchOperator.FlatAppearance.BorderColor = UiTheme.Slate300;
             _btnSwitchOperator.Click += OnSwitchOperatorClick;
 
             pnl.Controls.Add(lblWh);
@@ -244,25 +245,25 @@ namespace BtrReturGudang.Winform.Views
 
         private Control BuildDatabaseCard()
         {
-            var pnl = CreateCardPanel("🗄️ Koneksi Database Lokal (SQL Server - btrgd)", 180);
+            var pnl = CreateCardPanel("🗄️ Koneksi Database Lokal (SQL Server - btrgd)", 185);
 
-            var lblConn = new Label { Text = "Connection String btrgd:", Location = new Point(20, 48), AutoSize = true };
+            var lblConn = new Label { Text = "Connection String btrgd:", Font = UiTheme.FontLabel, ForeColor = UiTheme.Slate700, Location = new Point(24, 48), AutoSize = true };
             _txtConnString = new TextBox
             {
-                Location = new Point(20, 72),
-                Width = 740,
-                Font = new Font("Consolas", 9F)
+                Location = new Point(24, 72),
+                Width = 780,
+                Font = UiTheme.FontMonospace
             };
 
             _btnTestDb = new Button
             {
                 Text = "🔌 Tes Koneksi Local DB",
-                Font = new Font("Segoe UI Semibold", 9F, FontStyle.Bold),
-                BackColor = Color.FromArgb(37, 99, 235),
+                Font = UiTheme.FontLabel,
+                BackColor = UiTheme.Primary,
                 ForeColor = Color.White,
                 FlatStyle = FlatStyle.Flat,
-                Location = new Point(20, 114),
-                Width = 180,
+                Location = new Point(24, 116),
+                Width = 185,
                 Height = 34,
                 Cursor = Cursors.Hand
             };
@@ -272,29 +273,30 @@ namespace BtrReturGudang.Winform.Views
             _btnResetDb = new Button
             {
                 Text = "Reset Default",
-                Font = new Font("Segoe UI", 8.5F),
-                BackColor = Color.FromArgb(241, 245, 249),
-                ForeColor = Color.FromArgb(71, 85, 105),
+                Font = UiTheme.FontLabel,
+                BackColor = UiTheme.Slate100,
+                ForeColor = UiTheme.Slate700,
                 FlatStyle = FlatStyle.Flat,
-                Location = new Point(208, 114),
-                Width = 110,
+                Location = new Point(218, 116),
+                Width = 115,
                 Height = 34,
                 Cursor = Cursors.Hand
             };
-            _btnResetDb.FlatAppearance.BorderColor = Color.FromArgb(203, 213, 225);
+            _btnResetDb.FlatAppearance.BorderColor = UiTheme.Slate300;
             _btnResetDb.Click += (s, e) =>
             {
                 _txtConnString.Text = ConnStringHelper.DefaultConnectionString;
                 _lblDbStatus.Text = "Status: Dikembalikan ke default (belum diuji).";
-                _lblDbStatus.ForeColor = Color.FromArgb(100, 116, 139);
+                _lblDbStatus.ForeColor = UiTheme.Slate500;
             };
 
             _lblDbStatus = new Label
             {
                 Text = "Status: Belum diuji.",
-                Location = new Point(330, 122),
+                Font = UiTheme.FontLabel,
+                Location = new Point(345, 124),
                 AutoSize = true,
-                ForeColor = Color.FromArgb(100, 116, 139)
+                ForeColor = UiTheme.Slate500
             };
 
             pnl.Controls.Add(lblConn);
@@ -310,23 +312,24 @@ namespace BtrReturGudang.Winform.Views
         {
             var pnl = CreateCardPanel("☁️ Konfigurasi Cloud API Relay (j06-pkl-btrade-api)", 150);
 
-            var lblUrl = new Label { Text = "Base URL Staging Relay:", Location = new Point(20, 48), AutoSize = true };
+            var lblUrl = new Label { Text = "Base URL Staging Relay:", Font = UiTheme.FontLabel, ForeColor = UiTheme.Slate700, Location = new Point(24, 48), AutoSize = true };
             _txtApiUrl = new TextBox
             {
                 Text = ConfigurationManager.AppSettings["BtradeApiBaseUrl"] ?? "http://localhost:5000",
-                Location = new Point(200, 45),
-                Width = 350
+                Font = UiTheme.FontBody,
+                Location = new Point(210, 45),
+                Width = 380
             };
 
             _btnTestApi = new Button
             {
                 Text = "🌐 Ping / Tes API Relay",
-                Font = new Font("Segoe UI Semibold", 9F, FontStyle.Bold),
-                BackColor = Color.FromArgb(37, 99, 235),
+                Font = UiTheme.FontLabel,
+                BackColor = UiTheme.Primary,
                 ForeColor = Color.White,
                 FlatStyle = FlatStyle.Flat,
-                Location = new Point(20, 88),
-                Width = 180,
+                Location = new Point(24, 90),
+                Width = 185,
                 Height = 34,
                 Cursor = Cursors.Hand
             };
@@ -336,9 +339,10 @@ namespace BtrReturGudang.Winform.Views
             _lblApiStatus = new Label
             {
                 Text = "Status: Belum diuji.",
-                Location = new Point(210, 96),
+                Font = UiTheme.FontLabel,
+                Location = new Point(220, 98),
                 AutoSize = true,
-                ForeColor = Color.FromArgb(100, 116, 139)
+                ForeColor = UiTheme.Slate500
             };
 
             pnl.Controls.Add(lblUrl);
@@ -356,9 +360,10 @@ namespace BtrReturGudang.Winform.Views
             _chkEnableAudio = new CheckBox
             {
                 Text = "Aktifkan Umpan Balik Suara Scanner & Notifikasi (EnableSoundFeedback)",
-                Font = new Font("Segoe UI Semibold", 9.5F, FontStyle.Bold),
+                Font = UiTheme.FontBodyBold,
+                ForeColor = UiTheme.Slate900,
                 Checked = true,
-                Location = new Point(20, 46),
+                Location = new Point(24, 46),
                 AutoSize = true
             };
             _chkEnableAudio.CheckedChanged += OnEnableAudioChanged;
@@ -366,31 +371,31 @@ namespace BtrReturGudang.Winform.Views
             _btnTestSuccessBeep = new Button
             {
                 Text = "🔔 Tes Beep Sukses (2000Hz, 80ms)",
-                Font = new Font("Segoe UI", 9F),
-                BackColor = Color.FromArgb(209, 250, 229), // Emerald-100
-                ForeColor = Color.FromArgb(4, 120, 87),    // Emerald-700
+                Font = UiTheme.FontLabel,
+                BackColor = UiTheme.EmeraldLight,
+                ForeColor = UiTheme.EmeraldText,
                 FlatStyle = FlatStyle.Flat,
-                Location = new Point(20, 86),
-                Width = 240,
+                Location = new Point(24, 88),
+                Width = 250,
                 Height = 34,
                 Cursor = Cursors.Hand
             };
-            _btnTestSuccessBeep.FlatAppearance.BorderColor = Color.FromArgb(167, 243, 208);
+            _btnTestSuccessBeep.FlatAppearance.BorderColor = UiTheme.EmeraldBorder;
             _btnTestSuccessBeep.Click += (s, e) => _audioHelper?.PlaySuccess();
 
             _btnTestWarningBeep = new Button
             {
                 Text = "⚠️ Tes Beep Peringatan (400Hz, 200ms)",
-                Font = new Font("Segoe UI", 9F),
-                BackColor = Color.FromArgb(254, 243, 199), // Amber-100
-                ForeColor = Color.FromArgb(180, 83, 9),    // Amber-700
+                Font = UiTheme.FontLabel,
+                BackColor = UiTheme.AmberLight,
+                ForeColor = UiTheme.AmberText,
                 FlatStyle = FlatStyle.Flat,
-                Location = new Point(270, 86),
-                Width = 250,
+                Location = new Point(284, 88),
+                Width = 260,
                 Height = 34,
                 Cursor = Cursors.Hand
             };
-            _btnTestWarningBeep.FlatAppearance.BorderColor = Color.FromArgb(253, 230, 138);
+            _btnTestWarningBeep.FlatAppearance.BorderColor = UiTheme.AmberBorder;
             _btnTestWarningBeep.Click += (s, e) => _audioHelper?.PlayWarning();
 
             pnl.Controls.Add(_chkEnableAudio);
@@ -404,19 +409,27 @@ namespace BtrReturGudang.Winform.Views
         {
             var pnl = new Panel
             {
-                Width = 780,
+                Width = 830,
                 Height = height,
-                BackColor = Color.White,
+                BackColor = UiTheme.White,
                 Margin = new Padding(0, 0, 0, 16),
                 Padding = new Padding(20)
+            };
+
+            pnl.Paint += (s, e) =>
+            {
+                using (var pen = new Pen(UiTheme.Slate200, 1))
+                {
+                    e.Graphics.DrawRectangle(pen, 0, 0, pnl.Width - 1, pnl.Height - 1);
+                }
             };
 
             var lblCardTitle = new Label
             {
                 Text = title,
-                Font = new Font("Segoe UI Semibold", 11F, FontStyle.Bold),
-                ForeColor = Color.FromArgb(30, 41, 59),
-                Location = new Point(16, 14),
+                Font = UiTheme.FontSectionTitle,
+                ForeColor = UiTheme.Slate900,
+                Location = new Point(20, 14),
                 AutoSize = true
             };
 

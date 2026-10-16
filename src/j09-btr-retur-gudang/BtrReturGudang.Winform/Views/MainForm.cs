@@ -97,17 +97,22 @@ namespace BtrReturGudang.Winform.Views
             Font = new Font("Segoe UI", 9.75F, FontStyle.Regular, GraphicsUnit.Point);
             BackColor = Color.FromArgb(241, 245, 249); // Slate-100
 
-            // 1. Header (Top)
+            // Build and dock controls in explicit Z-order.
+            // In Windows Forms, docked controls are evaluated in reverse child index order (from highest index to 0).
+            // To ensure:
+            // 1. _pnlHeader (DockStyle.Top) spans the FULL width across the top of the form (index 3).
+            // 2. _statusStrip (DockStyle.Bottom) spans the FULL width across the bottom of the form (index 2).
+            // 3. _pnlSidebar (DockStyle.Left) docks cleanly BETWEEN Header and StatusStrip (index 1).
+            // 4. _pnlContentHost (DockStyle.Fill) fills the remaining rectangle to the right of the sidebar (index 0).
+            BuildContentHost();
+            BuildSidebar();
+            BuildStatusStrip();
             BuildHeader();
 
-            // 2. Status Strip (Bottom)
-            BuildStatusStrip();
-
-            // 3. Sidebar (Left)
-            BuildSidebar();
-
-            // 4. Content Host (Fill)
-            BuildContentHost();
+            Controls.SetChildIndex(_pnlContentHost, 0);
+            Controls.SetChildIndex(_pnlSidebar, 1);
+            Controls.SetChildIndex(_statusStrip, 2);
+            Controls.SetChildIndex(_pnlHeader, 3);
 
             // Initial view load
             LoadView(NavigationModule.Intake);
@@ -118,19 +123,60 @@ namespace BtrReturGudang.Winform.Views
             _pnlHeader = new Panel
             {
                 Dock = DockStyle.Top,
-                Height = 60,
-                BackColor = Color.FromArgb(15, 23, 42), // Slate-900
+                Height = 64,
+                BackColor = UiTheme.Slate900,
                 Padding = new Padding(20, 0, 20, 0)
+            };
+
+            _pnlHeader.Paint += (s, e) =>
+            {
+                using (var pen = new Pen(UiTheme.Slate800, 1))
+                {
+                    e.Graphics.DrawLine(pen, 0, _pnlHeader.Height - 1, _pnlHeader.Width, _pnlHeader.Height - 1);
+                }
+            };
+
+            // Brand Mark container
+            var pnlBrand = new Panel
+            {
+                Dock = DockStyle.Left,
+                Width = 420,
+                Height = 64,
+                BackColor = Color.Transparent
+            };
+
+            var lblLogoBadge = new Label
+            {
+                Text = "BTR",
+                Font = new Font("Segoe UI Bold", 9.5F, FontStyle.Bold),
+                ForeColor = Color.White,
+                BackColor = UiTheme.Primary,
+                TextAlign = ContentAlignment.MiddleCenter,
+                Size = new Size(44, 26),
+                Location = new Point(0, 19)
             };
 
             _lblAppTitle = new Label
             {
-                Text = "BTR RETUR GUDANG",
-                Font = new Font("Segoe UI", 13F, FontStyle.Bold, GraphicsUnit.Point),
+                Text = "RETUR GUDANG",
+                Font = new Font("Segoe UI", 12.5F, FontStyle.Bold, GraphicsUnit.Point),
                 ForeColor = Color.White,
                 AutoSize = true,
-                Location = new Point(20, 18)
+                Location = new Point(52, 14)
             };
+
+            var lblAppSubtitle = new Label
+            {
+                Text = "Desktop Return Order & Barcode Station",
+                Font = new Font("Segoe UI", 8F, FontStyle.Regular, GraphicsUnit.Point),
+                ForeColor = UiTheme.Slate400,
+                AutoSize = true,
+                Location = new Point(54, 38)
+            };
+
+            pnlBrand.Controls.Add(lblLogoBadge);
+            pnlBrand.Controls.Add(_lblAppTitle);
+            pnlBrand.Controls.Add(lblAppSubtitle);
 
             // Flow panel for right-aligned items
             var pnlRightHeader = new FlowLayoutPanel
@@ -139,8 +185,8 @@ namespace BtrReturGudang.Winform.Views
                 AutoSize = true,
                 FlowDirection = FlowDirection.LeftToRight,
                 WrapContents = false,
-                Height = 60,
-                Padding = new Padding(0, 14, 0, 0)
+                Height = 64,
+                Padding = new Padding(0, 16, 0, 0)
             };
 
             // Depo badge
@@ -151,11 +197,11 @@ namespace BtrReturGudang.Winform.Views
             _lblDepoBadge = new Label
             {
                 Text = $"🏢 DEPO: {depoCode}",
-                Font = new Font("Segoe UI Semibold", 9.5F, FontStyle.Bold, GraphicsUnit.Point),
-                ForeColor = Color.FromArgb(203, 213, 225), // Slate-300
-                BackColor = Color.FromArgb(30, 41, 59),   // Slate-800
-                Padding = new Padding(8, 5, 8, 5),
-                Margin = new Padding(0, 0, 12, 0),
+                Font = new Font("Segoe UI Semibold", 9F, FontStyle.Bold, GraphicsUnit.Point),
+                ForeColor = UiTheme.Slate300,
+                BackColor = UiTheme.Slate800,
+                Padding = new Padding(10, 6, 10, 6),
+                Margin = new Padding(0, 0, 10, 0),
                 AutoSize = true
             };
 
@@ -167,11 +213,11 @@ namespace BtrReturGudang.Winform.Views
             _lblOperatorBadge = new Label
             {
                 Text = $"👤 {operatorName}",
-                Font = new Font("Segoe UI Semibold", 9.5F, FontStyle.Bold, GraphicsUnit.Point),
-                ForeColor = Color.FromArgb(226, 232, 240),
-                BackColor = Color.FromArgb(30, 41, 59),
-                Padding = new Padding(8, 5, 8, 5),
-                Margin = new Padding(0, 0, 4, 0),
+                Font = new Font("Segoe UI Semibold", 9F, FontStyle.Bold, GraphicsUnit.Point),
+                ForeColor = Color.White,
+                BackColor = UiTheme.Slate800,
+                Padding = new Padding(10, 6, 10, 6),
+                Margin = new Padding(0, 0, 6, 0),
                 AutoSize = true
             };
 
@@ -179,11 +225,11 @@ namespace BtrReturGudang.Winform.Views
             _btnSwitchOperator = new Button
             {
                 Text = "Ganti",
-                Font = new Font("Segoe UI", 8.5F, FontStyle.Regular, GraphicsUnit.Point),
-                ForeColor = Color.White,
-                BackColor = Color.FromArgb(51, 65, 85), // Slate-700
+                Font = new Font("Segoe UI Semibold", 8F, FontStyle.Bold, GraphicsUnit.Point),
+                ForeColor = UiTheme.Slate300,
+                BackColor = UiTheme.Slate700,
                 FlatStyle = FlatStyle.Flat,
-                Width = 56,
+                Width = 54,
                 Height = 28,
                 Margin = new Padding(0, 2, 16, 0),
                 Cursor = Cursors.Hand
@@ -191,31 +237,42 @@ namespace BtrReturGudang.Winform.Views
             _btnSwitchOperator.FlatAppearance.BorderSize = 0;
             _btnSwitchOperator.Click += OnSwitchOperatorClick;
 
-            // Live online/offline indicator dot
+            // Online/offline indicator container pill
+            var pnlOnlinePill = new Panel
+            {
+                BackColor = Color.FromArgb(20, 35, 30),
+                Height = 28,
+                AutoSize = true,
+                Padding = new Padding(8, 6, 10, 6),
+                Margin = new Padding(0, 2, 0, 0)
+            };
+
             _pnlOnlineDot = new Panel
             {
-                Width = 12,
-                Height = 12,
-                BackColor = Color.FromArgb(16, 185, 129), // Emerald-500 (Online by default)
-                Margin = new Padding(0, 10, 6, 0)
+                Width = 8,
+                Height = 8,
+                BackColor = UiTheme.Emerald,
+                Location = new Point(10, 10)
             };
 
             _lblOnlineStatus = new Label
             {
                 Text = "ONLINE",
-                Font = new Font("Segoe UI Bold", 9F, FontStyle.Bold, GraphicsUnit.Point),
-                ForeColor = Color.FromArgb(16, 185, 129),
+                Font = new Font("Segoe UI Bold", 8.5F, FontStyle.Bold, GraphicsUnit.Point),
+                ForeColor = UiTheme.Emerald,
                 AutoSize = true,
-                Margin = new Padding(0, 7, 0, 0)
+                Location = new Point(24, 6)
             };
+
+            pnlOnlinePill.Controls.Add(_pnlOnlineDot);
+            pnlOnlinePill.Controls.Add(_lblOnlineStatus);
 
             pnlRightHeader.Controls.Add(_lblDepoBadge);
             pnlRightHeader.Controls.Add(_lblOperatorBadge);
             pnlRightHeader.Controls.Add(_btnSwitchOperator);
-            pnlRightHeader.Controls.Add(_pnlOnlineDot);
-            pnlRightHeader.Controls.Add(_lblOnlineStatus);
+            pnlRightHeader.Controls.Add(pnlOnlinePill);
 
-            _pnlHeader.Controls.Add(_lblAppTitle);
+            _pnlHeader.Controls.Add(pnlBrand);
             _pnlHeader.Controls.Add(pnlRightHeader);
             Controls.Add(_pnlHeader);
         }
@@ -225,45 +282,54 @@ namespace BtrReturGudang.Winform.Views
             _statusStrip = new StatusStrip
             {
                 Dock = DockStyle.Bottom,
-                BackColor = Color.FromArgb(248, 250, 252),
+                BackColor = UiTheme.White,
                 Font = new Font("Segoe UI", 9F, FontStyle.Regular, GraphicsUnit.Point),
-                SizingGrip = false
+                SizingGrip = false,
+                Height = 28
+            };
+
+            _statusStrip.Paint += (s, e) =>
+            {
+                using (var pen = new Pen(UiTheme.Slate300, 1))
+                {
+                    e.Graphics.DrawLine(pen, 0, 0, _statusStrip.Width, 0);
+                }
             };
 
             _lblStatusScanner = new ToolStripStatusLabel
             {
-                Text = "Scanner: Aktif (IMessageFilter)",
-                ForeColor = Color.FromArgb(15, 23, 42),
+                Text = "⚡ Scanner: Aktif (IMessageFilter)",
+                ForeColor = UiTheme.Slate900,
                 BorderSides = ToolStripStatusLabelBorderSides.Right,
                 BorderStyle = Border3DStyle.Etched,
-                Padding = new Padding(8, 0, 8, 0)
+                Padding = new Padding(10, 2, 10, 2)
             };
 
             _lblStatusLatency = new ToolStripStatusLabel
             {
-                Text = "Buffer Latency: <= 50ms",
-                ForeColor = Color.FromArgb(71, 85, 105),
+                Text = "Latency: <= 50ms",
+                ForeColor = UiTheme.Slate600,
                 BorderSides = ToolStripStatusLabelBorderSides.Right,
                 BorderStyle = Border3DStyle.Etched,
-                Padding = new Padding(8, 0, 8, 0)
+                Padding = new Padding(10, 2, 10, 2)
             };
 
             _lblStatusLastSync = new ToolStripStatusLabel
             {
                 Text = "Terakhir Sync: Belum ada",
-                ForeColor = Color.FromArgb(71, 85, 105),
+                ForeColor = UiTheme.Slate600,
                 BorderSides = ToolStripStatusLabelBorderSides.Right,
                 BorderStyle = Border3DStyle.Etched,
-                Padding = new Padding(8, 0, 8, 0)
+                Padding = new Padding(10, 2, 10, 2)
             };
 
             _lblStatusInfo = new ToolStripStatusLabel
             {
-                Text = "Siap menerima transaksi.",
-                ForeColor = Color.FromArgb(100, 116, 139),
+                Text = "Siap menerima transaksi fisik retur.",
+                ForeColor = UiTheme.Slate500,
                 Spring = true,
                 TextAlign = ContentAlignment.MiddleLeft,
-                Padding = new Padding(8, 0, 8, 0)
+                Padding = new Padding(10, 2, 10, 2)
             };
 
             _statusStrip.Items.AddRange(new ToolStripItem[]
@@ -282,31 +348,40 @@ namespace BtrReturGudang.Winform.Views
             _pnlSidebar = new Panel
             {
                 Dock = DockStyle.Left,
-                Width = 220,
-                BackColor = Color.FromArgb(30, 41, 59), // Slate-800
-                Padding = new Padding(12, 16, 12, 16)
+                Width = 230,
+                BackColor = UiTheme.Slate850,
+                Padding = new Padding(12, 18, 12, 16)
+            };
+
+            _pnlSidebar.Paint += (s, e) =>
+            {
+                using (var pen = new Pen(UiTheme.Slate800, 1))
+                {
+                    e.Graphics.DrawLine(pen, _pnlSidebar.Width - 1, 0, _pnlSidebar.Width - 1, _pnlSidebar.Height);
+                }
             };
 
             var lblMenuSection = new Label
             {
                 Text = "NAVIGASI UTAMA",
-                Font = new Font("Segoe UI Bold", 8F, FontStyle.Bold, GraphicsUnit.Point),
-                ForeColor = Color.FromArgb(148, 163, 184), // Slate-400
+                Font = new Font("Segoe UI Bold", 7.5F, FontStyle.Bold, GraphicsUnit.Point),
+                ForeColor = UiTheme.Slate400,
                 Location = new Point(16, 16),
                 AutoSize = true
             };
 
-            _btnNavIntake = CreateSidebarButton("F1   Intake Retur", 42, () => NavigateTo(NavigationModule.Intake));
-            _btnNavDaftar = CreateSidebarButton("F3   Daftar Retur", 98, () => NavigateTo(NavigationModule.DaftarRetur));
-            _btnNavBarcode = CreateSidebarButton("F4   Barcode Registry", 154, () => NavigateTo(NavigationModule.BarcodeRegistry));
-            _btnNavSettings = CreateSidebarButton("F5   Pengaturan", 210, () => NavigateTo(NavigationModule.Pengaturan));
+            _btnNavIntake = CreateSidebarButton("Intake Retur", "F1", 42, () => NavigateTo(NavigationModule.Intake));
+            _btnNavDaftar = CreateSidebarButton("Daftar Retur", "F3", 98, () => NavigateTo(NavigationModule.DaftarRetur));
+            _btnNavBarcode = CreateSidebarButton("Barcode Registry", "F4", 154, () => NavigateTo(NavigationModule.BarcodeRegistry));
+            _btnNavSettings = CreateSidebarButton("Pengaturan", "F5", 210, () => NavigateTo(NavigationModule.Pengaturan));
 
             // Manual sync button container at bottom of sidebar
             var pnlSyncContainer = new Panel
             {
                 Dock = DockStyle.Bottom,
-                Height = 90,
-                BackColor = Color.Transparent
+                Height = 92,
+                BackColor = Color.Transparent,
+                Padding = new Padding(4, 8, 4, 0)
             };
 
             _btnManualSync = new Button
@@ -314,7 +389,7 @@ namespace BtrReturGudang.Winform.Views
                 Text = "🔄 Sync Sekarang",
                 Font = new Font("Segoe UI Semibold", 9.5F, FontStyle.Bold, GraphicsUnit.Point),
                 ForeColor = Color.White,
-                BackColor = Color.FromArgb(16, 185, 129), // Emerald-500
+                BackColor = UiTheme.Emerald,
                 FlatStyle = FlatStyle.Flat,
                 Dock = DockStyle.Top,
                 Height = 44,
@@ -327,7 +402,7 @@ namespace BtrReturGudang.Winform.Views
             {
                 Text = "Sinkronisasi otomatis: Tiap 5 menit",
                 Font = new Font("Segoe UI", 7.5F, FontStyle.Regular, GraphicsUnit.Point),
-                ForeColor = Color.FromArgb(148, 163, 184),
+                ForeColor = UiTheme.Slate400,
                 Dock = DockStyle.Bottom,
                 Height = 28,
                 TextAlign = ContentAlignment.MiddleCenter
@@ -346,17 +421,17 @@ namespace BtrReturGudang.Winform.Views
             Controls.Add(_pnlSidebar);
         }
 
-        private Button CreateSidebarButton(string text, int top, Action onClick)
+        private Button CreateSidebarButton(string title, string hotkey, int top, Action onClick)
         {
             var btn = new Button
             {
-                Text = text,
+                Text = $"  [{hotkey}]  {title}",
                 Font = new Font("Segoe UI Semibold", 9.5F, FontStyle.Bold, GraphicsUnit.Point),
-                ForeColor = Color.FromArgb(226, 232, 240),
-                BackColor = Color.FromArgb(30, 41, 59),
+                ForeColor = UiTheme.Slate300,
+                BackColor = UiTheme.Slate850,
                 FlatStyle = FlatStyle.Flat,
                 Location = new Point(12, top),
-                Width = 196,
+                Width = 206,
                 Height = 46,
                 TextAlign = ContentAlignment.MiddleLeft,
                 Padding = new Padding(12, 0, 0, 0),
@@ -364,6 +439,24 @@ namespace BtrReturGudang.Winform.Views
             };
             btn.FlatAppearance.BorderSize = 0;
             btn.Click += (s, e) => onClick();
+
+            btn.MouseEnter += (s, e) =>
+            {
+                if (btn.BackColor != UiTheme.Primary)
+                {
+                    btn.BackColor = UiTheme.Slate700;
+                    btn.ForeColor = Color.White;
+                }
+            };
+            btn.MouseLeave += (s, e) =>
+            {
+                if (btn.BackColor != UiTheme.Primary)
+                {
+                    btn.BackColor = UiTheme.Slate850;
+                    btn.ForeColor = UiTheme.Slate300;
+                }
+            };
+
             return btn;
         }
 
@@ -456,13 +549,20 @@ namespace BtrReturGudang.Winform.Views
 
         private void UpdateSidebarHighlight(NavigationModule module)
         {
-            var activeColor = Color.FromArgb(37, 99, 235);   // Blue-600
-            var defaultColor = Color.FromArgb(30, 41, 59);  // Slate-800
+            var activeColor = UiTheme.Primary;       // Blue-600
+            var defaultColor = UiTheme.Slate850;     // Slate-850
 
-            _btnNavIntake.BackColor = module == NavigationModule.Intake ? activeColor : defaultColor;
-            _btnNavDaftar.BackColor = module == NavigationModule.DaftarRetur ? activeColor : defaultColor;
-            _btnNavBarcode.BackColor = module == NavigationModule.BarcodeRegistry ? activeColor : defaultColor;
-            _btnNavSettings.BackColor = module == NavigationModule.Pengaturan ? activeColor : defaultColor;
+            SetNavButtonState(_btnNavIntake, module == NavigationModule.Intake, activeColor, defaultColor);
+            SetNavButtonState(_btnNavDaftar, module == NavigationModule.DaftarRetur, activeColor, defaultColor);
+            SetNavButtonState(_btnNavBarcode, module == NavigationModule.BarcodeRegistry, activeColor, defaultColor);
+            SetNavButtonState(_btnNavSettings, module == NavigationModule.Pengaturan, activeColor, defaultColor);
+        }
+
+        private void SetNavButtonState(Button btn, bool isActive, Color activeColor, Color defaultColor)
+        {
+            btn.BackColor = isActive ? activeColor : defaultColor;
+            btn.ForeColor = isActive ? Color.White : UiTheme.Slate300;
+            btn.Font = isActive ? UiTheme.FontBodyBold : UiTheme.FontLabel;
         }
 
         private void LoadView(NavigationModule module)

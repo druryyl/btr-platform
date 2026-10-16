@@ -66,43 +66,59 @@ namespace BtrReturGudang.Winform.Views
             MaximizeBox = false;
             MinimizeBox = false;
             StartPosition = FormStartPosition.CenterParent;
-            ClientSize = new Size(520, 520);
-            BackColor = Color.FromArgb(248, 250, 252);
-            Font = new Font("Segoe UI", 9.5F, FontStyle.Regular, GraphicsUnit.Point);
+            ClientSize = new Size(540, 560);
+            BackColor = UiTheme.Slate100;
+            Font = UiTheme.FontBody;
 
-            // Title Header
+            // 1. Title Header
+            var pnlHeader = new Panel
+            {
+                Dock = DockStyle.Top,
+                Height = 68,
+                BackColor = UiTheme.Slate900,
+                Padding = new Padding(24, 12, 24, 12)
+            };
+
             var lblTitle = new Label
             {
-                Text = "Registrasi Barcode Produk",
-                Font = new Font("Segoe UI", 13F, FontStyle.Bold, GraphicsUnit.Point),
-                ForeColor = Color.FromArgb(15, 23, 42),
-                Location = new Point(24, 16),
+                Text = "🏷️ Registrasi Barcode Produk",
+                Font = UiTheme.FontSectionTitle,
+                ForeColor = Color.White,
+                Location = new Point(24, 10),
                 AutoSize = true
             };
 
             var lblSubtitle = new Label
             {
                 Text = "Tautkan barcode ke master barang dan tentukan satuan konversinya.",
-                Font = new Font("Segoe UI", 9F, FontStyle.Regular, GraphicsUnit.Point),
-                ForeColor = Color.FromArgb(100, 116, 139),
-                Location = new Point(24, 44),
+                Font = UiTheme.FontSubtitle,
+                ForeColor = UiTheme.Slate400,
+                Location = new Point(24, 36),
                 AutoSize = true
             };
+
+            pnlHeader.Controls.Add(lblTitle);
+            pnlHeader.Controls.Add(lblSubtitle);
+
+            // Card body container
+            var pnlBody = UiTheme.CreateCard(new Padding(20), new Padding(16, 12, 16, 16));
+            pnlBody.Dock = DockStyle.Fill;
 
             // Barcode input
             var lblBarcode = new Label
             {
                 Text = "Nilai Barcode:",
-                Font = new Font("Segoe UI Semibold", 9F, FontStyle.Bold),
-                Location = new Point(24, 76),
+                Font = UiTheme.FontLabel,
+                ForeColor = UiTheme.Slate700,
+                Location = new Point(16, 14),
                 AutoSize = true
             };
 
             _txtBarcode = new TextBox
             {
                 Text = initialBarcode ?? string.Empty,
-                Font = new Font("Consolas", 11F, FontStyle.Bold, GraphicsUnit.Point),
-                Location = new Point(24, 98),
+                Font = UiTheme.FontMonospaceBold,
+                Location = new Point(16, 36),
                 Width = 472
             };
 
@@ -110,34 +126,36 @@ namespace BtrReturGudang.Winform.Views
             var lblSearch = new Label
             {
                 Text = "Cari Master Barang (Nama / Kode):",
-                Font = new Font("Segoe UI Semibold", 9F, FontStyle.Bold),
-                Location = new Point(24, 136),
+                Font = UiTheme.FontLabel,
+                ForeColor = UiTheme.Slate700,
+                Location = new Point(16, 72),
                 AutoSize = true
             };
 
             _txtSearchItem = new TextBox
             {
-                Font = new Font("Segoe UI", 9.5F),
-                Location = new Point(24, 158),
+                Font = UiTheme.FontBody,
+                Location = new Point(16, 94),
                 Width = 472
             };
             _txtSearchItem.TextChanged += async (s, e) => await SearchItemsAsync(_txtSearchItem.Text);
 
             _lstItems = new ListBox
             {
-                Font = new Font("Segoe UI", 9F),
-                Location = new Point(24, 190),
+                Font = UiTheme.FontBody,
+                Location = new Point(16, 126),
                 Width = 472,
-                Height = 110
+                Height = 115,
+                BorderStyle = BorderStyle.FixedSingle
             };
             _lstItems.SelectedIndexChanged += OnItemSelected;
 
             _lblSelectedItem = new Label
             {
                 Text = "Barang Terpilih: (Belum dipilih)",
-                Font = new Font("Segoe UI Semibold", 9F, FontStyle.Bold),
-                ForeColor = Color.FromArgb(37, 99, 235), // Blue-600
-                Location = new Point(24, 308),
+                Font = UiTheme.FontBodyBold,
+                ForeColor = UiTheme.Primary,
+                Location = new Point(16, 250),
                 AutoSize = true
             };
 
@@ -145,16 +163,18 @@ namespace BtrReturGudang.Winform.Views
             var lblSatuan = new Label
             {
                 Text = "Satuan:",
-                Font = new Font("Segoe UI Semibold", 9F, FontStyle.Bold),
-                Location = new Point(24, 338),
+                Font = UiTheme.FontLabel,
+                ForeColor = UiTheme.Slate700,
+                Location = new Point(16, 280),
                 AutoSize = true
             };
 
             _cboSatuan = new ComboBox
             {
                 DropDownStyle = ComboBoxStyle.DropDownList,
-                Location = new Point(24, 360),
-                Width = 140
+                Font = UiTheme.FontBody,
+                Location = new Point(16, 304),
+                Width = 160
             };
             _cboSatuan.Items.AddRange(new object[] { "Dus", "Pak", "Pcs", "Ball", "Lusin" });
             _cboSatuan.SelectedIndex = 0;
@@ -162,8 +182,9 @@ namespace BtrReturGudang.Winform.Views
             var lblPengali = new Label
             {
                 Text = "Pengali (Konversi ke Pcs):",
-                Font = new Font("Segoe UI Semibold", 9F, FontStyle.Bold),
-                Location = new Point(190, 338),
+                Font = UiTheme.FontLabel,
+                ForeColor = UiTheme.Slate700,
+                Location = new Point(200, 280),
                 AutoSize = true
             };
 
@@ -173,21 +194,22 @@ namespace BtrReturGudang.Winform.Views
                 Minimum = 1,
                 Maximum = 10000,
                 Value = 1,
-                Location = new Point(190, 360),
-                Width = 140
+                Font = UiTheme.FontBodyBold,
+                Location = new Point(200, 304),
+                Width = 160
             };
 
             // Buttons
             _btnSave = new Button
             {
                 Text = "Simpan & Daftarkan",
-                Font = new Font("Segoe UI Semibold", 9.5F, FontStyle.Bold),
-                BackColor = Color.FromArgb(37, 99, 235), // Blue-600
+                Font = UiTheme.FontBodyBold,
+                BackColor = UiTheme.Primary,
                 ForeColor = Color.White,
                 FlatStyle = FlatStyle.Flat,
-                Location = new Point(240, 440),
-                Width = 150,
-                Height = 38,
+                Location = new Point(220, 396),
+                Width = 175,
+                Height = 40,
                 Cursor = Cursors.Hand
             };
             _btnSave.FlatAppearance.BorderSize = 0;
@@ -197,34 +219,35 @@ namespace BtrReturGudang.Winform.Views
             {
                 Text = "Batal",
                 DialogResult = DialogResult.Cancel,
-                Font = new Font("Segoe UI", 9.5F),
-                BackColor = Color.FromArgb(226, 232, 240),
-                ForeColor = Color.FromArgb(71, 85, 105),
+                Font = UiTheme.FontBody,
+                BackColor = UiTheme.White,
+                ForeColor = UiTheme.Slate700,
                 FlatStyle = FlatStyle.Flat,
-                Location = new Point(402, 440),
-                Width = 94,
-                Height = 38,
+                Location = new Point(405, 396),
+                Width = 83,
+                Height = 40,
                 Cursor = Cursors.Hand
             };
-            _btnCancel.FlatAppearance.BorderSize = 0;
+            _btnCancel.FlatAppearance.BorderColor = UiTheme.Slate300;
 
             AcceptButton = _btnSave;
             CancelButton = _btnCancel;
 
-            Controls.Add(lblTitle);
-            Controls.Add(lblSubtitle);
-            Controls.Add(lblBarcode);
-            Controls.Add(_txtBarcode);
-            Controls.Add(lblSearch);
-            Controls.Add(_txtSearchItem);
-            Controls.Add(_lstItems);
-            Controls.Add(_lblSelectedItem);
-            Controls.Add(lblSatuan);
-            Controls.Add(_cboSatuan);
-            Controls.Add(lblPengali);
-            Controls.Add(_numPengali);
-            Controls.Add(_btnSave);
-            Controls.Add(_btnCancel);
+            pnlBody.Controls.Add(lblBarcode);
+            pnlBody.Controls.Add(_txtBarcode);
+            pnlBody.Controls.Add(lblSearch);
+            pnlBody.Controls.Add(_txtSearchItem);
+            pnlBody.Controls.Add(_lstItems);
+            pnlBody.Controls.Add(_lblSelectedItem);
+            pnlBody.Controls.Add(lblSatuan);
+            pnlBody.Controls.Add(_cboSatuan);
+            pnlBody.Controls.Add(lblPengali);
+            pnlBody.Controls.Add(_numPengali);
+            pnlBody.Controls.Add(_btnSave);
+            pnlBody.Controls.Add(_btnCancel);
+
+            Controls.Add(pnlBody);
+            Controls.Add(pnlHeader);
         }
 
         private async Task SearchItemsAsync(string keyword)

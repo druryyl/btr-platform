@@ -97,8 +97,8 @@ namespace BtrReturGudang.Winform.Views
         private void InitializeComponent()
         {
             Dock = DockStyle.Fill;
-            BackColor = Color.FromArgb(241, 245, 249); // Slate-100
-            Font = new Font("Segoe UI", 9.75F, FontStyle.Regular, GraphicsUnit.Point);
+            BackColor = UiTheme.Slate100;
+            Font = UiTheme.FontBody;
 
             // 1. Top Header
             BuildHeader();
@@ -109,12 +109,8 @@ namespace BtrReturGudang.Winform.Views
             // 3. Grid Container
             BuildDataGrid();
 
-            var pnlGridContainer = new Panel
-            {
-                Dock = DockStyle.Fill,
-                Padding = new Padding(24, 16, 24, 24),
-                BackColor = Color.FromArgb(241, 245, 249)
-            };
+            var pnlGridContainer = UiTheme.CreateCard(new Padding(12), new Padding(24, 16, 24, 24));
+            pnlGridContainer.Dock = DockStyle.Fill;
             pnlGridContainer.Controls.Add(_dgvBarcodes);
 
             Controls.Add(pnlGridContainer);
@@ -127,27 +123,27 @@ namespace BtrReturGudang.Winform.Views
             _pnlHeader = new Panel
             {
                 Dock = DockStyle.Top,
-                Height = 72,
-                BackColor = Color.White,
+                Height = 68,
+                BackColor = UiTheme.White,
                 Padding = new Padding(24, 12, 24, 12)
             };
 
             _lblTitle = new Label
             {
                 Text = "Barcode Registry [F4]",
-                Font = new Font("Segoe UI", 15F, FontStyle.Bold, GraphicsUnit.Point),
-                ForeColor = Color.FromArgb(15, 23, 42),
+                Font = UiTheme.FontPageTitle,
+                ForeColor = UiTheme.Slate900,
                 AutoSize = true,
-                Location = new Point(24, 12)
+                Location = new Point(24, 10)
             };
 
             _lblStatus = new Label
             {
                 Text = "Katalog barcode fisik lokal, status sinkronisasi, dan registrasi on-the-spot untuk barang belum terpetakan.",
-                Font = new Font("Segoe UI", 9F, FontStyle.Regular, GraphicsUnit.Point),
-                ForeColor = Color.FromArgb(100, 116, 139),
+                Font = UiTheme.FontSubtitle,
+                ForeColor = UiTheme.Slate500,
                 AutoSize = true,
-                Location = new Point(26, 42)
+                Location = new Point(26, 38)
             };
 
             var pnlHeaderRight = new FlowLayoutPanel
@@ -157,18 +153,18 @@ namespace BtrReturGudang.Winform.Views
                 FlowDirection = FlowDirection.LeftToRight,
                 WrapContents = false,
                 Height = 50,
-                Padding = new Padding(0, 8, 0, 0)
+                Padding = new Padding(0, 6, 0, 0)
             };
 
             _btnAddBarcode = new Button
             {
                 Text = "➕ Tambah Barcode Baru",
-                Font = new Font("Segoe UI Semibold", 9F, FontStyle.Bold),
-                BackColor = Color.FromArgb(37, 99, 235), // Blue-600
+                Font = UiTheme.FontLabel,
+                BackColor = UiTheme.Primary,
                 ForeColor = Color.White,
                 FlatStyle = FlatStyle.Flat,
-                Width = 180,
-                Height = 36,
+                Width = 185,
+                Height = 34,
                 Margin = new Padding(0, 0, 8, 0),
                 Cursor = Cursors.Hand
             };
@@ -178,15 +174,15 @@ namespace BtrReturGudang.Winform.Views
             _btnRefresh = new Button
             {
                 Text = "🔄 Refresh",
-                Font = new Font("Segoe UI Semibold", 9F, FontStyle.Bold),
-                BackColor = Color.FromArgb(241, 245, 249),
-                ForeColor = Color.FromArgb(30, 41, 59),
+                Font = UiTheme.FontLabel,
+                BackColor = UiTheme.Slate100,
+                ForeColor = UiTheme.Slate800,
                 FlatStyle = FlatStyle.Flat,
-                Width = 90,
-                Height = 36,
+                Width = 95,
+                Height = 34,
                 Cursor = Cursors.Hand
             };
-            _btnRefresh.FlatAppearance.BorderColor = Color.FromArgb(203, 213, 225);
+            _btnRefresh.FlatAppearance.BorderColor = UiTheme.Slate300;
             _btnRefresh.Click += async (s, e) => await LoadBarcodesAsync();
 
             pnlHeaderRight.Controls.Add(_btnAddBarcode);
@@ -199,27 +195,30 @@ namespace BtrReturGudang.Winform.Views
 
         private void BuildFilterBar()
         {
-            _pnlFilter = new Panel
+            _pnlFilter = new FlowLayoutPanel
             {
                 Dock = DockStyle.Top,
-                Height = 56,
-                BackColor = Color.FromArgb(248, 250, 252),
-                Padding = new Padding(24, 12, 24, 12)
+                Height = 52,
+                BackColor = UiTheme.Slate50,
+                Padding = new Padding(24, 10, 24, 10),
+                FlowDirection = FlowDirection.LeftToRight,
+                WrapContents = false
             };
 
             var lblSearch = new Label
             {
                 Text = "Cari Barcode / Kode / Nama:",
-                Location = new Point(24, 18),
                 AutoSize = true,
-                ForeColor = Color.FromArgb(51, 65, 85)
+                Font = UiTheme.FontLabel,
+                ForeColor = UiTheme.Slate700,
+                Margin = new Padding(0, 6, 6, 0)
             };
 
             _txtSearch = new TextBox
             {
-                Font = new Font("Segoe UI", 9.5F),
-                Location = new Point(200, 15),
-                Width = 260
+                Font = UiTheme.FontBody,
+                Width = 260,
+                Margin = new Padding(0, 2, 8, 0)
             };
             _txtSearch.KeyDown += (s, e) =>
             {
@@ -234,14 +233,14 @@ namespace BtrReturGudang.Winform.Views
             _btnSearch = new Button
             {
                 Text = "Cari",
-                Font = new Font("Segoe UI Semibold", 9F, FontStyle.Bold),
-                BackColor = Color.FromArgb(37, 99, 235),
+                Font = UiTheme.FontLabel,
+                BackColor = UiTheme.Primary,
                 ForeColor = Color.White,
                 FlatStyle = FlatStyle.Flat,
-                Location = new Point(468, 14),
                 Width = 65,
-                Height = 28,
-                Cursor = Cursors.Hand
+                Height = 30,
+                Cursor = Cursors.Hand,
+                Margin = new Padding(0, 1, 24, 0)
             };
             _btnSearch.FlatAppearance.BorderSize = 0;
             _btnSearch.Click += (s, e) => ApplyFilter();
@@ -249,16 +248,18 @@ namespace BtrReturGudang.Winform.Views
             var lblStatus = new Label
             {
                 Text = "Filter Status:",
-                Location = new Point(560, 18),
                 AutoSize = true,
-                ForeColor = Color.FromArgb(51, 65, 85)
+                Font = UiTheme.FontLabel,
+                ForeColor = UiTheme.Slate700,
+                Margin = new Padding(0, 6, 6, 0)
             };
 
             _cboStatusFilter = new ComboBox
             {
                 DropDownStyle = ComboBoxStyle.DropDownList,
-                Location = new Point(640, 15),
-                Width = 140
+                Font = UiTheme.FontBody,
+                Width = 145,
+                Margin = new Padding(0, 2, 20, 0)
             };
             _cboStatusFilter.Items.AddRange(new object[] { "Semua Status", "Aktif Pusat", "Pending Upload" });
             _cboStatusFilter.SelectedIndex = 0;
@@ -267,9 +268,10 @@ namespace BtrReturGudang.Winform.Views
             _lblItemCount = new Label
             {
                 Text = "0 barcode terdaftar",
-                Location = new Point(800, 18),
                 AutoSize = true,
-                ForeColor = Color.FromArgb(100, 116, 139)
+                Font = UiTheme.FontLabel,
+                ForeColor = UiTheme.Slate500,
+                Margin = new Padding(0, 6, 0, 0)
             };
 
             _pnlFilter.Controls.Add(lblSearch);
@@ -284,43 +286,24 @@ namespace BtrReturGudang.Winform.Views
         {
             _dgvBarcodes = new DataGridView
             {
-                Dock = DockStyle.Fill,
-                BackgroundColor = Color.White,
-                BorderStyle = BorderStyle.None,
-                RowHeadersVisible = false,
-                SelectionMode = DataGridViewSelectionMode.FullRowSelect,
-                MultiSelect = false,
-                ReadOnly = true,
-                AllowUserToAddRows = false,
-                AllowUserToDeleteRows = false,
-                AllowUserToResizeRows = false,
-                Font = new Font("Segoe UI", 9.5F, FontStyle.Regular, GraphicsUnit.Point),
-                RowTemplate = { Height = 34 },
-                ColumnHeadersHeight = 36,
-                ColumnHeadersBorderStyle = DataGridViewHeaderBorderStyle.Single,
-                GridColor = Color.FromArgb(241, 245, 249),
-                EnableHeadersVisualStyles = false
+                Dock = DockStyle.Fill
             };
-
-            _dgvBarcodes.ColumnHeadersDefaultCellStyle.BackColor = Color.FromArgb(248, 250, 252);
-            _dgvBarcodes.ColumnHeadersDefaultCellStyle.ForeColor = Color.FromArgb(30, 41, 59);
-            _dgvBarcodes.ColumnHeadersDefaultCellStyle.Font = new Font("Segoe UI Semibold", 9.5F, FontStyle.Bold, GraphicsUnit.Point);
-            _dgvBarcodes.DefaultCellStyle.SelectionBackColor = Color.FromArgb(219, 234, 254);
-            _dgvBarcodes.DefaultCellStyle.SelectionForeColor = Color.FromArgb(15, 23, 42);
+            UiTheme.StyleDataGrid(_dgvBarcodes);
 
             _dgvBarcodes.Columns.Add(new DataGridViewTextBoxColumn
             {
                 Name = "colBarcode",
                 HeaderText = "Nilai Barcode",
-                Width = 180,
-                DefaultCellStyle = { Font = new Font("Consolas", 10F, FontStyle.Regular) }
+                Width = 190,
+                DefaultCellStyle = { Font = UiTheme.FontMonospaceBold }
             });
 
             _dgvBarcodes.Columns.Add(new DataGridViewTextBoxColumn
             {
                 Name = "colBrgId",
                 HeaderText = "Kode Barang",
-                Width = 120
+                Width = 130,
+                DefaultCellStyle = { Font = UiTheme.FontMonospace }
             });
 
             _dgvBarcodes.Columns.Add(new DataGridViewTextBoxColumn
@@ -334,7 +317,7 @@ namespace BtrReturGudang.Winform.Views
             {
                 Name = "colSatuan",
                 HeaderText = "Satuan",
-                Width = 80,
+                Width = 85,
                 DefaultCellStyle = { Alignment = DataGridViewContentAlignment.MiddleCenter }
             });
 
@@ -342,15 +325,15 @@ namespace BtrReturGudang.Winform.Views
             {
                 Name = "colPengali",
                 HeaderText = "Pengali",
-                Width = 80,
-                DefaultCellStyle = { Alignment = DataGridViewContentAlignment.MiddleRight }
+                Width = 85,
+                DefaultCellStyle = { Alignment = DataGridViewContentAlignment.MiddleRight, Font = UiTheme.FontBodyBold }
             });
 
             _dgvBarcodes.Columns.Add(new DataGridViewTextBoxColumn
             {
                 Name = "colStatus",
                 HeaderText = "Status Barcode",
-                Width = 140,
+                Width = 145,
                 DefaultCellStyle = { Alignment = DataGridViewContentAlignment.MiddleCenter }
             });
 

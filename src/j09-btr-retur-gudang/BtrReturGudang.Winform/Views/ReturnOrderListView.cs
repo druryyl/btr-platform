@@ -144,43 +144,43 @@ namespace BtrReturGudang.Winform.Views
             _pnlHeader = new Panel
             {
                 Dock = DockStyle.Top,
-                Height = 72,
-                BackColor = Color.White,
+                Height = 68,
+                BackColor = UiTheme.White,
                 Padding = new Padding(24, 12, 24, 12)
             };
 
             _lblTitle = new Label
             {
                 Text = "Daftar & Riwayat Retur [F3]",
-                Font = new Font("Segoe UI", 15F, FontStyle.Bold, GraphicsUnit.Point),
-                ForeColor = Color.FromArgb(15, 23, 42), // Slate-900
+                Font = UiTheme.FontPageTitle,
+                ForeColor = UiTheme.Slate900,
                 AutoSize = true,
-                Location = new Point(24, 12)
+                Location = new Point(24, 10)
             };
 
             _lblStatus = new Label
             {
                 Text = "Riwayat fisik retur, verifikasi status sinkronisasi, dan inspeksi proteksi dokumen (Post-Sync Locking).",
-                Font = new Font("Segoe UI", 9F, FontStyle.Regular, GraphicsUnit.Point),
-                ForeColor = Color.FromArgb(100, 116, 139), // Slate-500
+                Font = UiTheme.FontSubtitle,
+                ForeColor = UiTheme.Slate500,
                 AutoSize = true,
-                Location = new Point(26, 42)
+                Location = new Point(26, 38)
             };
 
             _btnRefresh = new Button
             {
                 Text = "🔄 Muat Ulang",
-                Font = new Font("Segoe UI Semibold", 9F, FontStyle.Bold, GraphicsUnit.Point),
-                BackColor = Color.FromArgb(241, 245, 249),
-                ForeColor = Color.FromArgb(30, 41, 59),
+                Font = UiTheme.FontLabel,
+                BackColor = UiTheme.Slate100,
+                ForeColor = UiTheme.Slate800,
                 FlatStyle = FlatStyle.Flat,
-                Width = 110,
-                Height = 36,
-                Location = new Point(Width - 140, 18),
+                Width = 115,
+                Height = 34,
+                Location = new Point(Width - 145, 16),
                 Anchor = AnchorStyles.Top | AnchorStyles.Right,
                 Cursor = Cursors.Hand
             };
-            _btnRefresh.FlatAppearance.BorderColor = Color.FromArgb(203, 213, 225);
+            _btnRefresh.FlatAppearance.BorderColor = UiTheme.Slate300;
             _btnRefresh.Click += async (s, e) => await LoadOrdersAsync();
 
             _pnlHeader.Controls.Add(_lblTitle);
@@ -190,59 +190,67 @@ namespace BtrReturGudang.Winform.Views
 
         private void BuildFilterBar()
         {
-            _pnlFilter = new Panel
+            _pnlFilter = new FlowLayoutPanel
             {
                 Dock = DockStyle.Top,
                 Height = 52,
-                BackColor = Color.FromArgb(248, 250, 252), // Slate-50
-                Padding = new Padding(24, 10, 24, 10)
+                BackColor = UiTheme.Slate50,
+                Padding = new Padding(24, 10, 24, 10),
+                FlowDirection = FlowDirection.LeftToRight,
+                WrapContents = false
             };
 
             var lblFrom = new Label
             {
                 Text = "Dari Tanggal:",
-                Location = new Point(24, 16),
                 AutoSize = true,
-                ForeColor = Color.FromArgb(51, 65, 85)
+                Font = UiTheme.FontLabel,
+                ForeColor = UiTheme.Slate700,
+                Margin = new Padding(0, 6, 6, 0)
             };
 
             _dtpStartDate = new DateTimePicker
             {
                 Format = DateTimePickerFormat.Short,
-                Location = new Point(106, 13),
+                Font = UiTheme.FontBody,
                 Width = 110,
-                Value = DateTime.Today.AddDays(-14)
+                Value = DateTime.Today.AddDays(-14),
+                Margin = new Padding(0, 2, 16, 0)
             };
 
             var lblTo = new Label
             {
                 Text = "Sampai:",
-                Location = new Point(226, 16),
                 AutoSize = true,
-                ForeColor = Color.FromArgb(51, 65, 85)
+                Font = UiTheme.FontLabel,
+                ForeColor = UiTheme.Slate700,
+                Margin = new Padding(0, 6, 6, 0)
             };
 
             _dtpEndDate = new DateTimePicker
             {
                 Format = DateTimePickerFormat.Short,
-                Location = new Point(282, 13),
+                Font = UiTheme.FontBody,
                 Width = 110,
-                Value = DateTime.Today
+                Value = DateTime.Today,
+                Margin = new Padding(0, 2, 16, 0)
             };
 
             var lblStatusFilter = new Label
             {
                 Text = "Status Sync:",
-                Location = new Point(408, 16),
                 AutoSize = true,
-                ForeColor = Color.FromArgb(51, 65, 85)
+                Font = UiTheme.FontLabel,
+                ForeColor = UiTheme.Slate700,
+                Margin = new Padding(0, 6, 6, 0)
             };
 
             _cboStatusFilter = new ComboBox
             {
                 DropDownStyle = ComboBoxStyle.DropDownList,
-                Location = new Point(488, 13),
-                Width = 120
+                Font = UiTheme.FontBody,
+                Width = 125,
+                Margin = new Padding(0, 2, 16, 0)
             };
             _cboStatusFilter.Items.AddRange(new object[] { "Semua (All)", "Draft", "Synced" });
             _cboStatusFilter.SelectedIndex = 0;
@@ -250,14 +258,14 @@ namespace BtrReturGudang.Winform.Views
             _btnApplyFilter = new Button
             {
                 Text = "Terapkan Filter",
-                Font = new Font("Segoe UI Semibold", 9F, FontStyle.Bold, GraphicsUnit.Point),
-                BackColor = Color.FromArgb(37, 99, 235), // Blue-600
+                Font = UiTheme.FontLabel,
+                BackColor = UiTheme.Primary,
                 ForeColor = Color.White,
                 FlatStyle = FlatStyle.Flat,
-                Location = new Point(620, 12),
                 Width = 115,
-                Height = 28,
-                Cursor = Cursors.Hand
+                Height = 30,
+                Cursor = Cursors.Hand,
+                Margin = new Padding(0, 1, 16, 0)
             };
             _btnApplyFilter.FlatAppearance.BorderSize = 0;
             _btnApplyFilter.Click += async (s, e) => await LoadOrdersAsync();
@@ -265,9 +273,10 @@ namespace BtrReturGudang.Winform.Views
             _lblSummaryCount = new Label
             {
                 Text = "0 dokumen ditemukan",
-                Location = new Point(750, 16),
                 AutoSize = true,
-                ForeColor = Color.FromArgb(100, 116, 139)
+                Font = UiTheme.FontLabel,
+                ForeColor = UiTheme.Slate500,
+                Margin = new Padding(0, 6, 0, 0)
             };
 
             _pnlFilter.Controls.Add(lblFrom);
@@ -288,62 +297,48 @@ namespace BtrReturGudang.Winform.Views
                 Orientation = Orientation.Vertical,
                 SplitterDistance = 620,
                 SplitterWidth = 6,
-                BackColor = Color.FromArgb(226, 232, 240)
+                BackColor = UiTheme.Slate200
             };
 
-            // Left: Master Return Orders Grid
-            BuildOrdersGrid();
-            _splitBody.Panel1.Controls.Add(_dgvOrders);
-            _splitBody.Panel1.Padding = new Padding(24, 16, 8, 16);
-            _splitBody.Panel1.BackColor = Color.FromArgb(241, 245, 249);
+            // Left: Master Return Orders Grid Card
+            var pnlOrdersCard = UiTheme.CreateCard(new Padding(12), new Padding(0));
+            pnlOrdersCard.Dock = DockStyle.Fill;
 
-            // Right: Inspector Panel
+            BuildOrdersGrid();
+            pnlOrdersCard.Controls.Add(_dgvOrders);
+
+            _splitBody.Panel1.Controls.Add(pnlOrdersCard);
+            _splitBody.Panel1.Padding = new Padding(20, 14, 6, 16);
+            _splitBody.Panel1.BackColor = UiTheme.Slate100;
+
+            // Right: Inspector Panel Card
             BuildInspectorPanel();
             _splitBody.Panel2.Controls.Add(_pnlInspector);
-            _splitBody.Panel2.Padding = new Padding(8, 16, 24, 16);
-            _splitBody.Panel2.BackColor = Color.FromArgb(241, 245, 249);
+            _splitBody.Panel2.Padding = new Padding(6, 14, 20, 16);
+            _splitBody.Panel2.BackColor = UiTheme.Slate100;
         }
 
         private void BuildOrdersGrid()
         {
             _dgvOrders = new DataGridView
             {
-                Dock = DockStyle.Fill,
-                BackgroundColor = Color.White,
-                BorderStyle = BorderStyle.None,
-                RowHeadersVisible = false,
-                SelectionMode = DataGridViewSelectionMode.FullRowSelect,
-                MultiSelect = false,
-                ReadOnly = true,
-                AllowUserToAddRows = false,
-                AllowUserToDeleteRows = false,
-                AllowUserToResizeRows = false,
-                Font = new Font("Segoe UI", 9.5F, FontStyle.Regular, GraphicsUnit.Point),
-                RowTemplate = { Height = 34 },
-                ColumnHeadersHeight = 36,
-                ColumnHeadersBorderStyle = DataGridViewHeaderBorderStyle.Single,
-                GridColor = Color.FromArgb(241, 245, 249),
-                EnableHeadersVisualStyles = false
+                Dock = DockStyle.Fill
             };
-
-            _dgvOrders.ColumnHeadersDefaultCellStyle.BackColor = Color.FromArgb(248, 250, 252);
-            _dgvOrders.ColumnHeadersDefaultCellStyle.ForeColor = Color.FromArgb(30, 41, 59);
-            _dgvOrders.ColumnHeadersDefaultCellStyle.Font = new Font("Segoe UI Semibold", 9.5F, FontStyle.Bold, GraphicsUnit.Point);
-            _dgvOrders.DefaultCellStyle.SelectionBackColor = Color.FromArgb(219, 234, 254); // Blue-100
-            _dgvOrders.DefaultCellStyle.SelectionForeColor = Color.FromArgb(15, 23, 42);
+            UiTheme.StyleDataGrid(_dgvOrders);
 
             _dgvOrders.Columns.Add(new DataGridViewTextBoxColumn
             {
                 Name = "colOrderId",
                 HeaderText = "No. Dokumen (ULID)",
-                Width = 160
+                Width = 165,
+                DefaultCellStyle = { Font = UiTheme.FontMonospace }
             });
 
             _dgvOrders.Columns.Add(new DataGridViewTextBoxColumn
             {
                 Name = "colDate",
                 HeaderText = "Tanggal",
-                Width = 85
+                Width = 90
             });
 
             _dgvOrders.Columns.Add(new DataGridViewTextBoxColumn
@@ -357,15 +352,15 @@ namespace BtrReturGudang.Winform.Views
             {
                 Name = "colTotalQty",
                 HeaderText = "Total Qty",
-                Width = 75,
-                DefaultCellStyle = { Alignment = DataGridViewContentAlignment.MiddleRight }
+                Width = 80,
+                DefaultCellStyle = { Alignment = DataGridViewContentAlignment.MiddleRight, Font = UiTheme.FontBodyBold }
             });
 
             _dgvOrders.Columns.Add(new DataGridViewTextBoxColumn
             {
                 Name = "colStatus",
                 HeaderText = "Status Sync",
-                Width = 110,
+                Width = 115,
                 DefaultCellStyle = { Alignment = DataGridViewContentAlignment.MiddleCenter }
             });
 
@@ -375,21 +370,17 @@ namespace BtrReturGudang.Winform.Views
 
         private void BuildInspectorPanel()
         {
-            _pnlInspector = new Panel
-            {
-                Dock = DockStyle.Fill,
-                BackColor = Color.White,
-                Padding = new Padding(16)
-            };
+            _pnlInspector = UiTheme.CreateCard(new Padding(16), new Padding(0));
+            _pnlInspector.Dock = DockStyle.Fill;
 
             // Inspector Title
             _lblInspectorTitle = new Label
             {
                 Text = "📋 Detail & Inspeksi Dokumen",
-                Font = new Font("Segoe UI", 12F, FontStyle.Bold, GraphicsUnit.Point),
-                ForeColor = Color.FromArgb(15, 23, 42),
+                Font = UiTheme.FontSectionTitle,
+                ForeColor = UiTheme.Slate900,
                 Dock = DockStyle.Top,
-                Height = 30
+                Height = 32
             };
 
             // Post-Sync Immutability Banner
@@ -397,38 +388,54 @@ namespace BtrReturGudang.Winform.Views
             {
                 Dock = DockStyle.Top,
                 Height = 54,
-                BackColor = Color.FromArgb(254, 242, 242), // Red-50
+                BackColor = UiTheme.RoseLight,
                 Padding = new Padding(12),
+                Margin = new Padding(0, 0, 0, 8),
                 Visible = false
+            };
+            _pnlLockedBanner.Paint += (s, e) =>
+            {
+                using (var pen = new Pen(UiTheme.RoseBorder, 1))
+                {
+                    e.Graphics.DrawRectangle(pen, 0, 0, _pnlLockedBanner.Width - 1, _pnlLockedBanner.Height - 1);
+                }
             };
 
             _lblLockedBanner = new Label
             {
                 Text = "🔒 DOKUMEN TERKUNCI (READ-ONLY)\nStatus telah disinkronkan ke pusat (Synced). Edit dan hapus dinonaktifkan.",
-                Font = new Font("Segoe UI Semibold", 9F, FontStyle.Bold, GraphicsUnit.Point),
-                ForeColor = Color.FromArgb(185, 28, 28), // Red-700
+                Font = UiTheme.FontLabel,
+                ForeColor = UiTheme.RoseText,
                 Dock = DockStyle.Fill
             };
             _pnlLockedBanner.Controls.Add(_lblLockedBanner);
 
-            // Metadata panel
+            // Metadata panel (Clean key-value grid)
             var pnlMeta = new Panel
             {
                 Dock = DockStyle.Top,
-                Height = 155,
-                BackColor = Color.FromArgb(248, 250, 252),
-                Padding = new Padding(12)
+                Height = 160,
+                BackColor = UiTheme.Slate50,
+                Padding = new Padding(12),
+                Margin = new Padding(0, 0, 0, 10)
+            };
+            pnlMeta.Paint += (s, e) =>
+            {
+                using (var pen = new Pen(UiTheme.Slate200, 1))
+                {
+                    e.Graphics.DrawRectangle(pen, 0, 0, pnlMeta.Width - 1, pnlMeta.Height - 1);
+                }
             };
 
-            _lblMetaOrderId = new Label { Text = "ID: -", Location = new Point(12, 10), AutoSize = true, Font = new Font("Segoe UI Semibold", 9.5F, FontStyle.Bold) };
-            _lblMetaDate = new Label { Text = "Tanggal: -", Location = new Point(12, 32), AutoSize = true };
-            _lblMetaCustomer = new Label { Text = "Customer: -", Location = new Point(12, 54), AutoSize = true };
-            _lblMetaOperator = new Label { Text = "Operator: -", Location = new Point(12, 76), AutoSize = true };
-            _lblMetaWarehouse = new Label { Text = "Depo: -", Location = new Point(240, 76), AutoSize = true };
-            _lblMetaDriver = new Label { Text = "Driver: -", Location = new Point(12, 98), AutoSize = true };
-            _lblMetaSales = new Label { Text = "Sales: -", Location = new Point(240, 98), AutoSize = true };
-            _lblMetaNote = new Label { Text = "Catatan: -", Location = new Point(12, 120), AutoSize = true, ForeColor = Color.FromArgb(71, 85, 105) };
-            _lblMetaSyncInfo = new Label { Text = "Status: -", Location = new Point(240, 32), AutoSize = true };
+            _lblMetaOrderId = new Label { Text = "ID: -", Location = new Point(12, 10), AutoSize = true, Font = UiTheme.FontMonospaceBold, ForeColor = UiTheme.Slate900 };
+            _lblMetaDate = new Label { Text = "Tanggal: -", Location = new Point(12, 32), AutoSize = true, Font = UiTheme.FontBody };
+            _lblMetaCustomer = new Label { Text = "Customer: -", Location = new Point(12, 54), AutoSize = true, Font = UiTheme.FontBodyBold, ForeColor = UiTheme.Slate900 };
+            _lblMetaOperator = new Label { Text = "Operator: -", Location = new Point(12, 76), AutoSize = true, Font = UiTheme.FontBody };
+            _lblMetaWarehouse = new Label { Text = "Depo: -", Location = new Point(230, 76), AutoSize = true, Font = UiTheme.FontBody };
+            _lblMetaDriver = new Label { Text = "Driver: -", Location = new Point(12, 98), AutoSize = true, Font = UiTheme.FontBody };
+            _lblMetaSales = new Label { Text = "Sales: -", Location = new Point(230, 98), AutoSize = true, Font = UiTheme.FontBody };
+            _lblMetaNote = new Label { Text = "Catatan: -", Location = new Point(12, 120), AutoSize = true, Font = UiTheme.FontBody, ForeColor = UiTheme.Slate600 };
+            _lblMetaSyncInfo = new Label { Text = "Status: -", Location = new Point(230, 32), AutoSize = true, Font = UiTheme.FontLabel, ForeColor = UiTheme.EmeraldDark };
 
             pnlMeta.Controls.Add(_lblMetaOrderId);
             pnlMeta.Controls.Add(_lblMetaDate);
@@ -443,11 +450,11 @@ namespace BtrReturGudang.Winform.Views
             // Items grid header label
             var lblItemsHeader = new Label
             {
-                Text = "Daftar Barang Fisik Retur:",
-                Font = new Font("Segoe UI Semibold", 9.5F, FontStyle.Bold, GraphicsUnit.Point),
-                ForeColor = Color.FromArgb(30, 41, 59),
+                Text = "📦 Daftar Barang Fisik Retur:",
+                Font = UiTheme.FontCardTitle,
+                ForeColor = UiTheme.Slate800,
                 Dock = DockStyle.Top,
-                Height = 26,
+                Height = 28,
                 Padding = new Padding(0, 6, 0, 0)
             };
 
@@ -470,86 +477,74 @@ namespace BtrReturGudang.Winform.Views
         {
             _dgvItems = new DataGridView
             {
-                Dock = DockStyle.Fill,
-                BackgroundColor = Color.White,
-                BorderStyle = BorderStyle.None,
-                RowHeadersVisible = false,
-                ReadOnly = true,
-                AllowUserToAddRows = false,
-                AllowUserToDeleteRows = false,
-                AllowUserToResizeRows = false,
-                Font = new Font("Segoe UI", 9F, FontStyle.Regular, GraphicsUnit.Point),
-                RowTemplate = { Height = 28 },
-                ColumnHeadersHeight = 30,
-                GridColor = Color.FromArgb(241, 245, 249),
-                EnableHeadersVisualStyles = false
+                Dock = DockStyle.Fill
             };
+            UiTheme.StyleDataGrid(_dgvItems);
+            _dgvItems.RowTemplate.Height = 30;
+            _dgvItems.ColumnHeadersHeight = 32;
 
-            _dgvItems.ColumnHeadersDefaultCellStyle.BackColor = Color.FromArgb(241, 245, 249);
-            _dgvItems.ColumnHeadersDefaultCellStyle.ForeColor = Color.FromArgb(51, 65, 85);
-            _dgvItems.ColumnHeadersDefaultCellStyle.Font = new Font("Segoe UI Semibold", 9F, FontStyle.Bold, GraphicsUnit.Point);
-
-            _dgvItems.Columns.Add(new DataGridViewTextBoxColumn { Name = "colItemNo", HeaderText = "#", Width = 30 });
+            _dgvItems.Columns.Add(new DataGridViewTextBoxColumn { Name = "colItemNo", HeaderText = "#", Width = 35 });
             _dgvItems.Columns.Add(new DataGridViewTextBoxColumn { Name = "colItemBrg", HeaderText = "Barang", AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill });
-            _dgvItems.Columns.Add(new DataGridViewTextBoxColumn { Name = "colItemBarcode", HeaderText = "Barcode", Width = 95 });
-            _dgvItems.Columns.Add(new DataGridViewTextBoxColumn { Name = "colItemJenis", HeaderText = "Klasifikasi", Width = 75, DefaultCellStyle = { Alignment = DataGridViewContentAlignment.MiddleCenter } });
-            _dgvItems.Columns.Add(new DataGridViewTextBoxColumn { Name = "colItemQty", HeaderText = "Qty", Width = 55, DefaultCellStyle = { Alignment = DataGridViewContentAlignment.MiddleRight } });
-            _dgvItems.Columns.Add(new DataGridViewTextBoxColumn { Name = "colItemSat", HeaderText = "Sat", Width = 45 });
+            _dgvItems.Columns.Add(new DataGridViewTextBoxColumn { Name = "colItemBarcode", HeaderText = "Barcode", Width = 110, DefaultCellStyle = { Font = UiTheme.FontMonospace } });
+            _dgvItems.Columns.Add(new DataGridViewTextBoxColumn { Name = "colItemJenis", HeaderText = "Klasifikasi", Width = 80, DefaultCellStyle = { Alignment = DataGridViewContentAlignment.MiddleCenter } });
+            _dgvItems.Columns.Add(new DataGridViewTextBoxColumn { Name = "colItemQty", HeaderText = "Qty", Width = 60, DefaultCellStyle = { Alignment = DataGridViewContentAlignment.MiddleRight, Font = UiTheme.FontBodyBold } });
+            _dgvItems.Columns.Add(new DataGridViewTextBoxColumn { Name = "colItemSat", HeaderText = "Sat", Width = 50, DefaultCellStyle = { Alignment = DataGridViewContentAlignment.MiddleCenter } });
 
             _dgvItems.CellFormatting += OnItemsGridCellFormatting;
         }
 
         private void BuildInspectorActions()
         {
-            _pnlInspectorActions = new Panel
+            _pnlInspectorActions = new FlowLayoutPanel
             {
                 Dock = DockStyle.Bottom,
                 Height = 52,
-                BackColor = Color.FromArgb(248, 250, 252),
-                Padding = new Padding(8, 8, 8, 8)
+                BackColor = UiTheme.Slate50,
+                Padding = new Padding(8, 9, 8, 8),
+                FlowDirection = FlowDirection.LeftToRight,
+                WrapContents = false
             };
 
             _btnEditOrder = new Button
             {
                 Text = "✏️ Buka / Edit Draft",
-                Font = new Font("Segoe UI Semibold", 9F, FontStyle.Bold, GraphicsUnit.Point),
-                BackColor = Color.FromArgb(241, 245, 249),
-                ForeColor = Color.FromArgb(30, 41, 59),
+                Font = UiTheme.FontLabel,
+                BackColor = UiTheme.White,
+                ForeColor = UiTheme.Slate800,
                 FlatStyle = FlatStyle.Flat,
-                Location = new Point(8, 9),
-                Width = 135,
+                Width = 140,
                 Height = 34,
                 Cursor = Cursors.Hand,
-                Enabled = false
+                Enabled = false,
+                Margin = new Padding(0, 0, 8, 0)
             };
-            _btnEditOrder.FlatAppearance.BorderColor = Color.FromArgb(203, 213, 225);
+            _btnEditOrder.FlatAppearance.BorderColor = UiTheme.Slate300;
             _btnEditOrder.Click += OnEditOrderClick;
 
             _btnDeleteOrder = new Button
             {
                 Text = "🗑️ Hapus Draft",
-                Font = new Font("Segoe UI Semibold", 9F, FontStyle.Bold, GraphicsUnit.Point),
-                BackColor = Color.FromArgb(254, 242, 242),
-                ForeColor = Color.FromArgb(185, 28, 28),
+                Font = UiTheme.FontLabel,
+                BackColor = UiTheme.RoseLight,
+                ForeColor = UiTheme.RoseText,
                 FlatStyle = FlatStyle.Flat,
-                Location = new Point(150, 9),
-                Width = 110,
+                Width = 115,
                 Height = 34,
                 Cursor = Cursors.Hand,
-                Enabled = false
+                Enabled = false,
+                Margin = new Padding(0, 0, 8, 0)
             };
-            _btnDeleteOrder.FlatAppearance.BorderColor = Color.FromArgb(254, 202, 202);
+            _btnDeleteOrder.FlatAppearance.BorderColor = UiTheme.RoseBorder;
             _btnDeleteOrder.Click += async (s, e) => await OnDeleteOrderClickAsync();
 
             _btnUploadOrder = new Button
             {
                 Text = "☁️ Upload Ulang",
-                Font = new Font("Segoe UI Semibold", 9F, FontStyle.Bold, GraphicsUnit.Point),
-                BackColor = Color.FromArgb(16, 185, 129), // Emerald-500
+                Font = UiTheme.FontLabel,
+                BackColor = UiTheme.Emerald,
                 ForeColor = Color.White,
                 FlatStyle = FlatStyle.Flat,
-                Location = new Point(268, 9),
-                Width = 120,
+                Width = 125,
                 Height = 34,
                 Cursor = Cursors.Hand,
                 Enabled = false

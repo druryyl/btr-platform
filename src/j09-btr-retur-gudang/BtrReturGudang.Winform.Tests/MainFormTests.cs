@@ -93,6 +93,59 @@ namespace BtrReturGudang.Winform.Tests
         }
 
         [Fact]
+        public void MainForm_LayoutBounds_AreCorrectWithoutOverlap()
+        {
+            ExecuteInStaThread(() =>
+            {
+                using (var provider = CreateTestServiceProvider())
+                {
+                    using (var mainForm = provider.GetRequiredService<MainForm>())
+                    {
+                        mainForm.ClientSize = new System.Drawing.Size(1280, 800);
+                        mainForm.PerformLayout();
+
+                        Control header = null, status = null, sidebar = null, contentHost = null;
+                        foreach (Control c in mainForm.Controls)
+                        {
+                            if (c is StatusStrip) status = c;
+                            else if (c.Dock == DockStyle.Top) header = c;
+                            else if (c.Dock == DockStyle.Left) sidebar = c;
+                            else if (c.Dock == DockStyle.Fill) contentHost = c;
+                        }
+
+                        Assert.NotNull(header);
+                        Assert.NotNull(status);
+                        Assert.NotNull(sidebar);
+                        Assert.NotNull(contentHost);
+
+                        // 1. Header spans full width across top
+                        Assert.Equal(0, header.Left);
+                        Assert.Equal(0, header.Top);
+                        Assert.Equal(1280, header.Width);
+                        Assert.Equal(64, header.Height);
+
+                        // 2. StatusStrip spans full width across bottom
+                        Assert.Equal(0, status.Left);
+                        Assert.Equal(800 - status.Height, status.Top);
+                        Assert.Equal(1280, status.Width);
+
+                        // 3. Sidebar sits strictly between Header and StatusStrip on the left
+                        Assert.Equal(0, sidebar.Left);
+                        Assert.Equal(64, sidebar.Top);
+                        Assert.Equal(230, sidebar.Width);
+                        Assert.Equal(800 - 64 - status.Height, sidebar.Height);
+
+                        // 4. ContentHost fills the remaining area to the right of the sidebar
+                        Assert.Equal(230, contentHost.Left);
+                        Assert.Equal(64, contentHost.Top);
+                        Assert.Equal(1280 - 230, contentHost.Width);
+                        Assert.Equal(800 - 64 - status.Height, contentHost.Height);
+                    }
+                }
+            });
+        }
+
+        [Fact]
         public void MainForm_OnlineIndicatorTogglesCorrectly()
         {
             ExecuteInStaThread(() =>
