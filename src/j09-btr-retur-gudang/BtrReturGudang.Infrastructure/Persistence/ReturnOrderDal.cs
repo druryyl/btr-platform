@@ -38,7 +38,7 @@ namespace BtrReturGudang.Infrastructure.Persistence
             {
                 conn.Open();
                 const string sql = @"
-SELECT ReturnOrderId, ReturnOrderDate, CustId, CustName, DriverId, DriverName,
+SELECT ReturnOrderId, ReturnOrderDate, CustId, CustName, CustomerCode, Wilayah, DriverId, DriverName,
        SalesPersonId, SalesPersonName, WarehouseCode, OperatorName, Keterangan,
        StatusSync, CreatedDate, ModifiedDate, SyncedDate
 FROM BTRG_ReturnOrder
@@ -70,7 +70,7 @@ ORDER BY NoUrut ASC;";
             {
                 await conn.OpenAsync().ConfigureAwait(false);
                 const string sql = @"
-SELECT ReturnOrderId, ReturnOrderDate, CustId, CustName, DriverId, DriverName,
+SELECT ReturnOrderId, ReturnOrderDate, CustId, CustName, CustomerCode, Wilayah, DriverId, DriverName,
        SalesPersonId, SalesPersonName, WarehouseCode, OperatorName, Keterangan,
        StatusSync, CreatedDate, ModifiedDate, SyncedDate
 FROM BTRG_ReturnOrder
@@ -99,7 +99,7 @@ ORDER BY NoUrut ASC;";
             {
                 conn.Open();
                 const string headerSql = @"
-SELECT ReturnOrderId, ReturnOrderDate, CustId, CustName, DriverId, DriverName,
+SELECT ReturnOrderId, ReturnOrderDate, CustId, CustName, CustomerCode, Wilayah, DriverId, DriverName,
        SalesPersonId, SalesPersonName, WarehouseCode, OperatorName, Keterangan,
        StatusSync, CreatedDate, ModifiedDate, SyncedDate
 FROM BTRG_ReturnOrder
@@ -143,7 +143,7 @@ ORDER BY ReturnOrderId, NoUrut ASC;";
             {
                 await conn.OpenAsync().ConfigureAwait(false);
                 const string headerSql = @"
-SELECT ReturnOrderId, ReturnOrderDate, CustId, CustName, DriverId, DriverName,
+SELECT ReturnOrderId, ReturnOrderDate, CustId, CustName, CustomerCode, Wilayah, DriverId, DriverName,
        SalesPersonId, SalesPersonName, WarehouseCode, OperatorName, Keterangan,
        StatusSync, CreatedDate, ModifiedDate, SyncedDate
 FROM BTRG_ReturnOrder
@@ -187,7 +187,7 @@ ORDER BY ReturnOrderId, NoUrut ASC;";
             {
                 conn.Open();
                 const string headerSql = @"
-SELECT ReturnOrderId, ReturnOrderDate, CustId, CustName, DriverId, DriverName,
+SELECT ReturnOrderId, ReturnOrderDate, CustId, CustName, CustomerCode, Wilayah, DriverId, DriverName,
        SalesPersonId, SalesPersonName, WarehouseCode, OperatorName, Keterangan,
        StatusSync, CreatedDate, ModifiedDate, SyncedDate
 FROM BTRG_ReturnOrder
@@ -223,7 +223,7 @@ ORDER BY ReturnOrderId, NoUrut ASC;";
             {
                 await conn.OpenAsync().ConfigureAwait(false);
                 const string headerSql = @"
-SELECT ReturnOrderId, ReturnOrderDate, CustId, CustName, DriverId, DriverName,
+SELECT ReturnOrderId, ReturnOrderDate, CustId, CustName, CustomerCode, Wilayah, DriverId, DriverName,
        SalesPersonId, SalesPersonName, WarehouseCode, OperatorName, Keterangan,
        StatusSync, CreatedDate, ModifiedDate, SyncedDate
 FROM BTRG_ReturnOrder
@@ -283,6 +283,8 @@ BEGIN
         ReturnOrderDate = @ReturnOrderDate,
         CustId = @CustId,
         CustName = @CustName,
+        CustomerCode = @CustomerCode,
+        Wilayah = @Wilayah,
         DriverId = @DriverId,
         DriverName = @DriverName,
         SalesPersonId = @SalesPersonId,
@@ -298,12 +300,12 @@ END
 ELSE
 BEGIN
     INSERT INTO BTRG_ReturnOrder (
-        ReturnOrderId, ReturnOrderDate, CustId, CustName,
+        ReturnOrderId, ReturnOrderDate, CustId, CustName, CustomerCode, Wilayah,
         DriverId, DriverName, SalesPersonId, SalesPersonName,
         WarehouseCode, OperatorName, Keterangan, StatusSync,
         CreatedDate, ModifiedDate, SyncedDate
     ) VALUES (
-        @ReturnOrderId, @ReturnOrderDate, @CustId, @CustName,
+        @ReturnOrderId, @ReturnOrderDate, @CustId, @CustName, @CustomerCode, @Wilayah,
         @DriverId, @DriverName, @SalesPersonId, @SalesPersonName,
         @WarehouseCode, @OperatorName, @Keterangan, @StatusSync,
         @CreatedDate, @ModifiedDate, @SyncedDate
@@ -316,6 +318,8 @@ END;";
                             ReturnOrderDate = returnOrder.ReturnOrderDate.Date,
                             returnOrder.CustId,
                             returnOrder.CustName,
+                            returnOrder.CustomerCode,
+                            returnOrder.Wilayah,
                             returnOrder.DriverId,
                             returnOrder.DriverName,
                             returnOrder.SalesPersonId,
@@ -401,6 +405,8 @@ BEGIN
         ReturnOrderDate = @ReturnOrderDate,
         CustId = @CustId,
         CustName = @CustName,
+        CustomerCode = @CustomerCode,
+        Wilayah = @Wilayah,
         DriverId = @DriverId,
         DriverName = @DriverName,
         SalesPersonId = @SalesPersonId,
@@ -416,12 +422,12 @@ END
 ELSE
 BEGIN
     INSERT INTO BTRG_ReturnOrder (
-        ReturnOrderId, ReturnOrderDate, CustId, CustName,
+        ReturnOrderId, ReturnOrderDate, CustId, CustName, CustomerCode, Wilayah,
         DriverId, DriverName, SalesPersonId, SalesPersonName,
         WarehouseCode, OperatorName, Keterangan, StatusSync,
         CreatedDate, ModifiedDate, SyncedDate
     ) VALUES (
-        @ReturnOrderId, @ReturnOrderDate, @CustId, @CustName,
+        @ReturnOrderId, @ReturnOrderDate, @CustId, @CustName, @CustomerCode, @Wilayah,
         @DriverId, @DriverName, @SalesPersonId, @SalesPersonName,
         @WarehouseCode, @OperatorName, @Keterangan, @StatusSync,
         @CreatedDate, @ModifiedDate, @SyncedDate
@@ -434,6 +440,8 @@ END;";
                             ReturnOrderDate = returnOrder.ReturnOrderDate.Date,
                             returnOrder.CustId,
                             returnOrder.CustName,
+                            returnOrder.CustomerCode,
+                            returnOrder.Wilayah,
                             returnOrder.DriverId,
                             returnOrder.DriverName,
                             returnOrder.SalesPersonId,
@@ -617,7 +625,9 @@ WHERE ReturnOrderId = @ReturnOrderId;";
                 status,
                 header.CreatedDate,
                 header.ModifiedDate,
-                header.SyncedDate);
+                header.SyncedDate,
+                header.CustomerCode,
+                header.Wilayah);
 
             if (items != null && items.Any())
             {
@@ -647,6 +657,8 @@ WHERE ReturnOrderId = @ReturnOrderId;";
             public DateTime ReturnOrderDate { get; set; }
             public string CustId { get; set; }
             public string CustName { get; set; }
+            public string CustomerCode { get; set; }
+            public string Wilayah { get; set; }
             public string DriverId { get; set; }
             public string DriverName { get; set; }
             public string SalesPersonId { get; set; }

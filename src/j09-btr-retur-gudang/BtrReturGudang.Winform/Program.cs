@@ -8,6 +8,7 @@ using BtrReturGudang.Infrastructure.Http;
 using BtrReturGudang.Infrastructure.Persistence;
 using BtrReturGudang.Infrastructure.Services;
 using BtrReturGudang.Winform.Hardware;
+using BtrReturGudang.Winform.Services;
 using BtrReturGudang.Winform.Views;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -55,6 +56,9 @@ namespace BtrReturGudang.Winform
             services.AddSingleton<IBtradeApiClient>(sp => 
                 new BtradeApiClient(sp.GetRequiredService<IRegistryHelper>()));
             services.AddSingleton<ISyncService, SyncService>();
+
+            // 4b. Operator session validation gate (Cloud POST api/session/resolve).
+            services.AddSingleton<OperatorSessionValidator>();
 
             // 5. Application Tier Orchestration Services
             services.AddSingleton<IReturnOrderService, ReturnOrderService>();

@@ -23,7 +23,50 @@ namespace BtrReturGudang.AppTier.Services
             string driverName = null,
             string salesPersonId = null,
             string salesPersonName = null,
-            string keterangan = null);
+            string keterangan = null,
+            string customerCode = null,
+            string wilayah = null,
+            IEnumerable<ReturnOrderItemDto> items = null);
+
+        Task<ReturnOrderDto> CreateAsync(
+            string custId,
+            string custName,
+            string warehouseCode,
+            string operatorName,
+            string driverId = null,
+            string driverName = null,
+            string salesPersonId = null,
+            string salesPersonName = null,
+            string keterangan = null,
+            string customerCode = null,
+            string wilayah = null,
+            IEnumerable<ReturnOrderItemDto> items = null);
+
+        ReturnOrderDto Update(
+            string returnOrderId,
+            string custId,
+            string custName,
+            string driverId = null,
+            string driverName = null,
+            string salesPersonId = null,
+            string salesPersonName = null,
+            string keterangan = null,
+            string customerCode = null,
+            string wilayah = null,
+            IEnumerable<ReturnOrderItemDto> items = null);
+
+        Task<ReturnOrderDto> UpdateAsync(
+            string returnOrderId,
+            string custId,
+            string custName,
+            string driverId = null,
+            string driverName = null,
+            string salesPersonId = null,
+            string salesPersonName = null,
+            string keterangan = null,
+            string customerCode = null,
+            string wilayah = null,
+            IEnumerable<ReturnOrderItemDto> items = null);
 
         ReturnOrderDto AddItem(
             string returnOrderId,

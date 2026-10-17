@@ -302,6 +302,37 @@ namespace BtrReturGudang.Winform.Tests
             });
         }
 
+        [Fact]
+        public void SaveDraftAsync_WithItems_SucceedsWithoutThrowingBR012()
+        {
+            ExecuteInStaThread(() =>
+            {
+                var repo = new ValidatingReturnOrderRepo();
+                var orderService = new ReturnOrderService(repo);
+                var audioHelper = new FakeAudioHelper();
+
+                using (var view = new ReturnOrderEntryView(orderService, null, null, audioHelper, null))
+                {
+                    view.SuppressMessageBoxes = true;
+                    view.CustomerComboBox.Text = "Toko Makmur";
+                    view.NotesTextBox.Text = "Retur barang";
+
+                    var lookup = BarcodeLookupResult.Hit("899111", "899111", "BRG01", "Indomie Goreng", "Dus", 1m, true);
+                    view.ApplyActiveProduct(lookup);
+                    view.QtyBagusNumeric.Value = 5;
+                    view.CommitQuantityStripToGrid();
+
+                    var saved = view.SaveDraftAsync().GetAwaiter().GetResult();
+
+                    Assert.NotNull(saved);
+                    Assert.False(string.IsNullOrWhiteSpace(saved.ReturnOrderId));
+                    Assert.Single(saved.Items);
+                    Assert.Equal(5m, saved.TotalQtyBagus);
+                    Assert.Single(repo.Store[saved.ReturnOrderId].Items);
+                }
+            });
+        }
+
         #region Fake Test Doubles
 
         private class FakeAudioHelper : IAudioHelper
@@ -345,6 +376,36 @@ namespace BtrReturGudang.Winform.Tests
 
             public IEnumerable<BarcodeRegistrationDto> GetPendingRegistrations() => Enumerable.Empty<BarcodeRegistrationDto>();
             public Task<IEnumerable<BarcodeRegistrationDto>> GetPendingRegistrationsAsync() => Task.FromResult(Enumerable.Empty<BarcodeRegistrationDto>());
+        }
+
+        private class ValidatingReturnOrderRepo : IReturnOrderRepo
+        {
+            public readonly Dictionary<string, ReturnOrder> Store = new Dictionary<string, ReturnOrder>();
+
+            public ReturnOrder GetById(string returnOrderId) => Store.TryGetValue(returnOrderId, out var o) ? o : null;
+            public Task<ReturnOrder> GetByIdAsync(string returnOrderId) => Task.FromResult(GetById(returnOrderId));
+            public IEnumerable<ReturnOrder> GetFilteredList(DateTime startDate, DateTime endDate, StatusSync? statusFilter = null) => Store.Values;
+            public Task<IEnumerable<ReturnOrder>> GetFilteredListAsync(DateTime startDate, DateTime endDate, StatusSync? statusFilter = null) => Task.FromResult(GetFilteredList(startDate, endDate, statusFilter));
+            public IEnumerable<ReturnOrder> GetPendingUploadList() => Store.Values;
+            public Task<IEnumerable<ReturnOrder>> GetPendingUploadListAsync() => Task.FromResult(GetPendingUploadList());
+
+            public void Save(ReturnOrder returnOrder)
+            {
+                if (returnOrder == null) throw new ArgumentNullException(nameof(returnOrder));
+                returnOrder.Validate(); // Strictly enforces BR-012!
+                Store[returnOrder.ReturnOrderId] = returnOrder;
+            }
+
+            public Task SaveAsync(ReturnOrder returnOrder)
+            {
+                Save(returnOrder);
+                return Task.CompletedTask;
+            }
+
+            public void MarkSynced(string returnOrderId, DateTime syncedDate) { }
+            public Task MarkSyncedAsync(string returnOrderId, DateTime syncedDate) => Task.CompletedTask;
+            public void DeleteDraft(string returnOrderId) => Store.Remove(returnOrderId);
+            public Task DeleteDraftAsync(string returnOrderId) => Task.CompletedTask;
         }
 
         #endregion

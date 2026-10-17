@@ -126,6 +126,38 @@ public class ReturnOrderSessionContextTests : IClassFixture<WebApplicationFactor
     }
 
     [Fact]
+    public async Task Submit_WithNullOptionalDriverAndSalesPerson_Returns200_AndPersistsEmptyStrings()
+    {
+        //  ADR-RO-005/GAP-005 — Salesman and Driver are optional. A payload that
+        //  leaves them empty (JSON null) must not be rejected by model validation,
+        //  and the NOT NULL DEFAULT('') relay columns must receive '' not null.
+        SeedUser("U-RO2", "ro2@gmail.com");
+        var client = SessionClient("GAMPING", "ro2@gmail.com");
+
+        var response = await client.PostAsJsonAsync(SubmitPath, new
+        {
+            ReturnOrderId = "RO-OPT",
+            ReturnOrderDate = "2026-01-05",
+            WarehouseCode = "GAMPING",
+            CustomerId = "C1",
+            CustomerName = "Customer",
+            SalesPersonId = (string?)null,
+            SalesPersonName = (string?)null,
+            DriverId = (string?)null,
+            DriverName = (string?)null,
+            Note = "note",
+            ListItem = Array.Empty<object>()
+        });
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var row = ReturnOrderDal().Items.Single(x => x.ReturnOrderId == "RO-OPT");
+        Assert.Equal(string.Empty, row.SalesPersonId);
+        Assert.Equal(string.Empty, row.SalesPersonName);
+        Assert.Equal(string.Empty, row.DriverId);
+        Assert.Equal(string.Empty, row.DriverName);
+    }
+
+    [Fact]
     public async Task Submit_WithUnresolvableActor_Returns409JSendFailure()
     {
         var client = SessionClient("GAMPING", "stranger@gmail.com");

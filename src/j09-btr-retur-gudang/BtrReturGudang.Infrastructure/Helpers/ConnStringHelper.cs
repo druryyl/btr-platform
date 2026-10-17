@@ -111,7 +111,7 @@ namespace BtrReturGudang.Infrastructure.Helpers
         /// </summary>
         public static SqlConnection CreateConnection(string connectionString = null)
         {
-            var connStr = connectionString ?? GetConnectionString();
+            var connStr = !string.IsNullOrWhiteSpace(connectionString) ? connectionString : GetConnectionString();
             return new SqlConnection(connStr);
         }
 

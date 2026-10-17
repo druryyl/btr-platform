@@ -39,7 +39,10 @@ namespace BtrReturGudang.AppTier.Services
             string driverName = null,
             string salesPersonId = null,
             string salesPersonName = null,
-            string keterangan = null)
+            string keterangan = null,
+            string customerCode = null,
+            string wilayah = null,
+            IEnumerable<ReturnOrderItemDto> items = null)
         {
             var returnOrderId = UlidGenerator.NewUlid();
             var order = new ReturnOrder(
@@ -54,10 +57,131 @@ namespace BtrReturGudang.AppTier.Services
                 salesPersonId,
                 salesPersonName,
                 keterangan,
-                StatusSync.Draft);
+                StatusSync.Draft,
+                customerCode: customerCode,
+                wilayah: wilayah);
+
+            PopulateItems(order, items);
 
             _returnOrderRepo.Save(order);
             return ReturnOrderDto.FromDomain(order);
+        }
+
+        public async Task<ReturnOrderDto> CreateAsync(
+            string custId,
+            string custName,
+            string warehouseCode,
+            string operatorName,
+            string driverId = null,
+            string driverName = null,
+            string salesPersonId = null,
+            string salesPersonName = null,
+            string keterangan = null,
+            string customerCode = null,
+            string wilayah = null,
+            IEnumerable<ReturnOrderItemDto> items = null)
+        {
+            var returnOrderId = UlidGenerator.NewUlid();
+            var order = new ReturnOrder(
+                returnOrderId,
+                DateTime.Today,
+                custId,
+                custName,
+                warehouseCode,
+                operatorName,
+                driverId,
+                driverName,
+                salesPersonId,
+                salesPersonName,
+                keterangan,
+                StatusSync.Draft,
+                customerCode: customerCode,
+                wilayah: wilayah);
+
+            PopulateItems(order, items);
+
+            await _returnOrderRepo.SaveAsync(order);
+            return ReturnOrderDto.FromDomain(order);
+        }
+
+        public ReturnOrderDto Update(
+            string returnOrderId,
+            string custId,
+            string custName,
+            string driverId = null,
+            string driverName = null,
+            string salesPersonId = null,
+            string salesPersonName = null,
+            string keterangan = null,
+            string customerCode = null,
+            string wilayah = null,
+            IEnumerable<ReturnOrderItemDto> items = null)
+        {
+            var order = _returnOrderRepo.GetById(returnOrderId)
+                ?? throw new KeyNotFoundException($"Return Order '{returnOrderId}' not found.");
+
+            order.EnsureModifiable("Update");
+            order.SetCustomer(custId, custName, customerCode, wilayah);
+            order.SetDriver(driverId, driverName);
+            order.SetSalesPerson(salesPersonId, salesPersonName);
+            order.SetKeterangan(keterangan);
+
+            order.ClearItems();
+            PopulateItems(order, items);
+
+            _returnOrderRepo.Save(order);
+            return ReturnOrderDto.FromDomain(order);
+        }
+
+        public async Task<ReturnOrderDto> UpdateAsync(
+            string returnOrderId,
+            string custId,
+            string custName,
+            string driverId = null,
+            string driverName = null,
+            string salesPersonId = null,
+            string salesPersonName = null,
+            string keterangan = null,
+            string customerCode = null,
+            string wilayah = null,
+            IEnumerable<ReturnOrderItemDto> items = null)
+        {
+            var order = await _returnOrderRepo.GetByIdAsync(returnOrderId)
+                ?? throw new KeyNotFoundException($"Return Order '{returnOrderId}' not found.");
+
+            order.EnsureModifiable("Update");
+            order.SetCustomer(custId, custName, customerCode, wilayah);
+            order.SetDriver(driverId, driverName);
+            order.SetSalesPerson(salesPersonId, salesPersonName);
+            order.SetKeterangan(keterangan);
+
+            order.ClearItems();
+            PopulateItems(order, items);
+
+            await _returnOrderRepo.SaveAsync(order);
+            return ReturnOrderDto.FromDomain(order);
+        }
+
+        private static void PopulateItems(ReturnOrder order, IEnumerable<ReturnOrderItemDto> items)
+        {
+            if (items == null) return;
+
+            foreach (var itm in items)
+            {
+                var jenisEnum = string.Equals(itm.JenisRetur, "RUSAK", StringComparison.OrdinalIgnoreCase)
+                    || (Enum.TryParse<JenisRetur>(itm.JenisRetur, true, out var parsed) && parsed == JenisRetur.RUSAK)
+                    ? JenisRetur.RUSAK
+                    : JenisRetur.BAGUS;
+
+                order.AddItem(
+                    itm.BrgId,
+                    itm.BrgName,
+                    itm.Barcode,
+                    jenisEnum,
+                    itm.Qty,
+                    itm.SatId,
+                    itm.Keterangan);
+            }
         }
 
         public ReturnOrderDto AddItem(

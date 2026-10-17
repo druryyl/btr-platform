@@ -14,6 +14,7 @@ using BtrReturGudang.Domain.Enums;
 using BtrReturGudang.Domain.Exceptions;
 using BtrReturGudang.Infrastructure.Services;
 using BtrReturGudang.Winform.Hardware;
+using BtrReturGudang.Winform.Services;
 using BtrReturGudang.Winform.Views;
 using Microsoft.Extensions.DependencyInjection;
 using Xunit;
@@ -465,6 +466,96 @@ namespace BtrReturGudang.Winform.Tests
 
         #endregion
 
+        #region Workflow 8/9: Unresolved operator configuration surfaces the resolve refusal, not a raw 409
+
+        [Fact]
+        public void Workflow_08_BlankOperatorEmail_PreEmptsUploadWithClearRefusal_NotRaw409()
+        {
+            ExecuteInStaThread(() =>
+            {
+                var fixture = new TestWorkflowFixture();
+                fixture.RegistryHelper.LastOperatorEmail = string.Empty; // blank actor configuration
+                fixture.SeedProductWithBarcode("8991001100110", "BRG-001", "Indomie Goreng", "Dus", 24m);
+
+                var validator = new OperatorSessionValidator(fixture.ApiClient, fixture.RegistryHelper);
+                validator.ValidateAsync().GetAwaiter().GetResult();
+
+                Assert.True(validator.IsUnresolved);
+                Assert.False(string.IsNullOrWhiteSpace(validator.RefusalMessage));
+
+                using (var entryView = new ReturnOrderEntryView(
+                    fixture.OrderService,
+                    fixture.BarcodeService,
+                    fixture.ReferenceRepo,
+                    fixture.AudioHelper,
+                    fixture.RegistryHelper,
+                    validator))
+                {
+                    entryView.SuppressMessageBoxes = true;
+                    entryView.AutoLaunchRegistrationDialog = false;
+                    entryView.CustomerComboBox.Text = "Toko Refusal";
+                    entryView.OnBarcodeScanned("8991001100110");
+                    entryView.QtyBagusNumeric.Value = 1;
+                    Assert.True(entryView.CommitQuantityStripToGrid());
+
+                    var result = entryView.SaveAndUploadAsync().GetAwaiter().GetResult();
+
+                    // TD-012 regression: the Cloud upload is pre-empted and a clear refusal is surfaced
+                    // instead of the opaque HTTP 409 "Google account is not registered..." failure.
+                    Assert.False(result.Success);
+                    Assert.False(string.IsNullOrWhiteSpace(result.ErrorMessage));
+                    Assert.DoesNotContain("409", result.ErrorMessage);
+                    Assert.Empty(fixture.ApiClient.UploadedOrders);
+                }
+            });
+        }
+
+        [Fact]
+        public void Workflow_09_NonEmailOperatorActor_PreEmptsUploadWithClearRefusal_NotRaw409()
+        {
+            ExecuteInStaThread(() =>
+            {
+                const string refusal =
+                    "Google account is not registered or is not active. Contact your administrator.";
+
+                var fixture = new TestWorkflowFixture();
+                fixture.RegistryHelper.LastOperatorEmail = "not-an-email"; // non-email actor configuration
+                fixture.ApiClient.SessionResolveResult = SessionResolveResultDto.Fail(400, refusal);
+                fixture.SeedProductWithBarcode("8991001100110", "BRG-001", "Indomie Goreng", "Dus", 24m);
+
+                var validator = new OperatorSessionValidator(fixture.ApiClient, fixture.RegistryHelper);
+                validator.ValidateAsync().GetAwaiter().GetResult();
+
+                Assert.True(validator.IsUnresolved);
+                Assert.Equal(refusal, validator.RefusalMessage);
+
+                using (var entryView = new ReturnOrderEntryView(
+                    fixture.OrderService,
+                    fixture.BarcodeService,
+                    fixture.ReferenceRepo,
+                    fixture.AudioHelper,
+                    fixture.RegistryHelper,
+                    validator))
+                {
+                    entryView.SuppressMessageBoxes = true;
+                    entryView.AutoLaunchRegistrationDialog = false;
+                    entryView.CustomerComboBox.Text = "Toko Refusal";
+                    entryView.OnBarcodeScanned("8991001100110");
+                    entryView.QtyBagusNumeric.Value = 1;
+                    Assert.True(entryView.CommitQuantityStripToGrid());
+
+                    var result = entryView.SaveAndUploadAsync().GetAwaiter().GetResult();
+
+                    Assert.False(result.Success);
+                    Assert.Equal(refusal, result.ErrorMessage);
+                    Assert.DoesNotContain("409", result.ErrorMessage);
+                    Assert.Empty(fixture.ApiClient.UploadedOrders);
+                }
+            });
+        }
+
+        #endregion
+
         #region Test Workflow Fixture & In-Memory Doubles
 
         private class TestWorkflowFixture
@@ -572,7 +663,9 @@ namespace BtrReturGudang.Winform.Tests
         {
             public string WarehouseCode { get; set; } = "GD-TEST";
             public string ServerTargetId { get; set; } = "SRV-TEST";
+            public string ApiBaseUrl { get; set; } = BtrReturGudang.Infrastructure.Helpers.RegistryHelper.DefaultApiBaseUrl;
             public string LastOperatorName { get; set; } = "BUDI-GUDANG";
+            public string LastOperatorEmail { get; set; } = "budi.gudang@btr.co.id";
             public bool EnableSoundFeedback { get; set; } = true;
         }
 
@@ -582,24 +675,35 @@ namespace BtrReturGudang.Winform.Tests
             public List<ReturnOrderDto> UploadedOrders { get; } = new List<ReturnOrderDto>();
             public List<BarcodeRegistrationDto> UploadedRegistrations { get; } = new List<BarcodeRegistrationDto>();
 
-            public Task<bool> UploadReturnOrderAsync(ReturnOrderDto dto)
+            public SessionResolveResultDto SessionResolveResult { get; set; } =
+                SessionResolveResultDto.Ok(200, null, "USR-001", "BUDI-GUDANG", "ROLE-GDG", null);
+
+            public List<string> ResolvedEmails { get; } = new List<string>();
+
+            public Task<ApiUploadResultDto> UploadReturnOrderAsync(ReturnOrderDto dto)
             {
-                if (!IsOnline) return Task.FromResult(false);
+                if (!IsOnline) return Task.FromResult(ApiUploadResultDto.Fail(0, "Cloud API relay unavailable (offline)."));
                 UploadedOrders.Add(dto);
-                return Task.FromResult(true);
+                return Task.FromResult(ApiUploadResultDto.Ok(200));
             }
 
-            public Task<bool> UploadBarcodeRegistrationAsync(BarcodeRegistrationDto dto)
+            public Task<ApiUploadResultDto> UploadBarcodeRegistrationAsync(BarcodeRegistrationDto dto)
             {
-                if (!IsOnline) return Task.FromResult(false);
+                if (!IsOnline) return Task.FromResult(ApiUploadResultDto.Fail(0, "Cloud API relay unavailable (offline)."));
                 UploadedRegistrations.Add(dto);
-                return Task.FromResult(true);
+                return Task.FromResult(ApiUploadResultDto.Ok(200));
             }
 
             public Task<MasterSyncDto> DownloadMasterDataAsync(string serverId)
             {
                 if (!IsOnline) return Task.FromResult<MasterSyncDto>(null);
                 return Task.FromResult(new MasterSyncDto());
+            }
+
+            public Task<SessionResolveResultDto> ResolveSessionAsync(string email)
+            {
+                ResolvedEmails.Add(email);
+                return Task.FromResult(SessionResolveResult);
             }
         }
 
@@ -639,6 +743,7 @@ namespace BtrReturGudang.Winform.Tests
             public void Save(ReturnOrder returnOrder)
             {
                 if (returnOrder == null) return;
+                returnOrder.Validate();
                 if (_orders.TryGetValue(returnOrder.ReturnOrderId, out var existing))
                 {
                     if (existing.StatusSync == StatusSync.Synced)

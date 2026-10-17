@@ -8,7 +8,9 @@ namespace BtrReturGudang.AppTier.Contracts
     {
         string WarehouseCode { get; set; }
         string ServerTargetId { get; set; }
+        string ApiBaseUrl { get; set; }
         string LastOperatorName { get; set; }
+        string LastOperatorEmail { get; set; }
         bool EnableSoundFeedback { get; set; }
     }
 }

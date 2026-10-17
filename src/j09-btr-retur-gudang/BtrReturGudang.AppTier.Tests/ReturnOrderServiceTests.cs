@@ -160,5 +160,105 @@ namespace BtrReturGudang.AppTier.Tests
             Assert.True(sync.UploadTriggered);
             Assert.Equal(created.ReturnOrderId, sync.LastUploadedId);
         }
+
+        [Fact]
+        public void Create_WithItems_PersistsItemsAtomically()
+        {
+            var repo = new FakeReturnOrderRepo();
+            var service = new ReturnOrderService(repo);
+
+            var items = new List<ReturnOrderItemDto>
+            {
+                new ReturnOrderItemDto { BrgId = "BRG-01", BrgName = "Indomie Goreng", Barcode = "899123", JenisRetur = "BAGUS", Qty = 5, SatId = "Dus" },
+                new ReturnOrderItemDto { BrgId = "BRG-02", BrgName = "Sedaap Soto", Barcode = "899456", JenisRetur = "RUSAK", Qty = 2, SatId = "Dus" }
+            };
+
+            var created = service.Create(
+                "CUST-001",
+                "Toko Berkah",
+                "WHS-01",
+                "Admin-1",
+                items: items);
+
+            Assert.NotNull(created);
+            Assert.Equal(2, created.TotalItemsCount);
+            Assert.Equal(5m, created.TotalQtyBagus);
+            Assert.Equal(2m, created.TotalQtyRusak);
+
+            var inRepo = repo.GetById(created.ReturnOrderId);
+            Assert.NotNull(inRepo);
+            Assert.Equal(2, inRepo.TotalItemsCount);
+            // Verify domain validation succeeds with items present (BR-012)
+            inRepo.Validate();
+        }
+
+        [Fact]
+        public async Task CreateAsync_WithItems_PersistsItemsAtomically()
+        {
+            var repo = new FakeReturnOrderRepo();
+            var service = new ReturnOrderService(repo);
+
+            var items = new List<ReturnOrderItemDto>
+            {
+                new ReturnOrderItemDto { BrgId = "BRG-01", BrgName = "Indomie Goreng", Barcode = "899123", JenisRetur = "BAGUS", Qty = 10, SatId = "Pcs" }
+            };
+
+            var created = await service.CreateAsync(
+                "CUST-001",
+                "Toko Berkah",
+                "WHS-01",
+                "Admin-1",
+                items: items);
+
+            Assert.NotNull(created);
+            Assert.Single(created.Items);
+            Assert.Equal(10m, created.TotalQtyBagus);
+
+            var inRepo = await repo.GetByIdAsync(created.ReturnOrderId);
+            Assert.NotNull(inRepo);
+            Assert.Single(inRepo.Items);
+            inRepo.Validate();
+        }
+
+        [Fact]
+        public async Task UpdateAsync_WithItems_ReplacesItemsAndUpdatesHeader()
+        {
+            var repo = new FakeReturnOrderRepo();
+            var service = new ReturnOrderService(repo);
+
+            var initialItems = new List<ReturnOrderItemDto>
+            {
+                new ReturnOrderItemDto { BrgId = "BRG-01", BrgName = "Indomie Goreng", Barcode = "899123", JenisRetur = "BAGUS", Qty = 5, SatId = "Dus" }
+            };
+
+            var created = await service.CreateAsync(
+                "CUST-001",
+                "Toko Berkah",
+                "WHS-01",
+                "Admin-1",
+                items: initialItems);
+
+            var updatedItems = new List<ReturnOrderItemDto>
+            {
+                new ReturnOrderItemDto { BrgId = "BRG-02", BrgName = "Kopi ABC", Barcode = "899789", JenisRetur = "RUSAK", Qty = 3, SatId = "Dus", Keterangan = "Bocor" }
+            };
+
+            var updated = await service.UpdateAsync(
+                created.ReturnOrderId,
+                "CUST-002",
+                "Toko Sejahtera",
+                keterangan: "Revisi barang",
+                items: updatedItems);
+
+            Assert.Equal("CUST-002", updated.CustId);
+            Assert.Equal("Toko Sejahtera", updated.CustName);
+            Assert.Equal("Revisi barang", updated.Keterangan);
+            Assert.Single(updated.Items);
+            Assert.Equal("BRG-02", updated.Items[0].BrgId);
+            Assert.Equal(3m, updated.TotalQtyRusak);
+
+            var inRepo = repo.GetById(created.ReturnOrderId);
+            inRepo.Validate();
+        }
     }
 }

@@ -109,3 +109,4 @@ A delivery vehicle, driver, or customer arrives at the warehouse dock with physi
 7. Return Orders upload upstream to the Cloud API relay (`POST api/return-order`) and transition from `Draft` to `Synced`.
 8. Synchronized Return Orders become read-only on the warehouse workstation.
 9. Application runs reliably under .NET Framework 4.7.1 on the onsite PC.
+10. Customer master synchronization pulls from the cloud API endpoint (`api/Customer/{ServerTargetId}`) with default server target `JOG` and base URL `http://dev.smart-ics.com:8089/belajar-api`, persisting `customerId`, `customerCode`, `customerName`, `alamat`, and `wilayah` in `BTRG_Customer`. Return Orders freeze `customerCode` and `wilayah` at document creation time.

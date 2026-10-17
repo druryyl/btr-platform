@@ -12,6 +12,7 @@ using BtrReturGudang.AppTier.Services;
 using BtrReturGudang.Domain.Entities;
 using BtrReturGudang.Domain.Enums;
 using BtrReturGudang.Winform.Controls;
+using BtrReturGudang.Winform.Services;
 
 namespace BtrReturGudang.Winform.Views
 {
@@ -29,6 +30,7 @@ namespace BtrReturGudang.Winform.Views
         private readonly IReferenceRepo _referenceRepo;
         private readonly IAudioHelper _audioHelper;
         private readonly IRegistryHelper _registryHelper;
+        private readonly OperatorSessionValidator _sessionValidator;
 
         // Active State
         private BarcodeLookupResult _currentScanResult;
@@ -106,13 +108,15 @@ namespace BtrReturGudang.Winform.Views
             IBarcodeService barcodeService,
             IReferenceRepo referenceRepo,
             IAudioHelper audioHelper,
-            IRegistryHelper registryHelper)
+            IRegistryHelper registryHelper,
+            OperatorSessionValidator sessionValidator = null)
         {
             _returnOrderService = returnOrderService;
             _barcodeService = barcodeService;
             _referenceRepo = referenceRepo;
             _audioHelper = audioHelper;
             _registryHelper = registryHelper;
+            _sessionValidator = sessionValidator;
 
             InitializeComponent();
             LoadReferenceData();
@@ -818,7 +822,7 @@ namespace BtrReturGudang.Winform.Views
                 _cboCustomer.Items.Clear();
                 foreach (var cust in customers)
                 {
-                    _cboCustomer.Items.Add(new CustomerItem(cust.CustId, cust.CustName));
+                    _cboCustomer.Items.Add(new CustomerItem(cust.CustomerId, cust.CustomerName, cust.CustomerCode, cust.Wilayah));
                 }
 
                 // 2. Drivers
@@ -1179,7 +1183,7 @@ namespace BtrReturGudang.Winform.Views
 
         public async Task<ReturnOrderDto> SaveDraftAsync()
         {
-            var (custId, custName) = GetSelectedCustomer();
+            var (custId, custName, customerCode, wilayah) = GetSelectedCustomer();
             if (string.IsNullOrWhiteSpace(custName))
             {
                 _audioHelper?.PlayWarning();
@@ -1222,43 +1226,50 @@ namespace BtrReturGudang.Winform.Views
 
             ReturnOrderDto order;
 
-            if (string.IsNullOrWhiteSpace(CurrentReturnOrderId))
+            try
             {
-                order = _returnOrderService.Create(
-                    custId,
-                    custName,
-                    warehouseCode,
-                    operatorName,
-                    driver?.Id,
-                    driver?.Name,
-                    salesman?.Id,
-                    salesman?.Name,
-                    notes);
-
-                CurrentReturnOrderId = order.ReturnOrderId;
-
-                foreach (var itm in _itemsList)
+                if (string.IsNullOrWhiteSpace(CurrentReturnOrderId))
                 {
-                    var jenisEnum = string.Equals(itm.JenisRetur, "RUSAK", StringComparison.OrdinalIgnoreCase)
-                        ? JenisRetur.RUSAK
-                        : JenisRetur.BAGUS;
+                    order = await _returnOrderService.CreateAsync(
+                        custId,
+                        custName,
+                        warehouseCode,
+                        operatorName,
+                        driver?.Id,
+                        driver?.Name,
+                        salesman?.Id,
+                        salesman?.Name,
+                        notes,
+                        customerCode,
+                        wilayah,
+                        _itemsList);
 
-                    _returnOrderService.AddItem(
-                        CurrentReturnOrderId,
-                        itm.BrgId,
-                        itm.BrgName,
-                        itm.Barcode,
-                        jenisEnum,
-                        itm.Qty,
-                        itm.SatId,
-                        itm.Keterangan);
+                    CurrentReturnOrderId = order.ReturnOrderId;
                 }
-
-                order = await _returnOrderService.CommitDraftAsync(CurrentReturnOrderId);
+                else
+                {
+                    order = await _returnOrderService.UpdateAsync(
+                        CurrentReturnOrderId,
+                        custId,
+                        custName,
+                        driver?.Id,
+                        driver?.Name,
+                        salesman?.Id,
+                        salesman?.Name,
+                        notes,
+                        customerCode,
+                        wilayah,
+                        _itemsList);
+                }
             }
-            else
+            catch (Exception ex)
             {
-                order = await _returnOrderService.CommitDraftAsync(CurrentReturnOrderId);
+                _audioHelper?.PlayWarning();
+                if (!SuppressMessageBoxes)
+                {
+                    MessageBox.Show($"Gagal menyimpan draft Return Order: {ex.Message}", "Kesalahan", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
+                return null;
             }
 
             _audioHelper?.PlaySuccess();
@@ -1277,6 +1288,24 @@ namespace BtrReturGudang.Winform.Views
 
             if (_returnOrderService == null)
                 return SyncResultDto.Fail("ReturnOrder", "Service tidak tersedia.");
+
+            // Pre-empt Cloud upload when the configured operator identity is unresolved so the
+            // Cloud refusal message is surfaced instead of an opaque HTTP 409.
+            // Traceable to: ARCHITECTURE §4 TD-012, §5.2 SCR-07, P2-S05.
+            if (_sessionValidator != null && _sessionValidator.IsUnresolved)
+            {
+                _audioHelper?.PlayWarning();
+                var refusal = _sessionValidator.RefusalMessage;
+                if (!SuppressMessageBoxes)
+                {
+                    MessageBox.Show(
+                        $"Return Order '{CurrentReturnOrderId}' tersimpan sebagai Draft LOKAL.\r\nUpload Cloud dibatalkan: {refusal}",
+                        "Operator Belum Terverifikasi",
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Warning);
+                }
+                return SyncResultDto.Fail("ReturnOrder", refusal);
+            }
 
             var syncResult = await _returnOrderService.CommitAndUploadAsync(CurrentReturnOrderId);
             if (syncResult != null && syncResult.Success)
@@ -1449,20 +1478,20 @@ namespace BtrReturGudang.Winform.Views
             }
         }
 
-        private (string CustId, string CustName) GetSelectedCustomer()
+        private (string CustId, string CustName, string CustomerCode, string Wilayah) GetSelectedCustomer()
         {
             if (_cboCustomer.SelectedItem is CustomerItem cust)
             {
-                return (cust.CustId, cust.CustName);
+                return (cust.CustId, cust.CustName, cust.CustomerCode, cust.Wilayah);
             }
 
             var text = _cboCustomer.Text.Trim();
             if (!string.IsNullOrWhiteSpace(text))
             {
-                return ("CUST-MANUAL", text);
+                return ("CUST-MANUAL", text, null, null);
             }
 
-            return (null, null);
+            return (null, null, null, null);
         }
 
         #endregion
@@ -1506,14 +1535,23 @@ namespace BtrReturGudang.Winform.Views
         {
             public string CustId { get; }
             public string CustName { get; }
+            public string CustomerCode { get; }
+            public string Wilayah { get; }
 
-            public CustomerItem(string custId, string custName)
+            public CustomerItem(string custId, string custName, string customerCode = null, string wilayah = null)
             {
                 CustId = custId;
                 CustName = custName;
+                CustomerCode = customerCode;
+                Wilayah = wilayah;
             }
 
-            public override string ToString() => $"{CustName} ({CustId})";
+            public override string ToString()
+            {
+                var codePart = !string.IsNullOrWhiteSpace(CustomerCode) ? $"[{CustomerCode}] " : string.Empty;
+                var regionPart = !string.IsNullOrWhiteSpace(Wilayah) ? $" - {Wilayah}" : string.Empty;
+                return $"{codePart}{CustName}{regionPart} ({CustId})";
+            }
         }
 
         private class KeyValueItem

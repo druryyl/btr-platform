@@ -17,7 +17,9 @@ namespace BtrReturGudang.Infrastructure.Tests
         {
             public string WarehouseCode { get; set; } = "GDG-CONCAT";
             public string ServerTargetId { get; set; } = "SERVER-01";
+            public string ApiBaseUrl { get; set; } = BtrReturGudang.Infrastructure.Helpers.RegistryHelper.DefaultApiBaseUrl;
             public string LastOperatorName { get; set; } = "Budi Hartono";
+            public string LastOperatorEmail { get; set; } = "budi.hartono@btr.co.id";
             public bool EnableSoundFeedback { get; set; } = true;
         }
 
@@ -57,7 +59,8 @@ namespace BtrReturGudang.Infrastructure.Tests
             var fakeRegistry = new FakeRegistryHelper
             {
                 WarehouseCode = "GDG-GAMPING",
-                LastOperatorName = "Andi Wijaya"
+                LastOperatorName = "Andi Wijaya",
+                LastOperatorEmail = "andi.wijaya@btr.co.id"
             };
 
             var fakeClient = new FakeRestClient();
@@ -71,7 +74,10 @@ namespace BtrReturGudang.Infrastructure.Tests
             Assert.NotNull(locationParam);
             Assert.Equal("GDG-GAMPING", locationParam.Value?.ToString());
             Assert.NotNull(actorParam);
-            Assert.Equal("Andi Wijaya", actorParam.Value?.ToString());
+
+            // TD-007/TD-012: the actor header carries the registered Google email, never the display name.
+            Assert.Equal("andi.wijaya@btr.co.id", actorParam.Value?.ToString());
+            Assert.NotEqual("Andi Wijaya", actorParam.Value?.ToString());
         }
 
         [Fact]
@@ -80,7 +86,7 @@ namespace BtrReturGudang.Infrastructure.Tests
             var fakeRegistry = new FakeRegistryHelper
             {
                 WarehouseCode = "GDG-GAMPING",
-                LastOperatorName = "Operator1"
+                LastOperatorEmail = "operator1@btr.co.id"
             };
 
             var fakeClient = new FakeRestClient();
@@ -88,14 +94,14 @@ namespace BtrReturGudang.Infrastructure.Tests
 
             var req1 = client.CreateRequest("api/test1", Method.Get);
             var actorParam1 = req1.Parameters.FirstOrDefault(p => p.Name == BtradeApiClient.HeaderActor);
-            Assert.Equal("Operator1", actorParam1?.Value?.ToString());
+            Assert.Equal("operator1@btr.co.id", actorParam1?.Value?.ToString());
 
             // Shift changes
-            fakeRegistry.LastOperatorName = "Operator2";
+            fakeRegistry.LastOperatorEmail = "operator2@btr.co.id";
 
             var req2 = client.CreateRequest("api/test2", Method.Get);
             var actorParam2 = req2.Parameters.FirstOrDefault(p => p.Name == BtradeApiClient.HeaderActor);
-            Assert.Equal("Operator2", actorParam2?.Value?.ToString());
+            Assert.Equal("operator2@btr.co.id", actorParam2?.Value?.ToString());
         }
 
         [Fact]
@@ -104,7 +110,7 @@ namespace BtrReturGudang.Infrastructure.Tests
             var fakeRegistry = new FakeRegistryHelper
             {
                 WarehouseCode = "GDG-PST",
-                LastOperatorName = "Joko"
+                LastOperatorEmail = "joko.gudang@btr.co.id"
             };
 
             var fakeClient = new FakeRestClient();
@@ -124,9 +130,10 @@ namespace BtrReturGudang.Infrastructure.Tests
                 }
             };
 
-            var success = await client.UploadReturnOrderAsync(dto);
+            var result = await client.UploadReturnOrderAsync(dto);
 
-            Assert.True(success);
+            Assert.True(result.Success);
+            Assert.Equal(200, result.StatusCode);
             Assert.Single(fakeClient.ExecutedRequests);
 
             var executed = fakeClient.ExecutedRequests[0];
@@ -137,8 +144,10 @@ namespace BtrReturGudang.Infrastructure.Tests
             var actor = executed.Parameters.FirstOrDefault(p => p.Name == BtradeApiClient.HeaderActor);
             Assert.NotNull(loc);
             Assert.Equal("GDG-PST", loc.Value?.ToString());
+
+            // Criterion: outbound requests carry X-Session-Actor == LastOperatorEmail.
             Assert.NotNull(actor);
-            Assert.Equal("Joko", actor.Value?.ToString());
+            Assert.Equal("joko.gudang@btr.co.id", actor.Value?.ToString());
         }
 
         [Fact]
@@ -163,14 +172,83 @@ namespace BtrReturGudang.Infrastructure.Tests
                 OperatorName = "Joko"
             };
 
-            var success = await client.UploadBarcodeRegistrationAsync(dto);
+            var result = await client.UploadBarcodeRegistrationAsync(dto);
 
-            Assert.True(success);
+            Assert.True(result.Success);
+            Assert.Equal(200, result.StatusCode);
             Assert.Single(fakeClient.ExecutedRequests);
 
             var executed = fakeClient.ExecutedRequests[0];
             Assert.Equal("api/barcode-registration", executed.Resource);
             Assert.Equal(Method.Post, executed.Method);
+        }
+
+        [Fact]
+        public async Task UploadReturnOrderAsync_NormalizesConfiguredBaseUrl_AndBuildsBelajarApiRequestUri()
+        {
+            var fakeRegistry = new FakeRegistryHelper();
+            var fakeClient = new FakeRestClient();
+
+            // Configured WITHOUT a trailing slash: RegistryHelper.NormalizeApiUrl must append one so
+            // RestSharp does not strip the '/belajar-api' segment when resolving the relative resource.
+            var client = new BtradeApiClient(fakeRegistry, "http://dev.smart-ics.com:8089/belajar-api", fakeClient);
+
+            Assert.Equal("http://dev.smart-ics.com:8089/belajar-api/", client.BaseUrl);
+
+            var dto = new ReturnOrderDto
+            {
+                ReturnOrderId = "01ARZ3NDEKTSV4RRFFQ69G5FAV",
+                ReturnOrderDate = new DateTime(2026, 10, 11),
+                CustId = "C001",
+                CustName = "Toko Berkah",
+                WarehouseCode = "GDG-PST",
+                Items = new List<ReturnOrderItemDto>()
+            };
+
+            await client.UploadReturnOrderAsync(dto);
+
+            var executed = Assert.Single(fakeClient.ExecutedRequests);
+
+            // Resolve the captured request against the normalized BaseUrl exactly as RestSharp does on the wire.
+            var resolvingClient = new RestClient(new RestClientOptions(client.BaseUrl));
+            var resolvedUri = resolvingClient.BuildUri(executed);
+
+            Assert.Equal("http://dev.smart-ics.com:8089/belajar-api/api/return-order", resolvedUri.ToString());
+        }
+
+        [Fact]
+        public async Task UploadReturnOrderAsync_Non2xxResponse_ReturnsFailureWithStatusCodeAndErrorMessage()
+        {
+            var fakeRegistry = new FakeRegistryHelper();
+            var errorBody = "{\"status\":\"error\",\"message\":\"Return order endpoint not found\"}";
+            var fakeClient = new FakeRestClient
+            {
+                NextResponse = new RestResponse
+                {
+                    StatusCode = System.Net.HttpStatusCode.NotFound,
+                    ResponseStatus = ResponseStatus.Completed,
+                    Content = errorBody
+                }
+            };
+
+            var client = new BtradeApiClient(fakeRegistry, "http://localhost:5000", fakeClient);
+
+            var dto = new ReturnOrderDto
+            {
+                ReturnOrderId = "01ARZ3NDEKTSV4RRFFQ69G5FAV",
+                ReturnOrderDate = new DateTime(2026, 10, 11),
+                CustId = "C001",
+                CustName = "Toko Berkah",
+                WarehouseCode = "GDG-PST",
+                Items = new List<ReturnOrderItemDto>()
+            };
+
+            var result = await client.UploadReturnOrderAsync(dto);
+
+            Assert.False(result.Success);
+            Assert.Equal(404, result.StatusCode);
+            Assert.Equal(errorBody, result.ErrorMessage);
+            Assert.Equal(errorBody, result.RawResponse);
         }
 
         [Fact]
@@ -212,11 +290,14 @@ namespace BtrReturGudang.Infrastructure.Tests
             var json = @"
 {
     ""status"": ""success"",
+    ""code"": ""200"",
     ""data"": [
         {
-            ""customerId"": ""CUST01"",
+            ""customerId"": ""CS0001"",
+            ""customerCode"": ""32"",
             ""customerName"": ""Toko Subur"",
-            ""alamat"": ""Jl. Malioboro No. 10""
+            ""alamat"": ""Jl. Malioboro No. 10"",
+            ""wilayah"": ""YOGYAKARTA""
         }
     ]
 }";
@@ -224,9 +305,38 @@ namespace BtrReturGudang.Infrastructure.Tests
             var list = BtradeApiClient.ParseCustomers(json);
 
             Assert.Single(list);
-            Assert.Equal("CUST01", list[0].CustId);
+            Assert.Equal("CS0001", list[0].CustomerId);
+            Assert.Equal("CS0001", list[0].CustId);
+            Assert.Equal("32", list[0].CustomerCode);
+            Assert.Equal("32", list[0].CustCode);
+            Assert.Equal("Toko Subur", list[0].CustomerName);
             Assert.Equal("Toko Subur", list[0].CustName);
             Assert.Equal("Jl. Malioboro No. 10", list[0].Alamat);
+            Assert.Equal("YOGYAKARTA", list[0].Wilayah);
+        }
+
+        [Fact]
+        public void ParseCustomers_HandlesMissingOptionalFieldsGracefully()
+        {
+            var json = @"
+{
+    ""status"": ""success"",
+    ""data"": [
+        {
+            ""customerId"": ""CS0002"",
+            ""customerName"": ""Customer Minimal""
+        }
+    ]
+}";
+
+            var list = BtradeApiClient.ParseCustomers(json);
+
+            Assert.Single(list);
+            Assert.Equal("CS0002", list[0].CustomerId);
+            Assert.Equal("Customer Minimal", list[0].CustomerName);
+            Assert.True(string.IsNullOrEmpty(list[0].CustomerCode));
+            Assert.True(string.IsNullOrEmpty(list[0].Alamat));
+            Assert.True(string.IsNullOrEmpty(list[0].Wilayah));
         }
 
         [Fact]
@@ -252,6 +362,108 @@ namespace BtrReturGudang.Infrastructure.Tests
             Assert.Equal("Indomie Goreng", list[0].BrgName);
             Assert.Equal("Dus", list[0].Satuan1);
             Assert.Equal("Pcs", list[0].Satuan2);
+        }
+
+        [Fact]
+        public async Task DownloadMasterDataAsync_DefaultsToJOG_WhenServerIdIsEmptyOrNull()
+        {
+            var fakeRegistry = new FakeRegistryHelper
+            {
+                ServerTargetId = "",
+                ApiBaseUrl = "http://dev.smart-ics.com:8089/belajar-api"
+            };
+
+            var fakeClient = new FakeRestClient();
+            var client = new BtradeApiClient(fakeRegistry, null, fakeClient);
+
+            var result = await client.DownloadMasterDataAsync("");
+
+            Assert.Equal("JOG", result.ServerId);
+            Assert.Contains(fakeClient.ExecutedRequests, r => r.Resource.Contains("Customer/JOG"));
+            Assert.Contains(fakeClient.ExecutedRequests, r => r.Resource.Contains("Brg/JOG"));
+        }
+
+        [Fact]
+        public async Task ResolveSessionAsync_200_ReturnsResolvedIdentityAndWarehouses()
+        {
+            var fakeRegistry = new FakeRegistryHelper();
+            var resolvedBody = @"{
+    ""status"": ""success"",
+    ""data"": {
+        ""UserId"": ""USR-001"",
+        ""UserName"": ""Andi Wijaya"",
+        ""RoleId"": ""ROLE-GDG"",
+        ""Warehouses"": [
+            { ""LocationId"": ""GDG-PST"", ""ServerId"": ""SRV-JOG"" },
+            { ""LocationId"": ""GDG-SBY"", ""ServerId"": ""SRV-SBY"" }
+        ]
+    }
+}";
+
+            var fakeClient = new FakeRestClient
+            {
+                NextResponse = new RestResponse
+                {
+                    StatusCode = System.Net.HttpStatusCode.OK,
+                    ResponseStatus = ResponseStatus.Completed,
+                    Content = resolvedBody
+                }
+            };
+
+            var client = new BtradeApiClient(fakeRegistry, "http://localhost:5000", fakeClient);
+
+            var result = await client.ResolveSessionAsync("andi.wijaya@btr.co.id");
+
+            Assert.True(result.Success);
+            Assert.Equal(200, result.StatusCode);
+            Assert.Equal("USR-001", result.UserId);
+            Assert.Equal("Andi Wijaya", result.UserName);
+            Assert.Equal("ROLE-GDG", result.RoleId);
+            Assert.NotNull(result.Warehouses);
+            Assert.Equal(2, result.Warehouses.Count);
+            Assert.Equal("GDG-PST", result.Warehouses[0].LocationId);
+            Assert.Equal("SRV-JOG", result.Warehouses[0].ServerId);
+            Assert.Equal("GDG-SBY", result.Warehouses[1].LocationId);
+            Assert.Equal("SRV-SBY", result.Warehouses[1].ServerId);
+
+            // Resolution is anonymous: no X-Session-* headers are attached.
+            var executed = Assert.Single(fakeClient.ExecutedRequests);
+            Assert.Equal("api/session/resolve", executed.Resource);
+            Assert.Equal(Method.Post, executed.Method);
+            Assert.DoesNotContain(executed.Parameters, p => p.Name == BtradeApiClient.HeaderActor);
+            Assert.DoesNotContain(executed.Parameters, p => p.Name == BtradeApiClient.HeaderLocation);
+        }
+
+        [Fact]
+        public async Task ResolveSessionAsync_400_ReturnsFailureWithServerMessage()
+        {
+            var fakeRegistry = new FakeRegistryHelper();
+            const string refusal = "Google account is not registered or is not active. Contact your administrator.";
+            var errorBody = "{\"status\":\"error\",\"message\":\"" + refusal + "\"}";
+
+            var fakeClient = new FakeRestClient
+            {
+                NextResponse = new RestResponse
+                {
+                    StatusCode = System.Net.HttpStatusCode.BadRequest,
+                    ResponseStatus = ResponseStatus.Completed,
+                    Content = errorBody
+                }
+            };
+
+            var client = new BtradeApiClient(fakeRegistry, "http://localhost:5000", fakeClient);
+
+            var result = await client.ResolveSessionAsync("tidak.terdaftar@btr.co.id");
+
+            Assert.False(result.Success);
+            Assert.Equal(400, result.StatusCode);
+            Assert.NotNull(result.ErrorMessage);
+            Assert.Contains(refusal, result.ErrorMessage);
+            Assert.Equal(errorBody, result.RawResponse);
+
+            var executed = Assert.Single(fakeClient.ExecutedRequests);
+            Assert.Equal("api/session/resolve", executed.Resource);
+            Assert.Equal(Method.Post, executed.Method);
         }
     }
 }

@@ -13,21 +13,68 @@ namespace BtrReturGudang.Infrastructure.Http
 {
     /// <summary>
     /// RestSharp HTTP API client targeting j06-pkl-btrade-api relay service.
-    /// Injects X-Session-Location (WarehouseCode) and X-Session-Actor (OperatorName) headers on all requests.
-    /// Traceable to: ARCHITECTURE §4 TD-007, §5.1, §6, P2-S05.
+    /// Injects X-Session-Location (WarehouseCode) and X-Session-Actor (registered Google email) headers on all requests.
+    /// Traceable to: ARCHITECTURE §4 TD-007, TD-012, §5.1, §6, P2-S05.
     /// </summary>
     public class BtradeApiClient : IBtradeApiClient
     {
         public const string HeaderLocation = "X-Session-Location";
         public const string HeaderActor = "X-Session-Actor";
-        public const string DefaultBaseUrl = "http://localhost:5000";
+        public const string DefaultBaseUrl = RegistryHelper.DefaultApiBaseUrl;
 
-        private readonly IRestClient _client;
+        private readonly IRegistryHelper _registryHelper;
+        private readonly IRestClient _injectedClient;
         private readonly Func<string> _warehouseCodeProvider;
-        private readonly Func<string> _operatorNameProvider;
-        private readonly string _baseUrl;
+        private readonly Func<string> _operatorEmailProvider;
+        private readonly string _configuredBaseUrl;
+        private readonly object _clientLock = new object();
+        private IRestClient _restClient;
+        private string _activeBaseUrl;
 
-        public string BaseUrl => _baseUrl;
+        public string BaseUrl => GetCurrentBaseUrl();
+
+        private string GetCurrentBaseUrl()
+        {
+            if (!string.IsNullOrWhiteSpace(_configuredBaseUrl))
+                return RegistryHelper.NormalizeApiUrl(_configuredBaseUrl);
+
+            var fromRegistry = _registryHelper?.ApiBaseUrl;
+            if (!string.IsNullOrWhiteSpace(fromRegistry))
+                return RegistryHelper.NormalizeApiUrl(fromRegistry);
+
+            var fromConfig = ConfigurationManager.AppSettings["BtradeApiBaseUrl"];
+            if (!string.IsNullOrWhiteSpace(fromConfig))
+                return RegistryHelper.NormalizeApiUrl(fromConfig);
+
+            return RegistryHelper.NormalizeApiUrl(DefaultBaseUrl);
+        }
+
+        private IRestClient Client
+        {
+            get
+            {
+                if (_injectedClient != null)
+                {
+                    return _injectedClient;
+                }
+
+                var currentBase = GetCurrentBaseUrl();
+                lock (_clientLock)
+                {
+                    if (_restClient == null || !string.Equals(_activeBaseUrl, currentBase, StringComparison.OrdinalIgnoreCase))
+                    {
+                        _restClient?.Dispose();
+                        _activeBaseUrl = currentBase;
+                        var options = new RestClientOptions(_activeBaseUrl)
+                        {
+                            Timeout = TimeSpan.FromSeconds(30)
+                        };
+                        _restClient = new RestClient(options);
+                    }
+                    return _restClient;
+                }
+            }
+        }
 
         /// <summary>
         /// Constructs client with explicit endpoint and session providers.
@@ -35,35 +82,21 @@ namespace BtrReturGudang.Infrastructure.Http
         public BtradeApiClient(
             string baseUrl = null,
             Func<string> warehouseCodeProvider = null,
-            Func<string> operatorNameProvider = null,
+            Func<string> operatorEmailProvider = null,
             IRestClient client = null)
         {
-            _baseUrl = !string.IsNullOrWhiteSpace(baseUrl)
-                ? baseUrl
-                : ConfigurationManager.AppSettings["BtradeApiBaseUrl"] ?? DefaultBaseUrl;
-
+            _configuredBaseUrl = baseUrl;
             _warehouseCodeProvider = warehouseCodeProvider
                 ?? (() => RegistryHelper.ReadString(RegistryHelper.KeyWarehouseCode, string.Empty));
 
-            _operatorNameProvider = operatorNameProvider
-                ?? (() => RegistryHelper.ReadString(RegistryHelper.KeyLastOperatorName, string.Empty));
+            _operatorEmailProvider = operatorEmailProvider
+                ?? (() => RegistryHelper.ReadString(RegistryHelper.KeyLastOperatorEmail, string.Empty));
 
-            if (client != null)
-            {
-                _client = client;
-            }
-            else
-            {
-                var options = new RestClientOptions(_baseUrl)
-                {
-                    Timeout = TimeSpan.FromSeconds(30)
-                };
-                _client = new RestClient(options);
-            }
+            _injectedClient = client;
         }
 
         /// <summary>
-        /// Constructs client using IRegistryHelper for session header resolution.
+        /// Constructs client using IRegistryHelper for session header and endpoint resolution.
         /// </summary>
         public BtradeApiClient(
             IRegistryHelper registryHelper,
@@ -72,9 +105,10 @@ namespace BtrReturGudang.Infrastructure.Http
             : this(
                 baseUrl,
                 () => registryHelper?.WarehouseCode ?? string.Empty,
-                () => registryHelper?.LastOperatorName ?? string.Empty,
+                () => registryHelper?.LastOperatorEmail ?? string.Empty,
                 client)
         {
+            _registryHelper = registryHelper;
         }
 
         /// <summary>
@@ -90,7 +124,7 @@ namespace BtrReturGudang.Infrastructure.Http
                 request.AddHeader(HeaderLocation, location);
             }
 
-            var actor = _operatorNameProvider?.Invoke();
+            var actor = _operatorEmailProvider?.Invoke();
             if (!string.IsNullOrWhiteSpace(actor))
             {
                 request.AddHeader(HeaderActor, actor);
@@ -101,8 +135,11 @@ namespace BtrReturGudang.Infrastructure.Http
 
         /// <summary>
         /// Uploads a completed Return Order to POST api/return-order.
+        /// Returns a rich result carrying the HTTP status code, success flag, and server error detail
+        /// so callers can surface detailed diagnostics for failed uploads.
+        /// Traceable to: ARCHITECTURE-NOT-REQUIRED, P2-S03.
         /// </summary>
-        public async Task<bool> UploadReturnOrderAsync(ReturnOrderDto dto)
+        public async Task<ApiUploadResultDto> UploadReturnOrderAsync(ReturnOrderDto dto)
         {
             if (dto == null) throw new ArgumentNullException(nameof(dto));
 
@@ -119,6 +156,8 @@ namespace BtrReturGudang.Infrastructure.Http
                 WarehouseCode = warehouseCode,
                 CustomerId = dto.CustId ?? dto.CustomerId,
                 CustomerName = dto.CustName ?? dto.CustomerName,
+                CustomerCode = dto.CustomerCode,
+                Wilayah = dto.Wilayah,
                 SalesPersonId = dto.SalesPersonId,
                 SalesPersonName = dto.SalesPersonName,
                 DriverId = dto.DriverId,
@@ -139,14 +178,32 @@ namespace BtrReturGudang.Infrastructure.Http
 
             request.AddJsonBody(payload);
 
-            var response = await _client.ExecuteAsync(request).ConfigureAwait(false);
-            return response != null && (response.IsSuccessful || ((int)response.StatusCode >= 200 && (int)response.StatusCode < 300));
+            try
+            {
+                var response = await Client.ExecuteAsync(request).ConfigureAwait(false);
+
+                if (IsSuccessResponse(response))
+                {
+                    return ApiUploadResultDto.Ok((int)response.StatusCode, response.Content);
+                }
+
+                return ApiUploadResultDto.Fail(
+                    response != null ? (int)response.StatusCode : 0,
+                    ExtractErrorDetail(response),
+                    response?.Content);
+            }
+            catch (Exception ex)
+            {
+                return ApiUploadResultDto.Fail(0, ex.Message, null);
+            }
         }
 
         /// <summary>
         /// Uploads an unmapped barcode registration request to POST api/barcode-registration.
+        /// Returns a rich result carrying the HTTP status code, success flag, and server error detail.
+        /// Traceable to: ARCHITECTURE-NOT-REQUIRED, P2-S03.
         /// </summary>
-        public async Task<bool> UploadBarcodeRegistrationAsync(BarcodeRegistrationDto dto)
+        public async Task<ApiUploadResultDto> UploadBarcodeRegistrationAsync(BarcodeRegistrationDto dto)
         {
             if (dto == null) throw new ArgumentNullException(nameof(dto));
 
@@ -162,8 +219,156 @@ namespace BtrReturGudang.Infrastructure.Http
 
             request.AddJsonBody(payload);
 
-            var response = await _client.ExecuteAsync(request).ConfigureAwait(false);
-            return response != null && (response.IsSuccessful || ((int)response.StatusCode >= 200 && (int)response.StatusCode < 300));
+            try
+            {
+                var response = await Client.ExecuteAsync(request).ConfigureAwait(false);
+
+                if (IsSuccessResponse(response))
+                {
+                    return ApiUploadResultDto.Ok((int)response.StatusCode, response.Content);
+                }
+
+                return ApiUploadResultDto.Fail(
+                    response != null ? (int)response.StatusCode : 0,
+                    ExtractErrorDetail(response),
+                    response?.Content);
+            }
+            catch (Exception ex)
+            {
+                return ApiUploadResultDto.Fail(0, ex.Message, null);
+            }
+        }
+
+        /// <summary>
+        /// Resolves an operator Google email through the Cloud anonymous endpoint
+        /// <c>POST api/session/resolve</c>. No <c>X-Session-*</c> headers are attached; the
+        /// email is the sole input. A 2xx response yields the authoritative BTR identity
+        /// (UserId/UserName/RoleId) and the warehouse mapping; a non-2xx response or a
+        /// transport failure yields a failed result carrying the server refusal detail
+        /// (e.g. "Google account is not registered or is not active. Contact your administrator.").
+        /// Traceable to: ARCHITECTURE §4 TD-012, §5.1, §6.
+        /// </summary>
+        public async Task<SessionResolveResultDto> ResolveSessionAsync(string email)
+        {
+            var request = new RestRequest("api/session/resolve", Method.Post);
+            request.AddJsonBody(new { Email = email });
+
+            try
+            {
+                var response = await Client.ExecuteAsync(request).ConfigureAwait(false);
+
+                if (IsSuccessResponse(response))
+                {
+                    var result = SessionResolveResultDto.Ok(
+                        (int)response.StatusCode,
+                        response.Content);
+                    PopulateResolvedIdentity(result, response.Content);
+                    return result;
+                }
+
+                return SessionResolveResultDto.Fail(
+                    response != null ? (int)response.StatusCode : 0,
+                    ExtractErrorDetail(response),
+                    response?.Content);
+            }
+            catch (Exception ex)
+            {
+                return SessionResolveResultDto.Fail(0, ex.Message, null);
+            }
+        }
+
+        /// <summary>
+        /// Populates the resolved identity and warehouse mapping from a successful
+        /// <c>api/session/resolve</c> payload. Tolerates the JSendOk envelope
+        /// (<c>{ "status": ..., "data": { ... } }</c>) as well as a bare payload object.
+        /// The raw response is preserved regardless of parseability.
+        /// </summary>
+        private static void PopulateResolvedIdentity(SessionResolveResultDto result, string json)
+        {
+            if (result == null || string.IsNullOrWhiteSpace(json)) return;
+
+            try
+            {
+                using (var doc = JsonDocument.Parse(json))
+                {
+                    var root = doc.RootElement;
+                    if (root.ValueKind != JsonValueKind.Object) return;
+
+                    var payload = root;
+                    if (root.TryGetProperty("data", out var dataElem) || root.TryGetProperty("Data", out dataElem))
+                    {
+                        payload = dataElem;
+                    }
+
+                    if (payload.ValueKind != JsonValueKind.Object) return;
+
+                    result.UserId = GetStringProp(payload, "UserId", "userId");
+                    result.UserName = GetStringProp(payload, "UserName", "userName");
+                    result.RoleId = GetStringProp(payload, "RoleId", "roleId");
+
+                    if (payload.TryGetProperty("Warehouses", out var warehousesElem)
+                        || payload.TryGetProperty("warehouses", out warehousesElem))
+                    {
+                        if (warehousesElem.ValueKind == JsonValueKind.Array)
+                        {
+                            var warehouses = new List<SessionWarehouseDto>();
+                            foreach (var item in warehousesElem.EnumerateArray())
+                            {
+                                warehouses.Add(new SessionWarehouseDto
+                                {
+                                    LocationId = GetStringProp(item, "LocationId", "locationId"),
+                                    ServerId = GetStringProp(item, "ServerId", "serverId")
+                                });
+                            }
+
+                            result.Warehouses = warehouses;
+                        }
+                    }
+                }
+            }
+            catch
+            {
+                // Structured fields remain unset; the raw response is still returned to callers.
+            }
+        }
+
+        /// <summary>
+        /// Returns true when the response represents a successful HTTP 2xx outcome.
+        /// </summary>
+        private static bool IsSuccessResponse(RestResponse response)
+        {
+            return response != null
+                && (response.IsSuccessful
+                    || ((int)response.StatusCode >= 200 && (int)response.StatusCode < 300));
+        }
+
+        /// <summary>
+        /// Extracts the most descriptive error detail available from a failed response,
+        /// preferring the raw response content, then transport/status messages.
+        /// </summary>
+        private static string ExtractErrorDetail(RestResponse response)
+        {
+            if (response == null)
+            {
+                return "No response received from Cloud API relay.";
+            }
+
+            if (!string.IsNullOrWhiteSpace(response.Content))
+            {
+                return response.Content;
+            }
+
+            if (!string.IsNullOrWhiteSpace(response.ErrorMessage))
+            {
+                return response.ErrorMessage;
+            }
+
+            if (!string.IsNullOrWhiteSpace(response.StatusDescription))
+            {
+                return response.StatusDescription;
+            }
+
+            return $"HTTP {(int)response.StatusCode}";
         }
 
         /// <summary>
@@ -171,9 +376,15 @@ namespace BtrReturGudang.Infrastructure.Http
         /// </summary>
         public async Task<MasterSyncDto> DownloadMasterDataAsync(string serverId)
         {
-            var effectiveServerId = !string.IsNullOrWhiteSpace(serverId)
+            var target = !string.IsNullOrWhiteSpace(serverId)
                 ? serverId
-                : "DEFAULT";
+                : (!string.IsNullOrWhiteSpace(_registryHelper?.ServerTargetId)
+                    ? _registryHelper.ServerTargetId
+                    : RegistryHelper.DefaultServerTargetId);
+
+            var effectiveServerId = !string.IsNullOrWhiteSpace(target)
+                ? target
+                : RegistryHelper.DefaultServerTargetId;
 
             var result = new MasterSyncDto
             {
@@ -185,7 +396,7 @@ namespace BtrReturGudang.Infrastructure.Http
             try
             {
                 var barcodeRequest = CreateRequest("api/barcodes/sync", Method.Get);
-                var barcodeResponse = await _client.ExecuteAsync(barcodeRequest).ConfigureAwait(false);
+                var barcodeResponse = await Client.ExecuteAsync(barcodeRequest).ConfigureAwait(false);
                 if (barcodeResponse != null && barcodeResponse.IsSuccessful && !string.IsNullOrWhiteSpace(barcodeResponse.Content))
                 {
                     result.Barcodes = ParseBarcodes(barcodeResponse.Content);
@@ -200,7 +411,7 @@ namespace BtrReturGudang.Infrastructure.Http
             try
             {
                 var custRequest = CreateRequest($"api/Customer/{effectiveServerId}", Method.Get);
-                var custResponse = await _client.ExecuteAsync(custRequest).ConfigureAwait(false);
+                var custResponse = await Client.ExecuteAsync(custRequest).ConfigureAwait(false);
                 if (custResponse != null && custResponse.IsSuccessful && !string.IsNullOrWhiteSpace(custResponse.Content))
                 {
                     result.Customers = ParseCustomers(custResponse.Content);
@@ -214,7 +425,7 @@ namespace BtrReturGudang.Infrastructure.Http
             try
             {
                 var brgRequest = CreateRequest($"api/Brg/{effectiveServerId}", Method.Get);
-                var brgResponse = await _client.ExecuteAsync(brgRequest).ConfigureAwait(false);
+                var brgResponse = await Client.ExecuteAsync(brgRequest).ConfigureAwait(false);
                 if (brgResponse != null && brgResponse.IsSuccessful && !string.IsNullOrWhiteSpace(brgResponse.Content))
                 {
                     result.Items = ParseBarang(brgResponse.Content);
@@ -228,7 +439,7 @@ namespace BtrReturGudang.Infrastructure.Http
             try
             {
                 var driverRequest = CreateRequest($"api/Driver/{effectiveServerId}", Method.Get);
-                var driverResponse = await _client.ExecuteAsync(driverRequest).ConfigureAwait(false);
+                var driverResponse = await Client.ExecuteAsync(driverRequest).ConfigureAwait(false);
                 if (driverResponse != null && driverResponse.IsSuccessful && !string.IsNullOrWhiteSpace(driverResponse.Content))
                 {
                     result.Drivers = ParseDrivers(driverResponse.Content);
@@ -242,7 +453,7 @@ namespace BtrReturGudang.Infrastructure.Http
             try
             {
                 var spRequest = CreateRequest($"api/SalesPerson/{effectiveServerId}", Method.Get);
-                var spResponse = await _client.ExecuteAsync(spRequest).ConfigureAwait(false);
+                var spResponse = await Client.ExecuteAsync(spRequest).ConfigureAwait(false);
                 if (spResponse != null && spResponse.IsSuccessful && !string.IsNullOrWhiteSpace(spResponse.Content))
                 {
                     result.SalesPersons = ParseSalesPersons(spResponse.Content);
@@ -342,17 +553,21 @@ namespace BtrReturGudang.Infrastructure.Http
 
             foreach (var item in dataArray.Value.EnumerateArray())
             {
-                var custId = GetStringProp(item, "customerId", "CustomerId", "custId", "CustId", "customerCode", "CustomerCode");
+                var custId = GetStringProp(item, "customerId", "CustomerId", "custId", "CustId");
+                var custCode = GetStringProp(item, "customerCode", "CustomerCode", "custCode", "CustCode");
                 var custName = GetStringProp(item, "customerName", "CustomerName", "custName", "CustName");
                 var alamat = GetStringProp(item, "alamat", "Alamat");
+                var wilayah = GetStringProp(item, "wilayah", "Wilayah");
 
                 if (!string.IsNullOrWhiteSpace(custId))
                 {
                     list.Add(new CustomerDto
                     {
-                        CustId = custId,
-                        CustName = custName,
-                        Alamat = alamat
+                        CustomerId = custId,
+                        CustomerCode = custCode,
+                        CustomerName = custName,
+                        Alamat = alamat,
+                        Wilayah = wilayah
                     });
                 }
             }

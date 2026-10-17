@@ -9,6 +9,7 @@ using BtrReturGudang.AppTier.Repositories;
 using BtrReturGudang.AppTier.Services;
 using BtrReturGudang.Domain.Entities;
 using BtrReturGudang.Domain.Enums;
+using BtrReturGudang.Infrastructure.Helpers;
 
 namespace BtrReturGudang.Infrastructure.Services
 {
@@ -74,9 +75,9 @@ namespace BtrReturGudang.Infrastructure.Services
                 }
 
                 var dto = ReturnOrderDto.FromDomain(order);
-                var success = await _apiClient.UploadReturnOrderAsync(dto).ConfigureAwait(false);
+                var uploadResult = await _apiClient.UploadReturnOrderAsync(dto).ConfigureAwait(false);
 
-                if (success)
+                if (uploadResult.Success)
                 {
                     var syncedDate = DateTime.Now;
                     await _returnOrderRepo.MarkSyncedAsync(returnOrderId, syncedDate).ConfigureAwait(false);
@@ -93,15 +94,16 @@ namespace BtrReturGudang.Infrastructure.Services
                 }
                 else
                 {
+                    var errorSummary = $"HTTP {uploadResult.StatusCode}: {uploadResult.ErrorMessage}";
                     var log = new SyncLogEntry(
                         "ReturnOrder",
                         "FAILED",
                         0,
                         0,
-                        $"Cloud API rejected upload of Return Order '{returnOrderId}'.");
+                        $"Failed to upload Return Order '{returnOrderId}': {errorSummary}. Response: {uploadResult.RawResponse}");
                     await _syncLogRepo.LogSyncAsync(log).ConfigureAwait(false);
 
-                    return SyncResultDto.Fail("ReturnOrder", $"Failed to upload Return Order '{returnOrderId}' to Cloud API.");
+                    return SyncResultDto.Fail("ReturnOrder", $"Failed to upload Return Order '{returnOrderId}': {errorSummary}");
                 }
             }
             catch (Exception ex)
@@ -141,9 +143,15 @@ namespace BtrReturGudang.Infrastructure.Services
         /// </summary>
         public async Task<SyncResultDto> PullReferenceDeltasAsync(string serverId = null)
         {
-            var effectiveServerId = !string.IsNullOrWhiteSpace(serverId)
+            var target = !string.IsNullOrWhiteSpace(serverId)
                 ? serverId
-                : _registryHelper?.ServerTargetId;
+                : (!string.IsNullOrWhiteSpace(_registryHelper?.ServerTargetId)
+                    ? _registryHelper.ServerTargetId
+                    : RegistryHelper.DefaultServerTargetId);
+
+            var effectiveServerId = !string.IsNullOrWhiteSpace(target)
+                ? target
+                : RegistryHelper.DefaultServerTargetId;
 
             try
             {
@@ -248,11 +256,22 @@ namespace BtrReturGudang.Infrastructure.Services
                 foreach (var reg in pendingRegs)
                 {
                     var regDto = BarcodeRegistrationDto.FromDomain(reg);
-                    var ok = await _apiClient.UploadBarcodeRegistrationAsync(regDto).ConfigureAwait(false);
-                    if (ok)
+                    var regResult = await _apiClient.UploadBarcodeRegistrationAsync(regDto).ConfigureAwait(false);
+                    if (regResult.Success)
                     {
                         await _barcodeRepo.MarkRegistrationUploadedAsync(reg.RequestId).ConfigureAwait(false);
                         pushedBarcodes++;
+                    }
+                    else
+                    {
+                        var regErrorSummary = $"HTTP {regResult.StatusCode}: {regResult.ErrorMessage}";
+                        var regLog = new SyncLogEntry(
+                            "Barcode",
+                            "FAILED",
+                            0,
+                            0,
+                            $"Failed to upload Barcode Registration '{reg.RequestId}': {regErrorSummary}. Response: {regResult.RawResponse}");
+                        await _syncLogRepo.LogSyncAsync(regLog).ConfigureAwait(false);
                     }
                 }
 
@@ -261,11 +280,22 @@ namespace BtrReturGudang.Infrastructure.Services
                 foreach (var order in pendingOrders)
                 {
                     var orderDto = ReturnOrderDto.FromDomain(order);
-                    var ok = await _apiClient.UploadReturnOrderAsync(orderDto).ConfigureAwait(false);
-                    if (ok)
+                    var orderResult = await _apiClient.UploadReturnOrderAsync(orderDto).ConfigureAwait(false);
+                    if (orderResult.Success)
                     {
                         await _returnOrderRepo.MarkSyncedAsync(order.ReturnOrderId, DateTime.Now).ConfigureAwait(false);
                         pushedOrders++;
+                    }
+                    else
+                    {
+                        var orderErrorSummary = $"HTTP {orderResult.StatusCode}: {orderResult.ErrorMessage}";
+                        var orderLog = new SyncLogEntry(
+                            "ReturnOrder",
+                            "FAILED",
+                            0,
+                            0,
+                            $"Failed to upload Return Order '{order.ReturnOrderId}': {orderErrorSummary}. Response: {orderResult.RawResponse}");
+                        await _syncLogRepo.LogSyncAsync(orderLog).ConfigureAwait(false);
                     }
                 }
 

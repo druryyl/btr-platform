@@ -11,6 +11,7 @@ using BtrReturGudang.AppTier.Repositories;
 using BtrReturGudang.AppTier.Services;
 using BtrReturGudang.Domain.Entities;
 using BtrReturGudang.Domain.Enums;
+using BtrReturGudang.Winform.Services;
 
 namespace BtrReturGudang.Winform.Views
 {
@@ -26,6 +27,7 @@ namespace BtrReturGudang.Winform.Views
         private readonly IReturnOrderRepo _orderRepo;
         private readonly ISyncService _syncService;
         private readonly IAudioHelper _audioHelper;
+        private readonly OperatorSessionValidator _sessionValidator;
 
         // UI Header Controls
         private Panel _pnlHeader;
@@ -96,7 +98,7 @@ namespace BtrReturGudang.Winform.Views
         public IReadOnlyList<ReturnOrderDto> LoadedOrders => _loadedOrders;
 
         public ReturnOrderListView()
-            : this(null, null, null, null)
+            : this(null, null, null, null, null)
         {
         }
 
@@ -104,12 +106,14 @@ namespace BtrReturGudang.Winform.Views
             IReturnOrderService orderService = null,
             IReturnOrderRepo orderRepo = null,
             ISyncService syncService = null,
-            IAudioHelper audioHelper = null)
+            IAudioHelper audioHelper = null,
+            OperatorSessionValidator sessionValidator = null)
         {
             _orderService = orderService;
             _orderRepo = orderRepo;
             _syncService = syncService;
             _audioHelper = audioHelper;
+            _sessionValidator = sessionValidator;
 
             InitializeComponent();
             EnableDoubleBuffering(_dgvOrders);
@@ -826,21 +830,38 @@ namespace BtrReturGudang.Winform.Views
                 return;
             }
 
+            // Pre-empt Cloud upload when the configured operator identity is unresolved so the
+            // Cloud refusal message is surfaced instead of an opaque HTTP 409.
+            // Traceable to: ARCHITECTURE §4 TD-012, §5.2 SCR-07, P2-S05.
+            if (_sessionValidator != null && _sessionValidator.IsUnresolved)
+            {
+                _audioHelper?.PlayWarning();
+                MessageBox.Show(
+                    $"Upload dokumen retur [{_selectedOrder.ReturnOrderId}] ke Cloud dibatalkan: {_sessionValidator.RefusalMessage}",
+                    "Operator Belum Terverifikasi",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Warning);
+                return;
+            }
+
             try
             {
                 _btnUploadOrder.Enabled = false;
                 _btnUploadOrder.Text = "Mengupload...";
 
                 bool success = false;
+                string failureReason = null;
                 if (_orderService != null)
                 {
                     var result = await _orderService.CommitAndUploadAsync(_selectedOrder.ReturnOrderId);
                     success = result != null && result.Success;
+                    failureReason = result?.ErrorMessage;
                 }
                 else if (_syncService != null)
                 {
                     var syncResult = await _syncService.TriggerDocumentUploadAsync(_selectedOrder.ReturnOrderId);
                     success = syncResult != null && syncResult.Success;
+                    failureReason = syncResult?.ErrorMessage;
                 }
 
                 if (success)
@@ -856,8 +877,11 @@ namespace BtrReturGudang.Winform.Views
                 else
                 {
                     _audioHelper?.PlayWarning();
+                    var msg = !string.IsNullOrWhiteSpace(failureReason)
+                        ? $"Gagal mengupload dokumen retur [{_selectedOrder.ReturnOrderId}] ke Cloud API relay:\r\n{failureReason}"
+                        : $"Gagal mengupload dokumen retur [{_selectedOrder.ReturnOrderId}] ke Cloud API relay.";
                     MessageBox.Show(
-                        $"Gagal mengupload dokumen retur [{_selectedOrder.ReturnOrderId}] ke Cloud API relay.",
+                        msg,
                         "Upload Gagal",
                         MessageBoxButtons.OK,
                         MessageBoxIcon.Warning);

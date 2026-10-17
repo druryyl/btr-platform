@@ -16,8 +16,11 @@ namespace BtrReturGudang.AppTier.DTOs
         public DateTime ReturnOrderDate { get; set; } = DateTime.Today;
         public string CustId { get; set; }
         public string CustName { get; set; }
+        public string CustomerCode { get; set; }
+        public string Wilayah { get; set; }
         public string CustomerId => CustId; // Alias for cloud API
         public string CustomerName => CustName; // Alias for cloud API
+        public string CustCode => CustomerCode; // Alias for consistency
         public string DriverId { get; set; }
         public string DriverName { get; set; }
         public string SalesPersonId { get; set; }
@@ -55,6 +58,8 @@ namespace BtrReturGudang.AppTier.DTOs
                 ReturnOrderDate = order.ReturnOrderDate,
                 CustId = order.CustId,
                 CustName = order.CustName,
+                CustomerCode = order.CustomerCode,
+                Wilayah = order.Wilayah,
                 DriverId = order.DriverId,
                 DriverName = order.DriverName,
                 SalesPersonId = order.SalesPersonId,
@@ -94,7 +99,9 @@ namespace BtrReturGudang.AppTier.DTOs
                 status,
                 CreatedDate,
                 ModifiedDate,
-                SyncedDate);
+                SyncedDate,
+                CustomerCode,
+                Wilayah);
 
             if (Items != null)
             {

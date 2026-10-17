@@ -19,6 +19,10 @@ namespace BtrReturGudang.Domain.Entities
         public DateTime ReturnOrderDate { get; private set; }
         public string CustId { get; private set; }
         public string CustName { get; private set; }
+        public string CustomerCode { get; private set; }
+        public string Wilayah { get; private set; }
+        public string CustomerId => CustId;
+        public string CustomerName => CustName;
         public string DriverId { get; private set; }
         public string DriverName { get; private set; }
         public string SalesPersonId { get; private set; }
@@ -60,7 +64,9 @@ namespace BtrReturGudang.Domain.Entities
             StatusSync statusSync = StatusSync.Draft,
             DateTime? createdDate = null,
             DateTime? modifiedDate = null,
-            DateTime? syncedDate = null)
+            DateTime? syncedDate = null,
+            string customerCode = null,
+            string wilayah = null)
         {
             if (string.IsNullOrWhiteSpace(returnOrderId))
                 returnOrderId = UlidGenerator.NewUlid();
@@ -83,6 +89,8 @@ namespace BtrReturGudang.Domain.Entities
             ReturnOrderDate = returnOrderDate == default ? now.Date : returnOrderDate;
             CustId = custId;
             CustName = custName;
+            CustomerCode = customerCode;
+            Wilayah = wilayah;
             WarehouseCode = warehouseCode;
             OperatorName = operatorName;
             DriverId = driverId;
@@ -109,7 +117,9 @@ namespace BtrReturGudang.Domain.Entities
             string driverName = null,
             string salesPersonId = null,
             string salesPersonName = null,
-            string keterangan = null)
+            string keterangan = null,
+            string customerCode = null,
+            string wilayah = null)
         {
             return new ReturnOrder(
                 UlidGenerator.NewUlid(),
@@ -123,7 +133,9 @@ namespace BtrReturGudang.Domain.Entities
                 salesPersonId,
                 salesPersonName,
                 keterangan,
-                StatusSync.Draft);
+                StatusSync.Draft,
+                customerCode: customerCode,
+                wilayah: wilayah);
         }
 
         /// <summary>
@@ -197,7 +209,7 @@ namespace BtrReturGudang.Domain.Entities
             ModifiedDate = DateTime.Now;
         }
 
-        public void SetCustomer(string custId, string custName)
+        public void SetCustomer(string custId, string custName, string customerCode = null, string wilayah = null)
         {
             EnsureModifiable(nameof(SetCustomer));
 
@@ -209,6 +221,8 @@ namespace BtrReturGudang.Domain.Entities
 
             CustId = custId;
             CustName = custName;
+            CustomerCode = customerCode;
+            Wilayah = wilayah;
             ModifiedDate = DateTime.Now;
         }
 

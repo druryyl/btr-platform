@@ -12,6 +12,8 @@ BEGIN
         ReturnOrderDate  DATE          NOT NULL,
         CustId           VARCHAR(10)   NOT NULL,
         CustName         VARCHAR(100)  NOT NULL,
+        CustomerCode     VARCHAR(20)   NULL,
+        Wilayah          VARCHAR(100)  NULL,
         DriverId         VARCHAR(10)   NULL,
         DriverName       VARCHAR(100)  NULL,
         SalesPersonId    VARCHAR(10)   NULL,
@@ -103,15 +105,22 @@ END;
 IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'BTRG_Customer' AND type = 'U')
 BEGIN
     CREATE TABLE BTRG_Customer (
-        CustId           VARCHAR(10)   NOT NULL PRIMARY KEY,
-        CustName         VARCHAR(100)  NOT NULL,
-        Alamat           VARCHAR(150)  NULL
+        CustomerId       VARCHAR(20)   NOT NULL PRIMARY KEY,
+        CustomerCode     VARCHAR(20)   NULL,
+        CustomerName     VARCHAR(100)  NOT NULL,
+        Alamat           VARCHAR(250)  NULL,
+        Wilayah          VARCHAR(100)  NULL
     );
+END;
+
+IF NOT EXISTS (SELECT * FROM sys.indexes WHERE name = 'IX_BTRG_Customer_Code' AND object_id = OBJECT_ID('BTRG_Customer'))
+BEGIN
+    CREATE INDEX IX_BTRG_Customer_Code ON BTRG_Customer (CustomerCode);
 END;
 
 IF NOT EXISTS (SELECT * FROM sys.indexes WHERE name = 'IX_BTRG_Customer_Name' AND object_id = OBJECT_ID('BTRG_Customer'))
 BEGIN
-    CREATE INDEX IX_BTRG_Customer_Name ON BTRG_Customer (CustName);
+    CREATE INDEX IX_BTRG_Customer_Name ON BTRG_Customer (CustomerName);
 END;
 
 -- 7. BTRG_Driver (Reference Cache)

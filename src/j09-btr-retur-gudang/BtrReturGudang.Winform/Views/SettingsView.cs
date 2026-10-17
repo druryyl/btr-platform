@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using System.Windows.Forms;
 using BtrReturGudang.AppTier.Contracts;
 using BtrReturGudang.Infrastructure.Helpers;
+using BtrReturGudang.Winform.Services;
 
 namespace BtrReturGudang.Winform.Views
 {
@@ -21,6 +22,7 @@ namespace BtrReturGudang.Winform.Views
         private readonly IRegistryHelper _registryHelper;
         private readonly IAudioHelper _audioHelper;
         private readonly IBtradeApiClient _apiClient;
+        private readonly OperatorSessionValidator _sessionValidator;
 
         // Header controls
         private Panel _pnlHeader;
@@ -33,7 +35,11 @@ namespace BtrReturGudang.Winform.Views
         private TextBox _txtServerTargetId;
         private TextBox _txtPcName;
         private Label _lblOperatorDisplay;
+        private Label _lblOperatorEmailDisplay;
         private Button _btnSwitchOperator;
+        private Button _btnVerifyOperator;
+        private Label _lblSessionStatus;
+        private string _currentOperatorEmail = string.Empty;
 
         // Database connection controls
         private TextBox _txtConnString;
@@ -56,7 +62,10 @@ namespace BtrReturGudang.Winform.Views
         public TextBox ServerTargetIdBox => _txtServerTargetId;
         public TextBox PcNameBox => _txtPcName;
         public Label OperatorLabel => _lblOperatorDisplay;
+        public Label OperatorEmailLabel => _lblOperatorEmailDisplay;
         public Button SwitchOperatorButton => _btnSwitchOperator;
+        public Button VerifyOperatorButton => _btnVerifyOperator;
+        public Label SessionStatusLabel => _lblSessionStatus;
         public TextBox ConnStringBox => _txtConnString;
         public Button TestDbButton => _btnTestDb;
         public Label DbStatusLabel => _lblDbStatus;
@@ -69,18 +78,20 @@ namespace BtrReturGudang.Winform.Views
         public Button SaveAllButton => _btnSaveAll;
 
         public SettingsView()
-            : this(null, null, null)
+            : this(null, null, null, null)
         {
         }
 
         public SettingsView(
             IRegistryHelper registryHelper = null,
             IAudioHelper audioHelper = null,
-            IBtradeApiClient apiClient = null)
+            IBtradeApiClient apiClient = null,
+            OperatorSessionValidator sessionValidator = null)
         {
             _registryHelper = registryHelper;
             _audioHelper = audioHelper;
             _apiClient = apiClient;
+            _sessionValidator = sessionValidator;
 
             InitializeComponent();
             LoadCurrentConfiguration();
@@ -182,7 +193,7 @@ namespace BtrReturGudang.Winform.Views
 
         private Control BuildIdentityCard()
         {
-            var pnl = CreateCardPanel("🏢 Identitas Workstation & Shift Operator", 185);
+            var pnl = CreateCardPanel("🏢 Identitas Workstation & Shift Operator", 250);
 
             // Depo / Warehouse Code
             var lblWh = new Label { Text = "Kode Depo / Warehouse:", Font = UiTheme.FontLabel, ForeColor = UiTheme.Slate700, Location = new Point(24, 48), AutoSize = true };
@@ -228,7 +239,43 @@ namespace BtrReturGudang.Winform.Views
                 Cursor = Cursors.Hand
             };
             _btnSwitchOperator.FlatAppearance.BorderColor = UiTheme.Slate300;
-            _btnSwitchOperator.Click += OnSwitchOperatorClick;
+            _btnSwitchOperator.Click += async (s, e) => await OnSwitchOperatorClickAsync();
+
+            // Google Email Operator (Cloud session actor)
+            var lblOpEmail = new Label { Text = "Google Email Operator:", Font = UiTheme.FontLabel, ForeColor = UiTheme.Slate700, Location = new Point(24, 162), AutoSize = true };
+            _lblOperatorEmailDisplay = new Label
+            {
+                Text = "Belum diatur",
+                Font = UiTheme.FontBody,
+                ForeColor = UiTheme.Slate700,
+                Location = new Point(210, 162),
+                AutoSize = true
+            };
+
+            // Verify Operator (Cloud POST api/session/resolve)
+            _btnVerifyOperator = new Button
+            {
+                Text = "🔐 Verifikasi Operator",
+                Font = UiTheme.FontLabel,
+                BackColor = UiTheme.Slate100,
+                ForeColor = UiTheme.Slate800,
+                FlatStyle = FlatStyle.Flat,
+                Location = new Point(508, 123),
+                Width = 155,
+                Height = 30,
+                Cursor = Cursors.Hand
+            };
+            _btnVerifyOperator.FlatAppearance.BorderColor = UiTheme.Slate300;
+            _btnVerifyOperator.Click += async (s, e) => await OnVerifyOperatorClickAsync();
+
+            _lblSessionStatus = new Label
+            {
+                Text = "Status operator: Belum diverifikasi.",
+                Font = UiTheme.FontLabel,
+                ForeColor = UiTheme.Slate500,
+                Location = new Point(24, 192),
+                AutoSize = true
+            };
 
             pnl.Controls.Add(lblWh);
             pnl.Controls.Add(_txtWarehouseCode);
@@ -239,6 +286,10 @@ namespace BtrReturGudang.Winform.Views
             pnl.Controls.Add(lblOp);
             pnl.Controls.Add(_lblOperatorDisplay);
             pnl.Controls.Add(_btnSwitchOperator);
+            pnl.Controls.Add(_btnVerifyOperator);
+            pnl.Controls.Add(lblOpEmail);
+            pnl.Controls.Add(_lblOperatorEmailDisplay);
+            pnl.Controls.Add(_lblSessionStatus);
 
             return pnl;
         }
@@ -315,7 +366,10 @@ namespace BtrReturGudang.Winform.Views
             var lblUrl = new Label { Text = "Base URL Staging Relay:", Font = UiTheme.FontLabel, ForeColor = UiTheme.Slate700, Location = new Point(24, 48), AutoSize = true };
             _txtApiUrl = new TextBox
             {
-                Text = ConfigurationManager.AppSettings["BtradeApiBaseUrl"] ?? "http://localhost:5000",
+                Text = RegistryHelper.NormalizeApiUrl(
+                    _registryHelper?.ApiBaseUrl
+                    ?? ConfigurationManager.AppSettings["BtradeApiBaseUrl"]
+                    ?? RegistryHelper.DefaultApiBaseUrl),
                 Font = UiTheme.FontBody,
                 Location = new Point(210, 45),
                 Width = 380
@@ -442,32 +496,125 @@ namespace BtrReturGudang.Winform.Views
             if (_registryHelper != null)
             {
                 _txtWarehouseCode.Text = _registryHelper.WarehouseCode ?? "GDG-PST";
-                _txtServerTargetId.Text = _registryHelper.ServerTargetId ?? string.Empty;
+                _txtServerTargetId.Text = !string.IsNullOrWhiteSpace(_registryHelper.ServerTargetId)
+                    ? _registryHelper.ServerTargetId
+                    : RegistryHelper.DefaultServerTargetId;
+                _txtApiUrl.Text = RegistryHelper.NormalizeApiUrl(_registryHelper.ApiBaseUrl ?? RegistryHelper.DefaultApiBaseUrl);
                 _lblOperatorDisplay.Text = !string.IsNullOrWhiteSpace(_registryHelper.LastOperatorName)
                     ? _registryHelper.LastOperatorName
                     : "Operator-1";
+                _currentOperatorEmail = _registryHelper.LastOperatorEmail ?? string.Empty;
+                _lblOperatorEmailDisplay.Text = string.IsNullOrWhiteSpace(_currentOperatorEmail)
+                    ? "Belum diatur"
+                    : _currentOperatorEmail;
                 _chkEnableAudio.Checked = _registryHelper.EnableSoundFeedback;
             }
             else
             {
                 _txtWarehouseCode.Text = "GDG-PST";
-                _txtServerTargetId.Text = string.Empty;
+                _txtServerTargetId.Text = RegistryHelper.DefaultServerTargetId;
+                _txtApiUrl.Text = RegistryHelper.NormalizeApiUrl(RegistryHelper.DefaultApiBaseUrl);
                 _lblOperatorDisplay.Text = "Operator-1";
+                _currentOperatorEmail = string.Empty;
+                _lblOperatorEmailDisplay.Text = "Belum diatur";
                 _chkEnableAudio.Checked = true;
             }
 
             _txtConnString.Text = ConnStringHelper.GetConnectionString();
+
+            // Operator session validation status starts unverified.
+            _lblSessionStatus.Text = "Status operator: Belum diverifikasi.";
+            _lblSessionStatus.ForeColor = UiTheme.Slate500;
         }
 
-        private void OnSwitchOperatorClick(object sender, EventArgs e)
+        private async Task OnSwitchOperatorClickAsync()
         {
             var helper = _registryHelper ?? new RegistryHelper();
             using (var dlg = new OperatorSwitcherDialog(helper))
             {
-                if (dlg.ShowDialog(this) == DialogResult.OK)
+                if (dlg.ShowDialog(this) != DialogResult.OK)
+                    return;
+
+                _lblOperatorDisplay.Text = dlg.SelectedOperatorName;
+                _currentOperatorEmail = dlg.SelectedOperatorEmail ?? string.Empty;
+                _lblOperatorEmailDisplay.Text = string.IsNullOrWhiteSpace(_currentOperatorEmail)
+                    ? "Belum diatur"
+                    : _currentOperatorEmail;
+
+                // Operator change (dialog save): validate the configured email and warn when unresolved.
+                await OnVerifyOperatorClickAsync();
+            }
+        }
+
+        /// <summary>
+        /// "Verify Operator" action: resolves the configured operator Google email through
+        /// <c>POST api/session/resolve</c> and surfaces the outcome. Success shows the resolved
+        /// UserName/RoleId; failure shows the Cloud refusal message (unwrapped from the JSend
+        /// failure envelope) rather than the raw response body.
+        /// Traceable to: ARCHITECTURE §4 TD-012, §11.13, §5.2 SCR-07.
+        /// </summary>
+        private async Task OnVerifyOperatorClickAsync()
+        {
+            if (_sessionValidator == null && _apiClient == null)
+            {
+                _lblSessionStatus.Text = "Status operator: Verifikasi tidak tersedia (Cloud API client belum terhubung).";
+                _lblSessionStatus.ForeColor = UiTheme.Slate500;
+                return;
+            }
+
+            string email = _registryHelper?.LastOperatorEmail;
+            if (string.IsNullOrWhiteSpace(email))
+            {
+                email = _currentOperatorEmail ?? string.Empty;
+            }
+
+            _btnVerifyOperator.Enabled = false;
+            _lblSessionStatus.Text = "Status operator: Memverifikasi...";
+            _lblSessionStatus.ForeColor = UiTheme.Slate500;
+
+            try
+            {
+                BtrReturGudang.AppTier.DTOs.SessionResolveResultDto result;
+                if (_sessionValidator != null)
                 {
-                    _lblOperatorDisplay.Text = dlg.SelectedOperatorName;
+                    result = await _sessionValidator.ValidateAsync();
                 }
+                else
+                {
+                    result = string.IsNullOrWhiteSpace(email)
+                        ? null
+                        : await _apiClient.ResolveSessionAsync(email);
+                }
+
+                if (result != null && result.Success)
+                {
+                    _audioHelper?.PlaySuccess();
+                    _lblSessionStatus.ForeColor = Color.FromArgb(4, 120, 87);
+                    _lblSessionStatus.Text = $"✅ Operator terverifikasi: {result.UserName} (Role: {result.RoleId})";
+                }
+                else if (result == null)
+                {
+                    _lblSessionStatus.ForeColor = UiTheme.Slate500;
+                    _lblSessionStatus.Text = "Status operator: Verifikasi tidak tersedia (Cloud API client belum terhubung).";
+                }
+                else
+                {
+                    _audioHelper?.PlayWarning();
+                    _lblSessionStatus.ForeColor = Color.FromArgb(185, 28, 28);
+                    // Surface the Cloud refusal message (unwrapped from the JSend failure
+                    // envelope) rather than the raw JSON body. Traceable to: TD-012, §11.13.
+                    _lblSessionStatus.Text = OperatorSessionValidator.ExtractRefusalMessage(result);
+                }
+            }
+            catch (Exception ex)
+            {
+                _audioHelper?.PlayWarning();
+                _lblSessionStatus.ForeColor = Color.FromArgb(185, 28, 28);
+                _lblSessionStatus.Text = ex.Message;
+            }
+            finally
+            {
+                _btnVerifyOperator.Enabled = true;
             }
         }
 
@@ -522,13 +669,16 @@ namespace BtrReturGudang.Winform.Views
 
         private async Task OnTestApiClickAsync()
         {
-            string url = _txtApiUrl.Text?.Trim();
+            string url = RegistryHelper.NormalizeApiUrl(_txtApiUrl.Text);
             if (string.IsNullOrWhiteSpace(url))
             {
                 _lblApiStatus.Text = "❌ Base URL relay tidak boleh kosong.";
                 _lblApiStatus.ForeColor = Color.FromArgb(185, 28, 28);
                 return;
             }
+
+            // Reflect the sanitized URL (trailing slash) before testing.
+            _txtApiUrl.Text = url;
 
             _btnTestApi.Enabled = false;
             _lblApiStatus.Text = "Menguji route HTTP API...";
@@ -593,6 +743,7 @@ namespace BtrReturGudang.Winform.Views
             {
                 string wh = _txtWarehouseCode.Text?.Trim() ?? string.Empty;
                 string serverId = _txtServerTargetId.Text?.Trim() ?? string.Empty;
+                string apiUrl = RegistryHelper.NormalizeApiUrl(_txtApiUrl.Text);
                 string connStr = _txtConnString.Text?.Trim() ?? string.Empty;
                 bool audio = _chkEnableAudio.Checked;
 
@@ -600,7 +751,18 @@ namespace BtrReturGudang.Winform.Views
                 {
                     _registryHelper.WarehouseCode = wh;
                     _registryHelper.ServerTargetId = serverId;
+                    _registryHelper.ApiBaseUrl = apiUrl;
                     _registryHelper.EnableSoundFeedback = audio;
+
+                    // Re-persist the configured operator Google email (Cloud session actor).
+                    _registryHelper.LastOperatorEmail = _currentOperatorEmail ?? string.Empty;
+
+                    // Reflect the sanitized URL actually persisted (guarantees a trailing slash).
+                    _txtApiUrl.Text = _registryHelper.ApiBaseUrl;
+                }
+                else
+                {
+                    _txtApiUrl.Text = apiUrl;
                 }
 
                 if (!string.IsNullOrWhiteSpace(connStr))

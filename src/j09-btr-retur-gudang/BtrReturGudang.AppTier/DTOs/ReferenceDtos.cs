@@ -63,24 +63,46 @@ namespace BtrReturGudang.AppTier.DTOs
 
     public class CustomerDto
     {
-        public string CustId { get; set; }
-        public string CustName { get; set; }
+        public string CustomerId { get; set; }
+        public string CustomerCode { get; set; }
+        public string CustomerName { get; set; }
         public string Alamat { get; set; }
+        public string Wilayah { get; set; }
+
+        public string CustId
+        {
+            get => CustomerId;
+            set => CustomerId = value;
+        }
+
+        public string CustName
+        {
+            get => CustomerName;
+            set => CustomerName = value;
+        }
+
+        public string CustCode
+        {
+            get => CustomerCode;
+            set => CustomerCode = value;
+        }
 
         public static CustomerDto FromDomain(Customer customer)
         {
             if (customer == null) return null;
             return new CustomerDto
             {
-                CustId = customer.CustId,
-                CustName = customer.CustName,
-                Alamat = customer.Alamat
+                CustomerId = customer.CustomerId,
+                CustomerCode = customer.CustomerCode,
+                CustomerName = customer.CustomerName,
+                Alamat = customer.Alamat,
+                Wilayah = customer.Wilayah
             };
         }
 
         public Customer ToDomain()
         {
-            return new Customer(CustId, CustName, Alamat);
+            return new Customer(CustomerId, CustomerName, Alamat, CustomerCode, Wilayah);
         }
     }
 

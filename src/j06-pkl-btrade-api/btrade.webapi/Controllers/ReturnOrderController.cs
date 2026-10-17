@@ -80,9 +80,12 @@ public record ReturnOrderSubmitRequest(
     string WarehouseCode,
     string CustomerId,
     string CustomerName,
-    string SalesPersonId,
-    string SalesPersonName,
-    string DriverId,
-    string DriverName,
+    //  ADR-RO-005/GAP-005 — Salesman and Driver are optional; declare them
+    //  nullable so the implicit [Required] on non-nullable reference types
+    //  does not reject a payload that leaves them empty.
+    string? SalesPersonId,
+    string? SalesPersonName,
+    string? DriverId,
+    string? DriverName,
     string Note,
     IEnumerable<ReturnOrderItemType> ListItem);

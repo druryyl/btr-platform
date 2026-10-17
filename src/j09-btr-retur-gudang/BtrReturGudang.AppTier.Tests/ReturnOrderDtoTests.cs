@@ -24,7 +24,9 @@ namespace BtrReturGudang.AppTier.Tests
                 "SLS-01",
                 "Agus",
                 "Barang rusak saat pengiriman",
-                StatusSync.Draft);
+                StatusSync.Draft,
+                customerCode: "C-32",
+                wilayah: "YOGYAKARTA");
 
             order.AddItem("BRG-01", "Indomie Goreng", "8991234567890", JenisRetur.BAGUS, 10, "PCS");
             order.AddItem("BRG-02", "Sedaap Goreng", "8999876543210", JenisRetur.RUSAK, 5, "PCS");
@@ -35,8 +37,11 @@ namespace BtrReturGudang.AppTier.Tests
             Assert.Equal("01JABCDEF01234567890ABCDEF", dto.ReturnOrderId);
             Assert.Equal("CUST-001", dto.CustId);
             Assert.Equal("CUST-001", dto.CustomerId);
+            Assert.Equal("C-32", dto.CustomerCode);
+            Assert.Equal("C-32", dto.CustCode);
             Assert.Equal("Toko Rejeki", dto.CustName);
             Assert.Equal("Toko Rejeki", dto.CustomerName);
+            Assert.Equal("YOGYAKARTA", dto.Wilayah);
             Assert.Equal("WHS-01", dto.WarehouseCode);
             Assert.Equal("Operator-1", dto.OperatorName);
             Assert.Equal("DRV-01", dto.DriverId);
@@ -63,6 +68,8 @@ namespace BtrReturGudang.AppTier.Tests
                 ReturnOrderDate = new DateTime(2026, 1, 10),
                 CustId = "CUST-001",
                 CustName = "Toko Rejeki",
+                CustomerCode = "C-32",
+                Wilayah = "YOGYAKARTA",
                 WarehouseCode = "WHS-01",
                 OperatorName = "Operator-1",
                 Keterangan = "Catatan",
@@ -84,6 +91,8 @@ namespace BtrReturGudang.AppTier.Tests
             Assert.Equal("01JABCDEF01234567890ABCDEF", domain.ReturnOrderId);
             Assert.Equal("CUST-001", domain.CustId);
             Assert.Equal("Toko Rejeki", domain.CustName);
+            Assert.Equal("C-32", domain.CustomerCode);
+            Assert.Equal("YOGYAKARTA", domain.Wilayah);
             Assert.Equal(StatusSync.Draft, domain.StatusSync);
             Assert.Single(domain.Items);
             Assert.Equal(12m, domain.TotalQtyBagus);

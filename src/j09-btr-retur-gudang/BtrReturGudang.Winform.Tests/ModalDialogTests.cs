@@ -235,6 +235,45 @@ namespace BtrReturGudang.Winform.Tests
 
         #endregion
 
+        #region SCR-07 / SCR-01: OperatorSwitcherDialog operator Google-email entry
+
+        [Fact]
+        public void OperatorSwitcherDialog_PrePopulatesAndPersistsValidOperatorGoogleEmail()
+        {
+            ExecuteInStaThread(() =>
+            {
+                var fakeRegistry = new FakeRegistryHelper
+                {
+                    LastOperatorName = "Budi",
+                    LastOperatorEmail = "budi@btr.co.id"
+                };
+
+                using (var dlg = new OperatorSwitcherDialog(fakeRegistry))
+                {
+                    // Show the dialog so the input controls are selectable and the Save button is clickable.
+                    dlg.Show();
+
+                    // Configured operator identity is pre-populated (name + Google email).
+                    Assert.Equal("Budi", dlg.OperatorNameBox.Text);
+                    Assert.Equal("budi@btr.co.id", dlg.OperatorEmailBox.Text);
+
+                    dlg.OperatorNameBox.Text = "Siti";
+                    dlg.OperatorEmailBox.Text = "siti.gudang@btr.co.id";
+                    dlg.SaveButton.PerformClick();
+
+                    // TD-007/TD-012: the entry persists the Google email as the session actor.
+                    Assert.Equal("Siti", dlg.SelectedOperatorName);
+                    Assert.Equal("siti.gudang@btr.co.id", dlg.SelectedOperatorEmail);
+                    Assert.Equal("Siti", fakeRegistry.LastOperatorName);
+                    Assert.Equal("siti.gudang@btr.co.id", fakeRegistry.LastOperatorEmail);
+
+                    dlg.Close();
+                }
+            });
+        }
+
+        #endregion
+
         #region ReturnOrderEntryView Wiring Integration Tests
 
         [Fact]
@@ -396,12 +435,14 @@ namespace BtrReturGudang.Winform.Tests
         {
             public string WarehouseCode { get; set; } = "GD-TEST";
             public string ServerTargetId { get; set; } = "PKL";
+            public string ApiBaseUrl { get; set; } = BtrReturGudang.Infrastructure.Helpers.RegistryHelper.DefaultApiBaseUrl;
             public string LocalDbServer { get; set; } = "(local)";
             public string LocalDbDatabase { get; set; } = "btrgd";
             public string LocalDbUser { get; set; } = "user";
             public string LocalDbPassword { get; set; } = "pass";
             public string CloudRelayBaseUrl { get; set; } = "http://localhost:5000";
             public string LastOperatorName { get; set; } = "OPERATOR";
+            public string LastOperatorEmail { get; set; } = "operator@btr.co.id";
             public bool EnableSoundFeedback { get; set; } = true;
             public string GetLocalDbConnectionString() => "Server=test";
             public void SaveWorkstationSettings(string warehouseCode, string serverTargetId, string localDbServer, string localDbDatabase, string localDbUser, string localDbPassword, string cloudRelayBaseUrl) { }

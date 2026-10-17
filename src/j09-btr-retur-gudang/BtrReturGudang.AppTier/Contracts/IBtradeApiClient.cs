@@ -10,8 +10,9 @@ namespace BtrReturGudang.AppTier.Contracts
     /// </summary>
     public interface IBtradeApiClient
     {
-        Task<bool> UploadReturnOrderAsync(ReturnOrderDto dto);
-        Task<bool> UploadBarcodeRegistrationAsync(BarcodeRegistrationDto dto);
+        Task<ApiUploadResultDto> UploadReturnOrderAsync(ReturnOrderDto dto);
+        Task<ApiUploadResultDto> UploadBarcodeRegistrationAsync(BarcodeRegistrationDto dto);
         Task<MasterSyncDto> DownloadMasterDataAsync(string serverId);
+        Task<SessionResolveResultDto> ResolveSessionAsync(string email);
     }
 }

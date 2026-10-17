@@ -5,6 +5,7 @@ using System.Windows.Forms;
 using BtrReturGudang.AppTier.Contracts;
 using BtrReturGudang.AppTier.Services;
 using BtrReturGudang.Winform.Hardware;
+using BtrReturGudang.Winform.Services;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace BtrReturGudang.Winform.Views
@@ -32,6 +33,8 @@ namespace BtrReturGudang.Winform.Views
         private readonly ScannerWedgeListener _scannerListener;
         private readonly ISyncService _syncService;
         private readonly IRegistryHelper _registryHelper;
+        private readonly OperatorSessionValidator _sessionValidator;
+        private bool _sessionValidationInProgress = false;
 
         // UI Controls
         private Panel _pnlHeader;
@@ -46,6 +49,7 @@ namespace BtrReturGudang.Winform.Views
         private Button _btnSwitchOperator;
         private Panel _pnlOnlineDot;
         private Label _lblOnlineStatus;
+        private ToolTip _operatorToolTip;
 
         // Sidebar navigation controls
         private Button _btnNavIntake;
@@ -74,16 +78,21 @@ namespace BtrReturGudang.Winform.Views
             IServiceProvider serviceProvider,
             ScannerWedgeListener scannerListener,
             ISyncService syncService,
-            IRegistryHelper registryHelper)
+            IRegistryHelper registryHelper,
+            OperatorSessionValidator sessionValidator = null)
         {
             _serviceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
             _scannerListener = scannerListener ?? throw new ArgumentNullException(nameof(scannerListener));
             _syncService = syncService ?? throw new ArgumentNullException(nameof(syncService));
             _registryHelper = registryHelper ?? throw new ArgumentNullException(nameof(registryHelper));
+            _sessionValidator = sessionValidator;
 
             InitializeComponent();
             SetupHardwareScannerHook();
             SetupBackgroundSyncTimer();
+
+            // Validate the configured operator email on startup and warn when unresolved.
+            Shown += async (s, e) => await ValidateOperatorSessionAsync();
         }
 
         private void InitializeComponent()
@@ -220,6 +229,11 @@ namespace BtrReturGudang.Winform.Views
                 Margin = new Padding(0, 0, 6, 0),
                 AutoSize = true
             };
+
+            // Operator Google email (Cloud session actor) is exposed as the badge tooltip.
+            string operatorEmail = _registryHelper.LastOperatorEmail ?? string.Empty;
+            _operatorToolTip = new ToolTip();
+            _operatorToolTip.SetToolTip(_lblOperatorBadge, FormatOperatorEmailTooltip(operatorEmail));
 
             // Switch operator button
             _btnSwitchOperator = new Button
@@ -522,16 +536,87 @@ namespace BtrReturGudang.Winform.Views
             }
         }
 
-        private void OnSwitchOperatorClick(object sender, EventArgs e)
+        private async void OnSwitchOperatorClick(object sender, EventArgs e)
         {
             using (var dlg = new OperatorSwitcherDialog(_registryHelper))
             {
                 if (dlg.ShowDialog(this) == DialogResult.OK)
                 {
                     _lblOperatorBadge.Text = $"👤 {dlg.SelectedOperatorName}";
+                    _operatorToolTip?.SetToolTip(_lblOperatorBadge, FormatOperatorEmailTooltip(dlg.SelectedOperatorEmail));
                     _lblStatusInfo.Text = $"Operator shift aktif diubah: {dlg.SelectedOperatorName}";
+
+                    // Operator change: validate the configured email and warn when unresolved.
+                    await ValidateOperatorSessionAsync();
                 }
             }
+        }
+
+        /// <summary>
+        /// Validates the configured operator Google email through
+        /// <c>POST api/session/resolve</c> and surfaces the outcome on the status strip.
+        /// When the operator is unresolved a clear warning is shown instead of allowing
+        /// uploads to fail later with an opaque HTTP 409.
+        /// Traceable to: ARCHITECTURE §4 TD-012, §5.2 SCR-07, P2-S05.
+        /// </summary>
+        public async Task ValidateOperatorSessionAsync()
+        {
+            if (_sessionValidator == null || SuppressSessionWarnings || _sessionValidationInProgress)
+                return;
+
+            _sessionValidationInProgress = true;
+            try
+            {
+                var result = await _sessionValidator.ValidateAsync();
+
+                if (result != null && result.Success)
+                {
+                    _lblStatusInfo.Text = $"Operator terverifikasi: {result.UserName} (Role: {result.RoleId})";
+                }
+                else if (_sessionValidator.IsUnresolved)
+                {
+                    _lblStatusInfo.Text = $"Operator belum terverifikasi: {_sessionValidator.RefusalMessage}";
+                    WarnUnresolvedOperator(_sessionValidator.RefusalMessage);
+                }
+                else if (result != null)
+                {
+                    _lblStatusInfo.Text = $"Verifikasi operator belum berhasil: {_sessionValidator.RefusalMessage}";
+                }
+            }
+            catch (Exception ex)
+            {
+                _lblStatusInfo.Text = $"Verifikasi operator terhambat: {ex.Message}";
+            }
+            finally
+            {
+                _sessionValidationInProgress = false;
+            }
+        }
+
+        /// <summary>
+        /// Shows the unresolved-operator warning to the user. Suppressed in headless tests.
+        /// </summary>
+        private void WarnUnresolvedOperator(string message)
+        {
+            if (SuppressSessionWarnings) return;
+            if (IsDisposed || !IsHandleCreated) return;
+
+            MessageBox.Show(
+                message,
+                "Operator Belum Terverifikasi",
+                MessageBoxButtons.OK,
+                MessageBoxIcon.Warning);
+        }
+
+        /// <summary>
+        /// Formats the operator Google email as the operator badge tooltip text.
+        /// The badge label itself continues to show the operator display name.
+        /// </summary>
+        private static string FormatOperatorEmailTooltip(string operatorEmail)
+        {
+            return string.IsNullOrWhiteSpace(operatorEmail)
+                ? "Google Email Operator belum dikonfigurasi."
+                : $"Google Email Operator: {operatorEmail.Trim()}";
         }
 
         public void NavigateTo(NavigationModule module)
@@ -607,6 +692,16 @@ namespace BtrReturGudang.Winform.Views
         private async Task ExecuteBackgroundSyncPassAsync(bool isBackground)
         {
             if (_isManualSyncRunning || _syncService.IsSyncInProgress) return;
+
+            // Pre-empt sync/upload when the operator identity is unresolved so the
+            // Cloud refusal message is surfaced instead of an opaque HTTP 409.
+            if (_sessionValidator != null && _sessionValidator.IsUnresolved)
+            {
+                _lblStatusInfo.Text = $"Sinkronisasi dihentikan: {_sessionValidator.RefusalMessage}";
+                WarnUnresolvedOperator(_sessionValidator.RefusalMessage);
+                UpdateSyncStatusDisplay(false);
+                return;
+            }
 
             _isManualSyncRunning = true;
             StartSyncAnimation();
@@ -697,6 +792,11 @@ namespace BtrReturGudang.Winform.Views
         public Control ActiveViewControl => _activeViewControl;
 
         /// <summary>
+        /// Test hook exposing the operator badge (tooltip carries the operator Google email).
+        /// </summary>
+        public Label OperatorBadge => _lblOperatorBadge;
+
+        /// <summary>
         /// Test hook exposing currently active navigation module.
         /// </summary>
         public NavigationModule CurrentModule => _currentModule;
@@ -705,6 +805,16 @@ namespace BtrReturGudang.Winform.Views
         /// Test hook exposing manual sync button.
         /// </summary>
         public Button ManualSyncButton => _btnManualSync;
+
+        /// <summary>
+        /// Test hook exposing the shared operator session validator.
+        /// </summary>
+        public OperatorSessionValidator SessionValidator => _sessionValidator;
+
+        /// <summary>
+        /// When true, unresolved-operator modal warnings are suppressed (headless tests).
+        /// </summary>
+        public bool SuppressSessionWarnings { get; set; }
 
         /// <summary>
         /// Test hook triggering background sync pass.
@@ -748,6 +858,8 @@ namespace BtrReturGudang.Winform.Views
                 _bgSyncTimer?.Dispose();
                 _syncAnimationTimer?.Stop();
                 _syncAnimationTimer?.Dispose();
+
+                _operatorToolTip?.Dispose();
 
                 Application.RemoveMessageFilter(_scannerListener);
             }

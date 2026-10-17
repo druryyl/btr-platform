@@ -151,34 +151,58 @@ namespace BtrReturGudang.Infrastructure.Tests
 
         private class FakeApiClient : IBtradeApiClient
         {
-            public bool ReturnOrderUploadResult { get; set; } = true;
-            public bool BarcodeRegistrationUploadResult { get; set; } = true;
+            public ApiUploadResultDto ReturnOrderUploadResult { get; set; } = ApiUploadResultDto.Ok();
+            public ApiUploadResultDto BarcodeRegistrationUploadResult { get; set; } = ApiUploadResultDto.Ok();
             public MasterSyncDto DownloadMasterDataResult { get; set; } = new MasterSyncDto();
 
             public List<ReturnOrderDto> UploadedOrders { get; } = new List<ReturnOrderDto>();
             public List<BarcodeRegistrationDto> UploadedBarcodes { get; } = new List<BarcodeRegistrationDto>();
 
+            public SessionResolveResultDto SessionResolveResult { get; set; } =
+                SessionResolveResultDto.Ok(200, null, "USR-001", "Operator1", "ROLE-1", null);
+
+            public List<string> ResolvedEmails { get; } = new List<string>();
+
             public int DelayMs { get; set; } = 0;
 
-            public async Task<bool> UploadReturnOrderAsync(ReturnOrderDto dto)
+            public async Task<ApiUploadResultDto> UploadReturnOrderAsync(ReturnOrderDto dto)
             {
                 if (DelayMs > 0) await Task.Delay(DelayMs);
                 UploadedOrders.Add(dto);
                 return ReturnOrderUploadResult;
             }
 
-            public async Task<bool> UploadBarcodeRegistrationAsync(BarcodeRegistrationDto dto)
+            public async Task<ApiUploadResultDto> UploadBarcodeRegistrationAsync(BarcodeRegistrationDto dto)
             {
                 if (DelayMs > 0) await Task.Delay(DelayMs);
                 UploadedBarcodes.Add(dto);
                 return BarcodeRegistrationUploadResult;
             }
 
+            public string LastRequestedServerId { get; set; }
+
             public async Task<MasterSyncDto> DownloadMasterDataAsync(string serverId)
             {
                 if (DelayMs > 0) await Task.Delay(DelayMs);
+                LastRequestedServerId = serverId;
                 return DownloadMasterDataResult;
             }
+
+            public Task<SessionResolveResultDto> ResolveSessionAsync(string email)
+            {
+                ResolvedEmails.Add(email);
+                return Task.FromResult(SessionResolveResult);
+            }
+        }
+
+        private class FakeRegistryHelper : IRegistryHelper
+        {
+            public string WarehouseCode { get; set; } = "GDG-PST";
+            public string ServerTargetId { get; set; } = "";
+            public string ApiBaseUrl { get; set; } = BtrReturGudang.Infrastructure.Helpers.RegistryHelper.DefaultApiBaseUrl;
+            public string LastOperatorName { get; set; } = "Operator1";
+            public string LastOperatorEmail { get; set; } = "operator1@btr.co.id";
+            public bool EnableSoundFeedback { get; set; } = true;
         }
 
         #endregion
@@ -218,7 +242,7 @@ namespace BtrReturGudang.Infrastructure.Tests
             var barcodeRepo = new FakeBarcodeRepo();
             var refRepo = new FakeReferenceRepo();
             var logRepo = new FakeSyncLogRepo();
-            var apiClient = new FakeApiClient { ReturnOrderUploadResult = false };
+            var apiClient = new FakeApiClient { ReturnOrderUploadResult = ApiUploadResultDto.Fail(500, "Internal Server Error") };
 
             var order = new ReturnOrder("ORD-002", DateTime.Today, "C01", "Toko Subur", "GDG-PST", "Operator1");
             returnRepo.Save(order);
@@ -235,6 +259,39 @@ namespace BtrReturGudang.Infrastructure.Tests
             var log = Assert.Single(logRepo.Logs);
             Assert.Equal("ReturnOrder", log.SyncType);
             Assert.Equal("FAILED", log.Status);
+        }
+
+        [Fact]
+        public async Task TriggerDocumentUploadAsync_FailedUpload_PropagatesHttpStatusAndErrorIntoResultAndLog()
+        {
+            var returnRepo = new FakeReturnOrderRepo();
+            var barcodeRepo = new FakeBarcodeRepo();
+            var refRepo = new FakeReferenceRepo();
+            var logRepo = new FakeSyncLogRepo();
+
+            var errorMessage = "Return order endpoint not found";
+            var apiClient = new FakeApiClient
+            {
+                ReturnOrderUploadResult = ApiUploadResultDto.Fail(404, errorMessage, "{\"status\":\"error\"}")
+            };
+
+            var order = new ReturnOrder("ORD-003", DateTime.Today, "C01", "Toko Subur", "GDG-PST", "Operator1");
+            returnRepo.Save(order);
+
+            var syncService = new SyncService(returnRepo, barcodeRepo, refRepo, logRepo, apiClient);
+
+            var result = await syncService.TriggerDocumentUploadAsync("ORD-003");
+
+            Assert.False(result.Success);
+            Assert.Contains("HTTP 404", result.ErrorMessage);
+            Assert.Contains(errorMessage, result.ErrorMessage);
+            Assert.Equal(StatusSync.Draft, order.StatusSync);
+
+            var log = Assert.Single(logRepo.Logs);
+            Assert.Equal("ReturnOrder", log.SyncType);
+            Assert.Equal("FAILED", log.Status);
+            Assert.Contains("HTTP 404", log.ErrorMessage);
+            Assert.Contains(errorMessage, log.ErrorMessage);
         }
 
         [Fact]
@@ -358,6 +415,23 @@ namespace BtrReturGudang.Infrastructure.Tests
 
             // After completion, lock is released
             Assert.False(syncService.IsSyncInProgress);
+        }
+
+        [Fact]
+        public async Task PullReferenceDeltasAsync_ResolvesJOG_WhenServerIdAndRegistryAreEmpty()
+        {
+            var returnRepo = new FakeReturnOrderRepo();
+            var barcodeRepo = new FakeBarcodeRepo();
+            var refRepo = new FakeReferenceRepo();
+            var logRepo = new FakeSyncLogRepo();
+            var apiClient = new FakeApiClient();
+            var registry = new FakeRegistryHelper { ServerTargetId = "" };
+
+            var syncService = new SyncService(returnRepo, barcodeRepo, refRepo, logRepo, apiClient, registry);
+
+            await syncService.PullReferenceDeltasAsync("");
+
+            Assert.Equal("JOG", apiClient.LastRequestedServerId);
         }
     }
 }

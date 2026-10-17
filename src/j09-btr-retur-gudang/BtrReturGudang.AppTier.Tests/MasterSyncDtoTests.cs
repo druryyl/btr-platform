@@ -43,5 +43,35 @@ namespace BtrReturGudang.AppTier.Tests
             Assert.Equal(1, dto.TotalSalesPersonCount);
             Assert.Equal("JOGJA", dto.ServerId);
         }
+
+        [Fact]
+        public void CustomerDto_MapsToAndFromDomain_PreservingAllFieldsAndAliases()
+        {
+            var customer = new BtrReturGudang.Domain.Entities.Customer(
+                "CS0001",
+                "Toko Rejeki",
+                "Jl. Malioboro No. 10",
+                "C-32",
+                "YOGYAKARTA");
+
+            var dto = CustomerDto.FromDomain(customer);
+
+            Assert.NotNull(dto);
+            Assert.Equal("CS0001", dto.CustomerId);
+            Assert.Equal("CS0001", dto.CustId);
+            Assert.Equal("C-32", dto.CustomerCode);
+            Assert.Equal("C-32", dto.CustCode);
+            Assert.Equal("Toko Rejeki", dto.CustomerName);
+            Assert.Equal("Toko Rejeki", dto.CustName);
+            Assert.Equal("Jl. Malioboro No. 10", dto.Alamat);
+            Assert.Equal("YOGYAKARTA", dto.Wilayah);
+
+            var domainRoundTrip = dto.ToDomain();
+            Assert.Equal("CS0001", domainRoundTrip.CustomerId);
+            Assert.Equal("C-32", domainRoundTrip.CustomerCode);
+            Assert.Equal("Toko Rejeki", domainRoundTrip.CustomerName);
+            Assert.Equal("Jl. Malioboro No. 10", domainRoundTrip.Alamat);
+            Assert.Equal("YOGYAKARTA", domainRoundTrip.Wilayah);
+        }
     }
 }

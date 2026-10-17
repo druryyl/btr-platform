@@ -198,17 +198,19 @@ WHERE BrgId = @BrgId;";
                     try
                     {
                         const string sql = @"
-IF EXISTS (SELECT 1 FROM BTRG_Customer WHERE CustId = @CustId)
+IF EXISTS (SELECT 1 FROM BTRG_Customer WHERE CustomerId = @CustomerId)
 BEGIN
     UPDATE BTRG_Customer
-    SET CustName = @CustName,
-        Alamat = @Alamat
-    WHERE CustId = @CustId;
+    SET CustomerCode = @CustomerCode,
+        CustomerName = @CustomerName,
+        Alamat = @Alamat,
+        Wilayah = @Wilayah
+    WHERE CustomerId = @CustomerId;
 END
 ELSE
 BEGIN
-    INSERT INTO BTRG_Customer (CustId, CustName, Alamat)
-    VALUES (@CustId, @CustName, @Alamat);
+    INSERT INTO BTRG_Customer (CustomerId, CustomerCode, CustomerName, Alamat, Wilayah)
+    VALUES (@CustomerId, @CustomerCode, @CustomerName, @Alamat, @Wilayah);
 END;";
 
                         conn.Execute(sql, list, tran);
@@ -237,17 +239,19 @@ END;";
                     try
                     {
                         const string sql = @"
-IF EXISTS (SELECT 1 FROM BTRG_Customer WHERE CustId = @CustId)
+IF EXISTS (SELECT 1 FROM BTRG_Customer WHERE CustomerId = @CustomerId)
 BEGIN
     UPDATE BTRG_Customer
-    SET CustName = @CustName,
-        Alamat = @Alamat
-    WHERE CustId = @CustId;
+    SET CustomerCode = @CustomerCode,
+        CustomerName = @CustomerName,
+        Alamat = @Alamat,
+        Wilayah = @Wilayah
+    WHERE CustomerId = @CustomerId;
 END
 ELSE
 BEGIN
-    INSERT INTO BTRG_Customer (CustId, CustName, Alamat)
-    VALUES (@CustId, @CustName, @Alamat);
+    INSERT INTO BTRG_Customer (CustomerId, CustomerCode, CustomerName, Alamat, Wilayah)
+    VALUES (@CustomerId, @CustomerCode, @CustomerName, @Alamat, @Wilayah);
 END;";
 
                         await conn.ExecuteAsync(sql, list, tran).ConfigureAwait(false);
@@ -269,10 +273,13 @@ END;";
             {
                 conn.Open();
                 const string sql = @"
-SELECT CustId, CustName, Alamat
+SELECT CustomerId, CustomerCode, CustomerName, Alamat, Wilayah
 FROM BTRG_Customer
-WHERE CustId LIKE @Keyword OR CustName LIKE @Keyword
-ORDER BY CustName;";
+WHERE CustomerId LIKE @Keyword 
+   OR CustomerCode LIKE @Keyword 
+   OR CustomerName LIKE @Keyword 
+   OR Wilayah LIKE @Keyword
+ORDER BY CustomerName;";
 
                 var rows = conn.Query<CustomerRow>(sql, new { Keyword = searchKey });
                 return rows.Select(MapToCustomer).ToList();
@@ -286,10 +293,13 @@ ORDER BY CustName;";
             {
                 await conn.OpenAsync().ConfigureAwait(false);
                 const string sql = @"
-SELECT CustId, CustName, Alamat
+SELECT CustomerId, CustomerCode, CustomerName, Alamat, Wilayah
 FROM BTRG_Customer
-WHERE CustId LIKE @Keyword OR CustName LIKE @Keyword
-ORDER BY CustName;";
+WHERE CustomerId LIKE @Keyword 
+   OR CustomerCode LIKE @Keyword 
+   OR CustomerName LIKE @Keyword 
+   OR Wilayah LIKE @Keyword
+ORDER BY CustomerName;";
 
                 var rows = await conn.QueryAsync<CustomerRow>(sql, new { Keyword = searchKey }).ConfigureAwait(false);
                 return rows.Select(MapToCustomer).ToList();
@@ -304,11 +314,11 @@ ORDER BY CustName;";
             {
                 conn.Open();
                 const string sql = @"
-SELECT CustId, CustName, Alamat
+SELECT CustomerId, CustomerCode, CustomerName, Alamat, Wilayah
 FROM BTRG_Customer
-WHERE CustId = @CustId;";
+WHERE CustomerId = @CustomerId;";
 
-                var row = conn.QueryFirstOrDefault<CustomerRow>(sql, new { CustId = custId });
+                var row = conn.QueryFirstOrDefault<CustomerRow>(sql, new { CustomerId = custId });
                 return row != null ? MapToCustomer(row) : null;
             }
         }
@@ -321,11 +331,11 @@ WHERE CustId = @CustId;";
             {
                 await conn.OpenAsync().ConfigureAwait(false);
                 const string sql = @"
-SELECT CustId, CustName, Alamat
+SELECT CustomerId, CustomerCode, CustomerName, Alamat, Wilayah
 FROM BTRG_Customer
-WHERE CustId = @CustId;";
+WHERE CustomerId = @CustomerId;";
 
-                var row = await conn.QueryFirstOrDefaultAsync<CustomerRow>(sql, new { CustId = custId }).ConfigureAwait(false);
+                var row = await conn.QueryFirstOrDefaultAsync<CustomerRow>(sql, new { CustomerId = custId }).ConfigureAwait(false);
                 return row != null ? MapToCustomer(row) : null;
             }
         }
@@ -561,7 +571,12 @@ ORDER BY SalesPersonName;";
 
         private static Customer MapToCustomer(CustomerRow row)
         {
-            return new Customer(row.CustId, row.CustName, row.Alamat);
+            return new Customer(
+                row.CustomerId ?? row.CustId,
+                row.CustomerName ?? row.CustName,
+                row.Alamat,
+                row.CustomerCode ?? row.CustCode,
+                row.Wilayah);
         }
 
         private static Driver MapToDriver(DriverRow row)
@@ -586,9 +601,15 @@ ORDER BY SalesPersonName;";
 
         private class CustomerRow
         {
-            public string CustId { get; set; }
-            public string CustName { get; set; }
+            public string CustomerId { get; set; }
+            public string CustomerCode { get; set; }
+            public string CustomerName { get; set; }
             public string Alamat { get; set; }
+            public string Wilayah { get; set; }
+
+            public string CustId { get => CustomerId; set => CustomerId = value; }
+            public string CustName { get => CustomerName; set => CustomerName = value; }
+            public string CustCode { get => CustomerCode; set => CustomerCode = value; }
         }
 
         private class DriverRow

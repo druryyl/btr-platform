@@ -9,8 +9,8 @@ namespace btrade.application.UseCase
     public record ReturnOrderUploadCommand(
         string ReturnOrderId, string ReturnOrderDate, string WarehouseCode,
         string CustomerId, string CustomerName,
-        string SalesPersonId, string SalesPersonName,
-        string DriverId, string DriverName,
+        string? SalesPersonId, string? SalesPersonName,
+        string? DriverId, string? DriverName,
         string Note, string ServerId, string SubmittedBy,
         IEnumerable<ReturnOrderItemType> ListItem) : IRequest, IServerId;
 
@@ -28,8 +28,8 @@ namespace btrade.application.UseCase
             var model = new ReturnOrderType(
                 request.ReturnOrderId, request.ServerId, request.ReturnOrderDate,
                 request.WarehouseCode, request.CustomerId, request.CustomerName,
-                request.SalesPersonId, request.SalesPersonName,
-                request.DriverId, request.DriverName,
+                request.SalesPersonId ?? string.Empty, request.SalesPersonName ?? string.Empty,
+                request.DriverId ?? string.Empty, request.DriverName ?? string.Empty,
                 request.Note, "TERKIRIM", request.SubmittedBy);
 
             foreach (var item in request.ListItem)
