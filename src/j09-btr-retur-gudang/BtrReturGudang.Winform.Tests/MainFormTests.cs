@@ -93,6 +93,22 @@ namespace BtrReturGudang.Winform.Tests
         }
 
         [Fact]
+        public void MainForm_WindowBounds_ConformTo720pSpecifications()
+        {
+            ExecuteInStaThread(() =>
+            {
+                using (var provider = CreateTestServiceProvider())
+                {
+                    using (var mainForm = provider.GetRequiredService<MainForm>())
+                    {
+                        Assert.Equal(new System.Drawing.Size(1280, 720), mainForm.Size);
+                        Assert.Equal(new System.Drawing.Size(1024, 600), mainForm.MinimumSize);
+                    }
+                }
+            });
+        }
+
+        [Fact]
         public void MainForm_LayoutBounds_AreCorrectWithoutOverlap()
         {
             ExecuteInStaThread(() =>
@@ -101,7 +117,7 @@ namespace BtrReturGudang.Winform.Tests
                 {
                     using (var mainForm = provider.GetRequiredService<MainForm>())
                     {
-                        mainForm.ClientSize = new System.Drawing.Size(1280, 800);
+                        mainForm.ClientSize = new System.Drawing.Size(1280, 720);
                         mainForm.PerformLayout();
 
                         Control header = null, status = null, sidebar = null, contentHost = null;
@@ -118,28 +134,28 @@ namespace BtrReturGudang.Winform.Tests
                         Assert.NotNull(sidebar);
                         Assert.NotNull(contentHost);
 
-                        // 1. Header spans full width across top
+                        // 1. Header spans full width across top (compact 44px height)
                         Assert.Equal(0, header.Left);
                         Assert.Equal(0, header.Top);
                         Assert.Equal(1280, header.Width);
-                        Assert.Equal(64, header.Height);
+                        Assert.Equal(44, header.Height);
 
                         // 2. StatusStrip spans full width across bottom
                         Assert.Equal(0, status.Left);
-                        Assert.Equal(800 - status.Height, status.Top);
+                        Assert.Equal(720 - status.Height, status.Top);
                         Assert.Equal(1280, status.Width);
 
-                        // 3. Sidebar sits strictly between Header and StatusStrip on the left
+                        // 3. Sidebar sits strictly between Header and StatusStrip on the left (compact 200px width)
                         Assert.Equal(0, sidebar.Left);
-                        Assert.Equal(64, sidebar.Top);
-                        Assert.Equal(230, sidebar.Width);
-                        Assert.Equal(800 - 64 - status.Height, sidebar.Height);
+                        Assert.Equal(44, sidebar.Top);
+                        Assert.Equal(200, sidebar.Width);
+                        Assert.Equal(720 - 44 - status.Height, sidebar.Height);
 
-                        // 4. ContentHost fills the remaining area to the right of the sidebar
-                        Assert.Equal(230, contentHost.Left);
-                        Assert.Equal(64, contentHost.Top);
-                        Assert.Equal(1280 - 230, contentHost.Width);
-                        Assert.Equal(800 - 64 - status.Height, contentHost.Height);
+                        // 4. ContentHost fills the remaining area to the right of the sidebar (>= 1064px net width, ~650px height)
+                        Assert.Equal(200, contentHost.Left);
+                        Assert.Equal(44, contentHost.Top);
+                        Assert.Equal(1280 - 200, contentHost.Width);
+                        Assert.Equal(720 - 44 - status.Height, contentHost.Height);
                     }
                 }
             });

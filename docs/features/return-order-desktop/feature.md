@@ -2,8 +2,8 @@
 Title: Warehouse Desktop Return Order Capture and Barcode Management
 Code: BTR-RETUR-DESKTOP-001
 Artifact: FEATURE
-Version: 1.0
-LastUpdated: 2026-10-11
+Version: 1.1
+LastUpdated: 2026-10-19
 ---
 
 # 1. Purpose
@@ -33,7 +33,7 @@ A delivery vehicle, driver, or customer arrives at the warehouse dock with physi
 
 # 5. Preconditions
 
-- The desktop workstation is configured with a valid Warehouse / Depo assignment.
+- The desktop workstation is configured with a valid Warehouse / Depo assignment and an active Shift Operator in `[F5] Pengaturan` → *Identitas Workstation & Shift Operator*. Return Order capture (`Save Draft` / `Save & Upload`) is refused with a clear message when either is missing; no placeholder warehouse or operator is substituted.
 - An active Warehouse Officer session is selected/active on the workstation.
 - Master reference data (Items, Barcodes, Customers, Drivers, SalesPersons) is available in the local workstation database.
 - A USB barcode scanner is connected to the workstation PC.
@@ -87,6 +87,7 @@ A delivery vehicle, driver, or customer arrives at the warehouse dock with physi
 - **Single Authority Preservation:** Physical Return Orders remain operational intake records; financial valuation, pricing, and accounting posting remain exclusively with Main Office Sales Return (`ReturJual`) processing (DOMAIN §1, §15).
 - **Post-Sync Immutability:** Once a Return Order is synchronized upstream (`Synced`), it becomes read-only on the warehouse workstation to prevent split-brain divergence (P-10, ADR-RO-006).
 - **Runtime Constraints:** The client must operate within the .NET Framework 4.7.1 runtime environment on the onsite warehouse PC.
+- **Display Resolution Constraint (1280x720):** Workstation monitors operate at 1280x720 physical resolution with Windows OS taskbar (~40-48px height), yielding an effective desktop working area of ~1280x672 px. All views (SCR-01 through SCR-07) and modal dialogs must fit comfortably within this viewport without vertical clipping, control truncation, or hiding action buttons. In particular, the intake screen (SCR-02) must preserve sufficient vertical space to display at least 8-10 rows in the items DataGridView simultaneously.
 
 # 9. Exceptions
 
@@ -110,3 +111,8 @@ A delivery vehicle, driver, or customer arrives at the warehouse dock with physi
 8. Synchronized Return Orders become read-only on the warehouse workstation.
 9. Application runs reliably under .NET Framework 4.7.1 on the onsite PC.
 10. Customer master synchronization pulls from the cloud API endpoint (`api/Customer/{ServerTargetId}`) with default server target `JOG` and base URL `http://dev.smart-ics.com:8089/belajar-api`, persisting `customerId`, `customerCode`, `customerName`, `alamat`, and `wilayah` in `BTRG_Customer`. Return Orders freeze `customerCode` and `wilayah` at document creation time.
+11. The application shell and all embedded views cleanly fit within a 1280x720 desktop display without window overflow, bottom action toolbar clipping, or scrollbar obscuration. The main shell starts maximized on 720p screens or adapts its initial dimensions within the OS working area.
+12. In the Return Order intake view (SCR-02), the document header, scanner intake strip, and action toolbar are streamlined so that the items DataGridView displays at least 8-10 rows concurrently without vertical scrolling on a 1280x720 display.
+13. In the Return Order list and inspector view (SCR-05), the split view layout proportions prevent metadata truncation and ensure the detail items grid displays at least 5-6 rows comfortably.
+14. All modal dialogs (SCR-03 Manual Item Search, SCR-04 Quick Barcode Registration, SCR-08 Manual Customer Search, BarcodeRegistrationDialog, OperatorSwitcherDialog) fit comfortably within the 720p screen height (< 520px height) so their header, inputs, and action buttons remain fully visible and operable without clipping.
+15. Customer selection utilizes on-demand keyboard-driven modal search (SCR-08) with real-time keydown filtering over large datasets (> 2,000 customers), eliminating startup ComboBox memory bloat and UI thread freezes while preserving manual walk-in customer capture (`CUST-MANUAL`).

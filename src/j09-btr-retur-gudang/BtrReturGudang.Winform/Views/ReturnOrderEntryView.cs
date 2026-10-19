@@ -39,7 +39,10 @@ namespace BtrReturGudang.Winform.Views
         private decimal _totalQtyRusak;
 
         // UI Controls - Header
-        private ComboBox _cboCustomer;
+        private TextBox _txtCustomer;
+        private Button _btnSearchCustomer;
+        private ComboBox _cboCustomer = new ComboBox();
+        private Customer _selectedCustomer;
         private ComboBox _cboDriver;
         private ComboBox _cboSalesPerson;
         private TextBox _txtKeterangan;
@@ -76,6 +79,8 @@ namespace BtrReturGudang.Winform.Views
         public string CurrentReturnOrderId { get; set; }
         public BindingList<ReturnOrderItemDto> ItemsList => _itemsList;
         public BarcodeLookupResult CurrentScanResult => _currentScanResult;
+        public Customer SelectedCustomer => _selectedCustomer;
+        public TextBox CustomerTextBox => _txtCustomer;
         public ComboBox CustomerComboBox => _cboCustomer;
         public ComboBox DriverComboBox => _cboDriver;
         public ComboBox SalesPersonComboBox => _cboSalesPerson;
@@ -99,6 +104,7 @@ namespace BtrReturGudang.Winform.Views
         public bool SuppressMessageBoxes { get; set; } = false;
         public Func<string, BarcodeLookupResult> QuickRegistrationDialogLauncher { get; set; }
         public Func<Barang> ManualSearchDialogLauncher { get; set; }
+        public Func<string, Customer> CustomerSearchDialogLauncher { get; set; }
 
         /// <summary>
         /// DI Constructor resolving required service and repository contracts.
@@ -141,7 +147,8 @@ namespace BtrReturGudang.Winform.Views
                 Dock = DockStyle.Fill,
                 ColumnCount = 1,
                 RowCount = 3,
-                Padding = new Padding(16, 12, 16, 8)
+                Padding = new Padding(12, 6, 12, 6),
+                AutoScroll = true
             };
 
             // Define row styles: Header (auto), Intake Card (auto), Grid (fill)
@@ -166,7 +173,7 @@ namespace BtrReturGudang.Winform.Views
 
             // Assemble controls with proper docking:
             // In WinForms, docked controls are evaluated in reverse child index order.
-            // pnlToolbar (DockStyle.Bottom) at index 1 is evaluated first -> takes bottom 54px.
+            // pnlToolbar (DockStyle.Bottom) at index 1 is evaluated first -> takes bottom 40px.
             // tblMain (DockStyle.Fill) at index 0 is evaluated last -> fills remaining space above pnlToolbar.
             Controls.Add(tblMain);
             Controls.Add(pnlToolbar);
@@ -178,71 +185,100 @@ namespace BtrReturGudang.Winform.Views
 
         private Panel BuildHeaderArea()
         {
-            var pnl = UiTheme.CreateCard(new Padding(18, 12, 18, 14), new Padding(0, 0, 0, 10));
+            var pnl = UiTheme.CreateCard(new Padding(12, 6, 12, 8), new Padding(0, 0, 0, 6));
             pnl.Dock = DockStyle.Top;
-            pnl.AutoSize = true;
+            pnl.Height = 58;
 
             var tbl = new TableLayoutPanel
             {
-                Dock = DockStyle.Top,
-                ColumnCount = 4,
-                RowCount = 3,
-                AutoSize = true
-            };
-
-            tbl.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 120F));
-            tbl.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50F));
-            tbl.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 125F));
-            tbl.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50F));
-
-            // Section Title Header
-            var pnlTitle = new Panel
-            {
                 Dock = DockStyle.Fill,
-                Height = 28,
-                Margin = new Padding(0, 0, 0, 10)
+                ColumnCount = 4,
+                RowCount = 2
             };
 
-            var lblTitle = new Label
-            {
-                Text = "📄 INFORMASI DOKUMEN & CUSTOMER",
-                Font = UiTheme.FontCardTitle,
-                ForeColor = UiTheme.Slate800,
-                AutoSize = true,
-                Location = new Point(0, 2)
-            };
-            pnlTitle.Controls.Add(lblTitle);
+            tbl.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 85F));
+            tbl.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50F));
+            tbl.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 100F));
+            tbl.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50F));
+            tbl.RowStyles.Add(new RowStyle(SizeType.Percent, 50F));
+            tbl.RowStyles.Add(new RowStyle(SizeType.Percent, 50F));
 
-            tbl.Controls.Add(pnlTitle, 0, 0);
-            tbl.SetColumnSpan(pnlTitle, 4);
-
-            // Row 1: Customer
+            // Row 0: Customer
             var lblCustomer = new Label
             {
                 Text = "Customer *:",
                 Font = UiTheme.FontLabel,
                 ForeColor = UiTheme.Slate700,
                 TextAlign = ContentAlignment.MiddleLeft,
-                Dock = DockStyle.Fill
+                Dock = DockStyle.Fill,
+                Margin = new Padding(0, 1, 4, 1)
             };
 
-            _cboCustomer = new ComboBox
+            var pnlCustomer = new TableLayoutPanel
+            {
+                Dock = DockStyle.Fill,
+                ColumnCount = 2,
+                RowCount = 1,
+                Margin = new Padding(0, 0, 12, 0),
+                Padding = new Padding(0)
+            };
+            pnlCustomer.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
+            pnlCustomer.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 70F));
+            pnlCustomer.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
+
+            _txtCustomer = new TextBox
             {
                 Dock = DockStyle.Fill,
                 Font = UiTheme.FontBody,
-                DropDownStyle = ComboBoxStyle.DropDown
+                Margin = new Padding(0, 0, 4, 0)
+            };
+            _txtCustomer.KeyDown += (s, e) =>
+            {
+                if (e.KeyCode == Keys.Enter)
+                {
+                    e.Handled = true;
+                    e.SuppressKeyPress = true;
+                    TriggerCustomerSearch(_txtCustomer.Text);
+                }
+            };
+            _txtCustomer.TextChanged += (s, e) =>
+            {
+                if (_cboCustomer != null && _cboCustomer.Text != _txtCustomer.Text)
+                {
+                    _cboCustomer.Text = _txtCustomer.Text;
+                }
             };
 
-            if (System.Threading.Thread.CurrentThread.GetApartmentState() == System.Threading.ApartmentState.STA)
+            _cboCustomer.TextChanged += (s, e) =>
             {
-                _cboCustomer.AutoCompleteMode = AutoCompleteMode.SuggestAppend;
-                _cboCustomer.AutoCompleteSource = AutoCompleteSource.ListItems;
-            }
+                if (_txtCustomer != null && _txtCustomer.Text != _cboCustomer.Text)
+                {
+                    _txtCustomer.Text = _cboCustomer.Text;
+                }
+            };
 
-            tbl.Controls.Add(lblCustomer, 0, 1);
-            tbl.Controls.Add(_cboCustomer, 1, 1);
+            _btnSearchCustomer = new Button
+            {
+                Text = "🔍 Cari",
+                Font = UiTheme.FontLabel,
+                BackColor = UiTheme.Slate700,
+                ForeColor = Color.White,
+                FlatStyle = FlatStyle.Flat,
+                Dock = DockStyle.Fill,
+                Height = 25,
+                Cursor = Cursors.Hand,
+                Margin = new Padding(0)
+            };
+            _btnSearchCustomer.FlatAppearance.BorderSize = 0;
+            _btnSearchCustomer.Click += (s, e) => TriggerCustomerSearch(_txtCustomer.Text);
 
-            // Row 1: Driver
+            pnlCustomer.Controls.Add(_txtCustomer, 0, 0);
+            pnlCustomer.Controls.Add(_btnSearchCustomer, 1, 0);
+
+            tbl.Controls.Add(lblCustomer, 0, 0);
+            tbl.Controls.Add(pnlCustomer, 1, 0);
+
+            // Row 0: Driver
             var lblDriver = new Label
             {
                 Text = "Driver Pengirim:",
@@ -250,20 +286,21 @@ namespace BtrReturGudang.Winform.Views
                 ForeColor = UiTheme.Slate700,
                 TextAlign = ContentAlignment.MiddleLeft,
                 Dock = DockStyle.Fill,
-                Margin = new Padding(16, 0, 0, 0)
+                Margin = new Padding(0, 1, 4, 1)
             };
 
             _cboDriver = new ComboBox
             {
                 Dock = DockStyle.Fill,
                 Font = UiTheme.FontBody,
-                DropDownStyle = ComboBoxStyle.DropDownList
+                DropDownStyle = ComboBoxStyle.DropDownList,
+                Margin = new Padding(0, 0, 0, 0)
             };
 
-            tbl.Controls.Add(lblDriver, 2, 1);
-            tbl.Controls.Add(_cboDriver, 3, 1);
+            tbl.Controls.Add(lblDriver, 2, 0);
+            tbl.Controls.Add(_cboDriver, 3, 0);
 
-            // Row 2: Salesman
+            // Row 1: Salesman
             var lblSalesman = new Label
             {
                 Text = "Salesman:",
@@ -271,7 +308,7 @@ namespace BtrReturGudang.Winform.Views
                 ForeColor = UiTheme.Slate700,
                 TextAlign = ContentAlignment.MiddleLeft,
                 Dock = DockStyle.Fill,
-                Margin = new Padding(0, 8, 0, 0)
+                Margin = new Padding(0, 1, 4, 1)
             };
 
             _cboSalesPerson = new ComboBox
@@ -279,13 +316,13 @@ namespace BtrReturGudang.Winform.Views
                 Dock = DockStyle.Fill,
                 Font = UiTheme.FontBody,
                 DropDownStyle = ComboBoxStyle.DropDownList,
-                Margin = new Padding(0, 8, 0, 0)
+                Margin = new Padding(0, 0, 12, 0)
             };
 
-            tbl.Controls.Add(lblSalesman, 0, 2);
-            tbl.Controls.Add(_cboSalesPerson, 1, 2);
+            tbl.Controls.Add(lblSalesman, 0, 1);
+            tbl.Controls.Add(_cboSalesPerson, 1, 1);
 
-            // Row 2: Catatan / Keterangan
+            // Row 1: Catatan / Keterangan
             var lblNotes = new Label
             {
                 Text = "Catatan Retur:",
@@ -293,18 +330,18 @@ namespace BtrReturGudang.Winform.Views
                 ForeColor = UiTheme.Slate700,
                 TextAlign = ContentAlignment.MiddleLeft,
                 Dock = DockStyle.Fill,
-                Margin = new Padding(16, 8, 0, 0)
+                Margin = new Padding(0, 1, 4, 1)
             };
 
             _txtKeterangan = new TextBox
             {
                 Dock = DockStyle.Fill,
                 Font = UiTheme.FontBody,
-                Margin = new Padding(0, 8, 0, 0)
+                Margin = new Padding(0, 0, 0, 0)
             };
 
-            tbl.Controls.Add(lblNotes, 2, 2);
-            tbl.Controls.Add(_txtKeterangan, 3, 2);
+            tbl.Controls.Add(lblNotes, 2, 1);
+            tbl.Controls.Add(_txtKeterangan, 3, 1);
 
             pnl.Controls.Add(tbl);
             return pnl;
@@ -312,50 +349,54 @@ namespace BtrReturGudang.Winform.Views
 
         #endregion
 
-        #region Intake Card (Scanner Banner + Ergonomic Quantity Strip)
+        #region Intake Card (Unified Horizontal Scan & Quantity Strip)
 
         private Panel BuildIntakeCard()
         {
-            var pnlCard = UiTheme.CreateCard(new Padding(14), new Padding(0, 0, 0, 10));
+            var pnlCard = UiTheme.CreateCard(new Padding(10, 6, 10, 6), new Padding(0, 0, 0, 6));
             pnlCard.Dock = DockStyle.Top;
-            pnlCard.AutoSize = true;
+            pnlCard.Height = 56;
 
             var tblCard = new TableLayoutPanel
             {
-                Dock = DockStyle.Top,
-                ColumnCount = 1,
-                RowCount = 2,
-                AutoSize = true
+                Dock = DockStyle.Fill,
+                ColumnCount = 2,
+                RowCount = 1
             };
-            tblCard.RowStyles.Add(new RowStyle(SizeType.AutoSize));
-            tblCard.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+            tblCard.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 42F));
+            tblCard.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 58F));
 
-            // 1. Scanner Intake Focus Banner
+            // 1. Left Section (42%): Scanner Banner Panel
             _pnlScannerBanner = new Panel
             {
                 Dock = DockStyle.Fill,
-                Height = 64,
                 BackColor = UiTheme.Slate900,
-                Padding = new Padding(16, 10, 16, 10),
-                Margin = new Padding(0, 0, 0, 10)
+                Padding = new Padding(8, 3, 8, 3),
+                Margin = new Padding(0, 0, 6, 0)
             };
+
+            var tblLeft = new TableLayoutPanel
+            {
+                Dock = DockStyle.Fill,
+                ColumnCount = 2,
+                RowCount = 2,
+                BackColor = Color.Transparent,
+                Margin = new Padding(0),
+                Padding = new Padding(0)
+            };
+            tblLeft.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
+            tblLeft.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
+            tblLeft.RowStyles.Add(new RowStyle(SizeType.Absolute, 20F));
+            tblLeft.RowStyles.Add(new RowStyle(SizeType.Absolute, 18F));
 
             _lblBannerTitle = new Label
             {
                 Text = "Menunggu scan barcode scanner USB atau tekan F2 untuk pencarian produk...",
-                Font = UiTheme.FontSectionTitle,
+                Font = new Font("Segoe UI", 9.5F, FontStyle.Bold),
                 ForeColor = Color.White,
-                Dock = DockStyle.Top,
-                AutoSize = true
-            };
-
-            _lblBannerDetails = new Label
-            {
-                Text = "Barcode: -  |  Satuan Default: -  |  Pengali: -",
-                Font = UiTheme.FontMonospace,
-                ForeColor = UiTheme.Slate400,
-                Dock = DockStyle.Bottom,
-                AutoSize = true
+                AutoEllipsis = true,
+                Dock = DockStyle.Fill,
+                TextAlign = ContentAlignment.MiddleLeft
             };
 
             _lblBannerStatus = new Label
@@ -364,38 +405,54 @@ namespace BtrReturGudang.Winform.Views
                 Font = UiTheme.FontBadge,
                 ForeColor = UiTheme.Emerald,
                 BackColor = Color.FromArgb(20, 35, 30),
-                Padding = new Padding(8, 4, 8, 4),
+                Padding = new Padding(6, 2, 6, 2),
                 Dock = DockStyle.Right,
                 AutoSize = true,
-                TextAlign = ContentAlignment.TopRight
+                TextAlign = ContentAlignment.MiddleCenter
             };
 
-            _pnlScannerBanner.Controls.Add(_lblBannerTitle);
-            _pnlScannerBanner.Controls.Add(_lblBannerDetails);
-            _pnlScannerBanner.Controls.Add(_lblBannerStatus);
+            _lblBannerDetails = new Label
+            {
+                Text = "Barcode: -  |  Satuan Default: -  |  Pengali: -",
+                Font = new Font("Consolas", 8.5F, FontStyle.Regular),
+                ForeColor = UiTheme.Slate400,
+                AutoEllipsis = true,
+                Dock = DockStyle.Fill,
+                TextAlign = ContentAlignment.MiddleLeft
+            };
 
-            // 2. Ergonomic Quantity Strip (TableLayoutPanel for clean non-wrapping layout)
+            tblLeft.Controls.Add(_lblBannerTitle, 0, 0);
+            tblLeft.Controls.Add(_lblBannerStatus, 1, 0);
+            tblLeft.Controls.Add(_lblBannerDetails, 0, 1);
+            tblLeft.SetColumnSpan(_lblBannerDetails, 2);
+
+            _pnlScannerBanner.Controls.Add(tblLeft);
+
+            // 2. Right Section (58%): Ergonomic Quantity Strip
             var pnlQuantityStrip = new TableLayoutPanel
             {
                 Dock = DockStyle.Fill,
                 ColumnCount = 5,
                 RowCount = 2,
-                AutoSize = true,
-                BackColor = UiTheme.Slate50,
-                Padding = new Padding(14, 10, 14, 10)
+                BackColor = Color.Transparent,
+                Margin = new Padding(0),
+                Padding = new Padding(0)
             };
 
-            pnlQuantityStrip.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 130F));
-            pnlQuantityStrip.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 135F));
-            pnlQuantityStrip.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 135F));
+            pnlQuantityStrip.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 85F));
+            pnlQuantityStrip.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 95F));
+            pnlQuantityStrip.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 95F));
             pnlQuantityStrip.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
-            pnlQuantityStrip.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 160F));
+            pnlQuantityStrip.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 115F));
+
+            pnlQuantityStrip.RowStyles.Add(new RowStyle(SizeType.Absolute, 15F));
+            pnlQuantityStrip.RowStyles.Add(new RowStyle(SizeType.Absolute, 29F));
 
             // Labels row (Row 0)
             var lblSatuan = new Label
             {
                 Text = "Satuan:",
-                Font = UiTheme.FontLabel,
+                Font = new Font("Segoe UI", 8F, FontStyle.Regular),
                 ForeColor = UiTheme.Slate600,
                 Dock = DockStyle.Fill,
                 TextAlign = ContentAlignment.BottomLeft
@@ -403,8 +460,8 @@ namespace BtrReturGudang.Winform.Views
 
             var lblBagus = new Label
             {
-                Text = "Qty BAGUS (Baik):",
-                Font = UiTheme.FontLabel,
+                Text = "Qty Bagus:",
+                Font = new Font("Segoe UI", 8F, FontStyle.Bold),
                 ForeColor = UiTheme.EmeraldDark,
                 Dock = DockStyle.Fill,
                 TextAlign = ContentAlignment.BottomLeft
@@ -412,8 +469,8 @@ namespace BtrReturGudang.Winform.Views
 
             var lblRusak = new Label
             {
-                Text = "Qty RUSAK (BS):",
-                Font = UiTheme.FontLabel,
+                Text = "Qty Rusak:",
+                Font = new Font("Segoe UI", 8F, FontStyle.Bold),
                 ForeColor = UiTheme.Rose,
                 Dock = DockStyle.Fill,
                 TextAlign = ContentAlignment.BottomLeft
@@ -421,8 +478,8 @@ namespace BtrReturGudang.Winform.Views
 
             var lblItemNote = new Label
             {
-                Text = "Keterangan Item:",
-                Font = UiTheme.FontLabel,
+                Text = "Catatan Item:",
+                Font = new Font("Segoe UI", 8F, FontStyle.Regular),
                 ForeColor = UiTheme.Slate600,
                 Dock = DockStyle.Fill,
                 TextAlign = ContentAlignment.BottomLeft
@@ -442,7 +499,7 @@ namespace BtrReturGudang.Winform.Views
                 Dock = DockStyle.Fill,
                 DropDownStyle = ComboBoxStyle.DropDownList,
                 Font = UiTheme.FontLabel,
-                Margin = new Padding(0, 4, 10, 0)
+                Margin = new Padding(0, 2, 6, 0)
             };
 
             _numQtyBagus = new NumericUpDown
@@ -451,11 +508,11 @@ namespace BtrReturGudang.Winform.Views
                 Minimum = 0,
                 Maximum = 999999,
                 DecimalPlaces = 0,
-                Font = new Font("Segoe UI Bold", 11F),
+                Font = new Font("Segoe UI", 10.5F, FontStyle.Bold),
                 ForeColor = UiTheme.EmeraldDark,
                 BackColor = UiTheme.EmeraldLight,
                 TextAlign = HorizontalAlignment.Right,
-                Margin = new Padding(0, 4, 10, 0)
+                Margin = new Padding(0, 2, 6, 0)
             };
             _numQtyBagus.KeyDown += OnQuantityKeyDown;
 
@@ -465,11 +522,11 @@ namespace BtrReturGudang.Winform.Views
                 Minimum = 0,
                 Maximum = 999999,
                 DecimalPlaces = 0,
-                Font = new Font("Segoe UI Bold", 11F),
+                Font = new Font("Segoe UI", 10.5F, FontStyle.Bold),
                 ForeColor = UiTheme.Rose,
                 BackColor = UiTheme.RoseLight,
                 TextAlign = HorizontalAlignment.Right,
-                Margin = new Padding(0, 4, 10, 0)
+                Margin = new Padding(0, 2, 6, 0)
             };
             _numQtyRusak.KeyDown += OnQuantityKeyDown;
 
@@ -477,7 +534,7 @@ namespace BtrReturGudang.Winform.Views
             {
                 Dock = DockStyle.Fill,
                 Font = UiTheme.FontBody,
-                Margin = new Padding(0, 4, 10, 0)
+                Margin = new Padding(0, 2, 6, 0)
             };
             _txtItemKeterangan.KeyDown += OnQuantityKeyDown;
 
@@ -489,9 +546,9 @@ namespace BtrReturGudang.Winform.Views
                 BackColor = UiTheme.Primary,
                 FlatStyle = FlatStyle.Flat,
                 Dock = DockStyle.Fill,
-                Height = 32,
+                Height = 30,
                 Cursor = Cursors.Hand,
-                Margin = new Padding(0, 2, 0, 0)
+                Margin = new Padding(0, 0, 0, 0)
             };
             _btnAddItem.FlatAppearance.BorderSize = 0;
             _btnAddItem.Click += (s, e) => CommitQuantityStripToGrid();
@@ -503,7 +560,7 @@ namespace BtrReturGudang.Winform.Views
             pnlQuantityStrip.Controls.Add(_btnAddItem, 4, 1);
 
             tblCard.Controls.Add(_pnlScannerBanner, 0, 0);
-            tblCard.Controls.Add(pnlQuantityStrip, 0, 1);
+            tblCard.Controls.Add(pnlQuantityStrip, 1, 0);
 
             pnlCard.Controls.Add(tblCard);
 
@@ -516,7 +573,7 @@ namespace BtrReturGudang.Winform.Views
 
         private Panel BuildGridArea()
         {
-            var pnlContainer = UiTheme.CreateCard(new Padding(14), new Padding(0, 0, 0, 0));
+            var pnlContainer = UiTheme.CreateCard(new Padding(8, 6, 8, 6), new Padding(0, 0, 0, 0));
             pnlContainer.Dock = DockStyle.Fill;
 
             // Section Title
@@ -526,7 +583,7 @@ namespace BtrReturGudang.Winform.Views
                 Font = UiTheme.FontCardTitle,
                 ForeColor = UiTheme.Slate800,
                 Dock = DockStyle.Top,
-                Height = 26
+                Height = 20
             };
 
             // Summary Footer
@@ -665,44 +722,46 @@ namespace BtrReturGudang.Winform.Views
             var pnl = new FlowLayoutPanel
             {
                 Dock = DockStyle.Bottom,
-                Height = 46,
+                Height = 32,
                 BackColor = UiTheme.Slate900,
-                Padding = new Padding(16, 12, 16, 12),
+                Padding = new Padding(12, 6, 12, 6),
                 FlowDirection = FlowDirection.LeftToRight,
                 WrapContents = false
             };
 
+            var summaryFont = new Font("Segoe UI", 9F, FontStyle.Bold);
+
             _lblSummaryItems = new Label
             {
                 Text = "Total Item: 0 baris",
-                Font = UiTheme.FontBodyBold,
+                Font = summaryFont,
                 ForeColor = UiTheme.Slate200,
                 AutoSize = true,
-                Margin = new Padding(0, 0, 36, 0)
+                Margin = new Padding(0, 0, 28, 0)
             };
 
             _lblSummaryBagus = new Label
             {
                 Text = "Total Qty Bagus: 0",
-                Font = UiTheme.FontBodyBold,
+                Font = summaryFont,
                 ForeColor = UiTheme.Emerald,
                 AutoSize = true,
-                Margin = new Padding(0, 0, 36, 0)
+                Margin = new Padding(0, 0, 28, 0)
             };
 
             _lblSummaryRusak = new Label
             {
                 Text = "Total Qty Rusak: 0",
-                Font = UiTheme.FontBodyBold,
+                Font = summaryFont,
                 ForeColor = Color.FromArgb(251, 113, 133), // Rose-400
                 AutoSize = true,
-                Margin = new Padding(0, 0, 36, 0)
+                Margin = new Padding(0, 0, 28, 0)
             };
 
             _lblSummaryTotal = new Label
             {
                 Text = "Total Kuantitas: 0",
-                Font = UiTheme.FontBodyBold,
+                Font = summaryFont,
                 ForeColor = Color.FromArgb(147, 197, 253), // Blue-300
                 AutoSize = true
             };
@@ -724,9 +783,9 @@ namespace BtrReturGudang.Winform.Views
             var pnl = new FlowLayoutPanel
             {
                 Dock = DockStyle.Bottom,
-                Height = 54,
+                Height = 40,
                 BackColor = UiTheme.Slate100,
-                Padding = new Padding(16, 9, 16, 9),
+                Padding = new Padding(12, 4, 12, 4),
                 FlowDirection = FlowDirection.LeftToRight,
                 WrapContents = false
             };
@@ -746,10 +805,10 @@ namespace BtrReturGudang.Winform.Views
                 ForeColor = Color.White,
                 BackColor = UiTheme.Slate700,
                 FlatStyle = FlatStyle.Flat,
-                Width = 150,
-                Height = 36,
+                Width = 145,
+                Height = 32,
                 Cursor = Cursors.Hand,
-                Margin = new Padding(0, 0, 12, 0)
+                Margin = new Padding(0, 0, 10, 0)
             };
             _btnSaveDraft.FlatAppearance.BorderSize = 0;
             _btnSaveDraft.Click += async (s, e) => await SaveDraftAsync();
@@ -761,10 +820,10 @@ namespace BtrReturGudang.Winform.Views
                 ForeColor = Color.White,
                 BackColor = UiTheme.Emerald,
                 FlatStyle = FlatStyle.Flat,
-                Width = 185,
-                Height = 36,
+                Width = 175,
+                Height = 32,
                 Cursor = Cursors.Hand,
-                Margin = new Padding(0, 0, 12, 0)
+                Margin = new Padding(0, 0, 10, 0)
             };
             _btnSaveAndUpload.FlatAppearance.BorderSize = 0;
             _btnSaveAndUpload.Click += async (s, e) => await SaveAndUploadAsync();
@@ -776,10 +835,10 @@ namespace BtrReturGudang.Winform.Views
                 ForeColor = UiTheme.Slate700,
                 BackColor = Color.White,
                 FlatStyle = FlatStyle.Flat,
-                Width = 140,
-                Height = 36,
+                Width = 135,
+                Height = 32,
                 Cursor = Cursors.Hand,
-                Margin = new Padding(0, 0, 12, 0)
+                Margin = new Padding(0, 0, 10, 0)
             };
             _btnReset.FlatAppearance.BorderColor = UiTheme.Slate300;
             _btnReset.FlatAppearance.BorderSize = 1;
@@ -792,8 +851,8 @@ namespace BtrReturGudang.Winform.Views
                 ForeColor = Color.White,
                 BackColor = UiTheme.Amber,
                 FlatStyle = FlatStyle.Flat,
-                Width = 145,
-                Height = 36,
+                Width = 140,
+                Height = 32,
                 Cursor = Cursors.Hand
             };
             _btnManualSearch.FlatAppearance.BorderSize = 0;
@@ -818,17 +877,13 @@ namespace BtrReturGudang.Winform.Views
             try
             {
                 // 1. Customers
-                var customers = _referenceRepo.SearchCustomer(string.Empty) ?? Enumerable.Empty<Customer>();
-                _cboCustomer.Items.Clear();
-                foreach (var cust in customers)
-                {
-                    _cboCustomer.Items.Add(new CustomerItem(cust.CustomerId, cust.CustomerName, cust.CustomerCode, cust.Wilayah));
-                }
+                // Note: Customer master is queried on-demand via ManualCustomerSearchDialog (SCR-08)
+                // to avoid loading 2,280+ items into memory and locking the UI thread at startup.
 
                 // 2. Drivers
                 var drivers = _referenceRepo.GetAllDrivers() ?? Enumerable.Empty<Driver>();
                 _cboDriver.Items.Clear();
-                _cboDriver.Items.Add(new KeyValueItem(null, "-- Pilih Driver (Opsional) --"));
+                _cboDriver.Items.Add(new KeyValueItem(null, null, "-- Pilih Driver (Opsional) --"));
                 foreach (var drv in drivers)
                 {
                     _cboDriver.Items.Add(new KeyValueItem(drv.DriverId, drv.DriverName));
@@ -838,7 +893,7 @@ namespace BtrReturGudang.Winform.Views
                 // 3. SalesPersons
                 var salesPersons = _referenceRepo.GetAllSalesPersons() ?? Enumerable.Empty<SalesPerson>();
                 _cboSalesPerson.Items.Clear();
-                _cboSalesPerson.Items.Add(new KeyValueItem(null, "-- Pilih Salesman (Opsional) --"));
+                _cboSalesPerson.Items.Add(new KeyValueItem(null, null, "-- Pilih Salesman (Opsional) --"));
                 foreach (var sp in salesPersons)
                 {
                     _cboSalesPerson.Items.Add(new KeyValueItem(sp.SalesPersonId, sp.SalesPersonName));
@@ -1191,7 +1246,14 @@ namespace BtrReturGudang.Winform.Views
                 {
                     MessageBox.Show("Silakan pilih atau masukkan Customer terlebih dahulu (wajib).", "Peringatan", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 }
-                _cboCustomer.Focus();
+                if (_txtCustomer != null && _txtCustomer.CanFocus)
+                {
+                    _txtCustomer.Focus();
+                }
+                else
+                {
+                    _cboCustomer.Focus();
+                }
                 return null;
             }
 
@@ -1218,11 +1280,22 @@ namespace BtrReturGudang.Winform.Views
             var salesman = _cboSalesPerson.SelectedItem as KeyValueItem;
             var notes = _txtKeterangan.Text.Trim();
 
-            var warehouseCode = _registryHelper?.WarehouseCode ?? "GD-BTR";
-            if (string.IsNullOrWhiteSpace(warehouseCode)) warehouseCode = "GD-BTR";
+            var warehouseCode = _registryHelper?.WarehouseCode;
+            var operatorName = _registryHelper?.LastOperatorName;
 
-            var operatorName = _registryHelper?.LastOperatorName ?? "OPERATOR";
-            if (string.IsNullOrWhiteSpace(operatorName)) operatorName = "OPERATOR";
+            if (string.IsNullOrWhiteSpace(warehouseCode) || string.IsNullOrWhiteSpace(operatorName))
+            {
+                _audioHelper?.PlayWarning();
+                if (!SuppressMessageBoxes)
+                {
+                    MessageBox.Show(
+                        "Identitas workstation belum dikonfigurasi. Lengkapi 'Kode Depo / Warehouse' dan 'Operator Shift Aktif' pada menu [F5] Pengaturan sebelum menyimpan Return Order.",
+                        "Workstation Belum Dikonfigurasi",
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Warning);
+                }
+                return null;
+            }
 
             ReturnOrderDto order;
 
@@ -1346,6 +1419,8 @@ namespace BtrReturGudang.Winform.Views
             }
 
             CurrentReturnOrderId = null;
+            _selectedCustomer = null;
+            if (_txtCustomer != null) _txtCustomer.Text = string.Empty;
             _cboCustomer.SelectedIndex = -1;
             _cboCustomer.Text = string.Empty;
 
@@ -1380,17 +1455,40 @@ namespace BtrReturGudang.Winform.Views
             _txtKeterangan.Text = order.Keterangan ?? string.Empty;
 
             // Set customer
-            for (int i = 0; i < _cboCustomer.Items.Count; i++)
+            if (!string.IsNullOrWhiteSpace(order.CustId))
             {
-                if (_cboCustomer.Items[i] is CustomerItem cust && cust.CustId == order.CustId)
+                Customer customer = null;
+                try
                 {
-                    _cboCustomer.SelectedIndex = i;
-                    break;
+                    customer = _referenceRepo?.GetCustomerById(order.CustId);
                 }
+                catch
+                {
+                    // Fallback
+                }
+
+                if (customer == null)
+                {
+                    customer = new Customer(
+                        order.CustId,
+                        order.CustName,
+                        null,
+                        order.CustomerCode,
+                        order.Wilayah);
+                }
+                SetSelectedCustomer(customer);
             }
-            if (_cboCustomer.SelectedIndex < 0)
+            else if (!string.IsNullOrWhiteSpace(order.CustName))
             {
-                _cboCustomer.Text = order.CustName;
+                _selectedCustomer = null;
+                if (_txtCustomer != null) _txtCustomer.Text = order.CustName;
+                if (_cboCustomer != null) _cboCustomer.Text = order.CustName;
+            }
+            else
+            {
+                _selectedCustomer = null;
+                if (_txtCustomer != null) _txtCustomer.Text = string.Empty;
+                if (_cboCustomer != null) _cboCustomer.Text = string.Empty;
             }
 
             // Set driver
@@ -1478,14 +1576,62 @@ namespace BtrReturGudang.Winform.Views
             }
         }
 
+        public void SetSelectedCustomer(Customer customer)
+        {
+            _selectedCustomer = customer;
+            if (customer == null)
+            {
+                if (_txtCustomer != null) _txtCustomer.Text = string.Empty;
+                if (_cboCustomer != null) _cboCustomer.Text = string.Empty;
+                return;
+            }
+
+            var codePart = !string.IsNullOrWhiteSpace(customer.CustomerCode)
+                ? $"[{customer.CustomerCode}] "
+                : (!string.IsNullOrWhiteSpace(customer.CustomerId) ? $"[{customer.CustomerId}] " : string.Empty);
+            var regionPart = !string.IsNullOrWhiteSpace(customer.Wilayah) ? $" - {customer.Wilayah}" : string.Empty;
+            var displayText = $"{codePart}{customer.CustomerName}{regionPart}";
+
+            if (_txtCustomer != null) _txtCustomer.Text = displayText;
+            if (_cboCustomer != null) _cboCustomer.Text = displayText;
+        }
+
+        public void TriggerCustomerSearch(string initialKeyword = null)
+        {
+            if (CustomerSearchDialogLauncher != null)
+            {
+                var customer = CustomerSearchDialogLauncher(initialKeyword);
+                if (customer != null)
+                {
+                    SetSelectedCustomer(customer);
+                }
+                return;
+            }
+
+            using (var dlg = new ManualCustomerSearchDialog(_referenceRepo, _audioHelper, initialKeyword))
+            {
+                IWin32Window owner = (Control)FindForm() ?? (IsHandleCreated ? this : null);
+                var result = owner != null ? dlg.ShowDialog(owner) : dlg.ShowDialog();
+                if (result == DialogResult.OK && dlg.SelectedCustomer != null)
+                {
+                    SetSelectedCustomer(dlg.SelectedCustomer);
+                }
+            }
+        }
+
         private (string CustId, string CustName, string CustomerCode, string Wilayah) GetSelectedCustomer()
         {
+            if (_selectedCustomer != null)
+            {
+                return (_selectedCustomer.CustomerId, _selectedCustomer.CustomerName, _selectedCustomer.CustomerCode, _selectedCustomer.Wilayah);
+            }
+
             if (_cboCustomer.SelectedItem is CustomerItem cust)
             {
                 return (cust.CustId, cust.CustName, cust.CustomerCode, cust.Wilayah);
             }
 
-            var text = _cboCustomer.Text.Trim();
+            var text = !string.IsNullOrWhiteSpace(_txtCustomer?.Text) ? _txtCustomer.Text.Trim() : _cboCustomer.Text.Trim();
             if (!string.IsNullOrWhiteSpace(text))
             {
                 return ("CUST-MANUAL", text, null, null);
@@ -1524,6 +1670,12 @@ namespace BtrReturGudang.Winform.Views
                 return true;
             }
 
+            if (keyData == Keys.F8)
+            {
+                TriggerCustomerSearch(_txtCustomer?.Text);
+                return true;
+            }
+
             return base.ProcessCmdKey(ref msg, keyData);
         }
 
@@ -1558,14 +1710,16 @@ namespace BtrReturGudang.Winform.Views
         {
             public string Id { get; }
             public string Name { get; }
+            public string Display { get; }
 
-            public KeyValueItem(string id, string name)
+            public KeyValueItem(string id, string name, string display = null)
             {
                 Id = id;
                 Name = name;
+                Display = display;
             }
 
-            public override string ToString() => Name;
+            public override string ToString() => Display ?? Name;
         }
 
         #endregion

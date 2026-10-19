@@ -66,7 +66,7 @@ namespace BtrReturGudang.Winform.Views
             MaximizeBox = false;
             MinimizeBox = false;
             StartPosition = FormStartPosition.CenterParent;
-            ClientSize = new Size(540, 560);
+            ClientSize = new Size(580, 480);
             BackColor = UiTheme.Slate100;
             Font = UiTheme.FontBody;
 
@@ -74,9 +74,9 @@ namespace BtrReturGudang.Winform.Views
             var pnlHeader = new Panel
             {
                 Dock = DockStyle.Top,
-                Height = 68,
+                Height = 44,
                 BackColor = UiTheme.Slate900,
-                Padding = new Padding(24, 12, 24, 12)
+                Padding = new Padding(20, 4, 20, 4)
             };
 
             var lblTitle = new Label
@@ -84,7 +84,7 @@ namespace BtrReturGudang.Winform.Views
                 Text = "🏷️ Registrasi Barcode Produk",
                 Font = UiTheme.FontSectionTitle,
                 ForeColor = Color.White,
-                Location = new Point(24, 10),
+                Location = new Point(20, 4),
                 AutoSize = true
             };
 
@@ -93,7 +93,7 @@ namespace BtrReturGudang.Winform.Views
                 Text = "Tautkan barcode ke master barang dan tentukan satuan konversinya.",
                 Font = UiTheme.FontSubtitle,
                 ForeColor = UiTheme.Slate400,
-                Location = new Point(24, 36),
+                Location = new Point(20, 24),
                 AutoSize = true
             };
 
@@ -101,7 +101,7 @@ namespace BtrReturGudang.Winform.Views
             pnlHeader.Controls.Add(lblSubtitle);
 
             // Card body container
-            var pnlBody = UiTheme.CreateCard(new Padding(20), new Padding(16, 12, 16, 16));
+            var pnlBody = UiTheme.CreateCard(new Padding(16, 10, 16, 10), new Padding(16, 8, 16, 12));
             pnlBody.Dock = DockStyle.Fill;
 
             // Barcode input
@@ -110,7 +110,7 @@ namespace BtrReturGudang.Winform.Views
                 Text = "Nilai Barcode:",
                 Font = UiTheme.FontLabel,
                 ForeColor = UiTheme.Slate700,
-                Location = new Point(16, 14),
+                Location = new Point(16, 10),
                 AutoSize = true
             };
 
@@ -118,8 +118,8 @@ namespace BtrReturGudang.Winform.Views
             {
                 Text = initialBarcode ?? string.Empty,
                 Font = UiTheme.FontMonospaceBold,
-                Location = new Point(16, 36),
-                Width = 472
+                Location = new Point(16, 30),
+                Width = 516
             };
 
             // Product lookup
@@ -128,24 +128,24 @@ namespace BtrReturGudang.Winform.Views
                 Text = "Cari Master Barang (Nama / Kode):",
                 Font = UiTheme.FontLabel,
                 ForeColor = UiTheme.Slate700,
-                Location = new Point(16, 72),
+                Location = new Point(16, 60),
                 AutoSize = true
             };
 
             _txtSearchItem = new TextBox
             {
                 Font = UiTheme.FontBody,
-                Location = new Point(16, 94),
-                Width = 472
+                Location = new Point(16, 80),
+                Width = 516
             };
             _txtSearchItem.TextChanged += async (s, e) => await SearchItemsAsync(_txtSearchItem.Text);
 
             _lstItems = new ListBox
             {
                 Font = UiTheme.FontBody,
-                Location = new Point(16, 126),
-                Width = 472,
-                Height = 115,
+                Location = new Point(16, 108),
+                Width = 516,
+                Height = 100,
                 BorderStyle = BorderStyle.FixedSingle
             };
             _lstItems.SelectedIndexChanged += OnItemSelected;
@@ -155,7 +155,7 @@ namespace BtrReturGudang.Winform.Views
                 Text = "Barang Terpilih: (Belum dipilih)",
                 Font = UiTheme.FontBodyBold,
                 ForeColor = UiTheme.Primary,
-                Location = new Point(16, 250),
+                Location = new Point(16, 214),
                 AutoSize = true
             };
 
@@ -165,7 +165,7 @@ namespace BtrReturGudang.Winform.Views
                 Text = "Satuan:",
                 Font = UiTheme.FontLabel,
                 ForeColor = UiTheme.Slate700,
-                Location = new Point(16, 280),
+                Location = new Point(16, 238),
                 AutoSize = true
             };
 
@@ -173,7 +173,7 @@ namespace BtrReturGudang.Winform.Views
             {
                 DropDownStyle = ComboBoxStyle.DropDownList,
                 Font = UiTheme.FontBody,
-                Location = new Point(16, 304),
+                Location = new Point(16, 258),
                 Width = 160
             };
             _cboSatuan.Items.AddRange(new object[] { "Dus", "Pak", "Pcs", "Ball", "Lusin" });
@@ -184,7 +184,7 @@ namespace BtrReturGudang.Winform.Views
                 Text = "Pengali (Konversi ke Pcs):",
                 Font = UiTheme.FontLabel,
                 ForeColor = UiTheme.Slate700,
-                Location = new Point(200, 280),
+                Location = new Point(200, 238),
                 AutoSize = true
             };
 
@@ -195,7 +195,7 @@ namespace BtrReturGudang.Winform.Views
                 Maximum = 10000,
                 Value = 1,
                 Font = UiTheme.FontBodyBold,
-                Location = new Point(200, 304),
+                Location = new Point(200, 258),
                 Width = 160
             };
 
@@ -207,9 +207,9 @@ namespace BtrReturGudang.Winform.Views
                 BackColor = UiTheme.Primary,
                 ForeColor = Color.White,
                 FlatStyle = FlatStyle.Flat,
-                Location = new Point(220, 396),
-                Width = 175,
-                Height = 40,
+                Location = new Point(226, 308),
+                Width = 185,
+                Height = 38,
                 Cursor = Cursors.Hand
             };
             _btnSave.FlatAppearance.BorderSize = 0;
@@ -223,9 +223,9 @@ namespace BtrReturGudang.Winform.Views
                 BackColor = UiTheme.White,
                 ForeColor = UiTheme.Slate700,
                 FlatStyle = FlatStyle.Flat,
-                Location = new Point(405, 396),
-                Width = 83,
-                Height = 40,
+                Location = new Point(421, 308),
+                Width = 111,
+                Height = 38,
                 Cursor = Cursors.Hand
             };
             _btnCancel.FlatAppearance.BorderColor = UiTheme.Slate300;

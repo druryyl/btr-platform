@@ -99,8 +99,13 @@ namespace BtrReturGudang.Winform.Views
         {
             Text = "BTR Retur Gudang - Desktop Application";
             StartPosition = FormStartPosition.CenterScreen;
-            Size = new Size(1280, 800);
-            MinimumSize = new Size(1024, 650);
+            Size = new Size(1280, 720);
+            MinimumSize = new Size(1024, 600);
+            if (Screen.PrimaryScreen != null &&
+                (Screen.PrimaryScreen.WorkingArea.Height <= 768 || Screen.PrimaryScreen.WorkingArea.Width <= 1366))
+            {
+                WindowState = FormWindowState.Maximized;
+            }
             KeyPreview = true;
             DoubleBuffered = true;
             Font = new Font("Segoe UI", 9.75F, FontStyle.Regular, GraphicsUnit.Point);
@@ -132,9 +137,9 @@ namespace BtrReturGudang.Winform.Views
             _pnlHeader = new Panel
             {
                 Dock = DockStyle.Top,
-                Height = 64,
+                Height = 44,
                 BackColor = UiTheme.Slate900,
-                Padding = new Padding(20, 0, 20, 0)
+                Padding = new Padding(16, 0, 16, 0)
             };
 
             _pnlHeader.Paint += (s, e) =>
@@ -149,29 +154,29 @@ namespace BtrReturGudang.Winform.Views
             var pnlBrand = new Panel
             {
                 Dock = DockStyle.Left,
-                Width = 420,
-                Height = 64,
+                Width = 300,
+                Height = 44,
                 BackColor = Color.Transparent
             };
 
             var lblLogoBadge = new Label
             {
                 Text = "BTR",
-                Font = new Font("Segoe UI Bold", 9.5F, FontStyle.Bold),
+                Font = new Font("Segoe UI Bold", 8.5F, FontStyle.Bold),
                 ForeColor = Color.White,
                 BackColor = UiTheme.Primary,
                 TextAlign = ContentAlignment.MiddleCenter,
-                Size = new Size(44, 26),
-                Location = new Point(0, 19)
+                Size = new Size(36, 22),
+                Location = new Point(0, 11)
             };
 
             _lblAppTitle = new Label
             {
                 Text = "RETUR GUDANG",
-                Font = new Font("Segoe UI", 12.5F, FontStyle.Bold, GraphicsUnit.Point),
+                Font = new Font("Segoe UI", 11F, FontStyle.Bold, GraphicsUnit.Point),
                 ForeColor = Color.White,
                 AutoSize = true,
-                Location = new Point(52, 14)
+                Location = new Point(44, 11)
             };
 
             var lblAppSubtitle = new Label
@@ -180,7 +185,8 @@ namespace BtrReturGudang.Winform.Views
                 Font = new Font("Segoe UI", 8F, FontStyle.Regular, GraphicsUnit.Point),
                 ForeColor = UiTheme.Slate400,
                 AutoSize = true,
-                Location = new Point(54, 38)
+                Location = new Point(54, 38),
+                Visible = false
             };
 
             pnlBrand.Controls.Add(lblLogoBadge);
@@ -194,8 +200,8 @@ namespace BtrReturGudang.Winform.Views
                 AutoSize = true,
                 FlowDirection = FlowDirection.LeftToRight,
                 WrapContents = false,
-                Height = 64,
-                Padding = new Padding(0, 16, 0, 0)
+                Height = 44,
+                Padding = new Padding(0, 7, 0, 0)
             };
 
             // Depo badge
@@ -206,11 +212,11 @@ namespace BtrReturGudang.Winform.Views
             _lblDepoBadge = new Label
             {
                 Text = $"🏢 DEPO: {depoCode}",
-                Font = new Font("Segoe UI Semibold", 9F, FontStyle.Bold, GraphicsUnit.Point),
+                Font = new Font("Segoe UI Semibold", 8.5F, FontStyle.Bold, GraphicsUnit.Point),
                 ForeColor = UiTheme.Slate300,
                 BackColor = UiTheme.Slate800,
-                Padding = new Padding(10, 6, 10, 6),
-                Margin = new Padding(0, 0, 10, 0),
+                Padding = new Padding(8, 4, 8, 4),
+                Margin = new Padding(0, 0, 8, 0),
                 AutoSize = true
             };
 
@@ -222,10 +228,10 @@ namespace BtrReturGudang.Winform.Views
             _lblOperatorBadge = new Label
             {
                 Text = $"👤 {operatorName}",
-                Font = new Font("Segoe UI Semibold", 9F, FontStyle.Bold, GraphicsUnit.Point),
+                Font = new Font("Segoe UI Semibold", 8.5F, FontStyle.Bold, GraphicsUnit.Point),
                 ForeColor = Color.White,
                 BackColor = UiTheme.Slate800,
-                Padding = new Padding(10, 6, 10, 6),
+                Padding = new Padding(8, 4, 8, 4),
                 Margin = new Padding(0, 0, 6, 0),
                 AutoSize = true
             };
@@ -243,9 +249,9 @@ namespace BtrReturGudang.Winform.Views
                 ForeColor = UiTheme.Slate300,
                 BackColor = UiTheme.Slate700,
                 FlatStyle = FlatStyle.Flat,
-                Width = 54,
-                Height = 28,
-                Margin = new Padding(0, 2, 16, 0),
+                Width = 48,
+                Height = 26,
+                Margin = new Padding(0, 1, 12, 0),
                 Cursor = Cursors.Hand
             };
             _btnSwitchOperator.FlatAppearance.BorderSize = 0;
@@ -255,10 +261,10 @@ namespace BtrReturGudang.Winform.Views
             var pnlOnlinePill = new Panel
             {
                 BackColor = Color.FromArgb(20, 35, 30),
-                Height = 28,
+                Height = 26,
                 AutoSize = true,
-                Padding = new Padding(8, 6, 10, 6),
-                Margin = new Padding(0, 2, 0, 0)
+                Padding = new Padding(6, 4, 8, 4),
+                Margin = new Padding(0, 1, 0, 0)
             };
 
             _pnlOnlineDot = new Panel
@@ -266,7 +272,7 @@ namespace BtrReturGudang.Winform.Views
                 Width = 8,
                 Height = 8,
                 BackColor = UiTheme.Emerald,
-                Location = new Point(10, 10)
+                Location = new Point(8, 9)
             };
 
             _lblOnlineStatus = new Label
@@ -275,7 +281,7 @@ namespace BtrReturGudang.Winform.Views
                 Font = new Font("Segoe UI Bold", 8.5F, FontStyle.Bold, GraphicsUnit.Point),
                 ForeColor = UiTheme.Emerald,
                 AutoSize = true,
-                Location = new Point(24, 6)
+                Location = new Point(20, 5)
             };
 
             pnlOnlinePill.Controls.Add(_pnlOnlineDot);
@@ -299,7 +305,7 @@ namespace BtrReturGudang.Winform.Views
                 BackColor = UiTheme.White,
                 Font = new Font("Segoe UI", 9F, FontStyle.Regular, GraphicsUnit.Point),
                 SizingGrip = false,
-                Height = 28
+                Height = 26
             };
 
             _statusStrip.Paint += (s, e) =>
@@ -362,9 +368,9 @@ namespace BtrReturGudang.Winform.Views
             _pnlSidebar = new Panel
             {
                 Dock = DockStyle.Left,
-                Width = 230,
+                Width = 200,
                 BackColor = UiTheme.Slate850,
-                Padding = new Padding(12, 18, 12, 16)
+                Padding = new Padding(8, 12, 8, 12)
             };
 
             _pnlSidebar.Paint += (s, e) =>
@@ -380,33 +386,33 @@ namespace BtrReturGudang.Winform.Views
                 Text = "NAVIGASI UTAMA",
                 Font = new Font("Segoe UI Bold", 7.5F, FontStyle.Bold, GraphicsUnit.Point),
                 ForeColor = UiTheme.Slate400,
-                Location = new Point(16, 16),
+                Location = new Point(10, 12),
                 AutoSize = true
             };
 
-            _btnNavIntake = CreateSidebarButton("Intake Retur", "F1", 42, () => NavigateTo(NavigationModule.Intake));
-            _btnNavDaftar = CreateSidebarButton("Daftar Retur", "F3", 98, () => NavigateTo(NavigationModule.DaftarRetur));
-            _btnNavBarcode = CreateSidebarButton("Barcode Registry", "F4", 154, () => NavigateTo(NavigationModule.BarcodeRegistry));
-            _btnNavSettings = CreateSidebarButton("Pengaturan", "F5", 210, () => NavigateTo(NavigationModule.Pengaturan));
+            _btnNavIntake = CreateSidebarButton("Intake Retur", "F1", 36, () => NavigateTo(NavigationModule.Intake));
+            _btnNavDaftar = CreateSidebarButton("Daftar Retur", "F3", 80, () => NavigateTo(NavigationModule.DaftarRetur));
+            _btnNavBarcode = CreateSidebarButton("Barcode Registry", "F4", 124, () => NavigateTo(NavigationModule.BarcodeRegistry));
+            _btnNavSettings = CreateSidebarButton("Pengaturan", "F5", 168, () => NavigateTo(NavigationModule.Pengaturan));
 
             // Manual sync button container at bottom of sidebar
             var pnlSyncContainer = new Panel
             {
                 Dock = DockStyle.Bottom,
-                Height = 92,
+                Height = 80,
                 BackColor = Color.Transparent,
-                Padding = new Padding(4, 8, 4, 0)
+                Padding = new Padding(4, 6, 4, 0)
             };
 
             _btnManualSync = new Button
             {
                 Text = "🔄 Sync Sekarang",
-                Font = new Font("Segoe UI Semibold", 9.5F, FontStyle.Bold, GraphicsUnit.Point),
+                Font = new Font("Segoe UI Semibold", 9F, FontStyle.Bold, GraphicsUnit.Point),
                 ForeColor = Color.White,
                 BackColor = UiTheme.Emerald,
                 FlatStyle = FlatStyle.Flat,
                 Dock = DockStyle.Top,
-                Height = 44,
+                Height = 38,
                 Cursor = Cursors.Hand
             };
             _btnManualSync.FlatAppearance.BorderSize = 0;
@@ -418,7 +424,7 @@ namespace BtrReturGudang.Winform.Views
                 Font = new Font("Segoe UI", 7.5F, FontStyle.Regular, GraphicsUnit.Point),
                 ForeColor = UiTheme.Slate400,
                 Dock = DockStyle.Bottom,
-                Height = 28,
+                Height = 26,
                 TextAlign = ContentAlignment.MiddleCenter
             };
 
@@ -440,15 +446,15 @@ namespace BtrReturGudang.Winform.Views
             var btn = new Button
             {
                 Text = $"  [{hotkey}]  {title}",
-                Font = new Font("Segoe UI Semibold", 9.5F, FontStyle.Bold, GraphicsUnit.Point),
+                Font = new Font("Segoe UI Semibold", 9F, FontStyle.Bold, GraphicsUnit.Point),
                 ForeColor = UiTheme.Slate300,
                 BackColor = UiTheme.Slate850,
                 FlatStyle = FlatStyle.Flat,
-                Location = new Point(12, top),
-                Width = 206,
-                Height = 46,
+                Location = new Point(8, top),
+                Width = 184,
+                Height = 40,
                 TextAlign = ContentAlignment.MiddleLeft,
-                Padding = new Padding(12, 0, 0, 0),
+                Padding = new Padding(8, 0, 0, 0),
                 Cursor = Cursors.Hand
             };
             btn.FlatAppearance.BorderSize = 0;

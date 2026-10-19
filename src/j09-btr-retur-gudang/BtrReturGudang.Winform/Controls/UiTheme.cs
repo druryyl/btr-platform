@@ -59,7 +59,7 @@ namespace BtrReturGudang.Winform
 
         #region Fonts
 
-        public static readonly Font FontAppTitle      = new Font("Segoe UI", 12.5F, FontStyle.Bold, GraphicsUnit.Point);
+        public static readonly Font FontAppTitle      = new Font("Segoe UI", 11F, FontStyle.Bold, GraphicsUnit.Point);
         public static readonly Font FontPageTitle     = new Font("Segoe UI", 14F, FontStyle.Bold, GraphicsUnit.Point);
         public static readonly Font FontSectionTitle  = new Font("Segoe UI Semibold", 10.5F, FontStyle.Bold, GraphicsUnit.Point);
         public static readonly Font FontCardTitle     = new Font("Segoe UI Semibold", 9.5F, FontStyle.Bold, GraphicsUnit.Point);

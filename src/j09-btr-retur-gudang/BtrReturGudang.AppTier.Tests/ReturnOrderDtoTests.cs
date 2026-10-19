@@ -60,6 +60,31 @@ namespace BtrReturGudang.AppTier.Tests
         }
 
         [Fact]
+        public void FromDomain_WithBlankOptionalIds_ClearsOptionalNames()
+        {
+            var order = new ReturnOrder(
+                "01JABCDEF01234567890ABCDEF",
+                new DateTime(2026, 1, 10),
+                "CUST-001",
+                "Toko Rejeki",
+                "WHS-01",
+                "Operator-1",
+                null,
+                "-- Pilih Driver (Opsional) --",
+                null,
+                "-- Pilih Salesman (Opsional) --",
+                "Catatan",
+                StatusSync.Draft);
+
+            order.AddItem("BRG-01", "Indomie Goreng", "8991234567890", JenisRetur.BAGUS, 10, "PCS");
+
+            var dto = ReturnOrderDto.FromDomain(order);
+
+            Assert.True(string.IsNullOrEmpty(dto.DriverName));
+            Assert.True(string.IsNullOrEmpty(dto.SalesPersonName));
+        }
+
+        [Fact]
         public void ToDomain_RestoresAggregateWithItems()
         {
             var dto = new ReturnOrderDto

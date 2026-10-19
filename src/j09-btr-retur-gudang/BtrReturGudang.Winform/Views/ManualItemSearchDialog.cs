@@ -70,7 +70,7 @@ namespace BtrReturGudang.Winform.Views
             MaximizeBox = false;
             MinimizeBox = false;
             StartPosition = FormStartPosition.CenterParent;
-            ClientSize = new Size(720, 540);
+            ClientSize = new Size(740, 480);
             BackColor = UiTheme.Slate100;
             Font = UiTheme.FontBody;
             KeyPreview = true;
@@ -79,9 +79,9 @@ namespace BtrReturGudang.Winform.Views
             var pnlHeader = new Panel
             {
                 Dock = DockStyle.Top,
-                Height = 68,
+                Height = 44,
                 BackColor = UiTheme.Slate900,
-                Padding = new Padding(20, 12, 20, 12)
+                Padding = new Padding(20, 4, 20, 4)
             };
 
             var lblTitle = new Label
@@ -89,7 +89,7 @@ namespace BtrReturGudang.Winform.Views
                 Text = "🔍 Cari Master Barang",
                 Font = UiTheme.FontSectionTitle,
                 ForeColor = Color.White,
-                Location = new Point(20, 12),
+                Location = new Point(20, 4),
                 AutoSize = true
             };
 
@@ -98,7 +98,7 @@ namespace BtrReturGudang.Winform.Views
                 Text = "Ketik kode atau nama barang. Gunakan panah Atas/Bawah dan tekan Enter untuk memilih.",
                 Font = UiTheme.FontSubtitle,
                 ForeColor = UiTheme.Slate400,
-                Location = new Point(20, 38),
+                Location = new Point(20, 24),
                 AutoSize = true
             };
 
@@ -127,7 +127,7 @@ namespace BtrReturGudang.Winform.Views
             {
                 Font = new Font("Segoe UI", 10F, FontStyle.Regular, GraphicsUnit.Point),
                 Location = new Point(110, 12),
-                Width = 470
+                Width = 490
             };
             _txtSearch.TextChanged += async (s, e) => await PerformSearchAsync(_txtSearch.Text);
             _txtSearch.KeyDown += OnSearchKeyDown;
@@ -139,7 +139,7 @@ namespace BtrReturGudang.Winform.Views
                 BackColor = UiTheme.Primary,
                 ForeColor = Color.White,
                 FlatStyle = FlatStyle.Flat,
-                Location = new Point(590, 11),
+                Location = new Point(610, 11),
                 Width = 105,
                 Height = 30,
                 Cursor = Cursors.Hand
@@ -211,7 +211,7 @@ namespace BtrReturGudang.Winform.Views
                 BackColor = UiTheme.Emerald,
                 ForeColor = Color.White,
                 FlatStyle = FlatStyle.Flat,
-                Location = new Point(470, 24),
+                Location = new Point(490, 24),
                 Width = 115,
                 Height = 38,
                 Cursor = Cursors.Hand
@@ -227,7 +227,7 @@ namespace BtrReturGudang.Winform.Views
                 BackColor = UiTheme.White,
                 ForeColor = UiTheme.Slate700,
                 FlatStyle = FlatStyle.Flat,
-                Location = new Point(595, 24),
+                Location = new Point(615, 24),
                 Width = 100,
                 Height = 38,
                 Cursor = Cursors.Hand

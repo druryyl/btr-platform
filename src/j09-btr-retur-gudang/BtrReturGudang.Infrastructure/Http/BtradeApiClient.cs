@@ -159,9 +159,9 @@ namespace BtrReturGudang.Infrastructure.Http
                 CustomerCode = dto.CustomerCode,
                 Wilayah = dto.Wilayah,
                 SalesPersonId = dto.SalesPersonId,
-                SalesPersonName = dto.SalesPersonName,
+                SalesPersonName = string.IsNullOrWhiteSpace(dto.SalesPersonId) ? null : dto.SalesPersonName,
                 DriverId = dto.DriverId,
-                DriverName = dto.DriverName,
+                DriverName = string.IsNullOrWhiteSpace(dto.DriverId) ? null : dto.DriverName,
                 Note = dto.Keterangan ?? dto.Note,
                 ListItem = (dto.Items ?? new List<ReturnOrderItemDto>()).Select(item => new
                 {

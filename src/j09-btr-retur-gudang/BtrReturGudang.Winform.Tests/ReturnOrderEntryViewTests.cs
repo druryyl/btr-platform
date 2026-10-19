@@ -311,7 +311,7 @@ namespace BtrReturGudang.Winform.Tests
                 var orderService = new ReturnOrderService(repo);
                 var audioHelper = new FakeAudioHelper();
 
-                using (var view = new ReturnOrderEntryView(orderService, null, null, audioHelper, null))
+                using (var view = new ReturnOrderEntryView(orderService, null, null, audioHelper, new FakeRegistryHelper()))
                 {
                     view.SuppressMessageBoxes = true;
                     view.CustomerComboBox.Text = "Toko Makmur";
@@ -329,6 +329,184 @@ namespace BtrReturGudang.Winform.Tests
                     Assert.Single(saved.Items);
                     Assert.Equal(5m, saved.TotalQtyBagus);
                     Assert.Single(repo.Store[saved.ReturnOrderId].Items);
+                }
+            });
+        }
+
+        [Fact]
+        public void SaveDraftAsync_WithPlaceholderDriverAndSalesman_PersistsBlankOptionalNames()
+        {
+            ExecuteInStaThread(() =>
+            {
+                var repo = new ValidatingReturnOrderRepo();
+                var orderService = new ReturnOrderService(repo);
+                var referenceRepo = new FakeReferenceRepo();
+                referenceRepo.Drivers.Add(new Driver("DRV-01", "Bambang"));
+                referenceRepo.SalesPersons.Add(new SalesPerson("SLS-01", "Agus"));
+
+                using (var view = new ReturnOrderEntryView(orderService, null, referenceRepo, new FakeAudioHelper(), new FakeRegistryHelper()))
+                {
+                    view.SuppressMessageBoxes = true;
+
+                    // The prompt items are selected by default; they must render the prompt but carry no value.
+                    Assert.Equal("-- Pilih Driver (Opsional) --", view.DriverComboBox.SelectedItem.ToString());
+                    Assert.Equal("-- Pilih Salesman (Opsional) --", view.SalesPersonComboBox.SelectedItem.ToString());
+
+                    view.CustomerComboBox.Text = "Toko Makmur";
+
+                    var lookup = BarcodeLookupResult.Hit("899111", "899111", "BRG01", "Indomie Goreng", "Dus", 1m, true);
+                    view.ApplyActiveProduct(lookup);
+                    view.QtyBagusNumeric.Value = 5;
+                    view.CommitQuantityStripToGrid();
+
+                    var saved = view.SaveDraftAsync().GetAwaiter().GetResult();
+
+                    Assert.NotNull(saved);
+                    Assert.True(string.IsNullOrEmpty(saved.DriverId));
+                    Assert.True(string.IsNullOrEmpty(saved.DriverName));
+                    Assert.True(string.IsNullOrEmpty(saved.SalesPersonId));
+                    Assert.True(string.IsNullOrEmpty(saved.SalesPersonName));
+
+                    var stored = repo.Store[saved.ReturnOrderId];
+                    Assert.True(string.IsNullOrEmpty(stored.DriverName));
+                    Assert.True(string.IsNullOrEmpty(stored.SalesPersonName));
+                }
+            });
+        }
+
+        [Fact]
+        public void SaveDraftAsync_WithSelectedDriverAndSalesman_PersistsTheirNames()
+        {
+            ExecuteInStaThread(() =>
+            {
+                var repo = new ValidatingReturnOrderRepo();
+                var orderService = new ReturnOrderService(repo);
+                var referenceRepo = new FakeReferenceRepo();
+                referenceRepo.Drivers.Add(new Driver("DRV-01", "Bambang"));
+                referenceRepo.SalesPersons.Add(new SalesPerson("SLS-01", "Agus"));
+
+                using (var view = new ReturnOrderEntryView(orderService, null, referenceRepo, new FakeAudioHelper(), new FakeRegistryHelper()))
+                {
+                    view.SuppressMessageBoxes = true;
+                    view.CustomerComboBox.Text = "Toko Makmur";
+
+                    view.DriverComboBox.SelectedIndex = 1;
+                    view.SalesPersonComboBox.SelectedIndex = 1;
+
+                    var lookup = BarcodeLookupResult.Hit("899111", "899111", "BRG01", "Indomie Goreng", "Dus", 1m, true);
+                    view.ApplyActiveProduct(lookup);
+                    view.QtyBagusNumeric.Value = 5;
+                    view.CommitQuantityStripToGrid();
+
+                    var saved = view.SaveDraftAsync().GetAwaiter().GetResult();
+
+                    Assert.NotNull(saved);
+                    Assert.Equal("DRV-01", saved.DriverId);
+                    Assert.Equal("Bambang", saved.DriverName);
+                    Assert.Equal("SLS-01", saved.SalesPersonId);
+                    Assert.Equal("Agus", saved.SalesPersonName);
+                }
+            });
+        }
+
+        [Fact]
+        public void SaveDraftAsync_WithBlankWorkstationIdentity_RefusesAndDoesNotPersist()
+        {
+            ExecuteInStaThread(() =>
+            {
+                var repo = new ValidatingReturnOrderRepo();
+                var orderService = new ReturnOrderService(repo);
+                var audioHelper = new FakeAudioHelper();
+                var registry = new FakeRegistryHelper { WarehouseCode = string.Empty, LastOperatorName = string.Empty };
+
+                using (var view = new ReturnOrderEntryView(orderService, null, null, audioHelper, registry))
+                {
+                    view.SuppressMessageBoxes = true;
+                    view.CustomerComboBox.Text = "Toko Makmur";
+
+                    var lookup = BarcodeLookupResult.Hit("899111", "899111", "BRG01", "Indomie Goreng", "Dus", 1m, true);
+                    view.ApplyActiveProduct(lookup);
+                    view.QtyBagusNumeric.Value = 5;
+                    view.CommitQuantityStripToGrid();
+
+                    var saved = view.SaveDraftAsync().GetAwaiter().GetResult();
+
+                    Assert.Null(saved);
+                    Assert.Empty(repo.Store);
+                    Assert.True(audioHelper.WarningCount > 0);
+                }
+            });
+        }
+
+        [Fact]
+        public void ReturnOrderEntryView_LayoutDimensions_ConformTo720pCompactSpecifications()
+        {
+            ExecuteInStaThread(() =>
+            {
+                using (var view = new ReturnOrderEntryView())
+                {
+                    // Root TableLayoutPanel check
+                    var tblMain = view.Controls.OfType<TableLayoutPanel>().FirstOrDefault();
+                    Assert.NotNull(tblMain);
+                    Assert.True(tblMain.AutoScroll);
+                    Assert.Equal(new Padding(12, 6, 12, 6), tblMain.Padding);
+
+                    // Action Toolbar check
+                    var toolbar = view.Controls.OfType<FlowLayoutPanel>().FirstOrDefault();
+                    Assert.NotNull(toolbar);
+                    Assert.Equal(40, toolbar.Height);
+                    Assert.Equal(new Padding(12, 4, 12, 4), toolbar.Padding);
+
+                    // Header Area Card check
+                    var pnlHeader = tblMain.GetControlFromPosition(0, 0) as Panel;
+                    Assert.NotNull(pnlHeader);
+                    Assert.Equal(new Padding(12, 6, 12, 8), pnlHeader.Padding);
+                    Assert.Equal(new Padding(0, 0, 0, 6), pnlHeader.Margin);
+
+                    var tblHeader = pnlHeader.Controls.OfType<TableLayoutPanel>().FirstOrDefault();
+                    Assert.NotNull(tblHeader);
+                    Assert.Equal(4, tblHeader.ColumnCount);
+                    Assert.Equal(2, tblHeader.RowCount);
+                    Assert.Equal(85F, tblHeader.ColumnStyles[0].Width);
+                    Assert.Equal(100F, tblHeader.ColumnStyles[2].Width);
+
+                    // Intake Card check
+                    var pnlIntake = tblMain.GetControlFromPosition(0, 1) as Panel;
+                    Assert.NotNull(pnlIntake);
+                    Assert.Equal(new Padding(10, 6, 10, 6), pnlIntake.Padding);
+                    Assert.Equal(new Padding(0, 0, 0, 6), pnlIntake.Margin);
+
+                    var tblIntake = pnlIntake.Controls.OfType<TableLayoutPanel>().FirstOrDefault();
+                    Assert.NotNull(tblIntake);
+                    Assert.Equal(2, tblIntake.ColumnCount);
+                    Assert.Equal(42F, tblIntake.ColumnStyles[0].Width);
+                    Assert.Equal(58F, tblIntake.ColumnStyles[1].Width);
+
+                    // Grid Container & Footer check
+                    var pnlGrid = tblMain.GetControlFromPosition(0, 2) as Panel;
+                    Assert.NotNull(pnlGrid);
+                    Assert.Equal(new Padding(8, 6, 8, 6), pnlGrid.Padding);
+
+                    var pnlFooter = pnlGrid.Controls.OfType<FlowLayoutPanel>().FirstOrDefault();
+                    Assert.NotNull(pnlFooter);
+                    Assert.Equal(32, pnlFooter.Height);
+                    Assert.Equal(new Padding(12, 6, 12, 6), pnlFooter.Padding);
+
+                    // In 1280x720 maximized mode (content host ~1080x602), verify compact dimensions and grid row capacity
+                    view.Size = new System.Drawing.Size(1080, 602);
+                    view.PerformLayout();
+                    tblMain.PerformLayout();
+                    pnlGrid.PerformLayout();
+
+                    Assert.InRange(pnlHeader.Height, 56, 62); // ~58-60px
+                    Assert.InRange(pnlIntake.Height, 54, 58); // ~54-58px
+                    Assert.True(view.ItemsGridView.Height >= 350,
+                        $"Expected grid height >= 350px for 10-12 rows visibility, but was {view.ItemsGridView.Height}px");
+
+                    // 10 data rows require 28px header + (10 * 26px) = 288px; verify grid displays at least 10 rows
+                    int minHeightFor10Rows = 28 + (10 * 26);
+                    Assert.True(view.ItemsGridView.Height >= minHeightFor10Rows,
+                        $"Grid height {view.ItemsGridView.Height}px must accommodate at least 10 data rows ({minHeightFor10Rows}px)");
                 }
             });
         }
@@ -406,6 +584,46 @@ namespace BtrReturGudang.Winform.Tests
             public Task MarkSyncedAsync(string returnOrderId, DateTime syncedDate) => Task.CompletedTask;
             public void DeleteDraft(string returnOrderId) => Store.Remove(returnOrderId);
             public Task DeleteDraftAsync(string returnOrderId) => Task.CompletedTask;
+        }
+
+        private class FakeReferenceRepo : IReferenceRepo
+        {
+            public readonly List<Driver> Drivers = new List<Driver>();
+            public readonly List<SalesPerson> SalesPersons = new List<SalesPerson>();
+
+            public void BulkUpsertBarang(IEnumerable<Barang> items) { }
+            public Task BulkUpsertBarangAsync(IEnumerable<Barang> items) => Task.CompletedTask;
+            public IEnumerable<Barang> SearchBarangByNameOrCode(string keyword) => Enumerable.Empty<Barang>();
+            public Task<IEnumerable<Barang>> SearchBarangByNameOrCodeAsync(string keyword) => Task.FromResult(Enumerable.Empty<Barang>());
+            public Barang GetBarangById(string brgId) => null;
+            public Task<Barang> GetBarangByIdAsync(string brgId) => Task.FromResult<Barang>(null);
+
+            public void BulkUpsertCustomer(IEnumerable<Customer> customers) { }
+            public Task BulkUpsertCustomerAsync(IEnumerable<Customer> customers) => Task.CompletedTask;
+            public IEnumerable<Customer> SearchCustomer(string keyword) => Enumerable.Empty<Customer>();
+            public Task<IEnumerable<Customer>> SearchCustomerAsync(string keyword) => Task.FromResult(Enumerable.Empty<Customer>());
+            public Customer GetCustomerById(string custId) => null;
+            public Task<Customer> GetCustomerByIdAsync(string custId) => Task.FromResult<Customer>(null);
+
+            public void BulkUpsertDriver(IEnumerable<Driver> drivers) { }
+            public Task BulkUpsertDriverAsync(IEnumerable<Driver> drivers) => Task.CompletedTask;
+            public IEnumerable<Driver> GetAllDrivers() => Drivers;
+            public Task<IEnumerable<Driver>> GetAllDriversAsync() => Task.FromResult(GetAllDrivers());
+
+            public void BulkUpsertSalesPerson(IEnumerable<SalesPerson> salesPersons) { }
+            public Task BulkUpsertSalesPersonAsync(IEnumerable<SalesPerson> salesPersons) => Task.CompletedTask;
+            public IEnumerable<SalesPerson> GetAllSalesPersons() => SalesPersons;
+            public Task<IEnumerable<SalesPerson>> GetAllSalesPersonsAsync() => Task.FromResult(GetAllSalesPersons());
+        }
+
+        private class FakeRegistryHelper : IRegistryHelper
+        {
+            public string WarehouseCode { get; set; } = "GDG-PST";
+            public string ServerTargetId { get; set; } = "JOG";
+            public string ApiBaseUrl { get; set; } = "http://localhost/";
+            public string LastOperatorName { get; set; } = "Operator-1";
+            public string LastOperatorEmail { get; set; } = "operator@example.com";
+            public bool EnableSoundFeedback { get; set; } = true;
         }
 
         #endregion

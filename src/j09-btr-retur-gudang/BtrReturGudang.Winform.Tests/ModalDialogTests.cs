@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Drawing;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -341,6 +342,51 @@ namespace BtrReturGudang.Winform.Tests
                     Assert.Equal("BRG-AUTO-REG", view.CurrentScanResult.BrgId);
                     Assert.Contains("Sabun Nuvo", view.BannerTitleLabel.Text);
                     Assert.Equal(12m, view.CurrentScanResult.Pengali);
+                }
+            });
+        }
+
+        #endregion
+
+        #region Low-Resolution 1280x720 Viewport Compliance Tests
+
+        [Fact]
+        public void ModalDialogs_ClientSizes_ConformToLowResolutionConstraint()
+        {
+            ExecuteInStaThread(() =>
+            {
+                using (var dlgSearch = new ManualItemSearchDialog())
+                {
+                    Assert.Equal(new Size(740, 480), dlgSearch.ClientSize);
+                    Assert.True(dlgSearch.ClientSize.Height <= 480, "ManualItemSearchDialog height must be <= 480px");
+                    var header = dlgSearch.Controls.OfType<Panel>().FirstOrDefault(p => p.Dock == DockStyle.Top && p.Controls.OfType<Label>().Any(l => l.Text.Contains("Cari Master Barang")));
+                    Assert.NotNull(header);
+                    Assert.Equal(44, header.Height);
+                }
+
+                using (var dlgQuick = new QuickBarcodeRegistrationDialog("8991234567890"))
+                {
+                    Assert.Equal(new Size(580, 480), dlgQuick.ClientSize);
+                    Assert.True(dlgQuick.ClientSize.Height <= 480, "QuickBarcodeRegistrationDialog height must be <= 480px");
+                    var header = dlgQuick.Controls.OfType<Panel>().FirstOrDefault(p => p.Dock == DockStyle.Top && p.Controls.OfType<Label>().Any(l => l.Text.Contains("Barcode Belum Terdaftar")));
+                    Assert.NotNull(header);
+                    Assert.Equal(44, header.Height);
+                }
+
+                using (var dlgBarcode = new BarcodeRegistrationDialog())
+                {
+                    Assert.Equal(new Size(580, 480), dlgBarcode.ClientSize);
+                    Assert.True(dlgBarcode.ClientSize.Height <= 480, "BarcodeRegistrationDialog height must be <= 480px");
+                    var header = dlgBarcode.Controls.OfType<Panel>().FirstOrDefault(p => p.Dock == DockStyle.Top && p.Controls.OfType<Label>().Any(l => l.Text.Contains("Registrasi Barcode")));
+                    Assert.NotNull(header);
+                    Assert.Equal(44, header.Height);
+                }
+
+                var fakeRegistry = new FakeRegistryHelper();
+                using (var dlgOp = new OperatorSwitcherDialog(fakeRegistry))
+                {
+                    Assert.Equal(new Size(680, 240), dlgOp.ClientSize);
+                    Assert.True(dlgOp.ClientSize.Height <= 480, "OperatorSwitcherDialog height must be <= 480px");
                 }
             });
         }

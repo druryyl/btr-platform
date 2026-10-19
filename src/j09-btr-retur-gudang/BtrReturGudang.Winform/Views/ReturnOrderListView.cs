@@ -63,6 +63,7 @@ namespace BtrReturGudang.Winform.Views
         private Label _lblMetaSales;
         private Label _lblMetaNote;
         private Label _lblMetaSyncInfo;
+        private TableLayoutPanel _pnlMeta;
 
         // Detail Items Grid
         private DataGridView _dgvItems;
@@ -94,6 +95,8 @@ namespace BtrReturGudang.Winform.Views
         public ComboBox StatusFilterBox => _cboStatusFilter;
         public DateTimePicker StartDatePicker => _dtpStartDate;
         public DateTimePicker EndDatePicker => _dtpEndDate;
+        public SplitContainer BodySplitter => _splitBody;
+        public TableLayoutPanel MetadataPanel => _pnlMeta;
         public ReturnOrderDto SelectedOrder => _selectedOrder;
         public IReadOnlyList<ReturnOrderDto> LoadedOrders => _loadedOrders;
 
@@ -148,27 +151,27 @@ namespace BtrReturGudang.Winform.Views
             _pnlHeader = new Panel
             {
                 Dock = DockStyle.Top,
-                Height = 68,
+                Height = 44,
                 BackColor = UiTheme.White,
-                Padding = new Padding(24, 12, 24, 12)
+                Padding = new Padding(16, 6, 16, 6)
             };
 
             _lblTitle = new Label
             {
                 Text = "Daftar & Riwayat Retur [F3]",
-                Font = UiTheme.FontPageTitle,
+                Font = new Font("Segoe UI", 11.5F, FontStyle.Bold, GraphicsUnit.Point),
                 ForeColor = UiTheme.Slate900,
                 AutoSize = true,
-                Location = new Point(24, 10)
+                Location = new Point(16, 4)
             };
 
             _lblStatus = new Label
             {
                 Text = "Riwayat fisik retur, verifikasi status sinkronisasi, dan inspeksi proteksi dokumen (Post-Sync Locking).",
-                Font = UiTheme.FontSubtitle,
+                Font = new Font("Segoe UI", 8F, FontStyle.Regular, GraphicsUnit.Point),
                 ForeColor = UiTheme.Slate500,
                 AutoSize = true,
-                Location = new Point(26, 38)
+                Location = new Point(16, 24)
             };
 
             _btnRefresh = new Button
@@ -178,9 +181,9 @@ namespace BtrReturGudang.Winform.Views
                 BackColor = UiTheme.Slate100,
                 ForeColor = UiTheme.Slate800,
                 FlatStyle = FlatStyle.Flat,
-                Width = 115,
-                Height = 34,
-                Location = new Point(Width - 145, 16),
+                Width = 105,
+                Height = 28,
+                Location = new Point(_pnlHeader.Width - 121, 8),
                 Anchor = AnchorStyles.Top | AnchorStyles.Right,
                 Cursor = Cursors.Hand
             };
@@ -197,9 +200,9 @@ namespace BtrReturGudang.Winform.Views
             _pnlFilter = new FlowLayoutPanel
             {
                 Dock = DockStyle.Top,
-                Height = 52,
+                Height = 38,
                 BackColor = UiTheme.Slate50,
-                Padding = new Padding(24, 10, 24, 10),
+                Padding = new Padding(16, 4, 16, 4),
                 FlowDirection = FlowDirection.LeftToRight,
                 WrapContents = false
             };
@@ -210,16 +213,17 @@ namespace BtrReturGudang.Winform.Views
                 AutoSize = true,
                 Font = UiTheme.FontLabel,
                 ForeColor = UiTheme.Slate700,
-                Margin = new Padding(0, 6, 6, 0)
+                Margin = new Padding(0, 5, 4, 0)
             };
 
             _dtpStartDate = new DateTimePicker
             {
                 Format = DateTimePickerFormat.Short,
                 Font = UiTheme.FontBody,
-                Width = 110,
+                Width = 105,
+                Height = 26,
                 Value = DateTime.Today.AddDays(-14),
-                Margin = new Padding(0, 2, 16, 0)
+                Margin = new Padding(0, 2, 12, 0)
             };
 
             var lblTo = new Label
@@ -228,16 +232,17 @@ namespace BtrReturGudang.Winform.Views
                 AutoSize = true,
                 Font = UiTheme.FontLabel,
                 ForeColor = UiTheme.Slate700,
-                Margin = new Padding(0, 6, 6, 0)
+                Margin = new Padding(0, 5, 4, 0)
             };
 
             _dtpEndDate = new DateTimePicker
             {
                 Format = DateTimePickerFormat.Short,
                 Font = UiTheme.FontBody,
-                Width = 110,
+                Width = 105,
+                Height = 26,
                 Value = DateTime.Today,
-                Margin = new Padding(0, 2, 16, 0)
+                Margin = new Padding(0, 2, 12, 0)
             };
 
             var lblStatusFilter = new Label
@@ -246,15 +251,16 @@ namespace BtrReturGudang.Winform.Views
                 AutoSize = true,
                 Font = UiTheme.FontLabel,
                 ForeColor = UiTheme.Slate700,
-                Margin = new Padding(0, 6, 6, 0)
+                Margin = new Padding(0, 5, 4, 0)
             };
 
             _cboStatusFilter = new ComboBox
             {
                 DropDownStyle = ComboBoxStyle.DropDownList,
                 Font = UiTheme.FontBody,
-                Width = 125,
-                Margin = new Padding(0, 2, 16, 0)
+                Width = 120,
+                Height = 26,
+                Margin = new Padding(0, 2, 12, 0)
             };
             _cboStatusFilter.Items.AddRange(new object[] { "Semua (All)", "Draft", "Synced" });
             _cboStatusFilter.SelectedIndex = 0;
@@ -266,10 +272,10 @@ namespace BtrReturGudang.Winform.Views
                 BackColor = UiTheme.Primary,
                 ForeColor = Color.White,
                 FlatStyle = FlatStyle.Flat,
-                Width = 115,
-                Height = 30,
+                Width = 110,
+                Height = 26,
                 Cursor = Cursors.Hand,
-                Margin = new Padding(0, 1, 16, 0)
+                Margin = new Padding(0, 2, 12, 0)
             };
             _btnApplyFilter.FlatAppearance.BorderSize = 0;
             _btnApplyFilter.Click += async (s, e) => await LoadOrdersAsync();
@@ -280,7 +286,7 @@ namespace BtrReturGudang.Winform.Views
                 AutoSize = true,
                 Font = UiTheme.FontLabel,
                 ForeColor = UiTheme.Slate500,
-                Margin = new Padding(0, 6, 0, 0)
+                Margin = new Padding(0, 5, 0, 0)
             };
 
             _pnlFilter.Controls.Add(lblFrom);
@@ -299,26 +305,27 @@ namespace BtrReturGudang.Winform.Views
             {
                 Dock = DockStyle.Fill,
                 Orientation = Orientation.Vertical,
-                SplitterDistance = 620,
+                Width = 1080,
+                SplitterDistance = 520,
                 SplitterWidth = 6,
                 BackColor = UiTheme.Slate200
             };
 
             // Left: Master Return Orders Grid Card
-            var pnlOrdersCard = UiTheme.CreateCard(new Padding(12), new Padding(0));
+            var pnlOrdersCard = UiTheme.CreateCard(new Padding(10), new Padding(0));
             pnlOrdersCard.Dock = DockStyle.Fill;
 
             BuildOrdersGrid();
             pnlOrdersCard.Controls.Add(_dgvOrders);
 
             _splitBody.Panel1.Controls.Add(pnlOrdersCard);
-            _splitBody.Panel1.Padding = new Padding(20, 14, 6, 16);
+            _splitBody.Panel1.Padding = new Padding(16, 10, 4, 12);
             _splitBody.Panel1.BackColor = UiTheme.Slate100;
 
             // Right: Inspector Panel Card
             BuildInspectorPanel();
             _splitBody.Panel2.Controls.Add(_pnlInspector);
-            _splitBody.Panel2.Padding = new Padding(6, 14, 20, 16);
+            _splitBody.Panel2.Padding = new Padding(4, 10, 16, 12);
             _splitBody.Panel2.BackColor = UiTheme.Slate100;
         }
 
@@ -374,27 +381,27 @@ namespace BtrReturGudang.Winform.Views
 
         private void BuildInspectorPanel()
         {
-            _pnlInspector = UiTheme.CreateCard(new Padding(16), new Padding(0));
+            _pnlInspector = UiTheme.CreateCard(new Padding(12, 8, 12, 8), new Padding(0));
             _pnlInspector.Dock = DockStyle.Fill;
 
             // Inspector Title
             _lblInspectorTitle = new Label
             {
                 Text = "📋 Detail & Inspeksi Dokumen",
-                Font = UiTheme.FontSectionTitle,
+                Font = UiTheme.FontCardTitle,
                 ForeColor = UiTheme.Slate900,
                 Dock = DockStyle.Top,
-                Height = 32
+                Height = 24
             };
 
             // Post-Sync Immutability Banner
             _pnlLockedBanner = new Panel
             {
                 Dock = DockStyle.Top,
-                Height = 54,
+                Height = 36,
                 BackColor = UiTheme.RoseLight,
-                Padding = new Padding(12),
-                Margin = new Padding(0, 0, 0, 8),
+                Padding = new Padding(8, 4, 8, 4),
+                Margin = new Padding(0, 0, 0, 4),
                 Visible = false
             };
             _pnlLockedBanner.Paint += (s, e) =>
@@ -407,49 +414,103 @@ namespace BtrReturGudang.Winform.Views
 
             _lblLockedBanner = new Label
             {
-                Text = "🔒 DOKUMEN TERKUNCI (READ-ONLY)\nStatus telah disinkronkan ke pusat (Synced). Edit dan hapus dinonaktifkan.",
-                Font = UiTheme.FontLabel,
+                Text = "🔒 DOKUMEN TERKUNCI (READ-ONLY): Status telah disinkronkan ke pusat (Synced). Edit dan hapus dinonaktifkan.",
+                Font = new Font("Segoe UI", 8.5F, FontStyle.Bold, GraphicsUnit.Point),
                 ForeColor = UiTheme.RoseText,
-                Dock = DockStyle.Fill
+                Dock = DockStyle.Fill,
+                TextAlign = ContentAlignment.MiddleLeft
             };
             _pnlLockedBanner.Controls.Add(_lblLockedBanner);
 
-            // Metadata panel (Clean key-value grid)
-            var pnlMeta = new Panel
+            // Metadata panel (Clean responsive 4-column key-value grid)
+            _pnlMeta = new TableLayoutPanel
             {
                 Dock = DockStyle.Top,
-                Height = 160,
+                Height = 80,
                 BackColor = UiTheme.Slate50,
-                Padding = new Padding(12),
-                Margin = new Padding(0, 0, 0, 10)
+                Padding = new Padding(6, 2, 6, 2),
+                Margin = new Padding(0, 0, 0, 6),
+                ColumnCount = 4,
+                RowCount = 5
             };
-            pnlMeta.Paint += (s, e) =>
+            _pnlMeta.Paint += (s, e) =>
             {
                 using (var pen = new Pen(UiTheme.Slate200, 1))
                 {
-                    e.Graphics.DrawRectangle(pen, 0, 0, pnlMeta.Width - 1, pnlMeta.Height - 1);
+                    e.Graphics.DrawRectangle(pen, 0, 0, _pnlMeta.Width - 1, _pnlMeta.Height - 1);
                 }
             };
 
-            _lblMetaOrderId = new Label { Text = "ID: -", Location = new Point(12, 10), AutoSize = true, Font = UiTheme.FontMonospaceBold, ForeColor = UiTheme.Slate900 };
-            _lblMetaDate = new Label { Text = "Tanggal: -", Location = new Point(12, 32), AutoSize = true, Font = UiTheme.FontBody };
-            _lblMetaCustomer = new Label { Text = "Customer: -", Location = new Point(12, 54), AutoSize = true, Font = UiTheme.FontBodyBold, ForeColor = UiTheme.Slate900 };
-            _lblMetaOperator = new Label { Text = "Operator: -", Location = new Point(12, 76), AutoSize = true, Font = UiTheme.FontBody };
-            _lblMetaWarehouse = new Label { Text = "Depo: -", Location = new Point(230, 76), AutoSize = true, Font = UiTheme.FontBody };
-            _lblMetaDriver = new Label { Text = "Driver: -", Location = new Point(12, 98), AutoSize = true, Font = UiTheme.FontBody };
-            _lblMetaSales = new Label { Text = "Sales: -", Location = new Point(230, 98), AutoSize = true, Font = UiTheme.FontBody };
-            _lblMetaNote = new Label { Text = "Catatan: -", Location = new Point(12, 120), AutoSize = true, Font = UiTheme.FontBody, ForeColor = UiTheme.Slate600 };
-            _lblMetaSyncInfo = new Label { Text = "Status: -", Location = new Point(230, 32), AutoSize = true, Font = UiTheme.FontLabel, ForeColor = UiTheme.EmeraldDark };
+            _pnlMeta.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 65F));
+            _pnlMeta.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50F));
+            _pnlMeta.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 65F));
+            _pnlMeta.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50F));
 
-            pnlMeta.Controls.Add(_lblMetaOrderId);
-            pnlMeta.Controls.Add(_lblMetaDate);
-            pnlMeta.Controls.Add(_lblMetaCustomer);
-            pnlMeta.Controls.Add(_lblMetaOperator);
-            pnlMeta.Controls.Add(_lblMetaWarehouse);
-            pnlMeta.Controls.Add(_lblMetaDriver);
-            pnlMeta.Controls.Add(_lblMetaSales);
-            pnlMeta.Controls.Add(_lblMetaNote);
-            pnlMeta.Controls.Add(_lblMetaSyncInfo);
+            _pnlMeta.RowStyles.Add(new RowStyle(SizeType.Percent, 20F));
+            _pnlMeta.RowStyles.Add(new RowStyle(SizeType.Percent, 20F));
+            _pnlMeta.RowStyles.Add(new RowStyle(SizeType.Percent, 20F));
+            _pnlMeta.RowStyles.Add(new RowStyle(SizeType.Percent, 20F));
+            _pnlMeta.RowStyles.Add(new RowStyle(SizeType.Percent, 20F));
+
+            Label CreateKeyLabel(string text) => new Label
+            {
+                Text = text,
+                Dock = DockStyle.Fill,
+                Font = new Font("Segoe UI", 8.25F, FontStyle.Regular, GraphicsUnit.Point),
+                ForeColor = UiTheme.Slate500,
+                TextAlign = ContentAlignment.MiddleLeft,
+                Margin = new Padding(0)
+            };
+
+            Label CreateValLabel(Font font, Color foreColor) => new Label
+            {
+                Text = "-",
+                Dock = DockStyle.Fill,
+                Font = font,
+                ForeColor = foreColor,
+                TextAlign = ContentAlignment.MiddleLeft,
+                AutoEllipsis = true,
+                Margin = new Padding(0)
+            };
+
+            _lblMetaOrderId = CreateValLabel(new Font("Consolas", 8.25F, FontStyle.Bold, GraphicsUnit.Point), UiTheme.Slate900);
+            _lblMetaSyncInfo = CreateValLabel(new Font("Segoe UI", 8.25F, FontStyle.Bold, GraphicsUnit.Point), UiTheme.EmeraldDark);
+            _lblMetaCustomer = CreateValLabel(new Font("Segoe UI", 8.25F, FontStyle.Bold, GraphicsUnit.Point), UiTheme.Slate900);
+            _lblMetaDate = CreateValLabel(new Font("Segoe UI", 8.25F, FontStyle.Regular, GraphicsUnit.Point), UiTheme.Slate700);
+            _lblMetaOperator = CreateValLabel(new Font("Segoe UI", 8.25F, FontStyle.Regular, GraphicsUnit.Point), UiTheme.Slate700);
+            _lblMetaWarehouse = CreateValLabel(new Font("Segoe UI", 8.25F, FontStyle.Regular, GraphicsUnit.Point), UiTheme.Slate700);
+            _lblMetaDriver = CreateValLabel(new Font("Segoe UI", 8.25F, FontStyle.Regular, GraphicsUnit.Point), UiTheme.Slate700);
+            _lblMetaSales = CreateValLabel(new Font("Segoe UI", 8.25F, FontStyle.Regular, GraphicsUnit.Point), UiTheme.Slate700);
+            _lblMetaNote = CreateValLabel(new Font("Segoe UI", 8.25F, FontStyle.Regular, GraphicsUnit.Point), UiTheme.Slate600);
+
+            // Row 0
+            _pnlMeta.Controls.Add(CreateKeyLabel("No. ID:"), 0, 0);
+            _pnlMeta.Controls.Add(_lblMetaOrderId, 1, 0);
+            _pnlMeta.Controls.Add(CreateKeyLabel("Status:"), 2, 0);
+            _pnlMeta.Controls.Add(_lblMetaSyncInfo, 3, 0);
+
+            // Row 1
+            _pnlMeta.Controls.Add(CreateKeyLabel("Customer:"), 0, 1);
+            _pnlMeta.Controls.Add(_lblMetaCustomer, 1, 1);
+            _pnlMeta.Controls.Add(CreateKeyLabel("Tanggal:"), 2, 1);
+            _pnlMeta.Controls.Add(_lblMetaDate, 3, 1);
+
+            // Row 2
+            _pnlMeta.Controls.Add(CreateKeyLabel("Operator:"), 0, 2);
+            _pnlMeta.Controls.Add(_lblMetaOperator, 1, 2);
+            _pnlMeta.Controls.Add(CreateKeyLabel("Depo:"), 2, 2);
+            _pnlMeta.Controls.Add(_lblMetaWarehouse, 3, 2);
+
+            // Row 3
+            _pnlMeta.Controls.Add(CreateKeyLabel("Driver:"), 0, 3);
+            _pnlMeta.Controls.Add(_lblMetaDriver, 1, 3);
+            _pnlMeta.Controls.Add(CreateKeyLabel("Sales:"), 2, 3);
+            _pnlMeta.Controls.Add(_lblMetaSales, 3, 3);
+
+            // Row 4
+            _pnlMeta.Controls.Add(CreateKeyLabel("Catatan:"), 0, 4);
+            _pnlMeta.Controls.Add(_lblMetaNote, 1, 4);
+            _pnlMeta.SetColumnSpan(_lblMetaNote, 3);
 
             // Items grid header label
             var lblItemsHeader = new Label
@@ -458,8 +519,8 @@ namespace BtrReturGudang.Winform.Views
                 Font = UiTheme.FontCardTitle,
                 ForeColor = UiTheme.Slate800,
                 Dock = DockStyle.Top,
-                Height = 28,
-                Padding = new Padding(0, 6, 0, 0)
+                Height = 22,
+                Padding = new Padding(0, 2, 0, 0)
             };
 
             // Bottom Action buttons
@@ -471,7 +532,7 @@ namespace BtrReturGudang.Winform.Views
             // Assemble inspector hierarchy (Reverse Dock order)
             _pnlInspector.Controls.Add(_dgvItems);
             _pnlInspector.Controls.Add(lblItemsHeader);
-            _pnlInspector.Controls.Add(pnlMeta);
+            _pnlInspector.Controls.Add(_pnlMeta);
             _pnlInspector.Controls.Add(_pnlLockedBanner);
             _pnlInspector.Controls.Add(_lblInspectorTitle);
             _pnlInspector.Controls.Add(_pnlInspectorActions);
@@ -484,8 +545,8 @@ namespace BtrReturGudang.Winform.Views
                 Dock = DockStyle.Fill
             };
             UiTheme.StyleDataGrid(_dgvItems);
-            _dgvItems.RowTemplate.Height = 30;
-            _dgvItems.ColumnHeadersHeight = 32;
+            _dgvItems.RowTemplate.Height = 28;
+            _dgvItems.ColumnHeadersHeight = 28;
 
             _dgvItems.Columns.Add(new DataGridViewTextBoxColumn { Name = "colItemNo", HeaderText = "#", Width = 35 });
             _dgvItems.Columns.Add(new DataGridViewTextBoxColumn { Name = "colItemBrg", HeaderText = "Barang", AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill });
@@ -502,9 +563,9 @@ namespace BtrReturGudang.Winform.Views
             _pnlInspectorActions = new FlowLayoutPanel
             {
                 Dock = DockStyle.Bottom,
-                Height = 52,
+                Height = 38,
                 BackColor = UiTheme.Slate50,
-                Padding = new Padding(8, 9, 8, 8),
+                Padding = new Padding(8, 5, 8, 5),
                 FlowDirection = FlowDirection.LeftToRight,
                 WrapContents = false
             };
@@ -516,8 +577,8 @@ namespace BtrReturGudang.Winform.Views
                 BackColor = UiTheme.White,
                 ForeColor = UiTheme.Slate800,
                 FlatStyle = FlatStyle.Flat,
-                Width = 140,
-                Height = 34,
+                Width = 135,
+                Height = 28,
                 Cursor = Cursors.Hand,
                 Enabled = false,
                 Margin = new Padding(0, 0, 8, 0)
@@ -532,8 +593,8 @@ namespace BtrReturGudang.Winform.Views
                 BackColor = UiTheme.RoseLight,
                 ForeColor = UiTheme.RoseText,
                 FlatStyle = FlatStyle.Flat,
-                Width = 115,
-                Height = 34,
+                Width = 110,
+                Height = 28,
                 Cursor = Cursors.Hand,
                 Enabled = false,
                 Margin = new Padding(0, 0, 8, 0)
@@ -548,8 +609,8 @@ namespace BtrReturGudang.Winform.Views
                 BackColor = UiTheme.Emerald,
                 ForeColor = Color.White,
                 FlatStyle = FlatStyle.Flat,
-                Width = 125,
-                Height = 34,
+                Width = 120,
+                Height = 28,
                 Cursor = Cursors.Hand,
                 Enabled = false
             };
@@ -678,19 +739,20 @@ namespace BtrReturGudang.Winform.Views
             }
 
             // Update Metadata Labels
-            _lblMetaOrderId.Text = $"ID: {order.ReturnOrderId}";
-            _lblMetaDate.Text = $"Tanggal: {order.ReturnOrderDate:yyyy-MM-dd}";
-            _lblMetaCustomer = SetText(_lblMetaCustomer, $"Customer: {order.CustName} ({order.CustId ?? order.CustomerId})");
-            _lblMetaOperator = SetText(_lblMetaOperator, $"Operator: {order.OperatorName}");
-            _lblMetaWarehouse = SetText(_lblMetaWarehouse, $"Depo: {order.WarehouseCode}");
-            _lblMetaDriver = SetText(_lblMetaDriver, $"Driver: {order.DriverName ?? "-"}");
-            _lblMetaSales = SetText(_lblMetaSales, $"Sales: {order.SalesPersonName ?? "-"}");
-            _lblMetaNote = SetText(_lblMetaNote, $"Catatan: {order.Keterangan ?? "-"}");
+            _lblMetaOrderId.Text = order.ReturnOrderId;
+            _lblMetaDate.Text = order.ReturnOrderDate.ToString("yyyy-MM-dd");
+            _lblMetaCustomer.Text = $"{order.CustName} ({order.CustId ?? order.CustomerId})";
+            _lblMetaOperator.Text = order.OperatorName;
+            _lblMetaWarehouse.Text = order.WarehouseCode;
+            _lblMetaDriver.Text = order.DriverName ?? "-";
+            _lblMetaSales.Text = order.SalesPersonName ?? "-";
+            _lblMetaNote.Text = order.Keterangan ?? "-";
 
             string syncInfo = order.IsSynced
-                ? $"Status: SYNCED ({order.SyncedDate:yyyy-MM-dd HH:mm})"
-                : "Status: DRAFT (Lokal)";
+                ? $"SYNCED ({order.SyncedDate:yyyy-MM-dd HH:mm})"
+                : "DRAFT (Lokal)";
             _lblMetaSyncInfo.Text = syncInfo;
+            _lblMetaSyncInfo.ForeColor = order.IsSynced ? UiTheme.EmeraldDark : UiTheme.AmberDark;
 
             // Render Items Grid
             _dgvItems.Rows.Clear();
@@ -732,22 +794,23 @@ namespace BtrReturGudang.Winform.Views
 
         private Label SetText(Label lbl, string text)
         {
-            lbl.Text = text;
+            if (lbl != null) lbl.Text = text;
             return lbl;
         }
 
         private void ClearInspector()
         {
             _selectedOrder = null;
-            _lblMetaOrderId.Text = "ID: -";
-            _lblMetaDate.Text = "Tanggal: -";
-            _lblMetaCustomer.Text = "Customer: -";
-            _lblMetaOperator.Text = "Operator: -";
-            _lblMetaWarehouse.Text = "Depo: -";
-            _lblMetaDriver.Text = "Driver: -";
-            _lblMetaSales.Text = "Sales: -";
-            _lblMetaNote.Text = "Catatan: -";
-            _lblMetaSyncInfo.Text = "Status: -";
+            _lblMetaOrderId.Text = "-";
+            _lblMetaDate.Text = "-";
+            _lblMetaCustomer.Text = "-";
+            _lblMetaOperator.Text = "-";
+            _lblMetaWarehouse.Text = "-";
+            _lblMetaDriver.Text = "-";
+            _lblMetaSales.Text = "-";
+            _lblMetaNote.Text = "-";
+            _lblMetaSyncInfo.Text = "-";
+            _lblMetaSyncInfo.ForeColor = UiTheme.Slate500;
 
             _dgvItems.Rows.Clear();
             _pnlLockedBanner.Visible = false;

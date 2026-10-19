@@ -151,6 +151,39 @@ namespace BtrReturGudang.Infrastructure.Tests
         }
 
         [Fact]
+        public async Task UploadReturnOrderAsync_BlankOptionalIds_StripsOptionalNamesFromPayload()
+        {
+            var fakeRegistry = new FakeRegistryHelper();
+            var fakeClient = new FakeRestClient();
+            var client = new BtradeApiClient(fakeRegistry, "http://localhost:5000", fakeClient);
+
+            var dto = new ReturnOrderDto
+            {
+                ReturnOrderId = "01ARZ3NDEKTSV4RRFFQ69G5FAV",
+                ReturnOrderDate = new DateTime(2026, 10, 11),
+                CustId = "C001",
+                CustName = "Toko Berkah",
+                WarehouseCode = "GDG-PST",
+                DriverId = null,
+                DriverName = "-- Pilih Driver (Opsional) --",
+                SalesPersonId = string.Empty,
+                SalesPersonName = "-- Pilih Salesman (Opsional) --",
+                Items = new List<ReturnOrderItemDto>()
+            };
+
+            await client.UploadReturnOrderAsync(dto);
+
+            var executed = Assert.Single(fakeClient.ExecutedRequests);
+            var body = executed.Parameters.First(p => p.Type == ParameterType.RequestBody).Value;
+            var driverName = body.GetType().GetProperty("DriverName").GetValue(body) as string;
+            var salesPersonName = body.GetType().GetProperty("SalesPersonName").GetValue(body) as string;
+
+            // The optional names must never carry the dropdown prompt placeholder onto the wire.
+            Assert.True(string.IsNullOrEmpty(driverName));
+            Assert.True(string.IsNullOrEmpty(salesPersonName));
+        }
+
+        [Fact]
         public async Task UploadBarcodeRegistrationAsync_ExecutesPost_WithPayload()
         {
             var fakeRegistry = new FakeRegistryHelper

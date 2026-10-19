@@ -2,8 +2,8 @@
 Title: Warehouse Desktop Return Order & Barcode Management (.NET 4.7.1) — Architecture
 Code: BTR-RETUR-DESKTOP-001
 Artifact: ARCHITECTURE
-Version: 1.2
-LastUpdated: 2026-10-17
+Version: 1.3
+LastUpdated: 2026-10-19
 ---
 
 # 1. Overview
@@ -22,6 +22,8 @@ client now carries the operator's registered **Google email** as `X-Session-Acto
 name, and validates that email through `POST api/session/resolve`. The operator name
 is retained for on-screen display and local record attribution only. See TD-007 and
 TD-012.
+
+Version 1.3 introduces **TD-013: 1280x720 Low-Resolution Ergonomic Layout & Workstation Display Adaptation**, re-architecting the screen layouts, shell geometry, compact headers, unified scanner intake strip, and modal dialog bounds so the entire application functions flawlessly on warehouse 720p monitors without vertical clipping or DataGridView starvation.
 
 ---
 
@@ -194,6 +196,36 @@ BUG-INVESTIGATION (return-order-upload-409)
      - `Esc`: Clear form / close active modal dialog
 - *Traceable to:* GAP-003, GAP-005, GAP-014, Approved Screen Design Inventory.
 
+### TD-013: 1280x720 Low-Resolution Ergonomic Layout & Workstation Display Adaptation
+- **Decision:** Re-architect the desktop presentation geometry to guarantee complete, unclipped operability on standard 1280x720 warehouse workstations with Windows taskbar (~1280x672 working area):
+  1. **Shell Geometry & Initialization (`MainForm` SCR-01):**
+     - Adjust default startup size from `1280x800` to `1280x720`, reduce `MinimumSize` from `1024x650` to `1024x600` to prevent OS working-area overflow.
+     - On launch, if `Screen.PrimaryScreen.WorkingArea.Height <= 768`, automatically start with `WindowState = FormWindowState.Maximized`.
+     - Compact Header (`_pnlHeader`): Streamline height from 64px to 44px, arranging brand logo, title, Depo badge, Operator badge, and online indicator pill along a single horizontal plane.
+     - Sidebar Navigation (`_pnlSidebar`): Streamline width from 230px to 200px, button heights from 46px to 40px, giving ~1064px net horizontal width to content host.
+  2. **Intake View Streamlining (`ReturnOrderEntryView` SCR-02):**
+     - Eliminate vertical card stacking that consumed 302px and starved the items grid.
+     - Header area: Compact 2-row table (Customer, Driver, Salesman, Notes) with height ~60px (reduced from 110px).
+     - Unified Scan & Quantity Strip: Merge separate Scanner Banner (64px) and Quantity Strip (80px) into a single unified card of height ~54-58px with scanner status and product name on the left and `cboSatuan`, `numQtyBagus`, `numQtyRusak`, `btnAddItem` on the right.
+     - Bottom Action Toolbar: Height reduced from 54px to 42px. Summary footer height reduced from 46px to 34px.
+     - Net DataGridView visible vertical space expands from ~82px (1 row) to **~370-400px (10-12 concurrent rows visible)**.
+     - Safety: Wrap main intake container with `AutoScroll = true` to prevent any clipping under 125% DPI scaling.
+  3. **Order History & Inspector Streamlining (`ReturnOrderListView` SCR-05):**
+     - Top Header height reduced from 68px to 44px; Filter bar height reduced from 52px to 40px.
+     - Proportional Splitter: Set `SplitterDistance = 540` (out of ~1040px), allocating ~500px to the Inspector panel (up from ~410px).
+     - Inspector Metadata Panel: Replaced fixed-coordinate layout (`X=230`) with responsive 2-column table of height 84px (down from 160px).
+     - Locked banner reduced from 54px to 38px.
+     - Detail items grid height expands from ~104px (1-2 rows) to **~210-230px (6-7 concurrent rows visible)**.
+  4. **Catalog & Settings Adaptation (SCR-06, SCR-07):**
+     - SCR-06 Barcode Registry: Streamlined 44px header and 40px filter bar; DataGridView expands to ~450px vertical height.
+     - SCR-07 Settings: Streamlined 44px header; responsive card layout with scrollable panel (`AutoScroll = true`).
+  5. **Dialog Viewport Compliance (SCR-03, SCR-04, Dialogs):**
+     - `ManualItemSearchDialog` (SCR-03) resized from 720x540 to 740x480.
+     - `QuickBarcodeRegistrationDialog` (SCR-04) resized from 540x560 to 580x480.
+     - `BarcodeRegistrationDialog` resized from 540x560 to 580x480.
+     - Guarantees > 100px vertical margin on 720p screens, preventing action buttons or title bars from clipping.
+- *Traceable to:* FEATURE §8, §10 (Criteria 11-14).
+
 ---
 
 # 5. Component Responsibilities
@@ -219,6 +251,7 @@ BUG-INVESTIGATION (return-order-upload-409)
 | **SCR-05** | `ReturnOrderListView` | `UserControl` (`Dock.Fill`) | **Return Order History & Inspector:** Filterable log of return orders by date/status (`Draft`/`Synced`). Displays detail inspector and strictly enforces Post-Sync Immutability (read-only lock). | `F3` / `Alt+2` | `BTRG_ReturnOrder`<br>`BTRG_ReturnOrderItem` |
 | **SCR-06** | `BarcodeRegistryView` | `UserControl` (`Dock.Fill`) | **Barcode Catalog Management:** Local barcode lookup, review of pending on-the-spot registration queues, and manual registration of packaging barcodes with conversion multipliers. | `F4` / `Alt+3` | `BTRG_Barcode`<br>`BTRG_BarcodeRegistration` |
 | **SCR-07** | `SettingsView` | `UserControl` (`Dock.Fill`) | **Station Configuration:** Depo/Warehouse code assignment, local SQL Server (`btrgd`) connection tester, active shift operator switcher (operator name + registered Google email, with session verification via `POST api/session/resolve`), and audio feedback test/toggle. | `F5` / `Alt+4` | Windows Registry<br>App.config |
+| **SCR-08** | `ManualCustomerSearchDialog` | `Form` (`ShowDialog`) | **Manual Customer Search:** Keyboard-driven on-demand modal search filtering 2,280+ customers by code, name, or region without UI stutter or startup memory overhead. | `Enter` on Customer box / `🔍 Cari` button / `F8` | `BTRG_Customer` (Local Cache) |
 
 ---
 
@@ -448,3 +481,6 @@ CREATE TABLE BTRG_SalesPerson (
 11. `SettingsView` (SCR-07) supports Depo assignment, local database connection testing, shift operator switching (operator name and registered Google email), session verification via `POST api/session/resolve`, and audio feedback toggling.
 12. Background timer executes periodic sync every 5 minutes without freezing the application UI.
 13. The operator Google email resolves to an active BTR user via `POST api/session/resolve`; an unregistered or inactive email is refused with the Cloud message surfaced to the operator, and no Cloud upload is attempted with an unresolved or name-based actor.
+14. The shell window (`MainForm`) starts maximized on 720p screens (`Screen.PrimaryScreen.WorkingArea.Height <= 768`) and fits cleanly within 1280x720 resolution with zero control clipping and fully visible action buttons.
+15. In `ReturnOrderEntryView`, the streamlined compact header and unified scan-quantity strip allocate at least 370px vertical height to `_dgvItems`, displaying at least 10 concurrent rows without scrolling.
+16. In `ReturnOrderListView`, the revised splitter distance and compact metadata panel prevent horizontal text truncation and allocate at least 210px vertical height to `_dgvItems` in the inspector panel.

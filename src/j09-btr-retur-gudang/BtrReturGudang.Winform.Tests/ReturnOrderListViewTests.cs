@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Drawing;
+using System.Linq;
 using System.Threading;
 using System.Windows.Forms;
 using BtrReturGudang.AppTier.DTOs;
@@ -202,6 +203,81 @@ namespace BtrReturGudang.Winform.Tests
                     view.EditButton.PerformClick();
 
                     Assert.Equal("ORD-DRAFT-123", editedId);
+                }
+            });
+        }
+
+        [Fact]
+        public void ReturnOrderListView_SplitterAndLayoutDefaults_ConformTo720pSpecifications()
+        {
+            ExecuteInStaThread(() =>
+            {
+                using (var view = new ReturnOrderListView())
+                {
+                    view.Size = new Size(1080, 602);
+                    view.PerformLayout();
+
+                    Assert.NotNull(view.BodySplitter);
+                    Assert.Equal(520, view.BodySplitter.SplitterDistance);
+                    Assert.Equal(6, view.BodySplitter.SplitterWidth);
+                    Assert.Equal(new Padding(16, 10, 4, 12), view.BodySplitter.Panel1.Padding);
+                    Assert.Equal(new Padding(4, 10, 16, 12), view.BodySplitter.Panel2.Padding);
+
+                    // Header & Filter bar
+                    var header = view.Controls.OfType<Panel>().FirstOrDefault(p => p.Dock == DockStyle.Top && p.Height == 44);
+                    Assert.NotNull(header);
+                    Assert.Equal(44, header.Height);
+
+                    var filter = view.Controls.OfType<FlowLayoutPanel>().FirstOrDefault(p => p.Dock == DockStyle.Top && p.Height == 38);
+                    Assert.NotNull(filter);
+                    Assert.Equal(38, filter.Height);
+                }
+            });
+        }
+
+        [Fact]
+        public void ReturnOrderListView_MetadataPanel_ResponsiveLayoutConformsToCompactSpecifications()
+        {
+            ExecuteInStaThread(() =>
+            {
+                using (var view = new ReturnOrderListView())
+                {
+                    Assert.NotNull(view.MetadataPanel);
+                    Assert.Equal(80, view.MetadataPanel.Height);
+                    Assert.Equal(4, view.MetadataPanel.ColumnCount);
+                    Assert.Equal(5, view.MetadataPanel.RowCount);
+
+                    // Column styles: Key1 65px absolute, Val1 50% percent, Key2 65px absolute, Val2 50% percent
+                    Assert.Equal(SizeType.Absolute, view.MetadataPanel.ColumnStyles[0].SizeType);
+                    Assert.Equal(65F, view.MetadataPanel.ColumnStyles[0].Width);
+                    Assert.Equal(SizeType.Percent, view.MetadataPanel.ColumnStyles[1].SizeType);
+                    Assert.Equal(50F, view.MetadataPanel.ColumnStyles[1].Width);
+                    Assert.Equal(SizeType.Absolute, view.MetadataPanel.ColumnStyles[2].SizeType);
+                    Assert.Equal(65F, view.MetadataPanel.ColumnStyles[2].Width);
+                    Assert.Equal(SizeType.Percent, view.MetadataPanel.ColumnStyles[3].SizeType);
+                    Assert.Equal(50F, view.MetadataPanel.ColumnStyles[3].Width);
+
+                    // When an order is inspected, metadata labels are populated with AutoEllipsis enabled
+                    var order = new ReturnOrderDto
+                    {
+                        ReturnOrderId = "01ARZ3NDEKTSV4RRFFQ69G5FAV",
+                        ReturnOrderDate = DateTime.Today,
+                        CustName = "Toko Makmur Sentosa Yang Sangat Panjang Sekali Namanya",
+                        WarehouseCode = "GDG-PST",
+                        OperatorName = "Budi Santoso",
+                        DriverName = "Pak Supir",
+                        SalesPersonName = "Pak Sales",
+                        Keterangan = "Catatan pengembalian barang rusak dari toko cabang",
+                        StatusSync = "Draft"
+                    };
+
+                    view.InspectOrder(order);
+
+                    // Verify value labels have AutoEllipsis set to true to eliminate truncation
+                    var valLabels = view.MetadataPanel.Controls.OfType<Label>()
+                        .Where(l => l.Dock == DockStyle.Fill && l.AutoEllipsis)
+                        .ToList();
+                    Assert.NotEmpty(valLabels);
                 }
             });
         }
