@@ -1,0 +1,126 @@
+<Window x:Class="BtrReturGudang.Wpf.Views.QuickBarcodeRegistrationDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:controls="clr-namespace:BtrReturGudang.Wpf.Controls"
+        mc:Ignorable="d"
+        Title="Registrasi Barcode Cepat (SCR-04)"
+        Width="580" Height="480"
+        MinWidth="580" MinHeight="480"
+        WindowStartupLocation="CenterOwner"
+        ResizeMode="NoResize"
+        Background="{DynamicResource Brush.Window.Background}"
+        FontFamily="Segoe UI" FontSize="12">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="44" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <!-- 1. Header Banner (44px) with Warning Accent -->
+        <Border Grid.Row="0" Background="#4C0C0C" Padding="16,6">
+            <StackPanel VerticalAlignment="Center">
+                <TextBlock Text="⚠️ Barcode Belum Terdaftar" FontSize="14" FontWeight="Bold" Foreground="#FECDD3" />
+                <TextBlock Text="Tautkan ke Master Barang agar item langsung masuk ke dokumen retur aktif."
+                           FontSize="10" Foreground="#FDA4AF" />
+            </StackPanel>
+        </Border>
+
+        <!-- 2. Form Body -->
+        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" Padding="16,10">
+            <StackPanel>
+                <!-- Barcode Detected Display (Read-Only) -->
+                <TextBlock Text="Barcode Terdeteksi (Read-Only):" FontWeight="SemiBold"
+                           Foreground="{DynamicResource Brush.Slate.700}" Margin="0,0,0,4" />
+                <TextBox x:Name="TxtBarcode" Height="32" Padding="6,4"
+                         FontFamily="Consolas" FontSize="13" FontWeight="Bold"
+                         IsReadOnly="True"
+                         Background="#FFF1F2" Foreground="#BE123C"
+                         BorderBrush="{DynamicResource Brush.Card.Border}"
+                         Text="{Binding BarcodeValue}"
+                         Margin="0,0,0,10" />
+
+                <!-- Product Lookup -->
+                <TextBlock Text="Cari Master Barang (Kode / Nama):" FontWeight="SemiBold"
+                           Foreground="{DynamicResource Brush.Slate.700}" Margin="0,0,0,4" />
+                <TextBox x:Name="TxtSearchItem" Height="30" Padding="6,4"
+                         Background="{DynamicResource Brush.White}"
+                         BorderBrush="{DynamicResource Brush.Card.Border}"
+                         Text="{Binding SearchKeyword, UpdateSourceTrigger=PropertyChanged}"
+                         PreviewKeyDown="OnSearchItemPreviewKeyDown"
+                         Margin="0,0,0,6" />
+
+                <ListBox x:Name="LstItems" Height="110"
+                         BorderBrush="{DynamicResource Brush.Card.Border}"
+                         ItemsSource="{Binding FilteredItems}"
+                         SelectedItem="{Binding SelectedBarang, Mode=TwoWay}"
+                         SelectionChanged="OnItemSelected"
+                         PreviewKeyDown="OnListPreviewKeyDown"
+                         ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                         Margin="0,0,0,8">
+                    <ListBox.ItemTemplate>
+                        <DataTemplate>
+                            <StackPanel Orientation="Horizontal" Margin="2">
+                                <TextBlock Text="{Binding BrgId}" FontWeight="Bold" Width="100" FontFamily="Consolas" />
+                                <TextBlock Text="{Binding BrgName}" TextTrimming="CharacterEllipsis" />
+                            </StackPanel>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+
+                <TextBlock x:Name="TxtSelectedItem" Text="Barang Terpilih: (Belum dipilih)"
+                           FontWeight="Bold" Foreground="{DynamicResource Brush.Primary}"
+                           Margin="0,0,0,10" />
+
+                <!-- Unit & Multiplier Strip -->
+                <Grid Margin="0,0,0,10">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="16" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+
+                    <StackPanel Grid.Column="0">
+                        <TextBlock Text="Satuan Kemasan:" FontWeight="SemiBold"
+                                   Foreground="{DynamicResource Brush.Slate.700}" Margin="0,0,0,4" />
+                        <ComboBox x:Name="CboSatuan" Height="30"
+                                  ItemsSource="{Binding PackagingUnits}"
+                                  SelectedItem="{Binding SelectedSatuan, Mode=TwoWay}" />
+                    </StackPanel>
+
+                    <StackPanel Grid.Column="2">
+                        <TextBlock Text="Pengali (Konversi ke Pcs):" FontWeight="SemiBold"
+                                   Foreground="{DynamicResource Brush.Slate.700}" Margin="0,0,0,4" />
+                        <controls:NumericTextBox x:Name="TxtPengali" Height="30"
+                                                 Value="{Binding Pengali, Mode=TwoWay}"
+                                                 Minimum="1" Maximum="10000" Step="1"
+                                                 FontWeight="Bold" TextAlignment="Right"
+                                                 BorderBrush="{DynamicResource Brush.Card.Border}" />
+                    </StackPanel>
+                </Grid>
+            </StackPanel>
+        </ScrollViewer>
+
+        <!-- 3. Footer Action Buttons -->
+        <Border Grid.Row="2" Background="{DynamicResource Brush.White}"
+                BorderBrush="{DynamicResource Brush.Card.Border}" BorderThickness="0,1,0,0"
+                Padding="16,8">
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                <Button x:Name="BtnRegisterAndUse" Content="Simpan &amp; Gunakan"
+                        Width="185" Height="34" Margin="0,0,8,0"
+                        Background="{DynamicResource Brush.Success}"
+                        Foreground="{DynamicResource Brush.White}"
+                        FontWeight="Bold" Click="OnRegisterClick" />
+
+                <Button x:Name="BtnCancel" Content="Batal"
+                        Width="90" Height="34"
+                        Background="{DynamicResource Brush.White}"
+                        Foreground="{DynamicResource Brush.Slate.700}"
+                        BorderBrush="{DynamicResource Brush.Card.Border}"
+                        BorderThickness="1" Click="OnCancelClick" />
+            </StackPanel>
+        </Border>
+    </Grid>
+</Window>

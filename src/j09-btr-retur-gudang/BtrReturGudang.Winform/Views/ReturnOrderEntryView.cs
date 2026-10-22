@@ -355,7 +355,7 @@ namespace BtrReturGudang.Winform.Views
         {
             var pnlCard = UiTheme.CreateCard(new Padding(10, 6, 10, 6), new Padding(0, 0, 0, 6));
             pnlCard.Dock = DockStyle.Top;
-            pnlCard.Height = 56;
+            pnlCard.Height = 64;
 
             var tblCard = new TableLayoutPanel
             {
@@ -363,10 +363,10 @@ namespace BtrReturGudang.Winform.Views
                 ColumnCount = 2,
                 RowCount = 1
             };
-            tblCard.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 42F));
-            tblCard.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 58F));
+            tblCard.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 46F));
+            tblCard.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 54F));
 
-            // 1. Left Section (42%): Scanner Banner Panel
+            // 1. Left Section (46%): Scanner Banner Panel
             _pnlScannerBanner = new Panel
             {
                 Dock = DockStyle.Fill,
@@ -386,13 +386,13 @@ namespace BtrReturGudang.Winform.Views
             };
             tblLeft.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
             tblLeft.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
+            tblLeft.RowStyles.Add(new RowStyle(SizeType.Absolute, 22F));
             tblLeft.RowStyles.Add(new RowStyle(SizeType.Absolute, 20F));
-            tblLeft.RowStyles.Add(new RowStyle(SizeType.Absolute, 18F));
 
             _lblBannerTitle = new Label
             {
                 Text = "Menunggu scan barcode scanner USB atau tekan F2 untuk pencarian produk...",
-                Font = new Font("Segoe UI", 9.5F, FontStyle.Bold),
+                Font = new Font("Segoe UI", 10.5F, FontStyle.Bold),
                 ForeColor = Color.White,
                 AutoEllipsis = true,
                 Dock = DockStyle.Fill,
@@ -428,7 +428,7 @@ namespace BtrReturGudang.Winform.Views
 
             _pnlScannerBanner.Controls.Add(tblLeft);
 
-            // 2. Right Section (58%): Ergonomic Quantity Strip
+            // 2. Right Section (54%): Ergonomic Quantity Strip
             var pnlQuantityStrip = new TableLayoutPanel
             {
                 Dock = DockStyle.Fill,
@@ -443,10 +443,10 @@ namespace BtrReturGudang.Winform.Views
             pnlQuantityStrip.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 95F));
             pnlQuantityStrip.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 95F));
             pnlQuantityStrip.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
-            pnlQuantityStrip.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 115F));
+            pnlQuantityStrip.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 135F));
 
-            pnlQuantityStrip.RowStyles.Add(new RowStyle(SizeType.Absolute, 15F));
-            pnlQuantityStrip.RowStyles.Add(new RowStyle(SizeType.Absolute, 29F));
+            pnlQuantityStrip.RowStyles.Add(new RowStyle(SizeType.Absolute, 16F));
+            pnlQuantityStrip.RowStyles.Add(new RowStyle(SizeType.Absolute, 34F));
 
             // Labels row (Row 0)
             var lblSatuan = new Label
@@ -514,6 +514,7 @@ namespace BtrReturGudang.Winform.Views
                 TextAlign = HorizontalAlignment.Right,
                 Margin = new Padding(0, 2, 6, 0)
             };
+            ConfigureErgonomicNumericInput(_numQtyBagus);
             _numQtyBagus.KeyDown += OnQuantityKeyDown;
 
             _numQtyRusak = new NumericUpDown
@@ -528,6 +529,7 @@ namespace BtrReturGudang.Winform.Views
                 TextAlign = HorizontalAlignment.Right,
                 Margin = new Padding(0, 2, 6, 0)
             };
+            ConfigureErgonomicNumericInput(_numQtyRusak);
             _numQtyRusak.KeyDown += OnQuantityKeyDown;
 
             _txtItemKeterangan = new TextBox
@@ -546,7 +548,9 @@ namespace BtrReturGudang.Winform.Views
                 BackColor = UiTheme.Primary,
                 FlatStyle = FlatStyle.Flat,
                 Dock = DockStyle.Fill,
-                Height = 30,
+                Height = 34,
+                TextAlign = ContentAlignment.MiddleCenter,
+                AutoEllipsis = false,
                 Cursor = Cursors.Hand,
                 Margin = new Padding(0, 0, 0, 0)
             };
@@ -924,6 +928,24 @@ namespace BtrReturGudang.Winform.Views
             var lookup = _barcodeService?.LookupBarcode(normalizedBarcode);
             if (lookup != null && lookup.Found)
             {
+                // High-load warehouse ergonomics: If scanning the same product consecutively before commit, increment Qty Bagus
+                if (_currentScanResult != null &&
+                    ((!string.IsNullOrWhiteSpace(_currentScanResult.NormalizedBarcode) && _currentScanResult.NormalizedBarcode == normalizedBarcode) ||
+                     (!string.IsNullOrWhiteSpace(_currentScanResult.BarcodeValue) && _currentScanResult.BarcodeValue == normalizedBarcode)))
+                {
+                    if (_numQtyBagus.Value == 0)
+                        _numQtyBagus.Value = 2;
+                    else
+                        _numQtyBagus.Value += 1;
+
+                    _lblBannerStatus.Text = $"QTY BAGUS: {_numQtyBagus.Value}";
+                    _lblBannerStatus.ForeColor = UiTheme.Emerald;
+                    _audioHelper?.PlaySuccess();
+                    _numQtyBagus.Focus();
+                    SafeSelectAll(_numQtyBagus);
+                    return;
+                }
+
                 _currentScanResult = lookup;
                 UpdateScannerBannerHit(lookup);
                 PopulatePackagingUnits(lookup);
@@ -932,7 +954,7 @@ namespace BtrReturGudang.Winform.Views
                 _numQtyBagus.Value = 0;
                 _numQtyRusak.Value = 0;
                 _numQtyBagus.Focus();
-                _numQtyBagus.Select(0, _numQtyBagus.Text.Length);
+                SafeSelectAll(_numQtyBagus);
             }
             else
             {
@@ -980,13 +1002,13 @@ namespace BtrReturGudang.Winform.Views
             _numQtyBagus.Value = 0;
             _numQtyRusak.Value = 0;
             _numQtyBagus.Focus();
-            _numQtyBagus.Select(0, _numQtyBagus.Text.Length);
+            SafeSelectAll(_numQtyBagus);
         }
 
         private void UpdateScannerBannerHit(BarcodeLookupResult result)
         {
             _pnlScannerBanner.BackColor = Color.FromArgb(15, 23, 42); // Slate-900
-            _lblBannerTitle.Text = $"📦 [{result.BrgId}] {result.BrgName}";
+            _lblBannerTitle.Text = $"📦 {result.BrgName}";
             _lblBannerTitle.ForeColor = Color.FromArgb(248, 250, 252);
 
             var barcodeDisplay = !string.IsNullOrWhiteSpace(result.NormalizedBarcode)
@@ -1068,6 +1090,53 @@ namespace BtrReturGudang.Winform.Views
 
         #region Ergonomic Quantity Strip & Item Intake
 
+        private static void SafeSelectAll(NumericUpDown nud)
+        {
+            if (nud == null) return;
+            if (nud.IsHandleCreated)
+            {
+                nud.BeginInvoke(new Action(() => nud.Select(0, nud.Text.Length)));
+            }
+            else
+            {
+                nud.Select(0, nud.Text.Length);
+            }
+        }
+
+        private void ConfigureErgonomicNumericInput(NumericUpDown nud)
+        {
+            // Auto-select entire text on Enter, Click, or GotFocus to eliminate cursor misalignment
+            nud.Enter += (s, e) => SafeSelectAll(nud);
+            nud.Click += (s, e) => SafeSelectAll(nud);
+            nud.GotFocus += (s, e) => SafeSelectAll(nud);
+
+            // High-load warehouse protection against sticky 0:
+            // When current value is 0, typing a digit (1-9) directly assigns that digit instead of prepending into "10".
+            nud.KeyDown += (s, e) =>
+            {
+                if (nud.Value == 0)
+                {
+                    int digit = -1;
+                    if (e.KeyCode >= Keys.D1 && e.KeyCode <= Keys.D9)
+                    {
+                        digit = e.KeyCode - Keys.D0;
+                    }
+                    else if (e.KeyCode >= Keys.NumPad1 && e.KeyCode <= Keys.NumPad9)
+                    {
+                        digit = e.KeyCode - Keys.NumPad0;
+                    }
+
+                    if (digit != -1)
+                    {
+                        e.Handled = true;
+                        e.SuppressKeyPress = true;
+                        nud.Value = digit;
+                        SafeSelectAll(nud);
+                    }
+                }
+            };
+        }
+
         private void OnQuantityKeyDown(object sender, KeyEventArgs e)
         {
             if (e.KeyCode == Keys.Enter)
@@ -1143,7 +1212,8 @@ namespace BtrReturGudang.Winform.Views
             // Trigger success audio cue
             _audioHelper?.PlaySuccess();
 
-            // Reset quantity strip
+            // Reset quantity strip and active scanned item
+            _currentScanResult = null;
             _numQtyBagus.Value = 0;
             _numQtyRusak.Value = 0;
             _txtItemKeterangan.Text = string.Empty;

@@ -210,5 +210,19 @@ namespace BtrReturGudang.AppTier.Services
             var registrations = await _barcodeRepo.GetPendingRegistrationsAsync();
             return registrations.Select(r => BarcodeRegistrationDto.FromDomain(r));
         }
+
+        public void DeleteBarcode(string rawBarcode)
+        {
+            if (string.IsNullOrWhiteSpace(rawBarcode)) return;
+            var normalized = BarcodeNormalization.Normalize(rawBarcode);
+            _barcodeRepo.DeleteBarcode(normalized);
+        }
+
+        public async Task DeleteBarcodeAsync(string rawBarcode)
+        {
+            if (string.IsNullOrWhiteSpace(rawBarcode)) return;
+            var normalized = BarcodeNormalization.Normalize(rawBarcode);
+            await _barcodeRepo.DeleteBarcodeAsync(normalized).ConfigureAwait(false);
+        }
     }
 }

@@ -38,6 +38,7 @@ namespace BtrReturGudang.AppTier.DTOs
         public decimal TotalQtyBagus { get; set; }
         public decimal TotalQtyRusak { get; set; }
         public int TotalItemsCount { get; set; }
+        public decimal TotalQty => (TotalQtyBagus + TotalQtyRusak > 0) ? (TotalQtyBagus + TotalQtyRusak) : (Items != null ? Items.Sum(i => i.Qty) : 0);
 
         public List<ReturnOrderItemDto> Items { get; set; } = new List<ReturnOrderItemDto>();
         public IEnumerable<ReturnOrderItemDto> ListItem => Items; // Alias for Cloud API (ReturnOrderUploadCommand)

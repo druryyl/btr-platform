@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Drawing;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -479,8 +480,8 @@ namespace BtrReturGudang.Winform.Tests
                     var tblIntake = pnlIntake.Controls.OfType<TableLayoutPanel>().FirstOrDefault();
                     Assert.NotNull(tblIntake);
                     Assert.Equal(2, tblIntake.ColumnCount);
-                    Assert.Equal(42F, tblIntake.ColumnStyles[0].Width);
-                    Assert.Equal(58F, tblIntake.ColumnStyles[1].Width);
+                    Assert.Equal(46F, tblIntake.ColumnStyles[0].Width);
+                    Assert.Equal(54F, tblIntake.ColumnStyles[1].Width);
 
                     // Grid Container & Footer check
                     var pnlGrid = tblMain.GetControlFromPosition(0, 2) as Panel;
@@ -499,14 +500,81 @@ namespace BtrReturGudang.Winform.Tests
                     pnlGrid.PerformLayout();
 
                     Assert.InRange(pnlHeader.Height, 56, 62); // ~58-60px
-                    Assert.InRange(pnlIntake.Height, 54, 58); // ~54-58px
-                    Assert.True(view.ItemsGridView.Height >= 350,
-                        $"Expected grid height >= 350px for 10-12 rows visibility, but was {view.ItemsGridView.Height}px");
+                    Assert.InRange(pnlIntake.Height, 54, 66); // ~62-64px for 34px controls
+                    Assert.True(view.ItemsGridView.Height >= 340,
+                        $"Expected grid height >= 340px for 10-12 rows visibility, but was {view.ItemsGridView.Height}px");
 
                     // 10 data rows require 28px header + (10 * 26px) = 288px; verify grid displays at least 10 rows
                     int minHeightFor10Rows = 28 + (10 * 26);
                     Assert.True(view.ItemsGridView.Height >= minHeightFor10Rows,
                         $"Grid height {view.ItemsGridView.Height}px must accommodate at least 10 data rows ({minHeightFor10Rows}px)");
+                }
+            });
+        }
+
+        [Fact]
+        public void ScannerBanner_ScannedProduct_DisplaysProductNameWithoutBrgId()
+        {
+            ExecuteInStaThread(() =>
+            {
+                var barcodeSvc = new FakeBarcodeService();
+                barcodeSvc.RegisterBarcode("8992741982110", "BRG-002941-KCP", "KECAP BANGO MANIS REFILL 550ML", "DUS", 24m);
+
+                using (var view = new ReturnOrderEntryView(null, barcodeSvc, null, null, null))
+                {
+                    view.OnBarcodeScanned("8992741982110");
+
+                    // Should contain pure product name, but NOT the internal code prefix
+                    Assert.Contains("KECAP BANGO MANIS REFILL 550ML", view.BannerTitleLabel.Text);
+                    Assert.DoesNotContain("[BRG-002941-KCP]", view.BannerTitleLabel.Text);
+                }
+            });
+        }
+
+        [Fact]
+        public void ScannerBanner_ReScanningSameBarcode_IncrementsQtyBagusAutomatically()
+        {
+            ExecuteInStaThread(() =>
+            {
+                var barcodeSvc = new FakeBarcodeService();
+                barcodeSvc.RegisterBarcode("8998866200112", "BRG-0001", "Indomie Goreng", "Pcs", 1m);
+
+                using (var view = new ReturnOrderEntryView(null, barcodeSvc, null, null, null))
+                {
+                    // First scan: Qty initially 0 (ready for typing or re-scan)
+                    view.OnBarcodeScanned("8998866200112");
+                    Assert.Equal(0, view.QtyBagusNumeric.Value);
+
+                    // Second consecutive scan of identical barcode: increments Qty Bagus to 2
+                    view.OnBarcodeScanned("8998866200112");
+                    Assert.Equal(2, view.QtyBagusNumeric.Value);
+
+                    // Third scan: increments to 3
+                    view.OnBarcodeScanned("8998866200112");
+                    Assert.Equal(3, view.QtyBagusNumeric.Value);
+                }
+            });
+        }
+
+        [Fact]
+        public void IntakeCard_AddItemButton_HasVisibleCaptionAndProperDimensions()
+        {
+            ExecuteInStaThread(() =>
+            {
+                using (var view = new ReturnOrderEntryView())
+                {
+                    var tblMain = view.Controls.OfType<TableLayoutPanel>().FirstOrDefault();
+                    var pnlIntake = tblMain.GetControlFromPosition(0, 1) as Panel;
+                    var tblIntake = pnlIntake.Controls.OfType<TableLayoutPanel>().FirstOrDefault();
+                    var pnlQuantityStrip = tblIntake.GetControlFromPosition(1, 0) as TableLayoutPanel;
+                    var btnAddItem = pnlQuantityStrip.GetControlFromPosition(4, 1) as Button;
+
+                    Assert.NotNull(btnAddItem);
+                    Assert.Equal("+ Tambah [Enter]", btnAddItem.Text);
+                    Assert.Equal(UiTheme.Primary, btnAddItem.BackColor);
+                    Assert.Equal(Color.White, btnAddItem.ForeColor);
+                    Assert.Equal(135F, pnlQuantityStrip.ColumnStyles[4].Width);
+                    Assert.Equal(34F, pnlQuantityStrip.RowStyles[1].Height);
                 }
             });
         }
@@ -554,6 +622,9 @@ namespace BtrReturGudang.Winform.Tests
 
             public IEnumerable<BarcodeRegistrationDto> GetPendingRegistrations() => Enumerable.Empty<BarcodeRegistrationDto>();
             public Task<IEnumerable<BarcodeRegistrationDto>> GetPendingRegistrationsAsync() => Task.FromResult(Enumerable.Empty<BarcodeRegistrationDto>());
+
+            public void DeleteBarcode(string rawBarcode) { _registry.Remove(rawBarcode); }
+            public Task DeleteBarcodeAsync(string rawBarcode) { DeleteBarcode(rawBarcode); return Task.CompletedTask; }
         }
 
         private class ValidatingReturnOrderRepo : IReturnOrderRepo

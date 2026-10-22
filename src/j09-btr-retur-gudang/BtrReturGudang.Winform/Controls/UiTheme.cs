@@ -66,11 +66,11 @@ namespace BtrReturGudang.Winform
         public static readonly Font FontSubtitle      = new Font("Segoe UI", 8.5F, FontStyle.Regular, GraphicsUnit.Point);
         public static readonly Font FontLabel         = new Font("Segoe UI Semibold", 9F, FontStyle.Bold, GraphicsUnit.Point);
         public static readonly Font FontBody          = new Font("Segoe UI", 9.5F, FontStyle.Regular, GraphicsUnit.Point);
-        public static readonly Font FontBodyBold      = new Font("Segoe UI Bold", 9.5F, FontStyle.Bold, GraphicsUnit.Point);
+        public static readonly Font FontBodyBold      = new Font("Segoe UI", 9.5F, FontStyle.Bold, GraphicsUnit.Point);
         public static readonly Font FontMonospace     = new Font("Consolas", 10F, FontStyle.Regular, GraphicsUnit.Point);
         public static readonly Font FontMonospaceBold = new Font("Consolas", 10F, FontStyle.Bold, GraphicsUnit.Point);
         public static readonly Font FontKpiValue      = new Font("Segoe UI", 14F, FontStyle.Bold, GraphicsUnit.Point);
-        public static readonly Font FontBadge         = new Font("Segoe UI Bold", 8F, FontStyle.Bold, GraphicsUnit.Point);
+        public static readonly Font FontBadge         = new Font("Segoe UI", 8F, FontStyle.Bold, GraphicsUnit.Point);
 
         #endregion
 

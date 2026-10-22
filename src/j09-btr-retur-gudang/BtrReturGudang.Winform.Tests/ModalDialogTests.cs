@@ -436,6 +436,9 @@ namespace BtrReturGudang.Winform.Tests
 
             public IEnumerable<BarcodeRegistrationDto> GetPendingRegistrations() => Enumerable.Empty<BarcodeRegistrationDto>();
             public Task<IEnumerable<BarcodeRegistrationDto>> GetPendingRegistrationsAsync() => Task.FromResult(Enumerable.Empty<BarcodeRegistrationDto>());
+
+            public void DeleteBarcode(string rawBarcode) { _registry.Remove(rawBarcode); }
+            public Task DeleteBarcodeAsync(string rawBarcode) { DeleteBarcode(rawBarcode); return Task.CompletedTask; }
         }
 
         private class FakeReferenceRepo : IReferenceRepo

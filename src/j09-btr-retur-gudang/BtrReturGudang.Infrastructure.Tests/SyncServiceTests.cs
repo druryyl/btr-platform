@@ -100,6 +100,8 @@ namespace BtrReturGudang.Infrastructure.Tests
                 }
             }
             public Task MarkRegistrationUploadedAsync(string requestId) { MarkRegistrationUploaded(requestId); return Task.CompletedTask; }
+            public void DeleteBarcode(string barcode) { Barcodes.Remove(barcode); Registrations.RemoveAll(r => r.Barcode == barcode); }
+            public Task DeleteBarcodeAsync(string barcode) { DeleteBarcode(barcode); return Task.CompletedTask; }
         }
 
         private class FakeReferenceRepo : IReferenceRepo

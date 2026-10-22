@@ -438,6 +438,38 @@ WHERE RequestId = @RequestId;";
             }
         }
 
+        public void DeleteBarcode(string barcode)
+        {
+            var normalized = BarcodeNormalization.Normalize(barcode);
+            if (string.IsNullOrWhiteSpace(normalized))
+                return;
+
+            using (var conn = CreateConnection())
+            {
+                conn.Open();
+                const string sql = @"
+DELETE FROM BTRG_Barcode WHERE Barcode = @Barcode;
+DELETE FROM BTRG_BarcodeRegistration WHERE Barcode = @Barcode;";
+                conn.Execute(sql, new { Barcode = normalized });
+            }
+        }
+
+        public async Task DeleteBarcodeAsync(string barcode)
+        {
+            var normalized = BarcodeNormalization.Normalize(barcode);
+            if (string.IsNullOrWhiteSpace(normalized))
+                return;
+
+            using (var conn = CreateConnection())
+            {
+                await conn.OpenAsync().ConfigureAwait(false);
+                const string sql = @"
+DELETE FROM BTRG_Barcode WHERE Barcode = @Barcode;
+DELETE FROM BTRG_BarcodeRegistration WHERE Barcode = @Barcode;";
+                await conn.ExecuteAsync(sql, new { Barcode = normalized }).ConfigureAwait(false);
+            }
+        }
+
         private static Barcode MapToBarcode(BarcodeRow row)
         {
             return new Barcode(row.Barcode, row.BrgId, row.BrgName, row.Satuan, row.Pengali, row.IsActive);

@@ -34,5 +34,8 @@ namespace BtrReturGudang.AppTier.Services
 
         IEnumerable<BarcodeRegistrationDto> GetPendingRegistrations();
         Task<IEnumerable<BarcodeRegistrationDto>> GetPendingRegistrationsAsync();
+
+        void DeleteBarcode(string rawBarcode);
+        Task DeleteBarcodeAsync(string rawBarcode);
     }
 }

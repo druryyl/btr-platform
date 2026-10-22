@@ -1,0 +1,84 @@
+<Window x:Class="BtrReturGudang.Wpf.Views.OperatorSwitcherDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d"
+        Title="Ganti Operator Shift"
+        Width="640" Height="260"
+        MinWidth="640" MinHeight="260"
+        WindowStartupLocation="CenterOwner"
+        ResizeMode="NoResize"
+        Background="{DynamicResource Brush.Window.Background}"
+        FontFamily="Segoe UI" FontSize="12">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="52" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <!-- 1. Header Banner -->
+        <Border Grid.Row="0" Background="{DynamicResource Brush.Slate.900}" Padding="20,8">
+            <StackPanel VerticalAlignment="Center">
+                <TextBlock Text="👤 Ganti Operator Shift" FontSize="14" FontWeight="Bold" Foreground="{DynamicResource Brush.White}" />
+                <TextBlock Text="Perbarui identitas operator aktif (nama tampilan &amp; Google email) untuk sesi retur workstation ini."
+                           FontSize="10" Foreground="{DynamicResource Brush.Slate.400}" />
+            </StackPanel>
+        </Border>
+
+        <!-- 2. Inputs Body -->
+        <Border Grid.Row="1" Padding="20,14">
+            <StackPanel>
+                <Grid Margin="0,0,0,10">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="16" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+
+                    <!-- Operator Name Input -->
+                    <StackPanel Grid.Column="0">
+                        <TextBlock Text="Nama Operator / Petugas Gudang:" FontWeight="SemiBold"
+                                   Foreground="{DynamicResource Brush.Slate.700}" Margin="0,0,0,4" />
+                        <TextBox x:Name="TxtOperatorName" Height="32" Padding="6,4"
+                                 FontSize="13" Background="{DynamicResource Brush.White}"
+                                 BorderBrush="{DynamicResource Brush.Card.Border}" />
+                    </StackPanel>
+
+                    <!-- Operator Google Email Input -->
+                    <StackPanel Grid.Column="2">
+                        <TextBlock Text="Google Email Operator:" FontWeight="SemiBold"
+                                   Foreground="{DynamicResource Brush.Slate.700}" Margin="0,0,0,4" />
+                        <TextBox x:Name="TxtOperatorEmail" Height="32" Padding="6,4"
+                                 FontSize="13" Background="{DynamicResource Brush.White}"
+                                 BorderBrush="{DynamicResource Brush.Card.Border}" />
+                    </StackPanel>
+                </Grid>
+
+                <TextBlock x:Name="LblHint" Text="Operator aktif sebelumnya: ..."
+                           FontSize="11" Foreground="{DynamicResource Brush.Slate.500}" />
+            </StackPanel>
+        </Border>
+
+        <!-- 3. Footer Action Buttons -->
+        <Border Grid.Row="2" Background="{DynamicResource Brush.White}"
+                BorderBrush="{DynamicResource Brush.Card.Border}" BorderThickness="0,1,0,0"
+                Padding="20,10">
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                <Button x:Name="BtnSave" Content="Simpan Operator"
+                        Width="140" Height="34" Margin="0,0,10,0"
+                        Background="{DynamicResource Brush.Primary}"
+                        Foreground="{DynamicResource Brush.White}"
+                        FontWeight="Bold" Click="OnSaveClick" />
+
+                <Button x:Name="BtnCancel" Content="Batal"
+                        Width="90" Height="34"
+                        Background="{DynamicResource Brush.White}"
+                        Foreground="{DynamicResource Brush.Slate.700}"
+                        BorderBrush="{DynamicResource Brush.Card.Border}"
+                        BorderThickness="1" Click="OnCancelClick" />
+            </StackPanel>
+        </Border>
+    </Grid>
+</Window>

@@ -868,6 +868,21 @@ namespace BtrReturGudang.Winform.Tests
                 MarkRegistrationUploaded(requestId);
                 return Task.CompletedTask;
             }
+
+            public void DeleteBarcode(string barcode)
+            {
+                if (barcode != null)
+                {
+                    _barcodes.Remove(barcode);
+                    _registrations.RemoveAll(r => string.Equals(r.Barcode, barcode, StringComparison.OrdinalIgnoreCase));
+                }
+            }
+
+            public Task DeleteBarcodeAsync(string barcode)
+            {
+                DeleteBarcode(barcode);
+                return Task.CompletedTask;
+            }
         }
 
         public class InMemoryReferenceRepo : IReferenceRepo

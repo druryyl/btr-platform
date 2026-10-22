@@ -33,5 +33,8 @@ namespace BtrReturGudang.AppTier.Repositories
 
         void MarkRegistrationUploaded(string requestId);
         Task MarkRegistrationUploadedAsync(string requestId);
+
+        void DeleteBarcode(string barcode);
+        Task DeleteBarcodeAsync(string barcode);
     }
 }

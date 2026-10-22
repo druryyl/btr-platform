@@ -278,6 +278,7 @@ FROM BTRG_Customer
 WHERE CustomerId LIKE @Keyword 
    OR CustomerCode LIKE @Keyword 
    OR CustomerName LIKE @Keyword 
+   OR Alamat LIKE @Keyword
    OR Wilayah LIKE @Keyword
 ORDER BY CustomerName;";
 
@@ -298,6 +299,7 @@ FROM BTRG_Customer
 WHERE CustomerId LIKE @Keyword 
    OR CustomerCode LIKE @Keyword 
    OR CustomerName LIKE @Keyword 
+   OR Alamat LIKE @Keyword
    OR Wilayah LIKE @Keyword
 ORDER BY CustomerName;";
 
