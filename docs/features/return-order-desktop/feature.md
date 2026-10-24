@@ -116,3 +116,8 @@ A delivery vehicle, driver, or customer arrives at the warehouse dock with physi
 13. In the Return Order list and inspector view (SCR-05), the split view layout proportions prevent metadata truncation and ensure the detail items grid displays at least 5-6 rows comfortably.
 14. All modal dialogs (SCR-03 Manual Item Search, SCR-04 Quick Barcode Registration, SCR-08 Manual Customer Search, BarcodeRegistrationDialog, OperatorSwitcherDialog) fit comfortably within the 720p screen height (< 520px height) so their header, inputs, and action buttons remain fully visible and operable without clipping.
 15. Customer selection utilizes on-demand keyboard-driven modal search (SCR-08) with real-time keydown filtering over large datasets (> 2,000 customers), eliminating startup ComboBox memory bloat and UI thread freezes while preserving manual walk-in customer capture (`CUST-MANUAL`).
+16. Hands-Free Desk Command Barcodes & Multi-Scan Intake:
+    - Scanning desk barcode `CMD:BAGUS` switches active entry mode to `Qty Bagus`; scanning `CMD:RUSAK` switches active entry mode to `Qty Rusak`, with prominent visual badge and audio tone feedback.
+    - Scanning an item barcode sets initial quantity = 1 in the active mode; re-scanning the same item increments quantity (+1) per scan without requiring keyboard interaction.
+    - Scanning a different item barcode automatically commits the previous item (if `Qty > 0`) to the items grid before staging the new item.
+    - Scanning desk barcodes `CMD:F9` triggers Save Draft (auto-committing any active item first), and `CMD:ESC` triggers Reset Form.

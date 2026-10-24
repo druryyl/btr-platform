@@ -19,6 +19,15 @@ using Microsoft.Extensions.DependencyInjection;
 namespace BtrReturGudang.Wpf.ViewModels
 {
     /// <summary>
+    /// Specifies the targeted intake destination mode for scanned quantities in ReturnOrderEntryView.
+    /// </summary>
+    public enum QuantityEntryMode
+    {
+        Bagus = 0,
+        Rusak = 1
+    }
+
+    /// <summary>
     /// ViewModel for the primary Return Order Intake view (ReturnOrderEntryView SCR-02).
     /// Orchestrates customer/driver header, full-width high-contrast product banner,
     /// spacious quantity strip, live items grid, summary counters, and order persistence.
@@ -50,7 +59,8 @@ namespace BtrReturGudang.Wpf.ViewModels
         private bool _isBannerActive;
         private bool _isBannerError;
 
-        // Quantity Strip State
+        // Quantity Strip State & Mode
+        private QuantityEntryMode _activeQuantityMode = QuantityEntryMode.Bagus;
         private string _selectedSatuan;
         private int _qtyBagus;
         private int _qtyRusak;
@@ -90,6 +100,7 @@ namespace BtrReturGudang.Wpf.ViewModels
 
         // View Notification Events
         public event Action RequestFocusQtyBagus;
+        public event Action RequestFocusQtyRusak;
         public event Action RequestFocusGrid;
 
         /// <summary>
@@ -118,6 +129,7 @@ namespace BtrReturGudang.Wpf.ViewModels
             ResetFormCommand = new RelayCommand(() => ResetForm(promptUser: true));
             ManualSearchCommand = new RelayCommand(TriggerManualItemSearch);
             CustomerSearchCommand = new RelayCommand(() => TriggerCustomerSearch(CustomerInputText));
+            ToggleQuantityModeCommand = new RelayCommand(ToggleQuantityMode);
 
             LoadReferenceData();
             UpdateSummaryFooter();
@@ -145,6 +157,7 @@ namespace BtrReturGudang.Wpf.ViewModels
         public ICommand ResetFormCommand { get; }
         public ICommand ManualSearchCommand { get; }
         public ICommand CustomerSearchCommand { get; }
+        public ICommand ToggleQuantityModeCommand { get; }
 
         #endregion
 
@@ -245,6 +258,44 @@ namespace BtrReturGudang.Wpf.ViewModels
         #endregion
 
         #region Quantity Strip Properties
+
+        public QuantityEntryMode ActiveQuantityMode
+        {
+            get => _activeQuantityMode;
+            set
+            {
+                if (SetProperty(ref _activeQuantityMode, value))
+                {
+                    OnPropertyChanged(nameof(IsModeBagus));
+                    OnPropertyChanged(nameof(IsModeRusak));
+                    OnPropertyChanged(nameof(ModeBadgeText));
+                }
+            }
+        }
+
+        public bool IsModeBagus => ActiveQuantityMode == QuantityEntryMode.Bagus;
+
+        public bool IsModeRusak => ActiveQuantityMode == QuantityEntryMode.Rusak;
+
+        public string ModeBadgeText => IsModeBagus ? "[● MODE: QTY BAGUS]" : "[● MODE: QTY RUSAK]";
+
+        public void ToggleQuantityMode()
+        {
+            ActiveQuantityMode = ActiveQuantityMode == QuantityEntryMode.Bagus
+                ? QuantityEntryMode.Rusak
+                : QuantityEntryMode.Bagus;
+
+            if (ActiveQuantityMode == QuantityEntryMode.Bagus)
+            {
+                BannerStatus = "MODE SCAN: QTY BAGUS";
+                RequestFocusQtyBagus?.Invoke();
+            }
+            else
+            {
+                BannerStatus = "MODE SCAN: QTY RUSAK";
+                RequestFocusQtyRusak?.Invoke();
+            }
+        }
 
         public string SelectedSatuan
         {
@@ -381,22 +432,113 @@ namespace BtrReturGudang.Wpf.ViewModels
 
             var clean = BarcodeNormalization.Normalize(normalizedBarcode);
 
-            // High-load warehouse ergonomics: If scanning the same product consecutively before commit, increment Qty Bagus
+            // Command barcode handling
+            if (BarcodeCommand.TryParse(clean, out BarcodeCommandType cmd))
+            {
+                if (cmd == BarcodeCommandType.SwitchToQtyBagus)
+                {
+                    ActiveQuantityMode = QuantityEntryMode.Bagus;
+                    BannerStatus = "MODE SCAN: QTY BAGUS";
+                    _audioHelper?.PlaySuccess();
+                    RequestFocusQtyBagus?.Invoke();
+                    return;
+                }
+
+                if (cmd == BarcodeCommandType.SwitchToQtyRusak)
+                {
+                    ActiveQuantityMode = QuantityEntryMode.Rusak;
+                    BannerStatus = "MODE SCAN: QTY RUSAK";
+                    _audioHelper?.PlaySuccess();
+                    RequestFocusQtyRusak?.Invoke();
+                    return;
+                }
+
+                if (cmd == BarcodeCommandType.CommitItem)
+                {
+                    CommitQuantityStripToGrid();
+                    return;
+                }
+
+                if (cmd == BarcodeCommandType.SaveDraft)
+                {
+                    if (_currentScanResult != null && (QtyBagus > 0 || QtyRusak > 0))
+                    {
+                        CommitQuantityStripToGrid();
+                    }
+
+                    if (SaveDraftCommand != null && SaveDraftCommand.CanExecute(null))
+                    {
+                        SaveDraftCommand.Execute(null);
+                    }
+                    else
+                    {
+                        _ = SaveDraftAsync();
+                    }
+                    return;
+                }
+
+                if (cmd == BarcodeCommandType.SaveAndUpload)
+                {
+                    if (_currentScanResult != null && (QtyBagus > 0 || QtyRusak > 0))
+                    {
+                        CommitQuantityStripToGrid();
+                    }
+
+                    if (SaveAndUploadCommand != null && SaveAndUploadCommand.CanExecute(null))
+                    {
+                        SaveAndUploadCommand.Execute(null);
+                    }
+                    else
+                    {
+                        _ = SaveAndUploadAsync();
+                    }
+                    return;
+                }
+
+                if (cmd == BarcodeCommandType.ResetForm)
+                {
+                    if (ResetFormCommand != null && ResetFormCommand.CanExecute(null))
+                    {
+                        ResetFormCommand.Execute(null);
+                    }
+                    else
+                    {
+                        ResetForm(promptUser: true);
+                    }
+                    return;
+                }
+            }
+
+            // High-load warehouse ergonomics: If scanning the same product consecutively before commit, increment active quantity mode
             if (_currentScanResult != null &&
                 ((!string.IsNullOrWhiteSpace(_currentScanResult.NormalizedBarcode) && _currentScanResult.NormalizedBarcode == clean) ||
                  (!string.IsNullOrWhiteSpace(_currentScanResult.BarcodeValue) && _currentScanResult.BarcodeValue == clean)))
             {
-                if (QtyBagus == 0)
-                    QtyBagus = 2;
-                else
+                if (ActiveQuantityMode == QuantityEntryMode.Bagus)
+                {
                     QtyBagus += 1;
-
-                BannerStatus = $"QTY BAGUS: {QtyBagus}";
-                IsBannerActive = true;
-                IsBannerError = false;
-                _audioHelper?.PlaySuccess();
-                RequestFocusQtyBagus?.Invoke();
+                    BannerStatus = $"QTY BAGUS: {QtyBagus}";
+                    IsBannerActive = true;
+                    IsBannerError = false;
+                    _audioHelper?.PlaySuccess();
+                    RequestFocusQtyBagus?.Invoke();
+                }
+                else
+                {
+                    QtyRusak += 1;
+                    BannerStatus = $"QTY RUSAK: {QtyRusak}";
+                    IsBannerActive = true;
+                    IsBannerError = false;
+                    _audioHelper?.PlaySuccess();
+                    RequestFocusQtyRusak?.Invoke();
+                }
                 return;
+            }
+
+            // Chained auto-commit: if a different barcode/item is scanned while an existing item is staged with quantity, commit it first
+            if (_currentScanResult != null && (QtyBagus > 0 || QtyRusak > 0))
+            {
+                CommitQuantityStripToGrid();
             }
 
             var lookup = _barcodeService?.LookupBarcode(clean);
@@ -447,11 +589,20 @@ namespace BtrReturGudang.Wpf.ViewModels
 
             PopulatePackagingUnits(result);
 
-            QtyBagus = 0;
-            QtyRusak = 0;
-            ItemKeterangan = string.Empty;
+            if (ActiveQuantityMode == QuantityEntryMode.Bagus)
+            {
+                QtyBagus = 1;
+                QtyRusak = 0;
+                RequestFocusQtyBagus?.Invoke();
+            }
+            else
+            {
+                QtyBagus = 0;
+                QtyRusak = 1;
+                RequestFocusQtyRusak?.Invoke();
+            }
 
-            RequestFocusQtyBagus?.Invoke();
+            ItemKeterangan = string.Empty;
         }
 
         private void PopulatePackagingUnits(BarcodeLookupResult lookup)
@@ -801,6 +952,7 @@ namespace BtrReturGudang.Wpf.ViewModels
             IsBannerError = false;
 
             PackagingUnits.Clear();
+            ActiveQuantityMode = QuantityEntryMode.Bagus;
             QtyBagus = 0;
             QtyRusak = 0;
             ItemKeterangan = string.Empty;

@@ -8,7 +8,6 @@
     <Style TargetType="{x:Type TextBlock}">
         <Setter Property="FontFamily" Value="Segoe UI" />
         <Setter Property="FontSize" Value="13" />
-        <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Primary}" />
         <Setter Property="TextTrimming" Value="CharacterEllipsis" />
     </Style>
 

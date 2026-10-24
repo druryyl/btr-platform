@@ -474,15 +474,15 @@ namespace BtrReturGudang.Wpf.Tests
             // Act 1: Initial scan of barcode
             vm.OnBarcodeScanned("8998866200112");
 
-            // Assert 1: Product banner is populated, initial Qty is 0 (ready for manual entry or consecutive scan)
+            // Assert 1: Product banner is populated, initial Qty is 1 (hands-free ergonomics)
             Assert.Equal("INDOMIE GORENG SPESIAL", vm.ProductName);
-            Assert.Equal(0, vm.QtyBagus);
+            Assert.Equal(1, vm.QtyBagus);
             Assert.Equal(1, audioHelper.SuccessBeepCount);
 
             // Act 2: Second consecutive scan of identical barcode
             vm.OnBarcodeScanned("8998866200112");
 
-            // Assert 2: QtyBagus auto-increments to 2 (initial 0 -> 2 consecutive items)
+            // Assert 2: QtyBagus auto-increments to 2 (initial 1 -> 2 consecutive items)
             Assert.Equal(2, vm.QtyBagus);
             Assert.Equal("QTY BAGUS: 2", vm.BannerStatus);
             Assert.Equal(2, audioHelper.SuccessBeepCount);
@@ -499,9 +499,9 @@ namespace BtrReturGudang.Wpf.Tests
             barcodeService.RegisterBarcode("8991234567890", "BRG-002", "TEH BOTOL SOSRO 250ML", "KRT", 24m);
             vm.OnBarcodeScanned("8991234567890");
 
-            // Assert 4: New item loaded, QtyBagus resets to 0
+            // Assert 4: New item loaded, initial Qty is 1 for the new item
             Assert.Equal("TEH BOTOL SOSRO 250ML", vm.ProductName);
-            Assert.Equal(0, vm.QtyBagus);
+            Assert.Equal(1, vm.QtyBagus);
         }
 
         #endregion
@@ -697,7 +697,7 @@ namespace BtrReturGudang.Wpf.Tests
             // First scan
             intakeVm.OnBarcodeScanned("8998866200112");
             Assert.Equal("INDOMIE GORENG SPESIAL 85G", intakeVm.ProductName);
-            Assert.Equal(0, intakeVm.QtyBagus);
+            Assert.Equal(1, intakeVm.QtyBagus);
 
             // Consecutive re-scans increment count
             intakeVm.OnBarcodeScanned("8998866200112"); // Count becomes 2
@@ -731,6 +731,7 @@ namespace BtrReturGudang.Wpf.Tests
 
             // === STAGE 6: INSPECT ORDER IN RETURN ORDER LIST VIEW ===
             var listVm = new ReturnOrderListViewModel(returnOrderService, repo, syncService, audioHelper, sessionValidator);
+            listVm.ShowNotificationAction = (t, m, w) => { };
             await listVm.LoadOrdersAsync();
 
             var listDraftOrder = listVm.Orders.FirstOrDefault(o => o.ReturnOrderId == createdDraft.ReturnOrderId);
@@ -827,9 +828,8 @@ namespace BtrReturGudang.Wpf.Tests
                 vm.OnBarcodeScanned(barcode);
 
                 Assert.Equal("KECAP BANGO 550ML", vm.ProductName);
-                Assert.Equal(0, vm.QtyBagus);
+                Assert.Equal(1, vm.QtyBagus);
 
-                vm.QtyBagus = 1;
                 Assert.True(vm.AddItemCommand.CanExecute(null));
                 vm.AddItemCommand.Execute(null);
 
@@ -849,6 +849,498 @@ namespace BtrReturGudang.Wpf.Tests
             // Success cue fires twice per cycle: successful lookup + successful line commit
             Assert.Equal(intakeCycles * 2, audioHelper.SuccessBeepCount);
             Assert.Equal(Enumerable.Range(1, intakeCycles), vm.Items.Select(item => item.NoUrut));
+        }
+
+        #endregion
+
+        #region P2-S03: Mode Tracking & Multi-Scan Quantity Accumulation Tests
+
+        [Fact]
+        public void BarcodeCommand_SwitchToBagusAndRusak_UpdatesModeState()
+        {
+            var audioHelper = new FakeAudioHelper();
+            var vm = new ReturnOrderEntryViewModel(
+                returnOrderService: null,
+                barcodeService: null,
+                referenceRepo: null,
+                audioHelper: audioHelper,
+                registryHelper: null);
+
+            // Default state
+            Assert.Equal(QuantityEntryMode.Bagus, vm.ActiveQuantityMode);
+            Assert.True(vm.IsModeBagus);
+            Assert.False(vm.IsModeRusak);
+            Assert.Equal("[● MODE: QTY BAGUS]", vm.ModeBadgeText);
+
+            int focusBagusCount = 0;
+            int focusRusakCount = 0;
+            vm.RequestFocusQtyBagus += () => focusBagusCount++;
+            vm.RequestFocusQtyRusak += () => focusRusakCount++;
+
+            // Switch to Rusak via barcode
+            vm.OnBarcodeScanned("CMD:RUSAK");
+            Assert.Equal(QuantityEntryMode.Rusak, vm.ActiveQuantityMode);
+            Assert.False(vm.IsModeBagus);
+            Assert.True(vm.IsModeRusak);
+            Assert.Equal("[● MODE: QTY RUSAK]", vm.ModeBadgeText);
+            Assert.Equal("MODE SCAN: QTY RUSAK", vm.BannerStatus);
+            Assert.Equal(1, audioHelper.SuccessBeepCount);
+            Assert.Equal(1, focusRusakCount);
+
+            // Switch to Bagus via barcode alias
+            vm.OnBarcodeScanned("$$BAGUS");
+            Assert.Equal(QuantityEntryMode.Bagus, vm.ActiveQuantityMode);
+            Assert.True(vm.IsModeBagus);
+            Assert.False(vm.IsModeRusak);
+            Assert.Equal("[● MODE: QTY BAGUS]", vm.ModeBadgeText);
+            Assert.Equal("MODE SCAN: QTY BAGUS", vm.BannerStatus);
+            Assert.Equal(2, audioHelper.SuccessBeepCount);
+            Assert.Equal(1, focusBagusCount);
+        }
+
+        [Fact]
+        public void BarcodeScan_SingleScan_InitializesQuantityToOne()
+        {
+            var barcodeService = new InMemoryBarcodeService();
+            barcodeService.RegisterBarcode("8992741982110", "BRG-01", "KECAP BANGO 550ML", "DUS");
+            var audioHelper = new FakeAudioHelper();
+
+            var vm = new ReturnOrderEntryViewModel(
+                returnOrderService: null,
+                barcodeService: barcodeService,
+                referenceRepo: null,
+                audioHelper: audioHelper,
+                registryHelper: null);
+
+            // Scan in default Bagus mode
+            vm.OnBarcodeScanned("8992741982110");
+            Assert.Equal(1, vm.QtyBagus);
+            Assert.Equal(0, vm.QtyRusak);
+
+            // Reset and switch to Rusak mode
+            vm.ResetForm(promptUser: false);
+            vm.OnBarcodeScanned("CMD:RUSAK");
+            Assert.Equal(QuantityEntryMode.Rusak, vm.ActiveQuantityMode);
+
+            // Scan in Rusak mode -> initial QtyRusak = 1
+            vm.OnBarcodeScanned("8992741982110");
+            Assert.Equal(0, vm.QtyBagus);
+            Assert.Equal(1, vm.QtyRusak);
+        }
+
+        [Fact]
+        public void BarcodeScan_RepeatedScan_IncrementsQuantity()
+        {
+            var barcodeService = new InMemoryBarcodeService();
+            barcodeService.RegisterBarcode("8992741982110", "BRG-01", "KECAP BANGO 550ML", "DUS");
+            var audioHelper = new FakeAudioHelper();
+
+            var vm = new ReturnOrderEntryViewModel(
+                returnOrderService: null,
+                barcodeService: barcodeService,
+                referenceRepo: null,
+                audioHelper: audioHelper,
+                registryHelper: null);
+
+            // 1st scan
+            vm.OnBarcodeScanned("8992741982110");
+            Assert.Equal(1, vm.QtyBagus);
+            Assert.Equal("BARCODE TERDETEKSI", vm.BannerStatus);
+
+            // 2nd scan
+            vm.OnBarcodeScanned("8992741982110");
+            Assert.Equal(2, vm.QtyBagus);
+            Assert.Equal("QTY BAGUS: 2", vm.BannerStatus);
+
+            // 3rd scan
+            vm.OnBarcodeScanned("8992741982110");
+            Assert.Equal(3, vm.QtyBagus);
+            Assert.Equal("QTY BAGUS: 3", vm.BannerStatus);
+
+            Assert.Equal(3, audioHelper.SuccessBeepCount);
+        }
+
+        [Fact]
+        public void BarcodeScan_MixedBagusAndRusak_StagesBothQuantities()
+        {
+            var barcodeService = new InMemoryBarcodeService();
+            barcodeService.RegisterBarcode("8992741982110", "BRG-01", "KECAP BANGO 550ML", "DUS");
+            var audioHelper = new FakeAudioHelper();
+
+            var vm = new ReturnOrderEntryViewModel(
+                returnOrderService: null,
+                barcodeService: barcodeService,
+                referenceRepo: null,
+                audioHelper: audioHelper,
+                registryHelper: null);
+
+            // 1st scan in Bagus mode
+            vm.OnBarcodeScanned("8992741982110");
+            Assert.Equal(1, vm.QtyBagus);
+            Assert.Equal(0, vm.QtyRusak);
+
+            // 2nd scan in Bagus mode
+            vm.OnBarcodeScanned("8992741982110");
+            Assert.Equal(2, vm.QtyBagus);
+            Assert.Equal(0, vm.QtyRusak);
+
+            // Switch to Rusak mode on desk
+            vm.OnBarcodeScanned("CMD:RUSAK");
+            Assert.Equal(QuantityEntryMode.Rusak, vm.ActiveQuantityMode);
+            Assert.Equal("KECAP BANGO 550ML", vm.ProductName); // Product retained!
+
+            // 3rd scan (now Rusak)
+            vm.OnBarcodeScanned("8992741982110");
+            Assert.Equal(2, vm.QtyBagus);
+            Assert.Equal(1, vm.QtyRusak);
+            Assert.Equal("QTY RUSAK: 1", vm.BannerStatus);
+
+            // 4th scan (now Rusak)
+            vm.OnBarcodeScanned("8992741982110");
+            Assert.Equal(2, vm.QtyBagus);
+            Assert.Equal(2, vm.QtyRusak);
+            Assert.Equal("QTY RUSAK: 2", vm.BannerStatus);
+        }
+
+        [Fact]
+        public void BarcodeScan_ChainedScanDifferentProduct_AutoCommitsPreviousItem()
+        {
+            var barcodeService = new InMemoryBarcodeService();
+            barcodeService.RegisterBarcode("8992741982110", "BRG-01", "KECAP BANGO 550ML", "DUS");
+            barcodeService.RegisterBarcode("8998866200112", "BRG-02", "INDOMIE GORENG 85G", "KRT");
+            var audioHelper = new FakeAudioHelper();
+
+            var vm = new ReturnOrderEntryViewModel(
+                returnOrderService: null,
+                barcodeService: barcodeService,
+                referenceRepo: null,
+                audioHelper: audioHelper,
+                registryHelper: null);
+            vm.SuppressMessageBoxes = true;
+
+            // 1st scan: Kecap Bango (initial Qty = 1)
+            vm.OnBarcodeScanned("8992741982110");
+            Assert.Equal("KECAP BANGO 550ML", vm.ProductName);
+            Assert.Equal(1, vm.QtyBagus);
+            Assert.Empty(vm.Items);
+
+            // Re-scan same product: increments to Qty = 2
+            vm.OnBarcodeScanned("8992741982110");
+            Assert.Equal(2, vm.QtyBagus);
+            Assert.Empty(vm.Items);
+
+            // Scan different product: INDOMIE GORENG
+            // Chained auto-commit should commit KECAP BANGO (Qty = 2) to Items and stage INDOMIE GORENG (Qty = 1)
+            vm.OnBarcodeScanned("8998866200112");
+
+            Assert.Single(vm.Items);
+            Assert.Equal("KECAP BANGO 550ML", vm.Items[0].BrgName);
+            Assert.Equal(2, vm.Items[0].Qty);
+
+            // Staged active product is now INDOMIE GORENG with initial Qty = 1
+            Assert.Equal("INDOMIE GORENG 85G", vm.ProductName);
+            Assert.Equal(1, vm.QtyBagus);
+
+            // Re-scan INDOMIE GORENG: increments to Qty = 2
+            vm.OnBarcodeScanned("8998866200112");
+            Assert.Equal(2, vm.QtyBagus);
+
+            // Scan CMD:ENTER to commit INDOMIE GORENG
+            vm.OnBarcodeScanned("CMD:ENTER");
+
+            Assert.Equal(2, vm.Items.Count);
+            Assert.Equal("INDOMIE GORENG 85G", vm.Items[1].BrgName);
+            Assert.Equal(2, vm.Items[1].Qty);
+            Assert.Null(vm.CurrentScanResult);
+            Assert.Equal(0, vm.QtyBagus);
+            Assert.Equal("ITEM DITAMBAHKAN", vm.BannerStatus);
+        }
+
+        [Fact]
+        public async Task BarcodeCommand_F9_AutoCommitsAndSavesDraft()
+        {
+            var repo = new InMemoryReturnOrderRepo();
+            var syncService = new InMemorySyncService(repo);
+            var returnOrderService = new ReturnOrderService(repo, syncService);
+            var barcodeService = new InMemoryBarcodeService();
+            barcodeService.RegisterBarcode("8992741982110", "BRG-002941-KCP", "KECAP BANGO MANIS REFILL 550ML", "DUS", 24m);
+            var referenceRepo = new FakeReferenceRepo();
+            var audioHelper = new FakeAudioHelper();
+            var registryHelper = new FakeRegistryHelper();
+            var apiClient = new FakeApiClient();
+            var sessionValidator = new OperatorSessionValidator(apiClient, registryHelper);
+            await sessionValidator.ValidateAsync();
+
+            var vm = new ReturnOrderEntryViewModel(
+                returnOrderService: returnOrderService,
+                barcodeService: barcodeService,
+                referenceRepo: referenceRepo,
+                audioHelper: audioHelper,
+                registryHelper: registryHelper,
+                sessionValidator: sessionValidator);
+            vm.SuppressMessageBoxes = true;
+
+            var customer = referenceRepo.Customers.First();
+            vm.SetSelectedCustomer(customer);
+
+            // Scan item (Qty = 1)
+            vm.OnBarcodeScanned("8992741982110");
+            Assert.Equal(1, vm.QtyBagus);
+            Assert.Empty(vm.Items);
+
+            // Scan CMD:F9
+            vm.OnBarcodeScanned("CMD:F9");
+
+            // Auto-commit staged item into Items
+            Assert.Single(vm.Items);
+            Assert.Equal("KECAP BANGO MANIS REFILL 550ML", vm.Items[0].BrgName);
+
+            // Verify order saved to draft repository
+            Assert.False(string.IsNullOrWhiteSpace(vm.CurrentReturnOrderId));
+            var saved = repo.GetById(vm.CurrentReturnOrderId);
+            Assert.NotNull(saved);
+            Assert.Equal(StatusSync.Draft, saved.StatusSync);
+            Assert.Single(saved.Items);
+        }
+
+        [Fact]
+        public void BarcodeCommand_Esc_ResetsForm()
+        {
+            var barcodeService = new InMemoryBarcodeService();
+            barcodeService.RegisterBarcode("8992741982110", "BRG-002941-KCP", "KECAP BANGO MANIS REFILL 550ML", "DUS", 24m);
+            var audioHelper = new FakeAudioHelper();
+
+            var vm = new ReturnOrderEntryViewModel(
+                returnOrderService: null,
+                barcodeService: barcodeService,
+                referenceRepo: null,
+                audioHelper: audioHelper,
+                registryHelper: null);
+            vm.SuppressMessageBoxes = true;
+
+            // Scan item
+            vm.OnBarcodeScanned("8992741982110");
+            Assert.Equal("KECAP BANGO MANIS REFILL 550ML", vm.ProductName);
+            Assert.Equal(1, vm.QtyBagus);
+
+            // Scan CMD:ESC
+            vm.OnBarcodeScanned("CMD:ESC");
+
+            Assert.Null(vm.CurrentScanResult);
+            Assert.Equal(0, vm.QtyBagus);
+            Assert.Equal(0, vm.QtyRusak);
+            Assert.Empty(vm.Items);
+            Assert.Equal("STATUS: STANDBY", vm.BannerStatus);
+        }
+
+        [Fact]
+        public void BarcodeCommand_Enter_CommitsItem_AndClearsStrip()
+        {
+            var barcodeService = new InMemoryBarcodeService();
+            barcodeService.RegisterBarcode("8992741982110", "BRG-01", "KECAP BANGO 550ML", "DUS");
+            barcodeService.RegisterBarcode("8998866200112", "BRG-02", "INDOMIE GORENG 85G", "KRT");
+            var audioHelper = new FakeAudioHelper();
+
+            var vm = new ReturnOrderEntryViewModel(
+                returnOrderService: null,
+                barcodeService: barcodeService,
+                referenceRepo: null,
+                audioHelper: audioHelper,
+                registryHelper: null);
+            vm.SuppressMessageBoxes = true;
+
+            // 1. Scan item
+            vm.OnBarcodeScanned("8992741982110");
+            Assert.Equal(1, vm.QtyBagus);
+            Assert.Empty(vm.Items);
+
+            // 2. Scan CMD:ENTER
+            vm.OnBarcodeScanned("CMD:ENTER");
+
+            Assert.Single(vm.Items);
+            Assert.Equal("KECAP BANGO 550ML", vm.Items[0].BrgName);
+            Assert.Equal(1, vm.Items[0].Qty);
+            Assert.Null(vm.CurrentScanResult);
+            Assert.Equal(0, vm.QtyBagus);
+            Assert.Equal("ITEM DITAMBAHKAN", vm.BannerStatus);
+
+            // 3. Scan second item and commit via alias CMD:TAMBAH
+            vm.OnBarcodeScanned("8998866200112");
+            Assert.Equal("INDOMIE GORENG 85G", vm.ProductName);
+            Assert.Equal(1, vm.QtyBagus);
+
+            vm.OnBarcodeScanned("CMD:TAMBAH");
+            Assert.Equal(2, vm.Items.Count);
+            Assert.Equal("INDOMIE GORENG 85G", vm.Items[1].BrgName);
+            Assert.Equal(1, vm.Items[1].Qty);
+            Assert.Null(vm.CurrentScanResult);
+        }
+
+        [Fact]
+        public async Task BarcodeCommand_F10_AutoCommitsAndSavesAndUploads()
+        {
+            var repo = new InMemoryReturnOrderRepo();
+            var syncService = new InMemorySyncService(repo);
+            var returnOrderService = new ReturnOrderService(repo, syncService);
+            var barcodeService = new InMemoryBarcodeService();
+            barcodeService.RegisterBarcode("8992741982110", "BRG-002941-KCP", "KECAP BANGO MANIS REFILL 550ML", "DUS", 24m);
+            var referenceRepo = new FakeReferenceRepo();
+            var audioHelper = new FakeAudioHelper();
+            var registryHelper = new FakeRegistryHelper();
+            var apiClient = new FakeApiClient();
+            var sessionValidator = new OperatorSessionValidator(apiClient, registryHelper);
+            await sessionValidator.ValidateAsync();
+
+            var vm = new ReturnOrderEntryViewModel(
+                returnOrderService: returnOrderService,
+                barcodeService: barcodeService,
+                referenceRepo: referenceRepo,
+                audioHelper: audioHelper,
+                registryHelper: registryHelper,
+                sessionValidator: sessionValidator);
+            vm.SuppressMessageBoxes = true;
+
+            var customer = referenceRepo.Customers.First();
+            vm.SetSelectedCustomer(customer);
+
+            // Scan item (Qty = 1)
+            vm.OnBarcodeScanned("8992741982110");
+            Assert.Equal(1, vm.QtyBagus);
+            Assert.Empty(vm.Items);
+
+            // Scan CMD:F10
+            vm.OnBarcodeScanned("CMD:F10");
+
+            // Auto-commits staged item and triggers upload
+            Assert.Equal(1, syncService.UploadCount);
+            var savedOrders = repo.GetFilteredList(DateTime.Today.AddDays(-1), DateTime.Today.AddDays(1)).ToList();
+            Assert.Single(savedOrders);
+            Assert.Equal(StatusSync.Synced, savedOrders[0].StatusSync);
+            Assert.Single(savedOrders[0].Items);
+            Assert.Equal("KECAP BANGO MANIS REFILL 550ML", savedOrders[0].Items[0].BrgName);
+
+            // Form was reset after successful upload
+            Assert.Equal("STATUS: STANDBY", vm.BannerStatus);
+            Assert.Null(vm.CurrentReturnOrderId);
+            Assert.Empty(vm.Items);
+        }
+
+        [Fact]
+        public void BarcodeCommand_ChainedScanMixedBagusAndRusak_AutoCommitsBothLines()
+        {
+            var barcodeService = new InMemoryBarcodeService();
+            barcodeService.RegisterBarcode("8992741982110", "BRG-01", "KECAP BANGO 550ML", "DUS");
+            barcodeService.RegisterBarcode("8998866200112", "BRG-02", "INDOMIE GORENG 85G", "KRT");
+            var audioHelper = new FakeAudioHelper();
+
+            var vm = new ReturnOrderEntryViewModel(
+                returnOrderService: null,
+                barcodeService: barcodeService,
+                referenceRepo: null,
+                audioHelper: audioHelper,
+                registryHelper: null);
+            vm.SuppressMessageBoxes = true;
+
+            // 1. Scan Kecap Bango in Bagus mode -> QtyBagus = 1
+            vm.OnBarcodeScanned("8992741982110");
+            Assert.Equal(1, vm.QtyBagus);
+            Assert.Equal(0, vm.QtyRusak);
+
+            // 2. Switch to Rusak mode and scan Kecap Bango again -> QtyRusak = 1
+            vm.OnBarcodeScanned("CMD:RUSAK");
+            vm.OnBarcodeScanned("8992741982110");
+            Assert.Equal(1, vm.QtyBagus);
+            Assert.Equal(1, vm.QtyRusak);
+            Assert.Empty(vm.Items);
+
+            // 3. Scan Indomie Goreng -> Chained auto-commit should add TWO lines for Kecap Bango (1 BAGUS, 1 RUSAK)
+            vm.OnBarcodeScanned("8998866200112");
+
+            Assert.Equal(2, vm.Items.Count);
+            Assert.Equal(1, vm.Items[0].Qty);
+            Assert.Equal("BAGUS", vm.Items[0].JenisRetur);
+            Assert.Equal("KECAP BANGO 550ML", vm.Items[0].BrgName);
+
+            Assert.Equal(1, vm.Items[1].Qty);
+            Assert.Equal("RUSAK", vm.Items[1].JenisRetur);
+            Assert.Equal("KECAP BANGO 550ML", vm.Items[1].BrgName);
+
+            // Active product is Indomie Goreng in Rusak mode -> initial QtyRusak = 1, QtyBagus = 0
+            Assert.Equal("INDOMIE GORENG 85G", vm.ProductName);
+            Assert.Equal(0, vm.QtyBagus);
+            Assert.Equal(1, vm.QtyRusak);
+
+            // Commit Indomie Goreng
+            vm.OnBarcodeScanned("CMD:ENTER");
+            Assert.Equal(3, vm.Items.Count);
+            Assert.Equal("INDOMIE GORENG 85G", vm.Items[2].BrgName);
+            Assert.Equal("RUSAK", vm.Items[2].JenisRetur);
+            Assert.Equal(1, vm.Items[2].Qty);
+        }
+
+        [Fact]
+        public void BarcodeCommand_ToggleQuantityModeCommand_TogglesCorrectly()
+        {
+            var audioHelper = new FakeAudioHelper();
+            var vm = new ReturnOrderEntryViewModel(
+                returnOrderService: null,
+                barcodeService: null,
+                referenceRepo: null,
+                audioHelper: audioHelper,
+                registryHelper: null);
+
+            Assert.Equal(QuantityEntryMode.Bagus, vm.ActiveQuantityMode);
+            Assert.True(vm.IsModeBagus);
+            Assert.False(vm.IsModeRusak);
+
+            int focusBagusCount = 0;
+            int focusRusakCount = 0;
+            vm.RequestFocusQtyBagus += () => focusBagusCount++;
+            vm.RequestFocusQtyRusak += () => focusRusakCount++;
+
+            // Toggle 1: switches to Rusak
+            Assert.True(vm.ToggleQuantityModeCommand.CanExecute(null));
+            vm.ToggleQuantityModeCommand.Execute(null);
+
+            Assert.Equal(QuantityEntryMode.Rusak, vm.ActiveQuantityMode);
+            Assert.False(vm.IsModeBagus);
+            Assert.True(vm.IsModeRusak);
+            Assert.Equal("[● MODE: QTY RUSAK]", vm.ModeBadgeText);
+            Assert.Equal(1, focusRusakCount);
+            Assert.Equal(0, focusBagusCount);
+
+            // Toggle 2: switches back to Bagus
+            vm.ToggleQuantityModeCommand.Execute(null);
+
+            Assert.Equal(QuantityEntryMode.Bagus, vm.ActiveQuantityMode);
+            Assert.True(vm.IsModeBagus);
+            Assert.False(vm.IsModeRusak);
+            Assert.Equal("[● MODE: QTY BAGUS]", vm.ModeBadgeText);
+            Assert.Equal(1, focusRusakCount);
+            Assert.Equal(1, focusBagusCount);
+        }
+
+        [Fact]
+        public void BarcodeCommand_UnrecognizedCommand_TreatedAsUnknownBarcode()
+        {
+            var barcodeService = new InMemoryBarcodeService();
+            var audioHelper = new FakeAudioHelper();
+            var vm = new ReturnOrderEntryViewModel(
+                returnOrderService: null,
+                barcodeService: barcodeService,
+                referenceRepo: null,
+                audioHelper: audioHelper,
+                registryHelper: null);
+
+            // Scan an unrecognized command string
+            vm.OnBarcodeScanned("CMD:UNKNOWN_ACTION");
+
+            // Should not change mode, should not crash, treated as unknown barcode
+            Assert.Equal(QuantityEntryMode.Bagus, vm.ActiveQuantityMode);
+            Assert.Contains("⚠️ Barcode tidak dikenal", vm.ProductName);
+            Assert.Equal("TIDAK DITEMUKAN", vm.BannerStatus);
+            Assert.True(vm.IsBannerError);
+            Assert.Equal(1, audioHelper.WarningBeepCount);
         }
 
         #endregion

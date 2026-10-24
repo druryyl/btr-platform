@@ -222,75 +222,191 @@
                 BorderThickness="1" CornerRadius="4"
                 Padding="10,6" Margin="0,0,0,6">
             <Grid>
-                <Grid.ColumnDefinitions>
-                    <!-- Satuan Dropdown (90px) -->
-                    <ColumnDefinition Width="90" />
-                    <ColumnDefinition Width="10" />
-                    <!-- Qty Bagus (110px) -->
-                    <ColumnDefinition Width="110" />
-                    <ColumnDefinition Width="10" />
-                    <!-- Qty Rusak (110px) -->
-                    <ColumnDefinition Width="110" />
-                    <ColumnDefinition Width="10" />
-                    <!-- Catatan Item (Fills remaining) -->
-                    <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="12" />
-                    <!-- Action Button (+ Tambah [Enter]) (165px) -->
-                    <ColumnDefinition Width="165" />
-                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
 
-                <!-- 1. Satuan -->
-                <StackPanel Grid.Column="0">
-                    <TextBlock Text="Satuan" Style="{StaticResource Text.Label}" Margin="0,0,0,2" />
-                    <ComboBox x:Name="CboSatuan"
-                              ItemsSource="{Binding PackagingUnits}"
-                              SelectedItem="{Binding SelectedSatuan}"
-                              Height="34" VerticalContentAlignment="Center" />
-                </StackPanel>
+                <!-- Strip Header: Section Label & Mode Pill Button -->
+                <DockPanel Grid.Row="0" Margin="0,0,0,6" LastChildFill="False">
+                    <StackPanel Orientation="Horizontal" DockPanel.Dock="Left" VerticalAlignment="Center">
+                        <TextBlock Text="INPUT KUANTITAS"
+                                   Style="{StaticResource Text.Label}"
+                                   FontWeight="Bold"
+                                   FontSize="11.5"
+                                   Foreground="{DynamicResource Brush.Slate.600}"
+                                   VerticalAlignment="Center" />
+                        <TextBlock Text="• Mode aktif menentukan target scan berulang"
+                                   Style="{StaticResource Text.Subtitle}"
+                                   Margin="8,0,0,0"
+                                   VerticalAlignment="Center" />
+                    </StackPanel>
 
-                <!-- 2. Qty Bagus (NumericTextBox with Green Accent) -->
-                <StackPanel Grid.Column="2">
-                    <TextBlock Text="Qty Bagus" Style="{StaticResource Text.Label}"
-                               Foreground="{DynamicResource Brush.Success.Text}" Margin="0,0,0,2" />
-                    <controls:NumericTextBox x:Name="TxtQtyBagus"
-                                             Value="{Binding QtyBagus, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                                             Minimum="0" Watermark="0"
-                                             Height="34" FontWeight="Bold" FontSize="14"
-                                             BorderBrush="{DynamicResource Brush.Success.Border}"
-                                             ToolTip="Kuantitas barang kondisi layak jual (BAGUS)" />
-                </StackPanel>
+                    <!-- Interactive Mode Pill Button / Badge -->
+                    <Button DockPanel.Dock="Right"
+                            x:Name="BtnModePill"
+                            Command="{Binding ToggleQuantityModeCommand}"
+                            Cursor="Hand"
+                            Focusable="False"
+                            ToolTip="Klik untuk beralih mode kuantitas aktif [CMD:BAGUS / CMD:RUSAK]">
+                        <Button.Style>
+                            <Style TargetType="{x:Type Button}">
+                                <Setter Property="Background" Value="{DynamicResource Brush.Success.Light}" />
+                                <Setter Property="BorderBrush" Value="{DynamicResource Brush.Success}" />
+                                <Setter Property="Foreground" Value="{DynamicResource Brush.Success.Text}" />
+                                <Setter Property="BorderThickness" Value="1.5" />
+                                <Setter Property="Padding" Value="10,3" />
+                                <Setter Property="Template">
+                                    <Setter.Value>
+                                        <ControlTemplate TargetType="{x:Type Button}">
+                                            <Border x:Name="pillBorder"
+                                                    Background="{TemplateBinding Background}"
+                                                    BorderBrush="{TemplateBinding BorderBrush}"
+                                                    BorderThickness="{TemplateBinding BorderThickness}"
+                                                    CornerRadius="12"
+                                                    Padding="{TemplateBinding Padding}"
+                                                    SnapsToDevicePixels="True">
+                                                <TextBlock Text="{Binding ModeBadgeText}"
+                                                           Foreground="{TemplateBinding Foreground}"
+                                                           FontFamily="Segoe UI"
+                                                           FontWeight="Bold"
+                                                           FontSize="11.5"
+                                                           VerticalAlignment="Center"
+                                                           HorizontalAlignment="Center" />
+                                            </Border>
+                                            <ControlTemplate.Triggers>
+                                                <Trigger Property="IsMouseOver" Value="True">
+                                                    <Setter TargetName="pillBorder" Property="Opacity" Value="0.8" />
+                                                </Trigger>
+                                                <Trigger Property="IsPressed" Value="True">
+                                                    <Setter TargetName="pillBorder" Property="Opacity" Value="0.6" />
+                                                </Trigger>
+                                            </ControlTemplate.Triggers>
+                                        </ControlTemplate>
+                                    </Setter.Value>
+                                </Setter>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsModeRusak}" Value="True">
+                                        <Setter Property="Background" Value="{DynamicResource Brush.Danger.Light}" />
+                                        <Setter Property="BorderBrush" Value="{DynamicResource Brush.Danger}" />
+                                        <Setter Property="Foreground" Value="{DynamicResource Brush.Danger.Text}" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Button.Style>
+                    </Button>
+                </DockPanel>
 
-                <!-- 3. Qty Rusak (NumericTextBox with Red Accent) -->
-                <StackPanel Grid.Column="4">
-                    <TextBlock Text="Qty Rusak" Style="{StaticResource Text.Label}"
-                               Foreground="{DynamicResource Brush.Danger.Text}" Margin="0,0,0,2" />
-                    <controls:NumericTextBox x:Name="TxtQtyRusak"
-                                             Value="{Binding QtyRusak, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                                             Minimum="0" Watermark="0"
-                                             Height="34" FontWeight="Bold" FontSize="14"
-                                             BorderBrush="{DynamicResource Brush.Danger.Border}"
-                                             ToolTip="Kuantitas barang kondisi cacat / rusak (RUSAK)" />
-                </StackPanel>
+                <!-- Inputs Row: Satuan, Qty Bagus, Qty Rusak, Catatan, + Tambah -->
+                <Grid Grid.Row="1">
+                    <Grid.ColumnDefinitions>
+                        <!-- Satuan Dropdown (90px) -->
+                        <ColumnDefinition Width="90" />
+                        <ColumnDefinition Width="10" />
+                        <!-- Qty Bagus (110px) -->
+                        <ColumnDefinition Width="110" />
+                        <ColumnDefinition Width="10" />
+                        <!-- Qty Rusak (110px) -->
+                        <ColumnDefinition Width="110" />
+                        <ColumnDefinition Width="10" />
+                        <!-- Catatan Item (Fills remaining) -->
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="12" />
+                        <!-- Action Button (+ Tambah [Enter]) (165px) -->
+                        <ColumnDefinition Width="165" />
+                    </Grid.ColumnDefinitions>
 
-                <!-- 4. Catatan Item -->
-                <StackPanel Grid.Column="6">
-                    <TextBlock Text="Catatan Item (Opsional)" Style="{StaticResource Text.Label}" Margin="0,0,0,2" />
-                    <TextBox x:Name="TxtItemNotes"
-                             Text="{Binding ItemKeterangan, UpdateSourceTrigger=PropertyChanged}"
-                             Height="34" VerticalContentAlignment="Center"
-                             ToolTip="Keterangan kondisi fisik barang (contoh: bungkus sobek, kadaluarsa)" />
-                </StackPanel>
+                    <!-- 1. Satuan -->
+                    <StackPanel Grid.Column="0">
+                        <TextBlock Text="Satuan" Style="{StaticResource Text.Label}" Margin="0,0,0,2" />
+                        <ComboBox x:Name="CboSatuan"
+                                  ItemsSource="{Binding PackagingUnits}"
+                                  SelectedItem="{Binding SelectedSatuan}"
+                                  Height="34" VerticalContentAlignment="Center" />
+                    </StackPanel>
 
-                <!-- 5. + Tambah [Enter] Button (Never clipped, prominent caption) -->
-                <StackPanel Grid.Column="8" VerticalAlignment="Bottom">
-                    <Button x:Name="BtnAddItem"
-                            Content="+ Tambah [Enter]"
-                            Command="{Binding AddItemCommand}"
-                            Height="34" MinWidth="150"
-                            Style="{StaticResource Button.Primary}"
-                            FontWeight="Bold" FontSize="13"
-                            ToolTip="Tambahkan barang ke daftar transaksi intake retur [Enter]" />
-                </StackPanel>
+                    <!-- 2. Qty Bagus (NumericTextBox with Dynamic Green Accent & Glow) -->
+                    <StackPanel Grid.Column="2">
+                        <TextBlock Text="Qty Bagus" Style="{StaticResource Text.Label}"
+                                   Foreground="{DynamicResource Brush.Success.Text}" Margin="0,0,0,2" />
+                        <controls:NumericTextBox x:Name="TxtQtyBagus"
+                                                 Value="{Binding QtyBagus, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                                 Minimum="0" Watermark="0"
+                                                 Height="34" FontWeight="Bold" FontSize="14"
+                                                 ToolTip="Kuantitas barang kondisi layak jual (BAGUS)">
+                            <controls:NumericTextBox.Style>
+                                <Style TargetType="{x:Type controls:NumericTextBox}" BasedOn="{StaticResource {x:Type controls:NumericTextBox}}">
+                                    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Success.Border}" />
+                                    <Setter Property="BorderThickness" Value="1" />
+                                    <Setter Property="Background" Value="{DynamicResource Brush.White}" />
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsModeBagus}" Value="True">
+                                            <Setter Property="BorderBrush" Value="{DynamicResource Brush.Success}" />
+                                            <Setter Property="BorderThickness" Value="2" />
+                                            <Setter Property="Background" Value="{DynamicResource Brush.Success.Light}" />
+                                            <Setter Property="Effect">
+                                                <Setter.Value>
+                                                    <DropShadowEffect Color="#10B981" BlurRadius="6" ShadowDepth="0" Opacity="0.35" />
+                                                </Setter.Value>
+                                            </Setter>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </controls:NumericTextBox.Style>
+                        </controls:NumericTextBox>
+                    </StackPanel>
+
+                    <!-- 3. Qty Rusak (NumericTextBox with Dynamic Red Accent & Glow) -->
+                    <StackPanel Grid.Column="4">
+                        <TextBlock Text="Qty Rusak" Style="{StaticResource Text.Label}"
+                                   Foreground="{DynamicResource Brush.Danger.Text}" Margin="0,0,0,2" />
+                        <controls:NumericTextBox x:Name="TxtQtyRusak"
+                                                 Value="{Binding QtyRusak, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                                 Minimum="0" Watermark="0"
+                                                 Height="34" FontWeight="Bold" FontSize="14"
+                                                 ToolTip="Kuantitas barang kondisi cacat / rusak (RUSAK)">
+                            <controls:NumericTextBox.Style>
+                                <Style TargetType="{x:Type controls:NumericTextBox}" BasedOn="{StaticResource {x:Type controls:NumericTextBox}}">
+                                    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Danger.Border}" />
+                                    <Setter Property="BorderThickness" Value="1" />
+                                    <Setter Property="Background" Value="{DynamicResource Brush.White}" />
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsModeRusak}" Value="True">
+                                            <Setter Property="BorderBrush" Value="{DynamicResource Brush.Danger}" />
+                                            <Setter Property="BorderThickness" Value="2" />
+                                            <Setter Property="Background" Value="{DynamicResource Brush.Danger.Light}" />
+                                            <Setter Property="Effect">
+                                                <Setter.Value>
+                                                    <DropShadowEffect Color="#E11D48" BlurRadius="6" ShadowDepth="0" Opacity="0.35" />
+                                                </Setter.Value>
+                                            </Setter>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </controls:NumericTextBox.Style>
+                        </controls:NumericTextBox>
+                    </StackPanel>
+
+                    <!-- 4. Catatan Item -->
+                    <StackPanel Grid.Column="6">
+                        <TextBlock Text="Catatan Item (Opsional)" Style="{StaticResource Text.Label}" Margin="0,0,0,2" />
+                        <TextBox x:Name="TxtItemNotes"
+                                 Text="{Binding ItemKeterangan, UpdateSourceTrigger=PropertyChanged}"
+                                 Height="34" VerticalContentAlignment="Center"
+                                 ToolTip="Keterangan kondisi fisik barang (contoh: bungkus sobek, kadaluarsa)" />
+                    </StackPanel>
+
+                    <!-- 5. + Tambah [Enter] Button (Never clipped, prominent caption) -->
+                    <StackPanel Grid.Column="8" VerticalAlignment="Bottom">
+                        <Button x:Name="BtnAddItem"
+                                Content="+ Tambah [Enter]"
+                                Command="{Binding AddItemCommand}"
+                                Height="34" MinWidth="150"
+                                Style="{StaticResource Button.Primary}"
+                                FontWeight="Bold" FontSize="13"
+                                ToolTip="Tambahkan barang ke daftar transaksi intake retur [Enter]" />
+                    </StackPanel>
+                </Grid>
             </Grid>
         </Border>
 

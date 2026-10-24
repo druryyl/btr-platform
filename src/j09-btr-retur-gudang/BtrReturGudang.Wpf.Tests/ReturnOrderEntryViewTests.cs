@@ -354,9 +354,9 @@ namespace BtrReturGudang.Wpf.Tests
 
             var vm = new ReturnOrderEntryViewModel(null, barcodeSvc, null, audio, null);
 
-            // Completion Criteria 2: First scan focuses Qty Bagus with text pre-selected; initial Qty = 0
+            // First scan focuses Qty Bagus with text pre-selected; initial Qty = 1 (hands-free ergonomics)
             vm.OnBarcodeScanned("8998866200112");
-            Assert.Equal(0, vm.QtyBagus);
+            Assert.Equal(1, vm.QtyBagus);
             Assert.Equal(1, audio.SuccessBeepCount);
 
             // Second consecutive scan of identical barcode auto-increments to 2

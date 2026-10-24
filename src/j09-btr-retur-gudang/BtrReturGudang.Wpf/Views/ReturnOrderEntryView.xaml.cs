@@ -23,6 +23,7 @@ namespace BtrReturGudang.Wpf.Views
 
             DataContextChanged += OnDataContextChanged;
             Loaded += OnLoaded;
+            Unloaded += OnUnloaded;
 
             // Wire keyboard accelerators in quantity strip inputs
             TxtQtyBagus.PreviewKeyDown += OnQuantityInputKeyDown;
@@ -37,7 +38,24 @@ namespace BtrReturGudang.Wpf.Views
             // By default, if no item is active, focus customer input or wait for scanner
             if (DataContext is ReturnOrderEntryViewModel vm && vm.CurrentScanResult != null)
             {
-                FocusQtyBagus();
+                if (vm.IsModeRusak)
+                {
+                    FocusQtyRusak();
+                }
+                else
+                {
+                    FocusQtyBagus();
+                }
+            }
+        }
+
+        private void OnUnloaded(object sender, RoutedEventArgs e)
+        {
+            if (DataContext is ReturnOrderEntryViewModel vm)
+            {
+                vm.RequestFocusQtyBagus -= FocusQtyBagus;
+                vm.RequestFocusQtyRusak -= FocusQtyRusak;
+                vm.RequestFocusGrid -= FocusGrid;
             }
         }
 
@@ -46,12 +64,14 @@ namespace BtrReturGudang.Wpf.Views
             if (e.OldValue is ReturnOrderEntryViewModel oldVm)
             {
                 oldVm.RequestFocusQtyBagus -= FocusQtyBagus;
+                oldVm.RequestFocusQtyRusak -= FocusQtyRusak;
                 oldVm.RequestFocusGrid -= FocusGrid;
             }
 
             if (e.NewValue is ReturnOrderEntryViewModel newVm)
             {
                 newVm.RequestFocusQtyBagus += FocusQtyBagus;
+                newVm.RequestFocusQtyRusak += FocusQtyRusak;
                 newVm.RequestFocusGrid += FocusGrid;
 
                 if (newVm.CustomerSearchDialogLauncher == null)
@@ -135,6 +155,15 @@ namespace BtrReturGudang.Wpf.Views
             {
                 TxtQtyBagus.Focus();
                 TxtQtyBagus.SelectAll();
+            }));
+        }
+
+        public void FocusQtyRusak()
+        {
+            Dispatcher.BeginInvoke(new Action(() =>
+            {
+                TxtQtyRusak.Focus();
+                TxtQtyRusak.SelectAll();
             }));
         }
 
