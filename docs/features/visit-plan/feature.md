@@ -11,9 +11,9 @@ Business framing: same template serves sales visits and collection routes.
 | Layer | Storage | Mutability | UI |
 | ----- | ------- | ---------- | -- |
 | Template | `BTR_SalesRute*` | Current state; SM4 overwrites slot items | SM4-Rute |
-| Materialized base | `BTR_VisitPlan` | Future rows regenerated on template change; past rows never updated/deleted | SM7 (read-only base grid) |
-| Exceptions | `BTR_VisitPlanException` | CRUD for future dates only | SM7 |
-| Effective plan | Computed | Derived at read time | SM7 (effective grid) |
+| Materialized base | `BTR_VisitPlan` | Future rows regenerated on template change; past rows never updated/deleted | SM7 (Master Rute tab in audit drawer) |
+| Exceptions | `BTR_VisitPlanException` | CRUD for future dates only | SM7 (Riwayat Exception tab in audit drawer) |
+| Effective plan | Computed | Derived at read time | SM7 (Unified Hero Grid) |
 
 ## Cycle Rule
 
