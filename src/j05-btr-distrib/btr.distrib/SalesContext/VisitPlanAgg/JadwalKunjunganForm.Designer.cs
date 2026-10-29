@@ -19,6 +19,7 @@ namespace btr.distrib.SalesContext.VisitPlanAgg
         {
             this.TopPanel = new System.Windows.Forms.Panel();
             this.CycleLabel = new System.Windows.Forms.Label();
+            this.MaterializeButton = new System.Windows.Forms.Button();
             this.RefreshButton = new System.Windows.Forms.Button();
             this.VisitDatePicker = new System.Windows.Forms.DateTimePicker();
             this.VisitDateLabel = new System.Windows.Forms.Label();
@@ -54,6 +55,7 @@ namespace btr.distrib.SalesContext.VisitPlanAgg
             this.TopPanel.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(217)))), ((int)(((byte)(230)))), ((int)(((byte)(242)))));
             this.TopPanel.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             this.TopPanel.Controls.Add(this.CycleLabel);
+            this.TopPanel.Controls.Add(this.MaterializeButton);
             this.TopPanel.Controls.Add(this.RefreshButton);
             this.TopPanel.Controls.Add(this.VisitDatePicker);
             this.TopPanel.Controls.Add(this.VisitDateLabel);
@@ -68,11 +70,20 @@ namespace btr.distrib.SalesContext.VisitPlanAgg
             // CycleLabel
             // 
             this.CycleLabel.AutoSize = true;
-            this.CycleLabel.Location = new System.Drawing.Point(560, 16);
+            this.CycleLabel.Location = new System.Drawing.Point(675, 16);
             this.CycleLabel.Name = "CycleLabel";
             this.CycleLabel.Size = new System.Drawing.Size(12, 16);
-            this.CycleLabel.TabIndex = 5;
+            this.CycleLabel.TabIndex = 6;
             this.CycleLabel.Text = "-";
+            // 
+            // MaterializeButton
+            // 
+            this.MaterializeButton.Location = new System.Drawing.Point(560, 10);
+            this.MaterializeButton.Name = "MaterializeButton";
+            this.MaterializeButton.Size = new System.Drawing.Size(105, 28);
+            this.MaterializeButton.TabIndex = 5;
+            this.MaterializeButton.Text = "Materialisasi";
+            this.MaterializeButton.UseVisualStyleBackColor = true;
             // 
             // RefreshButton
             // 
@@ -271,6 +282,7 @@ namespace btr.distrib.SalesContext.VisitPlanAgg
         private System.Windows.Forms.Panel TopPanel;
         private System.Windows.Forms.Label CycleLabel;
         private System.Windows.Forms.Button RefreshButton;
+        private System.Windows.Forms.Button MaterializeButton;
         private System.Windows.Forms.DateTimePicker VisitDatePicker;
         private System.Windows.Forms.Label VisitDateLabel;
         private System.Windows.Forms.ComboBox SalesComboBox;

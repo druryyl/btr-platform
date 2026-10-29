@@ -51,7 +51,9 @@
     <Reference Include="MediatR.Contracts, Version=2.0.1.0, Culture=neutral, PublicKeyToken=bb9a41a5e8aaa7e2, processorArchitecture=MSIL">
       <HintPath>..\packages\MediatR.Contracts.2.0.1\lib\netstandard2.0\MediatR.Contracts.dll</HintPath>
     </Reference>
-    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="Microsoft.Extensions.DependencyInjection, Version=7.0.0.0, Culture=neutral, PublicKeyToken=adb9793829ddae60, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.Extensions.DependencyInjection.7.0.0\lib\net462\Microsoft.Extensions.DependencyInjection.dll</HintPath>
+    </Reference>
     <Reference Include="Microsoft.Extensions.DependencyInjection.Abstractions, Version=7.0.0.0, Culture=neutral, PublicKeyToken=adb9793829ddae60, processorArchitecture=MSIL">
       <HintPath>..\packages\Microsoft.Extensions.DependencyInjection.Abstractions.7.0.0\lib\net462\Microsoft.Extensions.DependencyInjection.Abstractions.dll</HintPath>
     </Reference>
@@ -123,6 +125,8 @@
     </Reference>
     <Reference Include="System.Xml" />
     <Reference Include="System.Xml.Linq" />
+    <Reference Include="System.Drawing" />
+    <Reference Include="System.Windows.Forms" />
     <Reference Include="xunit.abstractions, Version=2.0.0.0, Culture=neutral, PublicKeyToken=8d05b1bb7a6fdb6c">
       <HintPath>..\packages\xunit.abstractions.2.0.0\lib\net35\xunit.abstractions.dll</HintPath>
     </Reference>
@@ -305,6 +309,7 @@
     <Compile Include="SalesContext\RuteCycleCalendarTest.cs" />
     <Compile Include="SalesContext\EffectiveVisitPlanResolverTest.cs" />
     <Compile Include="SalesContext\RegenerateVisitPlanWorkerTest.cs" />
+    <Compile Include="SalesContext\JadwalKunjunganFormTest.cs" />
     <Compile Include="SalesContext\SalesRuteVisitPlanMaterializationTest.cs" />
     <Compile Include="SalesContext\VisitPlanDalDeleteFutureTest.cs" />
     <Compile Include="SalesContext\SalesOmzetHealthPolicyTest.cs" />
@@ -346,6 +351,10 @@
     <ProjectReference Include="..\btr.nuna\btr.nuna.csproj">
       <Project>{ef0be179-091d-4477-a5e5-7e39910057c3}</Project>
       <Name>btr.nuna</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\btr.distrib\btr.distrib.csproj">
+      <Project>{6884F4FD-C792-4FD2-A3FA-8EC2E3B49E06}</Project>
+      <Name>btr.distrib</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>

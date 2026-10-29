@@ -2,6 +2,7 @@ using btr.application.SalesContext.CustomerAgg.Contracts;
 using btr.application.SalesContext.SalesPersonAgg.Contracts;
 using btr.application.SalesContext.VisitPlanAgg;
 using btr.application.SalesContext.VisitPlanAgg.Services;
+using btr.application.SalesContext.VisitPlanAgg.UseCases;
 using btr.distrib.Helpers;
 using btr.domain.SalesContext.CustomerAgg;
 using btr.domain.SalesContext.SalesPersonAgg;
@@ -25,6 +26,7 @@ namespace btr.distrib.SalesContext.VisitPlanAgg
         private readonly IEffectiveVisitPlanDal _effectiveVisitPlanDal;
         private readonly IVisitPlanExceptionWriter _exceptionWriter;
         private readonly IRuteCycleCalendar _calendar;
+        private readonly IRegenerateVisitPlanWorker _regenerateWorker;
 
         private readonly BindingList<VisitPlanModel> _basePlanRows;
         private readonly BindingList<EffectiveVisitPlanEntry> _effectivePlanRows;
@@ -40,7 +42,8 @@ namespace btr.distrib.SalesContext.VisitPlanAgg
             IVisitPlanExceptionDal exceptionDal,
             IEffectiveVisitPlanDal effectiveVisitPlanDal,
             IVisitPlanExceptionWriter exceptionWriter,
-            IRuteCycleCalendar calendar)
+            IRuteCycleCalendar calendar,
+            IRegenerateVisitPlanWorker regenerateWorker)
         {
             InitializeComponent();
 
@@ -51,6 +54,7 @@ namespace btr.distrib.SalesContext.VisitPlanAgg
             _effectiveVisitPlanDal = effectiveVisitPlanDal;
             _exceptionWriter = exceptionWriter;
             _calendar = calendar;
+            _regenerateWorker = regenerateWorker;
 
             _basePlanRows = new BindingList<VisitPlanModel>();
             _effectivePlanRows = new BindingList<EffectiveVisitPlanEntry>();
@@ -70,6 +74,7 @@ namespace btr.distrib.SalesContext.VisitPlanAgg
         private void RegisterEventHandlers()
         {
             RefreshButton.Click += (_, __) => RefreshPlans();
+            MaterializeButton.Click += MaterializeButton_Click;
             SalesComboBox.SelectedIndexChanged += (_, __) => RefreshPlans();
             VisitDatePicker.ValueChanged += (_, __) => RefreshPlans();
             AddButton.Click += AddButton_Click;
@@ -176,6 +181,60 @@ namespace btr.distrib.SalesContext.VisitPlanAgg
                          ?? Enumerable.Empty<VisitPlanExceptionModel>())
             {
                 _exceptionRows.Add(row);
+            }
+        }
+
+        private void MaterializeButton_Click(object sender, EventArgs e)
+        {
+            if (string.IsNullOrWhiteSpace(SelectedSalesPersonId))
+                return;
+
+            if (SelectedVisitDate < DateTime.Today)
+            {
+                MessageBox.Show("Tanggal kunjungan harus hari ini atau ke depan.", "Materialisasi",
+                    MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            if (SelectedVisitDate.DayOfWeek == DayOfWeek.Sunday)
+            {
+                MessageBox.Show("Hari Minggu tidak memiliki jadwal rute.", "Materialisasi",
+                    MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+
+            Cursor = Cursors.WaitCursor;
+            try
+            {
+                _regenerateWorker.Execute(new RegenerateVisitPlanRequest
+                {
+                    SalesPersonId = SelectedSalesPersonId,
+                    FromDate = SelectedVisitDate,
+                    ToDate = SelectedVisitDate,
+                    AllowPast = false,
+                    TriggeredBy = "SM7Manual"
+                });
+
+                RefreshPlans();
+
+                if (_basePlanRows.Count > 0)
+                {
+                    MessageBox.Show($"Materialisasi berhasil: {_basePlanRows.Count} kunjungan dimuat.",
+                        "Materialisasi", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                }
+                else
+                {
+                    MessageBox.Show("Materialisasi selesai: template tidak memiliki kunjungan untuk rute ini.",
+                        "Materialisasi", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message, "Materialisasi", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+            finally
+            {
+                Cursor = Cursors.Default;
             }
         }
 

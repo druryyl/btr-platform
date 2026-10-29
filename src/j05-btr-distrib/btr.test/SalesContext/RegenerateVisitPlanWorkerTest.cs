@@ -48,6 +48,40 @@ namespace btr.test.SalesContext
         }
 
         [Fact]
+        public void Execute_SingleDateRequest_WithSM7ManualTrigger_ExecutesSuccessfullyAndPopulatesPlan()
+        {
+            var visitPlanDal = new RecordingVisitPlanDal();
+            var sut = CreateWorker(
+                visitPlanDal,
+                CreateTemplate("SP1",
+                    new SalesRuteModel { SalesRuteId = "RT1", SalesPersonId = "SP1", HariRuteId = "H12" },
+                    new SalesRuteItemModel { SalesRuteId = "RT1", CustomerId = "C001", NoUrut = 1 },
+                    new SalesRuteItemModel { SalesRuteId = "RT1", CustomerId = "C002", NoUrut = 2 }));
+
+            sut.Execute(new RegenerateVisitPlanRequest
+            {
+                SalesPersonId = "SP1",
+                FromDate = Today,
+                ToDate = Today,
+                AllowPast = false,
+                TriggeredBy = "SM7Manual"
+            });
+
+            visitPlanDal.DeleteCalls.Should().ContainSingle();
+            visitPlanDal.DeleteCalls[0].SalesPersonId.Should().Be("SP1");
+            visitPlanDal.DeleteCalls[0].FromDate.Should().Be(Today);
+            visitPlanDal.DeleteCalls[0].ToDate.Should().Be(Today);
+
+            visitPlanDal.InsertedRows.Should().HaveCount(2);
+            visitPlanDal.InsertedRows.Should().OnlyContain(x =>
+                x.SalesPersonId == "SP1" &&
+                x.VisitDate == Today &&
+                x.HariRuteId == "H12" &&
+                x.PlanSource == "Template");
+            visitPlanDal.InsertedRows.Select(x => x.CustomerId).Should().BeEquivalentTo("C001", "C002");
+        }
+
+        [Fact]
         public void Execute_SkipsSunday()
         {
             var visitPlanDal = new RecordingVisitPlanDal();
