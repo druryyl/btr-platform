@@ -89,9 +89,9 @@ BEGIN
     CREATE TABLE BTRG_Barang (
         BrgId            VARCHAR(20)   NOT NULL PRIMARY KEY,
         BrgName          VARCHAR(100)  NOT NULL,
-        Satuan1          VARCHAR(7)    NULL,
-        Satuan2          VARCHAR(7)    NULL,
-        Satuan3          VARCHAR(7)    NULL,
+        SatBesar         VARCHAR(7)    NULL,
+        SatKecil         VARCHAR(7)    NULL,
+        Konversi         INT           NOT NULL CONSTRAINT DF_BTRG_Barang_Konversi DEFAULT 1,
         IsActive         BIT           NOT NULL CONSTRAINT DF_BTRG_Barang_IsActive DEFAULT 1
     );
 END;

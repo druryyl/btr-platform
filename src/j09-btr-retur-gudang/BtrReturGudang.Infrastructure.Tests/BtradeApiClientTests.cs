@@ -383,7 +383,8 @@ namespace BtrReturGudang.Infrastructure.Tests
             ""brgId"": ""B001"",
             ""brgName"": ""Indomie Goreng"",
             ""satBesar"": ""Dus"",
-            ""satKecil"": ""Pcs""
+            ""satKecil"": ""Pcs"",
+            ""konversi"": 24
         }
     ]
 }";
@@ -393,8 +394,55 @@ namespace BtrReturGudang.Infrastructure.Tests
             Assert.Single(list);
             Assert.Equal("B001", list[0].BrgId);
             Assert.Equal("Indomie Goreng", list[0].BrgName);
-            Assert.Equal("Dus", list[0].Satuan1);
-            Assert.Equal("Pcs", list[0].Satuan2);
+            Assert.Equal("Dus", list[0].SatBesar);
+            Assert.Equal("Pcs", list[0].SatKecil);
+            Assert.Equal(24, list[0].Konversi);
+        }
+
+        [Fact]
+        public void ParseBarang_WhenKonversiIsStringOrMissing_ParsesOrDefaultsToOne()
+        {
+            var json = @"
+{
+    ""status"": ""success"",
+    ""data"": [
+        {
+            ""brgId"": ""B001"",
+            ""brgName"": ""Item With String Konversi"",
+            ""satBesar"": ""Dus"",
+            ""satKecil"": ""Pcs"",
+            ""konversi"": ""12""
+        },
+        {
+            ""brgId"": ""B002"",
+            ""brgName"": ""Item With Missing Konversi"",
+            ""satBesar"": ""Pack"",
+            ""satKecil"": ""Pcs""
+        },
+        {
+            ""brgId"": ""B003"",
+            ""brgName"": ""Item With Zero Konversi"",
+            ""satBesar"": ""Dus"",
+            ""satKecil"": ""Pcs"",
+            ""konversi"": 0
+        },
+        {
+            ""brgId"": ""B004"",
+            ""brgName"": ""Item With Negative Konversi"",
+            ""satBesar"": ""Dus"",
+            ""satKecil"": ""Pcs"",
+            ""konversi"": -5
+        }
+    ]
+}";
+
+            var list = BtradeApiClient.ParseBarang(json);
+
+            Assert.Equal(4, list.Count);
+            Assert.Equal(12, list[0].Konversi);
+            Assert.Equal(1, list[1].Konversi);
+            Assert.Equal(1, list[2].Konversi);
+            Assert.Equal(1, list[3].Konversi);
         }
 
         [Fact]

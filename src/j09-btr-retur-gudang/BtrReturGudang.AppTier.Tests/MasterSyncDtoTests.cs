@@ -15,8 +15,8 @@ namespace BtrReturGudang.AppTier.Tests
                 ServerId = "JOGJA",
                 Items = new List<BarangDto>
                 {
-                    new BarangDto { BrgId = "B1", BrgName = "Item 1", Satuan1 = "PCS" },
-                    new BarangDto { BrgId = "B2", BrgName = "Item 2", Satuan1 = "DUS" }
+                    new BarangDto { BrgId = "B1", BrgName = "Item 1", SatBesar = "PCS" },
+                    new BarangDto { BrgId = "B2", BrgName = "Item 2", SatBesar = "DUS" }
                 },
                 Barcodes = new List<BarcodeDto>
                 {
@@ -42,6 +42,44 @@ namespace BtrReturGudang.AppTier.Tests
             Assert.Equal(1, dto.TotalDriverCount);
             Assert.Equal(1, dto.TotalSalesPersonCount);
             Assert.Equal("JOGJA", dto.ServerId);
+        }
+
+        [Fact]
+        public void BarangDto_MapsToAndFromDomain_PreservingSatBesarAndSatKecil()
+        {
+            var barang = new BtrReturGudang.Domain.Entities.Barang(
+                "BRG-001",
+                "Indomie Goreng",
+                "DUS",
+                "PCS",
+                konversi: 24,
+                isActive: true);
+
+            var dto = BarangDto.FromDomain(barang);
+
+            Assert.NotNull(dto);
+            Assert.Equal("BRG-001", dto.BrgId);
+            Assert.Equal("Indomie Goreng", dto.BrgName);
+            Assert.Equal("DUS", dto.SatBesar);
+            Assert.Equal("PCS", dto.SatKecil);
+            Assert.Equal(24, dto.Konversi);
+            Assert.True(dto.IsActive);
+
+            var roundTrip = dto.ToDomain();
+            Assert.NotNull(roundTrip);
+            Assert.Equal("BRG-001", roundTrip.BrgId);
+            Assert.Equal("Indomie Goreng", roundTrip.BrgName);
+            Assert.Equal("DUS", roundTrip.SatBesar);
+            Assert.Equal("PCS", roundTrip.SatKecil);
+            Assert.Equal(24, roundTrip.Konversi);
+            Assert.True(roundTrip.IsActive);
+        }
+
+        [Fact]
+        public void BarangDto_DefaultsKonversiToOne()
+        {
+            var dto = new BarangDto();
+            Assert.Equal(1, dto.Konversi);
         }
 
         [Fact]

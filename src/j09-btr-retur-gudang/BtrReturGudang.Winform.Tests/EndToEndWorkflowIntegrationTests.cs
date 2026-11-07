@@ -126,7 +126,7 @@ namespace BtrReturGudang.Winform.Tests
                 var fixture = new TestWorkflowFixture();
 
                 // Seed master product (not yet mapped to the barcode)
-                fixture.SeedProductMaster("BRG-002", "Sari Roti Tawar Spesial", "Pak", "Dus", "Pcs");
+                fixture.SeedProductMaster("BRG-002", "Sari Roti Tawar Spesial", "Pak", "Dus");
 
                 using (var entryView = fixture.CreateIntakeView())
                 {
@@ -147,7 +147,7 @@ namespace BtrReturGudang.Winform.Tests
                             audioHelper: fixture.AudioHelper))
                         {
                             // Operator selects product, unit, and multiplier in dialog
-                            dlg.SetItems(new[] { new Barang("BRG-002", "Sari Roti Tawar Spesial", "Pak", "Dus", "Pcs") });
+                            dlg.SetItems(new[] { new Barang("BRG-002", "Sari Roti Tawar Spesial", "Pak", "Dus") });
                             dlg.SatuanComboBox.SelectedItem = "Pak";
                             dlg.PengaliNumeric.Value = 1m;
 
@@ -206,7 +206,7 @@ namespace BtrReturGudang.Winform.Tests
                 var fixture = new TestWorkflowFixture();
 
                 // Seed master product in BTRG_Barang cache
-                fixture.SeedProductMaster("BRG-003", "Kopi Kapal Api Special Mix", "Dus", "Renteng", "Sachet");
+                fixture.SeedProductMaster("BRG-003", "Kopi Kapal Api Special Mix", "Dus", "Renteng");
 
                 using (var entryView = fixture.CreateIntakeView())
                 {
@@ -215,7 +215,7 @@ namespace BtrReturGudang.Winform.Tests
                     {
                         using (var dlg = new ManualItemSearchDialog(fixture.ReferenceRepo, fixture.AudioHelper))
                         {
-                            dlg.SetItems(new[] { new Barang("BRG-003", "Kopi Kapal Api Special Mix", "Dus", "Renteng", "Sachet") });
+                            dlg.SetItems(new[] { new Barang("BRG-003", "Kopi Kapal Api Special Mix", "Dus", "Renteng") });
                             dlg.SatuanComboBox.SelectedItem = "Dus";
 
                             dlg.ConfirmSelection();
@@ -581,9 +581,9 @@ namespace BtrReturGudang.Winform.Tests
                 OrderService = new ReturnOrderService(ReturnOrderRepo, SyncService);
             }
 
-            public void SeedProductMaster(string brgId, string brgName, string sat1, string sat2 = null, string sat3 = null)
+            public void SeedProductMaster(string brgId, string brgName, string satBesar, string satKecil = null)
             {
-                var barang = new Barang(brgId, brgName, sat1, sat2, sat3, true);
+                var barang = new Barang(brgId, brgName, satBesar, satKecil, true);
                 ReferenceRepo.BulkUpsertBarang(new[] { barang });
             }
 

@@ -7,9 +7,9 @@ namespace BtrReturGudang.AppTier.DTOs
     {
         public string BrgId { get; set; }
         public string BrgName { get; set; }
-        public string Satuan1 { get; set; }
-        public string Satuan2 { get; set; }
-        public string Satuan3 { get; set; }
+        public string SatBesar { get; set; }
+        public string SatKecil { get; set; }
+        public int Konversi { get; set; } = 1;
         public bool IsActive { get; set; } = true;
 
         public static BarangDto FromDomain(Barang barang)
@@ -19,16 +19,16 @@ namespace BtrReturGudang.AppTier.DTOs
             {
                 BrgId = barang.BrgId,
                 BrgName = barang.BrgName,
-                Satuan1 = barang.Satuan1,
-                Satuan2 = barang.Satuan2,
-                Satuan3 = barang.Satuan3,
+                SatBesar = barang.SatBesar,
+                SatKecil = barang.SatKecil,
+                Konversi = barang.Konversi,
                 IsActive = barang.IsActive
             };
         }
 
         public Barang ToDomain()
         {
-            return new Barang(BrgId, BrgName, Satuan1, Satuan2, Satuan3, IsActive);
+            return new Barang(BrgId, BrgName, SatBesar, SatKecil, Konversi, IsActive);
         }
     }
 

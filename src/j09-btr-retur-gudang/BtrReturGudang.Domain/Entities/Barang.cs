@@ -11,33 +11,56 @@ namespace BtrReturGudang.Domain.Entities
     {
         public string BrgId { get; private set; }
         public string BrgName { get; private set; }
-        public string Satuan1 { get; private set; }
-        public string Satuan2 { get; private set; }
-        public string Satuan3 { get; private set; }
+        public string SatBesar { get; private set; }
+        public string SatKecil { get; private set; }
+        public int Konversi { get; private set; }
         public bool IsActive { get; private set; }
 
         public Barang()
         {
+            Konversi = 1;
         }
 
-        public Barang(string brgId, string brgName, string satuan1 = null, string satuan2 = null, string satuan3 = null, bool isActive = true)
+        public Barang(string brgId, string brgName, string satBesar = null, string satKecil = null, int konversi = 1, bool isActive = true)
         {
             BrgId = brgId;
             BrgName = brgName;
-            Satuan1 = satuan1;
-            Satuan2 = satuan2;
-            Satuan3 = satuan3;
+            SatBesar = satBesar;
+            SatKecil = satKecil;
+            Konversi = konversi <= 0 ? 1 : konversi;
             IsActive = isActive;
         }
 
         /// <summary>
-        /// Returns all non-empty packaging units configured for this item.
+        /// Returns all non-empty, distinct packaging units configured for this item.
         /// </summary>
         public IEnumerable<string> GetAvailableUnits()
         {
-            if (!string.IsNullOrWhiteSpace(Satuan1)) yield return Satuan1;
-            if (!string.IsNullOrWhiteSpace(Satuan2)) yield return Satuan2;
-            if (!string.IsNullOrWhiteSpace(Satuan3)) yield return Satuan3;
+            if (!string.IsNullOrWhiteSpace(SatBesar))
+                yield return SatBesar;
+            if (!string.IsNullOrWhiteSpace(SatKecil) && !string.Equals(SatBesar, SatKecil, StringComparison.OrdinalIgnoreCase))
+                yield return SatKecil;
+        }
+
+        /// <summary>
+        /// Resolves the conversion multiplier to base unit (Pcs) for the given packaging unit.
+        /// Returns Konversi for SatBesar, 1 for SatKecil, and 1 as fallback.
+        /// </summary>
+        public int GetConversionForUnit(string satuan)
+        {
+            if (string.IsNullOrWhiteSpace(satuan)) return 1;
+
+            if (!string.IsNullOrWhiteSpace(SatBesar) && string.Equals(satuan, SatBesar, StringComparison.OrdinalIgnoreCase))
+            {
+                return Konversi > 0 ? Konversi : 1;
+            }
+
+            if (!string.IsNullOrWhiteSpace(SatKecil) && string.Equals(satuan, SatKecil, StringComparison.OrdinalIgnoreCase))
+            {
+                return 1;
+            }
+
+            return 1;
         }
     }
 }

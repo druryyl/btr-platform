@@ -314,7 +314,7 @@ namespace BtrReturGudang.Infrastructure.Tests
                 },
                 Items = new List<BarangDto>
                 {
-                    new BarangDto { BrgId = "BRG-01", BrgName = "Kopi", Satuan1 = "Dus", Satuan2 = "Pcs" }
+                    new BarangDto { BrgId = "BRG-01", BrgName = "Kopi", SatBesar = "Dus", SatKecil = "Pcs" }
                 },
                 Customers = new List<CustomerDto>
                 {

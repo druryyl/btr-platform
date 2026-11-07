@@ -356,9 +356,9 @@ namespace BtrReturGudang.Winform.Views
                 int rowIndex = _dgvItems.Rows.Add(
                     item.BrgId,
                     item.BrgName,
-                    item.Satuan1 ?? "-",
-                    item.Satuan2 ?? "-",
-                    item.Satuan3 ?? "-");
+                    item.SatBesar ?? "-",
+                    item.SatKecil ?? "-",
+                    "-");
                 _dgvItems.Rows[rowIndex].Tag = item;
             }
 

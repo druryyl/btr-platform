@@ -237,8 +237,8 @@ namespace BtrReturGudang.Wpf.Tests
         public async Task ManualItemSearchViewModel_PerformSearchAsync_QueriesRepoAndSelectsFirstItem()
         {
             var fakeRepo = new FakeReferenceRepo();
-            fakeRepo.BarangCatalog.Add(new Barang("BRG-01", "Indomie Goreng Spesial", "Dus", "Pak", "Pcs"));
-            fakeRepo.BarangCatalog.Add(new Barang("BRG-02", "Sari Roti Tawar Gandum", "Pak", "Pcs", null));
+            fakeRepo.BarangCatalog.Add(new Barang("BRG-01", "Indomie Goreng Spesial", "Dus", "Pcs"));
+            fakeRepo.BarangCatalog.Add(new Barang("BRG-02", "Sari Roti Tawar Gandum", "Pak", "Pcs"));
             var audio = new FakeAudioHelper();
 
             var vm = new ManualItemSearchViewModel(fakeRepo, audio);
@@ -262,7 +262,7 @@ namespace BtrReturGudang.Wpf.Tests
             bool closeOkTriggered = false;
             vm.RequestCloseOk += () => closeOkTriggered = true;
 
-            vm.SetItems(new[] { new Barang("B-99", "Teh Botol Sosro", "Dus", "Btl", "Pcs") });
+            vm.SetItems(new[] { new Barang("B-99", "Teh Botol Sosro", "Dus", "Pcs") });
 
             Assert.NotNull(vm.SelectedBarang);
             var success = vm.ConfirmSelection();
@@ -295,8 +295,8 @@ namespace BtrReturGudang.Wpf.Tests
                 var dlg = new ManualItemSearchDialog(new FakeReferenceRepo(), new FakeAudioHelper());
                 var items = new List<Barang>
                 {
-                    new Barang("BRG-01", "Kopi Kapal Api Special", "Dus", "Renteng", "Sachet"),
-                    new Barang("BRG-02", "Susu Dancow Coklat", "Dus", "Box", null)
+                    new Barang("BRG-01", "Kopi Kapal Api Special", "Dus", "Sachet"),
+                    new Barang("BRG-02", "Susu Dancow Coklat", "Dus", "Box")
                 };
 
                 dlg.SetItems(items);
@@ -315,7 +315,7 @@ namespace BtrReturGudang.Wpf.Tests
             ExecuteInStaThread(() =>
             {
                 var dlg = new ManualItemSearchDialog(new FakeReferenceRepo(), new FakeAudioHelper());
-                dlg.SetItems(new[] { new Barang("BRG-01", "Susu Ultra Milk", "Dus", "Pak", "Pcs") });
+                dlg.SetItems(new[] { new Barang("BRG-01", "Susu Ultra Milk", "Dus", "Pcs") });
 
                 dlg.SatuanComboBox.SelectedItem = "Pcs";
 
@@ -366,7 +366,7 @@ namespace BtrReturGudang.Wpf.Tests
                 registryHelper: reg,
                 audioHelper: audio);
 
-            vm.SetItems(new[] { new Barang("BRG-ABC", "Kecap Manis ABC", "Dus", "Btl", "Pcs") });
+            vm.SetItems(new[] { new Barang("BRG-ABC", "Kecap Manis ABC", "Dus", "Pcs") });
             vm.SelectedSatuan = "Dus";
             vm.Pengali = 12m;
 
@@ -385,6 +385,27 @@ namespace BtrReturGudang.Wpf.Tests
             Assert.Equal("Dus", vm.RegisteredResult.Satuan);
             Assert.Equal(12m, vm.RegisteredResult.Pengali);
             Assert.True(audio.SuccessCount > 0);
+        }
+
+        [Fact]
+        public void QuickBarcodeRegistrationViewModel_SetSelectedItem_PopulatesPackagingUnitsAndAutoSelectsSatBesar()
+        {
+            var vm = new QuickBarcodeRegistrationViewModel("899111222333");
+            Assert.Empty(vm.PackagingUnits);
+            Assert.Null(vm.SelectedSatuan);
+            Assert.False(vm.HasPackagingUnits);
+
+            var item = new Barang("BRG-KOPI", "Kopi ABC Susu", "Dus", "Renceng");
+            vm.SetItems(new[] { item });
+
+            // PackagingUnits populated dynamically via GetAvailableUnits()
+            Assert.Equal(2, vm.PackagingUnits.Count);
+            Assert.Contains("Dus", vm.PackagingUnits);
+            Assert.Contains("Renceng", vm.PackagingUnits);
+            Assert.True(vm.HasPackagingUnits);
+
+            // SatBesar is auto-selected
+            Assert.Equal("Dus", vm.SelectedSatuan);
         }
 
         [Fact]
@@ -414,6 +435,40 @@ namespace BtrReturGudang.Wpf.Tests
             });
         }
 
+        [Fact]
+        public void QuickBarcodeRegistrationViewModel_SettingSelectedBarang_AutoCalculatesPengaliForSatBesarAndSatKecil()
+        {
+            var vm = new QuickBarcodeRegistrationViewModel("8991234567890");
+            var item = new Barang("BRG-X", "Snack Box", satBesar: "DUS", satKecil: "PCS", konversi: 24);
+            vm.SelectedBarang = item;
+
+            Assert.Equal("DUS", vm.SelectedSatuan);
+            Assert.Equal(24m, vm.Pengali);
+
+            vm.SelectedSatuan = "PCS";
+            Assert.Equal(1m, vm.Pengali);
+        }
+
+        [Fact]
+        public void QuickBarcodeRegistrationDialog_TxtPengali_IsReadOnly()
+        {
+            ExecuteInStaThread(() =>
+            {
+                var dlg = new QuickBarcodeRegistrationDialog("8991234567890");
+                Assert.True(dlg.TxtPengali.IsReadOnly);
+            });
+        }
+
+        [Fact]
+        public void BarcodeRegistrationDialog_TxtPengali_IsReadOnly()
+        {
+            ExecuteInStaThread(() =>
+            {
+                var dlg = new BarcodeRegistrationDialog();
+                Assert.True(dlg.TxtPengali.IsReadOnly);
+            });
+        }
+
         #endregion
 
         #region Intake Strip Integration Tests (SCR-02 with SCR-03 and SCR-04)
@@ -433,7 +488,7 @@ namespace BtrReturGudang.Wpf.Tests
                 sessionValidator: null);
 
             // Configure manual search launcher returning Indomie
-            vm.ManualSearchDialogLauncher = () => new Barang("BRG-MANUAL", "Indomie Kari Ayam", "Dus", "Pak", "Pcs");
+            vm.ManualSearchDialogLauncher = () => new Barang("BRG-MANUAL", "Indomie Kari Ayam", "Dus", "Pcs");
 
             vm.TriggerManualItemSearch();
 
@@ -504,7 +559,7 @@ namespace BtrReturGudang.Wpf.Tests
                 vm.ManualSearchDialogLauncher = () =>
                 {
                     searchTriggered = true;
-                    return new Barang("BRG-F2", "Wafer Tango Cokelat", "Dus", null, null);
+                    return new Barang("BRG-F2", "Wafer Tango Cokelat", "Dus", null);
                 };
 
                 var view = new ReturnOrderEntryView { DataContext = vm };

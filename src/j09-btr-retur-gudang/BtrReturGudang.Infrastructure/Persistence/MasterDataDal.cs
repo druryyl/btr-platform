@@ -46,16 +46,16 @@ IF EXISTS (SELECT 1 FROM BTRG_Barang WHERE BrgId = @BrgId)
 BEGIN
     UPDATE BTRG_Barang
     SET BrgName = @BrgName,
-        Satuan1 = @Satuan1,
-        Satuan2 = @Satuan2,
-        Satuan3 = @Satuan3,
+        SatBesar = @SatBesar,
+        SatKecil = @SatKecil,
+        Konversi = @Konversi,
         IsActive = @IsActive
     WHERE BrgId = @BrgId;
 END
 ELSE
 BEGIN
-    INSERT INTO BTRG_Barang (BrgId, BrgName, Satuan1, Satuan2, Satuan3, IsActive)
-    VALUES (@BrgId, @BrgName, @Satuan1, @Satuan2, @Satuan3, @IsActive);
+    INSERT INTO BTRG_Barang (BrgId, BrgName, SatBesar, SatKecil, Konversi, IsActive)
+    VALUES (@BrgId, @BrgName, @SatBesar, @SatKecil, @Konversi, @IsActive);
 END;";
 
                         conn.Execute(sql, list, tran);
@@ -88,16 +88,16 @@ IF EXISTS (SELECT 1 FROM BTRG_Barang WHERE BrgId = @BrgId)
 BEGIN
     UPDATE BTRG_Barang
     SET BrgName = @BrgName,
-        Satuan1 = @Satuan1,
-        Satuan2 = @Satuan2,
-        Satuan3 = @Satuan3,
+        SatBesar = @SatBesar,
+        SatKecil = @SatKecil,
+        Konversi = @Konversi,
         IsActive = @IsActive
     WHERE BrgId = @BrgId;
 END
 ELSE
 BEGIN
-    INSERT INTO BTRG_Barang (BrgId, BrgName, Satuan1, Satuan2, Satuan3, IsActive)
-    VALUES (@BrgId, @BrgName, @Satuan1, @Satuan2, @Satuan3, @IsActive);
+    INSERT INTO BTRG_Barang (BrgId, BrgName, SatBesar, SatKecil, Konversi, IsActive)
+    VALUES (@BrgId, @BrgName, @SatBesar, @SatKecil, @Konversi, @IsActive);
 END;";
 
                         await conn.ExecuteAsync(sql, list, tran).ConfigureAwait(false);
@@ -119,7 +119,7 @@ END;";
             {
                 conn.Open();
                 const string sql = @"
-SELECT BrgId, BrgName, Satuan1, Satuan2, Satuan3, IsActive
+SELECT BrgId, BrgName, SatBesar, SatKecil, Konversi, IsActive
 FROM BTRG_Barang
 WHERE (BrgId LIKE @Keyword OR BrgName LIKE @Keyword) AND IsActive = 1
 ORDER BY BrgName;";
@@ -136,7 +136,7 @@ ORDER BY BrgName;";
             {
                 await conn.OpenAsync().ConfigureAwait(false);
                 const string sql = @"
-SELECT BrgId, BrgName, Satuan1, Satuan2, Satuan3, IsActive
+SELECT BrgId, BrgName, SatBesar, SatKecil, Konversi, IsActive
 FROM BTRG_Barang
 WHERE (BrgId LIKE @Keyword OR BrgName LIKE @Keyword) AND IsActive = 1
 ORDER BY BrgName;";
@@ -154,7 +154,7 @@ ORDER BY BrgName;";
             {
                 conn.Open();
                 const string sql = @"
-SELECT BrgId, BrgName, Satuan1, Satuan2, Satuan3, IsActive
+SELECT BrgId, BrgName, SatBesar, SatKecil, Konversi, IsActive
 FROM BTRG_Barang
 WHERE BrgId = @BrgId;";
 
@@ -171,7 +171,7 @@ WHERE BrgId = @BrgId;";
             {
                 await conn.OpenAsync().ConfigureAwait(false);
                 const string sql = @"
-SELECT BrgId, BrgName, Satuan1, Satuan2, Satuan3, IsActive
+SELECT BrgId, BrgName, SatBesar, SatKecil, Konversi, IsActive
 FROM BTRG_Barang
 WHERE BrgId = @BrgId;";
 
@@ -568,7 +568,7 @@ ORDER BY SalesPersonName;";
 
         private static Barang MapToBarang(BarangRow row)
         {
-            return new Barang(row.BrgId, row.BrgName, row.Satuan1, row.Satuan2, row.Satuan3, row.IsActive);
+            return new Barang(row.BrgId, row.BrgName, row.SatBesar, row.SatKecil, row.Konversi, row.IsActive);
         }
 
         private static Customer MapToCustomer(CustomerRow row)
@@ -595,9 +595,9 @@ ORDER BY SalesPersonName;";
         {
             public string BrgId { get; set; }
             public string BrgName { get; set; }
-            public string Satuan1 { get; set; }
-            public string Satuan2 { get; set; }
-            public string Satuan3 { get; set; }
+            public string SatBesar { get; set; }
+            public string SatKecil { get; set; }
+            public int Konversi { get; set; }
             public bool IsActive { get; set; }
         }
 

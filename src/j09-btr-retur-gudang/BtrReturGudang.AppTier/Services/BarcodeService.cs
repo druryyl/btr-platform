@@ -60,7 +60,7 @@ namespace BtrReturGudang.AppTier.Services
                         normalized,
                         barang.BrgId,
                         barang.BrgName,
-                        barang.Satuan1 ?? "PCS",
+                        barang.SatBesar ?? barang.SatKecil ?? "PCS",
                         1.0m,
                         barang.IsActive);
                 }
@@ -101,7 +101,7 @@ namespace BtrReturGudang.AppTier.Services
                         normalized,
                         barang.BrgId,
                         barang.BrgName,
-                        barang.Satuan1 ?? "PCS",
+                        barang.SatBesar ?? barang.SatKecil ?? "PCS",
                         1.0m,
                         barang.IsActive);
                 }

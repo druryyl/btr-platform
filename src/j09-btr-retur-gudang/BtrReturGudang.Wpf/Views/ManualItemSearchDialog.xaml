@@ -101,29 +101,24 @@
                         </DataGridTextColumn.ElementStyle>
                     </DataGridTextColumn>
 
-                    <DataGridTextColumn Header="Satuan 1" Binding="{Binding Satuan1}" Width="75">
+                    <DataGridTextColumn Header="Satuan Besar" Binding="{Binding SatBesar}" Width="85">
                         <DataGridTextColumn.ElementStyle>
                             <Style TargetType="TextBlock">
+                                <Setter Property="VerticalAlignment" Value="Center" />
+                                <Setter Property="HorizontalAlignment" Value="Right" />
+                                <Setter Property="Padding" Value="4,0,8,0" />
                                 <Setter Property="Foreground" Value="{DynamicResource Brush.Slate.600}" />
-                                <Setter Property="Padding" Value="6,4" />
                             </Style>
                         </DataGridTextColumn.ElementStyle>
                     </DataGridTextColumn>
 
-                    <DataGridTextColumn Header="Satuan 2" Binding="{Binding Satuan2}" Width="75">
+                    <DataGridTextColumn Header="Satuan Kecil" Binding="{Binding SatKecil}" Width="85">
                         <DataGridTextColumn.ElementStyle>
                             <Style TargetType="TextBlock">
-                                <Setter Property="Foreground" Value="{DynamicResource Brush.Slate.500}" />
-                                <Setter Property="Padding" Value="6,4" />
-                            </Style>
-                        </DataGridTextColumn.ElementStyle>
-                    </DataGridTextColumn>
-
-                    <DataGridTextColumn Header="Satuan 3" Binding="{Binding Satuan3}" Width="75">
-                        <DataGridTextColumn.ElementStyle>
-                            <Style TargetType="TextBlock">
-                                <Setter Property="Foreground" Value="{DynamicResource Brush.Slate.500}" />
-                                <Setter Property="Padding" Value="6,4" />
+                                <Setter Property="VerticalAlignment" Value="Center" />
+                                <Setter Property="HorizontalAlignment" Value="Right" />
+                                <Setter Property="Padding" Value="4,0,8,0" />
+                                <Setter Property="Foreground" Value="{DynamicResource Brush.Slate.600}" />
                             </Style>
                         </DataGridTextColumn.ElementStyle>
                     </DataGridTextColumn>

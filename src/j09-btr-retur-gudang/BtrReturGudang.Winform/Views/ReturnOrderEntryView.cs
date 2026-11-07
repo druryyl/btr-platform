@@ -1054,9 +1054,8 @@ namespace BtrReturGudang.Winform.Views
                     var barang = _referenceRepo.GetBarangById(lookup.BrgId);
                     if (barang != null)
                     {
-                        if (!string.IsNullOrWhiteSpace(barang.Satuan1)) units.Add(barang.Satuan1);
-                        if (!string.IsNullOrWhiteSpace(barang.Satuan2)) units.Add(barang.Satuan2);
-                        if (!string.IsNullOrWhiteSpace(barang.Satuan3)) units.Add(barang.Satuan3);
+                        if (!string.IsNullOrWhiteSpace(barang.SatBesar)) units.Add(barang.SatBesar);
+                        if (!string.IsNullOrWhiteSpace(barang.SatKecil) && !string.Equals(barang.SatBesar, barang.SatKecil, StringComparison.OrdinalIgnoreCase)) units.Add(barang.SatKecil);
                     }
                 }
                 catch
@@ -1607,7 +1606,7 @@ namespace BtrReturGudang.Winform.Views
             string effectiveSatuan = selectedSatuan;
             if (string.IsNullOrWhiteSpace(effectiveSatuan))
             {
-                effectiveSatuan = item.Satuan1 ?? "Pcs";
+                effectiveSatuan = item.SatBesar ?? item.SatKecil ?? "Pcs";
             }
 
             var lookup = BarcodeLookupResult.Hit(

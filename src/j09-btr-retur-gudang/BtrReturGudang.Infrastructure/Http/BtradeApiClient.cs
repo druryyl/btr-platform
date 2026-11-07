@@ -515,6 +515,25 @@ namespace BtrReturGudang.Infrastructure.Http
             return string.Empty;
         }
 
+        private static int GetIntProp(JsonElement elem, int defaultValue = 1, params string[] propNames)
+        {
+            foreach (var name in propNames)
+            {
+                if (elem.TryGetProperty(name, out var val))
+                {
+                    if (val.ValueKind == JsonValueKind.Number && val.TryGetInt32(out var intVal))
+                    {
+                        return intVal > 0 ? intVal : defaultValue;
+                    }
+                    if (val.ValueKind == JsonValueKind.String && int.TryParse(val.GetString(), out var parsed) && parsed > 0)
+                    {
+                        return parsed;
+                    }
+                }
+            }
+            return defaultValue;
+        }
+
         public static List<BarcodeDto> ParseBarcodes(string json)
         {
             var list = new List<BarcodeDto>();
@@ -587,7 +606,7 @@ namespace BtrReturGudang.Infrastructure.Http
                 var brgName = GetStringProp(item, "brgName", "BrgName");
                 var satBesar = GetStringProp(item, "satBesar", "SatBesar", "satuan1", "Satuan1");
                 var satKecil = GetStringProp(item, "satKecil", "SatKecil", "satuan2", "Satuan2");
-                var sat3 = GetStringProp(item, "satuan3", "Satuan3");
+                var konversi = GetIntProp(item, 1, "konversi", "Konversi");
 
                 if (!string.IsNullOrWhiteSpace(brgId))
                 {
@@ -595,9 +614,9 @@ namespace BtrReturGudang.Infrastructure.Http
                     {
                         BrgId = brgId,
                         BrgName = brgName,
-                        Satuan1 = satBesar,
-                        Satuan2 = satKecil,
-                        Satuan3 = sat3,
+                        SatBesar = satBesar,
+                        SatKecil = satKecil,
+                        Konversi = konversi,
                         IsActive = true
                     });
                 }

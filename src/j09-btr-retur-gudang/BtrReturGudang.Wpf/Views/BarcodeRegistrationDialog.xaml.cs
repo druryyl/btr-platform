@@ -30,7 +30,10 @@ namespace BtrReturGudang.Wpf.Views
         public string RegisteredBarcode => TxtBarcode.Text?.Trim();
         public string RegisteredBrgId => _selectedBarang?.BrgId;
         public string RegisteredBrgName => _selectedBarang?.BrgName;
-        public string RegisteredSatuan => (CboSatuan.SelectedItem as ComboBoxItem)?.Content?.ToString() ?? CboSatuan.Text;
+        public string RegisteredSatuan =>
+            (CboSatuan?.SelectedItem as ComboBoxItem)?.Content?.ToString()
+            ?? CboSatuan?.SelectedItem?.ToString()
+            ?? CboSatuan?.Text;
         public decimal RegisteredPengali => decimal.TryParse(TxtPengali.Text, out var p) ? p : 1m;
 
         public BarcodeRegistrationDialog()
@@ -78,10 +81,21 @@ namespace BtrReturGudang.Wpf.Views
 
                 LstItems.ItemsSource = null;
                 LstItems.ItemsSource = _filteredItems;
+
+                // Clear error on successful search
+                TxtSearchStatus.Text = "";
+                TxtSearchStatus.Visibility = Visibility.Collapsed;
             }
-            catch
+            catch (Exception ex)
             {
-                // Suppress search failure in UI typing
+                // Show error to user instead of silently suppressing
+                TxtSearchStatus.Text = $"Gagal mencari barang: {ex.Message}";
+                TxtSearchStatus.Visibility = Visibility.Visible;
+
+                // Clear the list on error
+                _filteredItems.Clear();
+                LstItems.ItemsSource = null;
+                LstItems.ItemsSource = _filteredItems;
             }
         }
 
@@ -92,19 +106,69 @@ namespace BtrReturGudang.Wpf.Views
                 _selectedBarang = selected;
                 TxtSelectedItem.Text = $"Barang Terpilih: [{selected.BrgId}] {selected.BrgName}";
 
-                // Auto-set satuan if master specifies it
-                if (!string.IsNullOrWhiteSpace(selected.Satuan1))
+                var units = selected.GetAvailableUnits().ToList();
+                if (CboSatuan.ItemsSource != null)
                 {
-                    foreach (ComboBoxItem item in CboSatuan.Items)
-                    {
-                        if (string.Equals(item.Content?.ToString(), selected.Satuan1, StringComparison.OrdinalIgnoreCase))
-                        {
-                            CboSatuan.SelectedItem = item;
-                            break;
-                        }
-                    }
+                    CboSatuan.ItemsSource = null;
                 }
+                else
+                {
+                    CboSatuan.Items.Clear();
+                }
+
+                CboSatuan.ItemsSource = units;
+                CboSatuan.IsEnabled = units.Count > 0;
+
+                if (!string.IsNullOrWhiteSpace(selected.SatBesar) && units.Contains(selected.SatBesar))
+                {
+                    CboSatuan.SelectedItem = selected.SatBesar;
+                }
+                else if (!string.IsNullOrWhiteSpace(selected.SatKecil) && units.Contains(selected.SatKecil))
+                {
+                    CboSatuan.SelectedItem = selected.SatKecil;
+                }
+                else
+                {
+                    CboSatuan.SelectedItem = units.FirstOrDefault();
+                }
+
+                UpdatePengali();
             }
+            else
+            {
+                _selectedBarang = null;
+                TxtSelectedItem.Text = "Barang Terpilih: (Belum dipilih)";
+                CboSatuan.ItemsSource = null;
+                CboSatuan.IsEnabled = false;
+                UpdatePengali();
+            }
+        }
+
+        private void OnSatuanSelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            UpdatePengali();
+        }
+
+        private void UpdatePengali()
+        {
+            if (TxtPengali == null) return;
+            var satuan = RegisteredSatuan;
+            var multiplier = _selectedBarang?.GetConversionForUnit(satuan) ?? 1;
+            TxtPengali.Text = multiplier.ToString();
+        }
+
+        public void ResetForm()
+        {
+            _selectedBarang = null;
+            TxtBarcode.Text = string.Empty;
+            TxtSearchItem.Text = string.Empty;
+            TxtSelectedItem.Text = "Barang Terpilih: (Belum dipilih)";
+            if (CboSatuan.ItemsSource != null)
+                CboSatuan.ItemsSource = null;
+            else
+                CboSatuan.Items.Clear();
+            CboSatuan.IsEnabled = false;
+            TxtPengali.Text = "1";
         }
 
         private async void OnSaveClick(object sender, RoutedEventArgs e)
@@ -122,6 +186,13 @@ namespace BtrReturGudang.Wpf.Views
                 return;
             }
 
+            string satuan = RegisteredSatuan;
+            if (string.IsNullOrWhiteSpace(satuan))
+            {
+                MessageBox.Show("Silakan pilih satuan kemasan yang valid.", "Validasi", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
             if (!decimal.TryParse(TxtPengali.Text, out var pengali) || pengali <= 0)
             {
                 pengali = 1m;
@@ -129,7 +200,6 @@ namespace BtrReturGudang.Wpf.Views
 
             string warehouseCode = _registryHelper?.WarehouseCode ?? "GDG-PST";
             string operatorName = _registryHelper?.LastOperatorName ?? "Operator-1";
-            string satuan = RegisteredSatuan;
 
             BtnSave.IsEnabled = false;
 

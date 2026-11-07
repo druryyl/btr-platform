@@ -161,24 +161,23 @@ namespace BtrReturGudang.Wpf.ViewModels
                 return;
             }
 
-            var units = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-            if (!string.IsNullOrWhiteSpace(barang.Satuan1)) units.Add(barang.Satuan1);
-            if (!string.IsNullOrWhiteSpace(barang.Satuan2)) units.Add(barang.Satuan2);
-            if (!string.IsNullOrWhiteSpace(barang.Satuan3)) units.Add(barang.Satuan3);
-
-            if (units.Count == 0)
-            {
-                units.Add("Dus");
-                units.Add("Pak");
-                units.Add("Pcs");
-            }
-
-            foreach (var u in units)
+            foreach (var u in barang.GetAvailableUnits())
             {
                 PackagingUnits.Add(u);
             }
 
-            SelectedSatuan = PackagingUnits.FirstOrDefault();
+            if (!string.IsNullOrWhiteSpace(barang.SatBesar) && PackagingUnits.Contains(barang.SatBesar))
+            {
+                SelectedSatuan = barang.SatBesar;
+            }
+            else if (!string.IsNullOrWhiteSpace(barang.SatKecil) && PackagingUnits.Contains(barang.SatKecil))
+            {
+                SelectedSatuan = barang.SatKecil;
+            }
+            else
+            {
+                SelectedSatuan = PackagingUnits.FirstOrDefault();
+            }
         }
 
         public bool ConfirmSelection()

@@ -87,7 +87,8 @@
                                    Foreground="{DynamicResource Brush.Slate.700}" Margin="0,0,0,4" />
                         <ComboBox x:Name="CboSatuan" Height="30"
                                   ItemsSource="{Binding PackagingUnits}"
-                                  SelectedItem="{Binding SelectedSatuan, Mode=TwoWay}" />
+                                  SelectedItem="{Binding SelectedSatuan, Mode=TwoWay}"
+                                  IsEnabled="{Binding HasPackagingUnits}" />
                     </StackPanel>
 
                     <StackPanel Grid.Column="2">
@@ -97,7 +98,10 @@
                                                  Value="{Binding Pengali, Mode=TwoWay}"
                                                  Minimum="1" Maximum="10000" Step="1"
                                                  FontWeight="Bold" TextAlignment="Right"
-                                                 BorderBrush="{DynamicResource Brush.Card.Border}" />
+                                                 IsReadOnly="True"
+                                                 Background="{DynamicResource Brush.Slate.100}"
+                                                 BorderBrush="{DynamicResource Brush.Card.Border}"
+                                                 ToolTip="Authoritative conversion multiplier derived from product master data" />
                     </StackPanel>
                 </Grid>
             </StackPanel>

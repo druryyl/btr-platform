@@ -46,6 +46,9 @@
                          TextChanged="OnSearchTextChanged"
                          Margin="0,0,0,6" />
 
+                <!-- Search Status/Error Message -->
+                <TextBlock x:Name="TxtSearchStatus" Text="" FontSize="10" Foreground="{DynamicResource Brush.Rose.600}" Margin="0,2,0,4" Visibility="Collapsed" />
+
                 <ListBox x:Name="LstItems" Height="110"
                          BorderBrush="{DynamicResource Brush.Card.Border}"
                          SelectionChanged="OnItemSelected"
@@ -75,7 +78,8 @@
 
                     <StackPanel Grid.Column="0">
                         <TextBlock Text="Satuan:" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Slate.700}" Margin="0,0,0,4" />
-                        <ComboBox x:Name="CboSatuan" Height="30" SelectedIndex="0">
+                        <ComboBox x:Name="CboSatuan" Height="30" SelectedIndex="0"
+                                  SelectionChanged="OnSatuanSelectionChanged">
                             <ComboBoxItem Content="Dus" />
                             <ComboBoxItem Content="Pak" />
                             <ComboBoxItem Content="Pcs" />
@@ -88,6 +92,9 @@
                         <TextBlock Text="Pengali (Konversi ke Pcs):" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Slate.700}" Margin="0,0,0,4" />
                         <TextBox x:Name="TxtPengali" Text="1" Height="30" Padding="6,4"
                                  FontWeight="Bold" TextAlignment="Right"
+                                 IsReadOnly="True" Focusable="True"
+                                 Background="{DynamicResource Brush.Slate.100}"
+                                 ToolTip="Authoritative conversion multiplier derived from product master data"
                                  BorderBrush="{DynamicResource Brush.Card.Border}" />
                     </StackPanel>
                 </Grid>

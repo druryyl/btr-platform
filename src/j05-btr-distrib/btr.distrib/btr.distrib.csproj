@@ -23,7 +23,7 @@
     <UpdatePeriodically>false</UpdatePeriodically>
     <UpdateRequired>false</UpdateRequired>
     <MapFileExtensions>true</MapFileExtensions>
-    <ApplicationRevision>364</ApplicationRevision>
+    <ApplicationRevision>366</ApplicationRevision>
     <ApplicationVersion>1.0.0.%2a</ApplicationVersion>
     <UseApplicationTrust>false</UseApplicationTrust>
     <PublishWizardCompleted>true</PublishWizardCompleted>
@@ -766,7 +766,6 @@
     <Compile Include="SalesContext\FakturAgg\RdlcViewerForm.Designer.cs">
       <DependentUpon>RdlcViewerForm.cs</DependentUpon>
     </Compile>
-
     <Compile Include="SalesContext\FakturCashRpt\FakturCashInfoForm.cs">
       <SubType>Form</SubType>
     </Compile>

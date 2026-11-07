@@ -60,6 +60,8 @@ namespace BtrReturGudang.Wpf.ViewModels
             }
         }
 
+        public bool HasPackagingUnits => PackagingUnits.Count > 0 && SelectedBarang != null;
+
         public Barang SelectedBarang
         {
             get => _selectedBarang;
@@ -68,6 +70,8 @@ namespace BtrReturGudang.Wpf.ViewModels
                 if (SetProperty(ref _selectedBarang, value))
                 {
                     UpdatePackagingUnits(value);
+                    Pengali = _selectedBarang?.GetConversionForUnit(_selectedSatuan) ?? 1m;
+                    OnPropertyChanged(nameof(HasPackagingUnits));
                 }
             }
         }
@@ -75,7 +79,13 @@ namespace BtrReturGudang.Wpf.ViewModels
         public string SelectedSatuan
         {
             get => _selectedSatuan;
-            set => SetProperty(ref _selectedSatuan, value);
+            set
+            {
+                if (SetProperty(ref _selectedSatuan, value))
+                {
+                    Pengali = _selectedBarang?.GetConversionForUnit(value) ?? 1m;
+                }
+            }
         }
 
         public decimal Pengali
@@ -120,14 +130,6 @@ namespace BtrReturGudang.Wpf.ViewModels
             _referenceRepo = referenceRepo;
             _registryHelper = registryHelper;
             _audioHelper = audioHelper;
-
-            // Default packaging units
-            PackagingUnits.Add("Dus");
-            PackagingUnits.Add("Pak");
-            PackagingUnits.Add("Pcs");
-            PackagingUnits.Add("Ball");
-            PackagingUnits.Add("Lusin");
-            _selectedSatuan = PackagingUnits.FirstOrDefault();
 
             SearchCommand = new AsyncRelayCommand(async () => await SearchItemsAsync(_searchKeyword));
             RegisterCommand = new AsyncRelayCommand(async () => await OnRegisterClickAsync());
@@ -187,28 +189,46 @@ namespace BtrReturGudang.Wpf.ViewModels
             }
         }
 
+        public void OnItemSelected(Barang item)
+        {
+            SelectedBarang = item;
+            Pengali = _selectedBarang?.GetConversionForUnit(_selectedSatuan) ?? 1m;
+        }
+
+        public void ResetForm()
+        {
+            BarcodeValue = string.Empty;
+            SearchKeyword = string.Empty;
+            FilteredItems.Clear();
+            SelectedBarang = null;
+            SelectedSatuan = null;
+            Pengali = 1m;
+            StatusMessage = string.Empty;
+            RegisteredResult = null;
+        }
+
         private void UpdatePackagingUnits(Barang barang)
         {
-            if (barang == null) return;
-
-            var units = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-            if (!string.IsNullOrWhiteSpace(barang.Satuan1)) units.Add(barang.Satuan1);
-            if (!string.IsNullOrWhiteSpace(barang.Satuan2)) units.Add(barang.Satuan2);
-            if (!string.IsNullOrWhiteSpace(barang.Satuan3)) units.Add(barang.Satuan3);
-
-            if (units.Count > 0)
+            PackagingUnits.Clear();
+            if (barang != null)
             {
-                PackagingUnits.Clear();
-                foreach (var u in units)
+                foreach (var unit in barang.GetAvailableUnits())
                 {
-                    PackagingUnits.Add(u);
+                    PackagingUnits.Add(unit);
                 }
-                SelectedSatuan = PackagingUnits.FirstOrDefault();
+
+                SelectedSatuan = !string.IsNullOrWhiteSpace(barang.SatBesar) && PackagingUnits.Contains(barang.SatBesar)
+                    ? barang.SatBesar
+                    : (!string.IsNullOrWhiteSpace(barang.SatKecil) && PackagingUnits.Contains(barang.SatKecil)
+                        ? barang.SatKecil
+                        : PackagingUnits.FirstOrDefault());
             }
-            else if (string.IsNullOrWhiteSpace(SelectedSatuan))
+            else
             {
-                SelectedSatuan = PackagingUnits.FirstOrDefault() ?? "Dus";
+                SelectedSatuan = null;
             }
+
+            OnPropertyChanged(nameof(HasPackagingUnits));
         }
 
         public async Task<bool> OnRegisterClickAsync()
@@ -228,9 +248,16 @@ namespace BtrReturGudang.Wpf.ViewModels
                 return false;
             }
 
+            if (string.IsNullOrWhiteSpace(SelectedSatuan))
+            {
+                _audioHelper?.PlayWarning();
+                StatusMessage = "Barang yang dipilih tidak memiliki satuan kemasan terdaftar.";
+                return false;
+            }
+
             string warehouseCode = _registryHelper?.WarehouseCode ?? "GDG-PST";
             string operatorName = _registryHelper?.LastOperatorName ?? "OPERATOR";
-            string satuan = !string.IsNullOrWhiteSpace(SelectedSatuan) ? SelectedSatuan : "Dus";
+            string satuan = SelectedSatuan;
             decimal pengali = _pengali <= 0 ? 1m : _pengali;
 
             IsRegistering = true;

@@ -124,8 +124,8 @@ namespace BtrReturGudang.Wpf.Tests
 
             public Dictionary<string, Barang> Barangs { get; } = new Dictionary<string, Barang>
             {
-                ["BRG-001"] = new Barang("BRG-001", "INDOMIE GORENG SPESIAL", "DUS", "PAK", "PCS", true),
-                ["BRG-002941-KCP"] = new Barang("BRG-002941-KCP", "KECAP BANGO MANIS REFILL 550ML", "DUS", "BTL", "PCS", true)
+                ["BRG-001"] = new Barang("BRG-001", "INDOMIE GORENG SPESIAL", "DUS", "PCS", isActive: true),
+                ["BRG-002941-KCP"] = new Barang("BRG-002941-KCP", "KECAP BANGO MANIS REFILL 550ML", "DUS", "PCS", isActive: true)
             };
 
             public void BulkUpsertBarang(IEnumerable<Barang> items) { }

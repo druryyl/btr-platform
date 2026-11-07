@@ -75,8 +75,8 @@ namespace BtrReturGudang.Winform.Tests
                 {
                     var items = new List<Barang>
                     {
-                        new Barang("BRG01", "Indomie Goreng", "Dus", "Pak", "Pcs"),
-                        new Barang("BRG02", "Sari Roti Tawar", "Pak", null, null)
+                        new Barang("BRG01", "Indomie Goreng", "Dus", "Pcs"),
+                        new Barang("BRG02", "Sari Roti Tawar", "Pak", null)
                     };
 
                     dlg.SetItems(items);
@@ -93,8 +93,8 @@ namespace BtrReturGudang.Winform.Tests
         public async Task ManualItemSearchDialog_PerformSearchAsync_QueriesReferenceRepo()
         {
             var fakeRepo = new FakeReferenceRepo();
-            fakeRepo.BarangCatalog.Add(new Barang("B01", "Kecap Bango Manis", "Dus", "Btl", "Pcs"));
-            fakeRepo.BarangCatalog.Add(new Barang("B02", "Minyak Goreng Bimoli", "Dus", "Pcs", null));
+            fakeRepo.BarangCatalog.Add(new Barang("B01", "Kecap Bango Manis", "Dus", "Pcs"));
+            fakeRepo.BarangCatalog.Add(new Barang("B02", "Minyak Goreng Bimoli", "Dus", "Pcs"));
 
             ManualItemSearchDialog dialog = null;
             ExecuteInStaThread(() =>
@@ -120,7 +120,7 @@ namespace BtrReturGudang.Winform.Tests
                 var audioHelper = new FakeAudioHelper();
                 using (var dlg = new ManualItemSearchDialog(null, audioHelper))
                 {
-                    dlg.SetItems(new[] { new Barang("BRG99", "Teh Botol Sosro", "Dus", "Btl", null) });
+                    dlg.SetItems(new[] { new Barang("BRG99", "Teh Botol Sosro", "Dus", "Btl") });
                     dlg.ConfirmSelection();
 
                     Assert.Equal(DialogResult.OK, dlg.DialogResult);
@@ -138,7 +138,7 @@ namespace BtrReturGudang.Winform.Tests
             {
                 using (var dlg = new ManualItemSearchDialog())
                 {
-                    dlg.SetItems(new[] { new Barang("BRG01", "Susu Ultra Milk", "Dus", "Pak", "Pcs") });
+                    dlg.SetItems(new[] { new Barang("BRG01", "Susu Ultra Milk", "Dus", "Pcs") });
 
                     dlg.SatuanComboBox.SelectedItem = "Pcs";
 
@@ -181,7 +181,7 @@ namespace BtrReturGudang.Winform.Tests
                 {
                     var items = new List<Barang>
                     {
-                        new Barang("B10", "Kopi Kapal Api", "Dus", "Renteng", "Sachet")
+                        new Barang("B10", "Kopi Kapal Api", "Dus", "Sachet")
                     };
 
                     dlg.SetItems(items);
@@ -212,7 +212,7 @@ namespace BtrReturGudang.Winform.Tests
                     registryHelper: fakeRegistry,
                     audioHelper: audioHelper);
 
-                dlg.SetItems(new[] { new Barang("BRG-KOPI", "Kopi ABC Susu", "Dus", "Pak", "Pcs") });
+                dlg.SetItems(new[] { new Barang("BRG-KOPI", "Kopi ABC Susu", "Dus", "Pcs") });
                 dlg.SatuanComboBox.SelectedItem = "Dus";
                 dlg.PengaliNumeric.Value = 20;
             });
@@ -285,7 +285,7 @@ namespace BtrReturGudang.Winform.Tests
                 var audioHelper = new FakeAudioHelper();
                 using (var view = new ReturnOrderEntryView(null, null, null, audioHelper, null))
                 {
-                    var barang = new Barang("BRG55", "Indomie Soto", "Dus", "Pak", "Pcs");
+                    var barang = new Barang("BRG55", "Indomie Soto", "Dus", "Pak");
                     view.SetSelectedItem(barang, "Pak");
 
                     Assert.NotNull(view.CurrentScanResult);
@@ -306,7 +306,7 @@ namespace BtrReturGudang.Winform.Tests
                 var audioHelper = new FakeAudioHelper();
                 using (var view = new ReturnOrderEntryView(null, null, null, audioHelper, null))
                 {
-                    view.ManualSearchDialogLauncher = () => new Barang("BRG-F2", "Biskuit Khong Guan", "Dus", null, null);
+                    view.ManualSearchDialogLauncher = () => new Barang("BRG-F2", "Biskuit Khong Guan", "Dus", null);
 
                     view.TriggerManualItemSearch();
 

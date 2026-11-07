@@ -608,14 +608,9 @@ namespace BtrReturGudang.Wpf.ViewModels
         private void PopulatePackagingUnits(BarcodeLookupResult lookup)
         {
             PackagingUnits.Clear();
-            var units = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            var units = new List<string>();
 
-            if (!string.IsNullOrWhiteSpace(lookup.Satuan))
-            {
-                units.Add(lookup.Satuan);
-            }
-
-            // Query product definition for alternative packaging units
+            // Query product definition for authoritative packaging units
             if (_referenceRepo != null && !string.IsNullOrWhiteSpace(lookup.BrgId))
             {
                 try
@@ -623,9 +618,13 @@ namespace BtrReturGudang.Wpf.ViewModels
                     var barang = _referenceRepo.GetBarangById(lookup.BrgId);
                     if (barang != null)
                     {
-                        if (!string.IsNullOrWhiteSpace(barang.Satuan1)) units.Add(barang.Satuan1);
-                        if (!string.IsNullOrWhiteSpace(barang.Satuan2)) units.Add(barang.Satuan2);
-                        if (!string.IsNullOrWhiteSpace(barang.Satuan3)) units.Add(barang.Satuan3);
+                        foreach (var u in barang.GetAvailableUnits())
+                        {
+                            if (!units.Contains(u, StringComparer.OrdinalIgnoreCase))
+                            {
+                                units.Add(u);
+                            }
+                        }
                     }
                 }
                 catch
@@ -634,9 +633,10 @@ namespace BtrReturGudang.Wpf.ViewModels
                 }
             }
 
-            if (units.Count == 0)
+            // Retain lookup.Satuan if provided
+            if (!string.IsNullOrWhiteSpace(lookup.Satuan) && !units.Contains(lookup.Satuan, StringComparer.OrdinalIgnoreCase))
             {
-                units.Add("Pcs");
+                units.Add(lookup.Satuan);
             }
 
             foreach (var u in units)
@@ -1034,7 +1034,11 @@ namespace BtrReturGudang.Wpf.ViewModels
             string effectiveSatuan = selectedSatuan;
             if (string.IsNullOrWhiteSpace(effectiveSatuan))
             {
-                effectiveSatuan = item.Satuan1 ?? "Pcs";
+                effectiveSatuan = !string.IsNullOrWhiteSpace(item.SatBesar)
+                    ? item.SatBesar
+                    : (!string.IsNullOrWhiteSpace(item.SatKecil)
+                        ? item.SatKecil
+                        : item.GetAvailableUnits().FirstOrDefault());
             }
 
             var lookup = BarcodeLookupResult.Hit(

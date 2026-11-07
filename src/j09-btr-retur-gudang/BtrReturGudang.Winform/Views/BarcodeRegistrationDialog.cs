@@ -27,6 +27,7 @@ namespace BtrReturGudang.Winform.Views
         private TextBox _txtSearchItem;
         private ListBox _lstItems;
         private Label _lblSelectedItem;
+        private Label _lblSearchStatus;
         private ComboBox _cboSatuan;
         private NumericUpDown _numPengali;
         private Button _btnSave;
@@ -140,10 +141,21 @@ namespace BtrReturGudang.Winform.Views
             };
             _txtSearchItem.TextChanged += async (s, e) => await SearchItemsAsync(_txtSearchItem.Text);
 
+            // Search status/error label
+            _lblSearchStatus = new Label
+            {
+                Font = UiTheme.FontSubtitle,
+                ForeColor = UiTheme.RoseText,
+                Location = new Point(16, 104),
+                Width = 516,
+                Height = 18,
+                Visible = false
+            };
+
             _lstItems = new ListBox
             {
                 Font = UiTheme.FontBody,
-                Location = new Point(16, 108),
+                Location = new Point(16, 126),
                 Width = 516,
                 Height = 100,
                 BorderStyle = BorderStyle.FixedSingle
@@ -237,6 +249,7 @@ namespace BtrReturGudang.Winform.Views
             pnlBody.Controls.Add(_txtBarcode);
             pnlBody.Controls.Add(lblSearch);
             pnlBody.Controls.Add(_txtSearchItem);
+            pnlBody.Controls.Add(_lblSearchStatus);
             pnlBody.Controls.Add(_lstItems);
             pnlBody.Controls.Add(_lblSelectedItem);
             pnlBody.Controls.Add(lblSatuan);
@@ -269,9 +282,20 @@ namespace BtrReturGudang.Winform.Views
                 {
                     _lstItems.SelectedIndex = 0;
                 }
+
+                // Clear error on successful search
+                _lblSearchStatus.Text = "";
+                _lblSearchStatus.Visible = false;
             }
-            catch
+            catch (Exception ex)
             {
+                // Show error to user instead of silently suppressing
+                _lblSearchStatus.Text = $"Gagal mencari barang: {ex.Message}";
+                _lblSearchStatus.Visible = true;
+
+                // Clear the list on error
+                _filteredItems.Clear();
+                _lstItems.Items.Clear();
             }
         }
 
@@ -283,9 +307,9 @@ namespace BtrReturGudang.Winform.Views
                 _lblSelectedItem.Text = $"Barang Terpilih: [{_selectedBarang.BrgId}] {_selectedBarang.BrgName}";
 
                 // Auto-set satuan options if item provides them
-                if (!string.IsNullOrWhiteSpace(_selectedBarang.Satuan1))
+                if (!string.IsNullOrWhiteSpace(_selectedBarang.SatBesar))
                 {
-                    _cboSatuan.SelectedItem = _selectedBarang.Satuan1;
+                    _cboSatuan.SelectedItem = _selectedBarang.SatBesar;
                 }
             }
         }
