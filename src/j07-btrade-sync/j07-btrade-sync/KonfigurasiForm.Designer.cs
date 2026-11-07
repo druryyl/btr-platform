@@ -31,6 +31,9 @@
             this.panel1 = new System.Windows.Forms.Panel();
             this.ServerTargetIDText = new System.Windows.Forms.TextBox();
             this.label1 = new System.Windows.Forms.Label();
+            this.SyncLocationIDText = new System.Windows.Forms.TextBox();
+            this.SyncLocationIDLabel = new System.Windows.Forms.Label();
+            this.SyncLocationHint = new System.Windows.Forms.Label();
             this.OKButton = new System.Windows.Forms.Button();
             this.CancelButton = new System.Windows.Forms.Button();
             this.DownloadOrderCheckBox = new System.Windows.Forms.CheckBox();
@@ -53,6 +56,9 @@
             this.panel1.Controls.Add(this.DownloadCheckInCheckBox);
             this.panel1.Controls.Add(this.SyncCustomerLocCheckBox);
             this.panel1.Controls.Add(this.DownloadOrderCheckBox);
+            this.panel1.Controls.Add(this.SyncLocationIDText);
+            this.panel1.Controls.Add(this.SyncLocationIDLabel);
+            this.panel1.Controls.Add(this.SyncLocationHint);
             this.panel1.Controls.Add(this.ServerTargetIDText);
             this.panel1.Controls.Add(this.label1);
             this.panel1.Location = new System.Drawing.Point(6, 7);
@@ -78,6 +84,37 @@
             this.label1.Size = new System.Drawing.Size(86, 13);
             this.label1.TabIndex = 0;
             this.label1.Text = "Server Target ID";
+            // 
+            // SyncLocationIDText
+            // 
+            this.SyncLocationIDText.Anchor = System.Windows.Forms.AnchorStyles.None;
+            this.SyncLocationIDText.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.SyncLocationIDText.Location = new System.Drawing.Point(164, 38);
+            this.SyncLocationIDText.Name = "SyncLocationIDText";
+            this.SyncLocationIDText.Size = new System.Drawing.Size(128, 22);
+            this.SyncLocationIDText.TabIndex = 2;
+            // 
+            // SyncLocationIDLabel
+            // 
+            this.SyncLocationIDLabel.Anchor = System.Windows.Forms.AnchorStyles.None;
+            this.SyncLocationIDLabel.AutoSize = true;
+            this.SyncLocationIDLabel.Location = new System.Drawing.Point(161, 19);
+            this.SyncLocationIDLabel.Name = "SyncLocationIDLabel";
+            this.SyncLocationIDLabel.Size = new System.Drawing.Size(113, 13);
+            this.SyncLocationIDLabel.TabIndex = 1;
+            this.SyncLocationIDLabel.Text = "Sync Warehouse Code";
+            // 
+            // SyncLocationHint
+            // 
+            this.SyncLocationHint.Anchor = System.Windows.Forms.AnchorStyles.None;
+            this.SyncLocationHint.AutoSize = true;
+            this.SyncLocationHint.ForeColor = System.Drawing.Color.DimGray;
+            this.SyncLocationHint.Location = new System.Drawing.Point(13, 136);
+            this.SyncLocationHint.MaximumSize = new System.Drawing.Size(300, 0);
+            this.SyncLocationHint.Name = "SyncLocationHint";
+            this.SyncLocationHint.Size = new System.Drawing.Size(294, 13);
+            this.SyncLocationHint.TabIndex = 7;
+            this.SyncLocationHint.Text = "Warehouse code (not Server ID): GAMPING / CONCAT / MAGELANG";
             // 
             // OKButton
             // 
@@ -179,6 +216,9 @@
         private System.Windows.Forms.Panel panel1;
         private System.Windows.Forms.TextBox ServerTargetIDText;
         private System.Windows.Forms.Label label1;
+        private System.Windows.Forms.TextBox SyncLocationIDText;
+        private System.Windows.Forms.Label SyncLocationIDLabel;
+        private System.Windows.Forms.Label SyncLocationHint;
         private System.Windows.Forms.Button OKButton;
         private System.Windows.Forms.Button CancelButton;
         private System.Windows.Forms.CheckBox DownloadOrderCheckBox;

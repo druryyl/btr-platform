@@ -1,6 +1,7 @@
 using j07_btrade_sync.Shared;
 using RestSharp;
 using System;
+using System.Collections.Generic;
 using System.Configuration;
 using System.Net;
 using System.Text.Json;
@@ -66,6 +67,37 @@ namespace j07_btrade_sync.Service
             return response != null && response.StatusCode == HttpStatusCode.Unauthorized;
         }
 
+        //  S3.6 — a rejected request must not surface as a bare "Bad Request".
+        //  RestSharp leaves ErrorMessage null for HTTP 4xx/5xx; the server's
+        //  JSend body carries the actionable reason (for example
+        //  "Invalid warehouse (JOGJA)").
+        public static string DescribeFailure(RestResponse response)
+        {
+            if (response == null)
+                return "no response";
+
+            var parts = new List<string>();
+            if (response.StatusCode != 0)
+                parts.Add($"HTTP {(int)response.StatusCode} {response.StatusCode}");
+            else
+                parts.Add("no HTTP response");
+
+            if (!string.IsNullOrWhiteSpace(response.ErrorMessage))
+                parts.Add(response.ErrorMessage.Trim());
+            else if (!string.IsNullOrWhiteSpace(response.StatusDescription))
+                parts.Add(response.StatusDescription.Trim());
+
+            if (!string.IsNullOrWhiteSpace(response.Content))
+            {
+                var content = response.Content.Trim();
+                if (content.Length > 1000)
+                    content = content.Substring(0, 1000) + "...";
+                parts.Add(content);
+            }
+
+            return string.Join(" - ", parts);
+        }
+
         private async Task<LoginData> LoginAsync()
         {
             var baseUrl = ConfigurationManager.AppSettings["btrade-cloud-base-url"];
@@ -93,9 +125,15 @@ namespace j07_btrade_sync.Service
             var request = new RestRequest().AddJsonBody(requestBody);
             var response = await client.ExecutePostAsync(request).ConfigureAwait(false);
             if (!response.IsSuccessful)
-                throw new InvalidOperationException(
-                    "Login failed: " + (response.ErrorMessage ?? response.StatusDescription
-                        ?? response.StatusCode.ToString()));
+            {
+                var message = "Login failed: " + DescribeFailure(response);
+                if (response.StatusCode == HttpStatusCode.BadRequest)
+                    message += ". Check SyncLocationId; it must be the warehouse code "
+                        + "(GAMPING/CONCAT/MAGELANG), not the Server ID.";
+                else if (response.StatusCode == HttpStatusCode.Unauthorized)
+                    message += ". Check SyncUserId/SyncPassword.";
+                throw new InvalidOperationException(message);
+            }
 
             var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
             var apiResponse = JsonSerializer.Deserialize<ApiResponse<LoginData>>(response.Content, options);

@@ -34,6 +34,13 @@ namespace j07_btrade_sync.Service
             var client = new RestClient(endpoint);
 
             var listUser = enumUser.ToList();
+
+            //  The Cloud projection replaces the tenant's user set. Never send
+            //  an empty list: it would delete every Cloud user for the tenant
+            //  (including the sync service account) and make the next login fail.
+            if (listUser.Count == 0)
+                return (true, "");
+
             foreach (var item in listUser)
                 item.ServerId = serverTargetId;
 
@@ -58,10 +65,7 @@ namespace j07_btrade_sync.Service
                     response = await client.ExecutePostAsync(retry);
                 }
                 if (response.StatusCode != System.Net.HttpStatusCode.OK)
-                {
-                    return (false, response.ErrorMessage ?? response.StatusDescription
-                        ?? response.Content);
-                }
+                    return (false, BtradeAuthService.DescribeFailure(response));
 
                 return (true, "");
             }

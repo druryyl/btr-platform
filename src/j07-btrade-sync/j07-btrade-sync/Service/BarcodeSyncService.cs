@@ -72,8 +72,7 @@ namespace j07_btrade_sync.Service
                     response = await client.ExecutePostAsync(retry);
                 }
                 if (response.StatusCode != HttpStatusCode.OK)
-                    return (false, response.ErrorMessage ?? response.StatusDescription
-                        ?? response.Content);
+                    return (false, BtradeAuthService.DescribeFailure(response));
 
                 //  ADVANCE WATERMARK ONLY AFTER HTTP 200
                 WriteWatermark(listChanged.Last().RowVer);

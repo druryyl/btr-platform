@@ -16,6 +16,7 @@ namespace j07_btrade_sync
         private readonly RegistryHelper _registryHelper;
 
         private string _serverTarget;
+        private string _syncLocationId;
         private bool _downloadSalesOrder;
         private bool _syncCustomerLocation;
         private bool _downloadCheckIn;
@@ -53,6 +54,9 @@ namespace j07_btrade_sync
         private void LoadConfig()
         {
             _serverTarget = _registryHelper.ReadString("ServerTargetID", "JOG");
+            //  S3.6 — the sync service account's login LocationId is the
+            //  WarehouseCode (GAMPING/CONCAT/MAGELANG), never the ServerId.
+            _syncLocationId = _registryHelper.ReadString("SyncLocationId", "");
             _downloadSalesOrder = _registryHelper.ReadString("DownloadSalesOrder", "0") == "1";
             _syncCustomerLocation = _registryHelper.ReadString("SyncCustomerLocation", "0") == "1";
             _downloadCheckIn = _registryHelper.ReadString("DownloadCheckIn", "0") == "1";
@@ -63,6 +67,7 @@ namespace j07_btrade_sync
         private void DisplayConfig()
         {
             ServerTargetIDText.Text = _serverTarget;
+            SyncLocationIDText.Text = _syncLocationId;
             DownloadCheckInCheckBox.Checked = _downloadCheckIn;
             SyncCustomerLocCheckBox.Checked = _syncCustomerLocation;
             DownloadCheckInCheckBox.Checked = _downloadCheckIn;
@@ -76,8 +81,10 @@ namespace j07_btrade_sync
             _downloadCheckIn = DownloadCheckInCheckBox.Checked;
             _downloadReturnOrder = DownloadReturnOrderCheckBox.Checked;
             _uploadPackingOrder = UploadPackingOrderCheckBox.Checked;
+            _syncLocationId = SyncLocationIDText.Text.Trim();
 
             _registryHelper.WriteString("ServerTargetID", ServerTargetIDText.Text);
+            _registryHelper.WriteString("SyncLocationId", _syncLocationId);
             _registryHelper.WriteString("DownloadSalesOrder", _downloadSalesOrder ? "1" : "0");
             _registryHelper.WriteString("SyncCustomerLocation", _syncCustomerLocation ? "1" : "0");
             _registryHelper.WriteString("DownloadCheckIn", _downloadCheckIn ? "1" : "0");

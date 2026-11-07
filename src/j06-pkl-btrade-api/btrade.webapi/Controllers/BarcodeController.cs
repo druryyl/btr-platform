@@ -30,10 +30,19 @@ public class BarcodeController : ControllerBase
         //  path keeps its existing claim-based tenant for token-bearing
         //  consumers (unchanged; removing the attribute does not strip claims
         //  from a supplied token).
+        var serverId = User.GetServerId();
         var cmd = new BarcodeSyncCommand(
-            request.ListUpsert ?? Enumerable.Empty<BarcodeType>(),
+            (request.ListUpsert ?? Enumerable.Empty<BarcodeSyncItem>())
+                .Select(x => new BarcodeType(
+                    x.BrgBarcodeId,
+                    x.BarcodeValue,
+                    x.BrgId,
+                    x.BrgCode,
+                    x.BrgName,
+                    x.Satuan,
+                    serverId)),
             request.ListRemove ?? Enumerable.Empty<string>(),
-            User.GetServerId());
+            serverId);
         await _mediator.Send(cmd);
         return Ok(new JSendOk("Done"));
     }
@@ -55,5 +64,16 @@ public class BarcodeController : ControllerBase
 }
 
 public record BarcodeSyncRequest(
-    IEnumerable<BarcodeType> ListUpsert,
+    IEnumerable<BarcodeSyncItem> ListUpsert,
     IEnumerable<string> ListRemove);
+
+//  Publish payload item. It deliberately carries no ServerId: the tenant is
+//  resolved from the JWT (ADR-007), so requiring a client-supplied value would
+//  make every legitimate request fail implicit-required model validation.
+public record BarcodeSyncItem(
+    string BrgBarcodeId,
+    string BarcodeValue,
+    string BrgId,
+    string BrgCode,
+    string BrgName,
+    string Satuan);

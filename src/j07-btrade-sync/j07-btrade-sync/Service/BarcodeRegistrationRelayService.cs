@@ -92,7 +92,7 @@ namespace j07_btrade_sync.Service
             }
 
             if (!response.IsSuccessful)
-                return (false, response.ErrorMessage ?? response.StatusDescription,
+                return (false, BtradeAuthService.DescribeFailure(response),
                     new List<BarcodeRegistrationRequestType>());
 
             var options = new JsonSerializerOptions
@@ -147,7 +147,7 @@ namespace j07_btrade_sync.Service
             }
 
             if (!response.IsSuccessful)
-                return (false, response.ErrorMessage ?? response.StatusDescription);
+                return (false, BtradeAuthService.DescribeFailure(response));
 
             return (true, "");
         }
