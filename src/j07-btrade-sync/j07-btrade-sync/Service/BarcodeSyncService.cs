@@ -35,10 +35,11 @@ namespace j07_btrade_sync.Service
             if (!listChanged.Any())
                 return (true, "");
 
+            var serverTargetId = _registryHelper.ReadString("ServerTargetID");
             var listUpsert = listChanged
                 .Where(x => x.IsAktif)
                 .Select(x => new BarcodeDto(x.BrgBarcodeId, x.BarcodeValue, x.BrgId,
-                    x.BrgCode, x.BrgName, x.Satuan))
+                    x.BrgCode, x.BrgName, x.Satuan, serverTargetId))
                 .ToList();
             var listRemove = listChanged
                 .Where(x => !x.IsAktif)
@@ -113,7 +114,7 @@ namespace j07_btrade_sync.Service
     public class BarcodeDto
     {
         public BarcodeDto(string brgBarcodeId, string barcodeValue, string brgId,
-            string brgCode, string brgName, string satuan)
+            string brgCode, string brgName, string satuan, string serverId = "")
         {
             BrgBarcodeId = brgBarcodeId;
             BarcodeValue = barcodeValue;
@@ -121,6 +122,7 @@ namespace j07_btrade_sync.Service
             BrgCode = brgCode;
             BrgName = brgName;
             Satuan = satuan;
+            ServerId = serverId;
         }
 
         public string BrgBarcodeId { get; set; }
@@ -129,5 +131,6 @@ namespace j07_btrade_sync.Service
         public string BrgCode { get; set; }
         public string BrgName { get; set; }
         public string Satuan { get; set; }
+        public string ServerId { get; set; }
     }
 }

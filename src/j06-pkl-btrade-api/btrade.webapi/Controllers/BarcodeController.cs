@@ -67,13 +67,13 @@ public record BarcodeSyncRequest(
     IEnumerable<BarcodeSyncItem> ListUpsert,
     IEnumerable<string> ListRemove);
 
-//  Publish payload item. It deliberately carries no ServerId: the tenant is
-//  resolved from the JWT (ADR-007), so requiring a client-supplied value would
-//  make every legitimate request fail implicit-required model validation.
+//  Publish payload item. ServerId is optional (resolved from the JWT per ADR-007,
+//  overwriting whatever the client sends), but accepts legacy client payloads.
 public record BarcodeSyncItem(
     string BrgBarcodeId,
     string BarcodeValue,
     string BrgId,
     string BrgCode,
     string BrgName,
-    string Satuan);
+    string Satuan,
+    string? ServerId = null);
