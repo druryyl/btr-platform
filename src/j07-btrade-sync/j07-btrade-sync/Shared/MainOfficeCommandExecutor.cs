@@ -23,6 +23,7 @@ using MediatR;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using System;
+using System.Configuration;
 using System.Globalization;
 using System.Linq;
 using System.Threading.Tasks;
@@ -47,8 +48,14 @@ namespace j07_btrade_sync.Shared
         public MainOfficeCommandExecutor()
         {
             var services = new ServiceCollection();
+            
+            // Read server/database from j07's app.config (same as j07's other sync services)
+            // This ensures barcode relay uses the correct database even when registry is empty/stale
+            var serverName = ConfigurationManager.AppSettings["btrapp-server"] ?? string.Empty;
+            var dbName = ConfigurationManager.AppSettings["btrapp-database"] ?? string.Empty;
             services.AddSingleton<IOptions<DatabaseOptions>>(
-                Options.Create(new DatabaseOptions()));
+                Options.Create(new DatabaseOptions { ServerName = serverName, DbName = dbName }));
+            
             services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(
                 typeof(ProcessBarcodeRegistrationRequestHandler).Assembly));
             services.AddScoped<DateTimeProvider>();
