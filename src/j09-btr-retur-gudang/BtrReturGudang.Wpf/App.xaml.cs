@@ -47,6 +47,7 @@ namespace BtrReturGudang.Wpf
             services.AddSingleton<IAudioHelper, AudioHelper>();
             services.AddSingleton<IRegistryHelper, RegistryHelper>();
             services.AddSingleton<WpfScannerWedgeListener>();
+            services.AddSingleton<IStatusNotificationService, StatusNotificationService>();
 
             // 3. Cloud API Client & Sync Service
             services.AddSingleton<IBtradeApiClient>(sp =>

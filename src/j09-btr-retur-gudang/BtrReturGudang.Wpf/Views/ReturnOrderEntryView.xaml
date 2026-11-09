@@ -593,5 +593,61 @@
                         ToolTip="Buka dialog pencarian produk manual [F2]" />
             </StackPanel>
         </Border>
+
+        <!-- ======================================================== -->
+        <!-- FLOATING TOAST NOTIFICATION OVERLAY                      -->
+        <!-- Non-intrusive status toast for successful save & actions -->
+        <!-- ======================================================== -->
+        <Border Grid.Row="0" Grid.RowSpan="6"
+                HorizontalAlignment="Right"
+                VerticalAlignment="Bottom"
+                Margin="0,0,16,56"
+                CornerRadius="6"
+                Padding="16,10"
+                Panel.ZIndex="1000"
+                IsHitTestVisible="False">
+            <Border.Style>
+                <Style TargetType="{x:Type Border}">
+                    <Setter Property="Visibility" Value="Collapsed" />
+                    <Setter Property="Background" Value="#065F46" />
+                    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Success}" />
+                    <Setter Property="BorderThickness" Value="1.5" />
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding IsToastVisible}" Value="True">
+                            <Setter Property="Visibility" Value="Visible" />
+                        </DataTrigger>
+                        <DataTrigger Binding="{Binding ToastType}" Value="Warning">
+                            <Setter Property="Background" Value="#78350F" />
+                            <Setter Property="BorderBrush" Value="{DynamicResource Brush.Warning}" />
+                        </DataTrigger>
+                        <DataTrigger Binding="{Binding ToastType}" Value="Info">
+                            <Setter Property="Background" Value="{DynamicResource Brush.Slate.800}" />
+                            <Setter Property="BorderBrush" Value="{DynamicResource Brush.Slate.600}" />
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </Border.Style>
+            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                <TextBlock Text="✓ " FontSize="14" FontWeight="Bold" Foreground="{DynamicResource Brush.White}">
+                    <TextBlock.Style>
+                        <Style TargetType="{x:Type TextBlock}">
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding ToastType}" Value="Warning">
+                                    <Setter Property="Text" Value="⚠️ " />
+                                </DataTrigger>
+                                <DataTrigger Binding="{Binding ToastType}" Value="Info">
+                                    <Setter Property="Text" Value="ℹ️ " />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </TextBlock.Style>
+                </TextBlock>
+                <TextBlock Text="{Binding ToastMessage}"
+                           Foreground="{DynamicResource Brush.White}"
+                           FontWeight="SemiBold"
+                           FontSize="12.5"
+                           VerticalAlignment="Center" />
+            </StackPanel>
+        </Border>
     </Grid>
 </UserControl>

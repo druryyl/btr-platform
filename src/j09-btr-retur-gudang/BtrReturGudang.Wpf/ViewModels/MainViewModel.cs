@@ -22,6 +22,7 @@ namespace BtrReturGudang.Wpf.ViewModels
         private readonly IRegistryHelper _registryHelper;
         private readonly WpfScannerWedgeListener _scannerListener;
         private readonly OperatorSessionValidator _sessionValidator;
+        private readonly IStatusNotificationService _notificationService;
 
         // Navigation state
         private NavigationModule _currentModule = NavigationModule.Intake;
@@ -63,13 +64,20 @@ namespace BtrReturGudang.Wpf.ViewModels
             ISyncService syncService,
             IRegistryHelper registryHelper,
             WpfScannerWedgeListener scannerListener = null,
-            OperatorSessionValidator sessionValidator = null)
+            OperatorSessionValidator sessionValidator = null,
+            IStatusNotificationService notificationService = null)
         {
             _serviceProvider = serviceProvider;
             _syncService = syncService;
             _registryHelper = registryHelper;
             _scannerListener = scannerListener;
             _sessionValidator = sessionValidator;
+            _notificationService = notificationService ?? serviceProvider?.GetService(typeof(IStatusNotificationService)) as IStatusNotificationService;
+
+            if (_notificationService != null)
+            {
+                _notificationService.NotificationReceived += OnStatusNotificationReceived;
+            }
 
             // Initialize Header info from Registry
             _depoCode = !string.IsNullOrWhiteSpace(_registryHelper?.WarehouseCode)
@@ -583,10 +591,23 @@ namespace BtrReturGudang.Wpf.ViewModels
 
         #endregion
 
+        private void OnStatusNotificationReceived(object sender, StatusNotificationEventArgs e)
+        {
+            if (e != null && !string.IsNullOrWhiteSpace(e.Message))
+            {
+                StatusInfoText = e.Message;
+            }
+        }
+
         public void Dispose()
         {
             try
             {
+                if (_notificationService != null)
+                {
+                    _notificationService.NotificationReceived -= OnStatusNotificationReceived;
+                }
+
                 _bgSyncTimer?.Stop();
                 _bgSyncTimer?.Dispose();
 

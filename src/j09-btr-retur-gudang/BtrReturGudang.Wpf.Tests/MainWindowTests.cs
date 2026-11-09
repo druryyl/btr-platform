@@ -454,5 +454,23 @@ namespace BtrReturGudang.Wpf.Tests
                 vm.Dispose();
             }
         }
+
+        [Fact]
+        public void MainViewModel_StatusNotificationService_UpdatesStatusInfoText()
+        {
+            var fakeRegistry = new FakeRegistryHelper();
+            var fakeSync = new FakeSyncService();
+            var notifService = new StatusNotificationService();
+            var vm = new MainViewModel(null, fakeSync, fakeRegistry, notificationService: notifService);
+            try
+            {
+                notifService.ShowNotification("Return Order 'RO-001' berhasil disimpan dan di-upload ke server Cloud!", NotificationType.Success);
+                Assert.Equal("Return Order 'RO-001' berhasil disimpan dan di-upload ke server Cloud!", vm.StatusInfoText);
+            }
+            finally
+            {
+                vm.Dispose();
+            }
+        }
     }
 }

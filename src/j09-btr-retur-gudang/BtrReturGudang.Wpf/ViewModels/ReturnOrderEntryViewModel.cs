@@ -41,6 +41,57 @@ namespace BtrReturGudang.Wpf.ViewModels
         private readonly IAudioHelper _audioHelper;
         private readonly IRegistryHelper _registryHelper;
         private readonly OperatorSessionValidator _sessionValidator;
+        private readonly IStatusNotificationService _notificationService;
+
+        // Toast Notification State
+        private string _toastMessage;
+        public string ToastMessage
+        {
+            get => _toastMessage;
+            set => SetProperty(ref _toastMessage, value);
+        }
+
+        private bool _isToastVisible;
+        public bool IsToastVisible
+        {
+            get => _isToastVisible;
+            set => SetProperty(ref _isToastVisible, value);
+        }
+
+        private string _toastType = "Success";
+        public string ToastType
+        {
+            get => _toastType;
+            set => SetProperty(ref _toastType, value);
+        }
+
+        private System.Threading.CancellationTokenSource _toastCts;
+
+        public void ShowToast(string message, string type = "Success", int durationMs = 3500)
+        {
+            ToastMessage = message;
+            ToastType = type;
+            IsToastVisible = true;
+
+            _toastCts?.Cancel();
+            var cts = new System.Threading.CancellationTokenSource();
+            _toastCts = cts;
+
+            Task.Delay(durationMs, cts.Token).ContinueWith(t =>
+            {
+                if (!t.IsCanceled && !cts.IsCancellationRequested)
+                {
+                    if (Application.Current?.Dispatcher != null && !Application.Current.Dispatcher.HasShutdownStarted)
+                    {
+                        Application.Current.Dispatcher.InvokeAsync(() => IsToastVisible = false);
+                    }
+                    else
+                    {
+                        IsToastVisible = false;
+                    }
+                }
+            }, TaskContinuationOptions.OnlyOnRanToCompletion);
+        }
 
         // Header State
         private string _currentReturnOrderId;
@@ -112,7 +163,8 @@ namespace BtrReturGudang.Wpf.ViewModels
             IReferenceRepo referenceRepo,
             IAudioHelper audioHelper,
             IRegistryHelper registryHelper,
-            OperatorSessionValidator sessionValidator = null)
+            OperatorSessionValidator sessionValidator = null,
+            IStatusNotificationService notificationService = null)
         {
             _returnOrderService = returnOrderService;
             _barcodeService = barcodeService;
@@ -120,6 +172,7 @@ namespace BtrReturGudang.Wpf.ViewModels
             _audioHelper = audioHelper;
             _registryHelper = registryHelper;
             _sessionValidator = sessionValidator;
+            _notificationService = notificationService;
 
             // Commands
             AddItemCommand = new RelayCommand(ExecuteAddItem, CanAddItem);
@@ -144,7 +197,8 @@ namespace BtrReturGudang.Wpf.ViewModels
             App.ServiceProvider?.GetService<IReferenceRepo>(),
             App.ServiceProvider?.GetService<IAudioHelper>(),
             App.ServiceProvider?.GetService<IRegistryHelper>(),
-            App.ServiceProvider?.GetService<OperatorSessionValidator>())
+            App.ServiceProvider?.GetService<OperatorSessionValidator>(),
+            App.ServiceProvider?.GetService<IStatusNotificationService>())
         {
         }
 
@@ -791,7 +845,7 @@ namespace BtrReturGudang.Wpf.ViewModels
 
         #region Actions (Save Draft, Save & Upload, Reset)
 
-        public async Task<ReturnOrderDto> SaveDraftAsync()
+        public async Task<ReturnOrderDto> SaveDraftAsync(bool suppressNotification = false)
         {
             var (custId, custName, customerCode, wilayah) = GetSelectedCustomer();
             if (string.IsNullOrWhiteSpace(custName))
@@ -875,14 +929,20 @@ namespace BtrReturGudang.Wpf.ViewModels
                 return null;
             }
 
-            _audioHelper?.PlaySuccess();
-            ShowMessage($"Draft Return Order '{CurrentReturnOrderId}' berhasil disimpan secara lokal.", "Sukses", "Information");
+            if (!suppressNotification)
+            {
+                _audioHelper?.PlaySuccess();
+                var successMsg = $"Draft Return Order '{CurrentReturnOrderId}' berhasil disimpan secara lokal.";
+                ShowToast(successMsg, "Success");
+                _notificationService?.ShowNotification(successMsg, NotificationType.Success);
+            }
+
             return order;
         }
 
         public async Task<SyncResultDto> SaveAndUploadAsync()
         {
-            var draftOrder = await SaveDraftAsync();
+            var draftOrder = await SaveDraftAsync(suppressNotification: true);
             if (draftOrder == null)
                 return SyncResultDto.Fail("ReturnOrder", "Gagal menyimpan draft.");
 
@@ -905,17 +965,19 @@ namespace BtrReturGudang.Wpf.ViewModels
             if (syncResult != null && syncResult.Success)
             {
                 _audioHelper?.PlaySuccess();
-                ShowMessage($"Return Order '{CurrentReturnOrderId}' berhasil disimpan dan di-upload ke server Cloud!", "Upload Berhasil", "Information");
+                var successMsg = $"Return Order '{CurrentReturnOrderId}' berhasil disimpan dan di-upload ke server Cloud!";
+                ShowToast(successMsg, "Success");
+                _notificationService?.ShowNotification(successMsg, NotificationType.Success);
                 ResetForm(promptUser: false);
             }
             else
             {
                 _audioHelper?.PlayWarning();
                 var err = syncResult?.ErrorMessage ?? "Koneksi offline atau server relay tidak merespon.";
-                ShowMessage(
-                    $"Return Order '{CurrentReturnOrderId}' tersimpan sebagai Draft LOKAL.\r\nUpload Cloud belum selesai: {err}\r\nDokumen akan di-upload otomatis saat online.",
-                    "Tersimpan Lokal",
-                    "Warning");
+                var toastMsg = $"Tersimpan LOKAL ('{CurrentReturnOrderId}'). Upload Cloud tertunda (offline).";
+                var statusMsg = $"Return Order '{CurrentReturnOrderId}' tersimpan sebagai Draft LOKAL (Upload Cloud tertunda: {err})";
+                ShowToast(toastMsg, "Warning");
+                _notificationService?.ShowNotification(statusMsg, NotificationType.Warning);
                 ResetForm(promptUser: false);
             }
 

@@ -13,6 +13,7 @@ using BtrReturGudang.Domain.Entities;
 using BtrReturGudang.Domain.Enums;
 using BtrReturGudang.Domain.ValueObjects;
 using BtrReturGudang.Wpf.Controls;
+using BtrReturGudang.Wpf.Services;
 using BtrReturGudang.Wpf.ViewModels;
 using BtrReturGudang.Wpf.Views;
 using Xunit;
@@ -616,6 +617,151 @@ namespace BtrReturGudang.Wpf.Tests
                     window.Close();
                 }
             });
+        }
+
+        [Fact]
+        public async Task SaveDraftAsync_Success_DispatchesToastAndNotification_WithoutMessageBox()
+        {
+            var barcodeSvc = new FakeBarcodeService();
+            barcodeSvc.RegisterBarcode("8998866200112", "BRG-001", "INDOMIE GORENG SPESIAL", "PCS", 1m);
+            var orderService = new FakeReturnOrderService();
+            var registry = new FakeRegistryHelper();
+            var refRepo = new FakeReferenceRepo();
+            var audio = new FakeAudioHelper();
+            var notifService = new StatusNotificationService();
+
+            var vm = new ReturnOrderEntryViewModel(orderService, barcodeSvc, refRepo, audio, registry, null, notifService);
+
+            bool messageBoxCalled = false;
+            vm.MessageDialogHandler = (msg, title, icon) => { messageBoxCalled = true; };
+
+            string lastNotifMessage = null;
+            NotificationType? lastNotifType = null;
+            notifService.NotificationReceived += (s, e) =>
+            {
+                lastNotifMessage = e.Message;
+                lastNotifType = e.Type;
+            };
+
+            // Setup valid customer and item
+            vm.SetSelectedCustomer(refRepo.Customers[0]);
+            vm.OnBarcodeScanned("8998866200112");
+            vm.QtyBagus = 3;
+            vm.CommitQuantityStripToGrid();
+
+            var order = await vm.SaveDraftAsync();
+
+            Assert.NotNull(order);
+            Assert.False(messageBoxCalled, "MessageBox must NOT be shown on successful save draft.");
+            Assert.True(vm.IsToastVisible);
+            Assert.Equal("Success", vm.ToastType);
+            Assert.Contains(order.ReturnOrderId, vm.ToastMessage);
+            Assert.NotNull(lastNotifMessage);
+            Assert.Equal(NotificationType.Success, lastNotifType);
+        }
+
+        [Fact]
+        public async Task SaveAndUploadAsync_Success_DispatchesToastAndResetsForm_WithoutMessageBox()
+        {
+            var barcodeSvc = new FakeBarcodeService();
+            barcodeSvc.RegisterBarcode("8998866200112", "BRG-001", "INDOMIE GORENG SPESIAL", "PCS", 1m);
+            var orderService = new FakeReturnOrderService();
+            var registry = new FakeRegistryHelper();
+            var refRepo = new FakeReferenceRepo();
+            var audio = new FakeAudioHelper();
+            var notifService = new StatusNotificationService();
+
+            var vm = new ReturnOrderEntryViewModel(orderService, barcodeSvc, refRepo, audio, registry, null, notifService);
+
+            bool messageBoxCalled = false;
+            vm.MessageDialogHandler = (msg, title, icon) => { messageBoxCalled = true; };
+
+            string lastNotifMessage = null;
+            notifService.NotificationReceived += (s, e) =>
+            {
+                lastNotifMessage = e.Message;
+            };
+
+            vm.SetSelectedCustomer(refRepo.Customers[0]);
+            vm.OnBarcodeScanned("8998866200112");
+            vm.QtyBagus = 5;
+            vm.CommitQuantityStripToGrid();
+
+            var syncResult = await vm.SaveAndUploadAsync();
+
+            Assert.NotNull(syncResult);
+            Assert.True(syncResult.Success);
+            Assert.False(messageBoxCalled, "MessageBox must NOT be shown on successful Save & Upload.");
+            Assert.True(vm.IsToastVisible);
+            Assert.Equal("Success", vm.ToastType);
+            Assert.Contains("di-upload ke server Cloud", vm.ToastMessage);
+            Assert.Empty(vm.Items); // Form reset cleanly
+            Assert.NotNull(lastNotifMessage);
+        }
+
+        [Fact]
+        public async Task SaveAndUploadAsync_Offline_DispatchesWarningToastAndResetsForm_WithoutMessageBox()
+        {
+            var barcodeSvc = new FakeBarcodeService();
+            barcodeSvc.RegisterBarcode("8998866200112", "BRG-001", "INDOMIE GORENG SPESIAL", "PCS", 1m);
+            var orderService = new FakeReturnOrderService { CommitUploadSuccess = false };
+            var registry = new FakeRegistryHelper();
+            var refRepo = new FakeReferenceRepo();
+            var audio = new FakeAudioHelper();
+            var notifService = new StatusNotificationService();
+
+            var vm = new ReturnOrderEntryViewModel(orderService, barcodeSvc, refRepo, audio, registry, null, notifService);
+
+            bool messageBoxCalled = false;
+            vm.MessageDialogHandler = (msg, title, icon) => { messageBoxCalled = true; };
+
+            vm.SetSelectedCustomer(refRepo.Customers[0]);
+            vm.OnBarcodeScanned("8998866200112");
+            vm.QtyBagus = 2;
+            vm.CommitQuantityStripToGrid();
+
+            var syncResult = await vm.SaveAndUploadAsync();
+
+            Assert.NotNull(syncResult);
+            Assert.False(syncResult.Success);
+            Assert.False(messageBoxCalled, "Offline upload must show warning toast rather than blocking MessageBox.");
+            Assert.True(vm.IsToastVisible);
+            Assert.Equal("Warning", vm.ToastType);
+            Assert.Contains("Tersimpan LOKAL", vm.ToastMessage);
+            Assert.Empty(vm.Items); // Form reset cleanly for next intake
+        }
+
+        [Fact]
+        public async Task SaveDraftAsync_MissingCustomer_StillShowsMessageBox()
+        {
+            var barcodeSvc = new FakeBarcodeService();
+            barcodeSvc.RegisterBarcode("8998866200112", "BRG-001", "INDOMIE GORENG SPESIAL", "PCS", 1m);
+            var orderService = new FakeReturnOrderService();
+            var registry = new FakeRegistryHelper();
+            var refRepo = new FakeReferenceRepo();
+            var audio = new FakeAudioHelper();
+
+            var vm = new ReturnOrderEntryViewModel(orderService, barcodeSvc, refRepo, audio, registry);
+
+            bool messageBoxCalled = false;
+            string messageBoxType = null;
+            vm.MessageDialogHandler = (msg, title, icon) =>
+            {
+                messageBoxCalled = true;
+                messageBoxType = icon;
+            };
+
+            // Customer not selected!
+            vm.OnBarcodeScanned("8998866200112");
+            vm.QtyBagus = 1;
+            vm.CommitQuantityStripToGrid();
+
+            var order = await vm.SaveDraftAsync();
+
+            Assert.Null(order);
+            Assert.True(messageBoxCalled, "Validation error must trigger MessageBox.");
+            Assert.Equal("Warning", messageBoxType);
+            Assert.False(vm.IsToastVisible);
         }
     }
 }
