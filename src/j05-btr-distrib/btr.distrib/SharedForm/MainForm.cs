@@ -1,4 +1,4 @@
-﻿using btr.application.SupportContext.RoleFeature;
+using btr.application.SupportContext.RoleFeature;
 using btr.application.SupportContext.UserAgg;
 using btr.distrib.FinanceContext;
 using btr.distrib.FinanceContext.FpKeluaranAgg;
@@ -707,9 +707,9 @@ namespace btr.distrib.SharedForm
         }
         private void RT3GenerateReturnOrder_Click(object sender, EventArgs e)
         {
-            if (BringMdiChildToFrontIfLoaded<GenerateReturnOrderForm>())
+            if (BringMdiChildToFrontIfLoaded<ListReturnOrderForm>())
                 return;
-            var form = ThisServicesProvider.GetRequiredService<GenerateReturnOrderForm>();
+            var form = ThisServicesProvider.GetRequiredService<ListReturnOrderForm>();
             form.StartPosition = FormStartPosition.CenterScreen;
             form.MdiParent = this;
             form.Show();

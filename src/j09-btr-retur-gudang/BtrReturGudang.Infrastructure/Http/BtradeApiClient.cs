@@ -162,7 +162,7 @@ namespace BtrReturGudang.Infrastructure.Http
                 SalesPersonName = string.IsNullOrWhiteSpace(dto.SalesPersonId) ? null : dto.SalesPersonName,
                 DriverId = dto.DriverId,
                 DriverName = string.IsNullOrWhiteSpace(dto.DriverId) ? null : dto.DriverName,
-                Note = dto.Keterangan ?? dto.Note,
+                Note = dto.Keterangan ?? string.Empty,
                 ListItem = (dto.Items ?? new List<ReturnOrderItemDto>()).Select(item => new
                 {
                     ReturnOrderId = dto.ReturnOrderId,

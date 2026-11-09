@@ -1,4 +1,4 @@
-﻿-- create table for ReturJualModel
+-- create table for ReturJualModel
 CREATE TABLE [dbo].[BTR_ReturJual](
 	ReturJualId VARCHAR(13) NOT NULL CONSTRAINT DF_BTR_ReturJual_ReturJualId DEFAULT(''),
 	ReturJualDate DATETIME NOT NULL CONSTRAINT DF_BTR_ReturJual_ReturJualDate DEFAULT(''),
@@ -18,6 +18,15 @@ CREATE TABLE [dbo].[BTR_ReturJual](
 
     VoidDate DATETIME NOT NULL CONSTRAINT DF_BTR_ReturJual_VoidDate DEFAULT('3000-01-01'),
     UserIdVoid VARCHAR(20) NOT NULL CONSTRAINT DF_BTR_ReturJual_UserIdVoid DEFAULT(''),
+
+    ReturnOrderId VARCHAR(26) NOT NULL CONSTRAINT DF_BTR_ReturJual_ReturnOrderId DEFAULT(''),
 	
 	CONSTRAINT [PK_BTR_ReturJual] PRIMARY KEY CLUSTERED  (ReturJualId)
 )
+GO
+
+CREATE NONCLUSTERED INDEX IX_BTR_ReturJual_ReturnOrderId
+    ON [dbo].[BTR_ReturJual](ReturnOrderId, VoidDate)
+    WHERE ReturnOrderId <> ''
+    WITH (FILLFACTOR = 75)
+GO

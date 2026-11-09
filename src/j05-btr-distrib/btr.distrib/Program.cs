@@ -1,4 +1,4 @@
-﻿using btr.application;
+using btr.application;
 using btr.distrib.PrintDocs;
 using btr.distrib.SharedForm;
 using btr.infrastructure;
@@ -35,6 +35,7 @@ using btr.application.SalesContext.VisitPlanAgg;
 using btr.application.SalesContext.VisitPlanAgg.Services;
 using btr.infrastructure.SalesContext.SalesPersonPrincipalTargetAgg;
 using btr.infrastructure.SalesContext.VisitPlanAgg;
+using btr.application.InventoryContext.ReturnOrderAgg.Workers;
 
 namespace btr.distrib
 {
@@ -208,6 +209,7 @@ namespace btr.distrib
             services.AddScoped<IVisitPlanExceptionWriter, VisitPlanExceptionWriter>();
             services.AddScoped<IVisitPlanDal, VisitPlanDal>();
             services.AddScoped<IEffectiveVisitPlanDal, EffectiveVisitPlanDal>();
+            services.AddScoped<IReturnOrderStatusWorker, ReturnOrderStatusWorker>();
 
             services
                 .Scan(selector => selector

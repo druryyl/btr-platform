@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using btr.domain.InventoryContext.WarehouseAgg;
 using btr.domain.SalesContext.CustomerAgg;
@@ -19,6 +19,7 @@ namespace btr.domain.InventoryContext.ReturJualAgg
         public string UserId { get;  set; }
         public string JenisRetur { get; set; }
         public string ReturJualCode { get; set; }
+        public string ReturnOrderId { get; set; } = string.Empty;
 
         public string CustomerId { get;  set; }
         public string CustomerName { get;  set; }

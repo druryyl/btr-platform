@@ -375,6 +375,7 @@
     <Compile Include="Browsers\MutasiBrowser.cs" />
     <Compile Include="Browsers\PackingBrowser.cs" />
     <Compile Include="Browsers\ReturJualBrowser.cs" />
+    <Compile Include="Browsers\ReturnOrderBrowser.cs" />
     <Compile Include="Browsers\HariRuteBrowser.cs" />
     <Compile Include="Browsers\SalesPersonBrowser.cs" />
     <Compile Include="Browsers\TagihanBrowser.cs" />
@@ -601,15 +602,12 @@
     <Compile Include="InventoryContext\ReturJualRpt\ReturJualReportForm.Designer.cs">
       <DependentUpon>ReturJualReportForm.cs</DependentUpon>
     </Compile>
-    <Compile Include="InventoryContext\ReturnOrderAgg\GenerateReturnOrderForm.cs">
+    <Compile Include="InventoryContext\ReturnOrderAgg\ListReturnOrderForm.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="InventoryContext\ReturnOrderAgg\GenerateReturnOrderForm.Designer.cs">
-      <DependentUpon>GenerateReturnOrderForm.cs</DependentUpon>
+    <Compile Include="InventoryContext\ReturnOrderAgg\ListReturnOrderForm.Designer.cs">
+      <DependentUpon>ListReturnOrderForm.cs</DependentUpon>
     </Compile>
-    <Compile Include="InventoryContext\ReturnOrderAgg\GenerateReturnOrderFormItemDto.cs" />
-    <Compile Include="InventoryContext\ReturnOrderAgg\GenerateReturnOrderFormOrderDto.cs" />
-    <Compile Include="InventoryContext\ReturnOrderAgg\GenerateReturnOrderFormResultDto.cs" />
     <Compile Include="InventoryContext\StokBalanceRpt\StokBalanceInfo2Form.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -1093,8 +1091,8 @@
     <EmbeddedResource Include="InventoryContext\ReturJualAgg\ReturJualForm.resx">
       <DependentUpon>ReturJualForm.cs</DependentUpon>
     </EmbeddedResource>
-    <EmbeddedResource Include="InventoryContext\ReturnOrderAgg\GenerateReturnOrderForm.resx">
-      <DependentUpon>GenerateReturnOrderForm.cs</DependentUpon>
+    <EmbeddedResource Include="InventoryContext\ReturnOrderAgg\ListReturnOrderForm.resx">
+      <DependentUpon>ListReturnOrderForm.cs</DependentUpon>
     </EmbeddedResource>
     <Content Include="Reports\ReturJualPrintOut-Yk.rdlc">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>

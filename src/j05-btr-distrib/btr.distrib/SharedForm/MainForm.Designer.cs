@@ -1,4 +1,4 @@
-﻿namespace btr.distrib.SharedForm
+namespace btr.distrib.SharedForm
 {
     partial class MainForm
     {
@@ -899,7 +899,7 @@
             this.RT3GenerateReturnOrderMenu.Image = global::btr.distrib.Properties.Resources.icons8_uninstalling_updates_32;
             this.RT3GenerateReturnOrderMenu.LargeImage = global::btr.distrib.Properties.Resources.icons8_uninstalling_updates_32;
             this.RT3GenerateReturnOrderMenu.Name = "RT3GenerateReturnOrderMenu";
-            this.RT3GenerateReturnOrderMenu.Text = "RT3-Generate Return Order";
+            this.RT3GenerateReturnOrderMenu.Text = "RT3-Monitoring Return Order";
             this.RT3GenerateReturnOrderMenu.Click += new System.EventHandler(this.RT3GenerateReturnOrder_Click);
             // 
             // ribbonPanel4

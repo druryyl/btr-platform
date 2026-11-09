@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using btr.domain.InventoryContext.ReturnOrderAgg;
+using btr.nuna.Domain;
 using btr.nuna.Infrastructure;
 
 namespace btr.application.InventoryContext.ReturnOrderAgg.Contracts
@@ -8,7 +9,8 @@ namespace btr.application.InventoryContext.ReturnOrderAgg.Contracts
         IInsert<ReturnOrderModel>,
         IUpdate<ReturnOrderModel>,
         IGetData<ReturnOrderModel, IReturnOrderKey>,
-        IListData<ReturnOrderModel>
+        IListData<ReturnOrderModel>,
+        IListData<ReturnOrderModel, Periode>
     {
         ReturnOrderModel GetByReturnOrderId(IReturnOrderKey key);
         IEnumerable<ReturnOrderModel> ListByStatus(string status);

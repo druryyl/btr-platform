@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlClient;
 using btr.application.InventoryContext.ReturJualAgg.Contracts;
@@ -27,14 +27,14 @@ namespace btr.infrastructure.InventoryContext.ReturJualAgg
             const string sql = @"
                 INSERT INTO 
                     BTR_ReturJual (
-                        ReturJualId, ReturJualDate, JenisRetur, ReturJualCode,
+                        ReturJualId, ReturJualDate, JenisRetur, ReturJualCode, ReturnOrderId,
                         CustomerId, WarehouseId, UserId,
                         SalesPersonId, DriverId, Note,
                         Total, DiscRp, PpnRp, GrandTotal,
                         VoidDate, UserIdVoid
                     )
                 VALUES (
-                        @ReturJualId, @ReturJualDate, @JenisRetur, @ReturJualCode,
+                        @ReturJualId, @ReturJualDate, @JenisRetur, @ReturJualCode, @ReturnOrderId,
                         @CustomerId, @WarehouseId, @UserId,
                         @SalesPersonId, @DriverId, @Note,
                         @Total, @DiscRp, @PpnRp, @GrandTotal,
@@ -47,6 +47,7 @@ namespace btr.infrastructure.InventoryContext.ReturJualAgg
             dp.AddParam("@ReturJualDate", model.ReturJualDate, SqlDbType.DateTime);
             dp.AddParam("@JenisRetur", model.JenisRetur, SqlDbType.VarChar);
             dp.AddParam("@ReturJualCode", model.ReturJualCode, SqlDbType.VarChar);
+            dp.AddParam("@ReturnOrderId", model.ReturnOrderId ?? string.Empty, SqlDbType.VarChar);
             dp.AddParam("@CustomerId", model.CustomerId, SqlDbType.VarChar);
             dp.AddParam("@WarehouseId", model.WarehouseId, SqlDbType.VarChar);
             dp.AddParam("@SalesPersonId", model.SalesPersonId, SqlDbType.VarChar);
@@ -77,6 +78,7 @@ namespace btr.infrastructure.InventoryContext.ReturJualAgg
                     ReturJualDate = @ReturJualDate,
                     JenisRetur = @JenisRetur,
                     ReturJualCode = @ReturJualCode,
+                    ReturnOrderId = @ReturnOrderId,
                     UserId = @UserId,
 
                     CustomerId = @CustomerId,
@@ -101,6 +103,7 @@ namespace btr.infrastructure.InventoryContext.ReturJualAgg
             dp.AddParam("@ReturJualDate", model.ReturJualDate, SqlDbType.DateTime);
             dp.AddParam("@JenisRetur", model.JenisRetur, SqlDbType.VarChar);
             dp.AddParam("@ReturJualCode", model.ReturJualCode, SqlDbType.VarChar);
+            dp.AddParam("@ReturnOrderId", model.ReturnOrderId ?? string.Empty, SqlDbType.VarChar);
             dp.AddParam("@CustomerId", model.CustomerId, SqlDbType.VarChar);
             dp.AddParam("@WarehouseId", model.WarehouseId, SqlDbType.VarChar);
             dp.AddParam("@SalesPersonId", model.SalesPersonId, SqlDbType.VarChar);
@@ -148,7 +151,7 @@ namespace btr.infrastructure.InventoryContext.ReturJualAgg
             const string sql = @"
                 SELECT 
                     aa.ReturJualId, aa.ReturJualDate, aa.UserId, 
-                    aa.JenisRetur, aa.ReturJualCode,
+                    aa.JenisRetur, aa.ReturJualCode, aa.ReturnOrderId,
                     aa.CustomerId, aa.WarehouseId, 
                     aa.SalesPersonId, aa.DriverId, aa.Note,
                     aa.Total, aa.DiscRp, aa.PpnRp, aa.GrandTotal,
@@ -163,7 +166,7 @@ namespace btr.infrastructure.InventoryContext.ReturJualAgg
                     LEFT JOIN BTR_Customer bb ON aa.CustomerId = bb.CustomerId
                     LEFT JOIN BTR_Warehouse cc ON aa.WarehouseId = cc.WarehouseId
                     LEFT JOIN BTR_SalesPerson dd ON aa.SalesPersonId = dd.SalesPersonId
-                    LEFT JOIN BTR_Driver ee ON ee.DriverId = ee.DriverId
+                    LEFT JOIN BTR_Driver ee ON aa.DriverId = ee.DriverId
                 WHERE 
                     ReturJualId = @ReturJualId";
             
@@ -184,7 +187,7 @@ namespace btr.infrastructure.InventoryContext.ReturJualAgg
             const string sql = @"
                 SELECT 
                     aa.ReturJualId, aa.ReturJualDate, aa.UserId, 
-                    aa.JenisRetur, aa.ReturJualCode,
+                    aa.JenisRetur, aa.ReturJualCode, aa.ReturnOrderId,
                     aa.CustomerId, aa.WarehouseId, 
                     aa.SalesPersonId, aa.DriverId, aa.Note,
                     aa.Total, aa.DiscRp, aa.PpnRp, aa.GrandTotal,
@@ -214,6 +217,41 @@ namespace btr.infrastructure.InventoryContext.ReturJualAgg
                 return conn.Read<ReturJualModel>(sql, dp);
             }
 
+        }
+
+        public IEnumerable<ReturJualModel> ListByReturnOrderId(string returnOrderId)
+        {
+            const string sql = @"
+                SELECT 
+                    aa.ReturJualId, aa.ReturJualDate, aa.UserId, 
+                    aa.JenisRetur, aa.ReturJualCode, aa.ReturnOrderId,
+                    aa.CustomerId, aa.WarehouseId, 
+                    aa.SalesPersonId, aa.DriverId, aa.Note,
+                    aa.Total, aa.DiscRp, aa.PpnRp, aa.GrandTotal,
+                    aa.VoidDate, aa.UserIdVoid,
+                    ISNULL(bb.CustomerName, '') AS CustomerName,
+                    ISNULL(bb.Address1, '') AS Address,
+                    ISNULL(cc.WarehouseName, '') AS WarehouseName,
+                    ISNULL(dd.SalesPersonName, '') AS SalesPersonName,
+                    ISNULL(ee.DriverName, '') AS DriverName
+                FROM 
+                    BTR_ReturJual aa
+                    LEFT JOIN BTR_Customer bb ON aa.CustomerId = bb.CustomerId
+                    LEFT JOIN BTR_Warehouse cc ON aa.WarehouseId = cc.WarehouseId
+                    LEFT JOIN BTR_SalesPerson dd ON aa.SalesPersonId = dd.SalesPersonId
+                    LEFT JOIN BTR_Driver ee ON aa.DriverId = ee.DriverId
+                WHERE 
+                    aa.ReturnOrderId = @ReturnOrderId
+                ORDER BY 
+                    aa.ReturJualDate DESC";
+
+            var dp = new DynamicParameters();
+            dp.AddParam("@ReturnOrderId", returnOrderId ?? string.Empty, SqlDbType.VarChar);
+
+            using (var conn = new SqlConnection(ConnStringHelper.Get(_opt)))
+            {
+                return conn.Read<ReturJualModel>(sql, dp);
+            }
         }
     }
 }

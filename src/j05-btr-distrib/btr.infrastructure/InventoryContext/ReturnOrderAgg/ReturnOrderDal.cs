@@ -4,6 +4,7 @@ using System.Data.SqlClient;
 using btr.application.InventoryContext.ReturnOrderAgg.Contracts;
 using btr.domain.InventoryContext.ReturnOrderAgg;
 using btr.infrastructure.Helpers;
+using btr.nuna.Domain;
 using btr.nuna.Infrastructure;
 using Dapper;
 using Microsoft.Extensions.Options;
@@ -146,6 +147,36 @@ namespace btr.infrastructure.InventoryContext.ReturnOrderAgg
             using (var conn = new SqlConnection(ConnStringHelper.Get(_opt)))
             {
                 return conn.Read<ReturnOrderModel>(sql);
+            }
+        }
+
+        public IEnumerable<ReturnOrderModel> ListData(Periode filter)
+        {
+            const string sql = @"
+                SELECT 
+                    aa.ReturnOrderId, aa.ReturnOrderNo, aa.ReturnOrderDate, aa.WarehouseCode,
+                    aa.CustomerId, aa.SalesPersonId, aa.DriverId, aa.Note, aa.Status,
+                    aa.CreatedBy, aa.CreatedDate, aa.ModifiedBy, aa.ModifiedDate,
+                    ISNULL(bb.CustomerName, '') AS CustomerName,
+                    ISNULL(cc.SalesPersonName, '') AS SalesPersonName,
+                    ISNULL(dd.DriverName, '') AS DriverName
+                FROM 
+                    BTR_ReturnOrder aa
+                    LEFT JOIN BTR_Customer bb ON aa.CustomerId = bb.CustomerId
+                    LEFT JOIN BTR_SalesPerson cc ON aa.SalesPersonId = cc.SalesPersonId
+                    LEFT JOIN BTR_Driver dd ON aa.DriverId = dd.DriverId
+                WHERE 
+                    aa.ReturnOrderDate BETWEEN @StartDate AND @EndDate
+                ORDER BY 
+                    aa.ReturnOrderDate DESC, aa.ReturnOrderId DESC";
+
+            var dp = new DynamicParameters();
+            dp.AddParam("@StartDate", filter.Tgl1, SqlDbType.DateTime);
+            dp.AddParam("@EndDate", filter.Tgl2, SqlDbType.DateTime);
+
+            using (var conn = new SqlConnection(ConnStringHelper.Get(_opt)))
+            {
+                return conn.Read<ReturnOrderModel>(sql, dp);
             }
         }
 

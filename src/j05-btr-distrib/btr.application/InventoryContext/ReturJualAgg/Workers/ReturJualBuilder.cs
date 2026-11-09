@@ -1,4 +1,4 @@
-﻿using btr.application.InventoryContext.ReturJualAgg.Contracts;
+using btr.application.InventoryContext.ReturJualAgg.Contracts;
 using btr.domain.InventoryContext.ReturJualAgg;
 using btr.nuna.Application;
 using btr.nuna.Domain;
@@ -30,6 +30,7 @@ namespace btr.application.InventoryContext.ReturJualAgg.Workers
         IReturJualBuilder AddItem(ReturJualItemModel item);
         IReturJualBuilder User(string userId);
         IReturJualBuilder Note(string note);
+        IReturJualBuilder ReturnOrderId(string returnOrderId);
     }
 
     public class ReturJualBuilder : IReturJualBuilder
@@ -86,7 +87,8 @@ namespace btr.application.InventoryContext.ReturJualAgg.Workers
             {
                 ReturJualDate = new DateTime(3000,1,1),
                 VoidDate = new DateTime(3000,1,1),
-                ListItem = new List<ReturJualItemModel>()
+                ListItem = new List<ReturJualItemModel>(),
+                ReturnOrderId = string.Empty
             };
             return this;
         }
@@ -182,6 +184,12 @@ namespace btr.application.InventoryContext.ReturJualAgg.Workers
         public IReturJualBuilder Note(string note)
         {
             _aggregate.Note = note ?? string.Empty;
+            return this;
+        }
+
+        public IReturJualBuilder ReturnOrderId(string returnOrderId)
+        {
+            _aggregate.ReturnOrderId = returnOrderId ?? string.Empty;
             return this;
         }
     }

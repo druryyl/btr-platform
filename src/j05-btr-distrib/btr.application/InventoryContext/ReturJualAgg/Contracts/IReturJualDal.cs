@@ -1,4 +1,5 @@
-﻿using btr.domain.InventoryContext.ReturJualAgg;
+using System.Collections.Generic;
+using btr.domain.InventoryContext.ReturJualAgg;
 using btr.nuna.Domain;
 using btr.nuna.Infrastructure;
 
@@ -11,5 +12,6 @@ namespace btr.application.InventoryContext.ReturJualAgg.Contracts
         IGetData<ReturJualModel, IReturJualKey>,
         IListData<ReturJualModel, Periode>
     {
+        IEnumerable<ReturJualModel> ListByReturnOrderId(string returnOrderId);
     }
 }

@@ -1,4 +1,4 @@
-﻿
+
 INSERT INTO BTR_Menu (MenuId, GroupOrder, FormType, MenuName, Caption) VALUES
 ('ST1', 10, 'TRS', 'ST1FakturMenu', 'ST1-Faktur'),
 ('ST2', 10, 'TRS', 'ST2ControlFakturMenu', 'ST2-Control Faktur'),
@@ -57,7 +57,7 @@ INSERT INTO BTR_Menu (MenuId, GroupOrder, FormType, MenuName, Caption) VALUES
 ('FF4', 41, 'INFO', 'FF4PelunasanInfoBMenu', 'FF4-Pelunasan Info'),
 ('RT1', 50, 'TRS', 'RT1ReturJualMenu', 'RT1-Retur Jual'),
 ('RT2', 50, 'TRS', 'RT2PostingReturMenu', 'RT2-Posting Retur'),
-('RT3', 50, 'TRS', 'RT3GenerateReturnOrderMenu', 'RT3-Generate Return Order'),
+('RT3', 50, 'TRS', 'RT3GenerateReturnOrderMenu', 'RT3-Monitoring Return Order'),
 ('RF1', 51, 'INFO', 'RF1ReturJualInfoMenu', 'RF1-Info Retur'),
 ('RF2', 51, 'INFO', 'RF2ReturBrgInfoMenu', 'RF2-Info Retr-Brg'),
 ('RF3', 51, 'INFO', 'RF3ReturJualPerSupplierInfoMenu', 'RF3-Retur Per-Supplier'),

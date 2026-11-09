@@ -1,6 +1,8 @@
-﻿using btr.application.InventoryContext.DriverAgg;
+using btr.application.InventoryContext.DriverAgg;
 using btr.application.InventoryContext.ReturJualAgg.Contracts;
 using btr.application.InventoryContext.ReturJualAgg.Workers;
+using btr.application.InventoryContext.ReturnOrderAgg.Contracts;
+using btr.application.InventoryContext.ReturnOrderAgg.Workers;
 using btr.application.InventoryContext.StokAgg;
 using btr.application.InventoryContext.StokAgg.GenStokUseCase;
 using btr.application.InventoryContext.WarehouseAgg;
@@ -13,6 +15,7 @@ using btr.distrib.SalesContext.FakturAgg;
 using btr.distrib.SharedForm;
 using btr.domain.InventoryContext.DriverAgg;
 using btr.domain.InventoryContext.ReturJualAgg;
+using btr.domain.InventoryContext.ReturnOrderAgg;
 using btr.domain.InventoryContext.StokAgg;
 using btr.domain.InventoryContext.WarehouseAgg;
 using btr.domain.SalesContext.CustomerAgg;
@@ -46,6 +49,7 @@ namespace btr.distrib.InventoryContext.ReturJualAgg
         private readonly IBrowser<DriverBrowserView> _driverBrowser;
         private readonly IBrowser<BrgBrowserView> _brgBrowser;
         private readonly IBrowser<ReturJualBrowserView> _returJualBrowser;
+        private readonly IBrowser<ReturnOrderBrowserView> _returnOrderBrowser;
 
         private readonly ICustomerDal _customerDal;
         private readonly ISalesPersonDal _salesPersonDal;
@@ -56,6 +60,9 @@ namespace btr.distrib.InventoryContext.ReturJualAgg
         private readonly IParamSistemDal _paramSistemDal;
         private readonly IRemoveRollbackStokWorker _removeRollbackStokWorker;
         private readonly IReturJualDal _returJualDal;
+        private readonly IReturnOrderDal _returnOrderDal;
+        private readonly IReturnOrderItemDal _returnOrderItemDal;
+        private readonly IReturnOrderStatusWorker _returnOrderStatusWorker;
 
         private readonly ICreateReturJualItemWorker _createReturJualItemWorker;
         private readonly IGenStokReturJualWorker _genStokReturJualWorker;
@@ -78,7 +85,11 @@ namespace btr.distrib.InventoryContext.ReturJualAgg
             IGenStokReturJualWorker genStokReturJualWorker,
             IParamSistemDal paramSistemDal,
             IRemoveRollbackStokWorker removeRollbackStokWorker,
-            IReturJualDal returJualDal)
+            IReturJualDal returJualDal,
+            IReturnOrderDal returnOrderDal,
+            IReturnOrderItemDal returnOrderItemDal,
+            IReturnOrderStatusWorker returnOrderStatusWorker,
+            IBrowser<ReturnOrderBrowserView> returnOrderBrowser)
         {
             InitializeComponent();
 
@@ -101,6 +112,10 @@ namespace btr.distrib.InventoryContext.ReturJualAgg
             _paramSistemDal = paramSistemDal;
             _removeRollbackStokWorker = removeRollbackStokWorker;
             _returJualDal = returJualDal;
+            _returnOrderDal = returnOrderDal;
+            _returnOrderItemDal = returnOrderItemDal;
+            _returnOrderStatusWorker = returnOrderStatusWorker;
+            _returnOrderBrowser = returnOrderBrowser;
 
             RegisterEventHandler();
             InitGrid();
@@ -159,9 +174,16 @@ namespace btr.distrib.InventoryContext.ReturJualAgg
             FakturItemGrid.KeyDown += FakturItemGrid_KeyDown;
             FakturItemGrid.RowPostPaint += DataGridViewExtensions.DataGridView_RowPostPaint;
             
+            // register event handler for return order
+            ReturnOrderButton.Click += ReturnOrderButton_Click;
+            ReturnOrderIdText.Validated += ReturnOrderIdText_Validated;
+            ReturnOrderIdText.KeyDown += ReturnOrderIdText_KeyDown;
+            ReturnOrderIdText.KeyDown += SetFocusToNextControl;
+
             SaveButton.Click += SaveButton_Click;
             DeleteButton.Click += DeleteButton_Click;
             PrintButton.Click += PrintButton_Click;
+            NewButton.Click += NewButton_Click;
         }
 
         private void DeleteButton_Click(object sender, EventArgs e)
@@ -185,6 +207,7 @@ namespace btr.distrib.InventoryContext.ReturJualAgg
             {
                 _returJualDal.Update(returJual);
                 _removeRollbackStokWorker.Execute(reqRemove);
+                _returnOrderStatusWorker.UpdateStatus(returJual.ReturnOrderId);
                 trans.Complete();
             }
         }
@@ -247,6 +270,7 @@ namespace btr.distrib.InventoryContext.ReturJualAgg
                 return false;
 
             returJual.RemoveNull();
+            ReturnOrderIdText.Text = returJual.ReturnOrderId ?? string.Empty;
             CustomerNameText.Text = returJual.CustomerName;
             CustomerIdText.Text = returJual.CustomerId;
             JenisReturCombo.SelectedItem = returJual.JenisRetur;
@@ -331,6 +355,7 @@ namespace btr.distrib.InventoryContext.ReturJualAgg
         private void ClearDisplay()
         {
             ReturJualIdText.Clear();
+            ReturnOrderIdText.Clear();
             CustomerIdText.Clear();
             CustomerNameText.Clear();
             CustomerAddressText.Clear();
@@ -357,6 +382,7 @@ namespace btr.distrib.InventoryContext.ReturJualAgg
             {
                 returJual = _writer.Save(returJual);
                 _genStokReturJualWorker.Execute(new GenStokReturJualRequest(returJual.ReturJualId));
+                _returnOrderStatusWorker.UpdateStatus(returJual.ReturnOrderId);
                 trans.Complete();
             }
             LastIdText.Text = returJual.ReturJualId;
@@ -377,6 +403,7 @@ namespace btr.distrib.InventoryContext.ReturJualAgg
             var mainform = (MainForm)this.Parent.Parent;
             resultBuildReturJual = _builder
                 .Attach(resultBuildReturJual)
+                .ReturnOrderId(ReturnOrderIdText.Text)
                 .Customer(new CustomerModel(CustomerIdText.Text))
                 .Warehouse(new WarehouseModel(WarehouseIdText.Text))
                 .SalesPerson(new SalesPersonModel(SalesIdText.Text))
@@ -700,5 +727,242 @@ namespace btr.distrib.InventoryContext.ReturJualAgg
         }
         #endregion
 
+        private void NewButton_Click(object sender, EventArgs e)
+        {
+            ClearDisplay();
+        }
+
+        #region RETURN-ORDER
+        private void ReturnOrderButton_Click(object sender, EventArgs e)
+        {
+            _returnOrderBrowser.Filter.Date = new Periode(DateTime.Today.AddDays(-30), DateTime.Today);
+            ReturnOrderIdText.Text = _returnOrderBrowser.Browse(ReturnOrderIdText.Text);
+            ReturnOrderIdText_Validated(ReturnOrderIdText, null);
+        }
+
+        private void ReturnOrderIdText_Validated(object sender, EventArgs e)
+        {
+            var textbox = (TextBox)sender;
+            if (textbox.Text.Length == 0)
+                return;
+            LoadReturnOrder(textbox.Text);
+        }
+
+        private void ReturnOrderIdText_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.KeyCode == Keys.F1)
+            {
+                ReturnOrderButton_Click(ReturnOrderButton, null);
+            }
+        }
+
+        public void LoadReturnOrder(string returnOrderId)
+        {
+            if (string.IsNullOrWhiteSpace(returnOrderId))
+                return;
+
+            var returnOrder = _returnOrderDal.GetData(new ReturnOrderModel(returnOrderId));
+            if (returnOrder == null)
+            {
+                MessageBox.Show($@"Order Retur '{returnOrderId}' tidak ditemukan.", @"Peringatan", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            if (string.Equals(returnOrder.Status, ReturnOrderStatus.Imported, StringComparison.OrdinalIgnoreCase))
+            {
+                MessageBox.Show($@"Order Retur '{returnOrderId}' sudah berstatus Imported (seluruh retur telah terbit).", @"Peringatan", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            var orderItems = _returnOrderItemDal.ListData(new ReturnOrderModel(returnOrderId))?.ToList()
+                ?? new List<ReturnOrderItemModel>();
+            if (orderItems.Count == 0)
+            {
+                MessageBox.Show($@"Order Retur '{returnOrderId}' tidak memiliki item barang.", @"Peringatan", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            // Evaluasi distinct JenisRetur dari detail order
+            var distinctJenis = orderItems
+                .Select(x => (x.JenisRetur ?? string.Empty).Trim().ToUpper())
+                .Where(x => !string.IsNullOrEmpty(x))
+                .Distinct()
+                .ToList();
+
+            string selectedJenis;
+            if (distinctJenis.Count <= 1)
+            {
+                // Homogen: langsung pilih jenis retur yang ada
+                selectedJenis = distinctJenis.Count == 1 ? distinctJenis[0] : "BAGUS";
+            }
+            else
+            {
+                // Heterogen: periksa dokumen Retur Jual aktif yang sudah pernah terbit
+                var activeReturJual = (_returJualDal.ListByReturnOrderId(returnOrderId) ?? Enumerable.Empty<ReturJualModel>())
+                    .Where(x => !x.IsVoid)
+                    .ToList();
+
+                var issuedJenis = activeReturJual
+                    .Select(x => (x.JenisRetur ?? string.Empty).Trim().ToUpper())
+                    .Where(x => !string.IsNullOrEmpty(x))
+                    .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+                var remainingJenis = distinctJenis
+                    .Where(x => !issuedJenis.Contains(x))
+                    .ToList();
+
+                if (remainingJenis.Count == 0)
+                {
+                    MessageBox.Show($@"Seluruh jenis retur pada Order Retur '{returnOrderId}' telah diproses dalam dokumen Retur Jual aktif.", @"Informasi", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    return;
+                }
+                else if (remainingJenis.Count == 1)
+                {
+                    // Salah satu jenis retur sudah pernah terbit, otomatis pilih jenis yang tersisa
+                    selectedJenis = remainingJenis[0];
+                }
+                else
+                {
+                    // Keduanya belum terbit, tampilkan modal konfirmasi pilihan interaktif bagi user
+                    using (var dlg = new SelectJenisReturDialog())
+                    {
+                        if (dlg.ShowDialog(this) == DialogResult.OK && !string.IsNullOrEmpty(dlg.SelectedJenisRetur))
+                        {
+                            selectedJenis = dlg.SelectedJenisRetur;
+                        }
+                        else
+                        {
+                            return;
+                        }
+                    }
+                }
+            }
+
+            // Reset form untuk dokumen baru
+            ClearDisplay();
+
+            // Set kontrol referensi Order Retur
+            ReturnOrderIdText.Text = returnOrderId;
+
+            // Set Customer
+            CustomerIdText.Text = returnOrder.CustomerId ?? string.Empty;
+            CustomerIdText_Validated(CustomerIdText, null);
+
+            // Set Sales jika terisi
+            if (!string.IsNullOrWhiteSpace(returnOrder.SalesPersonId))
+            {
+                SalesIdText.Text = returnOrder.SalesPersonId;
+                SalesPersonIdText_Validated(SalesIdText, null);
+            }
+            else
+            {
+                SalesIdText.Clear();
+                SalesNameText.Clear();
+            }
+
+            // Set Driver jika terisi
+            if (!string.IsNullOrWhiteSpace(returnOrder.DriverId))
+            {
+                DriverIdText.Text = returnOrder.DriverId;
+                DriverIdText_Validated(DriverIdText, null);
+            }
+            else
+            {
+                DriverIdText.Clear();
+                DriverNameText.Clear();
+            }
+
+            // Warehouse wajib dipilih manual secara eksplisit oleh user
+            WarehouseIdText.Clear();
+            WarehouseNameText.Clear();
+
+            // Set JenisReturCombo
+            JenisReturCombo.SelectedItem = selectedJenis;
+
+            // Filter item sesuai jenis retur yang terpilih
+            var filteredItems = orderItems
+                .Where(x => string.Equals((x.JenisRetur ?? string.Empty).Trim(), selectedJenis, StringComparison.OrdinalIgnoreCase))
+                .ToList();
+
+            _listItem.Clear();
+            foreach (var item in filteredItems)
+            {
+                var req = new CreateReturJualItemRequest(
+                    item.BrgId,
+                    CustomerIdText.Text,
+                    string.Empty,
+                    $"0;{item.Qty:G29}",
+                    0,
+                    string.Empty,
+                    "0;0;0;0",
+                    _ppnProsen,
+                    selectedJenis);
+                var newItemModel = _createReturJualItemWorker.Execute(req);
+                var newItemDto = newItemModel.Adapt<ReturJualItemDto>();
+                _listItem.Add(newItemDto);
+            }
+
+            FakturItemGrid.Refresh();
+            CalcTotal();
+
+            MessageBox.Show(@"Silakan pilih Warehouse tujuan untuk proses Retur Jual ini.", @"Pemberitahuan", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            WarehouseIdText.Focus();
+        }
+        #endregion
+
+    }
+
+    public class SelectJenisReturDialog : Form
+    {
+        public string SelectedJenisRetur { get; private set; }
+
+        public SelectJenisReturDialog()
+        {
+            Text = @"Pilih Jenis Retur";
+            FormBorderStyle = FormBorderStyle.FixedDialog;
+            MaximizeBox = false;
+            MinimizeBox = false;
+            StartPosition = FormStartPosition.CenterParent;
+            ClientSize = new Size(360, 140);
+            ShowInTaskbar = false;
+
+            var label = new Label
+            {
+                Text = @"Order Retur memuat item BAGUS dan RUSAK." + Environment.NewLine + @"Pilih jenis retur yang ingin diproses:",
+                Location = new Point(20, 20),
+                Size = new Size(320, 40),
+                Font = new Font("Segoe UI", 9F, FontStyle.Regular)
+            };
+
+            var btnBagus = new Button
+            {
+                Text = @"BAGUS",
+                Location = new Point(60, 75),
+                Size = new Size(100, 32),
+                DialogResult = DialogResult.OK,
+                Font = new Font("Segoe UI", 9F, FontStyle.Bold)
+            };
+            btnBagus.Click += (s, e) =>
+            {
+                SelectedJenisRetur = "BAGUS";
+            };
+
+            var btnRusak = new Button
+            {
+                Text = @"RUSAK",
+                Location = new Point(190, 75),
+                Size = new Size(100, 32),
+                DialogResult = DialogResult.OK,
+                Font = new Font("Segoe UI", 9F, FontStyle.Bold)
+            };
+            btnRusak.Click += (s, e) =>
+            {
+                SelectedJenisRetur = "RUSAK";
+            };
+
+            Controls.Add(label);
+            Controls.Add(btnBagus);
+            Controls.Add(btnRusak);
+        }
     }
 }

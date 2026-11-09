@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="4.0">
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
@@ -272,5 +272,6 @@
     <None Include="Scripts\Upgrade_Barcode_Registry.sql" />
     <None Include="Scripts\Create_BTR_ReturnOrder.sql" />
     <None Include="Scripts\Upgrade_BTR_User_Email.sql" />
+    <None Include="Scripts\Alter_BTR_ReturJual_Add_ReturnOrderId.sql" />
   </ItemGroup>
 </Project>

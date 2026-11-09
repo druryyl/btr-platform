@@ -230,12 +230,14 @@
     <Compile Include="InventoryContext\ReturnOrderAgg\Workers\ReturnOrderBuilder.cs" />
     <Compile Include="InventoryContext\ReturnOrderAgg\Workers\ReturnOrderValidator.cs" />
     <Compile Include="InventoryContext\ReturnOrderAgg\Workers\ReturnOrderWriter.cs" />
+    <Compile Include="InventoryContext\ReturnOrderAgg\Workers\ReturnOrderStatusWorker.cs" />
     <Compile Include="InventoryContext\ReturnOrderAgg\ImportReturnOrderCommand.cs" />
     <Compile Include="InventoryContext\ReturnOrderAgg\CompleteReturnOrderCommand.cs" />
-    <Compile Include="InventoryContext\ReturnOrderAgg\GenerateSalesReturnFromReturnOrderCommand.cs" />
     <Compile Include="InventoryContext\ReturnOrderAgg\GetReturnOrderQuery.cs" />
     <Compile Include="InventoryContext\ReturnOrderAgg\ListReturnOrderQuery.cs" />
     <Compile Include="InventoryContext\ReturnOrderAgg\ListReturnOrderByCustomerQuery.cs" />
+    <Compile Include="InventoryContext\ReturnOrderAgg\ListReturnOrderDto.cs" />
+    <Compile Include="InventoryContext\ReturnOrderAgg\ListReturnOrderMonitoringQuery.cs" />
     <Compile Include="InventoryContext\StokAgg\GenStokUseCase\AddStokWorker.cs" />
     <Compile Include="InventoryContext\StokAgg\GenStokUseCase\GenStokAdjustmentWorker.cs" />
     <Compile Include="InventoryContext\StokAgg\GenStokUseCase\GenStokBalanceWorker.cs" />

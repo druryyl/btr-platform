@@ -1,4 +1,4 @@
-﻿namespace btr.distrib.InventoryContext.ReturJualAgg
+namespace btr.distrib.InventoryContext.ReturJualAgg
 {
     partial class ReturJualForm
     {
@@ -44,6 +44,9 @@
             this.DriverNameText = new System.Windows.Forms.TextBox();
             this.DriverButton = new System.Windows.Forms.Button();
             this.DriverLabel = new System.Windows.Forms.Label();
+            this.ReturnOrderLabel = new System.Windows.Forms.Label();
+            this.ReturnOrderIdText = new System.Windows.Forms.TextBox();
+            this.ReturnOrderButton = new System.Windows.Forms.Button();
             this.SalesIdText = new System.Windows.Forms.TextBox();
             this.SalesNameText = new System.Windows.Forms.TextBox();
             this.SalesButton = new System.Windows.Forms.Button();
@@ -201,6 +204,9 @@
             // 
             this.panel3.BackColor = System.Drawing.Color.Cornsilk;
             this.panel3.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.panel3.Controls.Add(this.ReturnOrderLabel);
+            this.panel3.Controls.Add(this.ReturnOrderIdText);
+            this.panel3.Controls.Add(this.ReturnOrderButton);
             this.panel3.Controls.Add(this.DriverIdText);
             this.panel3.Controls.Add(this.DriverNameText);
             this.panel3.Controls.Add(this.DriverButton);
@@ -285,6 +291,33 @@
             this.label3.Size = new System.Drawing.Size(33, 13);
             this.label3.TabIndex = 9;
             this.label3.Text = "Sales";
+            // 
+            // ReturnOrderLabel
+            // 
+            this.ReturnOrderLabel.AutoSize = true;
+            this.ReturnOrderLabel.Location = new System.Drawing.Point(3, 147);
+            this.ReturnOrderLabel.Name = "ReturnOrderLabel";
+            this.ReturnOrderLabel.Size = new System.Drawing.Size(73, 13);
+            this.ReturnOrderLabel.TabIndex = 17;
+            this.ReturnOrderLabel.Text = "Return Order";
+            // 
+            // ReturnOrderIdText
+            // 
+            this.ReturnOrderIdText.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.ReturnOrderIdText.Font = new System.Drawing.Font("Consolas", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.ReturnOrderIdText.Location = new System.Drawing.Point(6, 165);
+            this.ReturnOrderIdText.Name = "ReturnOrderIdText";
+            this.ReturnOrderIdText.Size = new System.Drawing.Size(147, 22);
+            this.ReturnOrderIdText.TabIndex = 14;
+            // 
+            // ReturnOrderButton
+            // 
+            this.ReturnOrderButton.Location = new System.Drawing.Point(159, 165);
+            this.ReturnOrderButton.Name = "ReturnOrderButton";
+            this.ReturnOrderButton.Size = new System.Drawing.Size(28, 20);
+            this.ReturnOrderButton.TabIndex = 15;
+            this.ReturnOrderButton.Text = "...";
+            this.ReturnOrderButton.UseVisualStyleBackColor = true;
             // 
             // PanelAtas4
             // 
@@ -693,5 +726,8 @@
         private System.Windows.Forms.Label CodeLabel;
         private System.Windows.Forms.Button PrintButton;
         private System.Windows.Forms.Button DeleteButton;
+        private System.Windows.Forms.Label ReturnOrderLabel;
+        private System.Windows.Forms.TextBox ReturnOrderIdText;
+        private System.Windows.Forms.Button ReturnOrderButton;
     }
 }
