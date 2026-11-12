@@ -4,7 +4,7 @@ Code: IS004-BTRG-SCANNER-INPUT-SEPARATION
 Artifact: IMPLEMENTATION-PLAN
 Version: 1.0
 LastUpdated: 2026-11-12
-Status: NOT-STARTED
+Status: COMPLETED
 Execution Approval: APPROVED
 ---
 
@@ -99,14 +99,14 @@ graph TD
 
 # 4. Progress Summary
 
-Plan status: NOT-STARTED  
+Plan status: COMPLETED  
 Execution Approval: APPROVED
 
 | Phase | Implementation Status | Review Status | Progress |
 | :--- | :--- | :--- | :--- |
-| P1 - Service Layer: Wedge Listener Burst Suppression & Rollback | NOT-STARTED | NOT-REVIEWED | 0/1 |
-| P2 - Presentation Layer: Scanner-First Neutral Focus Orchestration | NOT-STARTED | NOT-REVIEWED | 0/2 |
-| P3 - Automated Verification: Test Suite Alignment & Solution Verification | NOT-STARTED | NOT-REVIEWED | 0/1 |
+| P1 - Service Layer: Wedge Listener Burst Suppression & Rollback | IMPLEMENTED | GO | 1/1 |
+| P2 - Presentation Layer: Scanner-First Neutral Focus Orchestration | IMPLEMENTED | GO | 2/2 |
+| P3 - Automated Verification: Test Suite Alignment & Solution Verification | IMPLEMENTED | GO | 1/1 |
 
 ---
 
@@ -114,8 +114,8 @@ Execution Approval: APPROVED
 
 ## P1 - Service Layer: Wedge Listener Burst Suppression & Rollback
 
-Implementation Status: NOT-STARTED  
-Review Status: NOT-REVIEWED
+Implementation Status: IMPLEMENTED  
+Review Status: GO  
 
 ---
 
@@ -123,8 +123,8 @@ Review Status: NOT-REVIEWED
 
 Title: `WpfScannerWedgeListener` Active Burst Suppression & Defensive Rollback
 
-Implementation Status: NOT-STARTED  
-Review Status: NOT-REVIEWED  
+Implementation Status: IMPLEMENTED  
+Review Status: GO  
 
 Objective:  
 Enhance `WpfScannerWedgeListener.cs` to actively suppress `WM_CHAR` messages for characters 2..N during high-speed scanner bursts ($\le 50\text{ms}$), suppress terminating `VK_RETURN` on `WM_KEYDOWN` and `WM_CHAR`, and perform defensive `TextBox.Undo()` rollback and focus neutralization if an editable `TextBox` was focused when the scan completed.
@@ -191,12 +191,22 @@ Completion Criteria:
 - When an editable `TextBox` holds focus upon burst completion, `tb.Undo()` is invoked and `Keyboard.ClearFocus()` is called before barcode dispatch.
 - `BtrReturGudang.Wpf` compiles cleanly without warnings or errors.
 
+Implementation Notes:
+- Added `System.Windows.Controls` and `System.Windows.Input` namespace imports to `WpfScannerWedgeListener.cs`.
+- Implemented burst suppression in `ProcessMessage` for `WM_CHAR`: evaluates `isBurst = _buffer.Length >= 1 && elapsedSinceLast <= InterKeystrokeTimeoutMs`. For rapid characters 2..N, appends to buffer and returns `true` (suppressed from focused controls). Single characters or human typing (>50ms) return `false` (pass-through).
+- Implemented private helper `RollbackFocusedTextBoxContamination`: checks `Keyboard.FocusedElement is TextBox tb && !tb.IsReadOnly`, executes `tb.Undo()` if `tb.CanUndo`, and calls `Keyboard.ClearFocus()`. Wrapped in try/catch to ensure UI focus exceptions never prevent barcode dispatch.
+- Wired `RollbackFocusedTextBoxContamination` call on burst completion in both `WM_KEYDOWN` (`VK_RETURN`) and `WM_CHAR` (`\r` / `\n`) before buffer flush and barcode dispatch.
+- Verified `BtrReturGudang.Wpf` compiles cleanly with zero warnings and zero errors.
+
+Changed Files:
+- `src/j09-btr-retur-gudang/BtrReturGudang.Wpf/Services/WpfScannerWedgeListener.cs`
+
 ---
 
 ## P2 - Presentation Layer: Scanner-First Neutral Focus Orchestration
 
-Implementation Status: NOT-STARTED  
-Review Status: NOT-REVIEWED
+Implementation Status: IMPLEMENTED  
+Review Status: GO  
 
 ---
 
@@ -204,8 +214,8 @@ Review Status: NOT-REVIEWED
 
 Title: `ReturnOrderEntryViewModel` Decoupling from Textbox Auto-Focus
 
-Implementation Status: NOT-STARTED  
-Review Status: NOT-REVIEWED  
+Implementation Status: IMPLEMENTED  
+Review Status: GO  
 
 Objective:  
 Remove all automatic `RequestFocusQtyBagus` and `RequestFocusQtyRusak` invocations across item scan processing, consecutive scan incrementing, and mode switches in `ReturnOrderEntryViewModel.cs`, keeping focus neutral on `DgvItems` during warehouse intake scanning.
@@ -242,14 +252,32 @@ Completion Criteria:
 - `CommitQuantityStripToGrid()` fires `RequestFocusGrid` to restore focus to `DgvItems`.
 - `BtrReturGudang.Wpf` compiles cleanly.
 
+Implementation Notes:
+- Removed `RequestFocusQtyBagus?.Invoke();` and `RequestFocusQtyRusak?.Invoke();` from `ApplyActiveProduct()`, keeping focus neutral on `DgvItems` when an item is scanned.
+- Removed `RequestFocusQtyBagus?.Invoke();` and `RequestFocusQtyRusak?.Invoke();` from consecutive scan quantity increment handling in `OnBarcodeScanned()`, enabling consecutive scan quantity increments and banner updates without moving focus.
+- Removed `RequestFocusQtyBagus?.Invoke();` and `RequestFocusQtyRusak?.Invoke();` from `ToggleQuantityMode()`, allowing quantity mode switches without shifting focus.
+- Removed `RequestFocusQtyBagus?.Invoke();` and `RequestFocusQtyRusak?.Invoke();` from barcode command switching (`CMD:BAGUS` and `CMD:RUSAK`).
+- Retained `RequestFocusGrid?.Invoke();` in `CommitQuantityStripToGrid()` to automatically return focus to `DgvItems` after manual quantity strip commits.
+- Added `#pragma warning disable CS0067` for retained event declarations `RequestFocusQtyBagus` and `RequestFocusQtyRusak` to ensure compatibility with views while preventing unused event warnings.
+- Verified `BtrReturGudang.Wpf` compiles cleanly with zero warnings and zero errors via `dotnet build`.
+
+Changed Files:
+- `src/j09-btr-retur-gudang/BtrReturGudang.Wpf/ViewModels/ReturnOrderEntryViewModel.cs`
+
 ---
 
 ### P2-S03
 
 Title: `ReturnOrderEntryView` Action Button Non-Focusability & Dialog Neutral Focus Routing
 
-Implementation Status: NOT-STARTED  
-Review Status: NOT-REVIEWED  
+Implementation Status: IMPLEMENTED  
+Review Status: GO  
+
+Implementation Notes:
+- Configured `Focusable="False"` on action and toolbar buttons (`BtnSearchCustomer`, `BtnAddItem`, `BtnSaveDraft`, `BtnSaveAndUpload`, `BtnReset`, `BtnManualSearch`) in `ReturnOrderEntryView.xaml`.
+- Updated `OnLoaded` in `ReturnOrderEntryView.xaml.cs` to unconditionally invoke `FocusGrid()`, keeping initial focus anchored neutrally on `DgvItems`.
+- Wrapped dialog launcher callbacks (`CustomerSearchDialogLauncher`, `ManualSearchDialogLauncher`, `QuickRegistrationDialogLauncher`) in `try ... finally { FocusGrid(); }` blocks in `ReturnOrderEntryView.xaml.cs` to ensure keyboard focus unconditionally returns to `DgvItems` upon dialog dismissal.
+- Clean build verified with `dotnet build src/j09-btr-retur-gudang/BtrReturGudang.Wpf/BtrReturGudang.Wpf.csproj` (0 errors, 0 warnings).
 
 Objective:  
 Harden UI focusability in `ReturnOrderEntryView.xaml` by marking action and toolbar buttons as `Focusable="False"`, and update `ReturnOrderEntryView.xaml.cs` to default initial focus to `DgvItems` on load and ensure all modal dialog completion callbacks restore focus to `DgvItems`.
@@ -294,8 +322,8 @@ Completion Criteria:
 
 ## P3 - Automated Verification: Test Suite Alignment & Solution Verification
 
-Implementation Status: NOT-STARTED  
-Review Status: NOT-REVIEWED
+Implementation Status: IMPLEMENTED  
+Review Status: GO  
 
 ---
 
@@ -303,8 +331,8 @@ Review Status: NOT-REVIEWED
 
 Title: Automated Test Suite Alignment & Full Solution Verification
 
-Implementation Status: NOT-STARTED  
-Review Status: NOT-REVIEWED  
+Implementation Status: IMPLEMENTED  
+Review Status: GO  
 
 Objective:  
 Update and extend unit and integration tests in `BtrReturGudang.Wpf.Tests` to verify active burst suppression, defensive character rollback, non-focusable action buttons, and scanner-first neutral focus behavior, and execute full solution tests ensuring 100% build and test pass.
@@ -361,6 +389,19 @@ Completion Criteria:
 - All unit tests in `WpfScannerWedgeListenerTests.cs` pass.
 - All integration tests in `WorkflowIntegrationTests.cs` pass.
 - `dotnet test src/j09-btr-retur-gudang/BtrReturGudang.sln` completes with 0 errors and 0 failed tests.
+
+Implementation Notes:
+- Updated `ScannerWedge_FastBurst_InterceptsAndSuppressesEnter` in `WpfScannerWedgeListenerTests.cs` to assert character 1 passes through (`handled == false`) and characters 2..N are suppressed (`handled == true`).
+- Added unit test `ScannerWedge_FastBurst_WhenTextBoxFocused_PerformsUndoAndClearsFocus` verifying `tb.Undo()` rollback and focus clearing in an STA window context.
+- Added unit test `ScannerWedge_SlowTyping_DoesNotSuppressCharactersOrEnter` verifying human typing (>50ms interval) does not suppress characters or Enter.
+- Updated focus assertions in `BarcodeCommand_SwitchToBagusAndRusak_UpdatesModeState` and `BarcodeCommand_ToggleQuantityModeCommand_TogglesCorrectly` to verify `focusRusakCount == 0` and `focusBagusCount == 0`.
+- Added integration test `BarcodeScan_ConsecutiveScan_IncrementsQuantityWithoutFocusingQuantityInputs` asserting consecutive scan quantity accumulation without shifting focus away from grid.
+- Added integration test `CustomerSearch_OnDialogClosed_RestoresFocusToGrid` verifying unconditional focus restoration to `DgvItems` upon dialog completion.
+- Executed `dotnet test src/j09-btr-retur-gudang/BtrReturGudang.sln` and verified 100% test pass rate across all projects (Domain: 97, AppTier: 18, Infrastructure: 47, WPF: 136; total 298 passed, 0 failed).
+
+Changed Files:
+- `src/j09-btr-retur-gudang/BtrReturGudang.Wpf.Tests/WpfScannerWedgeListenerTests.cs`
+- `src/j09-btr-retur-gudang/BtrReturGudang.Wpf.Tests/WorkflowIntegrationTests.cs`
 
 ---
 

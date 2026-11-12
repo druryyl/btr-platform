@@ -1,4 +1,9 @@
 using System;
+using System.Runtime.InteropServices;
+using System.Threading;
+using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Input;
 using System.Windows.Interop;
 using BtrReturGudang.Wpf.Services;
 using Xunit;
@@ -7,6 +12,49 @@ namespace BtrReturGudang.Wpf.Tests
 {
     public class WpfScannerWedgeListenerTests
     {
+        [DllImport("user32.dll")]
+        private static extern bool SetForegroundWindow(IntPtr hWnd);
+
+        [DllImport("user32.dll")]
+        private static extern IntPtr SetActiveWindow(IntPtr hWnd);
+        private static readonly object _staLock = new object();
+
+        private static void RunInSta(Action action)
+        {
+            Exception exception = null;
+            var thread = new Thread(() =>
+            {
+                try
+                {
+                    lock (_staLock)
+                    {
+                        if (System.Windows.Application.Current == null)
+                        {
+                            try
+                            {
+                                new System.Windows.Application();
+                            }
+                            catch (InvalidOperationException)
+                            {
+                            }
+                        }
+                    }
+                    action();
+                }
+                catch (Exception ex)
+                {
+                    exception = ex;
+                }
+            });
+            thread.SetApartmentState(ApartmentState.STA);
+            thread.Start();
+            thread.Join();
+            if (exception != null)
+            {
+                System.Runtime.ExceptionServices.ExceptionDispatchInfo.Capture(exception).Throw();
+            }
+        }
+
         private static MSG CreateKeyMessage(int msg, int wParam)
         {
             return new MSG
@@ -54,12 +102,19 @@ namespace BtrReturGudang.Wpf.Tests
             string barcode = "8992753123456";
 
             // Feed characters with 10ms interval (<= 50ms)
-            foreach (char c in barcode)
+            for (int i = 0; i < barcode.Length; i++)
             {
                 mockTime += 10;
-                var wmChar = CreateKeyMessage(WpfScannerWedgeListener.WM_CHAR, c);
+                var wmChar = CreateKeyMessage(WpfScannerWedgeListener.WM_CHAR, barcode[i]);
                 bool handledChar = listener.ProcessMessage(ref wmChar);
-                Assert.False(handledChar); // printable characters pass through
+                if (i == 0)
+                {
+                    Assert.False(handledChar); // Char 1 passes through
+                }
+                else
+                {
+                    Assert.True(handledChar);  // Chars 2..N are suppressed during burst
+                }
             }
 
             // Feed VK_RETURN 10ms after last char
@@ -81,6 +136,110 @@ namespace BtrReturGudang.Wpf.Tests
             var wmCharEnter = CreateKeyMessage(WpfScannerWedgeListener.WM_CHAR, '\r');
             bool handledCharEnter = listener.ProcessMessage(ref wmCharEnter);
             Assert.True(handledCharEnter);
+        }
+
+        [Fact]
+        public void ScannerWedge_FastBurst_WhenTextBoxFocused_PerformsUndoAndClearsFocus()
+        {
+            RunInSta(() =>
+            {
+                var window = new Window
+                {
+                    Width = 300,
+                    Height = 200
+                };
+                var tb = new TextBox
+                {
+                    IsUndoEnabled = true,
+                    Text = "ABC"
+                };
+                window.Content = tb;
+                window.Show();
+                window.Activate();
+
+                try
+                {
+                    tb.Focus();
+                    Keyboard.Focus(tb);
+                    if (Keyboard.FocusedElement != tb)
+                    {
+                        // In non-interactive or background test runners, force WPF input manager activation
+                        var hwnd = new System.Windows.Interop.WindowInteropHelper(window).Handle;
+                        SetForegroundWindow(hwnd);
+                        SetActiveWindow(hwnd);
+                        Keyboard.Focus(tb);
+                    }
+
+                    // Simulate character 1 typing into textbox creating an undo action
+                    tb.CaretIndex = tb.Text.Length;
+                    tb.SelectedText = "8";
+                    Assert.Equal("ABC8", tb.Text);
+                    Assert.True(tb.CanUndo);
+
+                    long mockTime = 1000;
+                    var listener = new WpfScannerWedgeListener(() => mockTime)
+                    {
+                        InterKeystrokeTimeoutMs = 50,
+                        MinBarcodeLength = 3
+                    };
+
+                    // Feed fast burst of barcode characters starting with '8'
+                    string barcode = "8992753123456";
+                    for (int i = 0; i < barcode.Length; i++)
+                    {
+                        mockTime += 10;
+                        var wmChar = CreateKeyMessage(WpfScannerWedgeListener.WM_CHAR, barcode[i]);
+                        listener.ProcessMessage(ref wmChar);
+                    }
+
+                    // Feed VK_RETURN burst completion
+                    mockTime += 10;
+                    var wmKeyDown = CreateKeyMessage(WpfScannerWedgeListener.WM_KEYDOWN, WpfScannerWedgeListener.VK_RETURN);
+                    bool handled = listener.ProcessMessage(ref wmKeyDown);
+
+                    Assert.True(handled);
+                    Assert.Equal("ABC", tb.Text); // Rolled back via tb.Undo()
+                    Assert.Null(Keyboard.FocusedElement); // Focus cleared via Keyboard.ClearFocus()
+                }
+                finally
+                {
+                    window.Close();
+                }
+            });
+        }
+
+        [Fact]
+        public void ScannerWedge_SlowTyping_DoesNotSuppressCharactersOrEnter()
+        {
+            long mockTime = 1000;
+            var listener = new WpfScannerWedgeListener(() => mockTime)
+            {
+                InterKeystrokeTimeoutMs = 50,
+                MinBarcodeLength = 3
+            };
+
+            var mockConsumer = new MockScannerConsumer();
+            listener.ActiveConsumer = mockConsumer;
+
+            string receivedBarcode = null;
+            listener.BarcodeScanned += b => receivedBarcode = b;
+
+            string slowInput = "12345";
+            foreach (char c in slowInput)
+            {
+                mockTime += 100; // > 50ms interval (human typing)
+                var wmChar = CreateKeyMessage(WpfScannerWedgeListener.WM_CHAR, c);
+                bool handledChar = listener.ProcessMessage(ref wmChar);
+                Assert.False(handledChar); // Characters must not be suppressed
+            }
+
+            mockTime += 100; // > 50ms interval
+            var wmKeyDownEnter = CreateKeyMessage(WpfScannerWedgeListener.WM_KEYDOWN, WpfScannerWedgeListener.VK_RETURN);
+            bool handledEnter = listener.ProcessMessage(ref wmKeyDownEnter);
+            Assert.False(handledEnter); // Enter must not be suppressed
+
+            Assert.Null(receivedBarcode);
+            Assert.Equal(0, mockConsumer.ScanCount);
         }
 
         [Fact]

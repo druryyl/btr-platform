@@ -1,6 +1,8 @@
 using System;
 using System.Diagnostics;
 using System.Text;
+using System.Windows.Controls;
+using System.Windows.Input;
 using System.Windows.Interop;
 using BtrReturGudang.Domain.ValueObjects;
 
@@ -147,6 +149,8 @@ namespace BtrReturGudang.Wpf.Services
                     // If buffer holds characters from a rapid burst arriving within timeout
                     if (_buffer.Length >= MinBarcodeLength && elapsedSinceLast <= InterKeystrokeTimeoutMs)
                     {
+                        RollbackFocusedTextBoxContamination();
+
                         string raw = _buffer.ToString();
                         string normalized = BarcodeNormalization.Normalize(raw);
 
@@ -181,6 +185,8 @@ namespace BtrReturGudang.Wpf.Services
 
                     if (_buffer.Length >= MinBarcodeLength && elapsedSinceLast <= InterKeystrokeTimeoutMs)
                     {
+                        RollbackFocusedTextBoxContamination();
+
                         string raw = _buffer.ToString();
                         string normalized = BarcodeNormalization.Normalize(raw);
 
@@ -201,6 +207,8 @@ namespace BtrReturGudang.Wpf.Services
                 // Printable character (ASCII 32 and above)
                 if (c >= 32)
                 {
+                    bool isBurst = _buffer.Length >= 1 && elapsedSinceLast <= InterKeystrokeTimeoutMs;
+
                     if (elapsedSinceLast > InterKeystrokeTimeoutMs)
                     {
                         // Flushes buffer if interval exceeds timeout (human typing pass-through)
@@ -210,7 +218,13 @@ namespace BtrReturGudang.Wpf.Services
                     _buffer.Append(c);
                     _lastKeystrokeTimestamp = now;
 
-                    // Allow normal keystrokes to pass through to the active control
+                    if (isBurst)
+                    {
+                        // Block characters 2..N from being injected into active UI controls while buffering full barcode
+                        return true;
+                    }
+
+                    // Allow character 1 to pass through to preserve normal typing responsiveness
                     return false;
                 }
             }
@@ -244,6 +258,31 @@ namespace BtrReturGudang.Wpf.Services
         {
             string normalized = BarcodeNormalization.Normalize(rawBarcode);
             DispatchBarcode(rawBarcode, normalized);
+        }
+
+        /// <summary>
+        /// Defensively rolls back any single character contaminated into a focused editable TextBox
+        /// during the initial keystroke of a scanner burst, and neutralizes keyboard focus.
+        /// Traceable to: TD-005-B, IS004 ARCHITECTURE §4.
+        /// </summary>
+        private void RollbackFocusedTextBoxContamination()
+        {
+            try
+            {
+                if (Keyboard.FocusedElement is TextBox tb && !tb.IsReadOnly)
+                {
+                    if (tb.CanUndo)
+                    {
+                        tb.Undo();
+                    }
+                    Keyboard.ClearFocus();
+                }
+            }
+            catch (Exception ex)
+            {
+                // Defensive: failure in UI focus manipulation must never prevent barcode processing or dispatch
+                Debug.WriteLine($"[WpfScannerWedgeListener] RollbackFocusedTextBoxContamination error: {ex.Message}");
+            }
         }
 
         private void DispatchBarcode(string rawBarcode, string normalizedBarcode)

@@ -35,18 +35,7 @@ namespace BtrReturGudang.Wpf.Views
 
         private void OnLoaded(object sender, RoutedEventArgs e)
         {
-            // By default, if no item is active, focus customer input or wait for scanner
-            if (DataContext is ReturnOrderEntryViewModel vm && vm.CurrentScanResult != null)
-            {
-                if (vm.IsModeRusak)
-                {
-                    FocusQtyRusak();
-                }
-                else
-                {
-                    FocusQtyBagus();
-                }
-            }
+            FocusGrid();
         }
 
         private void OnUnloaded(object sender, RoutedEventArgs e)
@@ -78,17 +67,24 @@ namespace BtrReturGudang.Wpf.Views
                 {
                     newVm.CustomerSearchDialogLauncher = (initialKey) =>
                     {
-                        var owner = Window.GetWindow(this);
-                        var dlg = new ManualCustomerSearchDialog(initialKeyword: initialKey);
-                        if (owner != null)
+                        try
                         {
-                            dlg.Owner = owner;
+                            var owner = Window.GetWindow(this);
+                            var dlg = new ManualCustomerSearchDialog(initialKeyword: initialKey);
+                            if (owner != null)
+                            {
+                                dlg.Owner = owner;
+                            }
+                            if (dlg.ShowDialog() == true)
+                            {
+                                return dlg.SelectedCustomer;
+                            }
+                            return null;
                         }
-                        if (dlg.ShowDialog() == true)
+                        finally
                         {
-                            return dlg.SelectedCustomer;
+                            FocusGrid();
                         }
-                        return null;
                     };
                 }
 
@@ -96,24 +92,31 @@ namespace BtrReturGudang.Wpf.Views
                 {
                     newVm.ManualSearchDialogLauncher = () =>
                     {
-                        var owner = Window.GetWindow(this);
-                        var refRepo = App.ServiceProvider?.GetService(typeof(IReferenceRepo)) as IReferenceRepo;
-                        var audio = App.ServiceProvider?.GetService(typeof(IAudioHelper)) as IAudioHelper;
-                        var dlg = new ManualItemSearchDialog(refRepo, audio);
-                        if (owner != null)
+                        try
                         {
-                            dlg.Owner = owner;
-                        }
-                        if (dlg.ShowDialog() == true && dlg.SelectedBarang != null)
-                        {
-                            if (!string.IsNullOrWhiteSpace(dlg.SelectedSatuan))
+                            var owner = Window.GetWindow(this);
+                            var refRepo = App.ServiceProvider?.GetService(typeof(IReferenceRepo)) as IReferenceRepo;
+                            var audio = App.ServiceProvider?.GetService(typeof(IAudioHelper)) as IAudioHelper;
+                            var dlg = new ManualItemSearchDialog(refRepo, audio);
+                            if (owner != null)
                             {
-                                newVm.SetSelectedItem(dlg.SelectedBarang, dlg.SelectedSatuan);
-                                return null;
+                                dlg.Owner = owner;
                             }
-                            return dlg.SelectedBarang;
+                            if (dlg.ShowDialog() == true && dlg.SelectedBarang != null)
+                            {
+                                if (!string.IsNullOrWhiteSpace(dlg.SelectedSatuan))
+                                {
+                                    newVm.SetSelectedItem(dlg.SelectedBarang, dlg.SelectedSatuan);
+                                    return null;
+                                }
+                                return dlg.SelectedBarang;
+                            }
+                            return null;
                         }
-                        return null;
+                        finally
+                        {
+                            FocusGrid();
+                        }
                     };
                 }
 
@@ -121,29 +124,36 @@ namespace BtrReturGudang.Wpf.Views
                 {
                     newVm.QuickRegistrationDialogLauncher = (unmappedBarcode) =>
                     {
-                        var owner = Window.GetWindow(this);
-                        var barcodeService = App.ServiceProvider?.GetService(typeof(IBarcodeService)) as IBarcodeService;
-                        var barcodeRepo = App.ServiceProvider?.GetService(typeof(IBarcodeRepo)) as IBarcodeRepo;
-                        var refRepo = App.ServiceProvider?.GetService(typeof(IReferenceRepo)) as IReferenceRepo;
-                        var regHelper = App.ServiceProvider?.GetService(typeof(IRegistryHelper)) as IRegistryHelper;
-                        var audio = App.ServiceProvider?.GetService(typeof(IAudioHelper)) as IAudioHelper;
+                        try
+                        {
+                            var owner = Window.GetWindow(this);
+                            var barcodeService = App.ServiceProvider?.GetService(typeof(IBarcodeService)) as IBarcodeService;
+                            var barcodeRepo = App.ServiceProvider?.GetService(typeof(IBarcodeRepo)) as IBarcodeRepo;
+                            var refRepo = App.ServiceProvider?.GetService(typeof(IReferenceRepo)) as IReferenceRepo;
+                            var regHelper = App.ServiceProvider?.GetService(typeof(IRegistryHelper)) as IRegistryHelper;
+                            var audio = App.ServiceProvider?.GetService(typeof(IAudioHelper)) as IAudioHelper;
 
-                        var dlg = new QuickBarcodeRegistrationDialog(
-                            unmappedBarcode,
-                            barcodeService,
-                            barcodeRepo,
-                            refRepo,
-                            regHelper,
-                            audio);
-                        if (owner != null)
-                        {
-                            dlg.Owner = owner;
+                            var dlg = new QuickBarcodeRegistrationDialog(
+                                unmappedBarcode,
+                                barcodeService,
+                                barcodeRepo,
+                                refRepo,
+                                regHelper,
+                                audio);
+                            if (owner != null)
+                            {
+                                dlg.Owner = owner;
+                            }
+                            if (dlg.ShowDialog() == true && dlg.RegisteredResult != null)
+                            {
+                                return dlg.RegisteredResult;
+                            }
+                            return null;
                         }
-                        if (dlg.ShowDialog() == true && dlg.RegisteredResult != null)
+                        finally
                         {
-                            return dlg.RegisteredResult;
+                            FocusGrid();
                         }
-                        return null;
                     };
                 }
             }

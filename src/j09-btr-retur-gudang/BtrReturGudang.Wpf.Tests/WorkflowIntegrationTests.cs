@@ -15,6 +15,7 @@ using BtrReturGudang.Domain.ValueObjects;
 using BtrReturGudang.Wpf.Controls;
 using BtrReturGudang.Wpf.Services;
 using BtrReturGudang.Wpf.ViewModels;
+using BtrReturGudang.Wpf.Views;
 using Xunit;
 
 namespace BtrReturGudang.Wpf.Tests
@@ -330,6 +331,8 @@ namespace BtrReturGudang.Wpf.Tests
 
         #region STA Test Runner Helper
 
+        private static readonly object _staAppLock = new object();
+
         private static void RunInSta(Action action)
         {
             Exception exception = null;
@@ -337,6 +340,34 @@ namespace BtrReturGudang.Wpf.Tests
             {
                 try
                 {
+                    lock (_staAppLock)
+                    {
+                        if (System.Windows.Application.Current == null)
+                        {
+                            try
+                            {
+                                new System.Windows.Application();
+                            }
+                            catch (InvalidOperationException)
+                            {
+                            }
+                        }
+                        if (System.Windows.Application.Current != null && System.Windows.Application.Current.Dispatcher.CheckAccess() && System.Windows.Application.Current.Resources.MergedDictionaries.Count == 0)
+                        {
+                            System.Windows.Application.Current.Resources.MergedDictionaries.Add(new ResourceDictionary
+                            {
+                                Source = new Uri("pack://application:,,,/BtrReturGudang.Wpf;component/Themes/Colors.xaml", UriKind.Absolute)
+                            });
+                            System.Windows.Application.Current.Resources.MergedDictionaries.Add(new ResourceDictionary
+                            {
+                                Source = new Uri("pack://application:,,,/BtrReturGudang.Wpf;component/Themes/Styles.xaml", UriKind.Absolute)
+                            });
+                            System.Windows.Application.Current.Resources.MergedDictionaries.Add(new ResourceDictionary
+                            {
+                                Source = new Uri("pack://application:,,,/BtrReturGudang.Wpf;component/Themes/DataGrid.xaml", UriKind.Absolute)
+                            });
+                        }
+                    }
                     action();
                 }
                 catch (Exception ex)
@@ -885,7 +916,7 @@ namespace BtrReturGudang.Wpf.Tests
             Assert.Equal("[● MODE: QTY RUSAK]", vm.ModeBadgeText);
             Assert.Equal("MODE SCAN: QTY RUSAK", vm.BannerStatus);
             Assert.Equal(1, audioHelper.SuccessBeepCount);
-            Assert.Equal(1, focusRusakCount);
+            Assert.Equal(0, focusRusakCount);
 
             // Switch to Bagus via barcode alias
             vm.OnBarcodeScanned("$$BAGUS");
@@ -895,7 +926,7 @@ namespace BtrReturGudang.Wpf.Tests
             Assert.Equal("[● MODE: QTY BAGUS]", vm.ModeBadgeText);
             Assert.Equal("MODE SCAN: QTY BAGUS", vm.BannerStatus);
             Assert.Equal(2, audioHelper.SuccessBeepCount);
-            Assert.Equal(1, focusBagusCount);
+            Assert.Equal(0, focusBagusCount);
         }
 
         [Fact]
@@ -1306,7 +1337,7 @@ namespace BtrReturGudang.Wpf.Tests
             Assert.False(vm.IsModeBagus);
             Assert.True(vm.IsModeRusak);
             Assert.Equal("[● MODE: QTY RUSAK]", vm.ModeBadgeText);
-            Assert.Equal(1, focusRusakCount);
+            Assert.Equal(0, focusRusakCount);
             Assert.Equal(0, focusBagusCount);
 
             // Toggle 2: switches back to Bagus
@@ -1316,8 +1347,91 @@ namespace BtrReturGudang.Wpf.Tests
             Assert.True(vm.IsModeBagus);
             Assert.False(vm.IsModeRusak);
             Assert.Equal("[● MODE: QTY BAGUS]", vm.ModeBadgeText);
-            Assert.Equal(1, focusRusakCount);
-            Assert.Equal(1, focusBagusCount);
+            Assert.Equal(0, focusRusakCount);
+            Assert.Equal(0, focusBagusCount);
+        }
+
+        [Fact]
+        public void BarcodeScan_ConsecutiveScan_IncrementsQuantityWithoutFocusingQuantityInputs()
+        {
+            var barcodeService = new InMemoryBarcodeService();
+            barcodeService.RegisterBarcode("8992741982110", "BRG-01", "KECAP BANGO 550ML", "DUS");
+            var audioHelper = new FakeAudioHelper();
+
+            var vm = new ReturnOrderEntryViewModel(
+                returnOrderService: null,
+                barcodeService: barcodeService,
+                referenceRepo: null,
+                audioHelper: audioHelper,
+                registryHelper: null);
+
+            int focusBagusCount = 0;
+            int focusRusakCount = 0;
+            vm.RequestFocusQtyBagus += () => focusBagusCount++;
+            vm.RequestFocusQtyRusak += () => focusRusakCount++;
+
+            // 1st scan in Bagus mode
+            vm.OnBarcodeScanned("8992741982110");
+            Assert.Equal(1, vm.QtyBagus);
+            Assert.Equal(0, vm.QtyRusak);
+            Assert.Equal(1, audioHelper.SuccessBeepCount);
+            Assert.Equal(0, focusBagusCount);
+            Assert.Equal(0, focusRusakCount);
+
+            // 2nd consecutive scan in Bagus mode
+            vm.OnBarcodeScanned("8992741982110");
+            Assert.Equal(2, vm.QtyBagus);
+            Assert.Equal(0, vm.QtyRusak);
+            Assert.Equal(2, audioHelper.SuccessBeepCount);
+            Assert.Equal(0, focusBagusCount);
+            Assert.Equal(0, focusRusakCount);
+        }
+
+        [Fact]
+        public void CustomerSearch_OnDialogClosed_RestoresFocusToGrid()
+        {
+            RunInSta(() =>
+            {
+                var vm = new ReturnOrderEntryViewModel(
+                    returnOrderService: null,
+                    barcodeService: null,
+                    referenceRepo: null,
+                    audioHelper: new FakeAudioHelper(),
+                    registryHelper: null);
+
+                var view = new ReturnOrderEntryView
+                {
+                    DataContext = vm
+                };
+
+                var window = new Window
+                {
+                    Content = view,
+                    Width = 1000,
+                    Height = 600
+                };
+                window.Show();
+
+                try
+                {
+                    // Move focus to another control first
+                    view.TxtCustomer.Focus();
+
+                    // Execute FocusGrid (which is invoked in finally on dialog completion)
+                    view.FocusGrid();
+
+                    System.Windows.Threading.Dispatcher.CurrentDispatcher.Invoke(
+                        System.Windows.Threading.DispatcherPriority.Background,
+                        new Action(() => { }));
+
+                    // Assert keyboard or logical focus restored to DgvItems
+                    Assert.True(view.DgvItems.IsFocused || System.Windows.Input.FocusManager.GetFocusedElement(window) == view.DgvItems || view.DgvItems.IsKeyboardFocusWithin);
+                }
+                finally
+                {
+                    window.Close();
+                }
+            });
         }
 
         [Fact]

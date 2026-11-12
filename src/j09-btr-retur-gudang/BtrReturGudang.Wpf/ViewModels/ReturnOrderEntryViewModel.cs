@@ -150,8 +150,10 @@ namespace BtrReturGudang.Wpf.ViewModels
         public Action<string, string, string> MessageDialogHandler { get; set; }
 
         // View Notification Events
+#pragma warning disable CS0067
         public event Action RequestFocusQtyBagus;
         public event Action RequestFocusQtyRusak;
+#pragma warning restore CS0067
         public event Action RequestFocusGrid;
 
         /// <summary>
@@ -342,12 +344,10 @@ namespace BtrReturGudang.Wpf.ViewModels
             if (ActiveQuantityMode == QuantityEntryMode.Bagus)
             {
                 BannerStatus = "MODE SCAN: QTY BAGUS";
-                RequestFocusQtyBagus?.Invoke();
             }
             else
             {
                 BannerStatus = "MODE SCAN: QTY RUSAK";
-                RequestFocusQtyRusak?.Invoke();
             }
         }
 
@@ -494,7 +494,6 @@ namespace BtrReturGudang.Wpf.ViewModels
                     ActiveQuantityMode = QuantityEntryMode.Bagus;
                     BannerStatus = "MODE SCAN: QTY BAGUS";
                     _audioHelper?.PlaySuccess();
-                    RequestFocusQtyBagus?.Invoke();
                     return;
                 }
 
@@ -503,7 +502,6 @@ namespace BtrReturGudang.Wpf.ViewModels
                     ActiveQuantityMode = QuantityEntryMode.Rusak;
                     BannerStatus = "MODE SCAN: QTY RUSAK";
                     _audioHelper?.PlaySuccess();
-                    RequestFocusQtyRusak?.Invoke();
                     return;
                 }
 
@@ -575,7 +573,6 @@ namespace BtrReturGudang.Wpf.ViewModels
                     IsBannerActive = true;
                     IsBannerError = false;
                     _audioHelper?.PlaySuccess();
-                    RequestFocusQtyBagus?.Invoke();
                 }
                 else
                 {
@@ -584,7 +581,6 @@ namespace BtrReturGudang.Wpf.ViewModels
                     IsBannerActive = true;
                     IsBannerError = false;
                     _audioHelper?.PlaySuccess();
-                    RequestFocusQtyRusak?.Invoke();
                 }
                 return;
             }
@@ -647,13 +643,11 @@ namespace BtrReturGudang.Wpf.ViewModels
             {
                 QtyBagus = 1;
                 QtyRusak = 0;
-                RequestFocusQtyBagus?.Invoke();
             }
             else
             {
                 QtyBagus = 0;
                 QtyRusak = 1;
-                RequestFocusQtyRusak?.Invoke();
             }
 
             ItemKeterangan = string.Empty;

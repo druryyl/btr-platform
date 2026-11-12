@@ -127,6 +127,7 @@
                             x:Name="BtnSearchCustomer"
                             Content="🔍 Cari [F8]"
                             Command="{Binding CustomerSearchCommand}"
+                            Focusable="False"
                             Height="30" Margin="4,0,0,0" Padding="8,0"
                             FontSize="11.5"
                             Style="{StaticResource Button.Primary}" />
@@ -401,6 +402,7 @@
                         <Button x:Name="BtnAddItem"
                                 Content="+ Tambah [Enter]"
                                 Command="{Binding AddItemCommand}"
+                                Focusable="False"
                                 Height="34" MinWidth="150"
                                 Style="{StaticResource Button.Primary}"
                                 FontWeight="Bold" FontSize="13"
@@ -560,6 +562,7 @@
                 <Button x:Name="BtnSaveDraft"
                         Content="[F9]  Simpan Draft"
                         Command="{Binding SaveDraftCommand}"
+                        Focusable="False"
                         Width="150" Height="34" Margin="0,0,8,0"
                         Background="{DynamicResource Brush.Slate.700}"
                         Foreground="{DynamicResource Brush.White}"
@@ -569,6 +572,7 @@
                 <Button x:Name="BtnSaveAndUpload"
                         Content="[F10]  Simpan &amp; Upload"
                         Command="{Binding SaveAndUploadCommand}"
+                        Focusable="False"
                         Width="175" Height="34" Margin="0,0,8,0"
                         Style="{StaticResource Button.Success}"
                         ToolTip="Simpan draft lokal dan langsung upload ke server Cloud [F10]" />
@@ -577,6 +581,7 @@
                 <Button x:Name="BtnReset"
                         Content="[Esc]  Reset Form"
                         Command="{Binding ResetFormCommand}"
+                        Focusable="False"
                         Width="140" Height="34" Margin="0,0,8,0"
                         Background="{DynamicResource Brush.White}"
                         Foreground="{DynamicResource Brush.Slate.700}"
@@ -588,6 +593,7 @@
                 <Button x:Name="BtnManualSearch"
                         Content="[F2]  Cari Barang"
                         Command="{Binding ManualSearchCommand}"
+                        Focusable="False"
                         Width="145" Height="34"
                         Style="{StaticResource Button.Warning}"
                         ToolTip="Buka dialog pencarian produk manual [F2]" />
