@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<title>Barcode Command - BtrReturGudang</title>
+<script src="https://cdn.jsdelivr.net/npm/bwip-js@4.6.0/dist/bwip-js.min.js"></script>
+<style>
+  body { font-family: 'Segoe UI', Arial, sans-serif; margin: 20px; }
+  h1 { text-align: center; color: #1a5276; border-bottom: 2px solid #1a5276; padding-bottom: 10px; }
+  .grid { display: flex; flex-wrap: wrap; gap: 20px; justify-content: center; }
+  .card { border: 1px solid #ccc; border-radius: 8px; padding: 12px; width: 240px; text-align: center; page-break-inside: avoid; background: #fff; }
+  .card canvas { width: 100%; height: auto; }
+  .card .label { font-size: 14px; font-weight: bold; color: #1a5276; margin-top: 6px; word-break: break-all; }
+  .card .desc { font-size: 11px; color: #666; margin-top: 2px; }
+  @media print {
+    body { margin: 0; }
+    .grid { gap: 10px; }
+    .card { border: 1px solid #000; page-break-inside: avoid; }
+  }
+</style>
+</head>
+<body>
+<h1>📋 Barcode Command — BtrReturGudang</h1>
+<div class="grid" id="grp"></div>
+<script>
+  const items = [
+    { cmd: 'CMD:QTY_BAGUS', desc: 'Switch Mode Qty Bagus' },
+    { cmd: 'CMD:QTY_RUSAK', desc: 'Switch Mode Qty Rusak' },
+    { cmd: 'CMD:TAMBAH', desc: 'Commit Item ke Grid' },
+    { cmd: 'CMD:RESET', desc: 'Reset Form' },
+    { cmd: 'CMD:UPLOAD', desc: 'Save & Upload' },
+  ];
+
+  const container = document.getElementById('grp');
+  items.forEach(function(item) {
+    const card = document.createElement('div');
+    card.className = 'card';
+    const canvas = document.createElement('canvas');
+    card.appendChild(canvas);
+    const label = document.createElement('div');
+    label.className = 'label';
+    label.textContent = item.cmd;
+    card.appendChild(label);
+    const desc = document.createElement('div');
+    desc.className = 'desc';
+    desc.textContent = item.desc;
+    card.appendChild(desc);
+    container.appendChild(card);
+
+    // Render Code 128 barcode using bwip-js
+    try {
+      bwipjs.toCanvas(canvas, {
+        bcid: 'code128',
+        text: item.cmd,
+        scale: 3,
+        height: 20,
+        includetext: false,
+        paddingwidth: 4,
+        paddingheight: 4,
+      });
+    } catch (e) {
+      canvas.style.display = 'none';
+      const err = document.createElement('div');
+      err.className = 'desc';
+      err.textContent = 'Gagal render: ' + e.message;
+      card.appendChild(err);
+    }
+  });
+</script>
+</body>
+</html>
