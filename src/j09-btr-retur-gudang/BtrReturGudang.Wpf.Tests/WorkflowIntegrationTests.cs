@@ -830,6 +830,55 @@ namespace BtrReturGudang.Wpf.Tests
             Assert.Equal(1, audioHelper.SuccessBeepCount);
         }
 
+        [Fact]
+        public void ScannerWedge_OrchestratedWithMainViewModel_EachScanIncrementsQtyByExactlyOne()
+        {
+            // End-to-end regression test for duplicate scan bug:
+            // Ensures that when WpfScannerWedgeListener and MainViewModel are wired together,
+            // scanning an item barcode increments Qty by exactly +1 per physical scan (not +2).
+            var barcodeService = new InMemoryBarcodeService();
+            barcodeService.RegisterBarcode("8992741982110", "BRG-01", "KECAP BANGO 550ML", "DUS");
+            var audioHelper = new FakeAudioHelper();
+            var registryHelper = new FakeRegistryHelper();
+            var syncService = new InMemorySyncService(new InMemoryReturnOrderRepo());
+
+            var vm = new ReturnOrderEntryViewModel(
+                returnOrderService: null,
+                barcodeService: barcodeService,
+                referenceRepo: null,
+                audioHelper: audioHelper,
+                registryHelper: registryHelper);
+
+            var listener = new WpfScannerWedgeListener();
+            var mainVm = new MainViewModel(null, syncService, registryHelper, scannerListener: listener);
+            try
+            {
+                // Inject intake ViewModel as CurrentViewModel
+                typeof(MainViewModel).GetProperty(nameof(MainViewModel.CurrentViewModel))
+                    ?.SetValue(mainVm, vm, null);
+
+                // 1st scan
+                listener.SimulateScan("8992741982110");
+                Assert.Equal("KECAP BANGO 550ML", vm.ProductName);
+                Assert.Equal(1, vm.QtyBagus);
+                Assert.Equal(1, audioHelper.SuccessBeepCount);
+
+                // 2nd scan of same barcode -> increments by +1 to 2
+                listener.SimulateScan("8992741982110");
+                Assert.Equal(2, vm.QtyBagus);
+                Assert.Equal(2, audioHelper.SuccessBeepCount);
+
+                // 3rd scan of same barcode -> increments by +1 to 3
+                listener.SimulateScan("8992741982110");
+                Assert.Equal(3, vm.QtyBagus);
+                Assert.Equal(3, audioHelper.SuccessBeepCount);
+            }
+            finally
+            {
+                mainVm.Dispose();
+            }
+        }
+
         #endregion
 
         #region High-Load Intake: Sustained Scan -> Commit Cycles

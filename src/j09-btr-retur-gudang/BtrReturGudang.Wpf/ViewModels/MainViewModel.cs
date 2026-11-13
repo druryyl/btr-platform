@@ -141,7 +141,16 @@ namespace BtrReturGudang.Wpf.ViewModels
         public ViewModelBase CurrentViewModel
         {
             get => _currentViewModel;
-            private set => SetProperty(ref _currentViewModel, value);
+            private set
+            {
+                if (SetProperty(ref _currentViewModel, value))
+                {
+                    if (_scannerListener != null)
+                    {
+                        _scannerListener.ActiveConsumer = value as IScannerConsumer;
+                    }
+                }
+            }
         }
 
         public bool IsIntakeActive => CurrentModule == NavigationModule.Intake;
@@ -564,11 +573,6 @@ namespace BtrReturGudang.Wpf.ViewModels
         private void OnBarcodeScannedReceived(object sender, BarcodeScannedEventArgs e)
         {
             StatusInfoText = $"Scan Terakhir: [{e.NormalizedBarcode}] pada {DateTime.Now:HH:mm:ss}";
-
-            if (CurrentViewModel is IScannerConsumer consumer)
-            {
-                consumer.OnBarcodeScanned(e.NormalizedBarcode);
-            }
         }
 
         #endregion

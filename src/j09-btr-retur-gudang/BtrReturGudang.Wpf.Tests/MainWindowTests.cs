@@ -103,11 +103,16 @@ namespace BtrReturGudang.Wpf.Tests
             public bool SaveAndUploadCalled { get; private set; }
             public bool CancelOrClearCalled { get; private set; }
             public string LastScannedBarcode { get; private set; }
+            public int ScanCallCount { get; private set; }
 
             public void HandleSaveDraft() => SaveDraftCalled = true;
             public void HandleSaveAndUpload() => SaveAndUploadCalled = true;
             public void HandleCancelOrClear() => CancelOrClearCalled = true;
-            public void OnBarcodeScanned(string barcode) => LastScannedBarcode = barcode;
+            public void OnBarcodeScanned(string barcode)
+            {
+                LastScannedBarcode = barcode;
+                ScanCallCount++;
+            }
         }
 
         #endregion
@@ -422,6 +427,7 @@ namespace BtrReturGudang.Wpf.Tests
                 scanner.SimulateScan("8991234567890");
 
                 Assert.Equal("8991234567890", actionHandler.LastScannedBarcode);
+                Assert.Equal(1, actionHandler.ScanCallCount);
                 Assert.Contains("8991234567890", vm.StatusInfoText);
             }
             finally
