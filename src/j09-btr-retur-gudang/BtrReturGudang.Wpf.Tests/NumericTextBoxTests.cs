@@ -302,5 +302,79 @@ namespace BtrReturGudang.Wpf.Tests
                 Assert.True(fired);
             });
         }
+
+        [Fact]
+        public void FocusAndEditMode_DoesNotSinkTextOrClipHeight()
+        {
+            RunInSta(() =>
+            {
+                if (System.Windows.Application.Current == null)
+                {
+                    new System.Windows.Application();
+                }
+                if (System.Windows.Application.Current.Resources.MergedDictionaries.Count == 0)
+                {
+                    System.Windows.Application.Current.Resources.MergedDictionaries.Add(new System.Windows.ResourceDictionary
+                    {
+                        Source = new Uri("pack://application:,,,/BtrReturGudang.Wpf;component/Themes/Colors.xaml", UriKind.Absolute)
+                    });
+                    System.Windows.Application.Current.Resources.MergedDictionaries.Add(new System.Windows.ResourceDictionary
+                    {
+                        Source = new Uri("pack://application:,,,/BtrReturGudang.Wpf;component/Themes/Styles.xaml", UriKind.Absolute)
+                    });
+                }
+
+                // Simulate Qty Bagus / Qty Rusak styling in ReturnOrderEntryView (Height=34, Bold, FontSize=14)
+                var control = new NumericTextBox
+                {
+                    Height = 34,
+                    FontSize = 14,
+                    FontWeight = System.Windows.FontWeights.Bold,
+                    Value = 123
+                };
+
+                var window = new System.Windows.Window
+                {
+                    Content = control,
+                    Width = 200,
+                    Height = 100
+                };
+                window.Show();
+
+                try
+                {
+                    control.ApplyTemplate();
+                    control.UpdateLayout();
+
+                    var sv = control.Template.FindName("PART_ContentHost", control) as System.Windows.Controls.ScrollViewer;
+                    Assert.NotNull(sv);
+
+                    // PART_ContentHost should not have redundant Margin (which caused double-padding and severe height clipping)
+                    Assert.Equal(new System.Windows.Thickness(0), sv.Margin);
+                    Assert.Equal(System.Windows.Controls.ScrollBarVisibility.Disabled, sv.VerticalScrollBarVisibility);
+
+                    // Verify before focus: viewport accommodates full extent height with no vertical offset
+                    Assert.Equal(0, sv.VerticalOffset);
+                    Assert.True(sv.ViewportHeight >= sv.ExtentHeight,
+                        $"Expected ViewportHeight ({sv.ViewportHeight}) >= ExtentHeight ({sv.ExtentHeight})");
+
+                    // Trigger edit mode / active mode with 2px accent border and focus
+                    control.BorderThickness = new System.Windows.Thickness(2);
+                    control.Focus();
+                    control.SelectAll();
+                    control.CaretIndex = 1;
+                    control.UpdateLayout();
+
+                    // Text must not sink or scroll down (VerticalOffset must remain 0, viewport must still accommodate extent)
+                    Assert.Equal(0, sv.VerticalOffset);
+                    Assert.True(sv.ViewportHeight >= sv.ExtentHeight,
+                        $"Expected ViewportHeight ({sv.ViewportHeight}) >= ExtentHeight ({sv.ExtentHeight}) after focus and edit");
+                }
+                finally
+                {
+                    window.Close();
+                }
+            });
+        }
     }
 }

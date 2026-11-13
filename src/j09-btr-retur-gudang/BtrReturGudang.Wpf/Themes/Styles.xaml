@@ -437,6 +437,7 @@
         <Setter Property="MinHeight" Value="32" />
         <Setter Property="VerticalContentAlignment" Value="Center" />
         <Setter Property="HorizontalContentAlignment" Value="Right" />
+        <Setter Property="ScrollViewer.VerticalScrollBarVisibility" Value="Disabled" />
         <Setter Property="WatermarkBrush" Value="{DynamicResource Brush.Slate.400}" />
         <Setter Property="ZeroBrush" Value="{DynamicResource Brush.Slate.400}" />
         <Setter Property="NormalForegroundBrush" Value="{DynamicResource Brush.Slate.900}" />
@@ -454,8 +455,7 @@
                             <ScrollViewer x:Name="PART_ContentHost"
                                           Focusable="false"
                                           HorizontalScrollBarVisibility="Hidden"
-                                          VerticalScrollBarVisibility="Hidden"
-                                          Margin="{TemplateBinding Padding}"
+                                          VerticalScrollBarVisibility="Disabled"
                                           VerticalAlignment="{TemplateBinding VerticalContentAlignment}" />
                             <TextBlock x:Name="WatermarkHost"
                                        Text="{TemplateBinding Watermark}"
