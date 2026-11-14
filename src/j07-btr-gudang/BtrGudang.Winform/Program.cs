@@ -28,8 +28,8 @@ namespace BtrGudang.Winform
             Application.SetCompatibleTextRenderingDefault(false);
 
             var configuration = new ConfigurationBuilder()
-                .SetBasePath(Directory.GetCurrentDirectory())
-                .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
+                .SetBasePath(AppDomain.CurrentDomain.BaseDirectory)
+                .AddJsonFile("AppSettings.json", optional: false, reloadOnChange: true)
                 .Build();
 
             // Setup DI
@@ -44,8 +44,8 @@ namespace BtrGudang.Winform
         private static void ConfigureServices(IServiceCollection services, IConfiguration configuration)
         {
             // Register configuration options
-            services.Configure<DatabaseOptions>(configuration.GetSection("Database"));
-            services.Configure<BtradeCloudOptions>(configuration.GetSection("BtradeCloud"));
+            services.Configure<DatabaseOptions>(configuration.GetSection(DatabaseOptions.SECTION_NAME));
+            services.Configure<BtradeCloudOptions>(configuration.GetSection(BtradeCloudOptions.SECTION_NAME));
             
             //  Register services
             services.AddTransient<PackingOrderDownloaderSvc, PackingOrderDownloaderSvc>();

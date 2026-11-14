@@ -28,7 +28,7 @@ namespace BtrGudang.Winform.Services
         public async Task<(bool, string, DateTime, IEnumerable<PackingOrderModel>)> Execute(DateTime startTimestamp, string warehouseCode, int pageSize)
         {
             var serverTargetId = _registryHelper.ReadString("ServerTargetID");
-            var baseUrl = _btradeCloudOpt.BaseUrl;
+            var baseUrl = _btradeCloudOpt.GetEffectiveBaseUrl();
             var endpoint = $"{baseUrl}/api/PackingOrder/{{startTimestamp}}/{{warehouseCode}}/{{pageSize}}";
             var client = new RestClient(endpoint);
 
@@ -71,7 +71,7 @@ namespace BtrGudang.Winform.Services
 
         public async Task<(bool, string, IEnumerable<PackingOrderModel>)> ExecutePending(string warehouseCode, int pageSize)
         {
-            var baseUrl = _btradeCloudOpt.BaseUrl;
+            var baseUrl = _btradeCloudOpt.GetEffectiveBaseUrl();
             var endpoint = $"{baseUrl}/api/PackingOrder/pending/{{warehouseCode}}/{{pageSize}}";
             var client = new RestClient(endpoint);
 
