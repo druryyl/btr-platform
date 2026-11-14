@@ -16,6 +16,7 @@ namespace btr.distrib.SalesContext.FakturAgg
         {
             FakturCode = $"No.Faktur: {faktur.FakturCode}";
             FakturDate = $"Tgl: {faktur.FakturDate:dd MMMM yyyy}";
+            RencanaKirimDate = $"Tgl: {faktur.TglRencanaKirim:dd MMMM yyyy}";
             CustomerId = $"Kepada Yth Customer-{faktur.CustomerId}";
             CustomerName = $"{faktur.CustomerName}";
             Address1 = $"{faktur.Address}";
@@ -130,6 +131,7 @@ namespace btr.distrib.SalesContext.FakturAgg
 
         public string FakturCode { get; set; }
         public string FakturDate { get; set; }
+        public string RencanaKirimDate { get; set; }
         public string CustomerId { get; set; }
         public string CustomerName { get; set; }
         public string Address1 { get; set; }

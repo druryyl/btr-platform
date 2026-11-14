@@ -1597,7 +1597,7 @@
           <Paragraph>
             <TextRuns>
               <TextRun>
-                <Value>=First(Fields!FakturDate.Value, "FakturJualDataset")</Value>
+                <Value>=First(Fields!RencanaKirimDate.Value, "FakturJualDataset")</Value>
                 <Style>
                   <FontFamily>Segoe UI</FontFamily>
                   <FontSize>9pt</FontSize>
@@ -2420,6 +2420,10 @@
         </Field>
         <Field Name="PpnProsen">
           <DataField>PpnProsen</DataField>
+          <rd:TypeName>System.String</rd:TypeName>
+        </Field>
+        <Field Name="RencanaKirimDate">
+          <DataField>RencanaKirimDate</DataField>
           <rd:TypeName>System.String</rd:TypeName>
         </Field>
         <Field Name="SalesName">

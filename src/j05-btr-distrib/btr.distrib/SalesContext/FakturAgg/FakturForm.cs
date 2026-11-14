@@ -307,9 +307,10 @@ namespace btr.distrib.SalesContext.FakturAgg
 
         private void ClearForm()
         {
-            var fakturDate = _dateTime.Now.AddDays(1);
-            if (fakturDate.DayOfWeek == DayOfWeek.Sunday)   
-                fakturDate = fakturDate.AddDays(1);
+            var fakturDate = _dateTime.Now.Date;
+            var tglKirim = fakturDate.AddDays(1);
+            if (tglKirim.DayOfWeek == DayOfWeek.Sunday)
+                tglKirim = tglKirim.AddDays(1);
 
             FakturIdText.Text = string.Empty;
             FakturCodeText.Clear();
@@ -323,7 +324,7 @@ namespace btr.distrib.SalesContext.FakturAgg
             CreditBalanceTextBox.Value = 0;
             WarehouseIdText.Text = string.Empty;
             WarehouseNameText.Text = string.Empty;
-            TglRencanaKirimTextBox.Value= fakturDate.AddDays(1);
+            TglRencanaKirimTextBox.Value = tglKirim;
             TermOfPaymentCombo.SelectedIndex = 0;
             DueDateText.Value= DateTime.Now.AddDays(15);
             NoteTextBox.Clear();
