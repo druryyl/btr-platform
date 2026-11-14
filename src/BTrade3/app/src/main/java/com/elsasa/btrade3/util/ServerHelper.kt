@@ -19,4 +19,18 @@ object ServerHelper {
     suspend fun getServerTarget(context: Context): String {
         return getSelectedServer(context)
     }
+
+    suspend fun getApiBaseUrl(context: Context): String {
+        val dataSource = ServerPreferencesDataSource(context.applicationContext)
+        return dataSource.getApiBaseUrl()
+    }
+
+    suspend fun setApiBaseUrl(context: Context, baseUrl: String) {
+        val dataSource = ServerPreferencesDataSource(context.applicationContext)
+        dataSource.setApiBaseUrl(ApiUrl.normalize(baseUrl))
+    }
+
+    fun normalizeApiBaseUrl(baseUrl: String): String {
+        return ApiUrl.normalize(baseUrl)
+    }
 }

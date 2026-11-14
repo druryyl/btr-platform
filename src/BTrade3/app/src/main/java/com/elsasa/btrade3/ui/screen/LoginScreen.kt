@@ -23,6 +23,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -39,6 +40,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -55,10 +57,13 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.elsasa.btrade3.R
+import com.elsasa.btrade3.util.ApiUrl
 import com.elsasa.btrade3.util.GoogleSignInHelper
 import com.elsasa.btrade3.util.ServerHelper
 import com.google.android.gms.auth.api.signin.GoogleSignIn
@@ -83,11 +88,18 @@ fun LoginScreen(
     var isServerLoaded by remember { mutableStateOf(false) }
     var expanded by remember { mutableStateOf(false) }
 
+    // API base URL (configurable cloud endpoint)
+    var apiBaseUrlInput by remember { mutableStateOf(ApiUrl.DEFAULT_BASE_URL) }
+    var apiBaseUrlError by remember { mutableStateOf<String?>(null) }
+    var apiBaseUrlSaved by remember { mutableStateOf(false) }
+    val canSaveApiBaseUrl = remember(apiBaseUrlInput) { apiBaseUrlInput.isNotBlank() }
+
     val scope = rememberCoroutineScope()
 
     // Load server data
     LaunchedEffect(Unit) {
         selectedServer = ServerHelper.getSelectedServer(context)
+        apiBaseUrlInput = ServerHelper.getApiBaseUrl(context)
 
         serverOptions = listOf(
             "JOG - Server Jogja",
@@ -251,6 +263,94 @@ fun LoginScreen(
                                         }
                                     )
                                 }
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(20.dp))
+
+                        Text(
+                            text = "API Base URL",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.SemiBold,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+
+                        Spacer(modifier = Modifier.height(12.dp))
+
+                        OutlinedTextField(
+                            value = apiBaseUrlInput,
+                            onValueChange = {
+                                apiBaseUrlInput = it
+                                apiBaseUrlError = null
+                                apiBaseUrlSaved = false
+                            },
+                            modifier = Modifier.fillMaxWidth(),
+                            label = { Text("Base URL") },
+                            singleLine = true,
+                            isError = apiBaseUrlError != null,
+                            keyboardOptions = KeyboardOptions(
+                                keyboardType = KeyboardType.Uri,
+                                imeAction = ImeAction.Done
+                            ),
+                            supportingText = {
+                                Text(
+                                    text = apiBaseUrlError
+                                        ?: if (ApiUrl.isValid(apiBaseUrlInput)) {
+                                            "Requests are sent to ${ServerHelper.normalizeApiBaseUrl(apiBaseUrlInput)}"
+                                        } else {
+                                            "Expected format: ${ApiUrl.DEFAULT_BASE_URL}"
+                                        }
+                                )
+                            }
+                        )
+
+                        if (apiBaseUrlSaved) {
+                            Text(
+                                text = "API base URL saved",
+                                style = MaterialTheme.typography.labelMedium,
+                                color = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.padding(top = 4.dp)
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.End,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            TextButton(
+                                enabled = apiBaseUrlInput != ApiUrl.DEFAULT_BASE_URL,
+                                onClick = {
+                                    apiBaseUrlInput = ApiUrl.DEFAULT_BASE_URL
+                                    apiBaseUrlError = null
+                                    apiBaseUrlSaved = false
+                                }
+                            ) {
+                                Text("Reset to default")
+                            }
+
+                            Spacer(modifier = Modifier.width(8.dp))
+
+                            Button(
+                                enabled = canSaveApiBaseUrl,
+                                onClick = {
+                                    if (!ApiUrl.isValid(apiBaseUrlInput)) {
+                                        apiBaseUrlError =
+                                            "Enter a valid http(s) URL, e.g. ${ApiUrl.DEFAULT_BASE_URL}"
+                                        apiBaseUrlSaved = false
+                                    } else {
+                                        scope.launch {
+                                            ServerHelper.setApiBaseUrl(context, apiBaseUrlInput)
+                                            apiBaseUrlInput = ServerHelper.getApiBaseUrl(context)
+                                            apiBaseUrlError = null
+                                            apiBaseUrlSaved = true
+                                        }
+                                    }
+                                }
+                            ) {
+                                Text("Save")
                             }
                         }
                     }

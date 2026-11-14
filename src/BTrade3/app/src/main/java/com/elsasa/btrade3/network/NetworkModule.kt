@@ -1,5 +1,6 @@
 package com.elsasa.btrade3.network
 
+import com.elsasa.btrade3.util.ApiUrl
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
@@ -7,9 +8,8 @@ import retrofit2.converter.gson.GsonConverterFactory
 import java.util.concurrent.TimeUnit
 
 object NetworkModule {
-    private const val BASE_URL = "http://dev.smart-ics.com:8089/belajar-api/api/"
 
-    fun createApiService(): ApiService {
+    fun createApiService(baseUrl: String = ApiUrl.DEFAULT_BASE_URL): ApiService {
         val loggingInterceptor = HttpLoggingInterceptor().apply {
             level = HttpLoggingInterceptor.Level.BODY
         }
@@ -22,7 +22,7 @@ object NetworkModule {
             .build()
 
         val retrofit = Retrofit.Builder()
-            .baseUrl(BASE_URL)
+            .baseUrl(ApiUrl.normalize(baseUrl))
             .client(okHttpClient)
             .addConverterFactory(GsonConverterFactory.create())
             .build()

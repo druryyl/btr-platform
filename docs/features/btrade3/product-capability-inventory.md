@@ -600,6 +600,8 @@ Local Order Summary (optional self-review)
 | **Printing** | Not used | — |
 | **WhatsApp** | Not used | — |
 
+**API base URL configuration.** The cloud API endpoint is configurable at runtime from the Login screen (Server Target card -> API Base URL) and persisted in the `server_preferences` DataStore. The default is `https://dev.smart-ics.com:8089/belajar-api`; `ApiUrl.normalize` appends the `/api/` path segment and trailing slash required by Retrofit, so endpoint paths in `ApiService` stay relative. Cleartext HTTP remains permitted for `dev.smart-ics.com` so manually configured legacy `http://` endpoints still work.
+
 API surface:
 - `GET Brg/{serverId}`
 - `GET Customer/{serverId}`

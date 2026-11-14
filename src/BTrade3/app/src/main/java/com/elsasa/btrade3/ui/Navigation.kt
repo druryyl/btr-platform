@@ -2,8 +2,15 @@ package com.elsasa.btrade3.ui
 
 import android.os.Build
 import androidx.annotation.RequiresApi
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.core.content.edit
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -13,6 +20,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import com.elsasa.btrade3.database.AppDatabase
+import com.elsasa.btrade3.datastore.ServerPreferencesDataSource
 import com.elsasa.btrade3.network.NetworkModule
 import com.elsasa.btrade3.repository.BarangRepository
 import com.elsasa.btrade3.repository.CheckInRepository
@@ -73,11 +81,26 @@ fun AppNavigation(
     database: AppDatabase
 ) {
     val context = LocalContext.current
+
+    // API base URL is user configurable (Login -> Server Target). Wait for the stored value
+    // before building the network layer so no request can use a stale base URL.
+    val serverPreferences = remember(context) {
+        ServerPreferencesDataSource(context.applicationContext)
+    }
+    val storedBaseUrl by serverPreferences.apiBaseUrl.collectAsState(initial = null)
+    val apiBaseUrl = storedBaseUrl
+    if (apiBaseUrl == null) {
+        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            CircularProgressIndicator()
+        }
+        return
+    }
+    val apiService = remember(apiBaseUrl) { NetworkModule.createApiService(apiBaseUrl) }
+
     val orderRepository = OrderRepository(
         database.orderDao(),
         database.orderItemDao()
     )
-    val apiService = NetworkModule.createApiService()
     val networkRepository = NetworkRepository(apiService, ServerHelper)
 
     val barangRepository = BarangRepository(database.barangDao())
